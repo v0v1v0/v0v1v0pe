@@ -1,0 +1,106 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.eicm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict method for EICM fits</h2>
+
+<h3>Description</h3>
+
+<p>Obtains probability predictions (conditional or unconditional) or a model realization from a
+parameterized EICM model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'eicm'
+predict(object, nrepetitions = 10000, newdata = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>the fitted EICM model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrepetitions</code></td>
+<td>
+<p>the number of realizations to conduct for computing probabilities. Set to 1
+if you only need simulated community data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>optionally, a matrix in which to look for variables with which to predict.
+If omitted, the original data (used to fit the model) is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>not used.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The interaction network of the model must be an <strong>acyclic graph</strong>.
+Predictions are obtained by realizing the model multiple times and averaging realizations,
+because there is not a closed-form expression for their calculation.
+</p>
+<p>To obtain conditional predictions, include presence/absence columns with species names in <code>newdata</code>.
+Named columns for all the environmental predictors must always be included.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A species x sample matrix with predictions. If nrepetitions=1, predictions correspond to one
+realization, otherwise they are probabilities.
+</p>
+
+
+<h3>Note</h3>
+
+<p>If the eicm was fit without regularization, unconditional predictions are numerically equal
+to those of simple binomial GLMs.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load the included parameterized model
+data(truemodel)
+
+# for reference, plot the species interaction network
+plot(truemodel, type="network")
+
+# Unconditional predictions
+# let's fix environmental predictors at 0, for simplicity.
+predict(truemodel, newdata=cbind(env01=0, env02=0))
+
+# Conditional predictions
+# predict probabilities for all species conditional on the
+# known presence of sp011 (compare sp014 and sp004 with the above)
+predict(truemodel, newdata=cbind(env01=0, env02=0, sp011=1))
+
+# Propagation of indirect species effects
+# predict probabilities for all species conditional on the known 
+# absence (first line) and known presence (second line) of sp005 and sp023
+predict(truemodel, newdata=cbind(env01=0, env02=0, sp012=c(0, 1), sp018=c(0, 1)), nrep=100000)
+
+# Notice the effects on sp026 and the effect propagation to those
+# species which depend on it (sp013, sp008)
+# Also compare with unconditional predictions
+</code></pre>
+
+
+</div>

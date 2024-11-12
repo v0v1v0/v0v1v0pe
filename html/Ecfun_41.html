@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>match.data.frame</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Identify the row of <code>y</code> best 
+matching each row of <code>x</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>For each row of <code>x[, by.x]</code>, 
+find the best matching row of 
+<code>y[, by.y]</code>, with the best 
+match defined by <code>grep.</code> and
+<code>split</code>.
+</p>
+<p><code>grep.</code> and <code>split</code> must 
+either be <code>missing</code> or
+have the same length as <code>by.x</code> 
+and <code>by.y</code>.  If <code>grep.[i]</code> 
+and <code>split[i]</code> are NA, do a 
+complete match of <code>x[, by.x[i]]</code> 
+and <code>y[, by.y[i]]</code>.  Otherwise, 
+for each row <code>j</code>, look for a 
+match for <code>strsplit(x[j, by.x[i]], 
+  split[i])[[1]][1]</code> among 
+<code>strsplit(y[, by.y[i]], split[i])</code>.
+See details.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">match.data.frame(x, y, by, by.x=by, by.y=by, 
+        grep., split, sep=':')
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+
+<p>data.frames
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by, by.x, by.y</code></td>
+<td>
+
+<p>names of columns of <code>x</code> and <code>y</code> 
+to match.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grep.</code></td>
+<td>
+
+<p>a character vector of the type of match 
+for each element of <code>by.x</code> and 
+<code>by.y</code>.  If <code>NA</code>, require a 
+perfect match.
+</p>
+<p>Alternatives are <code>grep</code> and 
+<code>agrep</code> to find a match for 
+the first segment in 
+<code>strsplit(x, split=split[i])</code> among 
+any of the segments of 
+<code>strsplit(y, split=split[i])</code>.  Use 
+<code>fixed=TRUE</code> with the calls to these
+functions.
+</p>
+<p>NOTE:  These alternatives are not examined 
+if a unique match is found between 
+<code>x[, by.x[is.na(grep.) &amp; is.na(split)]]</code> 
+and the corresponding columns of <code>y</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split</code></td>
+<td>
+
+<p>A character vector of <code>split</code> characters 
+to pass to <code>strsplit</code>;  
+<code>strsplit</code> is not called if
+<code>is.na(split)</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+
+<p>a <code>sep</code> argument to use with 
+<code>paste</code> to produce a matching 
+key for the columns of <code>x</code> and <code>y</code> 
+for which perfect matches are required.  
+<code>If(missing(sep) &amp;&amp; not(missing(grep.))) 
+    sep &lt;- ' '</code> except where <code>grep.</code> = 
+<code>NA</code>s.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>1.  Check <code>by.x, by.y, grep.</code> and 
+<code>split</code>.  <code>If((missing(by.x) |
+  missing(by.y)) &amp;&amp; missing(by)) by &lt;- names(x)</code>
+</p>
+<p>2.  <code>fullMatch &lt;- (is.na(grep.) &amp; is
+  .na(split))</code>.  Create <code>keyfx</code> and
+<code>keyfy</code> by by pasting columns of 
+<code>x[, by.x[fullMatch]]</code> and 
+<code>y[, by.y[fullMatch]]</code>.  Also 
+create <code>x.</code> and <code>y.</code> = 
+<code>strsplit</code> of
+<code>x[, by.x[!fullMatch]]</code>.
+</p>
+<p>3.  Iterate over rows of <code>x</code> looking 
+for the best match.  This includes an inner 
+loop over columns of 
+<code>x[, by.x[!fullMatch]]</code>, stopping
+on the first unique match.  Return (-1) if 
+no unique match is found.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an integer vector of length <code>nrow(x)</code>
+containing the index of the best matching row 
+of <code>y</code> or <code>NA</code> if no adequate match 
+was found.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>strsplit</code>, <code>is.na</code>
+<code>grep</code>, <code>agrep</code>
+<code>match</code>, <code>row.match</code>,
+<code>join</code>, <code>match_df</code>
+<code>classify</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">newdata &lt;- data.frame(state=c("AL", "MI","NY"),
+                      surname=c("Rogers", "Rogers", "Smith"),
+                      givenName=c("Mike R.", "Mike K.", "Al"),
+                      stringsAsFactors=FALSE)
+reference &lt;- data.frame(state=c("NY", "NY", "MI", "AL", "NY", "MI"),
+                      surname=c("Smith", "Rogers", "Rogers (MI)",
+                                "Rogers (AL)", "Smith", 'Jones'),
+                      givenName=c("John", "Mike", "Mike", "Mike",
+                                "T. Albert", 'Al Thomas'),
+                      stringsAsFactors=FALSE)
+newInRef &lt;- match.data.frame(newdata, reference,
+       grep.=c(NA, 'agrep', 'agrep'))
+
+
+all.equal(newInRef, c(4, 3, 5))
+
+</code></pre>
+
+
+</div>

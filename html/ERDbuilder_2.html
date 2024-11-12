@@ -1,0 +1,194 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>perform_join</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Use inner join (unless the other is specified)</h2>
+
+<h3>Description</h3>
+
+<p>The perform_join function uses an inner join unless the user specifies the
+join type.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">perform_join(erd_object, tables_to_join, specified_joins = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>erd_object</code></td>
+<td>
+<p>An object of class "ERD", which encapsulates the data
+frames and the relationships between them. This object is generated using
+the <code>create_erd</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tables_to_join</code></td>
+<td>
+<p>A character vector listing the names of tables to join.
+The first table in this list serves as the main table to which subsequent
+tables are joined. The tables are joined in the order specified and utilize
+the relationships defined with the first table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>specified_joins</code></td>
+<td>
+<p>An optional named list where each element's name
+corresponds to a table in <code>tables_to_join</code> and the value specifies the
+type of join to perform with that table. The default value is <code>NULL</code>,
+which activates automated mode (which uses inner joins).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This orchestrates the joining of multiple tables based on a specified
+Entity-Relationship Diagram (ERD) object. This function extracts the
+relationships and join criteria defined within the ERD object and executes
+the appropriate join operations using R's <code>dplyr</code> package.
+</p>
+<p>The function can operate in two modes: automated and user-specified joins. In
+automated mode, join types are determined by the relationship symbols in the
+ERD object. In user-specified mode, the types of joins are explicitly
+provided by the user.
+</p>
+<p>Implementation Details:
+</p>
+<p>- Join Variables: For each pair of tables to be joined, the function extracts
+the relevant join variables from the ERD object.
+</p>
+<p>- Join Type: Depending on the relationship symbol associated with each pair
+of tables, the function decides whether to perform an inner join or a left
+join. This decision is implemented by dynamically invoking the corresponding
+dplyr function (<code>inner_join</code> or
+<code>left_join</code>).
+</p>
+<p>- Aggregation: The function uses <code>do.call</code> to dynamically execute
+the appropriate join operation, accumulating the result in the
+<code>main_table</code> variable, which is ultimately returned.
+</p>
+<p>Notes:
+</p>
+<p>-   The function iteratively applies the join operations, using the first
+table in <code>tables_to_join</code> as the main table.
+</p>
+<p>-   The join operations are performed in the order specified in
+<code>tables_to_join</code>.
+</p>
+<p>-   When <code>specified_joins</code> is <code>NULL</code>, the function operates in
+automated mode, determining the type of join based on relationship symbols.
+</p>
+<p>-   The names in <code>specified_joins</code> should match the table names in
+<code>tables_to_join</code> for user-specified mode to function correctly.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame resulting from the join operations conducted between the
+specified tables, consistent with the relationships indicated in the ERD
+object. Additionally, the types of joins used are printed to the console.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# Load Packages -----------------------------------------------------------
+
+library(ERDbuilder)
+library(dplyr)
+
+# Define entities ---------------------------------------------------------
+
+students_tbl &lt;- data.frame(
+  st_id = c("hu1", "de2", "lo3"),
+  dep_id = c("water", "evil", "values"),
+  student = c("Huey", "Dewey", "Louie"),
+  email = c("hubert.duck", "dewfort.duck", "llewellyn.duck"),
+  dob = c("04-15", "04-15", "04-15")
+)
+
+courses_tbl &lt;- data.frame(
+  crs_id = c("water101", "evil205", "water202"),
+  fac_id = c("02do", "03pe", "04mi"),
+  dep_id = c("water", "evil", "water"),
+  course = c("Swimming", "Human-chasing", "Dives")
+)
+
+enrollment_tbl &lt;- data.frame(
+  crs_id = c("water101", "evil205", "evil205", "water202"),
+  st_id = c("hu1", "hu1", "de2", "de2"),
+  final_grade = c("B", "A", "A", "F")
+)
+
+department_tbl &lt;- data.frame(
+  dep_id = c("water", "evil", "values"),
+  department = c("Water activities", "Evil procurement", "Good values")
+)
+
+faculty_tbl &lt;- data.frame(
+  faculty_name = c("Scrooge McDuck", "Donald", "Pete", "Mickey"),
+  title = c("Emeritus", "Full", "Assistant", "Full"),
+  fac_id = c("01sc", "02do", "03pe", "04mi"),
+  dep_id = c("water", "water", "evil", "values")
+)
+
+head(students_tbl)
+head(courses_tbl)
+head(enrollment_tbl)
+head(department_tbl)
+head(faculty_tbl)
+
+## Define relationships----------------------------------------
+relationships &lt;- list(
+  courses = list(
+    enrollment = list(crs_id = "crs_id", relationship = c("||", "|&lt;")),
+    department = list(dep_id = "dep_id", relationship = c("&gt;|", "||")),
+    faculty = list(fac_id = "fac_id", relationship = c("&gt;0", "||"))
+  ),
+  enrollment = list(
+    students = list(st_id = "st_id", relationship = c("&gt;0", "||")
+    )
+  ),
+  students = list(
+    department = list(dep_id = "dep_id", relationship = c("&gt;|", "||"))
+  ),
+  faculty = list(
+    department = list(dep_id = "dep_id", relationship = c("&gt;|", "||"))
+  )
+)
+
+## Create ERD object
+erd_object &lt;-
+  create_erd(
+    list(
+      students = students_tbl,
+      courses = courses_tbl,
+      enrollment = enrollment_tbl,
+      department = department_tbl,
+      faculty = faculty_tbl
+    ),
+    relationships)
+
+## Render ERD -----------------------------------------------------------
+render_erd(erd_object, label_distance = 0, label_angle = 15, n = 20)
+
+
+# Perform joins -----------------------------------------------------------
+
+perform_join(erd_object, c("courses", "enrollment", "department"))
+</code></pre>
+
+
+</div>

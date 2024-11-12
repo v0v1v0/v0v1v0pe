@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>binned_plot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Quantile-binned effect size plot</h2>
+
+<h3>Description</h3>
+
+<p>Plots the effect size between focal and reference groups by matched (binned) 
+quantiles (i.e., the results from binned_es), with the matched
+quantiles plotted along the x-axis and the effect size plotted along the 
+y-axis. The intent is to examine how (if) the magnitude of the effect size
+varies at different points of the distributions. The mean differences within
+each quantile bin are divided by the overall pooled standard deviation for 
+the two groups being compared.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">binned_plot(
+  data,
+  formula,
+  ref_group = NULL,
+  qtile_groups = 3,
+  es = "g",
+  lines = TRUE,
+  points = TRUE,
+  shade = TRUE,
+  shade_alpha = 0.4,
+  rects = TRUE,
+  rect_fill = "gray20",
+  rect_alpha = 0.35,
+  refline = TRUE,
+  refline_col = "gray40",
+  refline_lty = "solid",
+  refline_lwd = 1.1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The data frame to be plotted</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula of the type <code>out ~ group</code> where <code>out</code> is
+the outcome variable and <code>group</code> is the grouping variable. Note this
+variable can include any arbitrary number of groups. Additional variables 
+can be included with <code>+</code> to produce separate plots by the secondary or
+tertiary variable of interest (e.g., <code>out ~ group + characteristic1 + 
+characteristic2</code>). No more than two additional characteristics can be 
+supplied at this time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref_group</code></td>
+<td>
+<p>Optional character vector (of length 1) naming the
+reference group. Defaults to the group with the highest mean score.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qtile_groups</code></td>
+<td>
+<p>The number of quantile bins to split the data by and 
+calculate effect sizes. Defaults to 3 bins (lower, middle, upper).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>es</code></td>
+<td>
+<p>The effect size to plot. Defaults to <code>"g"</code>, in which case 
+Hedge's g is plotted, which is better for small samples. At present, the 
+only other option is <code>"d"</code> for Cohen's D.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lines</code></td>
+<td>
+<p>Logical. Should the PP Lines be plotted? Defaults to 
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>Logical. Should points be plotted for each <code>qtiles</code> be 
+plotted? Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shade</code></td>
+<td>
+<p>Logical. Should the standard errors around the effect size point
+estimates be displayed? Defaults to <code>TRUE</code>, with the uncertainty 
+displayed with shading.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shade_alpha</code></td>
+<td>
+<p>Transparency level of the standard error shading.
+Defaults to 0.40.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rects</code></td>
+<td>
+<p>Logical. Should semi-transparent rectangles be plotted in the 
+background to show the binning? Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rect_fill</code></td>
+<td>
+<p>Color fill of rectangles to be plotted in the background, if
+<code>rects == TRUE</code>. Defaults to "gray20".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rect_alpha</code></td>
+<td>
+<p>Transparency level of the rectangles in the background when
+<code>rects == TRUE</code>. Defaults to 0.35.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refline</code></td>
+<td>
+<p>Logical. Defaults to <code>TRUE</code>. Should a diagonal
+reference line, representing the point of equal probabilities, be plotted?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refline_col</code></td>
+<td>
+<p>The color of the reference line. Defaults to 
+<code>"gray40"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refline_lty</code></td>
+<td>
+<p>Line type of the reference line. Defaults to
+<code>"solid"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refline_lwd</code></td>
+<td>
+<p>Line width of the reference line. Defaults to <code>1.1</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Binned Effect Size Plot: Defaults to Hedges' G
+binned_plot(star, math ~ condition)
+ 
+# Same plot, separated by sex
+binned_plot(star, math ~ condition + sex)
+
+# Same plot by sex and race
+## Not run: 
+  pp_plot(star, math ~ condition + sex + race)
+
+## End(Not run)
+## Evaluate with simulated data: Plot is most interesting when variance
+# in the distributions being compared differ.
+
+library(tidyr)
+library(ggplot2)
+
+# simulate data with different variances
+set.seed(100)
+common_vars &lt;- data.frame(low  = rnorm(1000, 10, 1),
+                        high = rnorm(1000, 12, 1),
+                        vars = "common")
+diff_vars &lt;- data.frame(low  = rnorm(1000, 10, 1),
+                      high = rnorm(1000, 12, 2),
+                      vars = "diff")
+d &lt;- rbind(common_vars, diff_vars)
+
+# Plot distributions 
+d &lt;- d %&gt;% 
+gather(group, value, -vars) 
+
+ggplot(d, aes(value, color = group)) +
+ geom_density() +
+ facet_wrap(~vars)
+
+# Note that the difference between the distributions depends on where you're 
+# evaluating from on the x-axis. The binned plot helps us visualize this. 
+# The below shows the binned plots when there is a common versus different
+# variance
+
+binned_plot(d, value ~ group + vars)   
+</code></pre>
+
+
+</div>

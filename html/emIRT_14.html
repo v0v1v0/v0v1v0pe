@@ -1,0 +1,319 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>poisIRT</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Poisson IRT estimation via EM </h2>
+
+<h3>Description</h3>
+
+ 
+<p><code>poisIRT</code> estimates an IRT model with count (usually word counts) in cells. Estimation
+is conducted using the EM algorithm described in the reference paper below. The algorithm
+generalizes a model by Slapin and Proksch (2009) that is commonly applied to manifesto
+data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">    poisIRT(.rc, i = 0:(nrow(.rc)-1), NI = nrow(.rc), .starts = NULL, .priors = NULL,
+    .control = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.rc</code></td>
+<td>
+<p>  matrix, usually with unique words along the J rows and different documents across K columns.
+Each cell will contain a count of words.  There should be no NA values, so documents missing a particular
+word should list 0 in the cell.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>  vector of length K, indicating for each of the K documents which actor it belongs to. Assignment
+of actors begins at actor 0.  If set to 0:(K-1), and NI=K below, then each document
+is assigned its own ideal point, and we get the Slapin and Proksch Wordfish model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NI</code></td>
+<td>
+<p>  integer, number of unique actors.  Must be less than or equal to K.  If NI=K, then each document
+is assigned its own ideal point, and we get the Slapin and Proksch Wordfish model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.starts</code></td>
+<td>
+<p> a list containing several matrices of starting values for the parameters. 
+The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>alpha</code></dt>
+<dd>
+<p>  A (J x 1) matrix of starting values for the word frequency parameter <code class="reqn">alpha</code>.</p>
+</dd>
+<dt><code>psi</code></dt>
+<dd>
+<p>  A (K x 1) matrix of starting values for the document verbosity parameter <code class="reqn">psi</code>.</p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of starting values for the word discrimination parameter <code class="reqn">\beta</code>.</p>
+</dd>
+<dt><code>x</code></dt>
+<dd>
+<p>  An (NI x 1) matrix of starting values for the actor ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.priors</code></td>
+<td>
+<p>  list, containing several matrices of starting values for the parameters.
+The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>x$mu</code></dt>
+<dd>
+<p>  numeric, prior mean for actor ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+<dt><code>x$sigma2</code></dt>
+<dd>
+<p>   numeric, prior variance for actor ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+<dt><code>beta$mu</code></dt>
+<dd>
+<p>  numeric, prior mean for <code class="reqn">\beta_j</code>.</p>
+</dd>
+<dt><code>beta$sigma2</code></dt>
+<dd>
+<p>  numeric, prior variance for <code class="reqn">\beta_j</code>.</p>
+</dd>
+<dt><code>alpha$mu</code></dt>
+<dd>
+<p>  numeric, prior mean for <code class="reqn">\alpha_j</code>.</p>
+</dd>
+<dt><code>alpha$sigma2</code></dt>
+<dd>
+<p>  numeric, prior variance for <code class="reqn">\alpha_j</code></p>
+</dd>
+<dt><code>psi$mu</code></dt>
+<dd>
+<p>  numeric, prior mean for <code class="reqn">\psi_k</code>.</p>
+</dd>
+<dt><code>psi$sigma2</code></dt>
+<dd>
+<p>  numeric, prior variance for <code class="reqn">\psi_k</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.control</code></td>
+<td>
+<p>list, specifying some control functions for estimation.  Options include the following:
+</p>
+
+<dl>
+<dt><code>threads</code></dt>
+<dd>
+<p>  integer, indicating number of cores to use. Default is to use a single core, but more can be
+supported if more speed is desired.</p>
+</dd>
+<dt><code>verbose</code></dt>
+<dd>
+<p>  boolean, indicating whether output during estimation should be verbose or not.  Set FALSE by default.</p>
+</dd>
+<dt><code>thresh</code></dt>
+<dd>
+<p>  numeric. Algorithm will run until all parameters correlate at 1 - thresh across
+consecutive iterations. Set at 1e-6 by default.</p>
+</dd>
+<dt><code>maxit</code></dt>
+<dd>
+<p>  integer. Sets the maximum number of iterations the algorithm can run. Set at 500 by default.</p>
+</dd>
+<dt><code>checkfreq</code></dt>
+<dd>
+<p>  integer. Sets frequency of verbose output by number of iterations. Set at 50 by default.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>poisIRT</code>.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>means</code></td>
+<td>
+<p> list, containing several matrices of point estimates for the parameters corresponding
+to the inputs for the priors.  The list should contain the following matrices.
+</p>
+
+<dl>
+<dt><code>alpha</code></dt>
+<dd>
+<p>  A (J x 1) matrix of point estimates for the word frequency parameter <code class="reqn">alpha</code>.</p>
+</dd>
+<dt><code>psi</code></dt>
+<dd>
+<p>  A (K x 1) matrix of point estimates for the document verbosity parameter <code class="reqn">psi</code>.</p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of point estimates for the word discrimination parameter <code class="reqn">\beta</code>.</p>
+</dd>
+<dt><code>x</code></dt>
+<dd>
+<p>  An (NI x 1) matrix of point estimates for the actor ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars</code></td>
+<td>
+<p> list, containing several matrices of variance estimates for parameters corresponding
+to the inputs for the priors.  Note that these variances are those recovered via variational approximation,
+and in most cases they are known to be far too small and generally unusable.  Better estimates of variances
+can be obtained manually via the parametric bootstrap.  The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of variational variance estimates for the word discrimination parameter <code class="reqn">\beta</code>.</p>
+</dd>
+<dt><code>x</code></dt>
+<dd>
+<p>  An (NI x 1) matrix of variational variance estimates for the actor ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runtime</code></td>
+<td>
+<p> A list of fit results, with elements listed as follows:
+</p>
+
+<dl>
+<dt><code>iters</code></dt>
+<dd>
+<p>  integer, number of iterations run.</p>
+</dd>
+<dt><code>conv</code></dt>
+<dd>
+<p>  integer, convergence flag. Will return 1 if threshold reached, and 0 if maximum number of iterations reached.</p>
+</dd>
+<dt><code>threads</code></dt>
+<dd>
+<p>  integer, number of threads used to estimated model.</p>
+</dd>
+<dt><code>tolerance</code></dt>
+<dd>
+<p>  numeric, tolerance threshold for convergence.  Identical to thresh argument in input to .control list.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p> A list of sizes, with elements listed as follow:
+</p>
+
+<dl>
+<dt>K</dt>
+<dd>
+<p> Number of unique words in term-document matrix.</p>
+</dd>
+<dt>J</dt>
+<dd>
+<p> Number of documents in term-document matrix.</p>
+</dd>
+<dt>I</dt>
+<dd>
+<p> Number of actors in model, always less than or equal to J.</p>
+</dd>
+<dt>call</dt>
+<dd>
+<p> Function call used to generate output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i_of_k</code></td>
+<td>
+<p> A copy of input for argument ‘i’, which allows the J documents to be linked to I actors.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+ 
+<p>Kosuke Imai <a href="mailto:imai@harvard.edu">imai@harvard.edu</a>
+</p>
+<p>James Lo <a href="mailto:jameslo@princeton.edu">jameslo@princeton.edu</a>
+</p>
+<p>Jonathan Olmsted <a href="mailto:jpolmsted@gmail.com">jpolmsted@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Kosuke Imai, James Lo, and Jonathan Olmsted (2016). “Fast Estimation of Ideal
+Points with Massive Data.” American Political Science Review, Vol. 110, No. 4 (December), pp. 631-656.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>'manifesto'
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+## Load German Manifesto data
+data(manifesto)
+
+## Estimate variational Wordfish model
+lout &lt;- poisIRT(.rc = manifesto$data.manif,
+		    i = 0:(ncol(manifesto$data.manif)-1),
+		    NI=ncol(manifesto$data.manif),
+                    .starts = manifesto$starts.manif,
+                    .priors = manifesto$priors.manif,
+                    .control = {list(
+                        threads = 1,
+                        verbose = TRUE,
+                        thresh = 1e-6,
+						maxit=1000
+                        )})
+
+## Positional Estimates for Parties
+lout$means$x  
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

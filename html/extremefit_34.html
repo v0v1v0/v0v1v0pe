@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.hill.ts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict the adaptive survival or quantile function for a time serie</h2>
+
+<h3>Description</h3>
+
+<p>Give the adaptive survival function or quantile function of a time serie
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'hill.ts'
+predict(object, newdata = NULL, type = "quantile",
+  input = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>output object of the function hill.ts.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>optionally, a data frame or a vector with which to predict. If omitted, the original data points are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>either "quantile" or "survival".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>input</code></td>
+<td>
+<p>optionnaly, the name of the variable to estimate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to or from other methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If type = "quantile", <code class="reqn">newdata</code> must be between 0 and 1. If type = "survival", <code class="reqn">newdata</code> must be in the domain of the data from the function <code>hill.ts</code>.
+If <code class="reqn">newdata</code> is a data frame, the variable from which to predict must be the first one or its name must start with a "p" if type = "quantile" and "x" if type = "survival".
+The name of the variable from which to predict can also be written as <code class="reqn">input</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>the input vector of probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the input vector of values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tgrid</code></td>
+<td>
+<p>Tgrid output of the function hill.ts.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantiles</code></td>
+<td>
+<p>the estimted quantiles assiociated to newdata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>survival</code></td>
+<td>
+<p>the estimated survival function assiociated to newdata.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Durrieu, G. and Grama, I. and Jaunatre, K. and Pham, Q.-K. and Tricot, J.-M. (2018). extremefit: A Package for Extreme Quantiles. Journal of Statistical Software, 87, 1–20.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>hill.ts</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Generate a pareto mixture sample of size n with a time varying parameter
+theta &lt;- function(t){
+   0.5+0.25*sin(2*pi*t)
+ }
+n &lt;- 4000
+t &lt;- 1:n/n
+Theta &lt;- theta(t)
+Data &lt;- NULL
+set.seed(1240)
+for(i in 1:n){
+   Data[i] &lt;- rparetomix(1, a = 1/Theta[i], b = 1/Theta[i]+5, c = 0.75, precision = 10^(-5))
+ }
+## Not run:  #For computing time purpose
+  #choose the bandwidth by cross validation
+  Tgrid &lt;- seq(0, 1, 0.1)#few points to improve the computing time
+  hgrid &lt;- bandwidth.grid(0.01, 0.2, 20, type = "geometric")
+  hcv &lt;- bandwidth.CV(Data, t, Tgrid, hgrid, TruncGauss.kernel,
+         kpar = c(sigma = 1), pcv = 0.99, CritVal = 3.6, plot = TRUE)
+  h.cv &lt;- hcv$h.cv
+
+  #we modify the Tgrid to cover the data set
+  Tgrid &lt;- seq(0, 1, 0.02)
+  hillTs &lt;- hill.ts(Data, t, Tgrid, h = h.cv, TruncGauss.kernel, kpar = c(sigma = 1),
+           CritVal = 3.6, gridlen = 100, initprop = 1/10, r1 = 1/4, r2 = 1/20)
+  p &lt;- c(0.999)
+  pred.quantile.ts &lt;- predict(hillTs, newdata = p, type = "quantile")
+  true.quantile &lt;- NULL
+  for(i in 1:n){
+     true.quantile[i] &lt;- qparetomix(p, a = 1/Theta[i], b = 1/Theta[i]+5, c = 0.75)
+   }
+  plot(Tgrid, log(as.numeric(pred.quantile.ts$y)),
+       ylim = c(0, max(log(as.numeric(pred.quantile.ts$y)))), ylab = "log(0.999-quantiles)")
+  lines(t, log(true.quantile), col = "red")
+  lines(t, log(Data), col = "blue")
+
+
+  #comparison with other fixed bandwidths
+
+  plot(Tgrid, log(as.numeric(pred.quantile.ts$y)),
+       ylim = c(0, max(log(as.numeric(pred.quantile.ts$y)))), ylab = "log(0.999-quantiles)")
+  lines(t, log(true.quantile), col = "red")
+
+  hillTs &lt;- hill.ts(Data, t, Tgrid, h = 0.1, TruncGauss.kernel, kpar = c(sigma = 1),
+                    CritVal = 3.6, gridlen = 100,initprop = 1/10, r1 = 1/4, r2 = 1/20)
+  pred.quantile.ts &lt;- predict(hillTs, p, type = "quantile")
+  lines(Tgrid, log(as.numeric(pred.quantile.ts$y)), col = "green")
+
+
+  hillTs &lt;- hill.ts(Data, t, Tgrid, h = 0.3, TruncGauss.kernel, kpar = c(sigma = 1),
+               CritVal = 3.6, gridlen = 100, initprop = 1/10, r1 = 1/4, r2 = 1/20)
+  pred.quantile.ts &lt;- predict(hillTs, p, type = "quantile")
+  lines(Tgrid, log(as.numeric(pred.quantile.ts$y)), col = "blue")
+
+
+  hillTs &lt;- hill.ts(Data, t, Tgrid, h = 0.04, TruncGauss.kernel, kpar = c(sigma = 1),
+             CritVal = 3.6, gridlen = 100, initprop = 1/10, r1 = 1/4, r2 = 1/20)
+  pred.quantile.ts &lt;- predict(hillTs ,p, type = "quantile")
+  lines(Tgrid, log(as.numeric(pred.quantile.ts$y)), col = "magenta")
+
+## End(Not run)
+
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sim.poissonc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Simulate Poisson Cluster Process </h2>
+
+<h3>Description</h3>
+
+<p>Generate a random point pattern, a simulated realisation of the Poisson Cluster Process
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sim.poissonc(x.ppp, rho, sigma)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x.ppp</code></td>
+<td>
+<p> Point pattern whose window and intensity will be simulated. An object with the
+<code>ppp</code> format of <span class="pkg">spatstat</span>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p> Parameter <code class="reqn">rho</code> of the Poisson Cluster process.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p> Parameter <code class="reqn">sigma</code> of the Poisson Cluster process.  </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The Poisson cluster processes are defined by the following postulates (Diggle 2003):
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+         <em>PCP1</em>
+</td>
+<td style="text-align: left;"> Parent events form a Poisson process with intensity <code class="reqn">rho</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+         <em>PCP2</em>
+</td>
+<td style="text-align: left;"> Each parent produces a random number of offspring, according to a probability distribution </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+	                    </td>
+<td style="text-align: left;"> <code class="reqn">p[s]: s = 0, 1, 2, ...</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+         <em>PCP3</em>
+</td>
+<td style="text-align: left;"> The positions of the offspring relative to their parents are distributed according to a bivariate pdf <code class="reqn">h</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+	 </td>
+</tr>
+</table>
+<p>This implementation asumes that the probability distribution <code class="reqn">p[s]</code> of offspring per parent is a Poisson distribution and 
+that the position of each offspring relative to its parent follows a radially symetric Gaussian distribution with pdf
+</p>
+<p style="text-align: center;"><code class="reqn">h(x, y) = [1/(2*pi*sigma^2)]* exp[-(x^2+y^2)/(2*sigma^2)]</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>The simulated point pattern (an object of class "<code>ppp</code>"). </p>
+
+
+<h3>Warning</h3>
+
+<p>This implementation simulates only point patterns within rectangular windows. Use  <code>ipc.estK</code> to fit and 
+<code>rIPCP</code> (or the <code>spatstat</code> functions) to simulate point patterns within irregular windows.
+</p>
+
+
+<h3>Note</h3>
+
+<p> This function can use the results of  <code>pc.estK</code> to simulate point patterns from a fitted model.
+Be careful as the paramted returned by <code>pc.estK</code> is <code class="reqn">sigma^2</code> while <code>sim.poissonc</code> takes 
+its square root, i.e. <code class="reqn">sigma</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Marcelino de la Cruz Rot </p>
+
+
+<h3>References</h3>
+
+<p> Diggle, P.J. 2003. <em>Statistical analysis of spatial point patterns</em>. Arnold, London. </p>
+
+
+<h3>See Also</h3>
+
+ <p><code>rIPCP</code> to simulate inhomogeneous PCP; <code>rNeymanScott</code> 
+and <code>rThomas</code> in <span class="pkg">spatstat</span> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+data(gypsophylous)
+
+# set the number of simulations (nsim=199 or larger for real analyses)
+nsim&lt;- 39
+
+## Estimate K function ("Kobs").
+gyps.env &lt;- envelope(gypsophylous, Kest, correction="iso", nsim=nsim)
+
+plot(gyps.env, sqrt(./pi)-r~r, legend=FALSE)
+
+## Fit Poisson Cluster Process. The limits of integration 
+## rmin and rmax are setup to 0 and 60, respectively. 
+cosa.pc &lt;- pc.estK(Kobs = gyps.env$obs[gyps.env$r&lt;=60],
+		           r = gyps.env$r[gyps.env$r&lt;=60])
+
+## Add fitted Kclust function to the plot.
+lines(gyps.env$r,sqrt(Kclust(gyps.env$r, cosa.pc$sigma2,cosa.pc$rho)/pi)-gyps.env$r,
+       lty=2, lwd=3, col="purple")
+
+## A kind of pointwise test of the pattern gypsophilous been a realisation
+## of the fitted model, simulating with sim.poissonc and using function J (Jest).
+
+gyps.env.sim &lt;- envelope(gypsophylous, Jest,  nsim=nsim,
+                    simulate=expression(sim.poissonc(gypsophylous,
+		    sigma=sqrt(cosa.pc$sigma2), rho=cosa.pc$rho)))
+
+plot(gyps.env.sim,  main="")
+
+
+</code></pre>
+
+
+</div>

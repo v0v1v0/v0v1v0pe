@@ -1,0 +1,116 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>aridityIndexThornthwaite</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>aridityIndexThornthwaite</h2>
+
+<h3>Description</h3>
+
+<p>Generates thornthwaite aridity index raster.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">aridityIndexThornthwaite(precipStack, PETstack, precipScale = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>precipStack</code></td>
+<td>
+<p>SpatRaster of monthly precipitation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PETstack</code></td>
+<td>
+<p>SpatRaster of monthly potential evapotranspiration. 
+Layer names are assumed to end in the month number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precipScale</code></td>
+<td>
+<p>integer; scaling factor for the precipitation data, see envirem
+for additional details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>Thornthwaite aridity index = 100d / n</code>
+where d = sum of monthly differences between precipitation and PET for months where precip &lt; PET
+where n = sum of monthly PET for those months
+</p>
+
+
+<h3>Value</h3>
+
+<p>RasterLayer, unitless
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Pascal Title
+</p>
+
+
+<h3>References</h3>
+
+<p>Thornthwaite, C.W. (1948). An approach toward a rational classification of climate.
+<em>Geographical Review</em>, <strong>38</strong>, 55-94.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Requires rasters created with <code>monthlyPET</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Find example rasters
+rasterFiles &lt;- list.files(system.file('extdata', package='envirem'), full.names=TRUE)
+env &lt;- rast(rasterFiles)
+
+# identify the appropriate layers
+meantemp &lt;- grep('mean', names(env), value=TRUE)
+solar &lt;- grep('solrad', names(env), value=TRUE)
+maxtemp &lt;- grep('tmax', names(env), value=TRUE)
+mintemp &lt;- grep('tmin', names(env), value=TRUE)
+
+# read them in as SpatRasters
+meantemp &lt;- env[[meantemp]]
+solar &lt;- env[[solar]]
+maxtemp &lt;- env[[maxtemp]]
+mintemp &lt;- env[[mintemp]]
+tempRange &lt;- abs(maxtemp - mintemp)
+
+# get monthly PET
+pet &lt;- monthlyPET(meantemp, solar, tempRange)
+
+precip &lt;- grep('prec', names(env), value=TRUE)
+precip &lt;- env[[precip]]
+
+# set up naming scheme - only precip is different from default
+assignNames(precip = 'prec_##')
+
+aridityIndexThornthwaite(precip, pet)
+
+# set back to defaults
+assignNames(reset = TRUE)
+
+
+</code></pre>
+
+
+</div>

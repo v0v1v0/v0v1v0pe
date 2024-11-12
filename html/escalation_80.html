@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>select_boin_mtd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Select dose by BOIN's MTD-choosing algorithm.</h2>
+
+<h3>Description</h3>
+
+<p>This method selects dose by the algorithm for identifying the maximum
+tolerable dose (MTD) described in Yan et al. (2019). This class is intended
+to be used when a BOIN trial has reached its maximum sample size. Thus, it
+intends to make the final dose recommendation after the regular BOIN dose
+selection algorithm, as implemented by <code>get_boin</code>, including any
+additional behaviours that govern stopping (etc), has gracefully concluded a
+dose-finding trial. However, the class can be used in any scenario where
+there is a target toxicity rate. See Examples. Note - this class will not
+override the parent dose selector when the parent is advocating no dose. Thus
+this class will not reinstate a dangerous dose.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">select_boin_mtd(
+  parent_selector_factory,
+  when = c("finally", "always"),
+  target = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>Object of type <code>selector_factory</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>when</code></td>
+<td>
+<p>Either of: 'finally' to select dose only when the parent
+dose-selector has finished, by returning continue() == FALSE; or 'always'
+to use this dose-selection algorithm for every dose decision. As per the
+authors' original intentions, the default is 'finally'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>We seek a dose with this probability of toxicity. If not
+provided, the value will be sought from the parent dose-selector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra args are passed to <code>select.mtd</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Yan, F., Pan, H., Zhang, L., Liu, S., &amp; Yuan, Y. (2019). BOIN: An
+R Package for Designing Single-Agent and Drug-Combination Dose-Finding Trials
+Using Bayesian Optimal Interval Designs. Journal of Statistical Software,
+27(November 2017), 0–35. https://doi.org/10.18637/jss.v000.i00
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># This class is intended to make the final dose selection in a BOIN trial:
+target &lt;- 0.25
+model &lt;- get_boin(num_doses = 5, target = target) %&gt;%
+  stop_at_n(n = 12) %&gt;%
+  select_boin_mtd()
+
+outcomes &lt;- '1NNN 2NTN 2NNN 3NTT'
+model %&gt;% fit(outcomes) %&gt;% recommended_dose()
+
+# However, since behaviour is modular in this package, we can use this method
+# to select dose at every dose decision if we wanted:
+model2 &lt;- get_boin(num_doses = 5, target = target) %&gt;%
+  select_boin_mtd(when = 'always')
+model2 %&gt;% fit('1NNT') %&gt;% recommended_dose()
+model2 %&gt;% fit('1NNN 2NNT') %&gt;% recommended_dose()
+
+# and with any underlying model:
+skeleton &lt;- c(0.05, 0.1, 0.25, 0.4, 0.6)
+model3 &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  select_boin_mtd(when = 'always')
+model3 %&gt;% fit('1NNT') %&gt;% recommended_dose()
+model3 %&gt;% fit('1NNN 2NNT') %&gt;% recommended_dose()
+
+</code></pre>
+
+
+</div>

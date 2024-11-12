@@ -1,0 +1,111 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>analyzeBlockExclusion</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Analyze block exclusiveness</h2>
+
+<h3>Description</h3>
+
+<p>Use exclusion tuples information to determine which assembled test blocks are exclusive.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">analyzeBlockExclusion(
+  solverOut,
+  items,
+  idCol,
+  exclusionTuples,
+  formName = "form"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>solverOut</code></td>
+<td>
+<p>Object created by <code>useSolver</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>items</code></td>
+<td>
+<p>Original <code>data.frame</code> containing information on item level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idCol</code></td>
+<td>
+<p>Column name in <code>items</code> containing item IDs. These will be used for matching to the solver output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclusionTuples</code></td>
+<td>
+<p><code>data.frame</code> with two columns, containing tuples with
+item IDs which should be in test
+forms exclusively. Must be the same object as used in <code>itemExclusionConstraint</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formName</code></td>
+<td>
+<p>A character vector with names to give to the forms.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If exclusion tuples have been used to assemble test forms (using the <code>itemExclusionConstraint</code>
+function), the resulting
+item blocks might also be exclusive. Using the initially used item exclusion tuples and the optimal solution
+given by <code>useSolver</code> this function determines, which item blocks are exclusive and can not be together in an
+assembled test form.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>data.frame</code> of block exclusions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Full workflow using itemExclusionTuples
+# Example data.frame
+items &lt;- data.frame(ID = c("items1", "items2", "items3", "items4"),
+                     exclusions = c("items2, items3", NA, NA, NA),
+                     stringsAsFactors = FALSE)
+
+# Create tuples
+exTuples2 &lt;- itemTuples(items = items, idCol = "ID", infoCol = "exclusions",
+                    sepPattern = ", ")
+
+#' ## Create constraints
+exclusion_constraint &lt;- itemExclusionConstraint(nForms = 2, itemTuples = exTuples2,
+                                                itemIDs = items$ID)
+depletion_constraint &lt;- depletePoolConstraint(2, nItems = 4,
+                                                itemIDs = items$ID)
+target_constraint &lt;- minimaxObjective(nForms = 2,
+                                          itemValues = c(3, 1.5, 2, 4),
+                                          targetValue = 1,
+                                          itemIDs = items$ID)
+
+opt_solution &lt;- useSolver(list(exclusion_constraint, target_constraint,
+                                        depletion_constraint))
+
+analyzeBlockExclusion(opt_solution, items = items, idCol = "ID",
+                       exclusionTuples = exTuples2)
+
+
+</code></pre>
+
+
+</div>

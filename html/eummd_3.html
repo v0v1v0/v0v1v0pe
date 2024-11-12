@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>meammd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>MEA-MMD: Multivariate Efficient Approximate Maximum Mean Discrepancy</h2>
+
+<h3>Description</h3>
+
+<p>Computes maximum mean discrepancy statistics with Laplacian
+or Gaussian kernel.
+Suitable for multivariate data. Naive approach, quadratic in number
+of observations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">meammd(
+  X,
+  Y,
+  beta = -0.1,
+  pval = TRUE,
+  type = c("proj", "dist"),
+  numproj = 20,
+  nmethod = c(2, 1),
+  distpval = c("Hommel", "Fisher"),
+  numperm = 200,
+  seednum = 0,
+  alternative = c("greater", "two.sided"),
+  allowzeropval = FALSE,
+  faster = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>Matrix (or vector) of observations in first sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>Matrix (or vector) of observations in second sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>kernel parameter. Must be positive; if not, computes
+median heuristic in quadratic time for each projection.
+Default value
+is <code>-0.1</code>, which will force median heuristic to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval</code></td>
+<td>
+<p>Boolean for whether to compute p-value or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>The type of projection used. Either <code>"proj"</code> for
+random projections (default) or <code>"dist"</code> for interpoint
+distances.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numproj</code></td>
+<td>
+<p>Number of projections (only used if <code>type="proj"</code>).
+Default is <code>20</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmethod</code></td>
+<td>
+<p>Norm used for interpoint distances, if <code>type="dist"</code>.
+Needs to be either <code>2</code> (for two-norm, default) or
+<code>1</code> (for one-norm).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distpval</code></td>
+<td>
+<p>The p-value combination procedure if <code>type="dist"</code>.
+Options are <code>"Hommel"</code> (default) or <code>"Fisher"</code>.
+The Hommel method is preferred since the Type I error does
+not seem to be controlled if the Fisher method is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numperm</code></td>
+<td>
+<p>Number of permutations. Default is <code>200</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seednum</code></td>
+<td>
+<p>Seed number for generating permutations. Default is <code>0</code>,
+which means seed is set randomly. For values larger than
+<code>0</code>, results will be reproducible.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>A character string specifying the alternative hypothesis,
+which must be either <code>"greater"</code> (default) or
+<code>"two.sided"</code>. In Gretton et al., the
+MMD test statistic is specified so that if it is
+significantly larger than zero, then the null hypothesis
+that the two samples come from the same distribution
+should be rejected. For this reason, <code>"greater"</code>
+is recommended. The test will still work
+in many cases with <code>"two.sided"</code> specified, but this
+could lead to problems in certain cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allowzeropval</code></td>
+<td>
+<p>A boolean, specifying whether we will allow zero
+p-values or not. Default is <code>FALSE</code>; then
+a threshold of <code>0.5 / (numperm+1)</code> is used,
+and if the computed p-value is less than this
+threshold, it is then set to be this value.
+this avoids the possibility of zero p-values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>faster</code></td>
+<td>
+<p>A boolean, specifying if to use faster algorithm
+when computing p-value. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with the following elements:
+</p>
+
+<dl>
+<dt><code>pval</code></dt>
+<dd>
+<p>The p-value of the test, if it is
+computed (<code>pval=TRUE</code>). Otherwise,
+it is set to <code>NA</code>.</p>
+</dd>
+<dt><code>stat</code></dt>
+<dd>
+<p>The statistic of the test, which
+is only returned when <code>type="proj"</code>,
+otherwise it is set to <code>NA</code>.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Bodenham, D. A., and Kawahara, Y. (2023)
+"euMMD: efficiently computing the MMD two-sample test statistic for
+univariate data." Statistics and Computing 33.5 (2023): 110.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">X &lt;- matrix(c(1:12), ncol=2, byrow=TRUE)
+Y &lt;- matrix(c(13:20), ncol=2, byrow=TRUE)
+# using the random projections method
+mmdList &lt;- meammd(X=X, Y=Y, pval=TRUE, type="proj", numproj=50)
+
+# using the method were distances are computed to the various points 
+mmdList &lt;- meammd(X=X, Y=Y, pval=TRUE, type="dist")
+
+
+</code></pre>
+
+
+</div>

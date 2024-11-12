@@ -1,0 +1,204 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dissolution_coefs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dissolution Coefficients for Stochastic Network Models</h2>
+
+<h3>Description</h3>
+
+<p>Calculates dissolution coefficients, given a dissolution model
+and average edge duration, to pass as offsets to an ERGM/TERGM
+model fit in <code>netest</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dissolution_coefs(dissolution, duration, d.rate = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dissolution</code></td>
+<td>
+<p>Right-hand sided STERGM dissolution formula
+(see <code>netest</code>). See below for list of supported
+dissolution models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>duration</code></td>
+<td>
+<p>A vector of mean edge durations in arbitrary time units.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d.rate</code></td>
+<td>
+<p>Departure or exit rate from the population, as a single
+homogeneous rate that applies to the entire population.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function performs two calculations for dissolution coefficients
+used in a network model estimated with <code>netest</code>:
+</p>
+
+<ol>
+<li> <p><strong>Transformation:</strong> the mean durations of edges in a network are
+mathematically transformed to logit coefficients.
+</p>
+</li>
+<li> <p><strong>Adjustment:</strong> in a dynamic network simulation in an open
+population (in which there are departures), it is further necessary to
+adjust these coefficients; this upward adjustment accounts for
+departure as a competing risk to edge dissolution.
+</p>
+</li>
+</ol>
+<p>The current dissolution models supported by this function and in network
+model estimation in <code>netest</code> are as follows:
+</p>
+
+<ul>
+<li> <p><code>~offset(edges)</code>: a homogeneous dissolution model in which the
+edge duration is the same for all partnerships. This requires
+specifying one duration value.
+</p>
+</li>
+<li> <p><code>~offset(edges) + offset(nodematch("&lt;attr&gt;"))</code>: a heterogeneous
+model in which the edge duration varies by whether the nodes in the
+dyad have similar values of a specified attribute. The duration
+vector should now contain two values: the first is the mean edge
+duration of non-matched dyads, and the second is the duration of the
+matched dyads.
+</p>
+</li>
+<li> <p><code>~offset(edges) + offset(nodemix("&lt;attr&gt;"))</code>: a heterogeneous
+model that extends the nodematch model to include non-binary
+attributes for homophily. The duration vector should first contain
+the base value, then the values for every other possible combination
+in the term.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>A list of class <code>disscoef</code> with the following elements:
+</p>
+
+<ul>
+<li> <p><strong>dissolution:</strong> right-hand sided STERGM dissolution formula
+passed in the function call.
+</p>
+</li>
+<li> <p><strong>duration:</strong> mean edge durations passed into the function.
+</p>
+</li>
+<li> <p><strong>coef.crude:</strong> mean durations transformed into logit
+coefficients.
+</p>
+</li>
+<li> <p><strong>coef.adj:</strong> crude coefficients adjusted for the risk of
+departure on edge persistence, if the <code>d.rate</code> argument is
+supplied.
+</p>
+</li>
+<li> <p><strong>coef.form.corr:</strong> corrections to be subtracted from formation
+coefficients.
+</p>
+</li>
+<li> <p><strong>d.rate:</strong> the departure rate.
+</p>
+</li>
+<li> <p><strong>diss.model.type:</strong> the form of the dissolution model; options
+include <code>edgesonly</code>, <code>nodematch</code>, and <code>nodemix</code>.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Homogeneous dissolution model with no departures
+dissolution_coefs(dissolution = ~offset(edges), duration = 25)
+
+## Homogeneous dissolution model with departures
+dissolution_coefs(dissolution = ~offset(edges), duration = 25,
+                  d.rate = 0.001)
+
+## Heterogeneous dissolution model in which same-race edges have
+## shorter duration compared to mixed-race edges, with no departures
+dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("race")),
+                  duration = c(20, 10))
+
+## Heterogeneous dissolution model in which same-race edges have
+## shorter duration compared to mixed-race edges, with departures
+dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("race")),
+                  duration = c(20, 10), d.rate = 0.001)
+
+## Not run: 
+## Extended example for differential homophily by age group
+# Set up the network with nodes categorized into 5 age groups
+nw &lt;- network_initialize(n = 1000)
+age.grp &lt;- sample(1:5, 1000, TRUE)
+nw &lt;- set_vertex_attribute(nw, "age.grp", age.grp)
+
+# durations = non-matched, age.grp1 &amp; age.grp1, age.grp2 &amp; age.grp2, ...
+# TERGM will include differential homophily by age group with nodematch term
+# Target stats for the formation model are overall edges, and then the number
+# matched within age.grp 1, age.grp 2, ..., age.grp 5
+form &lt;- ~edges + nodematch("age.grp", diff = TRUE)
+target.stats &lt;- c(450, 100, 125, 40, 80, 100)
+
+# Target stats for the dissolution model are duration of non-matched edges,
+# then duration of edges matched within age.grp 1, age.grp 2, ..., age.grp 5
+durs &lt;- c(60, 30, 80, 100, 125, 160)
+diss &lt;- dissolution_coefs(~offset(edges) +
+                            offset(nodematch("age.grp", diff = TRUE)),
+                          duration = durs)
+
+# Fit the TERGM
+fit &lt;- netest(nw, form, target.stats, diss)
+
+# Full diagnostics to evaluate model fit
+dx &lt;- netdx(fit, nsims = 10, ncores = 4, nsteps = 300)
+print(dx)
+
+# Simulate one long time series to examine timed edgelist
+dx &lt;- netdx(fit, nsims = 1, nsteps = 5000, keep.tedgelist = TRUE)
+
+# Extract timed-edgelist
+te &lt;- as.data.frame(dx)
+head(te)
+
+# Limit to non-censored edges
+te &lt;- te[which(te$onset.censored == FALSE &amp; te$terminus.censored == FALSE),
+         c("head", "tail", "duration")]
+head(te)
+
+# Look up the age group of head and tail nodes
+te$ag.head &lt;- age.grp[te$head]
+te$ag.tail &lt;- age.grp[te$tail]
+head(te)
+
+# Recover average edge durations for age-group pairing
+mean(te$duration[te$ag.head != te$ag.tail])
+mean(te$duration[te$ag.head == 1 &amp; te$ag.tail == 1])
+mean(te$duration[te$ag.head == 2 &amp; te$ag.tail == 2])
+mean(te$duration[te$ag.head == 3 &amp; te$ag.tail == 3])
+mean(te$duration[te$ag.head == 4 &amp; te$ag.tail == 4])
+mean(te$duration[te$ag.head == 5 &amp; te$ag.tail == 5])
+durs
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,88 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>surv2binary</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert a "Surv" object into binary variables at different time points</h2>
+
+<h3>Description</h3>
+
+<p>Function to convert a <code>"Surv"</code> object (e.g., the predictions obtained from <code>glmnet_predict</code> using a <code>"cox"</code> model) into a list of binary variables (e.g., as obtained from <code>glmnet_predict</code> using a <code>"binomial"</code> model) at different time points.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">surv2binary(x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a <code>"Surv"</code> object.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>This function is useful, for instance, to estimate the AUC at different timepoints from <code>"cox"</code> predictions.</p>
+
+
+<h3>Value</h3>
+
+<p>A list of times and binary variables.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Joaquim Radua</p>
+
+
+<h3>See Also</h3>
+
+<p><code>glmnet_predict</code> for obtaining <code>"cox"</code> predictions.
+<code>cv</code> for conducting a cross-validation.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(survival)
+library(pROC)
+
+# Create random x (predictors) and y (survival)
+x = matrix(rnorm(5000), ncol = 10)
+time = rexp(500)
+y = Surv(time, plogis(x[,1] / pmax(1, time^2) + rnorm(500)) &gt; 0.5)
+
+# Predict y via cross-validation
+fit_fun = function (x, y) {
+  glmnet_fit(x, y, family = "cox")
+}
+predict_fun = function (m, x) {
+  glmnet_predict(m, x)
+}
+res = cv(x, y, family = "cox", fit_fun = fit_fun, predict_fun = predict_fun)
+
+# Convert y to binary
+y.binary = surv2binary(y)
+
+# Calculate and plot AUC for binary y at each timepoint
+time_auc = NULL
+for (i in 1:length(y.binary)) {
+  status_i = y.binary[[i]]$status
+  if (length(unique(na.omit(status_i))) == 2) {
+    time_auc = rbind(time_auc, data.frame(
+      time = y.binary[[i]]$time,
+      auc = roc(status_i ~ res$predictions$y.pred, levels = 0:1, direction = "&lt;")$auc
+    ))
+  }
+}
+plot(time_auc$time, time_auc$auc, type = "l", xlab = "Time", ylab = "AUC", ylim = 0:1)
+abline(h = 0.5)
+</code></pre>
+
+
+</div>

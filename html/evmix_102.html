@@ -1,0 +1,508 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fpsdengpd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>MLE Fitting of P-splines Density Estimate for Bulk and GPD Tail Extreme Value Mixture Model</h2>
+
+<h3>Description</h3>
+
+<p>Maximum likelihood estimation for fitting the extreme value 
+mixture model with P-splines density estimate for bulk distribution upto the threshold and conditional
+GPD above threshold. With options for profile likelihood estimation for threshold and
+fixed threshold approach.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fpsdengpd(x, phiu = TRUE, useq = NULL, fixedu = FALSE,
+  pvector = NULL, lambdaseq = NULL, breaks = NULL, xrange = NULL,
+  nseg = 10, degree = 3, design.knots = NULL, ord = 2,
+  std.err = TRUE, method = "BFGS", control = list(maxit = 10000),
+  finitelik = TRUE, ...)
+
+lpsdengpd(x, psdenx, u = NULL, sigmau = NULL, xi = 0, phiu = TRUE,
+  bsplinefit = NULL, phib = NULL, log = TRUE)
+
+nlpsdengpd(pvector, x, psdenx, phiu = TRUE, bsplinefit, phib = NULL,
+  finitelik = FALSE)
+
+proflupsdengpd(u, pvector, x, psdenx, phiu = TRUE, bsplinefit,
+  method = "BFGS", control = list(maxit = 10000), finitelik = TRUE,
+  ...)
+
+nlupsdengpd(pvector, u, x, psdenx, phiu = TRUE,
+  bsplinefit = bsplinefit, phib = NULL, finitelik = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector of sample data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phiu</code></td>
+<td>
+<p>probability of being above threshold <code class="reqn">(0, 1)</code> or logical, see Details in 
+help for <code>fnormgpd</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useq</code></td>
+<td>
+<p>vector of thresholds (or scalar) to be considered in profile likelihood or
+<code>NULL</code> for no profile likelihood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixedu</code></td>
+<td>
+<p>logical, should threshold be fixed (at either scalar value in <code>useq</code>,
+or estimated from maximum of profile likelihood evaluated at
+sequence of thresholds in <code>useq</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvector</code></td>
+<td>
+<p>vector of initial values of parameters or <code>NULL</code> for default
+values, see below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdaseq</code></td>
+<td>
+<p>vector of <code class="reqn">\lambda</code>'s (or scalar) to be considered in profile likelihood. Required.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>histogram breaks (as in <code>hist</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xrange</code></td>
+<td>
+<p>vector of minimum and maximum of B-spline (support of density)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nseg</code></td>
+<td>
+<p>number of segments between knots</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree</code></td>
+<td>
+<p>degree of B-splines (0 is constant, 1 is linear, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design.knots</code></td>
+<td>
+<p>spline knots for splineDesign function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ord</code></td>
+<td>
+<p>order of difference used in the penalty term</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>logical, should standard errors be calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>optimisation method (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optimisation control list (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>finitelik</code></td>
+<td>
+<p>logical, should log-likelihood return finite value for invalid parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional inputs passed to <code>optim</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>psdenx</code></td>
+<td>
+<p>P-splines based density estimate for each datapoint in x</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>scalar threshold value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigmau</code></td>
+<td>
+<p>scalar scale parameter (positive)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>scalar shape parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bsplinefit</code></td>
+<td>
+<p>list output from P-splines density fitting <code>fpsden</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phib</code></td>
+<td>
+<p>renormalisation constant for bulk model density <code class="reqn">(1-\phi_u)/H(u)</code>, to make it integrate to <code>1-phiu</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if <code>TRUE</code> then log-likelihood rather than likelihood is output</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The extreme value mixture model with P-splines density estimate for bulk and GPD tail is 
+fitted to the entire dataset. A two-stage maximum likelihood inference approach is taken. The first
+stage consists fitting of the P-spline density estimator, which is acheived by MLE using the 
+<code>fpsden</code> function. The second stage, conditions on the B-spline coefficients,
+using MLE for the extreme value mixture model (GPD parameters and threshold, if requested). The estimated
+parameters, variance-covariance matrix and their standard errors are automatically
+output.
+</p>
+<p>See help for <code>fnormgpd</code> for details of extreme value mixture models,
+type <code>help fnormgpd</code>. Only the different features are outlined below for brevity.
+</p>
+<p>As the second stage conditions on the Bs-pline coefficients, the full parameter vector is
+(<code>u</code>, <code>sigmau</code>, <code>xi</code>) if threshold is also estimated and
+(<code>sigmau</code>, <code>xi</code>) for profile likelihood or fixed threshold approach.
+</p>
+<p>(Penalized) MLE estimation of the B-Spline coefficients is carried out using Poisson regression
+based on histogram bin counts. See help for <code>fpsden</code> for details,
+type <code>help fpsden</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Log-likelihood is given by <code>lpsdengpd</code> and it's
+wrappers for negative log-likelihood from <code>nlpsdengpd</code>
+and <code>nlupsdengpd</code>. Profile likelihood for single
+threshold given by <code>proflupsdengpd</code>. Fitting function
+<code>fpsdengpd</code> returns a simple list with the
+following elements
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+ <code>call</code>:          </td>
+<td style="text-align: left;"> <code>optim</code> call</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>x</code>:             </td>
+<td style="text-align: left;"> data vector <code>x</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>init</code>:          </td>
+<td style="text-align: left;"> <code>pvector</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>fixedu</code>:        </td>
+<td style="text-align: left;"> fixed threshold, logical</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>useq</code>:          </td>
+<td style="text-align: left;"> threshold vector for profile likelihood or scalar for fixed threshold</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nllhuseq</code>:      </td>
+<td style="text-align: left;"> profile negative log-likelihood at each threshold in useq</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>bsplinefit</code>:    </td>
+<td style="text-align: left;"> complete <code>fpsden</code> output</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>psdenx</code>:        </td>
+<td style="text-align: left;"> P-splines based density estimate for each datapoint in <code>x</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>xrange</code>:        </td>
+<td style="text-align: left;"> range of support of B-splines</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>degree</code>:        </td>
+<td style="text-align: left;"> degree of B-splines</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nseg</code>:          </td>
+<td style="text-align: left;"> number of internal segments</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>design.knots</code>:  </td>
+<td style="text-align: left;"> knots used in <code>splineDesign</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nbinwidth</code>:     </td>
+<td style="text-align: left;"> scaling factor to convert counts to density</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>optim</code>:         </td>
+<td style="text-align: left;"> complete <code>optim</code> output</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>conv</code>:          </td>
+<td style="text-align: left;"> indicator for "possible" convergence</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>mle</code>:           </td>
+<td style="text-align: left;"> vector of MLE of (GPD and threshold, if relevant) parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>cov</code>:           </td>
+<td style="text-align: left;"> variance-covariance matrix of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>se</code>:            </td>
+<td style="text-align: left;"> vector of standard errors of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>rate</code>:          </td>
+<td style="text-align: left;"> <code>phiu</code> to be consistent with <code>evd</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nllh</code>:          </td>
+<td style="text-align: left;"> minimum negative log-likelihood</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>n</code>:             </td>
+<td style="text-align: left;"> total sample size</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>beta</code>:          </td>
+<td style="text-align: left;"> vector of MLE of B-spline coefficients</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>lambda</code>:        </td>
+<td style="text-align: left;"> Estimated or fixed <code class="reqn">\lambda</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>u</code>:             </td>
+<td style="text-align: left;"> threshold (fixed or MLE)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>sigmau</code>:        </td>
+<td style="text-align: left;"> MLE of GPD scale</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>xi</code>:            </td>
+<td style="text-align: left;"> MLE of GPD shape</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>phiu</code>:          </td>
+<td style="text-align: left;"> MLE of tail fraction (bulk model or parameterised approach)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>se.phiu</code>:       </td>
+<td style="text-align: left;"> standard error of MLE of tail fraction</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Acknowledgments</h3>
+
+<p>See Acknowledgments in
+<code>fnormgpd</code>, type <code>help fnormgpd</code>.
+</p>
+<p>The Poisson regression and leave-one-out cross-validation functions
+are based on the code of Eilers and Marx (1996) available from Brian Marx's website 
+<a href="http://statweb.lsu.edu/faculty/marx/">http://statweb.lsu.edu/faculty/marx/</a>, which is gratefully acknowledged.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The data are both vectors. Infinite and missing sample values are dropped.
+</p>
+<p>No initial values for the coefficients are needed.
+</p>
+<p>It is advised to specify the range of support <code>xrange</code>, using finite end-points. This is 
+especially important when the support is bounded. By default <code>xrange</code> is simply the range of the
+input data <code>range(x)</code>.
+</p>
+<p>Further, it is advised to always set the histogram bin <code>breaks</code>, expecially if the support is bounded.
+By default <code>10*ln(n)</code> equi-spaced bins are defined between <code>xrange</code>.
+</p>
+<p>When <code>pvector=NULL</code> then the initial values are:
+</p>
+
+<ul>
+<li>
+<p> threshold 90% quantile (not relevant for profile likelihood for threshold or fixed threshold approaches);
+</p>
+</li>
+<li>
+<p> MLE of GPD parameters above threshold. 
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Alfadino Akbar and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://www.math.canterbury.ac.nz/~c.scarrott/evmix">http://www.math.canterbury.ac.nz/~c.scarrott/evmix</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Generalized_Pareto_distribution">http://en.wikipedia.org/wiki/Generalized_Pareto_distribution</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Cross-validation_(statistics)">http://en.wikipedia.org/wiki/Cross-validation_(statistics)</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/B-spline">http://en.wikipedia.org/wiki/B-spline</a>
+</p>
+<p><a href="http://statweb.lsu.edu/faculty/marx/">http://statweb.lsu.edu/faculty/marx/</a>
+</p>
+<p>Eilers, P.H.C. and Marx, B.D. (1996). Flexible smoothing with B-splines and penalties.
+Statistical Science 11(2), 89-121.
+</p>
+<p>Scarrott, C.J. and MacDonald, A. (2012). A review of extreme value
+threshold estimation and uncertainty quantification. REVSTAT - Statistical
+Journal 10(1), 33-59. Available from <a href="http://www.ine.pt/revstat/pdf/rs120102.pdf">http://www.ine.pt/revstat/pdf/rs120102.pdf</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fpsden</code>, <code>fnormgpd</code>,
+<code>fgpd</code> and <code>gpd</code>
+</p>
+<p>Other psden: <code>fpsden</code>, <code>psdengpd</code>,
+<code>psden</code>
+</p>
+<p>Other psdengpd: <code>psdengpd</code>, <code>psden</code>
+</p>
+<p>Other fpsdengpd: <code>psdengpd</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(1, 1))
+
+x = rnorm(1000)
+xx = seq(-4, 4, 0.01)
+y = dnorm(xx)
+
+# Plenty of histogram bins (100)
+breaks = seq(-4, 4, length.out=101)
+
+# P-spline fitting with cubic B-splines, 2nd order penalty and 10 internal segments
+# CV search for penalty coefficient. 
+fit = fpsdengpd(x, useq = seq(0, 3, 0.1), fixedu = TRUE,
+             lambdaseq = 10^seq(-5, 5, 0.25), breaks = breaks,
+             xrange = c(-4, 4), nseg = 10, degree = 3, ord = 2)
+             
+hist(x, freq = FALSE, breaks = breaks, xlim = c(-6, 6))
+lines(xx, y, col = "black") # true density
+
+# P-splines+GPD
+with(fit, lines(xx, dpsdengpd(xx, beta, nbinwidth, 
+                              u = u, sigmau = sigmau, xi = xi, design = design.knots),
+                lwd = 2, col = "red"))
+abline(v = fit$u, col = "red", lwd = 2, lty = 3)
+
+# P-splines density estimate
+with(fit, lines(xx, dpsden(xx, beta, nbinwidth, design = design.knots),
+                lwd = 2, col = "blue", lty = 2))
+
+# vertical lines for all knots
+with(fit, abline(v = design.knots, col = "red"))
+
+# internal knots
+with(fit, abline(v = design.knots[(degree + 2):(length(design.knots) - degree - 1)], col = "blue"))
+  
+# boundary knots (support of B-splines)
+with(fit, abline(v = design.knots[c(degree + 1, length(design.knots) - degree)], col = "green"))
+
+legend("topright", c("True Density","P-spline density","P-spline+GPD"),
+  col=c("black", "blue", "red"), lty = c(1, 2, 1))
+legend("topleft", c("Internal Knots", "Boundaries", "Extra Knots", "Threshold"),
+  col=c("blue", "green", "red", "red"), lty = c(1, 1, 1, 2))
+
+## End(Not run)
+  
+</code></pre>
+
+
+</div>

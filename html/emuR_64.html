@@ -1,0 +1,127 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dapply</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>apply a function to each part of a trackdata object</h2>
+
+<h3>Description</h3>
+
+<p>Given an Emu trackdata object, <code>dapply</code> will apply a given function to
+the data corresponding to each segment of data. The result is a new
+trackdata object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dapply(trackdata, fun, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>trackdata</code></td>
+<td>
+<p>An Emu trackdata object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>A function taking a matrix of data and a vector of times and
+returning a list with components <code>$data</code> and <code>$ftime</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to <code>fun</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>dapply</code> can be used to apply an arbitrary function to trackdata
+extracted from an Emu database. It can be used for example to smooth the
+data (see <code>dsmooth</code>) or differentiate it (see
+<code>ddiff</code>).
+</p>
+<p>Trackdata is made up of three components: a matrix of data <code>$data</code>, a
+matrix of indexes (<code>$index</code>) and a matrix of segment times
+(<code>$ftime</code>).  The indexes contain the start and end rows for each
+segment in the trackdata, the time matrix contains the start and end times
+of each data segment.
+</p>
+<p>The function <code>fun</code> supplied to <code>dapply</code> should take one matrix of
+data (corresponding to one segment) and a vector of two times being the
+start and end of the data.  It should return a modified data matrix, which
+can have any number of rows or columns, and a new pair of start and end
+times.  The new start and end times are necessary because the operation
+applied might shorten or interpolate the data and hence change the times
+corresponding to the first and last rows of data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An Emu trackdata object with components: </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A matrix of
+data with all segments concatenated by row.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>A two column
+matrix of the start and end rows for each segment</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ftime</code></td>
+<td>
+<p>A two
+column matrix of the start and end times for each segment</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>dsmooth</code> <code>ddiff</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+data(dip)
+## formant data of the first segment in segment list dip
+fm &lt;- dip.fdat[1]
+
+testfun &lt;- function(data, ftime, n) {
+  ## return only the first n rows of data
+  ## doesn't check to see if there really are n rows...
+  newdata &lt;- data[1:n,]
+  ## calculate a new end time
+  interval &lt;- (ftime[2]-ftime[1])/nrow(data)
+  ftime[2] &lt;- ftime[1] + interval*n
+  ## now return the required list 
+  return( list( data=newdata, ftime=ftime ) )
+}
+
+fm.first3 &lt;- dapply( fm, testfun, 3 )
+fm.first10 &lt;- dapply( fm, testfun, 10 )
+
+
+</code></pre>
+
+
+</div>

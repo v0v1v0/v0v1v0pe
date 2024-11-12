@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prob_solve</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Total or Conditional Probability Computation</h2>
+
+<h3>Description</h3>
+
+<p>The following functions are available:
+</p>
+
+<ul>
+<li> <p><code>prob_solve</code> given a set of events it computes the total or conditional probability of the given event or
+<code>NA</code> if no solution could be found. For the naming of the events upper case letters must be used and
+the available operators are <code>!</code> (complementary event), <code>|</code> (conditional event), and <code>^</code> (intersection of events).
+The attribute <code>latex</code> of the return value contains the necessary computation steps for computation of the given event.
+If <code>getprob</code> is <code>TRUE</code> then additionally the attribute <code>prob</code>, a vector with all computed probabilities, and <code>compute</code>,
+which includes all computational steps, are generated.
+</p>
+</li>
+<li> <p><code>print</code> shows the solution way in ASCII.
+</p>
+</li>
+<li> <p><code>toLatex</code> shows the solution way in LaTeX/MathJax with an <code>align</code> environment.
+</p>
+</li>
+<li> <p><code>lprob</code> converts <code>!A</code> to <code style="white-space: pre;">⁠\\bar{A}⁠</code> and <code>A^B</code> to <code style="white-space: pre;">⁠A \\cap B⁠</code>.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">prob_solve(target, ...)
+
+## Default S3 method:
+prob_solve(target, ..., partition = NULL, getprob = FALSE, quiet = TRUE)
+
+lprob(txt)
+
+## S3 method for class 'prob_solve'
+toLatex(object, ...)
+
+## S3 method for class 'prob_solve'
+print(x, type = c("numeric", "latex", "prob", "compute"), ...)
+
+latex_prob(txt)
+
+probability_solution(target, ...)
+
+sprob(target, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>character: target event</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>numeric: named events with given probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partition</code></td>
+<td>
+<p>character or list: set of events which form a partition</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>getprob</code></td>
+<td>
+<p>logical: return all computed probabilities and used computation steps (default: <code>FALSE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>logical: show all computation steps (default: <code>FALSE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>txt</code></td>
+<td>
+<p>character: vector to convert <code>!</code> to <code style="white-space: pre;">⁠\\bar⁠</code> and <code>^</code> to ‘\cap’</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object, x</code></td>
+<td>
+<p><code>prob_solve</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character: what to print, either <code>numeric</code> (solution, default), <code>latex</code> (solution steps in ASCII format),
+<code>prob</code> (optional: all probabilities computed), or <code>compute</code> (optional: all rules used)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The program applies iteratively the following rules to find a solution:
+</p>
+
+<ul>
+<li> <p><code class="reqn">P(A) = 1-P(!A)</code>,
+</p>
+</li>
+<li> <p><code class="reqn">P(A|B) = 1-P(!A|B)</code>,
+</p>
+</li>
+<li> <p><code class="reqn">P(A^B) = P(B^A)</code>,
+</p>
+</li>
+<li> <p><code class="reqn">P(B) = P(A^B)+P(!A^B)</code>,
+</p>
+</li>
+<li> <p><code class="reqn">P(A|B) = P(A^B)/P(B)</code>, and
+</p>
+</li>
+<li> <p><code class="reqn">P(A) = P(A|P1)+P(A|P2)+...+ P(A|Pn)</code> for a partition <code class="reqn">P1, P2, ..., Pn</code>.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>An object of the class <code>prob_solve</code> with the resulting probability, including the steps for computing.
+If <code>NA</code> is returned then no solution could be found.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">prob_solve("!A", "A"=0.3)
+prob_solve("!A|B", "A|B"=0.3)
+prob_solve("B^A", "A^B"=0.3)
+# P(B)   = P(A^B)+P(!A^B)
+prob_solve("B", "A^B"=0.3, "!A^B"= 0.4)
+prob_solve("A^B", "B"=0.7, "!A^B"= 0.4)
+prob_solve("!A^B", "B"=0.7, "A^B"= 0.3)
+# P(A|B) = P(A^B)/P(B)
+prob_solve("A|B", "A^B"=0.3, "B"= 0.6)
+prob_solve("A^B", "B"=0.6, "A|B"= 0.5)
+prob_solve("B", "A|B"=0.5, "A^B"= 0.3)
+#' latex, prob and compute attributes
+pmt &lt;- prob_solve("M|T", "M"=0.6, "T|M"=0.75, "T|!M"=0.39, quiet=FALSE, getprob=TRUE)
+toLatex(pmt)
+attr(pmt, "latex")
+pmt &lt;- prob_solve("M|T", "M"=0.6, "T|M"=0.75, "T|!M"=0.39, quiet=FALSE, getprob=TRUE)
+attr(pmt, "prob")
+print(pmt, "latex") 
+print(pmt, "prob")    # only if getprob=TRUE   
+print(pmt, "compute") # only if getprob=TRUE   
+# bayes theorem and total probability
+prob_solve("Z", "Z|A"=0.1, "Z|B"=0.2, "Z|C"=0.3, partition=c("A", "B", "C"))
+prob_solve("Z|A", "Z"=0.6, "Z|B"=0.2, "Z|C"=0.3, partition=c("A", "B", "C"))
+prob_solve('A|K', "A"=0.55, "B"=0.35, "C"=0.1, "K|A"=0.4, "K|B"=0.1, "K|C"=0.1, 
+           partition=c("A", "B", "C"))
+prob_solve('K', "A"=0.55, "B"=0.35, "C"=0.1, "K|A"=0.4, "K|B"=0.1, "K|C"=0.1, 
+           partition=c("A", "B", "C"))
+</code></pre>
+
+
+</div>

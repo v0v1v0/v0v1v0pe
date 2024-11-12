@@ -1,0 +1,111 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>add.echogram</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Add two echograms
+</h2>
+
+<h3>Description</h3>
+
+<p>This function allows addition or subtraction of Sv data matrices of corresponding echograms from two frequencies in the linear or logarithmic domain.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">add.echogram(echogram1, echogram2, operator = c("plus", "minus"), 
+    domain = c("linear", "dB"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>echogram1</code></td>
+<td>
+<p>an object of <code>class</code> “echogram” as returned by <code>read.echogram</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>echogram2</code></td>
+<td>
+<p>an object of <code>class</code> “echogram” from a different acoustic frequency than <code>echogram1</code> above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>operator</code></td>
+<td>
+<p> a string indicating addition (“plus”) or subtraction (“minus”). May be abbreviatted. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>domain</code></td>
+<td>
+<p> a string indicating the domain where the operation will be performed (see details). </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Corresponding echograms refers to data acquired at the same time with different acoustic frequencies. In order to add echograms, the Sv data matrices must have the same dimensions. If they don't, <code>match.echogram</code> can be used for this purpose. It is also important to mask undesired echoes beforehand, as those belonging  to the bottom and below. When <code>domain = "dB"</code> (the default), the Sv matrices are added as they are. When <code>domain = "linear"</code>, the Sv values are transformed with 10^(Sv/10) before addition, and the result (X) is then back transformed to dB (10*log10(X)).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of <code>class</code> “echogram” where the Sv component is the result of  the performed operation.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Héctor Villalobos
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>match.echogram</code>, <code>mask.echogram</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># import 38 and 120 kHz data from an HAC file 
+hacfile &lt;- system.file("hac", "D20150510-T202500.hac", package = "echogram")
+echo2.038 &lt;- read.echogram(hacfile, channel = 1)
+echo2.120 &lt;- read.echogram(hacfile, channel = 2)
+
+## Not run: 
+# attempting to add the two frequencies with unequal number of pings gives an error
+add.echogram(echo2.038, echo2.120, "plus", "dB")
+
+## End(Not run)
+
+# running match.echogram() solves this
+tmp &lt;- match.echogram(echo2.038, echo2.120)
+str(tmp) # both frequencies are in a list, need to split
+echo2.038 &lt;- tmp$echogram1
+echo2.120 &lt;- tmp$echogram2
+
+# we don't want to add bottom echoes, mask bottom and surface from both frequencies
+echo2.038m &lt;- mask.echogram(echo2.038, surf.off = 2, bott.off = 0.2)
+echo2.120m &lt;- mask.echogram(echo2.120, surf.off = 2, bott.off = 0.2)
+
+# adding Sv values and plot result
+echo.sum &lt;- add.echogram(echo2.038m, echo2.120m, "plus", "dB")
+Min &lt;- min(as.vector(echo.sum$Sv), na.rm=TRUE) # useful to set Sv threshold
+echogram(echo.sum, Svthr=floor(Min), scheme = "EK500")
+
+# subtract 38 from 120 kHz
+echo.minus &lt;- add.echogram(echo2.120m, echo2.038m, "minus", "dB")
+Min &lt;- min(as.vector(echo.minus$Sv), na.rm=TRUE)
+echogram(echo.minus, Svthr=floor(Min), scheme = "EK500")
+</code></pre>
+
+
+</div>

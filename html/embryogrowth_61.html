@@ -1,0 +1,516 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>searchR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit the parameters that best represent nest incubation data.</h2>
+
+<h3>Description</h3>
+
+<p>Fit the parameters that best represent data.<br>
+hatchling.metric can be a data.frame with two columns Mean and SD and rownames with the nest name.<br>
+If SD is na, then least squarre criteria is used for fitting.<br>
+Function to fit thermal reaction norm can be expressed as : <br></p>
+
+<ul>
+<li>
+<p> a 4-parameters Schoolfield, Sharpe, and Magnuson model (1981) with <code>DHH</code>, <code>DHA</code>, <code>T12H</code>, and <code>Rho25</code>;
+</p>
+</li>
+<li>
+<p> a 6-parameters Schoolfield, Sharpe, and Magnuson model (1981) with <code>T12L</code>, <code>DT</code>, <code>DHH</code>, <code>DHL</code>, <code>DHA</code>, and <code>Rho25</code>;
+</p>
+</li>
+<li>
+<p> Each of these two first models can be combined as low and high sets of parameters by adding the <code>_L</code> suffix to one set. Then you must add also <code>transition_S</code> and <code>transition_P</code> parameters and then the growth rate is 1/(1+exp((1/transition_S)*(P-transition_P))) with P being the proportion of development;
+</p>
+</li>
+<li>
+<p> The <code>Rho25_b</code> control the effect of hygrometry (or <code>Rho25_b_L</code>) (It is not fully functional still);
+</p>
+</li>
+<li>
+<p> a Weibull function with <code>k</code> (shape), <code>lambda</code> (scale) and <code>theta</code> parameters;
+</p>
+</li>
+<li>
+<p> a normal function with <code>Peak</code>, <code>Scale</code>, and <code>sd</code> parameters;
+</p>
+</li>
+<li>
+<p> an asymmetric normal fuction with <code>Peak</code>, <code>Scale</code>, <code>sdH</code> and <code>sdL</code> parameters;
+</p>
+</li>
+<li>
+<p> a symmetric trigonometric function with <code>Length</code>, <code>Peak</code>, and <code>Max</code>;
+</p>
+</li>
+<li>
+<p> an asymmetric trigonometric function with <code>LengthB</code>, <code>LengthE</code>, <code>Peak</code>, and <code>Max</code>.
+</p>
+</li>
+<li>
+<p> Dallwitz-Higgins model (1992) can be used using <code>Dallwitz_b1</code>, <code>Dallwitz_b2</code>, <code>Dallwitz_b3</code>, <code>Dallwitz_b4</code> and <code>Dallwitz_b5</code> parameters.
+</p>
+</li>
+<li>
+<p> If <code>Dallwitz_b4</code> is not included, <code>Dallwitz_b4</code> = 6 will be used.
+</p>
+</li>
+<li>
+<p> If <code>Dallwitz_b5</code> is not included, <code>Dallwitz_b5</code> = 0.4 will be used.
+</p>
+</li>
+<li>
+<p> It is possible also to add the parameter <code>epsilon</code> and then the model becomes <code>X + epsilon</code> with X being any of the above model;
+</p>
+</li>
+<li>
+<p> It is possible also to add the parameter <code>epsilon_L</code> and then the model becomes <code>X_L + epsilon_L</code> with <code>X_L</code> being any of the above model with suffix <code>_L</code>;
+</p>
+</li>
+<li>
+<p> If the name of the parameter is a number, then the model is a polynom anchored with the rate being the parameter value at this temperature (the name). see <code>ChangeSSM()</code> function.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">searchR(
+  parameters = stop("Initial set of parameters must be provided"),
+  fixed.parameters = c(rK = 1.208968),
+  temperatures = stop("Formated temperature must be provided !"),
+  integral = integral.Gompertz,
+  derivate = NULL,
+  hatchling.metric = c(Mean = 39.33, SD = 1.92),
+  M0 = 0.3470893,
+  saveAtMaxiter = FALSE,
+  fileName = "intermediate",
+  weight = NULL,
+  control = list(trace = 1, REPORT = 100, maxit = 500)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>A set of parameters used as initial point for searching</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.parameters</code></td>
+<td>
+<p>A set of parameters that will not be changed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temperatures</code></td>
+<td>
+<p>Timeseries of temperatures after formated using FormatNests()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>integral</code></td>
+<td>
+<p>Function used to fit embryo growth: integral.Gompertz, integral.exponential or integral.linear</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>derivate</code></td>
+<td>
+<p>Function used to fit embryo growth: derivate.Gompertz, derivate.exponential or derivate.linear</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hatchling.metric</code></td>
+<td>
+<p>A vector with Mean and SD of size of hatchlings, ex. hatchling.metric=c(Mean=39, SD=3). Can be a data.frame also. See description</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M0</code></td>
+<td>
+<p>Measure of hatchling size or mass proxi at laying date</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>saveAtMaxiter</code></td>
+<td>
+<p>If True, each time number of interation reach maxiter, current data are saved in file with filename name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fileName</code></td>
+<td>
+<p>The intermediate results are saved in file with fileName.Rdata name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>A named vector of the weight for each nest for likelihood estimation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>List for control parameters for optimx</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>searchR fits the parameters that best represent nest incubation data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A result object
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Marc Girondot <a href="mailto:marc.girondot@gmail.com">marc.girondot@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Girondot M, Kaska Y (2014).
+“A model to predict the thermal reaction norm for the embryo growth rate from field data.”
+<em>Journal of Thermal Biology</em>, <b>45</b>, 96-102.
+<a href="https://doi.org/10.1016/j.jtherbio.2014.08.005">doi:10.1016/j.jtherbio.2014.08.005</a>.<br>
+Fuentes MM, Monsinjon J, Lopez M, Lara P, Santos A, dei Marcovaldi MA, Girondot M (2017).
+“Sex ratio estimates for species with temperature-dependent sex determination differ according to the proxy used.”
+<em>Ecological Modelling</em>, <b>365</b>, 55-67.
+<a href="https://doi.org/10.1016/j.ecolmodel.2017.09.022">doi:10.1016/j.ecolmodel.2017.09.022</a>.<br>
+Monsinjon J, Jribi I, Hamza A, Ouerghi A, Kaska Y, Girondot M (2017).
+“Embryonic growth rate thermal reaction norm of Mediterranean Caretta caretta embryos from two different thermal habitats, Turkey and Libya.”
+<em>Chelonian Conservation and Biology</em>, <b>16</b>(2), 172-179.
+<a href="https://doi.org/10.2744/CCB-1269.1">doi:10.2744/CCB-1269.1</a>.<br>
+Girondot M, Monsinjon J, Guillon J (2018).
+“Delimitation of the embryonic thermosensitive period for sex determination using an embryo growth model reveals a potential bias for sex ratio prediction in turtles.”
+<em>Journal of Thermal Biology</em>, <b>73</b>, 32-40.
+<a href="https://doi.org/10.1016/j.jtherbio.2018.02.006">doi:10.1016/j.jtherbio.2018.02.006</a>.<br>
+Angilletta MJ (2006).
+“Estimating and comparing thermal performance curves.”
+<em>Journal of Thermal Biology</em>, <b>31</b>(7), 541-545.
+ISSN 03064565, <a href="https://doi.org/10.1016/j.jtherbio.2006.06.002">doi:10.1016/j.jtherbio.2006.06.002</a>.<br>
+Georges A, Beggs K, Young JE, Doody JS (2005).
+“Modelling development of reptile embryos under fluctuating temperature regimes.”
+<em>Physiological and Biochemical Zoology</em>, <b>78</b>, 18-30.<br>
+Dallwitz MJ, Higgins JP (1992).
+“User’s guide to DEVAR. A computer program for estimating development rate as a function of temperature.”
+<em>CSIRO Aust Div Entomol Rep</em>, <b>2</b>, 1-23.<br></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(embryogrowth)
+data(nest)
+formated &lt;- FormatNests(nest)
+# The initial parameters value can be:
+# "T12H", "DHA",  "DHH", "Rho25"
+# Or
+# "T12L", "DT", "DHA",  "DHH", "DHL", "Rho25"
+# K for Gompertz must be set as fixed parameter or being a constant K  
+# or relative to the hatchling size rK
+############################################################################
+# From Girondot M, Monsinjon J, Guillon J-M (2018) Delimitation of the 
+# embryonic thermosensitive period for sex determination using an embryo 
+# growth model reveals a potential bias for sex ratio prediction in turtles. 
+# Journal of Thermal Biology 73: 32-40 
+#  rK = 1.208968 
+#  M0 = 0.3470893 
+############################################################################
+pfixed &lt;- c(rK=1.208968)
+M0 = 0.3470893 
+############################################################################
+# 4 parameters SSM
+############################################################################
+x &lt;- c('DHA' = 109.31113503282113, 'DHH' = 617.80695919563857, 
+    'T12H' = 306.38890489505093, 'Rho25' = 229.37265815800225)
+    
+resultNest_4p_SSM &lt;- searchR(parameters=x, fixed.parameters=pfixed, 
+	temperatures=formated, integral=integral.Gompertz, M0=M0, 
+	hatchling.metric=c(Mean=39.33, SD=1.92))
+	
+data(resultNest_4p_SSM)
+plot(resultNest_4p_SSM, xlim=c(0,70), ylimT=c(22, 32), ylimS=c(0,45), series=1, 
+embryo.stages="Caretta caretta.SCL")
+
+############################################################################
+# 6 parameters SSM
+############################################################################
+x &lt;- structure(c(106.567809092008, 527.359011254683, 614.208632495199, 
+2720.94506457237, 306.268259715624, 120.336791245212), .Names = c("DHA", 
+"DHH", "DHL", "DT", "T12L", "Rho25"))
+
+############################################################################
+# example of data.frame for hatchling.metric
+############################################################################
+thatchling.metric &lt;- data.frame(Mean=rep(39.33, formated$IndiceT["NbTS"]), 
+                     SD=rep(1.92, formated$IndiceT["NbTS"]), 
+                     row.names=names(formated)[1:formated$IndiceT["NbTS"]])
+# It is sometimes difficult to find a good starting point for 
+# SSM 6 parameters model. This function helps to find it based on a previoulsy 
+# fitted model.
+
+ x &lt;- ChangeSSM(temperatures = (200:350)/10,
+                parameters = resultNest_4p_SSM$par,
+                initial.parameters = structure(c(106.567809092008, 
+                527.359011254683, 614.208632495199, 
+                4.94506457237, 306.268259715624, 120.336791245212), 
+                .Names = c("DHA", "DHH", "DHL", "DT", "T12L", "Rho25")), 
+                control=list(maxit=1000))
+                     
+resultNest_6p_SSM &lt;- searchR(parameters=x$par, fixed.parameters=pfixed, 
+	                        temperatures=formated, integral=integral.Gompertz, 
+	                        M0=M0, 
+	                        hatchling.metric=thatchling.metric)
+	                        
+plotR(resultNest_6p_SSM, ylim=c(0, 1))
+	                        
+data(resultNest_6p_SSM)
+pMCMC &lt;- TRN_MHmcmc_p(resultNest_6p_SSM, accept=TRUE)
+# Take care, it can be very long, sometimes several days
+resultNest_mcmc_6p_SSM &lt;- GRTRN_MHmcmc(result=resultNest_6p_SSM,  
+	                                      parametersMCMC=pMCMC, 
+	                                      n.iter=10000, 
+	                                      n.chains = 1, 
+	                                      n.adapt = 0, 
+	                                      thin=1, 
+	                                      trace=TRUE)
+	
+############################################################################
+# compare_AIC() is a function from the package "HelpersMG"
+compare_AIC(test1=resultNest_4p_SSM, test2=resultNest_6p_SSM)
+############################################################################
+
+############################################################################
+############ Example as linear progression of development
+############ The development progress goes from 0 to 1
+############################################################################
+
+pfixed &lt;- NULL
+M0 = 0
+
+############################################################################
+# 4 parameters SSM
+############################################################################
+x &lt;- c('DHA' = 64.868697530424186, 'DHH' = 673.18292743646771, 
+       'T12H' = 400.90952554047749, 'Rho25' = 82.217237723502123)
+resultNest_4p_SSM_Linear &lt;- searchR(parameters=x, fixed.parameters=pfixed, 
+	temperatures=formated, integral=integral.linear, M0=M0, 
+	hatchling.metric=c(Mean=39.33, SD=1.92)/39.33)
+plotR(resultNest_4p_SSM_Linear, ylim=c(0, 2), scaleY= 100000)
+plot(resultNest_4p_SSM_Linear, xlim=c(0,70), ylimT=c(22, 32), ylimS=c(0,1.1), 
+series=1, embryo.stages="Generic.ProportionDevelopment")
+
+tc &lt;- GenerateConstInc(duration=300*24*60, temperatures = 28)
+tc_f &lt;- FormatNests(tc)
+plot(resultNest_4p_SSM_Linear, xlim=c(0,70), ylimT=c(22, 32), ylimS=c(0,1.1), 
+series=1, embryo.stages="Generic.ProportionDevelopment", temperatures=tc_f)
+
+############################################################################
+############ with new parametrization based on anchor
+############ This is a non-parametric version
+############################################################################
+
+data(resultNest_4p_SSM)
+x0 &lt;- resultNest_4p_SSM$par
+t &lt;- range(hist(resultNest_4p_SSM, plot=FALSE)$temperatures)
+
+x &lt;- getFromNamespace(".SSM", ns="embryogrowth")(T=seq(from=t[1], 
+                                                       to=t[2], 
+                                                       length.out=7), 
+                                            parms=x0)[[1]]*1E5
+names(x) &lt;- as.character(seq(from=t[1], 
+                          to=t[2], 
+                          length.out=7))
+     
+M0 &lt;- 0.3470893 
+pfixed &lt;- c(rK=1.208968)
+resultNest_newp &lt;- searchR(parameters=x, fixed.parameters=pfixed,
+                           temperatures=formated, 
+                           integral=integral.Gompertz, M0=M0, 
+                           hatchling.metric=c(Mean=39.33, SD=1.92))
+plotR(resultNest_newp, ylim=c(0, 2), 
+      xlim=c(23, 34), ylimH=c(0, 3), show.hist=TRUE)
+compare_AIC(test4p=resultNest_4p_SSM, 
+            test6p=resultNest_6p_SSM, 
+            testAnchor=resultNest_newp)
+            
+############################################
+# example with thermal reaction norm fitted from Weibull function
+############################################
+
+ x &lt;- ChangeSSM(temperatures = (200:350)/10,
+                parameters = resultNest_4p_SSM$par,
+                initial.parameters = structure(c(73.4009010417375, 304.142079511996, 
+                                                27.4671689276281), 
+                                        .Names = c("k", "lambda", "scale")), 
+                control=list(maxit=1000))
+M0 &lt;- 0.3470893 
+pfixed &lt;- c(rK=1.208968)
+resultNest_3p_Weibull &lt;- searchR(parameters=x$par, fixed.parameters=pfixed, 
+                         temperatures=formated, integral=integral.Gompertz, M0=M0, 
+                         hatchling.metric=c(Mean=39.33, SD=1.92))
+plotR(resultNest_3p_Weibull, ylim=c(0,6), col="Black")
+compare_AIC(SSM=resultNest_4p_SSM, Weibull=resultNest_3p_Weibull)
+
+###########################################
+# example with thermal reaction norm fitted from asymmetric normal function
+############################################
+
+x &lt;- ChangeSSM(temperatures = (200:350)/10,
+               parameters = resultNest_4p_SSM$par,
+               initial.parameters = structure(c(3, 7, 11, 32), 
+                               .Names = c("Scale", "sdL", "sdH", "Peak")), 
+               control=list(maxit=1000))
+M0 &lt;- 0.3470893 
+pfixed &lt;- c(rK=1.208968)
+resultNest_4p_normal &lt;- searchR(parameters=x$par, fixed.parameters=pfixed, 
+                         temperatures=formated, integral=integral.Gompertz, M0=M0, 
+                         hatchling.metric=c(Mean=39.33, SD=1.92))
+                         
+###########################################
+# example with thermal reaction norm fitted from trigonometric model
+############################################
+
+ x &lt;- ChangeSSM(temperatures = (200:350)/10,
+               parameters = resultNest_4p_SSM$par,
+               initial.parameters = structure(c(3, 20, 40, 32), 
+               .Names = c("Max", "LengthB", "LengthE", "Peak")), 
+               control=list(maxit=1000))
+M0 &lt;- 0.3470893 
+pfixed &lt;- c(rK=1.208968)
+resultNest_4p_trigo &lt;- searchR(parameters=x$par, fixed.parameters=pfixed, 
+                         temperatures=formated, integral=integral.Gompertz, M0=M0, 
+                         hatchling.metric=c(Mean=39.33, SD=1.92))
+                         
+###############################################################
+# example with thermal reaction norm fitted from Dallwitz model
+###############################################################
+# See: Dallwitz, M.J., Higgins, J.P., 1992. User’s guide to DEVAR. A computer 
+# program for estimating development rate as a function of temperature. CSIRO Aust 
+# Div Entomol Rep 2, 1-23.
+
+# Note that Dallwitz model has many problems and I recommend to not use it:
+# - The 3-parameters is too highly constraint
+# - The 5 parameters produced infinite outputs for some sets of parameters that
+#   can be generated while using delta method.
+
+x &lt;- c('Dallwitz_b1' = 4.8854060791241816, 
+       'Dallwitz_b2' = 20.398366565842029, 
+       'Dallwitz_b3' = 31.510995256647092)
+M0 &lt;- 0.3470893 
+pfixed &lt;- c(rK=1.208968)
+resultNest_3p_Dallwitz &lt;- searchR(parameters=x, fixed.parameters=pfixed, 
+                         temperatures=formated, integral=integral.Gompertz, M0=M0, 
+                         hatchling.metric=c(Mean=39.33, SD=1.92))
+plotR(resultNest_3p_Dallwitz, ylim=c(0,6))
+
+x &lt;- c('Dallwitz_b1' = 4.9104386262684656, 
+       'Dallwitz_b2' = 7.515425231891359, 
+       'Dallwitz_b3' = 31.221784599026638, 
+       'Dallwitz_b4' = 7.0354467023505682, 
+       'Dallwitz_b5' = -1.5955717975708577)
+pfixed &lt;- c(rK=1.208968)
+resultNest_5p_Dallwitz &lt;- searchR(parameters=x, fixed.parameters=pfixed, 
+                         temperatures=formated, integral=integral.Gompertz, M0=0.3470893, 
+                         hatchling.metric=c(Mean=39.33, SD=1.92))
+plotR(resultNest_5p_Dallwitz, ylim=c(0,3), scaleY=10000)
+
+xp &lt;- resultNest_6p_SSM$par
+xp["Rho25"] &lt;- 233
+pfixed &lt;- c(rK=1.208968)
+resultNest_6p_SSM &lt;- searchR(parameters=xp, fixed.parameters=pfixed, 
+                         temperatures=formated, integral=integral.Gompertz, M0=0.3470893, 
+                         hatchling.metric=c(Mean=39.33, SD=1.92))
+plotR(resultNest_6p_SSM, ylim=c(0,8))
+
+xp &lt;- ChangeSSM(parameters = resultNest_3p_Dallwitz$par, 
+                initial.parameters = resultNest_4p_SSM$par)
+pfixed &lt;- c(rK=1.208968)
+resultNest_4p_SSM &lt;- searchR(parameters=xp$par, fixed.parameters=pfixed, 
+                         temperatures=formated, integral=integral.Gompertz, M0=0.3470893, 
+                         hatchling.metric=c(Mean=39.33, SD=1.92))
+plotR(resultNest_4p_SSM, ylim=c(0,6))
+
+compare_AIC(Dallwitz3p=resultNest_3p_Dallwitz, Dallwitz5p=resultNest_5p_Dallwitz, 
+             SSM=resultNest_4p_SSM, SSM=resultNest_6p_SSM)
+                         
+###########################################
+# Example with thermal reaction norm of proportion of development
+# fitted from Dallwitz model
+# see Woolgar, L., Trocini, S., Mitchell, N., 2013. Key parameters describing 
+# temperature-dependent sex determination in the southernmost population of loggerhead 
+# sea turtles. Journal of Experimental Marine Biology and Ecology 449, 77-84.
+############################################
+
+x &lt;- structure(c(1.48207559695689, 20.1100310234046, 31.5665036287242), 
+ .Names = c("Dallwitz_b1", "Dallwitz_b2", "Dallwitz_b3"))
+resultNest_PropDev_3p_Dallwitz &lt;- searchR(parameters=x, fixed.parameters=NULL, 
+                         temperatures=formated, integral=integral.linear, M0=0, 
+                         hatchling.metric=c(Mean=1, SD=NA))
+ plotR(resultNest_PropDev_3p_Dallwitz, ylim=c(0, 1.5), curve="ML")
+ plot(x=resultNest_PropDev_3p_Dallwitz, ylimS=c(0,1), xlim=c(0,60), series=2, 
+         embryo.stages="Generic.ProportionDevelopment")
+         
+x &lt;- structure(c(1.48904182113431, 10.4170365155993, 31.2591665490154, 
+6.32355497589913, -1.07425378667104), .Names = c("Dallwitz_b1", 
+"Dallwitz_b2", "Dallwitz_b3", "Dallwitz_b4", "Dallwitz_b5"))
+resultNest_PropDev_5p_Dallwitz &lt;- searchR(parameters=x, fixed.parameters=NULL, 
+                         temperatures=formated, integral=integral.linear, M0=0, 
+                         hatchling.metric=c(Mean=1, SD=NA))
+ plotR(resultNest_PropDev_5p_Dallwitz, ylim=c(0, 1.5))
+ plot(x=resultNest_PropDev_5p_Dallwitz, ylimS=c(0,1), xlim=c(0,60), series=2, 
+         embryo.stages="Generic.ProportionDevelopment")
+         
+ plotR(resultNest_PropDev_3p_Dallwitz, ylim=c(0, 1.5), curve="ML")
+ plotR(resultNest_PropDev_5p_Dallwitz, ylim=c(0, 1.5), curve="ML", new=FALSE, col="red")
+ compare_AICc(Dallwitz3p=resultNest_PropDev_3p_Dallwitz, 
+              Dallwitz5p=resultNest_PropDev_5p_Dallwitz)
+              
+###########################################################################
+# Dalwitz model with proportion of development and fitted SD for final size
+###########################################################################
+
+x &lt;- c('Dallwitz_b1' = 1.4886497996404355, 
+       'Dallwitz_b2' = 10.898310418085916, 
+       'Dallwitz_b3' = 31.263224721068056, 
+       'Dallwitz_b4' = 6.1624623077734535, 
+       'Dallwitz_b5' = -1.0027132357973265, 
+       'SD' = 0.041829475961912894)
+resultNest_PropDev_5p_Dallwitz &lt;- searchR(parameters=x, fixed.parameters=NULL, 
+                         temperatures=formated, integral=integral.linear, M0=0, 
+                         hatchling.metric=c(Mean=1))
+ plotR(resultNest_PropDev_5p_Dallwitz, ylim=c(0, 1.5), curve="ML")
+ # Note that the standard error of the curve cannot be estimated with delta method. 
+ # MCMC should be used
+ plot(x=resultNest_PropDev_5p_Dallwitz, ylimS=c(0,1), xlim=c(0,60), series=2, 
+         embryo.stages="Generic.ProportionDevelopment")
+         
+##############################################################################         
+# Parameters Threshold_Low and Threshold_High are used to truncate growth rate
+##############################################################################         
+
+plotR(result=resultNest_PropDev_5p_Dallwitz, 
+     fixed.parameters=c(Threshold_Low=26, 
+                        Threshold_High=33), 
+     ylim=c(0, 1.5), curve="ML")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,224 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>subNonStandardCharacters</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+sub nonstandard characters with replacement
+</h2>
+
+<h3>Description</h3>
+
+<p>First convert to ASCII, stripping standard 
+accents and special characters.  Then find 
+the first and last character not in 
+<code>standardCharacters</code> and replace all 
+between them with <code>replacement</code>.  For 
+example, a string like "Ruben" where "e" 
+carries an accent and is mangled by some 
+software would become something like 
+"Rub_n" using the default values for 
+<code>standardCharacters</code> and 
+<code>replacement</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">subNonStandardCharacters(x,
+   standardCharacters=c(letters, LETTERS, 
+      ' ','.', '?', '!', ',', 0:9, '/', '*', 
+      '$', '%', '\"', "\'", '-', '+', '&amp;', 
+      '_', ';', '(', ')', '[', ']', '\n'),
+   replacement='_',
+   gsubList=list(list(pattern = 
+      '\\\\\\\\|\\\\',
+      replacement='\"')), ... )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>character vector in which it is desired 
+to find the first and last character not 
+in <code>standardCharacters</code> and replace 
+that substring by <code>replacement</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standardCharacters</code></td>
+<td>
+
+<p>a character vector of acceptable characters 
+to keep.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replacement</code></td>
+<td>
+
+<p>a character to replace the substring 
+starting and ending with characters not 
+in <code>standardCharacters</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gsubList</code></td>
+<td>
+
+<p>list of lists of <code>pattern</code> and 
+<code>replacement</code> arguments to be called 
+in succession before looking for 
+<code>nonStandardCharacters</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>optional arguments passed to 
+<code>strsplit</code>
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>1.  <code>for(il in 1:length(gsubList))
+    x &lt;- gsub(gsubList[[il]][["pattern"]], 
+        gsubList[[il]][['replacement']], x)</code>
+</p>
+<p>2.  <code>x &lt;- stringi::stri_trans_general(x,
+  "Latin-ASCII")</code>
+</p>
+<p>3.  <code>nx &lt;- length(x)</code>
+</p>
+<p>4.  <code>x. &lt;- strsplit(x, "", ...)</code>
+</p>
+<p>5.  <code>for(ix in 1:nx)</code> find the first and 
+last <code>standardCharacters</code> in <code>x.[ix]</code>
+and substitute <code>replacement</code> for 
+everything in between.
+</p>
+<p>NOTES:  
+</p>
+<p>** To find the elements of x that have changed,
+use either 
+<code>subNonStandardCharacters(x) != x</code> or 
+<code>grep(replacement, 
+  subNonStandardCharacters(x))</code>,
+where 
+<code>replacement</code> is the <code>replacement</code> 
+argument = "_" by default.  
+</p>
+<p>** On 13 May 2013 Jeff Newmiller at the 
+University of California, Davis, wrote, 'I 
+think it is a fools errand to think that you 
+can automatically "normalize" arbitrary Unicode
+characters to an ASCII form that everyone will
+agree on.'  (This was a reply on 
+r-help@r-project.org, subject:  "Re: [R] Matching 
+names with non-English characters".)  
+</p>
+<p>** On 2014-12-15 Ista Zahn suggested 
+<code>stri_trans_general</code>. 
+(This was a reply on r-help@r-project.org, 
+subject:  "[R] Comparing Latin characters with 
+and without accents?".)  
+</p>
+
+
+<h3>Value</h3>
+
+<p>a character vector with everything between the
+first and last character not in 
+<code>standardCharacters</code> replaced by 
+<code>replacement</code>.  
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves with thanks to Jeff Newmiller, 
+who described this as a "fool's errand", 
+Milan Bouchet-Valat, who directed me to 
+<code>iconv</code>, and Ista Zahn, who 
+suggested 
+<code>stri_trans_general</code>.  
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>sub</code>, <code>strsplit</code>,
+<code>grepNonStandardCharacters</code>,
+<code>subNonStandardNames</code>
+<code>subNonStandardNames</code>
+<code>iconv</code> in the <code>base</code> 
+package does some conversion, but is not
+consistent across platforms, at least 
+using R 3.1.2 on 2015-01.25.  
+<code>stri_trans_general</code> 
+seems better.  
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1. Consider Names = Ruben, Avila and Jose, where 
+##    "e" and "A" in these examples carry an accent.  
+##    With the default values for standardCharacters and
+##    replacement, these might be converted to something
+##    like Rub_n, _vila, and Jos_, with different software
+##    possibly mangling the names differently.  (The
+##    standard checks for R packages in an English locale 
+##    complains about non-ASCII characters, because they
+##    are not portable.)
+##
+nonstdNames &lt;- c('Ra`l', 'Ra`', '`l', 'Torres, Raul',
+           "Robert C. \\Bobby\\\\", NA, '', '  ', 
+           '$12', '12%')
+
+
+
+
+#  confusion in character sets can create
+#  names like Names[2]
+Name2 &lt;- subNonStandardCharacters(nonstdNames)
+str(Name2)
+
+# check 
+Name2. &lt;- c('Ra_l', 'Ra_', '_l', nonstdNames[4],
+            'Robert C. "Bobby"', NA, '', '  ', 
+            '$12', '12%')
+str(Name2.)
+
+all.equal(Name2, Name2.)
+
+##
+## 2.  Example from iconv
+##
+icx &lt;- c("Ekstr\u{f8}m", "J\u{f6}reskog", 
+         "bi\u{df}chen Z\u{fc}rcher")
+icx2 &lt;- subNonStandardCharacters(icx)
+
+# check 
+icx. &lt;- c('Ekstrom', 'Joreskog', 'bisschen Zurcher')
+
+all.equal(icx2, icx.)
+
+</code></pre>
+
+
+</div>

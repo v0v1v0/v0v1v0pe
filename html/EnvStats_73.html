@@ -1,0 +1,929 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>distChooseCensored</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Choose Best Fitting Distribution Based on Goodness-of-Fit Tests for Censored Data
+</h2>
+
+<h3>Description</h3>
+
+<p>Perform a series of goodness-of-fit tests for censored data
+from a (possibly user-specified) set of candidate probability
+distributions to determine which probability distribution
+provides the best fit for a data set.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">distChooseCensored(x, censored, censoring.side = "left", alpha = 0.05,
+    method = "sf", choices = c("norm", "gamma", "lnorm"),
+    est.arg.list = NULL, prob.method = "hirsch-stedinger",
+    plot.pos.con = 0.375, warn = TRUE, keep.data = TRUE,
+    data.name = NULL, censoring.name = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>a numeric vector containing data for the goodness-of-fit tests.
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and
+infinite (<code>Inf</code>, <code>-Inf</code>) values are allowed but will be
+removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censored</code></td>
+<td>
+
+<p>numeric or logical vector indicating which values of <code>x</code> are censored.
+This must be the same length as <code>x</code>.  If the mode of <code>censored</code> is
+<code>"logical"</code>, <code>TRUE</code> values correspond to elements of <code>x</code> that
+are censored, and <code>FALSE</code> values correspond to elements of <code>x</code> that
+are not censored.  If the mode of <code>censored</code> is <code>"numeric"</code>,
+it must contain only <code>1</code>'s and <code>0</code>'s; <code>1</code> corresponds to
+<code>TRUE</code> and <code>0</code> corresponds to <code>FALSE</code>.  Missing (<code>NA</code>)
+values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censoring.side</code></td>
+<td>
+
+<p>character string indicating on which side the censoring occurs.  The possible
+values are <code>"left"</code> (the default) and <code>"right"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>numeric scalar between 0 and 1 specifying the Type I error associated with each
+goodness-of-fit test.  When <code>method="proucl"</code> the only allowed values for
+<code>alpha</code> are 0.01, 0.05, and 0.1.  The default value is <code>alpha=0.05</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>character string defining which method to use.  Possible values are:
+</p>
+
+<ul>
+<li> <p><code>"sw"</code>. Shapiro-Wilk.
+</p>
+</li>
+<li> <p><code>"sf"</code>. Shapiro-Francia; the default.
+</p>
+</li>
+<li> <p><code>"ppcc"</code>. Probability Plot Correlation Coefficient.
+</p>
+</li>
+<li> <p><code>"proucl"</code>.  ProUCL.
+</p>
+</li>
+</ul>
+<p>The Shapiro-Wilk method is only available for singly censored data.
+</p>
+<p>See the DETAILS section for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>choices</code></td>
+<td>
+
+<p>a character vector denoting the distribution abbreviations of the candidate
+distributions.  See the help file for <code>Distribution.df</code> for a list
+of distributions and their abbreviations.
+The default value is <code>choices=c("norm", "gamma", "lnorm")</code>,
+indicating the Normal, Gamma,  and Lognormal distributions.
+</p>
+<p>This argument is ignored when <code>method="proucl"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est.arg.list</code></td>
+<td>
+
+<p>a list containing one or more lists of arguments to be passed to the
+function(s) estimating the distribution parameters.  The name(s) of
+the components of the list must be equal to or a subset of the values of the
+argument <code>choices</code>.  For example, if
+<code>choices=c("norm", "gammaAlt", "lnormAlt")</code>, setting <br><code>est.arg.list=list(lnormAlt=list(method="bcmle"))</code> indicates
+using the bias-corrected maximum-likelihood estimators (see the help file for
+<code>elnormAltCensored</code>).
+See the section <b>Estimating Distribution Parameters</b> in the help file
+EnvStats Functions for Censored Data for a list of
+available estimating functions for censored data.
+The default value is <code>est.arg.list=NULL</code> so that all default values for the
+estimating functions are used.
+</p>
+<p>In the course of testing for some form of normality (i.e., Normal, Lognormal),
+the estimated parameters are saved in the <code>test.results</code>
+component of the returned object, but the choice of the method of estimation
+has no effect on the goodness-of-fit test statistic or p-value.
+</p>
+<p>This argument is ignored when <code>method="proucl"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob.method</code></td>
+<td>
+
+<p>character string indicating what method to use to compute the plotting positions
+(empirical probabilities) when <code>test="sf"</code> or <code>test="ppcc"</code>.
+Possible values are:
+</p>
+
+<ul>
+<li> <p><code>"modified kaplan-meier"</code> (modification of product-limit method of
+Kaplan and Meier (1958))
+</p>
+</li>
+<li> <p><code>"nelson"</code> (hazard plotting method of Nelson (1972))
+</p>
+</li>
+<li> <p><code>"michael-schucany"</code> (generalization of the product-limit method due to
+Michael and Schucany (1986))
+</p>
+</li>
+<li> <p><code>"hirsch-stedinger"</code> (generalization of the product-limit method due to
+Hirsch and Stedinger (1987))
+</p>
+</li>
+</ul>
+<p>The default value is <code>prob.method="hirsch-stedinger"</code>.
+</p>
+<p>The <code>"nelson"</code> method is only available for <code>censoring.side="right"</code>, and
+the <code>"modified kaplan-meier"</code> method is only available for
+<code>censoring.side="left"</code>.  See the help files for
+<code>gofTestCensored</code> and <code>ppointsCensored</code> for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.pos.con</code></td>
+<td>
+
+<p>numeric scalar between 0 and 1 containing the value of the plotting position
+constant to use when <code>test="sf"</code> or <code>test="ppcc"</code>.  The default value is <br><code>plot.pos.con=0.375</code>.  See the help files for <code>gofTestCensored</code> and
+<code>ppointsCensored</code> for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn</code></td>
+<td>
+
+<p>logical scalar indicating whether to print a warning message when
+observations with <code>NA</code>s, <code>NaN</code>s, or <code>Inf</code>s in
+<code>y</code> are removed.  The default value is <code>warn=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.data</code></td>
+<td>
+
+<p>logical scalar indicating whether to return the original data.  The
+default value is <code>keep.data=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name</code></td>
+<td>
+
+<p>optional character string indicating the name of the data used for argument <code>x</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censoring.name</code></td>
+<td>
+
+<p>optional character string indicating the name for the data used for argument <code>censored</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>distChooseCensored</code> returns a list with information on the goodness-of-fit
+tests for various distributions and which distribution appears to best fit the
+data based on the p-values from the goodness-of-fit tests.  This function was written in
+order to compare ProUCL's way of choosing the best-fitting distribution (USEPA, 2015) with
+other ways of choosing the best-fitting distribution.
+</p>
+<p><b>Method Based on Shapiro-Wilk, Shapiro-Francia, or Probability Plot Correlation Test</b> <br>
+(<code>method="sw"</code>, <code>method="sf"</code>, or <code>method="ppcc"</code>)
+</p>
+<p>For each value of the argument <code>choices</code>, the function <code>distChooseCensored</code>
+runs the goodness-of-fit test using the data in <code>x</code> assuming that particular
+distribution.  For example, if <br><code>choices=c("norm", "gamma", "lnorm")</code>,
+indicating the Normal, Gamma, and Lognormal distributions, and
+<code>method="sf"</code>, then the usual Shapiro-Francia test is performed for the Normal
+and Lognormal distributions, and the extension of the Shapiro-Francia test is performed
+for the Gamma distribution (see the section
+<em>Testing Goodness-of-Fit for Any Continuous Distribution</em> in the help
+file for <code>gofTestCensored</code> for an explanation of the latter).  The distribution associated
+with the largest p-value is the chosen distribution.  In the case when all p-values are
+less than the value of the argument <code>alpha</code>, the distribution “Nonparametric” is chosen.  <br></p>
+<p><b>Method Based on ProUCL Algorithm</b> (<code>method="proucl"</code>)
+</p>
+<p>When <code>method="proucl"</code>, the function <code>distChooseCensored</code> uses the
+algorithm that ProUCL (USEPA, 2015) uses to determine the best fitting
+distribution.  The candidate distributions are the
+Normal, Gamma, and Lognormal distributions.  The algorithm
+used by ProUCL is as follows:
+</p>
+
+<ol>
+<li>
+<p> Remove all censored observations and use only the uncensored observations.
+</p>
+</li>
+<li>
+<p> Perform the Shapiro-Wilk and Lilliefors goodness-of-fit tests for the Normal distribution,
+i.e., call the function <code>gofTest</code> with <code>distribution="norm", test="sw"</code> and <br><code>distribution = "norm", test="lillie"</code>.
+If either or both of the associated p-values are greater than or equal to the user-supplied value
+of <code>alpha</code>, then choose the Normal distribution.  Otherwise, proceed to the next step.
+</p>
+</li>
+<li>
+<p> Perform the “ProUCL Anderson-Darling” and
+“ProUCL Kolmogorov-Smirnov” goodness-of-fit tests for the Gamma distribution,
+i.e., call the function <code>gofTest</code> with <br><code>distribution="gamma", test="proucl.ad.gamma"</code> and <br><code>distribution="gamma", test="proucl.ks.gamma"</code>.
+If either or both of the associated p-values are greater than or equal to the user-supplied value
+of <code>alpha</code>, then choose the Gamma distribution.  Otherwise, proceed to the next step.
+</p>
+</li>
+<li>
+<p> Perform the Shapiro-Wilk and Lilliefors goodness-of-fit tests for the
+Lognormal distribution, i.e., call the function <code>gofTest</code>
+with <code>distribution = "lnorm", test="sw"</code> and <br><code>distribution = "lnorm", test="lillie"</code>.
+If either or both of the associated p-values are greater than or equal to the user-supplied value
+of <code>alpha</code>, then choose the Lognormal distribution.  Otherwise, proceed to the next step.
+</p>
+</li>
+<li>
+<p> If none of the goodness-of-fit tests above yields a p-value greater than or equal to the user-supplied value
+of <code>alpha</code>, then choose the “Nonparametric” distribution.
+</p>
+</li>
+</ol>
+<h3>Value</h3>
+
+<p>a list of class <code>"distChooseCensored"</code> containing the results of the goodness-of-fit tests.
+Objects of class <code>"distChooseCensored"</code> have a special printing method.
+See the help file for <br><code>distChooseCensored.object</code> for details.
+</p>
+
+
+<h3>Note</h3>
+
+<p>In practice, almost any goodness-of-fit test will <em>not</em> reject the null hypothesis
+if the number of observations is relatively small.  Conversely, almost any goodness-of-fit
+test <em>will</em> reject the null hypothesis if the number of observations is very large,
+since “real” data are never distributed according to any theoretical distribution
+(Conover, 1980, p.367).  For most cases, however, the distribution of “real” data
+is close enough to some theoretical distribution that fairly accurate results may be
+provided by assuming that particular theoretical distribution.  One way to asses the
+goodness of the fit is to use goodness-of-fit tests.  Another way is to look at
+quantile-quantile (Q-Q) plots (see <code>qqPlotCensored</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Birnbaum, Z.W., and F.H. Tingey. (1951).
+One-Sided Confidence Contours for Probability Distribution Functions.
+<em>Annals of Mathematical Statistics</em> <b>22</b>, 592-596.
+</p>
+<p>Blom, G. (1958). <em>Statistical Estimates and Transformed Beta Variables</em>.
+John Wiley and Sons, New York.
+</p>
+<p>Conover, W.J. (1980). <em>Practical Nonparametric Statistics</em>. Second Edition.
+John Wiley and Sons, New York.
+</p>
+<p>Dallal, G.E., and L. Wilkinson. (1986).
+An Analytic Approximation to the Distribution of Lilliefor's Test for Normality.
+<em>The American Statistician</em> <b>40</b>, 294-296.
+</p>
+<p>D'Agostino, R.B. (1970). Transformation to Normality of the Null Distribution of <code class="reqn">g1</code>.
+<em>Biometrika</em> <b>57</b>, 679-681.
+</p>
+<p>D'Agostino, R.B. (1971). An Omnibus Test of Normality for Moderate and Large Size Samples.
+<em>Biometrika</em> <b>58</b>, 341-348.
+</p>
+<p>D'Agostino, R.B. (1986b). Tests for the Normal Distribution. In: D'Agostino, R.B., and M.A. Stephens, eds.
+<em>Goodness-of Fit Techniques</em>. Marcel Dekker, New York.
+</p>
+<p>D'Agostino, R.B., and E.S. Pearson (1973). Tests for Departures from Normality.
+Empirical Results for the Distributions of <code class="reqn">b2</code> and <code class="reqn">\sqrt{b1}</code>.
+<em>Biometrika</em> <b>60</b>(3), 613-622.
+</p>
+<p>D'Agostino, R.B., and G.L. Tietjen (1973). Approaches to the Null Distribution of <code class="reqn">\sqrt{b1}</code>.
+<em>Biometrika</em> <b>60</b>(1), 169-173.
+</p>
+<p>Fisher, R.A. (1950). <em>Statistical Methods for Research Workers</em>. 11'th Edition.
+Hafner Publishing Company, New York, pp.99-100.
+</p>
+<p>Gibbons, R.D., D.K. Bhaumik, and S. Aryal. (2009).
+<em>Statistical Methods for Groundwater Monitoring</em>, Second Edition.
+John Wiley &amp; Sons, Hoboken.
+</p>
+<p>Kendall, M.G., and A. Stuart. (1991).
+<em>The Advanced Theory of Statistics, Volume 2: Inference and Relationship</em>.
+Fifth Edition. Oxford University Press, New York.
+</p>
+<p>Kim, P.J., and R.I. Jennrich. (1973).
+Tables of the Exact Sampling Distribution of the Two Sample Kolmogorov-Smirnov Criterion.
+In Harter, H.L., and D.B. Owen, eds. <em>Selected Tables in Mathematical Statistics, Vol. 1</em>.
+American Mathematical Society, Providence, Rhode Island, pp.79-170.
+</p>
+<p>Kolmogorov, A.N. (1933). Sulla determinazione empirica di una legge di distribuzione.
+<em>Giornale dell' Istituto Italiano degle Attuari</em> <b>4</b>, 83-91.
+</p>
+<p>Marsaglia, G., W.W. Tsang, and J. Wang. (2003). Evaluating Kolmogorov's distribution.
+<em>Journal of Statistical Software</em>, <b>8</b>(18).
+<a href="https://doi.org/10.18637/jss.v008.i18">doi:10.18637/jss.v008.i18</a>.
+</p>
+<p>Moore, D.S. (1986). Tests of Chi-Squared Type. In D'Agostino, R.B., and M.A. Stephens, eds.
+<em>Goodness-of Fit Techniques</em>. Marcel Dekker, New York, pp.63-95.
+</p>
+<p>Pomeranz, J. (1973).
+Exact Cumulative Distribution of the Kolmogorov-Smirnov Statistic for Small Samples (Algorithm 487).
+<em>Collected Algorithms from ACM</em> ??, ???-???.
+</p>
+<p>Royston, J.P. (1992a). Approximating the Shapiro-Wilk W-Test for Non-Normality.
+<em>Statistics and Computing</em> <b>2</b>, 117-119.
+</p>
+<p>Royston, J.P. (1992b).
+Estimation, Reference Ranges and Goodness of Fit for the Three-Parameter Log-Normal Distribution.
+<em>Statistics in Medicine</em> <b>11</b>, 897-912.
+</p>
+<p>Royston, J.P. (1992c).
+A Pocket-Calculator Algorithm for the Shapiro-Francia Test of Non-Normality: An Application to Medicine.
+<em>Statistics in Medicine</em> <b>12</b>, 181-184.
+</p>
+<p>Royston, P. (1993). A Toolkit for Testing for Non-Normality in Complete and Censored Samples.
+<em>The Statistician</em> <b>42</b>, 37-43.
+</p>
+<p>Ryan, T., and B. Joiner. (1973). <em>Normal Probability Plots and Tests for Normality</em>.
+Technical Report, Pennsylvannia State University, Department of Statistics.
+</p>
+<p>Shapiro, S.S., and R.S. Francia. (1972). An Approximate Analysis of Variance Test for Normality.
+<em>Journal of the American Statistical Association</em> <b>67</b>(337), 215-219.
+</p>
+<p>Shapiro, S.S., and M.B. Wilk. (1965). An Analysis of Variance Test for Normality (Complete Samples).
+<em>Biometrika</em> <b>52</b>, 591-611.
+</p>
+<p>Smirnov, N.V. (1939).
+Estimate of Deviation Between Empirical Distribution Functions in Two Independent Samples.
+<em>Bulletin Moscow University</em> <b>2</b>(2), 3-16.
+</p>
+<p>Smirnov, N.V. (1948). Table for Estimating the Goodness of Fit of Empirical Distributions.
+<em>Annals of Mathematical Statistics</em> <b>19</b>, 279-281.
+</p>
+<p>Stephens, M.A. (1970).
+Use of the Kolmogorov-Smirnov, Cramer-von Mises and Related Statistics Without Extensive Tables.
+<em>Journal of the Royal Statistical Society, Series B</em>, <b>32</b>, 115-122.
+</p>
+<p>Stephens, M.A. (1986a). Tests Based on EDF Statistics. In D'Agostino, R. B., and M.A. Stevens, eds.
+<em>Goodness-of-Fit Techniques</em>. Marcel Dekker, New York.
+</p>
+<p>USEPA. (2015).  <em>ProUCL Version 5.1.002 Technical Guide</em>.  EPA/600/R-07/041, October 2015.
+Office of Research and Development. U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Verrill, S., and R.A. Johnson. (1987).
+The Asymptotic Equivalence of Some Modified Shapiro-Wilk Statistics – Complete and Censored Sample Cases.
+<em>The Annals of Statistics</em> <b>15</b>(1), 413-419.
+</p>
+<p>Verrill, S., and R.A. Johnson. (1988).
+Tables and Large-Sample Distribution Theory for Censored-Data Correlation Statistics for Testing Normality.
+<em>Journal of the American Statistical Association</em> <b>83</b>, 1192-1197.
+</p>
+<p>Weisberg, S., and C. Bingham. (1975).
+An Approximate Analysis of Variance Test for Non-Normality Suitable for Machine Calculation.
+<em>Technometrics</em> <b>17</b>, 133-134.
+</p>
+<p>Wilk, M.B., and S.S. Shapiro. (1968). The Joint Assessment of Normality of Several Independent
+Samples. <em>Technometrics</em>, <b>10</b>(4), 825-839.
+</p>
+<p>Zar, J.H. (2010). <em>Biostatistical Analysis</em>. Fifth Edition.
+Prentice-Hall, Upper Saddle River, NJ.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gofTestCensored</code>, <code>distChooseCensored.object</code>,
+<code>print.distChooseCensored</code>, <code>distChoose</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 30 observations from a gamma distribution with
+  # parameters mean=10 and cv=1 and then censor observations less than 5.
+  # Then:
+  #
+  # 1) Call distChooseCensored using the Shapiro-Wilk method and specify
+  #    choices of the
+  #      normal,
+  #      gamma (alternative parameterzation), and
+  #      lognormal (alternative parameterization)
+  #    distributions.
+  #
+  # 2) Compare the results in 1) above with the results using the
+  #    ProUCL method.
+  #
+  # Notes:  The call to set.seed lets you reproduce this example.
+  #
+  #         The ProUCL method chooses the Normal distribution, whereas the
+  #         Shapiro-Wilk method chooses the Gamma distribution.
+
+  set.seed(598)
+
+  dat &lt;- sort(rgammaAlt(30, mean = 10, cv = 1))
+  dat
+  # [1]  0.5313509  1.4741833  1.9936208  2.7980636  3.4509840
+  # [6]  3.7987348  4.5542952  5.5207531  5.5253596  5.7177872
+  #[11]  5.7513827  9.1086375  9.8444090 10.6247123 10.9304922
+  #[16] 11.7925398 13.3432689 13.9562777 14.6029065 15.0563342
+  #[21] 15.8730642 16.0039936 16.6910715 17.0288922 17.8507891
+  #[26] 19.1105522 20.2657141 26.3815970 30.2912797 42.8726101
+
+  dat.censored &lt;- dat
+  censored &lt;- dat.censored &lt; 5
+  dat.censored[censored] &lt;- 5
+
+
+  # 1) Call distChooseCensored using the Shapiro-Wilk method.
+  #----------------------------------------------------------
+
+  distChooseCensored(dat.censored, censored, method = "sw",
+    choices = c("norm", "gammaAlt", "lnormAlt"))
+
+  #Results of Choosing Distribution
+  #--------------------------------
+  #
+  #Candidate Distributions:         Normal
+  #                                 Gamma
+  #                                 Lognormal
+  #
+  #Choice Method:                   Shapiro-Wilk
+  #
+  #Type I Error per Test:           0.05
+  #
+  #Decision:                        Gamma
+  #
+  #Estimated Parameter(s):          mean = 12.4911448
+  #                                 cv   =  0.7617343
+  #
+  #Estimation Method:               MLE
+  #
+  #Data:                            dat.censored
+  #
+  #Sample Size:                     30
+  #
+  #Censoring Side:                  left
+  #
+  #Censoring Variable:              censored
+  #
+  #Censoring Level(s):              5
+  #
+  #Percent Censored:                23.33333%
+  #
+  #Test Results:
+  #
+  #  Normal
+  #    Test Statistic:              W = 0.9372741
+  #    P-value:                     0.1704876
+  #
+  #  Gamma
+  #    Test Statistic:              W = 0.9613711
+  #    P-value:                     0.522329
+  #
+  #  Lognormal
+  #    Test Statistic:              W = 0.9292406
+  #    P-value:                     0.114511
+
+  #--------------------
+
+  # 2) Compare the results in 1) above with the results using the
+  #    ProUCL method.
+  #---------------------------------------------------------------
+
+  distChooseCensored(dat.censored, censored, method = "proucl")
+
+  #Results of Choosing Distribution
+  #--------------------------------
+  #
+  #Candidate Distributions:         Normal
+  #                                 Gamma
+  #                                 Lognormal
+  #
+  #Choice Method:                   ProUCL
+  #
+  #Type I Error per Test:           0.05
+  #
+  #Decision:                        Normal
+  #
+  #Estimated Parameter(s):          mean = 15.397584
+  #                                 sd   =  8.688302
+  #
+  #Estimation Method:               mvue
+  #
+  #Data:                            dat.censored
+  #
+  #Sample Size:                     30
+  #
+  #Censoring Side:                  left
+  #
+  #Censoring Variable:              censored
+  #
+  #Censoring Level(s):              5
+  #
+  #Percent Censored:                23.33333%
+  #
+  #ProUCL Sample Size:              23
+  #
+  #Test Results:
+  #
+  #  Normal
+  #    Shapiro-Wilk GOF
+  #      Test Statistic:            W = 0.861652
+  #      P-value:                   0.004457924
+  #    Lilliefors (Kolmogorov-Smirnov) GOF
+  #      Test Statistic:            D = 0.1714435
+  #      P-value:                   0.07794315
+  #
+  #  Gamma
+  #    ProUCL Anderson-Darling Gamma GOF
+  #      Test Statistic:            A = 0.3805556
+  #      P-value:                   &gt;= 0.10
+  #    ProUCL Kolmogorov-Smirnov Gamma GOF
+  #      Test Statistic:            D = 0.1035271
+  #      P-value:                   &gt;= 0.10
+  #
+  #  Lognormal
+  #    Shapiro-Wilk GOF
+  #      Test Statistic:            W = 0.9532604
+  #      P-value:                   0.3414187
+  #    Lilliefors (Kolmogorov-Smirnov) GOF
+  #      Test Statistic:            D = 0.115588
+  #      P-value:                   0.5899259
+
+  #--------------------
+
+  # Clean up
+  #---------
+
+  rm(dat, censored, dat.censored)
+
+  #====================================================================
+
+  # Check the assumption that the silver data stored in Helsel.Cohn.88.silver.df
+  # follows a lognormal distribution.
+  # Note that the small p-value and the shape of the Q-Q plot
+  # (an inverted S-shape) suggests that the log transformation is not quite strong
+  # enough to "bring in" the tails (i.e., the log-transformed silver data has tails
+  # that are slightly too long relative to a normal distribution).
+  # Helsel and Cohn (1988, p.2002) note that the gross outlier of 560 mg/L tends to
+  # make the shape of the data resemble a gamma distribution, but
+  # the distChooseCensored function decision is neither Gamma nor Lognormal,
+  # but instead Nonparametric.
+
+  # First create a lognormal Q-Q plot
+  #----------------------------------
+
+  dev.new()
+  with(Helsel.Cohn.88.silver.df,
+    qqPlotCensored(Ag, Censored, distribution = "lnorm",
+      points.col = "blue", add.line = TRUE))
+
+  #----------
+
+  # Now call the distChooseCensored function using the default settings.
+  #---------------------------------------------------------------------
+
+  with(Helsel.Cohn.88.silver.df,
+    distChooseCensored(Ag, Censored))
+
+  #Results of Choosing Distribution
+  #--------------------------------
+  #
+  #Candidate Distributions:         Normal
+  #                                 Gamma
+  #                                 Lognormal
+  #
+  #Choice Method:                   Shapiro-Francia
+  #
+  #Type I Error per Test:           0.05
+  #
+  #Decision:                        Nonparametric
+  #
+  #Data:                            Ag
+  #
+  #Sample Size:                     56
+  #
+  #Censoring Side:                  left
+  #
+  #Censoring Variable:              Censored
+  #
+  #Censoring Level(s):               0.1  0.2  0.3  0.5  1.0  2.0  2.5  5.0  6.0 10.0 20.0 25.0
+  #
+  #Percent Censored:                60.71429%
+  #
+  #Test Results:
+  #
+  #  Normal
+  #    Test Statistic:              W = 0.3065529
+  #    P-value:                     8.346126e-08
+  #
+  #  Gamma
+  #    Test Statistic:              W = 0.6254148
+  #    P-value:                     1.884155e-05
+  #
+  #  Lognormal
+  #    Test Statistic:              W = 0.8957198
+  #    P-value:                     0.03490314
+
+  #----------
+
+  # Clean up
+  #---------
+
+  graphics.off()
+
+  #====================================================================
+
+  # Chapter 15 of USEPA (2009) gives several examples of looking
+  # at normal Q-Q plots and estimating the mean and standard deviation
+  # for manganese concentrations (ppb) in groundwater at five background
+  # wells (USEPA, 2009, p. 15-10).  The Q-Q plot shown in Figure 15-4
+  # on page 15-13 clearly indicates that the Lognormal distribution
+  # is a good fit for these data.
+  # In EnvStats these data are stored in the data frame EPA.09.Ex.15.1.manganese.df.
+
+  # Here we will call the distChooseCensored function to determine
+  # whether the data appear to come from a normal, gamma, or lognormal
+  # distribution.
+  #
+  # Note that using the Probability Plot Correlation Coefficient method
+  # (equivalent to using the Shapiro-Francia method) yields a decision of
+  # Lognormal, but using the ProUCL method yields a decision of Gamma.
+  #----------------------------------------------------------------------
+
+
+  # First look at the data:
+  #-----------------------
+
+  EPA.09.Ex.15.1.manganese.df
+
+  #   Sample   Well Manganese.Orig.ppb Manganese.ppb Censored
+  #1       1 Well.1                 &lt;5           5.0     TRUE
+  #2       2 Well.1               12.1          12.1    FALSE
+  #3       3 Well.1               16.9          16.9    FALSE
+  #...
+  #23      3 Well.5                3.3           3.3    FALSE
+  #24      4 Well.5                8.4           8.4    FALSE
+  #25      5 Well.5                 &lt;2           2.0     TRUE
+
+  longToWide(EPA.09.Ex.15.1.manganese.df,
+    "Manganese.Orig.ppb", "Sample", "Well",
+    paste.row.name = TRUE)
+
+  #         Well.1 Well.2 Well.3 Well.4 Well.5
+  #Sample.1     &lt;5     &lt;5     &lt;5    6.3   17.9
+  #Sample.2   12.1    7.7    5.3   11.9   22.7
+  #Sample.3   16.9   53.6   12.6     10    3.3
+  #Sample.4   21.6    9.5  106.3     &lt;2    8.4
+  #Sample.5     &lt;2   45.9   34.5   77.2     &lt;2
+
+
+  # Use distChooseCensored with the probability plot correlation method,
+  # and for the gamma and lognormal distribution specify the
+  # mean and CV parameterization:
+  #------------------------------------------------------------
+
+  with(EPA.09.Ex.15.1.manganese.df,
+    distChooseCensored(Manganese.ppb, Censored,
+      choices = c("norm", "gamma", "lnormAlt"), method = "ppcc"))
+
+  #Results of Choosing Distribution
+  #--------------------------------
+  #
+  #Candidate Distributions:         Normal
+  #                                 Gamma
+  #                                 Lognormal
+  #
+  #Choice Method:                   PPCC
+  #
+  #Type I Error per Test:           0.05
+  #
+  #Decision:                        Lognormal
+  #
+  #Estimated Parameter(s):          mean = 23.003987
+  #                                 cv   =  2.300772
+  #
+  #Estimation Method:               MLE
+  #
+  #Data:                            Manganese.ppb
+  #
+  #Sample Size:                     25
+  #
+  #Censoring Side:                  left
+  #
+  #Censoring Variable:              Censored
+  #
+  #Censoring Level(s):              2 5
+  #
+  #Percent Censored:                24%
+  #
+  #Test Results:
+  #
+  #  Normal
+  #    Test Statistic:              r = 0.9147686
+  #    P-value:                     0.004662658
+  #
+  #  Gamma
+  #    Test Statistic:              r = 0.9844875
+  #    P-value:                     0.6836625
+  #
+  #  Lognormal
+  #    Test Statistic:              r = 0.9931982
+  #    P-value:                     0.9767731
+
+  #--------------------
+
+  # Repeat the above example using the ProUCL method.
+  #--------------------------------------------------
+
+  with(EPA.09.Ex.15.1.manganese.df,
+    distChooseCensored(Manganese.ppb, Censored, method = "proucl"))
+
+  #Results of Choosing Distribution
+  #--------------------------------
+  #
+  #Candidate Distributions:         Normal
+  #                                 Gamma
+  #                                 Lognormal
+  #
+  #Choice Method:                   ProUCL
+  #
+  #Type I Error per Test:           0.05
+  #
+  #Decision:                        Gamma
+  #
+  #Estimated Parameter(s):          shape =  1.284882
+  #                                 scale = 19.813413
+  #
+  #Estimation Method:               MLE
+  #
+  #Data:                            Manganese.ppb
+  #
+  #Sample Size:                     25
+  #
+  #Censoring Side:                  left
+  #
+  #Censoring Variable:              Censored
+  #
+  #Censoring Level(s):              2 5
+  #
+  #Percent Censored:                24%
+  #
+  #ProUCL Sample Size:              19
+  #
+  #Test Results:
+  #
+  #  Normal
+  #    Shapiro-Wilk GOF
+  #      Test Statistic:            W = 0.7423947
+  #      P-value:                   0.0001862975
+  #    Lilliefors (Kolmogorov-Smirnov) GOF
+  #      Test Statistic:            D = 0.2768771
+  #      P-value:                   0.0004771155
+  #
+  #  Gamma
+  #    ProUCL Anderson-Darling Gamma GOF
+  #      Test Statistic:            A = 0.6857121
+  #      P-value:                   0.05 &lt;= p &lt; 0.10
+  #    ProUCL Kolmogorov-Smirnov Gamma GOF
+  #      Test Statistic:            D = 0.1830034
+  #      P-value:                   &gt;= 0.10
+  #
+  #  Lognormal
+  #    Shapiro-Wilk GOF
+  #      Test Statistic:            W = 0.969805
+  #      P-value:                   0.7725528
+  #    Lilliefors (Kolmogorov-Smirnov) GOF
+  #      Test Statistic:            D = 0.138547
+  #      P-value:                   0.4385195
+
+  #====================================================================
+
+  ## Not run: 
+  # 1) Simulate 1000 trials where for each trial you:
+  #    a) Generate 30 observations from a Gamma distribution with
+  #       parameters mean = 10 and CV = 1.
+  #    b) Censor observations less than 5 (the 39th percentile).
+  #    c) Use distChooseCensored with the Shapiro-Francia method.
+  #    d) Use distChooseCensored with the ProUCL method.
+  #
+  #  2) Compare the proportion of times the
+  #     Normal vs. Gamma vs. Lognormal vs. Nonparametric distribution
+  #     is chosen for c) and d) above.
+  #------------------------------------------------------------------
+
+  set.seed(58)
+  N &lt;- 1000
+
+  Choose.fac &lt;- factor(rep("", N), levels = c("Normal", "Gamma", "Lognormal", "Nonparametric"))
+  Choose.df &lt;- data.frame(SW = Choose.fac, ProUCL = Choose.fac)
+
+  for(i in 1:N) {
+    dat &lt;- rgammaAlt(30, mean = 10, cv = 1)
+    censored &lt;- dat &lt; 5
+    dat[censored] &lt;- 5
+    Choose.df[i, "SW"]     &lt;- distChooseCensored(dat, censored, method = "sw")$decision
+    Choose.df[i, "ProUCL"] &lt;- distChooseCensored(dat, censored, method = "proucl")$decision
+  }
+
+  summaryStats(Choose.df, digits = 0)
+
+  #                ProUCL(N) ProUCL(Pct) SW(N) SW(Pct)
+  #Normal              520          52   398      40
+  #Gamma               336          34   375      38
+  #Lognormal           105          10   221      22
+  #Nonparametric        39           4     6       1
+  #Combined           1000         100  1000     100
+
+  #--------------------
+
+
+  # Repeat above example for the Lognormal Distribution with mean=10 and CV = 1.
+  # In this case, 5 is the 34th percentile.
+  #-----------------------------------------------------------------------------
+
+  set.seed(297)
+  N &lt;- 1000
+
+  Choose.fac &lt;- factor(rep("", N), levels = c("Normal", "Gamma", "Lognormal", "Nonparametric"))
+  Choose.df &lt;- data.frame(SW = Choose.fac, ProUCL = Choose.fac)
+
+  for(i in 1:N) {
+    dat &lt;- rlnormAlt(30, mean = 10, cv = 1)
+    censored &lt;- dat &lt; 5
+    dat[censored] &lt;- 5
+    Choose.df[i, "SW"]     &lt;- distChooseCensored(dat, censored, method = "sf")$decision
+    Choose.df[i, "ProUCL"] &lt;- distChooseCensored(dat, censored, method = "proucl")$decision
+  }
+
+  summaryStats(Choose.df, digits = 0)
+
+  #              ProUCL(N) ProUCL(Pct) SW(N) SW(Pct)
+  #Normal              277          28    92       9
+  #Gamma               393          39   231      23
+  #Lognormal           190          19   624      62
+  #Nonparametric       140          14    53       5
+  #Combined           1000         100  1000     100
+
+  #--------------------
+
+
+  # Clean up
+  #---------
+
+  rm(N, Choose.fac, Choose.df, i, dat, censored)
+  
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,252 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_wisle_poi_list</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compile information on worst case batches for what-if shelf life estimation</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>get_wisle_poi_list()</code> prepares a list of points of
+intersection (POI) for multiple regression models and release limits
+using the <code>find_poi()</code> function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_wisle_poi_list(
+  icpt_list,
+  model_list,
+  rl,
+  sl,
+  srch_range,
+  alpha = 0.05,
+  xform = c("no", "no"),
+  shift = c(0, 0),
+  ivl = "confidence",
+  ivl_type = "one.sided",
+  ivl_side = "lower",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>icpt_list</code></td>
+<td>
+<p>A list of four elements named <code>cics</code>, <code>dics</code>,
+<code>dids.pmse</code> and <code>dids</code> with the intercepts of each linear
+regression model and batch. The <code>cics</code>, <code>dics</code> and
+<code>dids.pmse</code> elements are <code>NA</code> if data of only a single batch
+is available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_list</code></td>
+<td>
+<p>A list of regression models of different type. Usually,
+it is a list of four elements named <code>cics</code>, <code>dics</code>,
+<code>dids.pmse</code> and <code>dids</code>, where the first three elements contain
+‘<code>lm</code>’ objects of the “common intercept / common slope”
+(<code>cics</code>), “different intercept / common slope” (<code>dics</code>)
+and “different intercept / different slope” (<code>dids.pmse</code>) type.
+The fourth element with the label <code>dids</code> is usually a list of the
+‘<code>lm</code>’ objects that is obtained from fitting a regression
+model to the data of each level of the categorical variable separately.
+The <code>dids.pmse</code> model differs from the <code>dids</code> model in that it
+is a model with the categorical variable as a fixed main effect and with
+an interaction term of the categorical variable with the time variable,
+i.e. a model where the mean square error is pooled across batches (thus
+the “pmse” suffix meaning “pooled mean square error”). The
+<code>cics</code>, <code>dics</code> and <code>dids.pmse</code> elements are <code>NA</code> if
+data of only a single batch is available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rl</code></td>
+<td>
+<p>A numeric value or a numeric vector that specifies the release
+specification limit(s) for which the corresponding expiry should be
+estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sl</code></td>
+<td>
+<p>A numeric value or a numeric vector of length <code>2</code> that
+specifies the specification limit or limits. If a vector is provided it
+must be of the form <code>c(lower limit, upper limit)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>srch_range</code></td>
+<td>
+<p>A vector of length <code>2</code> that specifies the end-points
+of the (time) range that is supposed to contain the shelf life or retest
+period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>A numeric value between 0 and 1 that specifies the significance
+level for the calculation of confidence or prediction intervals. The
+default is <code>0.05</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xform</code></td>
+<td>
+<p>A vector of two character strings that specifies the
+transformation of the response and the time variable. The default is
+“no” transformation, i.e. <code>c("no", "no")</code>, where the first
+element specifies the transformation of the <code class="reqn">x</code> variable and the
+second element the transformation of the <code class="reqn">y</code> variable. Valid
+alternatives for <code class="reqn">x</code> and/or <code class="reqn">y</code> variable transformation are
+<code>"log"</code> (natural logarithm), <code>"sqrt"</code> (square root) and
+<code>"sq"</code> (square).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shift</code></td>
+<td>
+<p>A vector of two values which will be added to the variables
+<code class="reqn">x</code> and/or <code class="reqn">y</code> before they are transformed as specified by the
+<code>xform</code> parameter, where the first element will be added to the
+<code class="reqn">x</code> variable and the second element to the <code class="reqn">y</code> variable. The
+purpose is to prevent an undefined state which could arise when variables
+with values of <code class="reqn">\leq 0</code> are log or square root transformed. The
+default is <code>c(0, 0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl</code></td>
+<td>
+<p>A character string of either <code>"confidence"</code> or
+<code>"prediction"</code> that specifies the type of interval of interest.
+The default is <code>"confidence"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl_type</code></td>
+<td>
+<p>A character string that specifies if a “one sided”
+or a “two sided” interval should be calculated, i.e. either
+<code>"one.sided"</code> or <code>"two.sided"</code>, respectively. The default is
+<code>"one.sided"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl_side</code></td>
+<td>
+<p>A character string that specifies if the “upper” or
+the “lower” limit is the relevant limit, i.e. either <code>"upper"</code>
+or <code>"lower"</code>, respectively. The default is <code>"lower"</code>. Since this
+parameter additionally specifies the relationship of <code>rl</code> with
+<code>sl</code>, i.e. which of the two sides of <code>sl</code> the <code>rl</code> is
+compared to, only either either <code>"upper"</code> or <code>"lower"</code> is
+possible. In this respect, the usage of <code>ivl_side</code> differs from its
+usage in the <code>expirest_osle()</code> function where <code>ivl_side</code> in
+addition can be <code>"both"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional named or unnamed arguments passed on to
+<code>uniroot()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>get_wisle_poi_list()</code> applies the
+<code>find_poi()</code> function (find the “point of intersection”) on
+all the models and for each release limit (<code>rl</code>) provided. With respect
+to the latter it differs from the <code>get_poi_list()</code> function.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following elements is returned:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>all.wcsl</code></td>
+<td>
+<p>A list of the worst case scenario (wcs) limits with a list
+of four elements for each linear model named <code>cics</code>, <code>dics</code>,
+<code>dids.pmse</code> and <code>dids</code>. Each of these elements contains a list
+element for each batch (intercept) containing itself a list element for
+each release limit. The wcs limit is obtained by adding/subtracting the
+absolute difference of specification limit and release limit to/from the
+common intercept of the test batches or the intercept of the worst
+performing batch.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all.poi</code></td>
+<td>
+<p>A list of the POI values, i.e. a list with a list of four
+elements for each linear model named <code>cics</code>, <code>dics</code>,
+<code>dids.pmse</code> and <code>dids</code>. Each of these elements contains a
+matrix with columns for each intercept and rows for each release limit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all.prl</code></td>
+<td>
+<p>A list of the confidence or prediction interval limits that
+are associated with a POI value, i.e. a list with a list of four elements
+for each linear model named <code>cics</code>, <code>dics</code>, <code>dids.pmse</code>
+and <code>dids</code>. Each of these elements contains an array with a level for
+each batch, containing matrices with columns for each batch and rows for
+each release limit, where the matrices contain the estimated interval
+limits at each POI value per batch.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.min.dist</code></td>
+<td>
+<p>A list of four elements for each linear model named
+<code>cics</code>, <code>dics</code>, <code>dids.pmse</code> and <code>dids</code>. Each of these
+list elements contains a matrix of the indices of the batches with the
+minimal intercept in the <code>all.prl</code> list. The matrices have a column
+for each batch and a row for each release limit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.min.poi</code></td>
+<td>
+<p>A list of four elements for each linear model named
+<code>cics</code>, <code>dics</code>, <code>dids.pmse</code> and <code>dids</code>. Each of these
+list elements contains a numeric vector with the minimal POI value of
+associated with each release limit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.wc.batch</code></td>
+<td>
+<p>A list of four elements for each linear model named
+<code>cics</code>, <code>dics</code>, <code>dids.pmse</code> and <code>dids</code>. Each of these
+list elements contains a numeric vector with the indices of the worst
+case batches associated with each release limit.</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>get_icpt_list</code>, <code>get_model_list</code>,
+<code>get_wcs_limit</code>, <code>find_poi</code>,
+<code>get_intvl_limit</code>, <code>expirest_osle</code>,
+<code>expirest_wisle</code>.
+</p>
+
+
+</div>

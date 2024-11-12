@@ -1,0 +1,2897 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EsgfQuery</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Query CMIP6 data using ESGF search RESTful API</h2>
+
+<h3>Description</h3>
+
+<p>The Earth System Grid Federation (ESGF) is an international collaboration for
+the software that powers most global climate change research, notably
+assessments by the Intergovernmental Panel on Climate Change (IPCC).
+</p>
+<p>The ESGF search service exposes RESTful APIs that can be used by clients to
+query the contents of the underlying search index, and return results
+matching the given constraints. The documentation of the APIs can be found
+using this <a href="https://esgf.github.io/esg-search/ESGF_Search_RESTful_API.html">link</a>
+</p>
+<p><code>EsgfQuery</code> is the workhorse for dealing with ESGF search services.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">query_esgf(host = "https://esgf-node.llnl.gov/esg-search")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>host</code></td>
+<td>
+<p>The URL to the ESGF Search API service. This should be the URL of
+the ESGF search service excluding the final endpoint name. Usually
+this is <code style="white-space: pre;">⁠http://&lt;hostname&gt;/esg-search⁠</code>. Default is set to the
+<a href="http://esgf-node.llnl.gov">LLNL (Lawrence Livermore National Laboratory) Index Node</a>,
+which is <code>"https://esgf-node.llnl.gov/esg-search"</code>.</p>
+</td>
+</tr></table>
+<h3>
+<code>EsgfQuery</code> object</h3>
+
+<p><code>query_esgf()</code> returns an <code>EsgfQuery</code> object, which is an R6
+object with quite a few methods that can be classified into 3 categories:
+</p>
+
+<ul>
+<li> <p><strong>Value listing</strong>: methods to list all possible values of facets, shards,
+etc.
+</p>
+</li>
+<li> <p><strong>Parameter getter &amp; setter</strong>: methods to get the query parameter values or
+set them before sending the actual query to the ESGF search services.
+</p>
+</li>
+<li> <p><strong>Query responses</strong>: methods to collect results for the query response.
+</p>
+</li>
+</ul>
+<h4>Value listing</h4>
+
+<p>When creating an <code>EsgfQuery</code> object, a
+<a href="https://esgf.github.io/esg-search/ESGF_Search_RESTful_API.html#facet-listings">facet listing query</a>
+is sent to the index node to get all available facets and shards for the
+default project (CMIP6).
+<code>EsgfQuery</code> object provides three value-listing methods to extract data from
+the response of the facet listing query:
+</p>
+
+<ul>
+<li> <p><a href="#method-EsgfQuery-list_all_facets"><code>EsgfQuery$list_all_facets()</code></a>:
+List all available facet names.
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-list_all_shards"><code>EsgfQuery$list_all_shards()</code></a>:
+List all available shards.
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-list_all_values"><code>EsgfQuery$list_all_values()</code></a>:
+List all available values of a specific facet.
+</p>
+</li>
+</ul>
+<h4>Parameter getter &amp; setter</h4>
+
+<p>The ESGF search services support a lot of parameters. The <code>EsgfQuery</code>
+contains dedicated methods to set values for most of them, including:
+</p>
+
+<ul>
+<li>
+<p> Most common keywords:
+<a href="#method-EsgfQuery-facets"><code>facets</code></a>,
+<a href="#method-EsgfQuery-offset"><code>offset</code></a>,
+<a href="#method-EsgfQuery-limit"><code>limit</code></a>,
+<a href="#method-EsgfQuery-fields"><code>fields</code></a>,
+<a href="#method-EsgfQuery-type"><code>type</code></a>,
+<a href="#method-EsgfQuery-replica"><code>replica</code></a>,
+<a href="#method-EsgfQuery-latest"><code>latest</code></a>,
+<a href="#method-EsgfQuery-distrib"><code>distrib</code></a>
+and
+<a href="#method-EsgfQuery-shards"><code>shards</code></a>.
+</p>
+</li>
+<li>
+<p> Most common facets:
+<a href="#method-EsgfQuery-project"><code>project</code></a>,
+<a href="#method-EsgfQuery-activity_id"><code>activity_id</code></a>,
+<a href="#method-EsgfQuery-experiment_id"><code>experiment_id</code></a>,
+<a href="#method-EsgfQuery-source_id"><code>source_id</code></a>,
+<a href="#method-EsgfQuery-variable_id"><code>variable_id</code></a>,
+<a href="#method-EsgfQuery-frequency"><code>frequency</code></a>,
+<a href="#method-EsgfQuery-variant_label"><code>variant_label</code></a>,
+<a href="#method-EsgfQuery-nominal_resolution"><code>nominal_resolution</code></a>
+and
+<a href="#method-EsgfQuery-data_node"><code>data_node</code></a>.
+</p>
+</li>
+</ul>
+<p>All methods act in a similar way:
+</p>
+
+<ul>
+<li>
+<p> If input is given, the corresponding parameter is set and the updated
+<code>EsgfQuery</code> object is returned.
+</p>
+
+<ul>
+<li>
+<p> This makes it possible to chain different parameter setters, e.g.
+<code>EsgfQuery$project("CMIP6")$frequency("day")$limit(1)</code> sets the parameter
+<code>project</code>, <code>frequency</code> and <code>limit</code> sequentially.
+</p>
+</li>
+<li>
+<p> For parameters that want character inputs, you can put a preceding <code>!</code> to
+negate the constraints, e.g. <code>EsgfQuery$project(!"CMIP6")</code> searches for
+all projects except for <code>CMIP6</code>.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> If no input is given, the current parameter value is returned. For example,
+directly calling <code>EsgfQuery$project()</code> returns the current value of the
+<code>project</code> parameter. The returned value can be two types:
+</p>
+
+<ul>
+<li> <p><code>NULL</code>, i.e. there is no constraint on the corresponding parameter
+</p>
+</li>
+<li>
+<p> An <code>EsgfQueryParam</code> object which is essentially a list of three elements:
+</p>
+
+<ul>
+<li> <p><code>value</code>: The input values
+</p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code> in the input
+</p>
+</li>
+<li> <p><code>name</code>: The parameter name
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Despite methods for specific keywords and facets, you can specify arbitrary
+query parameters using
+<a href="#method-EsgfQuery-params"><code>EsgfQuery$params()</code></a> method. For
+details on the usage, please see the
+<a href="#method-EsgfQuery-params">documentation</a>.
+</p>
+
+
+
+<h4>Query responses</h4>
+
+<p>The query is not sent unless related methods are called:
+</p>
+
+<ul>
+<li> <p><a href="#method-EsgfQuery-count"><code>EsgfQuery$count()</code></a>: Count the total
+number of records that match the query.
+</p>
+
+<ul>
+<li>
+<p> You can return only the total number of matched record by calling
+<code>EsgfQuery$count(facets = FALSE)</code>
+</p>
+</li>
+<li>
+<p> You can also count the matched records for specified facets, e.g.
+<code>EsgfQuery$count(facets = c("source_id", "activity_id"))</code>
+</p>
+</li>
+</ul>
+</li>
+<li> <p><a href="#method-EsgfQuery-collect"><code>EsgfQuery$collect()</code></a>: Collect the
+query results and format it into a data.table
+</p>
+</li>
+</ul>
+<h4>Other helpers</h4>
+
+<p><code>EsgfQuery</code> object also provide several other helper functions:
+</p>
+
+<ul>
+<li> <p><a href="#method-EsgfQuery-build_cache"><code>EsgfQuery$build_cache()</code></a>:
+By default, <code>EsgfQuery$build_cache()</code> is called when initialize a new
+<code>EsgfQuery</code> object. So in general, there is no need to call this
+separately. Basically, <code>EsgfQuery$build_cahce()</code> sends a
+<a href="https://esgf.github.io/esg-search/ESGF_Search_RESTful_API.html#facet-listings">facet listing query</a>
+to the index node and stores the response internally. The response contains
+all available facets and shards and is used as a source for validating user
+input for parameter setters.
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-url"><code>EsgfQuery$url()</code></a>: Returns the actual
+query URL or the wget script URL which can be used to download all files
+matching the given constraints..
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-response"><code>EsgfQuery$response()</code></a>: Returns the
+actual response of
+<a href="#method-EsgfQuery-count"><code>EsgfQuery$count()</code></a> and
+<a href="#method-EsgfQuery-collect"><code>EsgfQuery$collect()</code></a>. It is a named
+list generated from the JSON response using <code>jsonlite::fromJSON()</code>.
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-print"><code>EsgfQuery$print()</code></a>: Print a summary
+of the current <code>EsgfQuery</code> object including the host URL, the built time of
+facet cache and all query parameters.
+</p>
+</li>
+</ul>
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-EsgfQuery-new"><code>EsgfQuery$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-build_cache"><code>EsgfQuery$build_cache()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-list_all_facets"><code>EsgfQuery$list_all_facets()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-list_all_shards"><code>EsgfQuery$list_all_shards()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-list_all_values"><code>EsgfQuery$list_all_values()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-project"><code>EsgfQuery$project()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-activity_id"><code>EsgfQuery$activity_id()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-experiment_id"><code>EsgfQuery$experiment_id()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-source_id"><code>EsgfQuery$source_id()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-variable_id"><code>EsgfQuery$variable_id()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-frequency"><code>EsgfQuery$frequency()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-variant_label"><code>EsgfQuery$variant_label()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-nominal_resolution"><code>EsgfQuery$nominal_resolution()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-data_node"><code>EsgfQuery$data_node()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-facets"><code>EsgfQuery$facets()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-fields"><code>EsgfQuery$fields()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-shards"><code>EsgfQuery$shards()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-replica"><code>EsgfQuery$replica()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-latest"><code>EsgfQuery$latest()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-type"><code>EsgfQuery$type()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-limit"><code>EsgfQuery$limit()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-offset"><code>EsgfQuery$offset()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-distrib"><code>EsgfQuery$distrib()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-params"><code>EsgfQuery$params()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-url"><code>EsgfQuery$url()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-count"><code>EsgfQuery$count()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-collect"><code>EsgfQuery$collect()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-response"><code>EsgfQuery$response()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EsgfQuery-print"><code>EsgfQuery$print()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-EsgfQuery-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create a new EsgfQuery object
+</p>
+<p>When initialization, a
+<a href="https://esgf.github.io/esg-search/ESGF_Search_RESTful_API.html#facet-listings">facet listing query</a>
+is sent to the index node to get all available facets and shards.
+This information will be used to validate inputs for <code>activity_id</code>,
+<code>scource_id</code> facets and etc.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$new(host = "https://esgf-node.llnl.gov/esg-search")</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>host</code></dt>
+<dd>
+<p>The URL to the ESGF Search API service. This should be
+the URL of the ESGF search service excluding the final
+endpoint name. Usually this is <code style="white-space: pre;">⁠http://&lt;hostname&gt;/esg-search⁠</code>.
+Default is to ses the <a href="http://esgf-node.llnl.gov">LLNL (Lawrence Livermore National Laboratory)</a> Index Node, which is
+<code>"https://esgf-node.llnl.gov/esg-search"</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>An <code>EsgfQuery</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q &lt;- EsgfQuery$new(host = "https://esgf-node.llnl.gov/esg-search")
+q
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-build_cache"></a>
+
+
+
+<h4>Method <code>build_cache()</code>
+</h4>
+
+<p>Build facet cache used for input validation
+</p>
+<p>A facet cache is data that is fetched using a
+<a href="https://esgf.github.io/esg-search/ESGF_Search_RESTful_API.html#facet-listings">facet listing query</a>
+to the index node. It contains all available facets and shards that
+can be used as parameter values within a specific project.
+</p>
+<p>By default, <code style="white-space: pre;">⁠$build_cache()⁠</code> is called when initialize a new
+<code>EsgfQuery</code> object for the default project (CMIP6). So in general,
+there is no need to call this method, unless that you want to
+rebuild the cache again with different projects after calling
+<a href="#method-EsgfQuery-project"><code>$project()</code></a>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$build_cache()</pre></div>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>EsgfQuery</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q$build_cache()
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-list_all_facets"></a>
+
+
+
+<h4>Method <code>list_all_facets()</code>
+</h4>
+
+<p>List all available facet names
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$list_all_facets()</pre></div>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q$list_all_facets()
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-list_all_shards"></a>
+
+
+
+<h4>Method <code>list_all_shards()</code>
+</h4>
+
+<p>List all available shards
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$list_all_shards()</pre></div>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q$list_all_shards()
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-list_all_values"></a>
+
+
+
+<h4>Method <code>list_all_values()</code>
+</h4>
+
+<p>List all available values of a specific facet
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$list_all_values(facet)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>facet</code></dt>
+<dd>
+<p>A single string giving the facet name.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>A named character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q$list_all_values()
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-project"></a>
+
+
+
+<h4>Method <code>project()</code>
+</h4>
+
+<p>Get or set the <code>project</code> facet parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$project(value = "CMIP6")</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>"CMIP6"</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$project(!c("CMIP5", "CMIP6"))</code> searches for all <code>project</code>s except for <code>CMIP5</code> and <code>CMIP6</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$project()
+
+# set the parameter
+q$project("CMIP6")
+
+# negate the project constraints
+q$project(!"CMIP6")
+
+# remove the parameter
+q$project(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-activity_id"></a>
+
+
+
+<h4>Method <code>activity_id()</code>
+</h4>
+
+<p>Get or set the <code>activity_id</code> facet parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$activity_id(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$activity_id(!c("C4MIP", "GeoMIP"))</code> searches for all <code>activity_id</code>s except for <code>C4MIP</code> and <code>GeoMIP</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$activity_id()
+
+# set the parameter
+q$activity_id("ScenarioMIP")
+
+# negate the constraints
+q$activity_id(!c("CFMIP", "ScenarioMIP"))
+
+# remove the parameter
+q$activity_id(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-experiment_id"></a>
+
+
+
+<h4>Method <code>experiment_id()</code>
+</h4>
+
+<p>Get or set the <code>experiment_id</code> facet parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$experiment_id(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$experiment_id(!c("ssp126", "ssp245"))</code> searches for all <code>experiment_id</code>s except for <code>ssp126</code> and <code>ssp245</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$experiment_id()
+
+# set the parameter
+q$experiment_id(c("ssp126", "ssp585"))
+
+# negate the constraints
+q$experiment_id(!c("ssp126", "ssp585"))
+
+# remove the parameter
+q$experiment_id(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-source_id"></a>
+
+
+
+<h4>Method <code>source_id()</code>
+</h4>
+
+<p>Get or set the <code>source_id</code> facet parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$source_id(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$source_id(!c("CESM2", "CESM2-FV2"))</code> searches for all <code>source_id</code>s except for <code>CESM2</code> and <code>CESM2-FV2</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$source_id()
+
+# set the parameter
+q$source_id(c("BCC-CSM2-MR", "CESM2"))
+
+# negate the constraints
+q$source_id(!c("BCC-CSM2-MR", "CESM2"))
+
+# remove the parameter
+q$source_id(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-variable_id"></a>
+
+
+
+<h4>Method <code>variable_id()</code>
+</h4>
+
+<p>Get or set the <code>variable_id</code> facet parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$variable_id(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$variable_id(!c("tas", "pr"))</code> searches for all <code>variable_id</code>s except for <code>tas</code> and <code>pr</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$variable_id()
+
+# set the parameter
+q$variable_id(c("tas", "pr"))
+
+# negate the constraints
+q$variable_id(!c("tas", "pr"))
+
+# remove the parameter
+q$variable_id(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-frequency"></a>
+
+
+
+<h4>Method <code>frequency()</code>
+</h4>
+
+<p>Get or set the <code>frequency</code> facet parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$frequency(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$frequency(!c("day", "mon"))</code> searches for all <code>frequency</code>s except for <code>day</code> and <code>mon</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$frequency()
+
+# set the parameter
+q$frequency(c("1hr", "day"))
+
+# negate the constraints
+q$frequency(!c("1hr", "day"))
+
+# remove the parameter
+q$frequency(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-variant_label"></a>
+
+
+
+<h4>Method <code>variant_label()</code>
+</h4>
+
+<p>Get or set the <code>variant_label</code> facet parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$variant_label(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$variant_label(!c("r1i1p1f1", "r2i1p1f1"))</code> searches for all <code>variant_label</code>s except for <code>r1i1p1f1</code> and <code>r2i1p1f1</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$variant_label()
+
+# set the parameter
+q$variant_label(c("r1i1p1f1", "r1i2p1f1"))
+
+# negate the constraints
+q$variant_label(!c("r1i1p1f1", "r1i2p1f1"))
+
+# remove the parameter
+q$variant_label(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-nominal_resolution"></a>
+
+
+
+<h4>Method <code>nominal_resolution()</code>
+</h4>
+
+<p>Get or set the <code>nominal_resolution</code> facet parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$nominal_resolution(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$nominal_resolution(!c("50 km", "1x1 degree"))</code> searches for all <code>nominal_resolution</code>s except for <code>50 km</code> and <code>1x1 degree</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$nominal_resolution()
+
+# set the parameter
+q$nominal_resolution(c("100 km", "1x1 degree"))
+
+# negate the constraints
+q$nominal_resolution(!c("100 km", "1x1 degree"))
+
+# remove the parameter
+q$nominal_resolution(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-data_node"></a>
+
+
+
+<h4>Method <code>data_node()</code>
+</h4>
+
+<p>Get or set the <code>data_node</code> parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$data_node(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The  parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.  Note that you can put a preceding <code>!</code> to negate the facet constraints. For example, <code>$data_node(!c("cmip.bcc.cma.cn", "esg.camscma.cn"))</code> searches for all <code>data_node</code>s except for <code>cmip.bcc.cma.cn</code> and <code>esg.camscma.cn</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$data_node()
+
+# set the parameter
+q$data_node("esg.lasg.ac.cn")
+
+# negate the constraints
+q$data_node(!"esg.lasg.ac.cn")
+
+# remove the parameter
+q$data_node(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-facets"></a>
+
+
+
+<h4>Method <code>facets()</code>
+</h4>
+
+<p>Get or set the <code>facets</code> parameter for facet counting query.
+</p>
+<p>Note that <code style="white-space: pre;">⁠$facets()⁠</code> only affects
+<a href="#method-EsgfQuery-count"><code>$count()</code></a>
+method when sending a query of facet counting.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$facets(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>. The special notation <code>"*"</code> can be used to indicate that all available facets should be considered.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$facets()
+
+# set the facets
+q$facets(c("activity_id", "source_id"))
+
+# use all available facets
+q$facets("*")
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-fields"></a>
+
+
+
+<h4>Method <code>fields()</code>
+</h4>
+
+<p>Get or set the <code>fields</code> parameter.
+</p>
+<p>By default, all available metadata fields are returned for each
+query. <code style="white-space: pre;">⁠$facets()⁠</code> can be used to limit the number of fields returned
+in the query response.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$fields(value = "*")</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value. Default: <code>"*"</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>. The special notation <code>"*"</code> can be used to indicate that all available fields should be considered.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$fields()
+
+# set the fields
+q$fields(c("activity_id", "source_id"))
+
+# use all available fields
+q$fields("*")
+
+# remove the parameter
+# act the same as above because the default `fields` in ESGF search
+# services is `*` if `fields` is not specified
+q$fields(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-shards"></a>
+
+
+
+<h4>Method <code>shards()</code>
+</h4>
+
+<p>Get or set the <code>shards</code> parameter.
+</p>
+<p>By default, a distributed query targets all ESGF Nodes. <code style="white-space: pre;">⁠$shards()⁠</code>
+can be used to execute a distributed search that targets only one or
+more specific nodes.
+</p>
+<p>All available shards can be retrieved using
+<a href="#method-EsgfQuery-list_all_shards"><code>$list_all_shards()</code></a>
+method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$shards(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A character vector or <code>NULL</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$shards()
+
+# set the parameter
+q$shards("localhost:8983/solr/datasets")
+
+# negate the constraints
+q$shards(!"localhost:8983/solr/datasets")
+
+# only applicable for distributed queries
+q$distrib(FALSE)$shards("localhost:8983/solr/datasets") # Error
+
+# remove the parameter
+q$shards(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-replica"></a>
+
+
+
+<h4>Method <code>replica()</code>
+</h4>
+
+<p>Get or set the <code>replica</code> parameter.
+</p>
+<p>By default, a query returns all records (masters and replicas)
+matching the search criteria, i.e. <code style="white-space: pre;">⁠$replica(NULL)⁠</code>.
+To return only master records, use <code style="white-space: pre;">⁠$replica(FALSE)⁠</code>; to return only
+replicas, use <code style="white-space: pre;">⁠$replica(TRUE)⁠</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$replica(value)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value. Default: <code>NULL</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A flag or <code>NULL</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$replica()
+
+# set the parameter
+q$replica(TRUE)
+
+# remove the parameter
+q$replica(NULL)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-latest"></a>
+
+
+
+<h4>Method <code>latest()</code>
+</h4>
+
+<p>Get or set the <code>latest</code> parameter.
+</p>
+<p>By default, a query to the ESGF search services returns only the very
+last, up-to-date version of the matching records, i.e.
+<code style="white-space: pre;">⁠$latest(TRUE)⁠</code>. You can use <code style="white-space: pre;">⁠$latest(FALSE)⁠</code> to return all versions.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$latest(value = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value. Default: <code>TRUE</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A flag.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$latest()
+
+# set the parameter
+q$latest(TRUE)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-type"></a>
+
+
+
+<h4>Method <code>type()</code>
+</h4>
+
+<p>Get or set the <code>type</code> parameter.
+</p>
+<p>There are three types in total: <code>Dataset</code>, <code>File</code> or <code>Aggregation</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$type(value = "Dataset")</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value. Default: <code>"Dataset"</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A string.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$type()
+
+# set the parameter
+q$type("Dataset")
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-limit"></a>
+
+
+
+<h4>Method <code>limit()</code>
+</h4>
+
+<p>Get or set the <code>limit</code> parameter.
+</p>
+<p><code style="white-space: pre;">⁠$limit()⁠</code> can be used to limit the number of records to return.
+Note that the maximum number of records to return per query for ESGF
+search services is 10,000. A warning is issued if input value is
+greater than that. In this case, <code>limit</code> will be reset to 10,000.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$limit(value = 10L)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value. Default: <code>10</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> An integer.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$limit()
+
+# set the parameter
+q$limit(10L)
+
+# `limit` is reset to 10,000 if input is greater than that
+q$limit(10000L) # warning
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-offset"></a>
+
+
+
+<h4>Method <code>offset()</code>
+</h4>
+
+<p>Get or set the <code>offset</code> parameter.
+</p>
+<p>If the query returns records that exceed the
+<a href="#method-EsgfQuery-limit"><code>limit</code></a> number,
+<code style="white-space: pre;">⁠$offset()⁠</code> can be used to paginate through the available results.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$offset(value = 0L)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value. Default: <code>0</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> An integer.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$offset()
+
+# set the parameter
+q$offset(0L)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-distrib"></a>
+
+
+
+<h4>Method <code>distrib()</code>
+</h4>
+
+<p>Get or set the <code>distrib</code> facet
+</p>
+<p>By default, the query is sent to all ESGF Nodes, i.e.
+<code style="white-space: pre;">⁠$distrib(TRUE)⁠</code>.
+<code style="white-space: pre;">⁠$distrib(FALSE)⁠</code> can be used to execute the query only on the
+target node.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$distrib(value = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The facet parameter value. Default: <code>TRUE</code>.
+There are two options:
+</p>
+
+<ul>
+<li>
+<p> If <code>value</code> is not given, current value is returned.
+</p>
+</li>
+<li>
+<p> A flag.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+ <ul>
+<li>
+<p> If <code>value</code> is given, the modified <code>EsgfQuery</code> object. </p>
+</li>
+<li>
+<p> Otherwise, an <code>EsgfQueryParam</code> object which is essentially a list of three elements: </p>
+ <ul>
+<li> <p><code>value</code>: input values. </p>
+</li>
+<li> <p><code>negate</code>: Whether there is a preceding <code>!</code>. </p>
+</li>
+<li> <p><code>name</code>: Parameter name. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current value
+q$distrib()
+
+# set the parameter
+q$distrib(TRUE)
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-params"></a>
+
+
+
+<h4>Method <code>params()</code>
+</h4>
+
+<p>Get or set other parameters.
+</p>
+<p><code style="white-space: pre;">⁠$params()⁠</code> can be used to specify other parameters that do not have
+a dedicated method, e.g. <code>version</code>, <code>master_id</code>, etc. It can also be
+used to overwrite existing parameter values specified using methods
+like <a href="#method-EsgfQuery-activity_id"><code>$activity_id()</code></a>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$params(...)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>Parameter values to set. There are three options:
+</p>
+
+<ul>
+<li>
+<p> If not given, existing parameters that do not have a dedicated
+method are returned.
+</p>
+</li>
+<li>
+<p> If <code>NULL</code>, all existing parameters that do not have a dedicated
+method are removed.
+</p>
+</li>
+<li>
+<p> A named vector, e.g. <code style="white-space: pre;">⁠$params(score = 1, table_id = "day")⁠</code> will
+set <code>score</code> to <code>1</code> and <code>table_id</code> to <code>day</code>.
+The <code>!</code> notation can still be used to negate the constraints, e.g.
+<code style="white-space: pre;">⁠$params(table_id = !c("3hr", "day"))⁠</code> searches for all <code>table_id</code>
+except for <code style="white-space: pre;">⁠3hr⁠</code> and <code>day</code>.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+
+<ul>
+<li>
+<p> If parameters are specified, the modified <code>EsgfQuery</code> object,
+invisibly.
+</p>
+</li>
+<li>
+<p> Otherwise, an empty list for <code style="white-space: pre;">⁠$params(NULL)⁠</code> or a list of
+<code>EsgfQueryParam</code> objects.
+</p>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get current values
+# default is an empty list (`list()`)
+q$params()
+
+# set the parameter
+q$params(table_id = c("3hr", "day"), member_id = "00")
+q$params()
+
+# reset existing parameters
+q$frequency("day")
+q$params(frequency = "mon")
+q$frequency() # frequency value has been changed using $params()
+
+# negating the constraints is also supported
+q$params(table_id = !c("3hr", "day"))
+
+# use NULL to remove all parameters
+q$params(NULL)$params()
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-url"></a>
+
+
+
+<h4>Method <code>url()</code>
+</h4>
+
+<p>Get the URL of actual query or wget script
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$url(wget = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>wget</code></dt>
+<dd>
+<p>Whether to return the URL of the wget script that can be
+used to download all files matching the given constraints.
+Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>A single string.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q$url()
+
+# get the wget script URL
+q$url(wget = TRUE)
+
+# You can download the wget script using the URL directly. For
+# example, the code below downloads the script and save it as
+# 'wget.sh' in R's temporary folder:
+download.file(q$url(TRUE), file.path(tempdir(), "wget.sh"), mode = "wb")
+
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-count"></a>
+
+
+
+<h4>Method <code>count()</code>
+</h4>
+
+<p>Send a query of facet counting and fetch the results
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$count(facets = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>facets</code></dt>
+<dd>
+<p><code>NULL</code>, a flag or a character vector. There are three
+options:
+</p>
+
+<ul>
+<li>
+<p> If <code>NULL</code> or <code>FALSE</code>, only the total number of matched records is
+returned.
+</p>
+</li>
+<li>
+<p> If <code>TRUE</code>, the value of <a href="#method-EsgfQuery-facets"><code>$facets()</code></a>
+is used to limit the facets. This is the default value.
+</p>
+</li>
+<li>
+<p> If a character vector, it is used to limit the facets.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+
+<ul>
+<li>
+<p> If <code>facets</code> equals <code>NULL</code> or <code>FALSE</code>, or <code style="white-space: pre;">⁠$facets()⁠</code> returns <code>NULL</code>,
+an integer.
+</p>
+</li>
+<li>
+<p> Otherwise, a named list with the first element always being <code>total</code>
+which is the total number of matched records. Other elements have
+the same length as input facets and are all named integer vectors.
+</p>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get the total number of matched records
+q$count(NULL) # or q$count(facets = FALSE)
+
+# count records for specific facets
+q$facets(c("activity_id", "source_id"))$count()
+
+# same as above
+q$count(facets = c("activity_id", "source_id"))
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-collect"></a>
+
+
+
+<h4>Method <code>collect()</code>
+</h4>
+
+<p>Send the actual query and fetch the results
+</p>
+<p><code style="white-space: pre;">⁠$collect()⁠</code> sends the actual query to the ESGF search services and
+returns the results in a data.table::data.table. The columns depend
+on the value of query type and <code>fields</code> parameter.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$collect()</pre></div>
+
+
+
+<h5>Returns</h5>
+
+<p>A data.table.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q$fields("source_id")
+q$collect()
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-response"></a>
+
+
+
+<h4>Method <code>response()</code>
+</h4>
+
+<p>Get the response of last sent query
+</p>
+<p>The response of the last sent query is always stored internally and
+can be retrieved using <code style="white-space: pre;">⁠$response()⁠</code>. It is a named list generated
+from the JSON response using <code>jsonlite::fromJSON()</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$response()</pre></div>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q$response()
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EsgfQuery-print"></a>
+
+
+
+<h4>Method <code>print()</code>
+</h4>
+
+<p>Print a summary of the current <code>EsgfQuery</code> object
+</p>
+<p><code style="white-space: pre;">⁠$print()⁠</code> gives the summary of current <code>EsgfQuery</code> object including
+the host URL, the built time of facet cache and all query parameters.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EsgfQuery$print()</pre></div>
+
+
+
+<h5>Returns</h5>
+
+<p>The <code>EsgfQuery</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+q$print()
+}
+</pre>
+</div>
+
+
+
+
+<h3>Author(s)</h3>
+
+<p>Hongyuan Jia
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## ------------------------------------------------
+## Method `EsgfQuery$new`
+## ------------------------------------------------
+
+## Not run: 
+q &lt;- EsgfQuery$new(host = "https://esgf-node.llnl.gov/esg-search")
+q
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$build_cache`
+## ------------------------------------------------
+
+## Not run: 
+q$build_cache()
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$list_all_facets`
+## ------------------------------------------------
+
+## Not run: 
+q$list_all_facets()
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$list_all_shards`
+## ------------------------------------------------
+
+## Not run: 
+q$list_all_shards()
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$list_all_values`
+## ------------------------------------------------
+
+## Not run: 
+q$list_all_values()
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$project`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$project()
+
+# set the parameter
+q$project("CMIP6")
+
+# negate the project constraints
+q$project(!"CMIP6")
+
+# remove the parameter
+q$project(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$activity_id`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$activity_id()
+
+# set the parameter
+q$activity_id("ScenarioMIP")
+
+# negate the constraints
+q$activity_id(!c("CFMIP", "ScenarioMIP"))
+
+# remove the parameter
+q$activity_id(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$experiment_id`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$experiment_id()
+
+# set the parameter
+q$experiment_id(c("ssp126", "ssp585"))
+
+# negate the constraints
+q$experiment_id(!c("ssp126", "ssp585"))
+
+# remove the parameter
+q$experiment_id(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$source_id`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$source_id()
+
+# set the parameter
+q$source_id(c("BCC-CSM2-MR", "CESM2"))
+
+# negate the constraints
+q$source_id(!c("BCC-CSM2-MR", "CESM2"))
+
+# remove the parameter
+q$source_id(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$variable_id`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$variable_id()
+
+# set the parameter
+q$variable_id(c("tas", "pr"))
+
+# negate the constraints
+q$variable_id(!c("tas", "pr"))
+
+# remove the parameter
+q$variable_id(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$frequency`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$frequency()
+
+# set the parameter
+q$frequency(c("1hr", "day"))
+
+# negate the constraints
+q$frequency(!c("1hr", "day"))
+
+# remove the parameter
+q$frequency(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$variant_label`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$variant_label()
+
+# set the parameter
+q$variant_label(c("r1i1p1f1", "r1i2p1f1"))
+
+# negate the constraints
+q$variant_label(!c("r1i1p1f1", "r1i2p1f1"))
+
+# remove the parameter
+q$variant_label(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$nominal_resolution`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$nominal_resolution()
+
+# set the parameter
+q$nominal_resolution(c("100 km", "1x1 degree"))
+
+# negate the constraints
+q$nominal_resolution(!c("100 km", "1x1 degree"))
+
+# remove the parameter
+q$nominal_resolution(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$data_node`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$data_node()
+
+# set the parameter
+q$data_node("esg.lasg.ac.cn")
+
+# negate the constraints
+q$data_node(!"esg.lasg.ac.cn")
+
+# remove the parameter
+q$data_node(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$facets`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$facets()
+
+# set the facets
+q$facets(c("activity_id", "source_id"))
+
+# use all available facets
+q$facets("*")
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$fields`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$fields()
+
+# set the fields
+q$fields(c("activity_id", "source_id"))
+
+# use all available fields
+q$fields("*")
+
+# remove the parameter
+# act the same as above because the default `fields` in ESGF search
+# services is `*` if `fields` is not specified
+q$fields(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$shards`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$shards()
+
+# set the parameter
+q$shards("localhost:8983/solr/datasets")
+
+# negate the constraints
+q$shards(!"localhost:8983/solr/datasets")
+
+# only applicable for distributed queries
+q$distrib(FALSE)$shards("localhost:8983/solr/datasets") # Error
+
+# remove the parameter
+q$shards(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$replica`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$replica()
+
+# set the parameter
+q$replica(TRUE)
+
+# remove the parameter
+q$replica(NULL)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$latest`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$latest()
+
+# set the parameter
+q$latest(TRUE)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$type`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$type()
+
+# set the parameter
+q$type("Dataset")
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$limit`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$limit()
+
+# set the parameter
+q$limit(10L)
+
+# `limit` is reset to 10,000 if input is greater than that
+q$limit(10000L) # warning
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$offset`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$offset()
+
+# set the parameter
+q$offset(0L)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$distrib`
+## ------------------------------------------------
+
+## Not run: 
+# get current value
+q$distrib()
+
+# set the parameter
+q$distrib(TRUE)
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$params`
+## ------------------------------------------------
+
+## Not run: 
+# get current values
+# default is an empty list (`list()`)
+q$params()
+
+# set the parameter
+q$params(table_id = c("3hr", "day"), member_id = "00")
+q$params()
+
+# reset existing parameters
+q$frequency("day")
+q$params(frequency = "mon")
+q$frequency() # frequency value has been changed using $params()
+
+# negating the constraints is also supported
+q$params(table_id = !c("3hr", "day"))
+
+# use NULL to remove all parameters
+q$params(NULL)$params()
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$url`
+## ------------------------------------------------
+
+## Not run: 
+q$url()
+
+# get the wget script URL
+q$url(wget = TRUE)
+
+# You can download the wget script using the URL directly. For
+# example, the code below downloads the script and save it as
+# 'wget.sh' in R's temporary folder:
+download.file(q$url(TRUE), file.path(tempdir(), "wget.sh"), mode = "wb")
+
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$count`
+## ------------------------------------------------
+
+## Not run: 
+# get the total number of matched records
+q$count(NULL) # or q$count(facets = FALSE)
+
+# count records for specific facets
+q$facets(c("activity_id", "source_id"))$count()
+
+# same as above
+q$count(facets = c("activity_id", "source_id"))
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$collect`
+## ------------------------------------------------
+
+## Not run: 
+q$fields("source_id")
+q$collect()
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$response`
+## ------------------------------------------------
+
+## Not run: 
+q$response()
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EsgfQuery$print`
+## ------------------------------------------------
+
+## Not run: 
+q$print()
+
+## End(Not run)
+</code></pre>
+
+
+</div>

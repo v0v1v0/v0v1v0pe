@@ -1,0 +1,377 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ETAS_Boots</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute bootstrap confidence intervals</h2>
+
+<h3>Description</h3>
+
+<p>A number (1000 by default) of earthquake data catalogs are
+simulated by bootstrap and recorded. A 2-D spatial and temporal ETAS model is
+fitted to each bootstrap-simulated
+earthquake data catalog, and the corresponding parameter estimates are
+recorded, which provides an empirical distribution for each estimate.
+For a given confidence level <code class="reqn">1-\alpha</code> (0.95 by default), bootstrap
+confidence intervals are built from the empirical <code class="reqn">\alpha/2</code> (0.025) and
+<code class="reqn">1 -\alpha/2</code> (0.975) quantiles
+of the distributions of estimates for the parameters
+<code class="reqn">(A,c,\alpha,p,D,q,\gamma)</code> of the ETAS model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ETAS_Boots(
+  earthquake_data,
+  longitude_boundaries = NULL,
+  latitude_boundaries = NULL,
+  study_region = NULL,
+  time_begin = NULL,
+  study_start = NULL,
+  study_end = NULL,
+  magnitude_threshold = NULL,
+  time_zone = "GMT",
+  round_off = FALSE,
+  parameters_0 = NULL,
+  number_simulations = 1000,
+  confidence_level = 0.95,
+  output_datasets = FALSE,
+  output_estimates = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>earthquake_data</code></td>
+<td>
+<p>An object of class "data.frame" containing the following 5 columns:
+</p>
+
+<ul>
+<li>
+<p> date: Occurrence date of earthquakes in the format "yyyy-mm-dd"
+</p>
+</li>
+<li>
+<p> time: Occurrence time of earthquakes in the format "hh:mm:ss"
+</p>
+</li>
+<li>
+<p> longitude: Longitude of the epicenter of earthquakes in decimal degrees
+</p>
+</li>
+<li>
+<p> latitude: Latitude of the epicenter of earthquakes in decimal degrees
+</p>
+</li>
+<li>
+<p> magnitude: Magnitude of earthquakes (Any type of magnitude is accepted as far as it is used consistently and thoroughly.)
+</p>
+</li>
+</ul>
+<p>See VCI_earthquakes for an example with a rectangular study region; for a more general, polygonal study region, see JPN_earthquakes.
+Note that West longitude and South latitude
+values should be negative, whereas East longitude and North latitude
+values are positive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>longitude_boundaries</code></td>
+<td>
+<p>A numerical vector of length 2 (long_min, long_max)
+with the longitude boundaries of a rectangular space window,
+for which the earthquake catalog data are contained in <b>earthquake_data</b>. If NULL (at the beginning of the execution of the program),
+long_min and long_max will be set (by the program) to the minimum and maximum values of the longitudes
+of earthquakes in <b>earthquake_data</b>. 
+Together with <b>latitude_boundaries</b>, <b>longitude_boundaries</b> defines a region aimed to take edge effects into account in the analyses. 
+This region includes the study region and approximately 20% more space around the study region.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>latitude_boundaries</code></td>
+<td>
+<p>A numerical vector of length 2 (lat_min, lat_max)
+with the latitude boundaries of a rectangular space window, for which
+the earthquake catalog data are contained in <b>earthquake_data</b>. If NULL, lat_min and lat_max will be set to the minimum and maximum values of the latitudes of
+earthquakes in <b>earthquake_data</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study_region</code></td>
+<td>
+<p>A list with two components (lat, long) of equal length specifying the coordinates
+of the vertices of a polygonal study region. The vertices must be written in anticlockwise order. If NULL, study_region will
+be filled with boundaries defining a rectangular space window 20% narrower than the space window built from the longitude_boundaries and latitude_boundaries, while keeping the same center.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_begin</code></td>
+<td>
+<p>A character string, in the date-time format (yyyy-mm-dd
+hh:mm:ss), which identifies the start of the time span in
+<b>earthquake_data</b>. If NULL, <b>time_begin</b> will be set to the date-time of the
+first event in <b>earthquake_data</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study_start</code></td>
+<td>
+<p>A character string, in the date-time format, which
+specifies the start of the study period. If NULL, <b>study_start</b> will be set to
+the date-time corresponding to that of <b>time_begin</b> plus 20% of the length of the
+time span in <b>earthquake_data</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study_end</code></td>
+<td>
+<p>A character string, in the date-time format, which specifies the
+end of the study period. If NULL, it will be set to the date-time of the last event in
+<b>earthquake_data</b>.
+Note: <b>study_end</b> coincides with the end of the time span in
+<b>earthquake_data</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>magnitude_threshold</code></td>
+<td>
+<p>A decimal number which specifies the threshold to be used for the
+magnitudes of earthquakes. Only earthquakes with a magnitude greater than or
+equal to <b>magnitude_threshold</b> will be considered, while the model
+is being fitted. If NULL, the minimum magnitude
+calculated from the events in <b>earthquake_data</b> will be used for
+<b>magnitude_threshold</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_zone</code></td>
+<td>
+<p>A character string specifying the time zone in
+which the occurrence times of earthquakes were recorded.
+The default "GMT"is the UTC (Universal Time Coordinates).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>round_off</code></td>
+<td>
+<p>A logical flag indicating whether or not to account for round-off error in coordinates of epicenters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters_0</code></td>
+<td>
+<p>A decimal vector of size 8 <code class="reqn">(\nu, A, c, \alpha, p, D, q, \gamma)</code> to be used as an initial solution for the
+iterative maximum likelihood estimation of the ETAS model parameters.
+In particular, the values of parameters <code class="reqn">\nu</code>,
+<code class="reqn">A</code>, <code class="reqn">c</code>, <code class="reqn">\alpha</code>, <code class="reqn">D</code>, and <code class="reqn">\gamma</code> are positive,
+and those of
+<code class="reqn">p</code> and <code class="reqn">q</code> are strictly greater than 1.
+If NULL, the values recommended by Ogata (1998) will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>number_simulations</code></td>
+<td>
+<p>A positive integer which stands for the number of
+requested bootstrap simulations. The default value is 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confidence_level</code></td>
+<td>
+<p>A decimal number in (0, 1) which specifies the
+confidence level associated with the bootstrap confidence intervals that are built for
+the ETAS model parameters, and saved as outputs.
+It is set to 0.95 by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_datasets</code></td>
+<td>
+<p>A logical flag indicating whether or not
+the bootstrap-simulated earthquake data catalogs must be written in CSV
+files. The default setting is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_estimates</code></td>
+<td>
+<p>A logical flag indicating whether or not
+the maximum likelihood estimates of parameters from each
+bootstrap-simulated earthquake data catalog must be written in a CSV file.
+The default setting is FALSE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Ogata (1998) proposed the 2-D spatial and temporal ETAS model, which is
+now widely used to decluster earthquake catalogs and, to a lesser extent,
+make short-term forecasts. In the 2-D spatial and temporal ETAS model, the
+behavior of the point process for which
+<code class="reqn">\{(t_i,x_i,y_i,m_i),i=1,\dots,n\}</code> is a partial realization is
+characterized by the conditional intensity function
+</p>
+<p style="text-align: center;"><code class="reqn">\lambda_{\beta,\mathbf{\theta}}(t,x,y,m
+ \mid H_t) = s_{\beta}(m)\lambda_{\mathbf{\theta}}(t,x,y \mid H_t),</code>
+</p>
+
+<p>where <code class="reqn">\beta</code> and <code class="reqn">\mathbf{\theta} = (\nu,A,\alpha,c,p,q,D,\gamma)</code>
+are the model parameters and <code class="reqn">s_\beta</code> is the probability density function
+(pdf) associated with the distribution of earthquake magnitudes. It is
+assumed that the distribution of the magnitude of earthquakes is independent
+of the joint distribution of the occurrence time of earthquakes and the 2-D
+spatial location of their epicenters. It can be expressed, for arbitrary
+<code class="reqn">\beta \in (0, \infty)</code>, as </p>
+<p style="text-align: center;"><code class="reqn">s_{\beta}(m) = \beta \exp \{
+ -\beta(m-m_0)\},</code>
+</p>
+<p> where <code class="reqn">m</code> and <code class="reqn">m_0</code> represent the magnitude of the
+earthquake and the magnitude threshold, respectively.
+Moreover, <code class="reqn">\lambda_{\mathbf{\theta}}(t,x,y \mid H_t)</code> represents the rate of
+observation of earthquakes in time and space, given the information on
+earthquakes prior to time <code class="reqn">t</code>. This rate is expressed as the sum of two
+terms, namely
+</p>
+<p style="text-align: center;"><code class="reqn">\lambda_{\mathbf{\theta}}(t,x,y \mid H_t) = \mu(x,y) + \sum_{i:t_i&lt;t}k(m_i)g(t-t_i)f(x-x_i,y-y_i \mid m_i)</code>
+</p>
+
+<p>with
+</p>
+<p style="text-align: center;"><code class="reqn">\mu(x,y) = \nu u(x,y),</code>
+</p>
+<p>where <code class="reqn">\nu \in (0, \infty)</code>.
+The term <code class="reqn">\mu(x,y)</code> is usually called "background seismicity rate" and represents the rate at which earthquakes independently occur around longitude <code class="reqn">x</code> and latitude <code class="reqn">y</code>.
+The <code class="reqn">i</code>th term of the summation in <code class="reqn">\lambda_{\theta}</code>, namely
+</p>
+<p style="text-align: center;"><code class="reqn">k(m_i)g(t-t_i)f(x-x_i,y-y_i \mid m_i),</code>
+</p>
+
+<p>represents the effect of the <code class="reqn">i</code>th earthquake before time <code class="reqn">t</code> on the occurrence rate of earthquakes that would occur at time <code class="reqn">t</code>, with an epicenter around <code class="reqn">(x,y)</code>. Thus,
+</p>
+<p style="text-align: center;"><code class="reqn">\sum_{i:t_i&lt;t}k(m_i)g(t-t_i)f(x-x_i,y-y_i \mid m_i)</code>
+</p>
+<p> describes the total effect of all the earthquakes that occurred prior to time <code class="reqn">t</code>, on the rate at which earthquakes would occur with an epicenter around <code class="reqn">(x, y)</code> at time <code class="reqn">t</code>.
+The expressions for <code class="reqn">k</code>, <code class="reqn">g</code>, and <code class="reqn">f</code> are discussed individually as follows. First,
+</p>
+<p style="text-align: center;"><code class="reqn"> k(m) = Ae^{\alpha(m-m_0)},\quad m \geq m_0 ,</code>
+</p>
+<p> can be interpreted as the expected number of earthquakes triggered by a previous earthquake with magnitude <code class="reqn">m</code>, where <code class="reqn">A \in (0, \infty)</code> and <code class="reqn">\alpha \in (0, \infty)</code>. Second, for all <code class="reqn">t \in (t_i, \infty)</code>,
+</p>
+<p style="text-align: center;"><code class="reqn">g(t-t_i) = \frac{p-1}{c} \, \left (1+\frac{t-t_i}{c} \right )^{-p}</code>
+</p>
+<p> is the pdf for the occurrence time of an earthquake triggered by the <code class="reqn">i</code>th earthquake in the catalog, which occurred at time <code class="reqn">t_i</code>, where <code class="reqn">c \in (0, \infty)</code> and <code class="reqn">p \in (1, \infty)</code>. Third,
+</p>
+<p style="text-align: center;"><code class="reqn">f(x-x_i,y-y_i \mid m_i) = \frac{q-1}{\pi De^{\gamma(m_i-m_0)}} \, \left\{ 1+\frac{(x-x_i)^2+(y-y_i)^2}{De^{\gamma(m_i-m_0)}} \right\}^{-q}</code>
+</p>
+
+<p>is the pdf for the occurrence location (epicenter) of an earthquake triggered by the <code class="reqn">i</code>th earthquake in the catalog, which occurred with magnitude <code class="reqn">m_i</code> and an epicenter at <code class="reqn">(x_i, y_i)</code>, where <code class="reqn">D \in (0, \infty)</code>, <code class="reqn">\gamma \in (0, \infty)</code>, and <code class="reqn">q \in (1, \infty)</code>.
+For more details, see the articles of Zhuang et al. (2002, 2004).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of three components:
+</p>
+
+<ul>
+<li>
+<p> MLE: A numerical vector recording the maximum likelihood estimates of the ETAS model parameters
+<code class="reqn">(A,c,\alpha,p,D,q,\gamma)</code>.
+</p>
+</li>
+<li>
+<p> ASE: A numerical vector recording the corresponding asymptotic standard errors.
+</p>
+</li>
+<li>
+<p> BootstrapCI: A matrix recording the corresponding bootstrap confidence intervals
+for
+the <b>confidence_level</b> entered as input and all the other input arguments
+of the ETAS_Boots function starting with <b>earthquake_data</b>.
+</p>
+</li>
+</ul>
+<p>When <b>output_datasets</b>=TRUE, the simulated earthquake data
+catalogs are
+written in "Boot_N.csv", where "N" denotes the number of bootstrap
+simulation runs.
+</p>
+<p>When <b>output_estimates</b>=TRUE, the maximum likelihood
+estimates of parameters
+from each simulated earthquake data catalog are written in "estimates.csv".
+</p>
+
+
+<h3>References</h3>
+
+<p>Dutilleul, P., Genest, C., Peng, R., 2024. Bootstrapping for parameter uncertainty
+in the space-time epidemic-type aftershock sequence model. Geophysical Journal 
+International 236, 1601–1608.
+</p>
+<p>Ogata, Y. (1998). Space-time point-process models for earthquake
+occurrences. Annals of the Institute of Statistical Mathematics 50(2),
+379–402.
+</p>
+<p>Zhuang, J., Y. Ogata, and D. Vere-Jones (2002). Stochastic declustering
+of space-time earthquake occurrences. Journal of the
+American Statistical Association 97(458), 369–380.
+</p>
+<p>Zhuang, J., Y. Ogata, and D. Vere-Jones (2004). Analyzing earthquake
+clustering features by using stochastic reconstruction. Journal of
+Geophysical Research: Solid Earth 109(B05301).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(23)
+ETAS_Boots(earthquake_data = VCI_earthquakes,
+          longitude_boundaries = c(-131, -126.25),
+          latitude_boundaries = c(48, 50),
+          study_region = list(long = c(-130.5, -130.5, -126.75, -126.75),
+                              lat = c(49.75, 48.25, 48.25, 49.75)),
+          time_begin = "2000/01/01 00:00:00",
+          study_start = "2008/04/27 00:00:00",
+          study_end = "2018/04/27 00:00:00",
+          magnitude_threshold = 4,
+          time_zone = "GMT",
+          parameters_0 = c(0.65, 0.24, 0.0068, 0.97, 1.22, 0.0033, 2.48, 0.17),
+          number_simulations = 4,
+          confidence_level = 0.95,
+          output_datasets = FALSE,
+          output_estimates = FALSE)
+          
+
+ETAS_Boots(
+ earthquake_data=JPN_earthquakes,
+ longitude_boundaries = c(128, 145),
+ latitude_boundaries = c(27, 45),
+ study_region = list(long=c(130,135,145,140),
+                    lat=c(33,30,40,43)),
+ time_begin = "1926-01-08",
+ study_start = "1953-05-26",
+ study_end = "1990-01-08",
+ magnitude_threshold = 5.5,
+ time_zone = "GMT",
+ round_off = FALSE,
+ parameters_0 = c(0.524813924, 0.09, 0.045215442, 1.970176559, 
+                  1.249620329, 0.002110203, 1.910492169,1.763149113 ),
+ number_simulations = 2,
+ confidence_level = 0.95,
+ output_datasets = FALSE,
+ output_estimates = FALSE
+)
+
+           
+</code></pre>
+
+
+</div>

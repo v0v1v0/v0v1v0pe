@@ -1,0 +1,295 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nearestEnvPoints</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract "most conservative" environments from points and/or polygons</h2>
+
+<h3>Description</h3>
+
+<p>This function implements the "nearest environmental point" method (Smith et al. 2023) to enable the use of occurrence records geolocated only to a general place (e.g., a country or province), along with occurrences georeferenced with little error.  The function returns environments from a set of precisely-geolocated points plus the environment associated with each imprecise record.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nearestEnvPoints(
+  rasts,
+  pts = NULL,
+  polys = NULL,
+  centerFrom = "pts",
+  pca = TRUE,
+  numPcs = 3,
+  center = TRUE,
+  scale = TRUE,
+  rule = "nearest",
+  na.rm = TRUE,
+  out = "both"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>rasts</code></td>
+<td>
+<p>A <code>SpatRaster</code> or "stack" of <code>SpatRaster</code>s. Please also see argument <code>pca</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pts</code></td>
+<td>
+<p>A set of spatial points of class <code>SpatVector</code> or <code>sf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>polys</code></td>
+<td>
+<p>A set of spatial polygons of class <code>SpatVector</code> or <code>sf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>centerFrom</code></td>
+<td>
+<p>Indicates how to locate the "reference" centroid used to identify single points on each polygon. This is only relevant if both <code>pts</code> and <code>polys</code> are specified.
+</p>
+
+<ul>
+<li> <p><code>'pts'</code>: The default is to use the environmental centroid of <code>pts</code>, which finds the centroid of <code>pts</code>, then finds the location on the border of each polygon closest to this centroid.
+</p>
+</li>
+<li> <p><code>'polys'</code>: This option will first calculate the environmental centroid of each polygon, then the centroid of these points, and then find the location on the border of each polygon closest to this point.
+</p>
+</li>
+<li> <p><code>'both'</code>: This option first calculates the environmental centroid of each polygon, then finds the joint centroid of these points plus of <code>pts</code>, and lastly locates on the border of each polygon the point closest to this grand centroid.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pca</code></td>
+<td>
+<p>If <code>TRUE</code> (default) and there is more than one raster specified in <code>rasts</code>, then a principal components analysis (PCA) is applied to the values of the rasters before finding the closest points. The returned values are those of the original rasters and the PC scores.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numPcs</code></td>
+<td>
+<p>The number of PC axes used to find environmental centroids. This is only used if <code>pca</code> is <code>TRUE</code>. By default, all axes are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center, scale</code></td>
+<td>
+<p>Settings for <code>prcomp</code>. These indicate if, when calculating the PCA, variables should first be centered and scaled (both <code>TRUE</code> by default). If the values in <code>rasts</code> are not of the same units, this should almost always be <code>TRUE</code>. They are ignored if <code>pca</code> is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+<p>Determines how to identify the single environmental point to associate with each polygon. Options include:
+</p>
+
+<ul>
+<li>    <p><code>'nearest'</code> (default): Returns the environmental point <em>closest</em> to the centroid (i.e., the "nearest environmental point").
+</p>
+</li>
+<li>    <p><code>'farthest'</code>: Returns the environmental point <em>farthest</em> from the centroid (i.e., opposite of the "nearest" point)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>If <code>TRUE</code> (default), ignore <code>NA</code>s when extracting from rasters (e.g., if a point or polygon falls onto an <code>NA</code> cell). If <code>FALSE</code>, then any <code>NA</code>s that overlap a point or polygon will result in an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out</code></td>
+<td>
+<p>Determines what is returned. Only used if both <code>pts</code> and <code>polys</code> are provided.
+</p>
+
+<ul>
+<li> <p><code>'both'</code> (default): Returns all environmental points. If <em>n</em> is the number of points in <code>pts</code> and <em>m</em> the number of polygons in <code>polys</code>, then the first <code>n</code> rows in the returned data frame refer to the environments of the <code>pts</code> and the subsequent <em>m</em> to each <code>poly</code>.
+</p>
+</li>
+<li> <p><code>'pts'</code>: Returns the environmental values associated with each point.
+</p>
+</li>
+<li> <p><code>'polys'</code>: Returns the environmental values on each <code>poly</code> polygon closest to the given center.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function locates a set of points from the environments covered by each polygon using the following procedure, the details of which depend on what arguments are specified:
+</p>
+
+<ul>
+<li>
+<p> Only <code>pts</code> is specified: Environments are taken directly from the locations of <code>pts</code> in environmental space.
+</p>
+</li>
+<li>
+<p> Only <code>polys</code> is specified: Environments are taken from the closest environment of all the environments associated with each each polygon that is closest to the environmental centroid of the environmental centroids of the polygons (that may be confusing, but it is not a typo).
+</p>
+</li>
+<li> <p><code>pts</code> and <code>polys</code> are specified: Environments are taken from the locations of <code>pts</code> plus the environment from each polygon closest to the environmental centroid of <code>pts</code>. By default, the function uses the environmental centroid of the precise occurrences in step (1), but this can be changed to the environmental centroid of the centroids of the polygons or the environmental centroid of the points defined by the union of precise occurrence points plus the environmental centroids of the polygons.
+</p>
+</li>
+</ul>
+<p>The function can alternatively return the points on the vertices of the MCP, or points on the input polygons closest to the reference centroid.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame.
+</p>
+
+
+<h3>References</h3>
+
+<p>Smith, A.B., Murphy, S.J., Henderson, D., and Erickson, K.D. 2023. Including imprecisely georeferenced specimens improves accuracy of species distribution models and estimates of niche breadth.  <em>Global Ecology and Biogeography</em> In press. Open access pre-print: <a href="https://doi.org/10.1101/2021.06.10.447988">doi:10.1101/2021.06.10.447988</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>nearestGeogPoints</code> for the "nearest geographic point" method, a related approach for geographic space.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># This is a contrived example based on red-bellied lemurs in Madagascar.
+# Point locations (which are real data) will be assumed to be "precise"
+# records. We will designate a set of Faritas ("counties") to represent
+# "imprecise" occurrences that can only be georeferenced to a geopolitical
+# unit.
+
+library(sf)
+library(terra)
+
+# coordinate reference system
+wgs84 &lt;- getCRS('WGS84')
+
+# lemur point data
+data(lemurs)
+precise &lt;- lemurs[lemurs$species == 'Eulemur rubriventer', ]
+ll &lt;- c('longitude', 'latitude')
+precise &lt;- sf::st_as_sf(precise[ , ll], coords=ll, crs=wgs84)
+
+# *fake* lemur administrative unit-level data
+faritras &lt;- c('Vakinankaratra', 'Haute matsiatra', 'Ihorombe',
+'Vatovavy Fitovinany', 'Alaotra-Mangoro', 'Analanjirofo', 'Atsinanana',
+'Analamanga', 'Itasy')
+
+data(mad1)
+imprecise &lt;- mad1[mad1$NAME_2 %in% faritras, ]
+
+# climate predictors
+rastFile &lt;- system.file('extdata/madClim.tif', package='enmSdmX')
+rasts &lt;- rast(rastFile)
+
+### Plot environment of points and environments of each polygon closest to
+### centroid of environments of points. In this example, we use the first two
+### principal component axes to characterize the niche.
+
+# apply Nearest Environmental Point method
+envPtsPolys &lt;- nearestEnvPoints(rasts, pts = precise, polys = imprecise,
+	pca = TRUE,	numPcs = 2)
+envPolys &lt;- nearestEnvPoints(rasts, pts = precise, polys = imprecise, numPcs = 2,
+	out = 'polys')
+envPts &lt;- nearestEnvPoints(rasts, pts = precise, polys = imprecise, numPcs = 2,
+	out = 'pts')
+	
+allPolyEnvs &lt;- extract(rasts, imprecise)
+
+# plot occurrences in environmental space
+plot(envPtsPolys$PC1, envPtsPolys$PC2, pch=16, col='black',
+	xlab='PC1', ylab='PC2')
+
+points(envPolys$PC1, envPolys$PC2, pch=21, bg='orange')
+
+legend(
+	'bottomleft',
+	inset = 0.01,
+	legend = c('precise', 'imprecise (closest)'),
+	pch = c(16, 21),
+	col = c('black', 'black'),
+	pt.bg = c('orange', 'orange')
+)
+
+### compare identified environments to all environments across all polygons
+###########################################################################
+
+env &lt;- as.data.frame(rasts)
+pca &lt;- stats::prcomp(env, center=TRUE, scale.=TRUE)
+
+allPolyEnvs &lt;- extract(rasts, imprecise, ID = FALSE)
+allPolyEnvsPcs &lt;- predict(pca, allPolyEnvs)
+allPolyEnvs &lt;- cbind(allPolyEnvs, allPolyEnvsPcs)
+
+# plot in environmental space
+plot(allPolyEnvs$PC1, allPolyEnvs$PC2, pch=16, col='orange',
+	xlab='PC1', ylab='PC2')
+points(envPts$PC1, envPts$PC2, pch=16)
+points(envPolys$PC1, envPolys$PC2, pch=1)
+legend(
+	'bottomleft',
+	inset = 0.01,
+	legend = c('precise', 'imprecise (closest)', 'imprecise (all)'),
+	pch = c(16, 21, 16),
+	col = c('black', 'black', 'orange'),
+	pt.bg = c(NA, 'orange')
+)
+
+### display niches (minimum convex hulls) estimated
+### using just precise or precise + imprecise records
+#####################################################
+
+pcs &lt;- c('PC1', 'PC2')
+preciseIndices &lt;- chull(envPts[ , pcs])
+preciseImpreciseIndices &lt;- chull(envPtsPolys[ , pcs])
+
+preciseIndices &lt;- c(preciseIndices, preciseIndices[1])
+preciseImpreciseIndices &lt;- c(preciseImpreciseIndices,
+	preciseImpreciseIndices[1])
+
+preciseOnlyNiche &lt;- envPts[preciseIndices, pcs]
+preciseImpreciseNiche &lt;- envPtsPolys[preciseImpreciseIndices, pcs]
+
+# plot in environmental space
+plot(allPolyEnvs$PC1, allPolyEnvs$PC2, pch=16, col='orange',
+	xlab='PC1', ylab='PC2')
+points(envPts$PC1, envPts$PC2, pch=16)
+points(envPolys$PC1, envPolys$PC2, pch=1)
+lines(preciseImpreciseNiche, col='coral4', lwd=2)
+lines(preciseOnlyNiche, lty='dotted')
+
+legend(
+	'bottomleft',
+	inset = 0.01,
+	legend = c('precise', 'imprecise (closest)', 'imprecise (all)', 
+		'MCP imprecise-only', 'MCP precise + imprecise'),
+	pch = c(16, 21, 16, NA, NA),
+	col = c('black', 'black', 'orange', 'black', 'coral4'),
+	pt.bg = c(NA, 'orange', NA, NA, NA),
+	lwd = c(NA, NA, NA, 1, 2),
+	lty = c(NA, NA, NA, 'dotted', 'solid')
+)
+</code></pre>
+
+
+</div>

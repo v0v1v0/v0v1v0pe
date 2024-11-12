@@ -1,0 +1,552 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>summaryFull</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Full Complement of Summary Statistics
+</h2>
+
+<h3>Description</h3>
+
+<p><code>summaryFull</code> is a generic function used to produce a full complement of summary statistics.  
+The function invokes particular <code>methods</code> which depend on the <code>class</code> of 
+the first argument.  The summary statistics include: sample size, number of missing values, 
+mean, median, trimmed mean, geometric mean, skew, kurtosis, min, max, range, 1st quartile, 3rd quartile, 
+standard deviation, geometric standard deviation, interquartile range, median absolute deviation, and 
+coefficient of variation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">summaryFull(object, ...)
+
+## S3 method for class 'formula'
+summaryFull(object, data = NULL, subset, 
+  na.action = na.pass, ...)
+
+## Default S3 method:
+summaryFull(object, group = NULL, 
+    combine.groups = FALSE, drop.unused.levels = TRUE, 
+    rm.group.na = TRUE, stats = NULL, trim = 0.1, 
+    sd.method = "sqrt.unbiased", geo.sd.method = "sqrt.unbiased", 
+    skew.list = list(), kurtosis.list = list(), 
+    cv.list = list(), digits = max(3, getOption("digits") - 3), 
+    digit.type = "signif", stats.in.rows = TRUE, 
+    drop0trailing = TRUE, data.name = deparse(substitute(object)), 
+    ...)
+
+## S3 method for class 'data.frame'
+summaryFull(object, ...)
+
+## S3 method for class 'matrix'
+summaryFull(object, ...)
+
+## S3 method for class 'list'
+summaryFull(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>an object for which summary statistics are desired.  In the default method, 
+the argument <code>object</code> must be a numeric vector, a data frame, a matrix, or a list.  
+When <code>object</code> is a data frame, all columns must be numeric.  
+When <code>object</code> is a matrix, it must be a numeric matrix.  
+When <code>object</code> is a list, all components must be numeric vectors.
+In the formula method, a symbolic specification of the form <code>y ~ g</code> 
+can be given, indicating the observations in the vector <code>y</code> are to be grouped 
+according to the levels of the factor <code>g</code> (the form <code>y ~ 1</code> indicates no grouping).  
+<code>NA</code>s are allowed in the data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>when <code>object</code> is a formula, <code>data</code> specifies an optional data frame, list or 
+environment (or object coercible by <code>as.data.frame</code> to a data frame) containing the 
+variables in the model.  If not found in <code>data</code>, the variables are taken from 
+<code>environment(formula)</code>, typically the environment from which <br><code>summaryFull</code> is called.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+
+<p>when <code>object</code> is a formula, <code>subset</code> specifies an optional vector specifying 
+a subset of observations to be used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+
+<p>when <code>object</code> is a formula, <code>na.action</code> specifies a function which indicates 
+what should happen when the data contain <code>NA</code>s. The default is <code>na.pass</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+
+<p>when <code>object</code> is a numeric vector, <code>group</code> is a factor or character vector 
+indicating which group each observation belongs to.  When <code>object</code> is a matrix or data frame
+this argument is ignored and the columns define the groups.  When <code>object</code> is a formula, 
+this argument is ignored and the right-hand side of the formula specifies the grouping variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>combine.groups</code></td>
+<td>
+
+<p>logical scalar indicating whether to show summary statistics for all groups combined.  
+The default value is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop.unused.levels</code></td>
+<td>
+
+<p>when <code>drop.unused.levels=TRUE</code>, groups with no observations are dropped.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rm.group.na</code></td>
+<td>
+
+<p>logical scalar indicating whether to remove missing values from the <code>group</code> argument.  By 
+default <code>rm.group.na=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stats</code></td>
+<td>
+
+<p>character vector indicating which statistics to compute.  Possible elements of the character 
+vector include:  <code>"all"</code> (indicating to include all summary statistics), 
+<code>"for.non.pos"</code> (only compute statistics that are meaningful for datasets with non-positive values), 
+<code>"n"</code> (number of non-missing values), <code>"n.miss"</code> (number of missing values), 
+<code>"mean"</code>, <code>"median"</code>, <br><code>"trimmed.mean"</code>, <code>"geo.mean"</code>, <code>"skew"</code>, <code>"kurtosis"</code>, <code>"min"</code>, <code>"max"</code>, <br><code>"range"</code>, <code>"1st.quart"</code>, <code>"3rd.quart"</code>, <code>"sd"</code>, <code>"geo.sd"</code>, <code>"iqr"</code>, <br><code>"mad"</code>, <code>"cv"</code>.  The default value is <code>stats="for.non.pos"</code> when <code>object</code> contains 
+non-positive values (i.e., values <code class="reqn">\le 0</code>), and <code>stats="all"</code> when <code>object</code> contains 
+only positive values.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trim</code></td>
+<td>
+
+<p>fraction (between 0 and 0.5 inclusive) of values to be trimmed from each end of the ordered data 
+to compute the trimmed mean.  The default value is <code>trim=0.1</code>.  
+If <code>trim=0.5</code>, this yields the median.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd.method</code></td>
+<td>
+
+<p>character string specifying what method to use to compute the sample standard deviation.  
+The possible values are <code>"sqrt.ubiased"</code> (the square root of the unbiased estimate of variance; 
+the default), or <code>"moments"</code> (the method of moments estimator).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geo.sd.method</code></td>
+<td>
+
+<p>character string specifying what method to use to compute the sample standard deviation of the 
+log-transformed observations prior to exponentiating this quantity.  The possible values are 
+<code>"sqrt.ubiased"</code> (the square root of the unbiased estimate of variance; the default), or 
+<code>"moments"</code> (the method of moments estimator).  See the help file for <code>geoSD</code> 
+for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skew.list</code></td>
+<td>
+
+<p>list of arguments to supply to the <code>skewness</code> function.  See the help file for 
+<code>skewness</code> for more information.  The default value is <code>skew.list=list()</code>, 
+which results in using the default arguments to <code>skewness</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kurtosis.list</code></td>
+<td>
+
+<p>list of arguments to supply to the <code>kurtosis</code> function.  See the help file for 
+<code>kurtosis</code> for more information.  The default value is <br><code>kurtosis.list=list()</code>, 
+which results in using the default arguments to <br><code>kurtosis</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv.list</code></td>
+<td>
+
+<p>list of arguments to supply to the <code>cv</code> function.  See the help file for <code>cv</code> 
+for more information.  The default value is <code>cv.list=list()</code>, which results in using the default 
+arguments to <code>cv</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+
+<p>integer indicating the number of digits to use for the summary statistics.  
+When <code>digit.type="signif"</code>, <code>digits</code> indicates the number of significant 
+digits.  When <code>digit.type="round"</code>, <code>digits</code> indicates the number of 
+decimal places to round to.  The default value is <code>max(3, getOption("digits") - 3)</code>, 
+that is, the maximum of 3 versus the current setting of the <code>"digits"</code> component 
+of <code>.Options</code> minus 3.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digit.type</code></td>
+<td>
+
+<p>character string indicating whether the <code>digits</code> argument refers to significant digits 
+(<code>digit.type="signif"</code>, the default), or how many decimal places to round to 
+(<code>digit.type="round"</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stats.in.rows</code></td>
+<td>
+
+<p>logical scalar indicating whether to show the summary statistics in the rows or columns of the 
+output.  The default is <code>stats.in.rows=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop0trailing</code></td>
+<td>
+
+<p>logical scalar indicating whether to drop trailing 0's when printing the summary statistics.  
+The value of this argument is added as an attribute to the returned list and is used by the 
+<code>print.summaryStats</code> function.  The default value is <code>TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name</code></td>
+<td>
+
+<p>character string indicating the name of the data used for the summary statistics.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>additional arguments affecting the summary statistics produced.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>summaryFull</code> returns summary statistics that are useful to describe various 
+characteristics of one or more variables.  It is an extended version of the built-in R function 
+<code>summary</code> specifically for non-factor numeric data.  The table below shows what 
+statistics are computed and what functions are called by <code>summaryFull</code> to compute these statistics.
+</p>
+<p>The object returned by <code>summaryFull</code> is useful for printing or report purposes.  You may also 
+use the functions that <code>summaryFull</code> calls (see table below) to compute summary statistics to 
+be used by other functions.
+</p>
+<p>See the help files for the functions listed in the table below for more information on these 
+summary statistics.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <b>Summary Statistic</b>     </td>
+<td style="text-align: left;"> <b>Function Used</b>               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Mean                         </td>
+<td style="text-align: left;"> <code>mean</code>                            </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Median                       </td>
+<td style="text-align: left;"> <code>median</code>                          </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Trimmed Mean                 </td>
+<td style="text-align: left;"> <code>mean</code> with <code>trim</code> argument  </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Geometric Mean               </td>
+<td style="text-align: left;"> <code>geoMean</code>                         </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Skew                         </td>
+<td style="text-align: left;"> <code>skewness</code>                        </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Kurtosis                     </td>
+<td style="text-align: left;"> <code>kurtosis</code>                        </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Min                          </td>
+<td style="text-align: left;"> <code>min</code>                             </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Max                          </td>
+<td style="text-align: left;"> <code>max</code>                             </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Range                        </td>
+<td style="text-align: left;"> <code>range</code> and <code>diff</code>    </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  1st Quartile                 </td>
+<td style="text-align: left;"> <code>quantile</code>                        </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  3rd Quartile                 </td>
+<td style="text-align: left;"> <code>quantile</code>                        </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Standard Deviation           </td>
+<td style="text-align: left;"> <code>sd</code>                              </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Geometric Standard Deviation </td>
+<td style="text-align: left;"> <code>geoSD</code>                           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Interquartile Range          </td>
+<td style="text-align: left;"> <code>iqr</code>                             </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Median Absolute Deviation    </td>
+<td style="text-align: left;"> <code>mad</code>                             </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  Coefficient of Variation     </td>
+<td style="text-align: left;"> <code>cv</code>                              </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of class <code>"summaryStats"</code> (see <code>summaryStats.object</code>.  
+Objects of class <code>"summaryStats"</code> are numeric matrices that contain the 
+summary statisics produced by a call to <code>summaryStats</code> or <code>summaryFull</code>.  
+These objects have a special printing method that by default removes 
+trailing zeros for sample size entries and prints blanks for statistics that are 
+normally displayed as <code>NA</code> (see <code>print.summaryStats</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Berthouex, P.M., and L.C. Brown. (2002). 
+<em>Statistics for Environmental Engineers, Second Edition</em>. 
+Lewis Publishers, Boca Raton, FL.
+</p>
+<p>Gilbert, R.O. (1987). <em>Statistical Methods for Environmental 
+Pollution Monitoring</em>.  Van Nostrand Reinhold, NY.
+</p>
+<p>Helsel, D.R., and R.M. Hirsch. (1992). 
+<em>Statistical Methods in Water Resources Research</em>. 
+Elsevier, New York, NY.
+</p>
+<p>Leidel, N.A., K.A. Busch, and J.R. Lynch. (1977). <em>Occupational Exposure Sampling Strategy Manual</em>. 
+U.S. Department of Health, Education, and Welfare, Public Health Service, Center for Disease Control, 
+National Institute for Occupational Safety and Health, Cincinnati, Ohio 45226, January, 1977, pp.102-103.
+</p>
+<p>Millard, S.P., and N.K. Neerchal. (2001). <em>Environmental Statistics with S-PLUS</em>. 
+CRC Press, Boca Raton, FL.
+</p>
+<p>Ott, W.R. (1995). <em>Environmental Statistics and Data Analysis</em>. 
+Lewis Publishers, Boca Raton, FL.
+</p>
+<p>Zar, J.H. (2010). <em>Biostatistical Analysis, Fifth Edition</em>. 
+Prentice-Hall, Upper Saddle River, NJ.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary</code>, <code>summaryStats</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 20 observations from a lognormal distribution with 
+  # parameters mean=10 and cv=1, and compute the summary statistics.  
+  # (Note: the call to set.seed simply allows you to reproduce this 
+  # example.)
+
+  set.seed(250) 
+
+  dat &lt;- rlnormAlt(20, mean=10, cv=1) 
+
+  summary(dat) 
+  # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  #2.608   4.995   6.235   7.490   9.295  15.440
+
+  summaryFull(dat) 
+  #                             dat     
+  #N                            20      
+  #Mean                          7.49   
+  #Median                        6.235  
+  #10% Trimmed Mean              7.125  
+  #Geometric Mean                6.674  
+  #Skew                          0.9877 
+  #Kurtosis                     -0.03539
+  #Min                           2.608  
+  #Max                          15.44   
+  #Range                        12.83   
+  #1st Quartile                  4.995  
+  #3rd Quartile                  9.295  
+  #Standard Deviation            3.803  
+  #Geometric Standard Deviation  1.634  
+  #Interquartile Range           4.3    
+  #Median Absolute Deviation     2.607  
+  #Coefficient of Variation      0.5078 
+
+  #----------
+
+  # Compare summary statistics for normal and lognormal data:
+  log.dat &lt;- log(dat) 
+
+  summaryFull(list(dat = dat, log.dat = log.dat))
+  #                             dat      log.dat
+  #N                            20       20     
+  #Mean                          7.49     1.898 
+  #Median                        6.235    1.83  
+  #10% Trimmed Mean              7.125    1.902 
+  #Geometric Mean                6.674    1.835 
+  #Skew                          0.9877   0.1319
+  #Kurtosis                     -0.03539 -0.4288
+  #Min                           2.608    0.9587
+  #Max                          15.44     2.737 
+  #Range                        12.83     1.778 
+  #1st Quartile                  4.995    1.607 
+  #3rd Quartile                  9.295    2.227 
+  #Standard Deviation            3.803    0.4913
+  #Geometric Standard Deviation  1.634    1.315 
+  #Interquartile Range           4.3      0.62  
+  #Median Absolute Deviation     2.607    0.4915
+  #Coefficient of Variation      0.5078   0.2588
+
+  # Clean up
+  rm(dat, log.dat)
+
+  #--------------------------------------------------------------------
+
+  # Compute summary statistics for 10 observations from a normal 
+  # distribution with parameters mean=0 and sd=1.  Note that the 
+  # geometric mean and geometric standard deviation are not computed 
+  # since some of the observations are non-positive.
+
+  set.seed(287) 
+
+  dat &lt;- rnorm(10) 
+
+  summaryFull(dat) 
+  #                          dat     
+  #N                         10      
+  #Mean                       0.07406
+  #Median                     0.1095 
+  #10% Trimmed Mean           0.1051 
+  #Skew                      -0.1646 
+  #Kurtosis                  -0.7135 
+  #Min                       -1.549  
+  #Max                        1.449  
+  #Range                      2.998  
+  #1st Quartile              -0.5834 
+  #3rd Quartile               0.6966 
+  #Standard Deviation         0.9412 
+  #Interquartile Range        1.28   
+  #Median Absolute Deviation  1.05
+
+  # Clean up
+  rm(dat)
+
+  #--------------------------------------------------------------------
+
+  # Compute summary statistics for the TcCB data given in USEPA (1994b) 
+  # (the data are stored in EPA.94b.tccb.df).  Arbitrarily set the one 
+  # censored observation to the censoring level. Group by the variable 
+  # Area.
+
+  summaryFull(TcCB ~ Area, data = EPA.94b.tccb.df)
+  #                             Cleanup  Reference
+  #N                             77       47      
+  #Mean                           3.915    0.5985 
+  #Median                         0.43     0.54   
+  #10% Trimmed Mean               0.6846   0.5728 
+  #Geometric Mean                 0.5784   0.5382 
+  #Skew                           7.717    0.9019 
+  #Kurtosis                      62.67     0.132  
+  #Min                            0.09     0.22   
+  #Max                          168.6      1.33   
+  #Range                        168.5      1.11   
+  #1st Quartile                   0.23     0.39   
+  #3rd Quartile                   1.1      0.75   
+  #Standard Deviation            20.02     0.2836 
+  #Geometric Standard Deviation   3.898    1.597  
+  #Interquartile Range            0.87     0.36   
+  #Median Absolute Deviation      0.3558   0.2669 
+  #Coefficient of Variation       5.112    0.4739 
+</code></pre>
+
+
+</div>

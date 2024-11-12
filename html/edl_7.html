@@ -1,0 +1,148 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>createTrainingData</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create event training data from a frequency data frame.</h2>
+
+<h3>Description</h3>
+
+<p>Create event training data from a frequency data frame.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">createTrainingData(
+  data,
+  nruns = 1,
+  random = TRUE,
+  within.runs = FALSE,
+  add.id = TRUE,
+  check = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame with columns <code>Cues</code> and <code>Outcomes</code>,
+and optionally <code>Frequency</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nruns</code></td>
+<td>
+<p>Numeric: number of times to run through the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random</code></td>
+<td>
+<p>Logical: randomize the data or not (defaults to TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within.runs</code></td>
+<td>
+<p>Logical: apply setting of <code>random</code> to the data 
+_within_ each run (if set to TRUE) or over all data (if set to 
+FALSE). Default setting is FALSE. 
+Note that to randomize the data within seprate runs, both <code>random</code> 
+and <code>within.runs</code> should be set to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.id</code></td>
+<td>
+<p>Logical: whether or not to add columns that identify events 
+(default is TRUE). The column <code>Item</code> is added to describe each type 
+of event (unless this column already exists in <code>data</code>), the column 
+<code>Run</code> is added when <code>within.runs=TRUE</code>, and the column 
+<code>Trial</code> indicates the order of events within the data frame or 
+within the run (when <code>within.runs=TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check</code></td>
+<td>
+<p>Logical: check for empty strings ("") or not (defaults 
+to TRUE). If empty strings are found, they will be removed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>data frame
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Jacolien van Rij
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load example data:
+data(dat)
+
+# add obligatory columns Cues, Outcomes, and Frequency:
+dat$Cues &lt;- paste("BG", dat$Shape, dat$Color, sep="_")
+dat$Outcomes &lt;- dat$Category
+dat$Frequency &lt;- dat$Frequency1
+head(dat)
+dim(dat)
+
+# now use createTrainingData to sample from the specified frequencies: 
+train &lt;- createTrainingData(dat)
+head(train)
+dim(train)
+# the rows should be equal to the sum of frequencies in dat:
+sum(dat$Frequency)
+
+# this training data can actually be used train network:
+wm &lt;- RWlearning(train)
+# inspect weight matrix:
+wm[[1]]
+
+# retrieve cues and outcomes from data:
+c &lt;- getCues(wm)
+o &lt;- getOutcomes(wm)
+# add missing cues to initial weight matrix:
+checkWM(c, o, wm=wm[[1]])
+
+# -------------------
+# additional possibility for  
+# simulating experimental designs:
+# -------------------
+dat$Frequency &lt;- dat$Frequency2
+train2 &lt;- createTrainingData(dat, nruns=5)
+head(train2)
+# items are completely randomized, 
+# and not equally distributed over the experiment:
+train2$Run &lt;- rep(1:5, each=(nrow(train2)/5))
+table(train2$Run, train2$Item)
+# in this way the items are randomized within each run: 
+train3 &lt;- createTrainingData(dat, nruns=5, within.runs=TRUE)
+head(train3)
+table(train3$Run, train3$Item)
+# difference in learning (may take some time):
+## Not run: 
+wm2 &lt;- RWlearning(train2)
+plotCueWeights(wm2, cue="brown")	
+wm3 &lt;- RWlearning(train3)
+plotCueWeights(wm3, cue="brown")	
+plotOutcomeWeights(wm3, outcome="animal")	
+
+## End(Not run)
+</code></pre>
+
+
+</div>

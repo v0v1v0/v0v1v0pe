@@ -1,0 +1,335 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ReadInputs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>ReadInputs raw date and climate data
+</h2>
+
+<h3>Description</h3>
+
+<p>Load raw date and climate data, perform pre-processing, check for missing and error entries and then compile data list of daily time step.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ReadInputs(varnames, climatedata, constants, stopmissing, timestep = "daily", 
+                        interp_missing_days = FALSE, 
+                        interp_missing_entries = FALSE, 
+                        interp_abnormal = FALSE, 
+                        missing_method = NULL, 
+                        abnormal_method = NULL,
+                        message = "yes")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>varnames</code></td>
+<td>
+
+<p>A character vector with length equals to the number of climate variables to be processed. Can include any element from:
+<em>Tmax</em>, <em>Tmin</em>, <em>Temp</em>, <em>Tdew</em>,
+<em>RHmax</em>, <em>RHmin</em>, <em>RH</em>,
+<em>Rs</em>, <em>n</em>, <em>Cd</em>, <em>Precip</em>,
+<em>uz</em>, <em>u2</em>, <em>Epan</em>, <em>va</em>, <em>vs</em>.<br></p>
+<p>Each variable is detailed as below:
+</p>
+<p><em>Tmax</em> - daily maximum temperature in degree Celcius,<br><em>Tmin</em> - daily minimum temperature in degree Celcius,<br><em>Temp</em> - subdaily temperature in degree Celcius<br><em>Tdew</em> - dew point temperature in degree Celcius, either daily or subdaily accepted,<br><em>RHmax</em> - daily maximum relative humidity in percentage,<br><em>RHmin</em> - daily minimum relative humidity in percentage,<br><em>RH</em> - subdaily relative humidity in percentage,<br><em>Rs</em> - incoming solar radiation in Megajoules per square metres per day, either daily or subdaily accepted,<br><em>n</em> - daily sunshine hour in hours,<br><em>Cd</em> - daily cloud cover in oktas,<br><em>Precip</em> - precipitation in millimitres, either daily or subdaily accepted,<br><em>u2</em> - wind speed measured at 2 metres from the ground surface in metres per second, either daily or subdaily accepted,<br><em>uz</em> - wind speed in metres per second, either daily or subdaily accepted,<br><em>Epan</em> - daily Class-A pan evaporation in millimitres,<br><em>va</em> - average vapour pressure in KPa, either daily or subdaily accepted,<br><em>vs</em> - saturated vapour pressure in KPa, either daily or subdaily accepted.<br></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>climatedata</code></td>
+<td>
+<p>A data frame named "climatedata" containing the raw data of date and climate variables. <br>
+The data frame must have objects named as <em>Year</em>, <em>Month</em> and <em>Day</em> to indicate the date.<br>
+The climate variables to include should be consistent with <em>varnames</em>. <br>
+In order to determine which variables are needed for ET estimation, please see <code>ET</code> for the specific data requirements for different formulations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timestep</code></td>
+<td>
+
+<p>Should be either <code>daily</code> or <code>subdaily</code> to specify the time step of raw climate data used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constants</code></td>
+<td>
+
+<p>A list named "constants" consists of constants required for data pre-processing which may contain the following items:<br><em>a_0</em>, <em>b_0</em>, <em>c_0</em>, <em>d_0</em>.<br>
+These four constants which are constants required to calculate daily sunshine hours from daily cloud cover (see Equation S3.10 in McMahon et al., 2012) - if the user requires such calculation these constants must be included in "constants".<br>
+The suggested values for various Australian locations are presented in Chiew and McMahon (1991), in which the four constants are named as a0, b0, c0, d0.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stopmissing</code></td>
+<td>
+
+<p>A numeric vector of length 3:<br>
+- the first value represents the maximum percentage of missing data that the user can tolerate;<br>
+- the second value represents the maximum percentage of the duration of missing data to the total data duaration that the user can toleratre;<br>
+- the third value represents the maximum percentage of missing days (within the date data, as a fraction of the total number of days) that the user can tolerate.<br>
+All values should be numbers between 1 and 99. <br>
+The percentages of the number and duration of missing data in the date data and each input variable are compared to the corresponding threshold; if any of the threshold is exceeded the program will be terminated due to unsatisfactory data quality.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interp_missing_days</code></td>
+<td>
+
+<p><code>T</code> or <code>F</code>, indicating if missing days (within the date data) should be interpolated, with a default of <code>F</code> which assigns <code>NA</code> to data at the missing days.<br></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interp_missing_entries</code></td>
+<td>
+
+<p><code>T</code> or <code>F</code>, indicating if missing data entries within individual climate variables should be interpolated, with a default of <code>F</code> which assigns <code>NA</code> to the missing entries.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interp_abnormal</code></td>
+<td>
+
+<p><code>T</code> or <code>F</code>, if abnormal values within individual climate variables should be interpolated, with a default of <code>F</code> which leaves the abnormal values unchanged.<br>
+Abnormal values are defined differently according to the input variable, as following:<br><br>
+- <em>Tmax</em> &gt; 100 or &lt; -50 degree Celcius<br>
+- <em>Tmin</em> &gt; Tmax or &lt; -50 degree Celcius <br>
+- <em>Temp</em> &gt; 100 or &lt; -50 degree Celcius<br>
+- <em>Tdew</em> &gt; 100 or &lt; -50 degree Celcius<br>
+- <em>RHmax</em> &gt; 100 or &lt; 0 per cent<br>
+- <em>RHmin</em>  &gt; RHmax or &lt; 0 per cent<br>
+- <em>RH</em> &gt; 100 per cent<br> 
+- <em>Rs</em> &lt; 0 MJ.m^2<br>
+- <em>n</em> &lt; 0 hour<br>
+- <em>Cd</em>  &lt; 0 Okta<br>
+- <em>Precip</em>  &lt; 0 mm<br>
+- <em>uz</em>	&lt; 0 m/s<br>
+- <em>u2</em>	&lt; 0 m/s<br>
+- <em>Epan</em>	&lt; 0 mm<br>
+- <em>vs</em>	&lt; 0 KPa<br>
+- <em>va</em>	&lt; 0 KPa<br></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missing_method</code></td>
+<td>
+
+<p>A character string for the name of the interpolated methods chosen for filling in missing days and missing data entries. Can be either: <br><br><code>monthly average</code> - replacement with same-month average (adapted from Narapusetty et al., 2009); <br><code>seasonal average</code> - replacement with same-season average (adapted from Narapusetty et al., 2009);<br><code>DoY average</code> - replacement with same day-of-the-year average (Narapusetty et al., 2009);<br><code>neighbouring average</code> - interpolation between the two bounding values, which is only suitable for time increments in which values are available at adjacent increments (McMahon et al., 2013). When there is more than one consecutive missing entry, this interpolation fails, with a warning given.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>abnormal_method </code></td>
+<td>
+
+<p>A character string for the name of the interpolated methods chosen for replacing data entries with abnormal values. Can be either: <br><br><code>monthly average</code> - replacement with same-month average (adapted from Narapusetty et al., 2009); <br><code>seasonal average</code> - replacement with same-season average (adapted from Narapusetty et al., 2009);<br><code>DoY average</code> - replacement with same day-of-the-year average (Narapusetty et al., 2009);<br><code>neighbouring average</code> - interpolation between the two bounding values, which is only suitable for time increments in which non-abnormal values are available at adjacent increments (McMahon et al., 2013). When there is more than one consecutive abnormal entry, this interpolation fails, with a warning given.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>message </code></td>
+<td>
+<p>"yes" or "no" indicating whether checking messages should be printed on screen.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>This function returns a list with all components of class <code>zoo</code> which have been processed from the raw data, including:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Date.daily</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the date in daily step in the format of yyyy-mm-dd.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Date.monthly</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the date in daily step in the format of mmm-yyyy.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>J</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the Julian Day for every day during the period that the data spans. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the month number for every day during the period that the data spans.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ndays</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the number of days for every month during the period that the data spans.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tmax</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily maximum temperatures in degree Celcius.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tmin</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily minimum temperatures in degree Celcius.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u2</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily wind speed at 2m from the ground in m/s.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uz</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily wind speed measured at the height of wind instrument in m/s.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Rs</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily solar radiation in MJ/m^2/day.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily sunshine hours.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Cd</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily cloud cover in oktas.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Precip</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily precipitation in mm.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Epan</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily Class-A pan evaporation in mm.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RHmax</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily maximum relative humidity in percentage.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RHmin</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the daily minimum relative humidity in percentage.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tdew</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing the average daily dew temperatures in degree Celcius.
+</p>
+</td>
+</tr>
+</table>
+<p>Note that the components might have value of <code>NULL</code> when the corresponding input variable cannot be found in the raw data (i.e. "climatedata").
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Danlu Guo
+</p>
+
+
+<h3>References</h3>
+
+<p>McMahon, T., Peel, M., Lowe, L., Srikanthan, R. &amp; McVicar, T. 2012. <em>Estimating actual, potential, reference crop and pan evaporation using standard meteorological data: a pragmatic synthesis</em>. Hydrology and Earth System Sciences Discussions, 9, 11829-11910.
+</p>
+<p>Chiew, F. H. &amp; McMahon, T. A. 1991. <em>The applicability of Morton's and Penman's evapotranspiration estimates in rainfall-runoff modeling1</em>. JAWRA Journal of the American Water Resources Association, 27, 611-620.
+</p>
+<p>Narapusetty, B., DelSole, T.Tippett, M.K. 2009, <em>Optimal Estimation of the Climatological Mean</em>. Journal of Climate, vol. 22, no. 18, pp. 4845-4859.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ET</code>,<code>climatedata</code>,<code>data</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># ReadInputs climate data
+data("climatedata")
+data("constants")
+data &lt;- ReadInputs(varnames = c("Temp","Tdew","n","RH","uz"),
+                   climatedata, 
+                   constants, 
+                   stopmissing=c(10,10,3),
+                   timestep = "subdaily",
+                   interp_missing_days = FALSE, 
+                   interp_missing_entries = FALSE, 
+                   interp_abnormal = FALSE, 
+                   missing_method = NULL, 
+                   abnormal_method = NULL)
+</code></pre>
+
+
+</div>

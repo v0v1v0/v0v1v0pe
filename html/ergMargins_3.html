@@ -1,0 +1,202 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm.MEM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Function to compute marginal effects at means in ERGM.
+</h2>
+
+<h3>Description</h3>
+
+<p>ERGM function to compute marginal effects at means for main effects or at various levels of a moderator. Also provides tests of significance for second differences for interaction terms. Currently accepts <code>ergm</code>, <code>btergm</code>, <code>mtergm</code>, <code>ergm.count</code>, <code>mlergm</code>, and <code>ergm.multi</code> objects. See ergm.AME to compute average marginal effect.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm.MEM(model,var1,var2=NULL,inter=NULL,at.2=NULL,
+                at.controls=NULL, control_vals=NULL,
+            return.dydx=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>the ergm object to be analyzed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var1</code></td>
+<td>
+<p>the character string containing the name of the focal variable on which to compute the MEM. If var2 is NULL, this is the simple MEM.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var2</code></td>
+<td>
+<p>the character string containing the name of the moderator variable. Default value is NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inter</code></td>
+<td>
+<p>the character string containing the name of the interaction between var1 and var2. Default value is NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>at.2</code></td>
+<td>
+<p>the levels of var2 at which to compute the MEMs. If var2=NULL, this parameter is ignored. If var2!=NULL and at.2=NULL, the function computes the AME at each unique value of var2. at.2 can also be set to meaningful values, such as the mean of var2 or other discrete values of interest. If var2 is discrete, leaving at.2 NULL will compute the AME for each discrete category of the moderator variable. It is usually safe to leave at.2=NULL unless examining a large network where var2 has a large number of unique values, in which case computation times can be restrictive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>at.controls</code></td>
+<td>
+<p>A character string containing the names of all control variables to be specified at fixed levels when calculating the marginal effect. Should match ERGM output exactly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control_vals</code></td>
+<td>
+<p>A vector specifying the values to hold at.controls variables. Ignored if at.controls = NULL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.dydx</code></td>
+<td>
+<p>logical parameter indicating whether to return the marginal effects for each dyad observation. Defaults to FALSE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Largely a wrapper for ergm.AME. The only difference is that marginal effects are computed at variable means.
+</p>
+<p>Computes the MEM for variables specified. If var2 and inter are left at NULL, this is the simple MEM. All MEMs are computed as tie probabilities (not on the linear scale). Standard errors are computed using the Delta method. If a moderator is specified using var2 and inter, a table of MEMs is returned at each level of at.2. If at.2=NULL, this is computed for every unique level of var2.
+</p>
+<p>When at.2 and var2 are specified, a table of second differences is also returned. The table of second differences assesses whether the difference in marginal effects is significant between levels of a moderator (values of at.2). If the moderator is binary, the second difference tests the overall significance of an interaction. The tests statistic is a Wald test.
+</p>
+<p>If more than 2 values of at.2 are specified, the function also computes the average absolute Wald test statistic and average second difference. The average second difference measures the average change in the MEM of var1 between levels of a moderator. The average absolute Wald test is the mean absolute value of the Wald tests for all second differences. It assesses whether, on average, there is a significant difference between the second differences and zero. A significant result means the interaction is significant.
+</p>
+<p>If at.controls and control_vals are provided, the MEM is calculated while holding specified control variables at fixed values provided in control_vals, rather than at their means
+</p>
+
+
+<h3>Value</h3>
+
+<p>If var2 and inter=NULL, then a table is returned with the MEM for var1, its standard error, and test statistic. Note again that all MEMs are in the metric of tie probabilities, not log-odds. If a moderator is specified, a list is returned with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>'Marginal effects at means'</code></td>
+<td>
+<p>is the table of MEMs at each level of at.2. If at.2=NULL, the table contains unique entries for every unique value of at.2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>'Second differences'</code></td>
+<td>
+<p>is a table containing point estimates, standard errors, and Wald tests for the difference in MEMs between each level of at.2. It has a number of rows equal to length(at.2)-1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>'Aggregate output'</code></td>
+<td>
+<p>is a table of summary statistics when at.2 has length &gt; 2. Reports the mean second difference and mean absolute Wald statistic for the second differences. If at.2 has length&lt;3, it is not returned</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>'Marginal effects'</code></td>
+<td>
+<p>if return.dydx=TRUE, returns the marginal effects (partial derivatives with respect to var1) for each dyad in the ERGM sample space.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Syntax is loosely based on the margins package by Thomas Leeper and Stata's margins commands. See ergm.AME to compute average marginal effects. Currently only considers two-ways interactions.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Scott Duxbury, Assistant Professor, University of North Carolina–Chapel Hill, Department of Sociology.
+</p>
+
+
+<h3>References</h3>
+
+<p>Duxbury, Scott W. Forthcoming. "The Problem of Scaling in Exponential Random Graph Models." <em>Sociological Methods &amp; Research</em>.
+</p>
+<p>Long, J. Scott, and Sarah Mustillo. 2018. "Using Predictions and Marginal Effects to Compare Groups in Regression Models for Binary Outcomes." <em>Sociological Methods and Research</em>
+</p>
+<p>Mize, Trenton D. 2019. "Best Practices for Estimating, Interpreting, and Presenting Nonlinear Interaction Effects." <em>Sociological Science</em>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ergm.AME</code>
+<code>ergm.mma</code>
+<code>margins</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+library(ergm)
+
+
+data("faux.dixon.high")
+
+
+set.seed(21093)
+
+my.ergm&lt;-ergm(faux.dixon.high~edges+
+                nodeicov("grade")+
+                nodeocov("grade")+
+                nodeifactor("sex")+
+                nodeofactor("sex")+
+                absdiff("grade")+
+                nodematch("sex")+
+                mutual)
+
+#main effect
+main.eff&lt;-ergm.MEM(my.ergm,"mutual")
+
+#main effect of "mutual" when sender and receiver effects for sex == 1
+ergm.MEM(my.ergm,"mutual",
+              at.controls=c("nodeifactor.sex.2","nodeofactor.sex.2"),
+              control_vals=c(1,1))
+
+
+##with moderator
+sex.inter&lt;-ergm.MEM(my.ergm,"nodeifactor.sex.2","nodeofactor.sex.2","nodematch.sex")
+
+##with moderator at specific levels
+grade.inter&lt;-ergm.MEM(my.ergm,"nodeicov.grade","nodeocov.grade","absdiff.grade",
+          at.2=c(9,12))
+
+##when moderator changes from mean to mean +sd
+tie.probs&lt;-edge.prob2(my.ergm)
+m&lt;-mean(tie.probs$nodeocov.grade)
+m.sd&lt;-m+sd(tie.probs$nodeocov.grade)
+
+grade.inter.at.means&lt;-ergm.MEM(my.ergm,"nodeicov.grade","nodeocov.grade",
+                            "absdiff.grade",at.2=c(m,m.sd))
+
+
+
+</code></pre>
+
+
+</div>

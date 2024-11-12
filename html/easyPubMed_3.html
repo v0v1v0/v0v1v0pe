@@ -1,0 +1,122 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>article_to_df</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract Data from a PubMed Record</h2>
+
+<h3>Description</h3>
+
+<p>Extract publication-specific information from a PubMed record driven by XML tags. 
+The input record is a string (character-class vector of length 1) and includes 
+PubMed-specific XML tags. Data are returned as a data frame where each row corresponds 
+to one of the authors of the PubMed article.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">article_to_df(pubmedArticle, autofill = FALSE, 
+                     max_chars = 500, getKeywords = FALSE, 
+                     getAuthors = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pubmedArticle</code></td>
+<td>
+<p>String including one PubMed record.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>autofill</code></td>
+<td>
+<p>Logical. If TRUE, missing affiliations are automatically imputed based on other non-NA 
+addresses from the same record.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_chars</code></td>
+<td>
+<p>Numeric (integer). Maximum number of characters to be extracted from the Article 
+Abstract field. Set max_chars to -1 for extracting the full-length abstract. Set max_chars to 0 to 
+extract no abstract.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>getKeywords</code></td>
+<td>
+<p>Logical. If TRUE, an attempt to extract article Keywords will be made.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>getAuthors</code></td>
+<td>
+<p>Logical. If FALSE, author information won't be extracted. This will considerably 
+speed up the operation.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Given one Pubmed Article record, this function will automatically extract a set of features. 
+Extracted information include: PMID, DOI, article title, article abstract, publication date (year, month, day), 
+journal name (title, abbreviation), keywords, and a set of author-specific info (names, affiliation, email address). 
+Each row of the output data frame corresponds to one of the authors of the PubMed record. Author-independent info 
+(publication ID, title, journal, date) are identical across all rows. If information about authors are not required, 
+set 'getAuthors' = TRUE.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Data frame including the extracted features. Each row correspond a different author.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Damiano Fantini <a href="mailto:damiano.fantini@gmail.com">damiano.fantini@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://www.data-pulse.com/dev_site/easypubmed/">https://www.data-pulse.com/dev_site/easypubmed/</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">try({
+  ## Display some contents
+  data("EPMsamples")
+  #display Query String used for collecting the data
+  print(EPMsamples$NUBL_1618$qry_st)
+  #Get records
+  BL_list &lt;- EPMsamples$NUBL_1618$rec_lst
+  cat(BL_list[[1]])
+  # cast PM recort to data.frame
+  BL_df &lt;- article_to_df(BL_list[[1]], max_chars = 0)
+  print(BL_df)
+}, silent = TRUE)
+
+## Not run: 
+## Query PubMed, retrieve a selected citation and format it as a data frame
+dami_query &lt;- "Damiano Fantini[AU] AND 2017[PDAT]"
+dami_on_pubmed &lt;- get_pubmed_ids(dami_query)
+dami_abstracts_xml &lt;- fetch_pubmed_data(dami_on_pubmed)
+dami_abstracts_list &lt;- articles_to_list(dami_abstracts_xml)
+article_to_df(pubmedArticle = dami_abstracts_list[[1]], autofill = FALSE)
+article_to_df(pubmedArticle = dami_abstracts_list[[2]], autofill = TRUE, max_chars = 300)[1:2,]
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

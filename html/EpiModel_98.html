@@ -1,0 +1,91 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_param_set</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract the Parameter Set from Network Simulations</h2>
+
+<h3>Description</h3>
+
+<p>Extract the Parameter Set from Network Simulations
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_param_set(sims)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>sims</code></td>
+<td>
+<p>An <code>EpiModel</code> object of class <code>netsim</code>.</p>
+</td>
+</tr></table>
+<h3>Value</h3>
+
+<p>A <code>data.frame</code> with one row per simulation and one column per
+parameter or parameter element where the parameters are of size &gt; 1.
+</p>
+
+
+<h3>Output Format</h3>
+
+<p>The outputted <code>data.frame</code> has one row per simulation and the columns
+correspond to the parameters used in this simulation.
+</p>
+<p>The column name will match the parameter name if it is a size 1 parameter or
+if the parameter is of size &gt; 1, there will be N columns (with N being the
+size of the parameter) named <code>parameter.name_1</code>,
+<code>parameter.name_2</code>, ..., <code>parameter.name_N</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Setup network
+nw &lt;- network_initialize(n = 50)
+
+est &lt;- netest(
+  nw, formation = ~edges,
+  target.stats = c(25),
+  coef.diss = dissolution_coefs(~offset(edges), 10, 0),
+  verbose = FALSE
+)
+
+init &lt;- init.net(i.num = 10)
+
+n &lt;- 5
+
+related.param &lt;- data.frame(
+  dummy.param = rbeta(n, 1, 2)
+)
+
+ my.randoms &lt;- list(
+   act.rate = param_random(c(0.25, 0.5, 0.75)),
+   dummy.param = function() rbeta(1, 1, 2),
+   dummy.strat.param = function() c(
+     rnorm(1, 0, 10),
+     rnorm(1, 10, 1)
+   )
+ )
+
+param &lt;- param.net(
+  inf.prob = 0.3,
+  dummy = c(0, 1, 2),
+  random.params = my.randoms
+)
+
+control &lt;- control.net(type = "SI", nsims = 3, nsteps = 5, verbose = FALSE)
+mod &lt;- netsim(est, param, init, control)
+
+get_param_set(mod)
+</code></pre>
+
+
+</div>

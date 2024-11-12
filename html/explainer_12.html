@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>regressmdl_eval</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Regression Model Evaluation</h2>
+
+<h3>Description</h3>
+
+<p>Provides calculations of measures to evaluate regression models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">regressmdl_eval(task, trained_model, splits)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>task</code></td>
+<td>
+<p>mlr3 regression task object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained_model</code></td>
+<td>
+<p>mlr3 trained learner (model) object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+<p>mlr3 object defining data splits for train and test sets</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Data frame containing regression evaluation measures
+</p>
+
+
+<h3>References</h3>
+
+<p>Lang M, Binder M, Richter J, Schratz P, Pfisterer F, Coors S, Au Q, Casalicchio G, Kotthoff L, Bischl B. mlr3: A modern object-oriented machine learning framework in R. Journal of Open Source Software. 2019 Dec 11;4(44):1903.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>eCM_plot()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library("explainer")
+seed &lt;- 246
+set.seed(seed)
+# Load necessary packages
+if (!requireNamespace("mlbench", quietly = TRUE)) stop("mlbench not installed.")
+if (!requireNamespace("mlr3learners", quietly = TRUE)) stop("mlr3learners not installed.")
+if (!requireNamespace("ranger", quietly = TRUE)) stop("ranger not installed.")
+# Load BreastCancer dataset
+utils::data("BreastCancer", package = "mlbench")
+mydata &lt;- BreastCancer[, -1]
+mydata &lt;- na.omit(mydata)
+sex &lt;- sample(
+  c("Male", "Female"),
+  size = nrow(mydata),
+  replace = TRUE
+)
+mydata$age &lt;- sample(
+  seq(18, 60),
+  size = nrow(mydata),
+  replace = TRUE
+)
+mydata$sex &lt;- factor(
+  sex,
+  levels = c("Male", "Female"),
+  labels = c(1, 0)
+)
+mydata$Class &lt;- NULL
+mydata$Cl.thickness &lt;- as.numeric(mydata$Cl.thickness)
+target_col &lt;- "Cl.thickness"
+maintask &lt;- mlr3::TaskRegr$new(
+  id = "my_regression_task",
+  backend = mydata,
+  target = target_col
+)
+splits &lt;- mlr3::partition(maintask)
+mylrn &lt;- mlr3::lrn(
+  "regr.ranger",
+  predict_type = "response"
+)
+mylrn$train(maintask, splits$train)
+regressmdl_eval_results &lt;- regressmdl_eval(
+  task = maintask,
+  trained_model = mylrn,
+  splits = splits
+)
+
+</code></pre>
+
+
+</div>

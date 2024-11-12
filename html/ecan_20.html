@@ -1,0 +1,144 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ordination</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Helper function for ordination methods</h2>
+
+<h3>Description</h3>
+
+<p>Helper function for ordination methods
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ordination(tbl, o_method, d_method = NULL, ...)
+
+ord_plot(ord, score = "st_scores", x = 1, y = 2)
+
+ord_add_group(ord, score = "st_scores", df, indiv, group)
+
+ord_extract_score(ord, score = "st_scores", row_name = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>tbl</code></td>
+<td>
+<p>A community data matrix.
+rownames: stands.
+colnames: species.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>o_method</code></td>
+<td>
+<p>A string of ordination method.
+"pca", "ca", "dca", "pcoa", or "nmds".
+"fspa" is removed, because package dave was archived.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_method</code></td>
+<td>
+<p>A string of distance method.
+"correlation", "manhattan", "euclidean", "canberra",
+"clark", "bray", "kulczynski", "jaccard", "gower",
+"altGower", "morisita", "horn", "mountford", "raup",
+"binomial", "chao", "cao", "mahalanobis", "chisq",
+"chord", "aitchison", or "robust.aitchison".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other parameters for PCA.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ord</code></td>
+<td>
+<p>A result of ordination().</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>score</code></td>
+<td>
+<p>A string to specify score for plot.
+"st_scores" means stands and "sp_scores" species.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+<p>A column number for x and y axis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>A data.frame to be added into ord scores</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indiv, group, row_name</code></td>
+<td>
+<p>A string to specify indiv, group, row_name column in df.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>ordination() returns result of ordination.
+$st_scores:         scores for stand.
+$sp_scores:         scores for species.
+$eig_val:           eigen value for stand.
+$results_raw:       results of original ordination function.
+$ordination_method: o_method.
+$distance_method:   d_method.
+ord_plot() returns ggplot2 object.
+ord_extract_score() extracts stand or species scores
+from ordination result.
+ord_add_group() adds group data.frame into ordination scores.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(ggplot2)
+library(vegan)
+data(dune)
+data(dune.env)
+
+df &lt;- 
+  table2df(dune) %&gt;%
+  dplyr::left_join(tibble::rownames_to_column(dune.env, "stand"))
+sp_dammy &lt;- 
+ tibble::tibble("species" = colnames(dune), 
+                "dammy_1" = stringr::str_sub(colnames(dune), 1, 1),
+                "dammy_6" = stringr::str_sub(colnames(dune), 6, 6))
+df &lt;- dplyr::left_join(df, sp_dammy)
+
+ord_dca &lt;- ordination(dune, o_method = "dca")
+ord_pca &lt;- 
+  df %&gt;%
+  df2table() %&gt;%
+  ordination(o_method = "pca")
+
+ord_dca_st &lt;- 
+  ord_extract_score(ord_dca, score = "st_scores")
+ord_pca_sp &lt;- 
+  ord_add_group(ord_pca, 
+  score = "sp_scores", df, indiv = "species", group = "dammy_1")
+
+
+</code></pre>
+
+
+</div>

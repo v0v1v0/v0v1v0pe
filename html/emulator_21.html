@@ -1,0 +1,198 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>optimal.scales</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Use optimization techniques to find the optimal scales</h2>
+
+<h3>Description</h3>
+
+<p>Uses optimization techniques (either Nelder-Mead or simulated annealing)
+to find the optimal scales, or roughness lengths.  Function
+<code>optimal.scale()</code> (ie singular) finds the optimal scale on the
+assumption that the roughness is isotropic so all scales are identical.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">optimal.scales(val, scales.start, d, use.like = TRUE,  give.answers =
+FALSE, func=regressor.basis, ...)
+optimal.scale(val, d, use.like = TRUE,  give.answers =
+FALSE, func=regressor.basis, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>val</code></td>
+<td>
+<p>Matrix with rows corresponding to points at which the
+function is known</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scales.start</code></td>
+<td>
+<p>Initial guess for the scales (plural).  See details
+section for explanation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>vector of observations, one for each row of <code>val</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.like</code></td>
+<td>
+<p>Boolean, with default <code>TRUE</code> meaning to use
+likelihood for the objective function, and <code>FALSE</code>
+meaning to use a leave-out-one bootstrap estimator</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>give.answers</code></td>
+<td>
+<p>Boolean, with default <code>FALSE</code> meaning to
+return just the roughness lengths and <code>TRUE</code> meaning to return
+extra information as returned by <code>optim()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>func</code></td>
+<td>
+<p>Function used to determine basis vectors, defaulting
+to <code>regressor.basis</code> if not given</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra parameters passed to <code>optim()</code> or
+<code>optimize()</code>. See examples for usage of this argument</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Internally, this function works with the logarithms of the roughness
+lengths, because they are inherently positive.  However, note that the
+lengths themselves must be supplied to argument <code>scales.start</code>,
+not their logarithms.
+</p>
+<p>The reason that there are two separate functions is that
+<code>optim()</code> and <code>optimize()</code> are very different. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>give.answers</code> takes the default value of <code>FALSE</code>, a
+vector of roughness lengths is returned.  If <code>TRUE</code>, output from
+<code>optim()</code> is returned directly (note that element <code>par</code> is
+the logarithm of the desired roughness length as the optimization
+routine operates with the logs of the lengths as detailed above) 
+</p>
+
+
+<h3>Note</h3>
+
+<p>This function is slow to evaluate because it needs to
+calculate and invert <code>A</code> each time it is called, because the
+scales change from call to call.
+</p>
+<p>In this package, “scales” means the diagonal elements of the
+<code class="reqn">B</code> matrix.  See the help page for <code>corr</code> for more
+discussion of this topic.
+</p>
+<p>Note the warning about partial matching under the “dot-dot-dot”
+argument in both <code>optim.Rd</code> [used in <code>optimal.scales()</code>] and
+<code>optimize.Rd</code> [used in <code>optimal.scale()</code>]: any unmatched
+arguments will be passed to the objective function.  Thus, passing
+named but unmatched arguments to <code>optimal.scale[s]()</code> will cause
+an error, because those arguments will be passed, by <code>optim()</code> or
+<code>optimize()</code>, to the (internal) <code>objective.fun()</code>.
+</p>
+<p>In particular, note that passing <code>control=list(maxit=4)</code> to
+<code>optimal.scale()</code> will cause an error for this reason
+[<code>optimize()</code> does not take a <code>control</code> argument].
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p>J. Oakley 2004. <em>Estimating percentiles of uncertain
+computer code outputs</em>.  Applied Statistics, 53(1), pp89-93.
+</p>
+</li>
+<li>
+<p>J. Oakley 1999. <em>Bayesian uncertainty analysis for complex
+computer codes</em>, PhD thesis, University of Sheffield.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>interpolant</code>,<code>corr</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##First, define some scales:
+fish &lt;- c(1,1,4)
+
+## and a sigmasquared value:
+REAL.SIGMASQ &lt;- 0.3
+
+## and a real relation:
+real.relation &lt;- function(x){sum( (1:3)*x )}
+
+## Now a design matrix:
+val  &lt;- latin.hypercube(7,3)
+
+## apply the real relation:
+d &lt;- apply(val,1,real.relation)
+
+## and add some suitably correlated Gaussian noise:
+A &lt;- corr.matrix(val,scales=fish)
+d.noisy &lt;-  as.vector(rmvnorm(n=1,mean=apply(val,1,real.relation),REAL.SIGMASQ*A))
+
+##  Now see if we can estimate the roughness lengths well.  Remember that
+##  the true values are those held in vector "fish":
+
+optimal.scales(val=val, scales.start=rep(1,3), d=d.noisy,
+       method="SANN",control=list(trace=1000,maxit=3),
+       give=FALSE)
+
+
+
+# Now a test of optimal.scale(), where there is only a single roughness
+#  scale to estimate.  This should be more straightforward:
+
+
+df &lt;- latin.hypercube(7,3)
+fish2 &lt;- rep(2,3)
+A2 &lt;- corr.matrix(df,scales=fish2)
+d.noisy &lt;- as.vector(rmvnorm(n=1, mean=apply(df,1,real.relation), sigma=A2))
+
+jj.T &lt;- optimal.scale(val=df,d=d.noisy,use.like=TRUE)
+jj.F &lt;- optimal.scale(val=df,d=d.noisy,use.like=FALSE)
+
+</code></pre>
+
+
+</div>

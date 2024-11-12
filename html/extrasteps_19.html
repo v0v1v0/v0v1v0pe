@@ -1,0 +1,160 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>step_date_before</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Time before Recurrent Date Time Event</h2>
+
+<h3>Description</h3>
+
+<p><code>step_date_before()</code> creates a <em>specification</em> of a recipe step that will
+create new columns indicating the time before an recurrent event.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">step_date_before(
+  recipe,
+  ...,
+  role = "predictor",
+  trained = FALSE,
+  rules = list(),
+  transform = "identity",
+  columns = NULL,
+  skip = FALSE,
+  id = rand_id("date_before")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>recipe</code></td>
+<td>
+<p>A recipe object. The step will be added to the
+sequence of operations for this recipe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more selector functions to choose variables
+for this step. See <code>selections()</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>role</code></td>
+<td>
+<p>Not used by this step since no new variables are
+created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained</code></td>
+<td>
+<p>A logical to indicate if the quantities for
+preprocessing have been estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rules</code></td>
+<td>
+<p>Named list of <code>almanac</code> rules.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transform</code></td>
+<td>
+<p>A function or character indication a function used oon the
+resulting variables. See details for allowed names and their functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>columns</code></td>
+<td>
+<p>A character string of variables that will be
+used as inputs. This field is a placeholder and will be
+populated once <code>recipes::prep.recipe()</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip</code></td>
+<td>
+<p>A logical. Should the step be skipped when the
+recipe is baked by <code>bake()</code>? While all operations are baked
+when <code>prep()</code> is run, some operations may not be able to be
+conducted on new data (e.g. processing the outcome variable(s)).
+Care should be taken when using <code>skip = TRUE</code> as it may affect
+the computations for subsequent operations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A character string that is unique to this step to identify it.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>transform</code> argument can be function that takes a numeric vector and
+returns a numeric vector of the same length. It can also be a character
+vector, below is the supported vector names. Some functions come with offset
+to avoid <code>Inf</code>.
+</p>
+<div class="sourceCode r"><pre>"identity"
+function(x) x
+
+"inverse"
+function(x) 1 / (x + 0.5)
+
+"exp"
+function(x) exp(x)
+
+"log"
+function(x) log(x + 0.5)
+</pre></div>
+<p>The effect of <code>transform</code> is illustrated below.
+</p>
+<p><img src="../help/figures/date_before-1.png" alt="date_before-1.png"><img src="../help/figures/date_before-2.png" alt="date_before-2.png"><img src="../help/figures/date_before-3.png" alt="date_before-3.png"><img src="../help/figures/date_before-4.png" alt="date_before-4.png"></p>
+<p>The naming of the resulting variables will be on the form
+</p>
+<div class="sourceCode r"><pre>{variable name}_before_{name of rule}
+</pre></div>
+
+
+<h3>Value</h3>
+
+<p>An updated version of <code>recipe</code> with the new check added to the
+sequence of any existing operations.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(recipes)
+library(extrasteps)
+library(almanac)
+library(modeldata)
+
+data(Chicago)
+
+on_easter &lt;- yearly() %&gt;% recur_on_easter()
+on_weekend &lt;- weekly() %&gt;% recur_on_weekends()
+
+rules &lt;- list(easter = on_easter, weekend = on_weekend)
+
+rec_spec &lt;- recipe(ridership ~ date, data = Chicago) %&gt;%
+  step_date_before(date, rules = rules)
+
+rec_spec_preped &lt;- prep(rec_spec)
+
+bake(rec_spec_preped, new_data = NULL)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,181 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>docs_create</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a document</h2>
+
+<h3>Description</h3>
+
+<p>Create a document
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">docs_create(
+  conn,
+  index,
+  body,
+  type = NULL,
+  id = NULL,
+  version = NULL,
+  version_type = NULL,
+  op_type = NULL,
+  routing = NULL,
+  parent = NULL,
+  timestamp = NULL,
+  ttl = NULL,
+  refresh = NULL,
+  timeout = NULL,
+  callopts = list(),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>an Elasticsearch connection object, see <code>connect()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>(character) The name of the index. Required</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>body</code></td>
+<td>
+<p>The document</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>(character) The type of the document. optional</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>(numeric/character) The document ID. Can be numeric or character.
+Optional. if not provided, Elasticsearch creates the ID for you as a UUID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>version</code></td>
+<td>
+<p>(character) Explicit version number for concurrency control</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>version_type</code></td>
+<td>
+<p>(character) Specific version type. One of internal,
+external, external_gte, or force</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>op_type</code></td>
+<td>
+<p>(character) Operation type. One of create, or ...</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>routing</code></td>
+<td>
+<p>(character) Specific routing value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parent</code></td>
+<td>
+<p>(numeric) A parent document ID</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timestamp</code></td>
+<td>
+<p>(date) Explicit timestamp for the document</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ttl</code></td>
+<td>
+<p>(aka “time to live”) Expiration time for the document.
+Expired documents will be expunged automatically. The expiration date that
+will be set for a document with a provided ttl is relative to the timestamp
+of the document,  meaning it can be based on the time of indexing or on
+any time provided. The provided ttl must be strictly positive and can be
+a number (in milliseconds) or any valid time value (e.g, 86400000, 1d).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refresh</code></td>
+<td>
+<p>(logical) Refresh the index after performing the operation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeout</code></td>
+<td>
+<p>(character) Explicit operation timeout, e.g,. 5m (for
+5 minutes)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>callopts</code></td>
+<td>
+<p>Curl options passed on to crul::HttpClient</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further args to query DSL</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+(x &lt;- connect())
+
+if (!index_exists(x, 'plos')) {
+  plosdat &lt;- system.file("examples", "plos_data.json",
+    package = "elastic")
+  plosdat &lt;- type_remover(plosdat)
+  invisible(docs_bulk(x, plosdat))
+}
+
+# give a document id
+z &lt;- docs_create(x, index = 'plos', id = 1002,
+  body = list(id = "12345", title = "New title"))
+z
+# and the document is there now
+docs_get(x, index = 'plos', id = 1002)
+
+# let Elasticsearch create the document id for you
+z &lt;- docs_create(x, index='plos', body=list(id="6789", title="Some title"))
+z
+# and the document is there now
+docs_get(x, index='plos', id=z$`_id`)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

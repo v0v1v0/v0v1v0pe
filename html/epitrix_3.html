@@ -1,0 +1,108 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>empirical_incubation_dist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract empirical incubation period distribution from linelist data</h2>
+
+<h3>Description</h3>
+
+<p>This function takes in a linelist data frame and extracts the empirical
+incubation period distribution and can take into account uncertainty in the
+dates of exposure.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">empirical_incubation_dist(x, date_of_onset, exposure, exposure_end = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the linelist data (data.frame or linelist object) containing at
+least a column containing the exposure dates and one containing the onset
+dates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date_of_onset</code></td>
+<td>
+<p>the name of the column containing the onset dates (bare
+variable name or in quotes)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exposure</code></td>
+<td>
+<p>the name of the column containing the exposure dates
+(bare variable name or in quotes)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exposure_end</code></td>
+<td>
+<p>the name of a column containing dates representing the
+end of the exposure period. This is 'NULL' by default, indicating
+all exposures are known and in the 'exposure' column.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a data frame containing a column with the different incubation
+periods and a column containing their relative frequency
+</p>
+
+
+<h3>Note</h3>
+
+<p>For exposure dates, each element can be a vector containing several
+possible exposure dates. Note that if the same exposure date appears twice
+in the list it is given twice as much weight.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Flavio Finger, <a href="mailto:flavio.finger@lshtm.ac.uk">flavio.finger@lshtm.ac.uk</a>, Zhian N. Kamvar
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if (require(tibble)) {
+random_dates &lt;- as.Date("2020-01-01") + sample(0:30, 50, replace = TRUE)
+x &lt;- tibble(date_of_onset = random_dates)
+
+# Linelist with a list column of potential exposure dates ------------------
+mkexposures &lt;- function(x) x - round(rgamma(sample.int(5, size = 1), shape = 12, rate = 3))
+exposures &lt;- sapply(x$date_of_onset, mkexposures)
+x$date_exposure &lt;- exposures
+
+incubation_period_dist &lt;- empirical_incubation_dist(x, date_of_onset, date_exposure)
+incubation_period_dist
+
+# Linelist with exposure range ---------------------------------------------
+start_exposure   &lt;- round(rgamma(nrow(x), shape = 12, rate = 3))
+end_exposure     &lt;- round(rgamma(nrow(x), shape = 12, rate = 7))
+x$exposure_end   &lt;- x$date_of_onset - end_exposure
+x$exposure_start &lt;- x$exposure_end - start_exposure
+incubation_period_dist &lt;- empirical_incubation_dist(x, date_of_onset, exposure_start, exposure_end)
+incubation_period_dist
+plot(incubation_period_dist,
+     type = "h", lwd = 10, lend = 2, col = "#49D193",
+     xlab = "Days since exposure",
+     ylab = "Probability",
+     main = "Incubation time distribution")
+}
+</code></pre>
+
+
+</div>

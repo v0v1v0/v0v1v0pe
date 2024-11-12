@@ -1,0 +1,209 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>intensity</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Construct count, incidence and severity objects.</h2>
+
+<h3>Description</h3>
+
+<p><code>count()</code>, <code>incidence()</code> and <code>severity()</code> create eponym
+objects. All of these classes inherit from the base class <code>intensity</code>.
+The choice of the class depends on the nature of the data set.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">count(data, mapping, keep_only_std = TRUE)
+
+incidence(data, mapping, keep_only_std = TRUE)
+
+severity(data, mapping, keep_only_std = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame. Each line corresponds to a record (or case, or
+entry).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mapping</code></td>
+<td>
+<p>A <code>mapping</code> object, created with <code>mapping()</code> or
+<code>mapping_()</code> functions. ... A vector with all the corresponding variables. The different
+elements can be named (names of the elements) of the data frame in the
+incidence object), or unamed. In the latter case, elements must be
+correctly ordered, i.e. x, y, z, t, r and then n. If variables in NULL,
+then only the 6 first ... will be take into account in the following (1, 2,
+...), i.e. the id of the value. All the 'parameters' need to be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_only_std</code></td>
+<td>
+<p>Are only standard names kept when proceeding to mapping?
+Setting <code>keep_only_std</code> to TRUE may be useful for subsequent data splitting
+using extra labels.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>incidence</code> reads disease incidence data from a data frame and return an
+incidence object. All of these classes inherit from <code>intensity</code> class.
+</p>
+
+<ul>
+<li>
+<p> count: Each sampling unit contains from 0 to theoreticaly an infinity of data.
+Number are positive integers.
+</p>
+</li>
+<li>
+<p> incidence: Each sampling unit contains an number of diseased plants,
+ranging from 0 to <code>n</code> which is the total amount of plants per sampling
+unit.
+</p>
+</li>
+<li>
+<p> severity: Each sampling unit contain a percentage of disease, a positive
+real number ranging from 0.0 to 1.0.
+</p>
+</li>
+</ul>
+<p>Class intensity and inherited classes
+</p>
+<p>All the classes recording disease intensity measurements inherit from this
+class. The class <code>intensity</code> is virtual which means that no object of a
+class <code>intensity</code> can be constructed. This class only describes common
+features of all the different disease intensity measurements implemented in
+this package (<code>count</code>, <code>incidence</code> and
+<code>severity</code>). You should call one of these inherited classes
+instead, depending on the nature of your data.
+</p>
+<p>By convention, the first columns of the different data frames of each slots
+have names, but the spatial, temporal or even disease information do not need
+to fit to these conventions or may be less straightforward and need more
+columns to record correctly all the information. In such unusual situations,
+the automatic options of the analysis tools would need to be overridden to be
+able to work in the desired way.
+</p>
+<p>The differences between the different inherited classes regard only the
+<code>obs</code> slot. In the case of <code>count</code>, the data expected for
+each record are positive integers (N+). For <code>incidence</code>, the data
+sets are supposed to be two information set per records, the number of
+diseased unit per sampling unit (r) and the total number of units per
+sampling unit (n). Note that in its current implementation, n is supposed to
+be the same for a whole data set. Unequal sampling units are not implemented
+yet. Finally, for <code>severity</code>, r is positive real ranging from 0
+to 1 and depecting a percentage.
+</p>
+<p>space A data frame containing only spatial information. Each row
+corresponds to a sampling unit. By convention, the first 3 columns are
+names <code>x</code>, <code>y</code>, <code>z</code>.
+</p>
+<p>time A data frame containing temporal information. By convention, the
+first column is named <code>t</code>.
+</p>
+<p>obs A data frame containing disease observations themselves. The name
+of the columns may differ between the sub-class chosed to record the data.
+</p>
+<p>Note that it is possible to create a "severity" object but no statistical
+tools are currently implemented to deal with such an object.
+</p>
+<p>An <code>intensity</code> object contains at very least the "pure" intensity
+records (column <code>r</code>) which is a so-called observational variable.
+Another observational variable, the number of individuals in a sampling unit
+(<code>n</code>), is present in the case of a <code>incidence</code> object. Very often
+in addition to observational variables, there are spatial (columns <code>x</code>,
+<code>y</code> and/or <code>z</code>) and/or temporal (column <code>t</code>) variables.
+</p>
+<p>Note that the <code>severity</code> class and the <code>z</code> variable (the 3rd
+spatial dimension) are implemented but no statistical methods use them at
+this point.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>intensity</code> object.
+</p>
+<p>When printed, difference information are available:
+</p>
+
+<ul>
+<li>
+<p> The number of sampling units.
+</p>
+</li>
+<li>
+<p> The time.
+</p>
+</li>
+<li>
+<p> Is it georeferenced (TRUE/FALSE)
+</p>
+</li>
+<li>
+<p> Are there any NA data (TRUE/FALSE)
+</p>
+</li>
+<li>
+<p> Is it a complet array (TRUE/FALSE)? A complete array means that all the recorded values allow to
+display an array (even if some data are not available), but this was explicitelly specified. To
+complete a dataset, just use <code>complete(data)</code>. You can also remove NA, which is necessary to use
+some analysis technics, using <code>replaceNA(data)</code> or <code>replace.na(data)</code>. Note that using both
+commands will results in modifying the original data sets which will be specified.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Create intensity objects
+# Implicite call: The variable mapping does not need to be specified if the
+# column names of the input data frame follow the default names.
+colnames(tomato_tswv$field_1929) # Returns c("x", "y", "t", "i", "n")
+my_incidence_1 &lt;- incidence(tomato_tswv$field_1929)
+my_incidence_1
+my_incidence_2 &lt;- incidence(tomato_tswv$field_1929,
+                            mapping(x = x, y = y, t = t, i = i, n = n))
+identical(my_incidence_1, my_incidence_2)
+
+# Explicite call: Otherwise, the variable mapping need to be specified, at
+# least for column names that do not correspond to default names.
+colnames(aphids) # Returns c("xm", "ym", "i")
+my_count_1 &lt;- count(aphids, mapping(x = xm, y = ym, i = i))
+my_count_1
+# We can drop the "i = i" in the mapping.
+my_count_2 &lt;- count(aphids, mapping(x = xm, y = ym))
+identical(my_count_1, my_count_2)
+
+# It is possible to change the variable mapping after the creation of an
+# intensity object:
+another_incidence &lt;- incidence(hop_viruses$HpLV)
+another_incidence
+remap(another_incidence, mapping(x = xm, y = ym))
+
+## Plotting data
+plot(my_incidence_1) # Same as: plot(my_incidence_1, type = "spatial")
+plot(my_incidence_1, type = "temporal")
+
+plot(my_count_1, tile = FALSE, size = 5)
+plot(my_count_1, type = "temporal") # Not possible: there is only 1 date.
+
+# Using grayscale:
+plot(my_count_1, grayscale = TRUE)
+plot(my_count_1, grayscale = TRUE, tile = FALSE, size = 5)
+
+</code></pre>
+
+
+</div>

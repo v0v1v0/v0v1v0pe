@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hankel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Perform Singular Value Decomposition of Block-Hankel Matrix</h2>
+
+<h3>Description</h3>
+
+<p>This function constructs a block-Hankel matrix based on time-course data, performs the subsequent
+singular value decomposition (SVD) on this matrix, and returns the number of large singular values
+as defined by a user-supplied cutoff criterion.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">hankel(y, lag, cutoff, type)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A list of R (PxT) matrices of observed time course profiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag</code></td>
+<td>
+<p>Maximum relevant time lag to be used in constructing the block-Hankel matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutoff</code></td>
+<td>
+<p>Cutoff to be used, determined by desired percent of total variance explained</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Method to combine results across replicates ("median" or "mean")</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Constructs the block-Hankel matrix <code class="reqn">H</code> of autocovariances of time series observations is constructed
+(see references for additional information), where the maximum relevant time lag must be specified
+as <code>lag</code>. In the context of gene networks, this corresponds to the maximum relevant biological time
+lag between a gene and its regulators. This quantity is experiment-specific, but will generally be
+small for gene expression studies (on the order of 1, 2, or 3).
+</p>
+<p>The singular value decomposition of <code class="reqn">H</code> is performed, and the singular values are ordered by size
+and scaled by the largest singular value. Note that if there are T time points in the data, only the
+first (T - 1) singular values will be non-zero.
+</p>
+<p>To choose the number of large singular values, we wish to find the point at which the inclusion of
+an additional singular value does not increase the amount of explained variation enough to justify
+its inclusion (similar to choosing the number of components in a Principal Components Analysis).
+The user-supplied value of <code>cutoff</code> gives the desired percent of variance explained by the first set
+of K principal components. The algorithm returns the value of K, which may subsequently be used
+as the dimension of the hidden state in <code>ebdbn</code>.
+</p>
+<p>The argument 'type' takes the value of "median" or "mean", and is used to determine how results
+from replicated experiments are combined (i.e., median or mean of the per-replicate final hidden
+state dimension).
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>svs </code></td>
+<td>
+<p>Vector of singular values of the block-Hankel matrix <code class="reqn">H</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dim </code></td>
+<td>
+<p>Number of large singular values, as determined by the user-supplied cutoff</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Andrea Rau</p>
+
+
+<h3>References</h3>
+
+<p>Masanao Aoki and Arthur Havenner (1991). State space modeling of multiple time series. <em>Econometric Reviews</em> 10(1), 1-59.
+</p>
+<p>Martina Bremer (2006). <em>Identifying regulated genes through the correlation structure of time dependent microarray data</em>. Ph. D. thesis, Purdue University.
+</p>
+<p>Andrea Rau, Florence Jaffrezic, Jean-Louis Foulley, and R. W. Doerge (2010). An Empirical Bayesian Method for Estimating Biological Networks from Temporal Microarray Data. 
+<em>Statistical Applications in Genetics and Molecular Biology</em> 9. Article 9.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(ebdbNet)
+tmp &lt;- runif(1) ## Initialize random number generator
+set.seed(125214) ## Save seed
+
+## Simulate data
+y &lt;- simulateVAR(R = 5, T = 10, P = 10, v = rep(10, 10), perc = 0.10)$y
+
+## Determine the number of hidden states to be estimated (with lag = 1)
+K &lt;- hankel(y, lag = 1, cutoff = 0.90, type = "median")$dim
+## K = 5
+
+</code></pre>
+
+
+</div>

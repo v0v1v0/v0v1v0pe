@@ -1,0 +1,115 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lambda_max</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Lambda Max</h2>
+
+<h3>Description</h3>
+
+<p>Determine the lambda_max value that would be generated from a call to
+<code>glmnet</code> without making that call.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lambda_max(y, x, standardize = TRUE, alpha = 0, lmin_factor = 1e-04,
+  ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>the response vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the predictor matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standardize</code></td>
+<td>
+<p>logicial, should the x matrix be standardized?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>the glmnet alpha value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lmin_factor</code></td>
+<td>
+<p>the smallest lambda value is defined as <code>lmin_factor
+* max(lambda)</code> where <code>max(lambda)</code> is determined by this function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other args</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(tbi)
+Xmat &lt;- model.matrix( ~ . - injury1 - injury2 - injury3 - 1, data = tbi)
+Yvec &lt;- matrix(tbi$injury1, ncol = 1)
+
+alphas &lt;- seq(0, 1, length = 20)
+lambda_max(Yvec, Xmat, alpha = alphas)
+
+# Look at different options for standardizing the inputs.
+
+dat &lt;-
+  expand.grid(standardize = c(TRUE, FALSE),
+              alpha = alphas)
+
+lmax &lt;-
+  Map(lambda_max,
+      standardize = dat$standardize,
+      alpha = dat$alpha,
+      MoreArgs = list(y = Yvec, x = Xmat))
+
+
+gmax &lt;-
+  Map(glmnet::glmnet,
+      standardize = dat$standardize,
+      alpha = dat$alpha,
+      MoreArgs = list(y = Yvec, x = Xmat))
+
+dat$gmax &lt;- sapply(gmax, function(f) f$lambda[1])
+dat$lmax &lt;- unlist(lmax)
+
+par(mfrow = c(1, 2))
+
+with(subset(dat, standardize == TRUE),
+     {
+       plot(log10(gmax), log10(lmax))
+       abline(0, 1)
+       title(main = "standardize == TRUE")
+     })
+
+with(subset(dat, standardize == FALSE),
+     {
+       plot(log10(gmax), log10(lmax))
+       abline(0, 1)
+       title(main = "standardize == FALSE")
+     })
+
+</code></pre>
+
+
+</div>

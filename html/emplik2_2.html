@@ -1,0 +1,261 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>el2.cen.EMs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Computes empirical likelihood ratio and p-value for a single mean-type hypothesis, 
+based on two independent samples that may contain censored data.
+</h2>
+
+<h3>Description</h3>
+
+<p>This function uses the EM algorithm to calculate a maximized empirical likelihood ratio for the hypothesis
+</p>
+<p style="text-align: center;"><code class="reqn">
+H_o:  E(g(x,y)-mean)=0 
+</code>
+</p>
+
+<p>where <code class="reqn">E</code> indicates expected value; <code class="reqn">g(x,y)</code> is a user-defined function of <code class="reqn">x</code> and <code class="reqn">y</code>; and
+<code class="reqn">mean</code> is the hypothesized value of <code class="reqn">E(g(x,y))</code>. The default: <code class="reqn">g(x,y)=I[x \geq y]</code>, <code class="reqn">mean=0.5</code>.
+The samples <code class="reqn">x</code> and <code class="reqn">y</code> are assumed independent.
+They may be uncensored, right-censored, left-censored, or left-and-right (“doubly”) censored. A p-value for 
+<code class="reqn">H_o</code> is also calculated, based on the assumption that -2*log(empirical likelihood ratio) is approximately
+distributed as chisq(df=1).  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">el2.cen.EMs(x,dx,y,dy,fun=function(x,y){x&gt;=y},mean=0.5,
+                                tol.u=1e-6,tol.v=1e-6,maxit=50)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector of the data for the first sample</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dx</code></td>
+<td>
+<p>a vector of the censoring indicators for <code>x</code>: 0=right-censored, 1=uncensored, 2=left-censored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>a vector of the data for the second sample</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dy</code></td>
+<td>
+<p>a vector of the censoring indicators for <code>y</code>: 0=right-censored, 1=uncensored, 2=left-censored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a user-defined, weight-function <code class="reqn">g(x,y)</code> used to define the mean in the hypothesis <code class="reqn">H_o</code>.
+The default is <code>fun=function(x,y){x&gt;=y}</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean</code></td>
+<td>
+<p>the hypothesized value of <code class="reqn">E(g(x,y))</code>; default is 0.5</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol.u</code></td>
+<td>
+<p>Error tolerance for iteration control. L1 norm of the <code>u-uOLD</code> is used. Default 1e-6</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol.v</code></td>
+<td>
+<p>Error tolerance for iteration control. L1 norm of the <code>v-vOLD</code> is used. Default 1e-6</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>a positive integer used to set the maximum number of iterations of the EM algorithm; default is 50</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The empirical likelihood used here is 
+</p>
+<p style="text-align: center;"><code class="reqn"> 
+EL(mean) = \max_{\mu_i, \nu_j} \left\{ \prod \mu_i \prod \nu_j ; s.t. \sum_i \sum_j g(x_i, y_j) \mu_i \nu_j = mean; 
+\sum \mu_i =1; \sum \nu_j =1. \right\} 
+</code>
+</p>
+
+<p>for uncensored data. If data were censored, approapriate adjustments are used accordingly.
+See Owen (2001) section 11.4.
+</p>
+<p>The value of <code class="reqn">mean</code> should be chosen between the maximum and minimum values of <code class="reqn">g(x_i,y_j)</code>; otherwise
+there may be no distributions for <code class="reqn">x</code> and <code class="reqn">y</code> that will satisfy <code class="reqn">H_o</code>.  If <code class="reqn">mean</code> is inside 
+this interval, but the convergence is still not satisfactory, then the value of <code class="reqn">mean</code> should be moved 
+closer to the NPMLE for <code class="reqn">E(g(x,y))</code>.  (The NPMLE itself should always be a feasible value for <code class="reqn">mean</code>.
+This NPMLE value is in the output.)
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>el2.cen.EMs</code> returns a list of values as follows:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>xd1</code></td>
+<td>
+<p>a vector of the unique, uncensored <code class="reqn">x</code>-values in ascending order</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yd1</code></td>
+<td>
+<p>a vector of the unique, uncensored <code class="reqn">y</code>-values in ascending order</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temp3</code></td>
+<td>
+<p>a list of values returned by the <code>el2.test.wts</code> function (which is called by <code>el2.cen.EMs</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean</code></td>
+<td>
+<p>the hypothesized value of <code class="reqn">E(g(x,y))</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funNPMLE</code></td>
+<td>
+<p>the non-parametric-maximum-likelihood-estimator of <code class="reqn">E(g(x,y))</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logel00</code></td>
+<td>
+<p>the log of the unconstrained empirical likelihood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logel</code></td>
+<td>
+<p>the log of the constrained empirical likelihood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p><code>-2*(logel-logel00)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pval</code></td>
+<td>
+<p>the estimated p-value for <code class="reqn">H_o</code>, computed as <code>1-pchisq(-2LLR, df = 1)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logvec</code></td>
+<td>
+<p>the vector of successive values of <code>logel</code> computed by the EM algorithm (should
+converge toward a fixed value)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sum_muvec</code></td>
+<td>
+<p>sum of the probability jumps for the uncensored <code class="reqn">x</code>-values, should be 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sum_nuvec</code></td>
+<td>
+<p>sum of the probability jumps for the uncensored <code class="reqn">y</code>-values, should be 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraint</code></td>
+<td>
+<p>the realized value of <code class="reqn">\sum_{i=1}^n \sum_{j=1}^m (g(x_i,y_j) - mean) \mu_i \nu_j</code>, 
+where <code class="reqn">\mu_i</code> and <code class="reqn">\nu_j</code> are the probability jumps at <code class="reqn">x_i</code> and <code class="reqn">y_j</code>, respectively, 
+that maximize the empirical likelihood ratio. The value of <code>constraint</code> should be close to 0.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>William H. Barton &lt;bbarton@lexmark.com&gt; ; modified by Mai Zhou.
+</p>
+
+
+<h3>References</h3>
+
+<p>Barton, W. (2010). Comparison of two samples by a nonparametric likelihood-ratio test.  
+PhD dissertation at University of Kentucky.
+</p>
+<p>Chang, M. and Yang, G. (1987). “Strong Consistency of a Nonparametric Estimator of the Survival Function
+with Doubly Censored Data.”  <code>Ann. Stat.</code>,15, pp. 1536-1547.
+</p>
+<p>Dempster, A., Laird, N., and Rubin, D. (1977). “Maximum Likelihood from Incomplete Data via the EM Algorithm.” <code>J. Roy. Statist. Soc.</code>, Series B, 39, pp.1-38.
+</p>
+<p>Gomez, G., Julia, O., and Utzet, F. (1992). “Survival Analysis for Left-Censored Data.” In Klein, J. and Goel, P. (ed.),
+<code>Survival Analysis: State of the Art.</code> Kluwer Academic Publishers, Boston, pp. 269-288.
+</p>
+<p>Li, G. (1995). “Nonparametric Likelihood Ratio Estimation of Probabilities for Truncated Data.”
+<code>J. Amer. Statist. Assoc.</code>, 90, pp. 997-1003.
+</p>
+<p>Owen, A.B. (2001). <code>Empirical Likelihood</code>. Chapman and Hall/CRC, Boca Raton, pp.223-227.
+</p>
+<p>Turnbull, B. (1976). “The Empirical Distribution Function with Arbitrarily Grouped, Censored and Truncated Data.”
+<code>J. Roy. Statist. Soc.</code>, Series B, 38, pp. 290-295.
+</p>
+<p>Zhou, M. (2005). “Empirical likelihood ratio with arbitrarily censored/truncated data by EM algorithm.”
+<code>J. Comput. Graph. Stat.</code>, 14, pp. 643-656.
+</p>
+<p>Zhou, M. (2009) <code>emplik</code> package on CRAN website.  
+The <code>el2.cen.EMs</code> function here extends the <code>el.cen.EM</code>
+function inside <code>emplik</code> package from one sample to two-samples. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> 
+x&lt;-c(10,80,209,273,279,324,391,415,566,785,852,881,895,954,1101,
+1133,1337,1393,1408,1444,1513,1585,1669,1823,1941)
+dx&lt;-c(1,2,1,1,1,1,1,2,1,1,1,1,1,1,1,0,0,1,0,0,0,0,1,1,0)
+y&lt;-c(21,38,39,51,77,185,240,289,524,610,612,677,798,881,899,946,
+1010,1074,1147,1154,1199,1269,1329,1484,1493,1559,1602,1684,1900,1952)
+dy&lt;-c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,1,0,0,0)
+
+# Ho1:  X is stochastically equal to Y (i.e. P(X&gt;Y)=0.5) 
+el2.cen.EMs(x, dx, y, dy, fun=function(x,y){x&gt;=y}, mean=0.5)
+# Result: Pval = 0.7090658, so we cannot with 95 percent confidence reject Ho1
+# Remark: may be we should be more careful for the (x=y) cases, if any.
+
+# Ho2: mean of X equals mean of Y
+el2.cen.EMs(x, dx, y, dy, fun=function(x,y){x-y}, mean=0)
+# Result: Pval = 0.9716493, so we cannot with 95 percent confidence reject Ho2
+</code></pre>
+
+
+</div>

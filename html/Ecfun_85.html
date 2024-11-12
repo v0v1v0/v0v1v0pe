@@ -1,0 +1,244 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trimImage</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Trim zero rows or columns from an object of 
+class <code>Image</code>.
+</h2>
+
+<h3>Description</h3>
+
+<p>Identify rows or columns of a matrix or 
+3-dimensional array that are all 0 and 
+remove them.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trimImage(x, max2trim=.Machine$double.eps, 
+      na.rm=TRUE, returnIndices2Keep=FALSE, 
+      ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>a numeric matrix or 3-dimensional array 
+or an object with subscripting defined so
+it acts like such.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max2trim</code></td>
+<td>
+
+<p>a single number indicating the max 
+absolute numeric value to trim.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+
+<p>logical:  If <code>TRUE</code>, <code>NA</code>s 
+will be ignored in determining the 
+max absolute value for the row.  If a
+row or column is all <code>NA</code>, it 
+will be treated as all 0 in deciding 
+whether to trim.
+</p>
+<p>If <code>FALSE</code>, any row or column 
+containing an <code>NA</code> will be 
+retained.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnIndices2Keep</code></td>
+<td>
+
+<p>if <code>TRUE</code>, return a list with 2 
+integer vectors giving row and column 
+indices to use in selecting the 
+desired subset of <code>x</code>.  This 
+allows an array <code>y</code> to be 
+trimmed to match <code>x</code>.
+</p>
+<p>If <code>FALSE</code>, return the desired 
+trimmed version of <code>x</code>.
+</p>
+<p>If this is a list with two two 
+integer vectors, use them to trim 
+<code>x</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Optional arguments;  not currently 
+used.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>1.  Check arguments:  2 &lt;= 
+<code>length(dim(x))</code> &lt;= 3?  
+<code>is.logical(na.rm)</code>?  
+<code>returnIndices2Keep</code> = logical 
+or list of 2 integer vectors, all 
+the same sign, not exceeding 
+<code>dim(x)</code>?
+</p>
+<p>2.  <code>if(is.list(returnIndices2Keep))</code> 
+check that <code>returnIndices2Keep</code> is a 
+list with 2 integer vectors, all the same 
+sign, not exceeding <code>dim(x)</code>.
+If yes, return <code>x</code> appropriately 
+subsetted.
+</p>
+<p>3.  <code>if(!is.logical(returnIndices2Keep))</code>
+throw an error message.
+</p>
+<p>4.  Compute <code>indices2Keep</code>.
+</p>
+<p>5.  <code>If(returnIndices2Keep)</code> return 
+(<code>indices2Keep</code>) else return <code>x</code>
+appropriately subsetted.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>if(returnIndices2Keep==TRUE)</code> return 
+a list with 2 integer vectors to use as 
+subscripts in trimming objects like 
+<code>x</code>.
+</p>
+<p>Otherwise, return an object like <code>x</code>
+appropriately trimmed.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>trim</code> trims raster 
+images, similar to <code>trimImage</code>.
+</p>
+<p><code>trimws</code> trims leading and 
+trailing spaces from character strings 
+and factors.  Similar <code>trim</code>
+functions exist in other packages but 
+without obvious, explicit consideration 
+of <code>factors</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  trim a simple matrix
+##
+tst1 &lt;- matrix(.Machine$double.eps, 3, 3,
+    dimnames=list(letters[1:3], LETTERS[1:3]))
+tst1[2,2] &lt;- 1
+tst1t &lt;- trimImage(tst1)
+
+# check
+tst1. &lt;- matrix(1, 1, 1,
+          dimnames=list(letters[2], LETTERS[2]))
+
+all.equal(tst1t, tst1.)
+
+
+##
+## 2.  returnIndices2Keep
+##
+tst2i &lt;- trimImage(tst1, returnIndices2Keep=TRUE)
+tst2a &lt;- trimImage(tst1, returnIndices2Keep=tst2i)
+
+tst2i. &lt;- list(index1=2, index2=2)
+
+
+# check
+
+all.equal(tst2i, tst2i.)
+
+
+all.equal(tst2a, tst1.)
+
+
+##
+## 3.  trim 0's only
+##
+tst3 &lt;- array(0, dim=3:5)
+tst3[2, 2:3, ] &lt;- 0.5*.Machine$double.eps
+tst3[3,,] &lt;- 1
+
+tst3t &lt;- trimImage(tst3, 0)
+
+# check
+tst3t. &lt;- tst3[2:3,, ]
+
+# check
+
+all.equal(tst3t, tst3t.)
+
+
+##
+## 4.  trim NAs
+##
+tst4 &lt;- tst1
+tst4[1,1] &lt;- NA
+tst4[3,] &lt;- NA
+
+tst4t &lt;- trimImage(tst4)
+# tst4o == tst4
+tst4o &lt;- trimImage(tst4, na.rm=FALSE)
+
+# check
+
+all.equal(tst4t, tst1[2, 2, drop=FALSE])
+
+
+
+all.equal(tst4o, tst4)
+
+
+##
+## 5.  trim all
+##
+tst4a &lt;- trimImage(tst1, 1)
+
+tst4a. &lt;- matrix(0,0,0,
+     dimnames=list(NULL, NULL))
+
+
+all.equal(tst4a, tst4a.)
+
+
+
+</code></pre>
+
+
+</div>

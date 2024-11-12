@@ -1,0 +1,162 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>choose_uk</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Threshold <code class="reqn">u</code> and runs parameter <code class="reqn">K</code> diagnostic for the <code class="reqn">K</code>-gaps
+estimator</h2>
+
+<h3>Description</h3>
+
+<p>Creates data for a plot to aid the choice of the threshold and
+run parameter <code class="reqn">K</code> for the <code class="reqn">K</code>-gaps estimator (see
+<code>kgaps</code>).  <code>plot.choose_uk</code> creates the plot.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">choose_uk(data, u, k = 1, inc_cens = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A numeric vector or numeric matrix of raw data.  If <code>data</code>
+is a matrix then the log-likelihood is constructed as the sum of
+(independent) contributions from different columns. A common situation is
+where each column relates to a different year.
+</p>
+<p>If <code>data</code> contains missing values then <code>split_by_NAs</code> is
+used to divide the data into sequences of non-missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u, k</code></td>
+<td>
+<p>Numeric vectors.  <code>u</code> is a vector of
+extreme value thresholds applied to data.  <code>k</code> is a vector of values
+of the run parameter <code class="reqn">K</code>, as defined in Suveges and Davison (2010).
+See <code>kgaps</code> for more details.
+</p>
+<p>Any values in <code>u</code> that are greater than all the observations in
+<code>data</code> will be removed without a warning being given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inc_cens</code></td>
+<td>
+<p>A logical scalar indicating whether or not to include
+contributions from censored inter-exceedance times, relating to the
+first and last observations.  See Attalides (2015) for details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each combination of threshold in <code>u</code> and <code class="reqn">K</code>
+in <code>k</code> the functions <code>kgaps</code> and <code>kgaps_imt</code>
+are called in order to estimate <code class="reqn">\theta</code> and to perform the
+information matrix test of Suveges and Davison (2010).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object (a list) of class <code>c("choose_uk", "exdex")</code>
+containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>imt </code></td>
+<td>
+<p>an object of class <code>c("kgaps_imt", "exdex")</code> returned
+from <code>kgaps_imt</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta </code></td>
+<td>
+<p>a <code>length(u)</code> by <code>length(k)</code> matrix.
+Element (i,j) of <code>theta</code> contains an object (a list) of class
+<code>c("kgaps", "exdex")</code>, a result of a call
+<code>kgaps(data, u[j], k[i])</code> to <code>kgaps</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Suveges, M. and Davison, A. C. (2010) Model
+misspecification in peaks over threshold analysis, <em>Annals of
+Applied Statistics</em>, <strong>4</strong>(1), 203-221.
+<a href="https://doi.org/10.1214/09-AOAS292">doi:10.1214/09-AOAS292</a>
+</p>
+<p>Attalides, N. (2015) Threshold-based extreme value modelling,
+PhD thesis, University College London.
+<a href="https://discovery.ucl.ac.uk/1471121/1/Nicolas_Attalides_Thesis.pdf">https://discovery.ucl.ac.uk/1471121/1/Nicolas_Attalides_Thesis.pdf</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>kgaps</code> for maximum likelihood estimation of the
+extremal index <code class="reqn">\theta</code> using the <code class="reqn">K</code>-gaps model.
+</p>
+<p><code>kgaps_imt</code> for the information matrix test under the
+<code class="reqn">K</code>-gaps model
+</p>
+<p><code>plot.choose_uk</code> to produce the diagnostic plot.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### S&amp;P 500 index
+
+# Multiple thresholds and run parameters
+u &lt;- quantile(sp500, probs = seq(0.1, 0.9, by = 0.1))
+imt_theta &lt;- choose_uk(sp500, u = u, k = 1:5)
+plot(imt_theta)
+plot(imt_theta, uprob = TRUE)
+plot(imt_theta, y = "theta")
+
+# One run parameter K, many thresholds u
+u &lt;- quantile(sp500, probs = seq(0.1, 0.9, by = 0.1))
+imt_theta &lt;- choose_uk(sp500, u = u, k = 1)
+plot(imt_theta)
+plot(imt_theta, y = "theta")
+
+# One threshold u, many run parameters K
+u &lt;- quantile(sp500, probs = 0.9)
+imt_theta &lt;- choose_uk(sp500, u = u, k = 1:5)
+plot(imt_theta)
+plot(imt_theta, y = "theta")
+
+### Newlyn sea surges
+
+u &lt;- quantile(newlyn, probs = seq(0.1, 0.9, by = 0.1))
+imt_theta &lt;- choose_uk(newlyn, u = u, k = 1:5)
+plot(imt_theta, uprob = TRUE)
+
+### Cheeseboro wind gusts (a matrix containing some NAs)
+
+probs &lt;- c(seq(0.5, 0.95, by = 0.05), 0.99)
+u &lt;- quantile(cheeseboro, probs = probs, na.rm = TRUE)
+imt_theta &lt;- choose_uk(cheeseboro, u, k = 1:6)
+plot(imt_theta, uprob = FALSE, lwd = 2)
+
+### Uccle July temperatures
+
+probs &lt;- c(seq(0.7, 0.95, by = 0.05), 0.99)
+u &lt;- quantile(uccle720m, probs = probs, na.rm = TRUE)
+imt_theta &lt;- choose_uk(uccle720m, u, k = 1:5)
+plot(imt_theta, uprob = TRUE, lwd = 2)
+</code></pre>
+
+
+</div>

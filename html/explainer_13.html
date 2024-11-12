@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SHAPclust</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>SHAP clustering</h2>
+
+<h3>Description</h3>
+
+<p>SHAP values are used to cluster data samples using the k-means method to identify subgroups of individuals with specific patterns of feature contributions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SHAPclust(
+  task,
+  trained_model,
+  splits,
+  shap_Mean_wide,
+  shap_Mean_long,
+  num_of_clusters = 4,
+  seed = 246,
+  subset = 1,
+  algorithm = "Hartigan-Wong",
+  iter.max = 1000
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>task</code></td>
+<td>
+<p>an mlr3 task for binary classification</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained_model</code></td>
+<td>
+<p>an mlr3 trained learner object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+<p>an mlr3 object defining data splits for train and test sets</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shap_Mean_wide</code></td>
+<td>
+<p>the data frame of SHAP values in wide format from eSHAP_plot.R</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shap_Mean_long</code></td>
+<td>
+<p>the data frame of SHAP values in long format from eSHAP_plot.R</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_of_clusters</code></td>
+<td>
+<p>number of clusters to make based on SHAP values, default: 4</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>an integer for reproducibility, Default to 246</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>what percentage of the instances to use from 0 to 1 where 1 means all</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algorithm</code></td>
+<td>
+<p>k-means algorithm character: "Hartigan-Wong", "Lloyd", "Forgy", "MacQueen".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter.max</code></td>
+<td>
+<p>maximum number of iterations allowed</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing four elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>shap_plot_onerow</code></td>
+<td>
+<p>An interactive plot displaying the SHAP values for each feature, clustered by the specified number of clusters. Each cluster is shown in a facet.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>combined_plot</code></td>
+<td>
+<p>A ggplot2 figure combining confusion matrices for each cluster, providing insights into the model's performance within each identified subgroup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kmeans_fvals_desc</code></td>
+<td>
+<p>A summary table containing statistical descriptions of the clusters based on feature values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shap_Mean_wide_kmeans</code></td>
+<td>
+<p>A data frame containing clustered SHAP values along with predictions and ground truth information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kmeans_info</code></td>
+<td>
+<p>Information about the k-means clustering process, including cluster centers and assignment details.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Zargari Marandi, R., 2024. ExplaineR: an R package to explain machine learning models. Bioinformatics advances, 4(1), p.vbae049, https://doi.org/10.1093/bioadv/vbae049.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other functions to visualize and interpret machine learning models: <code>eSHAP_plot</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library("explainer")
+seed &lt;- 246
+set.seed(seed)
+# Load necessary packages
+if (!requireNamespace("mlbench", quietly = TRUE)) stop("mlbench not installed.")
+if (!requireNamespace("mlr3learners", quietly = TRUE)) stop("mlr3learners not installed.")
+if (!requireNamespace("ranger", quietly = TRUE)) stop("ranger not installed.")
+# Load BreastCancer dataset
+utils::data("BreastCancer", package = "mlbench")
+target_col &lt;- "Class"
+positive_class &lt;- "malignant"
+mydata &lt;- BreastCancer[, -1]
+mydata &lt;- na.omit(mydata)
+sex &lt;- sample(
+  c("Male", "Female"),
+  size = nrow(mydata),
+  replace = TRUE
+)
+mydata$age &lt;- as.numeric(sample(
+  seq(18, 60),
+  size = nrow(mydata),
+  replace = TRUE
+))
+mydata$sex &lt;- factor(
+  sex,
+  levels = c("Male", "Female"),
+  labels = c(1, 0)
+)
+maintask &lt;- mlr3::TaskClassif$new(
+  id = "my_classification_task",
+  backend = mydata,
+  target = target_col,
+  positive = positive_class
+)
+splits &lt;- mlr3::partition(maintask)
+mylrn &lt;- mlr3::lrn(
+  "classif.ranger",
+  predict_type = "prob"
+)
+mylrn$train(maintask, splits$train)
+SHAP_output &lt;- eSHAP_plot(
+  task = maintask,
+  trained_model = mylrn,
+  splits = splits,
+  sample.size = 2, # also 30 or more
+  seed = seed,
+  subset = 0.02 # up to 1
+)
+shap_Mean_wide &lt;- SHAP_output[[2]]
+shap_Mean_long &lt;- SHAP_output[[3]]
+SHAP_plot_clusters &lt;- SHAPclust(
+  task = maintask,
+  trained_model = mylrn,
+  splits = splits,
+  shap_Mean_wide = shap_Mean_wide,
+  shap_Mean_long = shap_Mean_long,
+  num_of_clusters = 3, # your choice
+  seed = seed,
+  subset = 0.02, # match with eSHAP_plot
+  algorithm = "Hartigan-Wong",
+  iter.max = 10
+)
+
+
+</code></pre>
+
+
+</div>

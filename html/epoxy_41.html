@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ui_epoxy_mustache</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Epoxy HTML Mustache Template</h2>
+
+<h3>Description</h3>
+
+<p>A Shiny output that uses <a href="https://mustache.github.io/">mustache templating</a>
+to render HTML. Mustache is a powerful template language with minimal
+internal logic. The advantage of <code>ui_epoxy_mustache()</code> is that all parts of
+the HTML can be templated – including element attributes – whereas
+<code>ui_epoxy_html()</code> requires that the dynamic template variables appear in the
+text portion of the UI. The downside is that the entire template is
+re-rendered (in the browser), each time that updated data is sent from the
+server – unlike <code>ui_epoxy_html()</code>, whose updates are specific to the parts
+of the data that have changed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ui_epoxy_mustache(
+  id,
+  ...,
+  .file = NULL,
+  .sep = "",
+  .container = "epoxy-mustache"
+)
+
+ui_epoxy_whisker(
+  id,
+  ...,
+  .file = NULL,
+  .sep = "",
+  .container = "epoxy-mustache"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>The ID of the output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Character strings of HTML or htmltools::tags. All elements
+should be unnamed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.file</code></td>
+<td>
+<p>A path to a template file. If provided, no other template lines
+should be included in <code>...</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.sep</code></td>
+<td>
+<p>The separator used to concatenate elements in <code>...</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.container</code></td>
+<td>
+<p>A character tag name, e.g. <code>"div"</code> or <code>"span"</code>, or a
+function that returns an <code>htmltools::tag()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a Shiny output UI element.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul><li> <p><code>ui_epoxy_whisker()</code>: An alias for <code>ui_epoxy_mustache()</code>, provided
+because R users are more familiar with this syntax via the <span class="pkg">whisker</span>
+package.
+</p>
+</li></ul>
+<h3>See Also</h3>
+
+<p><code>ui_epoxy_html()</code>, <code>render_epoxy()</code>
+</p>
+<p>Other Mustache-style template functions: 
+<code>epoxy_mustache()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(shiny)
+
+ui &lt;- fluidPage(
+  fluidRow(
+    style = "max-width: 600px; margin: 0 auto",
+    column(
+      width = 6,
+      ui_epoxy_mustache(
+        id = "template",
+        h2(class = "{{heading_class}}", "Hello, {{name}}!"),
+        "{{#favorites}}",
+        p("Your favorite fruits are..."),
+        tags$ul(HTML("{{#fruits}}&lt;li&gt;{{.}}&lt;/li&gt;{{/fruits}}")),
+        "{{/favorites}}",
+        "{{^favorites}}&lt;p&gt;Do you have any favorite fruits?&lt;/p&gt;{{/favorites}}"
+      )
+    ),
+    column(
+      width = 6,
+      h2("Inputs"),
+      textInput("name", "Your name"),
+      textInput("fruits", "Favorite fruits", placeholder = "apple, banana"),
+      helpText("Enter a comma-separated list of fruits.")
+    )
+  )
+)
+
+server &lt;- function(input, output, session) {
+  user_name &lt;- reactive({
+    if (!nzchar(input$name)) return("user")
+    input$name
+  })
+
+  favorites &lt;- reactive({
+    if (identical(input$fruits, "123456")) {
+      # Errors are equivalent to "empty" values,
+      # the rest of the template will still render.
+      stop("Bad fruits, bad!")
+    }
+
+    if (!nzchar(input$fruits)) return(NULL)
+    list(fruits = strsplit(input$fruits, "\\s*,\\s*")[[1]])
+  })
+
+  output$template &lt;- render_epoxy(
+    name = user_name(),
+    heading_class = if (user_name() != "user") "text-success",
+    favorites = favorites()
+  )
+}
+
+if (interactive()) {
+  shiny::shinyApp(ui, server)
+}
+
+
+run_epoxy_example_app("ui_epoxy_mustache")
+
+</code></pre>
+
+
+</div>

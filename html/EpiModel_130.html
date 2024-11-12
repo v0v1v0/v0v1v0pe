@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>merge.netsim</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Merge Model Simulations across netsim Objects</h2>
+
+<h3>Description</h3>
+
+<p>Merges epidemiological data from two independent simulations of
+stochastic network models from <code>netsim</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'netsim'
+merge(
+  x,
+  y,
+  keep.transmat = TRUE,
+  keep.network = TRUE,
+  keep.nwstats = TRUE,
+  keep.other = TRUE,
+  param.error = TRUE,
+  keep.diss.stats = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An <code>EpiModel</code> object of class <code>netsim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Another <code>EpiModel</code> object of class <code>netsim</code>,
+with the identical model parameterization as <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.transmat</code></td>
+<td>
+<p>If <code>TRUE</code>, keep the transmission matrices from the
+original <code>x</code> and <code>y</code> elements. Note: transmission matrices
+only saved when (<code>save.transmat == TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.network</code></td>
+<td>
+<p>If <code>TRUE</code>, keep the <code>networkDynamic</code> objects
+from the original <code>x</code> and <code>y</code> elements. Note: network
+only saved when (<code>tergmLite == FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.nwstats</code></td>
+<td>
+<p>If <code>TRUE</code>, keep the network statistics (as set by
+the <code>nwstats.formula</code> parameter in <code>control.netsim</code>) from
+the original <code>x</code> and <code>y</code> elements.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.other</code></td>
+<td>
+<p>If <code>TRUE</code>, keep the other simulation elements (as set
+by the <code>save.other</code> parameter in <code>control.netsim</code>) from the
+original <code>x</code> and <code>y</code> elements.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param.error</code></td>
+<td>
+<p>If <code>TRUE</code>, if <code>x</code> and <code>y</code> have different
+params (in <code>param.net</code>) or controls (passed in
+<code>control.net</code>) an error will prevent the merge. Use
+<code>FALSE</code> to override that check.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.diss.stats</code></td>
+<td>
+<p>If <code>TRUE</code>, keep <code>diss.stats</code> from the
+original <code>x</code> and <code>y</code> objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional merge arguments (not currently used).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This merge function combines the results of two independent simulations of
+<code>netsim</code> class models, simulated under separate function calls.
+The model parameterization between the two calls must be exactly the same,
+except for the number of simulations in each call. This allows for manual
+parallelization of model simulations.
+</p>
+<p>This merge function does not work the same as the default merge, which allows
+for a combined object where the structure differs between the input elements.
+Instead, the function checks that objects are identical in model
+parameterization in every respect (except number of simulations) and binds
+the results.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>EpiModel</code> object of class <code>netsim</code> containing
+the data from both <code>x</code> and <code>y</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Network model
+nw &lt;- network_initialize(n = 100)
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 10)
+est &lt;- netest(nw, formation = ~edges, target.stats = 25,
+              coef.diss = coef.diss, verbose = FALSE)
+
+# Epidemic models
+param &lt;- param.net(inf.prob = 1)
+init &lt;- init.net(i.num = 1)
+control &lt;- control.net(type = "SI", nsteps = 20, nsims = 2,
+                       save.nwstats = TRUE,
+                       nwstats.formula = ~edges + degree(0),
+                       verbose = FALSE)
+x &lt;- netsim(est, param, init, control)
+y &lt;- netsim(est, param, init, control)
+
+# Merging
+z &lt;- merge(x, y)
+
+# Examine separate and merged data
+as.data.frame(x)
+as.data.frame(y)
+as.data.frame(z)
+
+</code></pre>
+
+
+</div>

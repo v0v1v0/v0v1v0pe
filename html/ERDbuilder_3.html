@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>render_erd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Render ERD</h2>
+
+<h3>Description</h3>
+
+<p>The <code>render_erd</code> function graphically renders ERD using
+<code>DiagrammeR</code>, incorporating pseudo-nodes to depict traditional ERD
+notations such as cardinality. This function uses edge attributes to append
+text labels near the end of the edge lines. Specifically, the
+<code>DiagrammeR</code> label attribute is leveraged to include text labels at the
+ends of the edges, which effectively convey the intended cardinality and
+relationship information. This function constructs edge labels from two
+strings representing the left and right relationship attributes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">render_erd(erd_object, label_distance = 2.5, label_angle = 45, n = 10)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>erd_object</code></td>
+<td>
+<p>An object of class "ERD", generated using the
+<code>link{create_erd}</code> function. This object encapsulates the data frames
+representing the entities and the relationships between these entities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_distance</code></td>
+<td>
+<p>A numeric value that specifies the distance between the
+edge labels and the lines connecting the nodes. The default value is 2.5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_angle</code></td>
+<td>
+<p>A numeric value that specifies the angle at which the edge
+labels are displayed. The default value is 45 degrees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>The maximum number of rows in each table. The tables will add
+columns to show all of the variables in the tables such that there are only
+'n' rows.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is responsible for graphically rendering an Entity-Relationship
+Diagram (ERD) based on an object of class "ERD". This function leverages the
+<code>DiagrammeR</code> package to generate a graph that visually represents both
+the entities and the relationships contained within the ERD object. The
+entities are represented as nodes, and the relationships as edges. The
+<code>render_erd</code> function thus provides a robust mechanism for visually
+representing an ERD based on structured data within the R environment. By
+converting an ERD object into a graphical form, the function aids in a
+clearer understanding and communication of complex data relationships.
+</p>
+<p>Nodes: Each entity (i.e., data frame) is represented as a node. The node
+label consists of the entity name and the attribute names within the entity.
+</p>
+<p>Edges: Relationships between entities are represented as edges between the
+corresponding nodes. Labels at the ends of the edges indicate the type and
+cardinality of the relationship.
+</p>
+<p>The <code>label_distance</code> and <code>label_angle</code> parameters control the
+presentation of edge labels in the ERD to minimize overlap and improve
+readability.
+</p>
+<p>The function uses a for loop to iterate through the entities and
+relationships, constructing the necessary <code>DiagrammeR</code> code to render
+each element. The <code>nodesep</code> and <code>ranksep</code> parameters in the
+<code>DiagrammeR</code> code control the node spacing in the rendered ERD, making
+it easier to visualize complex ERDs.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>DiagrammeR</code> graph object representing the ERD.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# Load Packages -----------------------------------------------------------
+
+library(ERDbuilder)
+library(dplyr)
+
+# Define entities ---------------------------------------------------------
+
+students_tbl &lt;- data.frame(
+  st_id = c("hu1", "de2", "lo3"),
+  dep_id = c("water", "evil", "values"),
+  student = c("Huey", "Dewey", "Louie"),
+  email = c("hubert.duck", "dewfort.duck", "llewellyn.duck"),
+  dob = c("04-15", "04-15", "04-15")
+)
+
+courses_tbl &lt;- data.frame(
+  crs_id = c("water101", "evil205", "water202"),
+  fac_id = c("02do", "03pe", "04mi"),
+  dep_id = c("water", "evil", "water"),
+  course = c("Swimming", "Human-chasing", "Dives")
+)
+
+enrollment_tbl &lt;- data.frame(
+  crs_id = c("water101", "evil205", "evil205", "water202"),
+  st_id = c("hu1", "hu1", "de2", "de2"),
+  final_grade = c("B", "A", "A", "F")
+)
+
+department_tbl &lt;- data.frame(
+  dep_id = c("water", "evil", "values"),
+  department = c("Water activities", "Evil procurement", "Good values")
+)
+
+faculty_tbl &lt;- data.frame(
+  faculty_name = c("Scrooge McDuck", "Donald", "Pete", "Mickey"),
+  title = c("Emeritus", "Full", "Assistant", "Full"),
+  fac_id = c("01sc", "02do", "03pe", "04mi"),
+  dep_id = c("water", "water", "evil", "values")
+)
+
+head(students_tbl)
+head(courses_tbl)
+head(enrollment_tbl)
+head(department_tbl)
+head(faculty_tbl)
+
+## Define relationships----------------------------------------
+relationships &lt;- list(
+  courses = list(
+    enrollment = list(crs_id = "crs_id", relationship = c("||", "|&lt;")),
+    department = list(dep_id = "dep_id", relationship = c("&gt;|", "||")),
+    faculty = list(fac_id = "fac_id", relationship = c("&gt;0", "||"))
+  ),
+  enrollment = list(
+    students = list(st_id = "st_id", relationship = c("&gt;0", "||")
+    )
+  ),
+  students = list(
+    department = list(dep_id = "dep_id", relationship = c("&gt;|", "||"))
+  ),
+  faculty = list(
+    department = list(dep_id = "dep_id", relationship = c("&gt;|", "||"))
+  )
+)
+
+## Create ERD object
+erd_object &lt;-
+  create_erd(
+    list(
+      students = students_tbl,
+      courses = courses_tbl,
+      enrollment = enrollment_tbl,
+      department = department_tbl,
+      faculty = faculty_tbl
+    ),
+    relationships)
+
+## Render ERD -----------------------------------------------------------
+render_erd(erd_object, label_distance = 0, label_angle = 15, n = 20)
+</code></pre>
+
+
+</div>

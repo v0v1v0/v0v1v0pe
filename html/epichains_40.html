@@ -1,0 +1,283 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate_chains</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate transmission chains</h2>
+
+<h3>Description</h3>
+
+<p>It generates independent transmission chains starting with a single case
+per chain, using a simple branching process model (See details for
+definition of "chains" and assumptions). Offspring for each
+chain are generated with an offspring distribution, and an optional
+generation time distribution function.
+</p>
+<p>The individual chain simulations are controlled by customisable stopping
+criteria, including a threshold chain size or length, and a generation time
+cut off. The function also optionally accepts population related inputs
+such as the population size (defaults to Inf) and percentage of the
+population initially immune (defaults to 0).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulate_chains(
+  n_chains,
+  statistic = c("size", "length"),
+  offspring_dist,
+  ...,
+  stat_threshold = Inf,
+  pop = Inf,
+  percent_immune = 0,
+  generation_time = NULL,
+  t0 = 0,
+  tf = Inf
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n_chains</code></td>
+<td>
+<p>Number of chains to simulate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+<p>The chain statistic to track as the
+stopping criteria for each chain being simulated when <code>stat_threshold</code> is not
+<code>Inf</code>; A <code style="white-space: pre;">⁠&lt;string&gt;⁠</code>. It can be one of:
+</p>
+
+<ul>
+<li>
+<p> "size": the total number of cases produced by a chain before it goes
+extinct.
+</p>
+</li>
+<li>
+<p> "length": the total number of generations reached by a chain before
+it goes extinct.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offspring_dist</code></td>
+<td>
+<p>Offspring distribution: a <code style="white-space: pre;">⁠&lt;function&gt;⁠</code> like the ones
+provided by R to generate random numbers from given distributions (e.g.,
+<code>rpois</code> for Poisson). More specifically, the function needs to
+accept at least one argument, <code>n</code>, which is the number of random
+numbers to generate. It can accept further arguments, which will be passed
+on to the random number generating functions. Examples that can be provided
+here are <code>rpois</code> for Poisson distributed offspring, <code>rnbinom</code> for negative
+binomial offspring, or custom functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Parameters of the offspring distribution as required by R.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat_threshold</code></td>
+<td>
+<p>A stopping criterion for individual chain simulations;
+a positive number coercible to integer. When any chain's cumulative statistic
+reaches or surpasses <code>stat_threshold</code>, that chain ends. Defaults to <code>Inf</code>.
+For example, if <code>statistic = "size"</code> and <code>stat_threshold = 10</code>, then any
+chain that produces 10 or more cases will stop. Note that setting
+<code>stat_threshold</code> does not guarantee that all chains will stop at the same
+value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pop</code></td>
+<td>
+<p>Population size; An <code style="white-space: pre;">⁠&lt;Integer&gt;⁠</code>. Used alongside <code>percent_immune</code>
+to define the susceptible population. Defaults to <code>Inf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>percent_immune</code></td>
+<td>
+<p>Percent of the population immune to
+infection at the start of the simulation; A <code style="white-space: pre;">⁠&lt;numeric&gt;⁠</code> between 0 and 1.
+Used alongside <code>pop</code> to initialise the susceptible population. Defaults to
+0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>generation_time</code></td>
+<td>
+<p>The generation time function; the name
+of a user-defined named or anonymous function with only one argument <code>n</code>,
+representing the number of generation times to sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t0</code></td>
+<td>
+<p>Start time (if generation time is given); either a single value
+or a vector of same length as <code>n_chains</code> (number of initial cases) with
+corresponding initial times. Defaults to 0, meaning all cases started at
+time 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tf</code></td>
+<td>
+<p>A number for the cut-off for the infection times (if generation
+time is given); Defaults to <code>Inf</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An <code style="white-space: pre;">⁠&lt;epichains&gt;⁠</code> object, which is basically a <code style="white-space: pre;">⁠&lt;data.frame&gt;⁠</code>
+with columns:
+</p>
+
+<ul>
+<li> <p><code>chain</code> - an ID for active/ongoing chains,
+</p>
+</li>
+<li> <p><code>infectee</code> - a unique ID for each infectee.
+</p>
+</li>
+<li> <p><code>infector</code> - an ID for the infector of each infectee.
+</p>
+</li>
+<li> <p><code>generation</code> - a discrete time point during which infection occurs, and
+optionally,
+</p>
+</li>
+<li> <p><code>time</code> - the time of infection.
+</p>
+</li>
+</ul>
+<h3>Definition of a transmission chain</h3>
+
+<p>A transmission chain as used here is an independent case and all
+the secondary cases linked to it through transmission. The chain starts with
+a single case, and each case in the chain generates secondary cases
+according to the offspring distribution. The chain ends when no more
+secondary cases are generated.
+</p>
+
+
+<h3>Calculating chain sizes and lengths</h3>
+
+<p>The function simulates the chain size for chain <code class="reqn">i</code> at time
+<code class="reqn">t</code>, <code class="reqn">I_{t, i}</code>, as:
+</p>
+<p style="text-align: center;"><code class="reqn">I_{t, i} = \sum_{i}^{I_{t-1}}X_{t, i},</code>
+</p>
+
+<p>and the chain length/duration for chain <code class="reqn">i</code> at time <code class="reqn">t</code>,
+<code class="reqn">L_{t, i}</code>, as:
+</p>
+<p style="text-align: center;"><code class="reqn">L_{t, i} = {\sf min}(1, X_{t, i}), </code>
+</p>
+
+<p>where <code class="reqn">X_{t, i}</code> is the secondary cases generated by chain <code class="reqn">i</code>
+at time <code class="reqn">t</code>, and <code class="reqn">I_{0, i} = L_{0, i} = 1</code>.
+</p>
+<p>The distribution of secondary cases, <code class="reqn">X_{t, i}</code> is modelled by the
+offspring distribution (<code>offspring_dist</code>).
+</p>
+
+
+<h3>Specifying <code>generation_time</code>
+</h3>
+
+<p>The argument <code>generation_time</code> must be specified as a function with
+one argument, <code>n</code>.
+</p>
+<p>For example, assuming we want to specify the generation time as a random
+log-normally distributed variable with <code>meanlog = 0.58</code> and <code>sdlog = 1.58</code>,
+we could define a named function, let's call it "generation_time_fn",
+with only one argument representing the number of generation times to
+sample: <code>generation_time_fn &lt;- function(n){rlnorm(n, 0.58, 1.38)}</code>,
+and assign the name of the function to <code>generation_time</code> in
+the simulation function, i.e.
+<code>`simulate_*`(..., generation_time = generation_time_fn)</code>,
+where <code>...</code> are the other arguments to <code style="white-space: pre;">⁠simulate_*()⁠</code> and * is a placeholder
+for the rest of simulation function's name.
+</p>
+<p>Alternatively, we could assign an anonymous function to <code>generation_time</code>
+in the <code style="white-space: pre;">⁠simulate_*()⁠</code> call, i.e.
+<code>simulate_*(..., generation_time = function(n){rlnorm(n, 0.58, 1.38)})</code>
+OR <code>simulate_*(..., generation_time = \(n){rlnorm(n, 0.58, 1.38)})</code>,
+where <code>...</code> are the other arguments to <code style="white-space: pre;">⁠simulate_*()⁠</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>James M. Azam, Sebastian Funk
+</p>
+
+
+<h3>References</h3>
+
+<p>Jacob C. (2010). Branching processes: their role in epidemiology.
+International journal of environmental research and public health, 7(3),
+1186–1204. <a href="https://doi.org/10.3390/ijerph7031204">doi:10.3390/ijerph7031204</a>
+</p>
+<p>Blumberg, S., and J. O. Lloyd-Smith. 2013. "Comparing Methods for
+Estimating R0 from the Size Distribution of Subcritical Transmission
+Chains." Epidemics 5 (3): 131–45.
+<a href="https://doi.org/10.1016/j.epidem.2013.05.002">doi:10.1016/j.epidem.2013.05.002</a>.
+</p>
+<p>Farrington, C. P., M. N. Kanaan, and N. J. Gay. 2003.
+"Branching Process Models for Surveillance of Infectious Diseases
+Controlled by Mass Vaccination.” Biostatistics (Oxford, England)
+4 (2): 279–95. <a href="https://doi.org/10.1093/biostatistics/4.2.279">doi:10.1093/biostatistics/4.2.279</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Using a Poisson offspring distribution and simulating from an infinite
+# population up to chain size 10.
+set.seed(32)
+chains_pois_offspring &lt;- simulate_chains(
+  n_chains = 10,
+  statistic = "size",
+  offspring_dist = rpois,
+  stat_threshold = 10,
+  generation_time = function(n) rep(3, n),
+  lambda = 2
+)
+chains_pois_offspring
+
+# Using a Negative binomial offspring distribution and simulating from a
+# finite population up to chain size 10.
+set.seed(32)
+chains_nbinom_offspring &lt;- simulate_chains(
+  n_chains = 10,
+  pop = 100,
+  percent_immune = 0,
+  statistic = "size",
+  offspring_dist = rnbinom,
+  stat_threshold = 10,
+  generation_time = function(n) rep(3, n),
+  mu = 2,
+  size = 0.2
+)
+chains_nbinom_offspring
+</code></pre>
+
+
+</div>

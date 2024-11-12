@@ -1,0 +1,510 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tsd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the parameters that best describe temperature-dependent sex determination</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the parameters that best describe the thermal reaction norm for sex ratio when temperature-dependent sex determination occurs.<br>
+It can be used also to evaluate the relationship between incubation duration and sex ratio.<br>
+The parameter l was defined in Girondot (1999). The TRT is defined from the difference between the two boundary temperatures giving sex ratios of <code class="reqn">l</code> and <code class="reqn">1 - l</code>, respectively:<br>
+For logistic model (Girondot, 1999), it follows </p>
+<p style="text-align: center;"><code class="reqn">TRT_{l}=abs\left ( S\: K_{l} \right )</code>
+</p>
+
+<p>where <code class="reqn">K_{l}</code> is a constant equal to <code class="reqn">2\: log\left ( \frac{l}{1-l} \right )</code>.<br>
+In Girondot (1999), l was 0.05 and then the TRT was defined as being the range of temperatures producing from 5\
+The default model is named logistic. This model (as well as the logit one) has the particularity to have a symmetric shape around P.<br>
+The <em>logistic</em> model is:
+</p>
+<p style="text-align: center;"><code class="reqn">SR(T) = 1 / (1 + exp((1 / S) * (P - T))))</code>
+</p>
+
+<p>The <em>logit</em> model is:
+</p>
+<p style="text-align: center;"><code class="reqn">SR(T) = 1 / (1 + exp(4 * S * (P - T))))</code>
+</p>
+
+<p>The other models have been built to alleviate this constraint. Hill and A-logistic models can be asymmetric, but it is impossible to control independently the low and high transitions.<br>
+Hulin model is assymmetric but the control of asymmetry is difficult to manage.<br>
+If asymmetric model is selected, it is always better to use <em>flexit</em> model.
+</p>
+<p style="text-align: center;"><code class="reqn">if\ \ T &lt; P\ \ then\ \ (1 + (2^{K_1} - 1) *  exp(4 * S_1 * (P - T)))^{(-1/K_1)}</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">if\ \ T &gt; P\ \ then\ \ 1-((1 + (2^{K_2} - 1) * exp(4 * S_2 * (T - P)))^{(-1/K_2)}</code>
+</p>
+
+<p>with:<br></p>
+<p style="text-align: center;"><code class="reqn">S_1 = S/((4/K_1)*(2^{(-K_1)})^{(1/K_1+1)}*(2^{K_1}-1))</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">S_2 = S/((4/K_2)*(2^{(-K_2)})^{(1/K_2+1)}*(2^{K_2}-1))</code>
+</p>
+
+<p>The <em>flexit*</em> model is defined as (QBT is the Quasi-Binary Threshold):
+</p>
+<p style="text-align: center;"><code class="reqn">QBT = 1/ (1 + exp(100 * (P - T)))</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">SR(T) = 1 / (1 + exp(4 * (SL * QBT + SH * (1 - QBT)) * (P - T))))</code>
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tsd(
+  df = NULL,
+  males = NULL,
+  females = NULL,
+  N = NULL,
+  temperatures = NULL,
+  durations = NULL,
+  l = 0.05,
+  parameters.initial = c(P = 30, S = -2, K = 0, K1 = 1, K2 = 0, SL = -1, SH = -1),
+  males.freq = TRUE,
+  fixed.parameters = NULL,
+  equation = "logistic",
+  replicate.CI = 10000,
+  range.CI = 0.95,
+  SE = TRUE,
+  replicate.NullDeviance = 1000,
+  control = list(maxit = 1000),
+  print = TRUE,
+  method = "BFGS"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>A dataframe with at least two columns named males, females or N and temperatures, Incubation.temperature or durations column</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>males</code></td>
+<td>
+<p>A vector with male numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>females</code></td>
+<td>
+<p>A vector with female numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>A vector with total numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temperatures</code></td>
+<td>
+<p>The constant incubation temperatures used to fit sex ratio</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>durations</code></td>
+<td>
+<p>The duration of incubation or TSP used to fit sex ratio</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l</code></td>
+<td>
+<p>Sex ratio limits to define TRT are l and 1-l (see Girondot, 1999)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters.initial</code></td>
+<td>
+<p>Initial values for P, S or K search as a vector, ex. c(P=29, S=-0.3)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>males.freq</code></td>
+<td>
+<p>If TRUE data are shown as males frequency</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.parameters</code></td>
+<td>
+<p>Parameters that will not be changed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>equation</code></td>
+<td>
+<p>Can be "logistic", "Hill", "A-logistic", "Hulin", "Double-A-logistic", "flexit", "flexit*", "GSD", "logit", "probit"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replicate.CI</code></td>
+<td>
+<p>Number of replicates to estimate confidence intervals</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>range.CI</code></td>
+<td>
+<p>The range of confidence interval for estimation, default=0.95</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SE</code></td>
+<td>
+<p>If FALSE, does not estimate SE of parameters. Can be use when something wrong happens.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replicate.NullDeviance</code></td>
+<td>
+<p>Number of replicates to estimate null distribution of deviance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>List of parameters used in optim.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print</code></td>
+<td>
+<p>Should the results be printed at screen? TRUE (default) or FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>method used for optim. Can be "BFGS", the most rapid or "Nelder-Mead" for special cases using n parameter.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>tsd estimates the parameters that best describe temperature-dependent sex determination
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list the pivotal temperature, transitional range of temperatures and their SE
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Marc Girondot <a href="mailto:marc.girondot@gmail.com">marc.girondot@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Girondot M (1999).
+“Statistical description of temperature-dependent sex determination using maximum likelihood.”
+<em>Evolutionary Ecology Research</em>, <b>1</b>(3), 479-486.<br>
+Godfrey MH, Delmas V, Girondot M (2003).
+“Assessment of patterns of temperature-dependent sex determination using maximum likelihood model selection.”
+<em>Ecoscience</em>, <b>10</b>(3), 265-272.<br>
+Abreu-Grobois FA, Morales-Mérida BA, Hart CE, Guillon J, Godfrey MH, Navarro E, Girondot M (2020).
+“Recent advances on the estimation of the thermal reaction norm for sex ratios.”
+<em>PeerJ</em>, <b>8</b>, e8451.
+<a href="https://doi.org/10.7717/peerj.8451">doi:10.7717/peerj.8451</a>, <a href="https://peerj.com/articles/8451/">https://peerj.com/articles/8451/</a>.<br>
+Hulin V, Delmas V, Girondot M, Godfrey MH, Guillon J (2009).
+“Temperature-dependent sex determination and global change: Are some species at greater risk?”
+<em>Oecologia</em>, <b>160</b>(3), 493-506.<br></p>
+
+
+<h3>See Also</h3>
+
+<p>Other Functions for temperature-dependent sex determination: 
+<code>DatabaseTSD</code>,
+<code>DatabaseTSD.version()</code>,
+<code>P_TRT()</code>,
+<code>ROSIE</code>,
+<code>ROSIE.version()</code>,
+<code>TSP.list</code>,
+<code>plot.tsd()</code>,
+<code>predict.tsd()</code>,
+<code>stages</code>,
+<code>tsd_MHmcmc()</code>,
+<code>tsd_MHmcmc_p()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(embryogrowth)
+CC_AtlanticSW &lt;- subset(DatabaseTSD, RMU.2010=="Atlantic, SW" &amp; 
+                          Species=="Caretta caretta" &amp; (!is.na(Sexed) &amp; Sexed!=0))
+tsdL &lt;- with (CC_AtlanticSW, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="logistic", replicate.CI=NULL))
+tsdH &lt;- with (CC_AtlanticSW, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="Hill", replicate.CI=NULL))
+tsdR &lt;- with (CC_AtlanticSW, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="A-logistic", replicate.CI=NULL))
+tsdF &lt;- with (CC_AtlanticSW, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="Flexit", replicate.CI=NULL))
+tsdF1 &lt;- with (CC_AtlanticSW, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="Flexit*", replicate.CI=NULL))
+tsdDR &lt;- with (CC_AtlanticSW, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="Double-A-logistic", replicate.CI=NULL))
+gsd &lt;- with (CC_AtlanticSW, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="GSD", replicate.CI=NULL))
+compare_AIC(Logistic_Model=tsdL, Hill_model=tsdH, Alogistic_model=tsdR, 
+               flexit=tsdF, 
+               DoubleAlogistic_model=tsdDR, GSD_model=gsd)
+compare_AICc(Logistic_Model=tsdL, Hill_model=tsdH, Alogistic_model=tsdR, 
+               DoubleAlogistic_model=tsdDR, GSD_model=gsd, factor.value = -1)
+compare_BIC(Logistic_Model=tsdL, Hill_model=tsdH, Alogistic_model=tsdR, 
+               DoubleAlogistic_model=tsdDR, GSD_model=gsd, factor.value = -1)
+##############
+eo &lt;- subset(DatabaseTSD, Species=="Emys orbicularis", c("Males", "Females", 
+                                       "Incubation.temperature"))
+                                       
+eo_Hill &lt;- with(eo, tsd(males=Males, females=Females, 
+                                       temperatures=Incubation.temperature.set,
+                                       equation="Hill"))
+eo_Hill &lt;- tsd(df=eo, equation="Hill", replicate.CI=NULL)
+eo_logistic &lt;- tsd(eo, replicate.CI=NULL)
+eo_Alogistic &lt;- with(eo, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="a-logistic", replicate.CI=NULL))
+### The Hulin model is a modification of A-logistic (See Hulin et al. 2009)
+
+########## Caution
+### It should not be used anymore as it can produce unexpected results
+par &lt;- eo_Alogistic$par
+names(par)[which(names(par)=="K")] &lt;- "K2"
+par &lt;- c(par, K1=0)
+eo_Hulin &lt;- with(eo, tsd(males=Males, females=Females, 
+                                 parameters.initial=par, 
+                                 temperatures=Incubation.temperature.set, 
+                                 equation="Hulin", replicate.CI=NULL))
+                                 
+### The Double-A-logistic model is a A-logistic model with K1 and K2 using respectively
+### below and above P
+
+########## Caution
+### The curve is not smooth at pivotal temperature
+
+par &lt;- eo_Alogistic$par
+names(par)[which(names(par)=="K")] &lt;- "K2"
+par &lt;- c(par, K1=as.numeric(par["K2"])*0.8)
+par["K2"] &lt;- par["K2"]*0.8
+eo_Double_Alogistic &lt;- with(eo, tsd(males=Males, females=Females,
+                                 parameters.initial=par,
+                                 temperatures=Incubation.temperature.set,
+                                 equation="Double-a-logistic", replicate.CI=NULL))
+                                 
+### The flexit model is modeled with K1 and K2 using respectively
+### below and above P and smooth transition at P; S is the slope at P
+
+par &lt;- c(eo_logistic$par["P"], 1/4*eo_logistic$par["S"], K1=1, K2=1)
+eo_flexit &lt;- with(eo, tsd(males=Males, females=Females,
+                                 parameters.initial=par,
+                                 temperatures=Incubation.temperature.set,
+                                 equation="flexit", replicate.CI=NULL))
+                                 
+compare_AIC(Logistic=eo_logistic, Hill=eo_Hill, Alogistic=eo_Alogistic, 
+             Hulin=eo_Hulin, Double_Alogistic=eo_Double_Alogistic, 
+             flexit=eo_flexit)
+## Note that SE for lower limit of TRT is wrong
+plot(eo_flexit)
+## To get correct confidence interval, check \code{tsd_MHmcmc()}. 
+             
+### Note the asymmetry of the Double-A-logistic and flexit models
+predict(eo_Double_Alogistic, 
+       temperatures=c(eo_Double_Alogistic$par["P"]-0.2, eo_Double_Alogistic$par["P"]+0.2))
+predict(eo_Double_Alogistic)
+
+(p &lt;- predict(eo_flexit, 
+       temperatures=c(eo_flexit$par["P"]-0.3, eo_flexit$par["P"]+0.3)))
+p["50%", 1]-0.5; 0.5-p["50%", 2]
+predict(eo_flexit)
+
+### It can be used also for incubation duration
+CC_AtlanticSW &lt;- subset(DatabaseTSD, RMU.2010=="Atlantic, SW" &amp; 
+                          Species=="Caretta caretta" &amp; Sexed!=0)
+tsdL_IP &lt;- with (CC_AtlanticSW, tsd(males=Males, females=Females, 
+                                 durations=IP.mean, 
+                                 equation="logistic", replicate.CI=NULL))
+plot(tsdL_IP, xlab="Incubation durations in days")
+# Example with Chelonia mydas
+cm &lt;- subset(DatabaseTSD, Species=="Chelonia mydas" &amp; !is.na(Sexed), c("Males", "Females", 
+                                       "Incubation.temperature", "RMU.2010"))
+tsd(subset(cm, subset=RMU.2010=="Pacific, SW"))
+tsd(subset(cm, subset=RMU.2010=="Pacific, Northwest"))
+tsd(subset(cm, subset=RMU.2010=="Atlantic, S Caribbean"))
+
+### Eretmochelys imbricata
+Ei_PacificSW &lt;- subset(DatabaseTSD, RMU.2010=="Pacific, SW" &amp; 
+                       Species=="Eretmochelys imbricata")
+Ei_AtlanticW &lt;- subset(DatabaseTSD, RMU.2010=="Atlantic, W (Caribbean and E USA)" &amp; 
+                       Species=="Eretmochelys imbricata")
+Ei_AtlanticSW &lt;- subset(DatabaseTSD, RMU.2010=="Atlantic, SW" &amp; 
+                       Species=="Eretmochelys imbricata")
+Ei_PacSW &lt;- tsd(Ei_PacificSW)
+Ei_AtlW &lt;- tsd(Ei_AtlanticW)
+Ei_AtlSW &lt;- tsd(Ei_AtlanticSW)
+
+plot(Ei_PacSW, xlim=c(27, 33), show.PTRT = FALSE, main=expression(italic("Eretmochelys imbricata")))
+par(new=TRUE)
+plot(Ei_AtlW, xlim=c(27, 33), col="red", xlab="", ylab="", 
+     axes=FALSE, xaxt="n", show.PTRT = FALSE, errbar.col="red")
+par(new=TRUE)
+plot(Ei_AtlSW, xlim=c(27, 33), col="blue", xlab="", ylab="", axes=FALSE, 
+     xaxt="n", show.PTRT = FALSE, errbar.col="blue")
+legend("topright", legend=c("Pacific, SW", "Atlantic, W", "Atlantic, SW"), lty=1, 
+col=c("black", "red", "blue"))
+
+### Chelonia mydas
+Cm_PacificSW &lt;- subset(DatabaseTSD, RMU.2010=="Pacific, SW" &amp; !is.na(Sexed) &amp; 
+                       Species=="Chelonia mydas")
+Cm_PacificNW &lt;- subset(DatabaseTSD, RMU.2010=="Pacific, NW" &amp;  !is.na(Sexed) &amp; 
+                       Species=="Chelonia mydas")
+Cm_AtlanticSC &lt;- subset(DatabaseTSD, RMU.2010=="Atlantic, S Caribbean" &amp;  !is.na(Sexed) &amp; 
+                       Species=="Chelonia mydas")
+Cm_IndianSE &lt;- subset(DatabaseTSD, RMU.2010=="Indian, SE" &amp;  !is.na(Sexed) &amp; 
+                       Species=="Chelonia mydas")
+Cm_PacSW &lt;- tsd(Cm_PacificSW)
+Cm_PacNW &lt;- tsd(Cm_PacificNW)
+Cm_IndSE &lt;- tsd(Cm_IndianSE)
+Cm_AtlSC &lt;- tsd(Cm_AtlanticSC)
+
+plot(Cm_PacSW, xlim=c(24, 34), show.PTRT = FALSE, main=expression(italic("Chelonia mydas")))
+par(new=TRUE)
+plot(Cm_PacNW, xlim=c(24, 34), col="red", xlab="", ylab="", 
+     axes=FALSE, xaxt="n", show.PTRT = FALSE, errbar.col="red")
+par(new=TRUE)
+plot(Cm_IndSE, xlim=c(24, 34), col="blue", xlab="", ylab="", 
+     axes=FALSE, xaxt="n", show.PTRT = FALSE, errbar.col="blue")
+par(new=TRUE)
+plot(Cm_AtlSC, xlim=c(24, 34), col="green", xlab="", ylab="", 
+     axes=FALSE, xaxt="n", show.PTRT = FALSE, errbar.col="green")
+
+# To fit a TSDII or FMF TSD pattern, you must indicate P_low, S_low, P_high, and S_high
+# for logistic model and P_low, S_low, K1_low, K2_low, P_high, S_high, K1_high, and K2_high for 
+# flexit model
+# The model must be 0-1 for low and 1-0 for high with P_low &lt; P_high
+
+Chelydra_serpentina &lt;- subset(DatabaseTSD, !is.na(Sexed) &amp; (Sexed != 0) &amp; 
+                       Species=="Chelydra serpentina")
+                       
+model_TSDII &lt;- tsd(Chelydra_serpentina, males.freq=FALSE, 
+                   parameters.initial=c(P_low=21, S_low=0.3, P_high=28, S_high=-0.4), 
+                   equation="logistic")
+plot(model_TSDII, lab.TRT = "TRT l = 5 %")
+priors &lt;- tsd_MHmcmc_p(result=model_TSDII, accept=TRUE)
+out_mcmc &lt;- tsd_MHmcmc(result=model_TSDII, n.iter=10000, parametersMCMC=priors)
+plot(model_TSDII, resultmcmc=out_mcmc, lab.TRT = "TRT l = 5 %")
+predict(model_TSDII, temperatures=25:35)
+
+# Podocnemis expansa
+Podocnemis_expansa &lt;- subset(DatabaseTSD, !is.na(Sexed) &amp; (Sexed != 0) &amp; 
+                       Species=="Podocnemis expansa")
+Podocnemis_expansa_Valenzuela_2001 &lt;- subset(Podocnemis_expansa, 
+                   Reference=="Valenzuela, 2001")
+PeL2001 &lt;- tsd(df=Podocnemis_expansa_Valenzuela_2001)
+# The pivotal temperature is 32.133 °C (CI 95% 31.495;32.766)
+# In Valenzuela, 2001: "Using data from the present study alone, 
+# the critical temperature was 32.2 °C by both methods and the 95% 
+# confidence limits were 31.4 °C and 32.9 °C."
+# Data are close but not identical to what was published.
+
+# The pivotal temperature calculated by maximum likelihood and by inverse 
+# prediction from logistic regression, was 32.6°C using raw data from 
+# 1991 (N. Valenzuela, unpublished data) and from this study. The lower 
+# and upper 95% confidence limits of the pivotal temperature were 32.2°C 
+# and 33.2°C,
+
+Podocnemis_expansa_Valenzuela_1997 &lt;- subset(Podocnemis_expansa, 
+                   subset=(((Reference=="Lance et al., 1992; Valenzuela et al., 1997") | 
+                   (Reference=="Valenzuela, 2001")) &amp; 
+                   (!is.na(Sexed)) &amp; (Sexed != 0)))
+
+PeL1997 &lt;- tsd(df=Podocnemis_expansa_Valenzuela_1997)
+
+# Gekko japonicus
+
+Gekko_japonicus &lt;- subset(DatabaseTSD, !is.na(Sexed) &amp; (Sexed != 0) &amp; 
+Species=="Gekko japonicus")
+model_TSDII_gj &lt;- tsd(Gekko_japonicus, males.freq=TRUE, 
+                   parameters.initial=c(P_low=26, S_low=1.5, 
+                                        P_high=31, S_high=-1.5), 
+                   equation="logistic")
+plot(model_TSDII_gj, lab.TRT = "TRT l = 5 %")
+print(model_TSDII_gj)
+prior &lt;- tsd_MHmcmc_p(result = model_TSDII_gj, accept = TRUE)
+prior &lt;- structure(list(
+  Density = c("dnorm", "dnorm", "dnorm", "dnorm"), 
+  Prior1 = c(26, 0.3, 31, -0.4), 
+  Prior2 = c(2, 1, 2, 1), 
+  SDProp = c(2, 0.5, 2, 0.5), 
+  Min = c(25, -2, 25, -2), 
+  Max = c(35, 2, 35, 2), 
+  Init = c(26, 0.3, 31, -0.4)), 
+  row.names = c("P_low",  "S_low", "P_high", "S_high"), 
+  class = "data.frame")
+  
+result_mcmc_tsd_gj &lt;- tsd_MHmcmc(result=model_TSDII_gj, 
+parametersMCMC=prior, n.iter=10000, n.chains = 1,  
+n.adapt = 0, thin=1, trace=FALSE, adaptive=TRUE)
+summary(result_mcmc_tsd_gj)
+plot(result_mcmc_tsd_gj, parameters="P_low", scale.prior=TRUE, xlim=c(20, 30), las=1)
+plot(result_mcmc_tsd_gj, parameters="P_high", scale.prior=TRUE, xlim=c(25, 35), las=1)
+plot(model_TSDII_gj, resultmcmc = result_mcmc_tsd_gj)
+
+# Trachemys scripta elegans
+# Take care, the pattern reflects large population variation
+
+Tse &lt;- subset(DatabaseTSD, Species=="Trachemys scripta" &amp; Subspecies == "elegans" &amp; !is.na(Sexed))
+Tse_logistic &lt;- tsd(Tse)
+plot(Tse_flexit)
+compare_AICc(logistic=Tse_logistic, flexit=Tse_flexit)
+plot(Tse_flexit)
+
+# Exemple when only proportion is known; experimental
+Ei_PacificSW &lt;- subset(DatabaseTSD, RMU.2010=="Pacific, SW" &amp; 
+                       Species=="Eretmochelys imbricata")
+males &lt;- Ei_PacificSW$Males/(Ei_PacificSW$Males+Ei_PacificSW$Females)*100
+females &lt;- 100-(Ei_PacificSW$Males/(Ei_PacificSW$Males+Ei_PacificSW$Females)*100)
+temperatures &lt;- Ei_PacificSW$Incubation.temperature
+Ei_PacSW &lt;- tsd(Ei_PacificSW)
+par &lt;- c(Ei_PacSW$par, n=10)
+embryogrowth:::.tsd_fit(par=par, males=males, N=males+females, temperatures=temperatures, 
+                        equation="logistic")
+Ei_PacSW_NormalApproximation &lt;- tsd(males=males, females=females, 
+                                    temperatures=temperatures, 
+                                    parameters.initial=par)
+Ei_PacSW_NormalApproximation$par
+Ei_PacSW$par
+# The data looks like only n=0.01 observations were done
+# This is the reason of the large observed heterogeneity
+plot(Ei_PacSW_NormalApproximation) 
+
+## End(Not run)
+</code></pre>
+
+
+</div>

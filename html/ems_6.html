@@ -1,0 +1,377 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SRU</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Standardized Resource Use (SRU)</h2>
+
+<h3>Description</h3>
+
+<p><code>SRU</code> calculates the standardized resource use for ICUs (Intensive Care Units) from information regarding admissions of individual patients. Resource use is represented by the patient's length of stay (LOS). Therefore the SRU for each unit is defined as the observed LOS divided by it's expected LOS. To estimate the expected LOS for each ICU one must define a severity score, here defined by the SAPS 3 score. In theory, the 'score' could be any score/probability that estimates death for each ICU admission.
+</p>
+<p>The <code>plot.SRU</code> function will return a <code>SMR</code> versus SRU scatter plot with its medians and tertiles. Thus, it classifies each unit in the quadrants formed by these two medians as: most efficient (ME) which is the lower left quadrant (both SRU and SMR below their medians);  least efficient (LE) is the upper right quadrant (both SRU and SMR above their medians); and least achieving (LA) - the lower right quadrant (SRU below and SMR above their medians); and over achieving (OA) - the upper left quadrant (SRU above and SMR below their medians).
+</p>
+<p><code>print.SRU</code> Prints a object of class 'SRU'.
+</p>
+<p><code>cut_in</code> is used to find limits to define severity classes which are used in <code>SRU</code> function. The severity classes are necessary to calculate the average of days to produce one survivor and consequently to estimate the expected LOS in each ICU. Its rationale is to find the limits for the severity classes that yeld a desired average of days to produce one survivor. At some point in time, we made a study to test if different arrangements of the severity classes would yeld different classifications in the efficiency quadrants. Despite the fact that this study did not show any difference from each approach, we left the function in the package. Therefore, any arbitrary severity classes should yeild the same results.
+</p>
+<p><code>SRUcalc</code> is a simpler function to estimte SRU and returns, for each unit, the SRU value, the observed and expected number of deaths, and the observed and expected LOS.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SRU(
+  prob,
+  death,
+  unit,
+  los,
+  los.exp,
+  class,
+  score,
+  plot = FALSE,
+  type = 1,
+  digits = 2,
+  digits2 = 5,
+  originals = FALSE,
+  myunits = NULL
+)
+
+## S3 method for class 'SRU'
+print(x, ...)
+
+## S3 method for class 'SRU'
+plot(
+  x,
+  ...,
+  xlim = range(x$rates[, 2]),
+  ylim = range(x$rates[, 1]),
+  xlab = "SMR",
+  ylab = "SRU",
+  points.arg = list(pch = 21, col = "white", bg = "cadetblue3", cex = 1.5),
+  med.arg = list(col = "dodgerblue4", lwd = 2, lty = 1),
+  tert.arg = list(col = "darkorange2", lty = 2, lwd = 1),
+  auto.legend = TRUE,
+  leg.arg = list(x = "top", bty = "n", xpd = NA, inset = -0.2, ncol = 2),
+  bty = "n",
+  myunits = x$myunits,
+  myunitspts.arg = list(pch = 21, col = "white", bg = "red", cex = 1.5),
+  myunitstext.arg = list(pos = 1, font = 2, cex = 0.8)
+)
+
+cut_in(
+  score,
+  los,
+  death,
+  unit,
+  days,
+  min = 200,
+  exc.ICU = TRUE,
+  complete = FALSE,
+  digits = 5
+)
+
+SRUcalc(prob, death, unit, los, score, digits = 2)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>Individual predicted probability of death (ranging from 0 to 1) in a vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>death</code></td>
+<td>
+<p>Observed death. Accepted values are 0 (absence) or 1 (presence) in a vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unit</code></td>
+<td>
+<p>A character or factor variable indicating the ICU where the patient is admitted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>los</code></td>
+<td>
+<p>A numeric variable indicating the observed length of stay for each patient.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>los.exp</code></td>
+<td>
+<p>Estimated length of stay (LOS). This argument is optional and will be required only if <code>type = 2</code>. If the user has an alternative model to estimate the individual LOS, the predicted individual LOS should be passed to this argument. If this is the case, the predicted ICU LOS is estimated as the mean of the individual predictions of the LOS of these groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>class</code></td>
+<td>
+<p>A factor variable indicating the class of severity score (e.g. SAPS 3). In the case of SAPS 3, this is a cut in the SAPS 3 score, grouping patients into severity classes. This will be required if the argument <code>original = FALSE</code> and NAs are not allowed; if <code>original = TRUE</code>, class is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>score</code></td>
+<td>
+<p>A numeric vector with the Acute Physiology Score (SAPS) 3 score for each admission. The function will use this argument to know to which severity class each patient will be assigned to. It is used only when <code>originals = TRUE</code> and ignored otherwise. NAs are not allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>Logical; If <code>TRUE</code>, plots a SMR versus SRU scatter plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>A Way to calculate SRU. If <code>type = 1</code>, it does as the original article to estimate the ICU's expected LOS (default). First, it multiplies the overall average of days of each severity class by the number of survivors in the same severity class in that ICU. Than, it sums the expected LOS for each severity class in that ICU. If <code>type = 2</code>, the user must provide the <code>los.exp</code> (expected LOS) for each subject (i.e. from a prediction model), and the function will estimate the ICU's expected LOS as the mean of all individual LOS for patients in that ICU.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits, digits2</code></td>
+<td>
+<p>Integer indicating the number of decimals to be used in the output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>originals</code></td>
+<td>
+<p>Logical; If <code>TRUE</code>, it uses the severity classes and average days as the original article and will override the <code>class</code> argument, if any. It requires the <code>score</code> argument and it must be the SAPS 3 score. We recommend not to set it <code>TRUE</code> unless you really know what you are doing. Even if one wishes to have severity classes identical to the original paper, it is better to set the severity classes before running the analysis. This way, the function will estimate the average days from the data instead of using the fixed average days from the original paper.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>myunits</code></td>
+<td>
+<p>A character vector with the unit names which one would like to benchmark among all units. These units will be highlighted with dots of different collors in the plot. Default is <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>For <code>print.SRU</code> or <code>plot.SRU</code>, an object of class 'SRU'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to be passed to <code>plot.default</code> or to <code>print</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlim, ylim</code></td>
+<td>
+<p>Limits of x and y axis for <code>plot.SRU</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab, ylab</code></td>
+<td>
+<p>Labels of x and y axis for <code>plot.SRU</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points.arg</code></td>
+<td>
+<p>List of arguments passed to <code>points</code> for plotting points correponding to ICU's SMR and SRU.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>med.arg</code></td>
+<td>
+<p>List of arguments passed to <code>abline</code> for plotting lines corresponding to SRU's and SMR's medians.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tert.arg</code></td>
+<td>
+<p>List of arguments passed to <code>abline</code> for plotting lines corresponding to SRU's and SMR's tertiles.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>auto.legend</code></td>
+<td>
+<p>Logical; If <code>TRUE</code>, prints a legend with parameters in <code>leg.arg</code> arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>leg.arg</code></td>
+<td>
+<p>List of arguments passed to <code>legend</code> for plotting legends in <code>plot.SRU</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bty</code></td>
+<td>
+<p>A character string which determines the type of box that is drawn about plots. See  <code>par</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>myunitspts.arg</code></td>
+<td>
+<p>List of arguments passed to <code>points</code> for plotting points correponding to <code>myunits</code>'s SMR and SRU.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>myunitstext.arg</code></td>
+<td>
+<p>List of arguments passed to <code>text</code> for labelling points correponding to <code>myunits</code>'s position.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>days</code></td>
+<td>
+<p>For <code>cut_in</code>, this is a vector of days to get an avarage. See example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min</code></td>
+<td>
+<p>For <code>cut_in</code>, this is the minimum desired quantity of patients in each severity class (default = 200) to estimate the average days.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exc.ICU</code></td>
+<td>
+<p>Logical; For <code>cut_in</code>, if <code>TRUE</code>, ICUs without surviving patients are ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>complete</code></td>
+<td>
+<p>Logical; For <code>cut_in</code>, if <code>TRUE</code>, shows additional information about severity classes.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Two tables: one with information about severity classes and the respective quantities required to estimate the expected LOS, and another with information about ICUs classified as Most Efficient (ME) or Least Efficient (LE).
+</p>
+
+<ul>
+<li> <p><code>Sev</code> Severity class.
+</p>
+</li>
+<li>
+<p><code>Total</code> Total of patients.
+</p>
+</li>
+<li> <p><code>Surv</code> Total of survivors.
+</p>
+</li>
+<li> <p><code>Total.LOS</code> Total length of stay (days).
+</p>
+</li>
+<li> <p><code>AvDays</code> Average days to produce a survivor.
+</p>
+</li>
+<li> <p><code>N.Unit</code> Quantity of ICUs.
+</p>
+</li>
+<li> <p><code>N.Pat</code> Quantity of patients.
+</p>
+</li>
+<li>
+<p><code>SMR</code> Standardized Mortality Ratio Mean (standard deviation).
+</p>
+</li>
+<li> <p><code>SRU</code> Standardized Resource Use Mean (standard deviation).
+</p>
+</li>
+</ul>
+<p>Most Efficient ICUs have SRU, SMR &lt; median. Least Efficient ICUs have SRU, SMR &gt; median.
+</p>
+<p><code>cut_in</code> returns a vector with the limits to cut the severity score.
+</p>
+<p><code>SRUcalc</code> returns a table with:
+</p>
+
+<ul>
+<li> <p><code>Unit</code> ICUs names.
+</p>
+</li>
+<li>
+<p><code>SMR or SRU</code> Standardized Rate.
+</p>
+</li>
+<li> <p><code>N</code> Number of subjects analyzed.
+</p>
+</li>
+<li> <p><code>Observed</code> Observed number of deaths.
+</p>
+</li>
+<li> <p><code>Expected</code> Expected number of deaths.
+</p>
+</li>
+<li> <p><code>LOS_esp</code> Expected length of stay.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Lunna Borges and Pedro Brasil
+</p>
+
+
+<h3>References</h3>
+
+<p>Rothen HU, Stricker K, Einfalt J, Bauer P, Metnitz PGH, Moreno RP, Takala J (2007) Variability in outcome and resource use in intensive care units. Intensive Care Med 33:1329-1336
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>SMR</code>, <code>reclass</code>, <code>funnel</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Loading the dataset
+data(icu)
+
+# Removing data with inapropriate values and some editing
+icu &lt;- icu[-which(icu$los &lt; 0 ),]
+icu$Saps3DeathProbabilityStandardEquation &lt;- icu$Saps3DeathProbabilityStandardEquation / 100
+
+# Setting classes acording to limits of SAPS 3 score
+days &lt;- seq(1,100)
+cut_lims &lt;- cut_in(icu$Saps3Points, icu$los, icu$UnitDischargeName,
+                   icu$Unit, days, exc.ICU = TRUE)
+icu$class &lt;- cut(icu$Saps3Points, breaks = cut_lims, include.lowest = TRUE)
+
+# Estimating the SRU benchmarking myunit A and B
+x &lt;- SRU(prob = icu$Saps3DeathProbabilityStandardEquation,
+death = icu$UnitDischargeName, unit = icu$Unit,
+los = icu$los, score = icu$Saps3Points,
+originals = TRUE, type = 1, plot = FALSE, myunits = c("A","B"))
+x
+plot(x)
+
+# To see the units rankings and individual SMR and SRU, ordering by its SRU
+x$rates[order(x$rates$sru),]
+
+# SRU with diferent severity classes created by cut_in function
+y &lt;- SRU(prob = icu$Saps3DeathProbabilityStandardEquation,
+death = icu$UnitDischargeName, unit = icu$Unit,
+los = icu$los, score = icu$Saps3Points,
+originals = FALSE, type = 1, plot = FALSE, class = icu$class)
+y
+
+# Using SRUcalc
+SRUcalc(prob = icu$Saps3DeathProbabilityStandardEquation,
+        death = icu$UnitDischargeName, unit = icu$Unit, los = icu$los,
+        score = icu$Saps3Points)
+
+rm(x, y, days, icu, cut_lims)
+
+</code></pre>
+
+
+</div>

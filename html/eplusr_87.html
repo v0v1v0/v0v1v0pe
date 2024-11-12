@@ -1,0 +1,145 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rdd_to_load</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Format RddFile Object to Standard Input for <code>Idf$load()</code> Method</h2>
+
+<h3>Description</h3>
+
+<p><code>rdd_to_load()</code> and <code>mdd_to_load()</code> takes a <code>RddFile</code> and <code>MddFile</code> object
+respectively and format it into a data.table in
+acceptable format for <code style="white-space: pre;">⁠$load()⁠</code> method in Idf class.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rdd_to_load(rdd, key_value, reporting_frequency)
+
+mdd_to_load(
+  mdd,
+  reporting_frequency,
+  class = c("Output:Meter", "Output:Meter:MeterFileOnly", "Output:Meter:Cumulative",
+    "Output:Meter:Cumulative:MeterFileOnly")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>rdd, mdd</code></td>
+<td>
+<p>A <code>RddFile</code> object created using <code>read_rdd()</code> and a <code>MddFile</code>
+object created using <code>read_mdd()</code>, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>key_value</code></td>
+<td>
+<p>Key value name for <strong>all</strong> variables. If not specified and
+the <code>key_value</code> column in the input <code>RddFile</code> object will be used. If
+<code>key_value</code> column does not exist, <code>"*"</code> are used for all variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reporting_frequency</code></td>
+<td>
+<p>Variable value reporting frequency for <strong>all</strong>
+variables. If not specified and the <code>reporting_freqency</code> column in the input
+<code>RddFile</code> object will be used. If <code>reporting_freqency</code> column does not exist,
+<code>"Timestep"</code> are used for all variables. All possible values: <code>"Detailed"</code>,
+<code>"Timestep"</code>, <code>"Hourly"</code>, <code>"Daily"</code>, <code>"Monthly"</code>, <code>"RunPeriod"</code>,
+<code>"Environment"</code>, and <code>"Annual"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>class</code></td>
+<td>
+<p>Class name for meter output. All possible values:
+<code>"Output:Meter"</code>, <code>"Output:Meter:MeterFileOnly"</code>,
+<code>"Output:Meter:Cumulative"</code>, and <code>"Output:Meter:Cumulative:MeterFileOnly"</code>.
+Default: <code>"Output:Meter"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data.table with 5 columns with an additional
+attribute named <code>eplus_version</code> extracted from the original <code>RddFile</code> and
+<code>MddFile</code>:
+</p>
+
+<ul>
+<li> <p><code>id</code>: Integer type. Used to distinguish each object definition.
+</p>
+</li>
+<li> <p><code>class</code>: Character type. Class names, e.g. <code>Output:Variable</code> and
+<code>Output:Meter</code>.
+</p>
+</li>
+<li> <p><code>index</code>: Integer type. Field indices.
+</p>
+</li>
+<li> <p><code>field</code>: Character type. Field names.
+</p>
+</li>
+<li> <p><code>value</code>: Character type. The value of each field to be added.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# read an example distributed with eplusr
+path_idf &lt;- system.file("extdata/1ZoneUncontrolled.idf", package = "eplusr")
+idf &lt;- read_idf(path_idf)
+
+# run Design-Day-Only simulation silently
+job &lt;- idf$run(NULL, tempdir(), echo = FALSE)
+
+# read RDD and MDD
+rdd &lt;- job$read_rdd()
+mdd &lt;- job$read_mdd()
+
+# perform subsetting on the variables
+# e.g.:
+rdd_sub &lt;- rdd[grepl("Site", variable)]
+mdd_sub &lt;- mdd[grepl("Electricity", variable)]
+
+# use newly added helper `rdd_to_load()` and `mdd_to_load()` and `$load()` to
+# add `Output:Variable` and `Output:Meter*`
+idf$load(rdd_to_load(rdd_sub))
+idf$load(mdd_to_load(mdd_sub))
+
+# default `Key Value` is `"*"` and `Reporting Frequency` is `Timestep`
+# can overwrite using `key_value` and `reporting_freqency` arg
+rdd_to_load(rdd_sub, key_value = "Environment", reporting_frequency = "hourly")
+
+# if input has column `key_value`, default is to use it, unless `key_value` is
+# explicitly specified
+rdd_to_load(rdd_sub[, key_value := "Environment"])
+rdd_to_load(rdd_sub[, key_value := "Environment"], key_value = "*")
+
+# `reporting_frequency` arg works in the same way as `key_value` arg, i.e.:
+# if input has column `reporting_frequency`, use it, unless
+# `reporting_frequency` is explicitly specified
+rdd_to_load(rdd_sub[,  reporting_frequency := "monthly"])
+rdd_to_load(rdd_sub[,  reporting_frequency := "monthly"], reporting_frequency = "detailed")
+
+# if input has column `key_value`, default is to use it, unless `key_value` is
+# explicitly specified
+rdd_to_load(rdd_sub[, key_value := "Environment"])
+rdd_to_load(rdd_sub[, key_value := "Environment"], key_value = "*")
+
+# meter class can be further specified using `class` arg
+mdd_to_load(mdd_sub, class = "Output:Meter:MeterFileOnly")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

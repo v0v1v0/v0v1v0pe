@@ -1,0 +1,448 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams2blackboard</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Exams in Blackboard Format</h2>
+
+<h3>Description</h3>
+
+<p>Automatic generation of exams in Blackboard format (which is
+partially based on QTI 1.2).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  exams2blackboard(file, n = 1L, nsamp = NULL, dir = ".",
+    name = NULL, quiet = TRUE, edir = NULL,
+    tdir = NULL, sdir = NULL, verbose = FALSE, rds = FALSE,
+    resolution = 100, width = 4, height = 4, encoding = "UTF-8",
+    envir = NULL, engine = NULL,
+    num = NULL, mchoice = NULL,
+    schoice = mchoice, string = NULL, cloze = NULL,
+    template = "blackboard",
+    pdescription = "This is an item from an item pool.",
+    tdescription = "This is today's test.",
+    pinstruction = "Please answer the following question.",
+    tinstruction = "Give an answer to each question.",
+    maxattempts = 1, zip = TRUE, points = NULL,
+    eval = list(partial = TRUE, rule = "false2", negative = FALSE),
+    base64 = FALSE, converter = NULL, seed = NULL, mathjax = NULL,
+    fix_pre = TRUE, ...)
+
+  make_itembody_blackboard(rtiming = FALSE, shuffle = FALSE,
+    rshuffle = shuffle, minnumber = NULL, maxnumber = NULL,
+    defaultval = NULL, minvalue = NULL, maxvalue = NULL,
+    cutvalue = NULL, enumerate = TRUE, digits = NULL,
+    tolerance = is.null(digits), maxchars = 12,
+    eval = list(partial = TRUE, rule = "false2", negative = FALSE),
+    qti12 = FALSE, mathjax = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamp</code></td>
+<td>
+<p>integer. The number(s) of exercise files sampled from each
+list element of <code>file</code>. Sampling without replacement is used
+if possible. (Only if some element of <code>nsamp</code> is larger than
+the length of the corresponding element in <code>file</code>, sampling
+with replacement is used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The default is the current working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting exercises and ZIP file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>logical. Should output be suppressed when calling
+<code>xweave</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edir</code></td>
+<td>
+<p>character specifying the path of the directory (along with its
+sub-directories) in which the files in <code>file</code> are stored
+(see also <code>xexams</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdir</code></td>
+<td>
+<p>character specifying a temporary directory, by default
+this is chosen via <code>tempfile</code>. Note that this
+is cleaned up (i.e., existing files are deleted) and only certain
+temporary files are preserved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdir</code></td>
+<td>
+<p>character specifying a directory for storing supplements, by
+default this is chosen via <code>tempfile</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical. Should information on progress of exam generation
+be reported?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rds</code></td>
+<td>
+<p>logical indicating whether the return list should also be
+saved as an RDS data file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution, width, height</code></td>
+<td>
+<p>numeric. Options for rendering PNG
+graphics passed to <code>xweave</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>character, ignored. The encoding is always assumed to be UTF-8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>argument passed to <code>xweave</code> (which passes
+it to <code>knit</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>engine</code></td>
+<td>
+<p>argument passed to <code>xweave</code> indicating whether
+<code>"Sweave"</code> (default) or <code>"knitr"</code> should be used for rendering Rnw exercises.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num</code></td>
+<td>
+<p>function or named list applied to numerical (i.e., type <code>num</code>)
+questions. If <code>num</code> is a function, <code>num</code> will be used
+for generating the item body of the question, see function <code>make_itembody_blackboard()</code>.
+If <code>num</code> is a named list, these arguments will be passed to function
+<code>make_itembody_blackboard()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mchoice, schoice, string, cloze</code></td>
+<td>
+<p>function or named list applied to multiple choice,
+single choice, string, and cloze questions (i.e., type <code>mchoice</code>, <code>schoice</code>,
+<code>string</code>, and <code>cloze</code>), respectively. See argument <code>num</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>character. The IMS QTI 1.2 or 2.1 template that should be used. Currently,
+the package provides <code>"blackboard.xml"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pdescription</code></td>
+<td>
+<p>character. Description (of length 1) of the item pool (i.e., the set of copies).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdescription</code></td>
+<td>
+<p>character. Description (of length 1) of the overall assessment (i.e., exam).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pinstruction</code></td>
+<td>
+<p>character. Instruction (of length 1) for the item pool (i.e., set of copies).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tinstruction</code></td>
+<td>
+<p>character. Instruction (of length 1) for the overall assessment (i.e., exam).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxattempts</code></td>
+<td>
+<p>integer. The maximum attempts for one question, may also be set to
+<code>Inf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zip</code></td>
+<td>
+<p>logical. Should the resulting XML file (plus supplements) be zipped?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>integer. How many points should be assigned to each exercise? Note that this
+argument overules any exercise points that are provided within an <code>expoints</code> tag
+in the Rnw/Rmd exercise file. The vector of points supplied is expanded to the number of exercises in
+the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eval</code></td>
+<td>
+<p>named list, specifies the settings for the evaluation policy, see function
+<code>exams_eval</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base64</code></td>
+<td>
+<p>logical. Should supplementary files be embedded using Base 64 coding?
+Argument <code>base64</code> may also be a character vector of file suffixes that should be encoded, e.g.
+<code>base64 = c("png", "rda")</code> will only encode PNG images and binary <code>.rda</code> files.
+If set to <code>NULL</code> only image files will be encoded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converter, ...</code></td>
+<td>
+<p>arguments passed on to <code>make_exercise_transform_html</code>.
+The default for <code>converter</code> is set to <code>"ttm"</code> unless there are Rmd
+exercises in <code>file</code> where <code>"pandoc"</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>integer matrix or logical. Either <code>NULL</code> (default), logical, or a
+matrix of random seeds for each possible exercise to be set prior to calling
+<code>driver@sweave</code>. If <code>NULL</code> no random seeds are set. If a matrix,
+the number of rows must be <code>n</code> and the number of columns must
+correspond to <code>unlist(file)</code>. If <code>TRUE</code> a suitable matrix of seeds
+is sampled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mathjax</code></td>
+<td>
+<p>logical. Should the JavaScript from <a href="https://www.MathJax.org/">https://www.MathJax.org/</a>
+be included for rendering mathematical formulas? By default <code>mathjax = FALSE</code>
+unless <code>converter = "pandoc-mathjax"</code> is used. However, also for the default
+converters (producing MathML output) <code>mathjax = TRUE</code> can be used, enabling
+rendering of mathematical equations in browsers without native MathML support
+(like Chrome/Chromium). Note that this only works in Classic Blackboard but not
+in Blackboard Ultra.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix_pre</code></td>
+<td>
+<p>logical. Should the HTML <code>&lt;pre&gt;</code> environment for rendering verbatim
+output be replaced by <code>&lt;code&gt;</code> tags? This is necessary in classical Blackboard
+which does not render <code>&lt;pre&gt;</code> correctly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rtiming, shuffle, rshuffle, minnumber, maxnumber, defaultval, minvalue,
+maxvalue</code></td>
+<td>
+<p>arguments used for IMS QTI 1.2 item construction, for details see the XML
+specification (see IMS Global Learning Consortium, Inc. 2012), especially Section 4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutvalue</code></td>
+<td>
+<p>numeric. The cutvalue at which the exam is passed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>enumerate</code></td>
+<td>
+<p>logical. Insert potential solutions in enumerated list?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>integer. How many digits should be used for <code>num</code> exercises?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance</code></td>
+<td>
+<p>logical. Should tolerance intervals be used for checking if the supplied
+<code>num</code> answer/number is correct? The default is to use tolerance intervals if <code>digits = NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxchars</code></td>
+<td>
+<p>numeric. Lower bound for the number of characters in fill-in-blank
+fields. The actual number of characters is selected as the maximum number of
+characters of this value and the actual solution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qti12</code></td>
+<td>
+<p>logical. For reverse compability to plain QTI 1.2 XML format.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Blackboard employs an XML format that essentially uses the Question &amp; Test
+Interoperability (QTI) standard, version 1.2, see IMS Global Learning
+Consortium, Inc. (2012). However, as this deviates from the plain QTI 1.2
+standard in several places, the <code>exams2qti12</code> cannot be used
+directly. Instead, <code>exams2blackboard</code> is a new interface that is likely
+to be improved in future versions.
+</p>
+<p><code>exams2blackboard</code> produces a <code>.zip</code> file that may be uploaded into
+Blackboard. This includes the final XML file of the exam/assessment as well as
+possible supplement folders that include images, data sets etc. used for the
+exam.  After uploading the test into Blackboard, the material will appear
+under ‘Course Tools’: the test will be available in ‘Tests’,
+and each pool within the test  will also appear in ‘Pools’.
+</p>
+<p><code>exams2blackboard</code> proceeds by (1) calling <code>xweave</code> on
+each exercise, (2) reading the resulting LaTeX code, (3) transforming the
+LaTeX code to HTML, and (4) embedding the HTML code in a XML file using
+Blackboard's QTI standards for assessments and question items. For steps (1)
+and (2) the standard drivers in <code>xexams</code> are used. In step (3), a
+suitable transformation function is set up on the fly using
+<code>make_exercise_transform_html</code>, see also the details section in
+<code>exams2html</code>. For step (4), the function will cycle through all
+questions and exams to generate the final XML file in the Blackboard QTI
+standard. Therefore, each question will be included in the XML as one section.
+The replicates of each question will be written as question items of the
+section.
+</p>
+<p>The function uses the XML template for Blackboard's QTI standards for
+assessments and items to generate the exam (per default, this is the XML file
+<code>blackboard.xml</code> provided in the <code>xml</code> folder of this package). The
+assessment template must provide one section including one item.
+<code>exams2blackboard</code> will then use the single item template to generate all
+items, as well as the assessment and section specifications set within the
+template.
+</p>
+<p>The default template will generate exams/assessments that sample one replicate
+of a question/item for each section. The usual procedure in exam/assessment
+generation would be to simply copy &amp; paste the XML template of the package
+and adapt it to the needs of the user. Note that all specifiers that have a
+leading <code>##</code> in the XML template will be replaced by suitable code in
+<code>exams2blackboard</code> and should always be provided in the template. I.e.,
+the user may add additional tags to the XML template or modify certain
+specifications, like the number of replicates/items that should be sampled for
+each section etc.
+</p>
+<p>Per default, the individual question/item bodies are generated by function
+<code>make_itembody_blackboard</code>, i.e., <code>make_itembody_blackboard</code> checks
+the type of the question and will produce suitable XML code. Note that for
+each question type, either the arguments of <code>make_itembody_blackboard</code>
+may be set within <code>num</code>, <code>mchoice</code>, <code>schoice</code> and <code>string</code>
+in <code>exams2blackboard</code>, by providing a named list of specifications that
+should be used, or for each questiontype, a function that produces the item
+body XML code may be provided to <code>num</code>, <code>mchoice</code>, <code>schoice</code>
+and <code>string</code>. E.g., <code>mchoice = list(shuffle = TRUE)</code> will force only
+multiple choice questions to have a shuffled answerlist.
+</p>
+<p>Note that in Blackboard <code>cloze</code> items are not officially supported, and
+hence this type of item is  not supported in the current version of
+<code>exams2blackboard</code> either. It is currently investigated if a  workaround
+may be implemented to allow for <code>cloze</code> items.  
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>exams2blackboard</code> returns a list of exams as generated by <code>xexams</code>.
+</p>
+<p><code>make_itembody_blackboard</code> returns a function that generates the XML code
+for the itembody tag in Blackboard's version of the IMS QTI 1.2 format.
+</p>
+
+
+<h3>References</h3>
+
+<p>Blackboard, Inc. (2016). <em>Blackboard Help: Question types</em>.
+<a href="https://help.blackboard.com/Learn/Instructor/Ultra/Tests_Pools_Surveys/Question_Types">https://help.blackboard.com/Learn/Instructor/Ultra/Tests_Pools_Surveys/Question_Types</a>
+</p>
+<p>IMS Global Learning Consortium, Inc. (2012).
+<em>IMS Question &amp; Test Interoperability: ASI XML Binding Specification Final Specification Version 1.2</em>.
+<a href="https://www.imsglobal.org/question/qtiv1p2/imsqti_asi_bindv1p2.html">https://www.imsglobal.org/question/qtiv1p2/imsqti_asi_bindv1p2.html</a>
+</p>
+<p>Zeileis A, Umlauf N, Leisch F (2014).
+Flexible Generation of E-Learning Exams in R: Moodle Quizzes, OLAT Assessments, and Beyond.
+<em>Journal of Statistical Software</em>, <b>58</b>(1), 1–36.
+<a href="https://doi.org/10.18637/jss.v058.i01">doi:10.18637/jss.v058.i01</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>exams2qti12</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+library("exams")
+options(device.ask.default = FALSE)
+
+## define an exams (= list of exercises)
+myexam &lt;- list(
+  "boxplots.Rmd",
+  "ttest.Rmd",
+  "anova.Rmd",
+  "scatterplot.Rmd",
+  "relfreq.Rmd"
+)
+
+## output directory
+dir.create(mydir &lt;- tempfile())
+
+## generate .zip with Blackboard exam in temporary directory
+exams2blackboard(myexam, n = 3, dir = mydir)
+dir(mydir)
+</code></pre>
+
+
+</div>

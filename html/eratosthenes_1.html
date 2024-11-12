@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gibbs_ad</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Gibbs Sampler for Archaeological Dating</h2>
+
+<h3>Description</h3>
+
+<p>A Gibbs sampler for archaeological dating, to fit relative sequences to absolute, calendrical dates. Elements can be associated with <em>termini post quem</em> (<em>t.p.q.</em>) and <em>termini ante quem</em> (<em>t.a.q.</em>), which are treated as a given probability density function <code class="reqn">f(t)</code>. This function may take any form, a single date (i.e., with a probability of 1), a continuous uniform distribution (any time between two dates), or a bespoke density (as with calibrated radicarbon dates). Inputs of this function take samples drawn from their respective density functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gibbs_ad(
+  sequences,
+  finds = NULL,
+  samples = 10^5,
+  tpq = NULL,
+  taq = NULL,
+  alpha = -5000,
+  omega = 1950,
+  trim = TRUE,
+  rule = "naive"
+)
+
+## S3 method for class 'list'
+gibbs_ad(
+  sequences,
+  finds = NULL,
+  samples = 10^5,
+  tpq = NULL,
+  taq = NULL,
+  alpha = -5000,
+  omega = 1950,
+  trim = TRUE,
+  rule = "naive"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sequences</code></td>
+<td>
+<p>A <code>list</code> of relative sequences of elements (e.g., contexts).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>finds</code></td>
+<td>
+<p>Optional. A <code>list</code> of finds related to (contained in) the elements of <code>sequences</code>. If one includes this ob</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samples</code></td>
+<td>
+<p>Number of samples. Default is <code>10^5</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tpq</code></td>
+<td>
+<p>A <code>list</code> containing <em>termini post quem</em>. Each object in the list consists of:
+</p>
+
+<ul>
+<li> <p><code>id</code> A <code>character</code> ID of the  <em>t.p.q.</em>, such as a reference or number.
+</p>
+</li>
+<li> <p><code>assoc</code> The element in <code>code</code> to which the <em>t.p.q.</em> is associated.
+</p>
+</li>
+<li> <p><code>samples</code> A vector of samples drawn from the appertaining probability density function of that <em>t.p.q.</em>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>taq</code></td>
+<td>
+<p>A <code>list</code> containing <em>termini ante quem</em>. Each object in the list consists of:
+</p>
+
+<ul>
+<li> <p><code>id</code> A <code>character</code> ID of the  <em>t.a.q.</em>, such as a reference or number.
+</p>
+</li>
+<li> <p><code>assoc</code> The element in <code>code</code> to which the <em>t.p.q.</em> is associated.
+</p>
+</li>
+<li> <p><code>samples</code> A vector of samples drawn from the appertaining probability density function of that <em>t.p.q.</em>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>An initial <em>t.p.q.</em> to limit any elements which may occur before the first provided <em>t.p.q.</em> Default is <code>-5000</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omega</code></td>
+<td>
+<p>A final <em>t.a.q.</em> to limit any elements which may occur after the after the last provided <em>t.a.q.</em> Default is <code>1950</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trim</code></td>
+<td>
+<p>A logical value to determine whether elements that occur before the first <em>t.p.q.</em> and after the last <em>t.a.q.</em> should be ommitted from the results (i.e., to "trim" elements at the ends of the sequence, whose marginal densities depend on the selection of <code>alpha</code> and <code>omega</code>). Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+<p>The rule for computing an estimated date of production of a find-type, either <code>"earliest"</code>, selecting a production date between the earliest deposition of that type and the next most earliest context,  or <code>"naive"</code> (the default), which will select a production date any time between the distribution of that "earliest" date and the depositional date of that artifact.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>list</code> object of class <code>marginals</code> which contains the following:
+</p>
+
+<ul>
+<li> <p><code>deposition</code> A <code>list</code> of samples from the marginal density of each context's depositional date.
+</p>
+</li>
+<li> <p><code>externals</code> A <code>list</code> of samples of the marginal density of each constrant (<em>t.p.q.</em> and <em>t.a.q.]</em>), as conditioned upon the occurrence of other depositional
+</p>
+</li>
+<li> <p><code>production</code> If a <code>finds</code> object has been input, samples of the marginal density of the production date of finds types will be included in the output.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")
+y &lt;- c("B", "D", "G", "H", "K")
+z &lt;- c("F", "K", "L", "M")
+contexts &lt;- list(x, y, z)
+
+f1 &lt;- list(id = "find01", assoc = "D", type = c("type1", "form1"))
+f2 &lt;- list(id = "find02", assoc = "E", type = c("type1", "form2"))
+f3 &lt;- list(id = "find03", assoc = "G", type = c("type1", "form1"))
+f4 &lt;- list(id = "find04", assoc = "H", type = c("type2", "form1"))
+f5 &lt;- list(id = "find05", assoc = "I", type = "type2")
+f6 &lt;- list(id = "find06", assoc = "H", type = NULL)
+
+artifacts &lt;- list(f1, f2, f3, f4, f5, f6)
+ 
+# external constraints
+coin1 &lt;- list(id = "coin1", assoc = "B", type = NULL, samples = runif(100,-320,-300))
+coin2 &lt;- list(id = "coin2", assoc = "G", type = NULL, samples = runif(100,37,41))
+destr &lt;- list(id = "destr", assoc = "J", type = NULL, samples = 79)
+
+tpq_info &lt;- list(coin1, coin2)
+taq_info &lt;- list(destr)
+
+result &lt;- gibbs_ad(contexts, finds = artifacts, samples = 10^4, tpq = tpq_info, taq = taq_info)
+</code></pre>
+
+
+</div>

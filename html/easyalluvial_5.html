@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>alluvial_model_response</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>create model response plot</h2>
+
+<h3>Description</h3>
+
+<p>alluvial plots are capable of displaying higher dimensional data
+on a plane, thus lend themselves to plot the response of a statistical model
+to changes in the input data across multiple dimensions. The practical limit
+here is 4 dimensions. We need the data space (a sensible range of data
+calculated based on the importance of the explanatory variables of the model
+as created by <code>get_data_space</code> and the predictions
+returned by the model in response to the data space.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">alluvial_model_response(
+  pred,
+  dspace,
+  imp,
+  degree = 4,
+  bin_labels = c("LL", "ML", "M", "MH", "HH"),
+  col_vector_flow = c("#FF0065", "#009850", "#A56F2B", "#005EAA", "#710500", "#7B5380",
+    "#9DD1D1"),
+  method = "median",
+  force = FALSE,
+  params_bin_numeric_pred = list(bins = 5),
+  pred_train = NULL,
+  stratum_label_size = 3.5,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pred</code></td>
+<td>
+<p>vector, predictions, if method = 'pdp' use
+<code>get_pdp_predictions</code> to calculate predictions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dspace</code></td>
+<td>
+<p>data frame, returned by
+<code>get_data_space</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>imp</code></td>
+<td>
+<p>dataframe, with not more then two columns one of them numeric
+containing importance measures and one character or factor column containing
+corresponding variable names as found in training data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree</code></td>
+<td>
+<p>integer,  number of top important variables to select. For
+plotting more than 4 will result in two many flows and the alluvial plot
+will not be very readable, Default: 4</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bin_labels</code></td>
+<td>
+<p>labels for prediction bins from low to high, Default: c("LL", "ML",
+"M", "MH", "HH")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col_vector_flow, </code></td>
+<td>
+<p>character vector, defines flow colours, Default:
+c('#FF0065','#009850', '#A56F2B', '#005EAA', '#710500')</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method, </code></td>
+<td>
+<p>character vector, one of c('median', 'pdp') </p>
+
+<dl>
+<dt>median</dt>
+<dd>
+<p>sets variables that are not displayed to median mode, use with
+regular predictions</p>
+</dd> <dt>pdp</dt>
+<dd>
+<p>partial dependency plot method, for each
+observation in the training data the displayed variable as are set to the
+indicated values. The predict function is called for each modified
+observation and the result is averaged, calculate predictions using
+<code>get_pdp_predictions</code> </p>
+</dd> </dl>
+<p>. Default: 'median'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force</code></td>
+<td>
+<p>logical, force plotting of over 1500 flows, Default: FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params_bin_numeric_pred</code></td>
+<td>
+<p>list, additional parameters passed to
+<code>manip_bin_numerics</code> which is applied to the pred
+parameter. Default: list( bins = 5, center = T, transform = T, scale = T)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pred_train</code></td>
+<td>
+<p>numeric vector, base the automated binning of the pred vector on
+the distribution of the training predictions. This is useful if marginal
+histograms are added to the plot later. Default = NULL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stratum_label_size</code></td>
+<td>
+<p>numeric, Default: 3.5</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameters passed to
+<code>alluvial_wide</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>this model visualisation approach follows the "visualising the model
+in the dataspace" principle as described in Wickham H, Cook D, Hofmann H
+(2015) Visualizing statistical models: Removing the blindfold. Statistical
+Analysis and Data Mining 8(4) &lt;doi:10.1002/sam.11271&gt;
+</p>
+
+
+<h3>Value</h3>
+
+<p>ggplot2 object
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>alluvial_wide</code>,
+<code>get_data_space</code>,
+<code>alluvial_model_response_caret</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">df = mtcars2[, ! names(mtcars2) %in% 'ids' ]
+m = randomForest::randomForest( disp ~ ., df)
+imp = m$importance
+dspace = get_data_space(df, imp, degree = 3)
+pred = predict(m, newdata = dspace)
+alluvial_model_response(pred, dspace, imp, degree = 3)
+
+# partial dependency plotting method
+## Not run: 
+ pred = get_pdp_predictions(df, imp
+                            , .f_predict = randomForest:::predict.randomForest
+                            , m
+                            , degree = 3
+                            , bins = 5)
+
+
+ alluvial_model_response(pred, dspace, imp, degree = 3, method = 'pdp')
+ 
+## End(Not run)
+</code></pre>
+
+
+</div>

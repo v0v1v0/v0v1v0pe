@@ -1,0 +1,363 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>confounded_meta</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sensitivity analysis for unmeasured confounding in meta-analyses</h2>
+
+<h3>Description</h3>
+
+<p>This function implements the sensitivity analyses of Mathur &amp; VanderWeele (2020a, 2020b). It computes point estimates, standard errors, and confidence intervals
+for (1) <code>Prop</code>, the proportion of studies with true causal effect sizes above or below a chosen threshold <code>q</code> as a function of the bias parameters;
+(2) the minimum bias factor on the relative risk scale (<code>Tmin</code>) required to reduce to
+less than <code>r</code> the proportion of studies with true causal effect sizes more extreme than
+<code>q</code>; and (3) the counterpart to (2) in which bias is parameterized as the minimum
+relative risk for both confounding associations (<code>Gmin</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">confounded_meta(
+  method = "calibrated",
+  q,
+  r = NA,
+  tail = NA,
+  CI.level = 0.95,
+  give.CI = TRUE,
+  R = 1000,
+  muB = NA,
+  muB.toward.null = FALSE,
+  dat = NA,
+  yi.name = NA,
+  vi.name = NA,
+  sigB = NA,
+  yr = NA,
+  vyr = NA,
+  t2 = NA,
+  vt2 = NA,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p><code>"calibrated"</code> or <code>"parametric"</code>. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>True causal effect size chosen as the threshold for a meaningfully large effect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>For <code>Tmin</code> and <code>Gmin</code>, value to which the proportion of meaningfully strong effect sizes is to be reduced.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tail</code></td>
+<td>
+<p><code>"above"</code> for the proportion of effects above <code>q</code>; <code>"below"</code> for
+the proportion of effects below <code>q</code>. By default, is set to <code>"above"</code> if the pooled point estimate (<code>method = "parametric"</code>) or median of the calibrated estimates (<code>method = "calibrated"</code>) is above 1 on the relative risk scale and is set to <code>"below"</code> otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CI.level</code></td>
+<td>
+<p>Confidence level as a proportion (e.g., 0.95).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>give.CI</code></td>
+<td>
+<p>Logical. If <code>TRUE</code>, confidence intervals are provided. Otherwise, only point estimates are provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>Number  of  bootstrap  iterates for confidence interval estimation. Only used if <code>method = "calibrated"</code> and <code>give.CI = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>muB</code></td>
+<td>
+<p>Mean bias factor on the log scale across studies (greater than 0). When considering bias that is of homogeneous strength across studies (i.e., <code>method = "calibrated"</code> or <code>method = "parametric"</code> with <code>sigB = 0</code>), <code>muB</code> represents the log-bias factor in each study. If <code>muB</code> is not specified, then only <code>Tmin</code> and <code>Gmin</code> will be returned, not <code>Prop</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>muB.toward.null</code></td>
+<td>
+<p>Whether you want to consider bias that has on average shifted studies' point estimates away from the null (<code>FALSE</code>; the default) or that has on average shifted studies' point estimates toward the null (<code>TRUE</code>). See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>Dataframe containing studies' point estimates and variances. Only used if <code>method = "calibrated"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yi.name</code></td>
+<td>
+<p>Name of variable in <code>dat</code> containing studies' point estimates on the log-relative risk scale. Only used if <code>method = "calibrated"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vi.name</code></td>
+<td>
+<p>Name of variable in <code>dat</code> containing studies' variance estimates. Only used if <code>method = "calibrated"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigB</code></td>
+<td>
+<p>Standard deviation of log bias factor across studies. Only used if <code>method = "parametric"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yr</code></td>
+<td>
+<p>Pooled point estimate (on log-relative risk scale) from confounded meta-analysis. Only used if <code>method = "parametric"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vyr</code></td>
+<td>
+<p>Estimated variance of pooled point estimate from confounded meta-analysis. Only used if <code>method = "parametric"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t2</code></td>
+<td>
+<p>Estimated heterogeneity (<code class="reqn">\tau^2</code>) from confounded meta-analysis. Only used if <code>method = "parametric"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vt2</code></td>
+<td>
+<p>Estimated variance of <code class="reqn">\tau^2</code> from confounded meta-analysis. Only used if <code>method = "parametric"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to <code>confounded_meta</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>Specifying the sensitivity parameters on the bias</h4>
+
+<p>By convention, the average log-bias factor, <code>muB</code>, is taken to be greater than 0 (Mathur &amp; VanderWeele, 2020a; Ding &amp; VanderWeele, 2017). Confounding can operate on average either away from or toward the null, a choice specified via <code>muB.toward.null</code>. The most common choice for sensitivity analysis is to consider bias that operates on average away from the null, which is <code>confounded_meta</code>'s default. In such an analysis, correcting for the bias involves shifting studies' estimates back toward the null by <code>muB</code> (i.e., if <code>yr &gt; 0</code>, the estimates will be corrected downward; if <code>yr &lt; 0</code>, they will be corrected upward). Alternatively, to consider bias that operates on average away from the null, you would still specify <code>muB &gt; 0</code> but would also specify <code>muB.toward.null = TRUE</code>. For detailed guidance on choosing the sensitivity parameters <code>muB</code> and <code>sigB</code>, see Section 5 of Mathur &amp; VanderWeele (2020a).
+</p>
+
+
+
+<h4>Specifying the threshold <code>q</code>
+</h4>
+
+<p>For detailed guidance on choosing the threshold <code>q</code>, see the Supplement of Mathur &amp; VanderWeele (2020a).
+</p>
+
+
+
+<h4>Specifying the estimation method</h4>
+
+<p>By default, <code>confounded_meta</code> performs estimation using a <strong>calibrated method</strong> (Mathur &amp; VanderWeele, 2020b) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified:
+</p>
+
+<ul>
+<li> <p><code>q</code>
+</p>
+</li>
+<li> <p><code>r</code> (if you want to estimate <code>Tmin</code> and <code>Gmin</code>)
+</p>
+</li>
+<li> <p><code>muB</code>
+</p>
+</li>
+<li> <p><code>dat</code>
+</p>
+</li>
+<li> <p><code>yi.name</code>
+</p>
+</li>
+<li> <p><code>vi.name</code>
+</p>
+</li>
+</ul>
+<p>The <strong>parametric method</strong> assumes that the population effects are approximately normal and that the number of studies is large. Parametric confidence intervals should only be used when the proportion estimate is between 0.15 and 0.85 (and <code>confounded_meta</code> will issue a warning otherwise). Unlike the calibrated method, the parametric method can accommodate bias that is heterogeneous across studies (specifically, bias that is log-normal across studies). When using this method, the following arguments need to be specified:
+</p>
+
+<ul>
+<li> <p><code>q</code>
+</p>
+</li>
+<li> <p><code>r</code> (if you want to estimate <code>Tmin</code> and <code>Gmin</code>)
+</p>
+</li>
+<li> <p><code>muB</code>
+</p>
+</li>
+<li> <p><code>sigB</code>
+</p>
+</li>
+<li> <p><code>yr</code>
+</p>
+</li>
+<li> <p><code>vyr</code> (if you want confidence intervals)
+</p>
+</li>
+<li> <p><code>t2</code>
+</p>
+</li>
+<li> <p><code>vt2</code> (if you want confidence intervals)
+</p>
+</li>
+</ul>
+<h4>Effect size measures other than log-relative risks</h4>
+
+<p>If your meta-analysis uses effect sizes other than log-relative risks, you should first approximately convert them to log-relative risks, for example via <code>convert_measures()</code> and then pass the converted point estimates or meta-analysis estimates to <code>confounded_meta</code>.
+</p>
+
+
+
+<h4>Interpreting <code>Tmin</code> and <code>Gmin</code>
+</h4>
+
+<p><code>Tmin</code> is defined as the minimum average bias factor on the relative risk scale that would be required to reduce to less than <code>r</code> the proportion of studies with true causal effect sizes stronger than the threshold <code>q</code>, assuming that the bias factors are log-normal across studies with standard deviation <code>sigB</code>. <code>Gmin</code> is defined as the minimum confounding strength on the relative risk scale – that is, the relative risk relating unmeasured confounder(s) to both the exposure and the outcome – on average among the meta-analyzed studies, that would be required to reduce to less than <code>r</code> the proportion of studies with true causal effect sizes stronger than the threshold <code>q</code>, again assuming that bias factors are log-normal across studies with standard deviation <code>sigB</code>. <code>Gmin</code> is a one-to-one transformation of <code>Tmin</code> given by <code class="reqn">Gmin = Tmin + \sqrt{Tmin * (Tmin - 1)} </code>. If the estimated proportion of meaningfully strong effect sizes is already less than <code>r</code> even without the introduction of any bias, <code>Tmin</code> and <code>Gmin</code> will be set to 1. (These definitions of <code>Tmin</code> and <code>Gmin</code> are generalizations of those given in Mathur &amp; VanderWeele, 2020a, who defined these quantities in terms of bias that is homogeneous across studies. You can conduct analyses with homogeneous bias by setting <code>sigB = 0</code>.)
+</p>
+<p>The direction of bias represented by <code>Tmin</code> and <code>Gmin</code> is dependent on the argument <code>tail</code>: when <code>tail = "above"</code>, these metrics consider bias that had operated to <em>increase</em> studies' point estimates, and when <code>tail = "below"</code>, these metrics consider bias that had operated to <em>decrease</em> studies' point estimates. Such bias could operate toward or away from the null depending on whether the pooled point estimate <code>yr</code> happens to fall above or below the null. As such, the direction of bias represented by <code>Tmin</code> and <code>Gmin</code> may or may not match that specified by the argument <code>muB.toward.null</code> (which is used only for estimation of <code>Prop</code>).
+</p>
+
+
+
+<h4>When these methods should be used</h4>
+
+<p>These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate <code>t2</code> is greater than 0. For meta-analyses with fewer than 10 studies or with a heterogeneity estimate of 0, you can simply report E-values for the point estimate via <code>evalue()</code> (VanderWeele &amp; Ding, 2017; see Mathur &amp; VanderWeele (2020a), Section 7.2 for interpretation in the meta-analysis context).
+</p>
+
+
+
+<h3>References</h3>
+
+<p>Mathur MB &amp; VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. <em>Journal of the American Statistical Association</em>.
+</p>
+<p>Mathur MB &amp; VanderWeele TJ (2020b). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. <em>Epidemiology</em>.
+</p>
+<p>Mathur MB &amp; VanderWeele TJ (2019). New statistical metrics for meta-analyses of heterogeneous effects. <em>Statistics in Medicine</em>.
+</p>
+<p>Ding P &amp; VanderWeele TJ (2016). Sensitivity analysis without assumptions. <em>Epidemiology</em>.
+</p>
+<p>VanderWeele TJ &amp; Ding P (2017). Introducing the E-value. <em>Annals of Internal Medicine</em>.
+</p>
+<p>Wang C-C &amp; Lee W-C (2019). A simple method to estimate prediction intervals and
+predictive distributions: Summarizing meta-analyses
+beyond means and confidence intervals. <em>Research Synthesis Methods</em>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##### Using Calibrated Method #####
+d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
+                    ci=cpos, di=cneg, data=metadat::dat.bcg)
+
+# obtaining all three estimators and inference
+# number of bootstrap iterates
+# should be larger in practice
+R = 100
+confounded_meta( method="calibrated",  # for both methods
+                 q = log(0.90),
+                 r = 0.20,
+                 tail="below",
+                 muB = log(1.5),
+                 dat = d,
+                 yi.name = "yi",
+                 vi.name = "vi",
+                 R = 100 )
+
+# passing only arguments needed for prop point estimate
+confounded_meta( method="calibrated",
+                 q = log(0.90),
+                 tail="below",
+                 muB = log(1.5),
+                 give.CI = FALSE,
+                 dat = d,
+                 yi.name = "yi",
+                 vi.name = "vi" )
+
+# passing only arguments needed for Tmin, Gmin point estimates
+confounded_meta( method="calibrated",
+                 q = log(0.90),
+                 r = 0.10,
+                 tail="below",
+                 give.CI = FALSE,
+                 dat = d,
+                 yi.name = "yi",
+                 vi.name = "vi" )
+
+##### Using Parametric Method #####
+# fit random-effects meta-analysis
+m = metafor::rma.uni(yi= d$yi,
+                     vi=d$vi,
+                     knha=TRUE,
+                     measure="RR",
+                     method="REML" )
+
+yr = as.numeric(m$b)  # metafor returns on log scale
+vyr = as.numeric(m$vb)
+t2 = m$tau2
+vt2 = m$se.tau2^2
+
+# obtaining all three estimators and inference
+# now the proportion considers heterogeneous bias
+confounded_meta( method = "parametric",
+                 q=log(0.90),
+                 r=0.20,
+                 tail = "below",
+                 muB=log(1.5),
+                 sigB=0.1,
+                 yr=yr,
+                 vyr=vyr,
+                 t2=t2,
+                 vt2=vt2,
+                 CI.level=0.95 )
+
+# passing only arguments needed for prop point estimate
+confounded_meta( method = "parametric",
+                 q=log(0.90),
+                 tail = "below",
+                 muB=log(1.5),
+                 sigB = 0,
+                 yr=yr,
+                 t2=t2,
+                 CI.level=0.95 )
+
+# passing only arguments needed for Tmin, Gmin point estimates
+confounded_meta( method = "parametric",
+                 q = log(0.90),
+                 sigB = 0,
+                 r = 0.10,
+                 tail = "below",
+                 yr=yr,
+                 t2=t2,
+                 CI.level=0.95 )
+</code></pre>
+
+
+</div>

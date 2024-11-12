@@ -1,0 +1,304 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emplikHs.test2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Two sample empirical likelihood ratio test for hazards
+with right censored, left truncated data. Many constraints.</h2>
+
+<h3>Description</h3>
+
+<p>Use empirical likelihood ratio and Wilks theorem to test 
+the null hypothesis that
+</p>
+<p style="text-align: center;"><code class="reqn"> 
+\int{f_1(t) dH_1(t)} -
+\int{f_2(t) dH_2(t)} = \theta 
+</code>
+</p>
+
+<p>where <code class="reqn">H_*(t)</code> is the (unknown) cumulative
+hazard functions; <code class="reqn">f_*(t)</code> can be any predictable  
+functions of <code class="reqn">t</code>. 
+<code class="reqn">\theta</code> is a vector of parameters (dim=q). 
+The given value of <code class="reqn">\theta</code>
+in these computation are the value to be tested.
+The data can be right censored and left truncated.
+</p>
+<p>When the given constants <code class="reqn">\theta</code> is too far
+away from the NPMLE, there will be no hazard function satisfy this 
+constraint and the -2 Log empirical likelihood ratio
+will be infinite. In this case the computation will stop.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emplikHs.test2(x1, d1, y1= -Inf, x2, d2, y2 = -Inf,
+          theta, fun1, fun2, maxit=25,tola = 1e-7,itertrace =FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x1</code></td>
+<td>
+<p>a vector of length n1, the observed survival times, sample 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d1</code></td>
+<td>
+<p>a vector, the censoring indicators, 1-uncensor; 0-censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y1</code></td>
+<td>
+<p>optional vector, the left truncation times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x2</code></td>
+<td>
+<p>a vector of length n2, the observed survival times, sample 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d2</code></td>
+<td>
+<p>a vector, the censoring indicators, 1-uncensor; 0-censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y2</code></td>
+<td>
+<p>optional vector, the left truncation times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun1</code></td>
+<td>
+<p>a predictable function used to calculate
+the weighted discrete hazard to form the null hypothesis <code class="reqn">H_0</code>. 
+<code>fun1(x)</code> must be able to take a vector input (length n1)
+<code>x</code>, and output a matrix of n1 x q. 
+When q=1, the output can also be a vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun2</code></td>
+<td>
+<p> Ditto. but for length n2</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tola</code></td>
+<td>
+<p>an optional positive real number, the tolerance of
+iteration error in solve the non-linear equation needed in constrained 
+maximization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>a given vector of length q. for Ho constraint. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>integer, maximum number of Newton-Raphson type iterations. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itertrace</code></td>
+<td>
+<p>Logocal, 
+if the results of each iteration needs to be printed. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The log likelihood been maximized is the Poisson likelihood:
+</p>
+<p style="text-align: center;"><code class="reqn"> 
+\sum D_{1i} \log w_i  - \sum R_{1i} w_i + 
+\sum D_{2j} \log v_j  - \sum R_{2j} v_j 
+</code>
+</p>
+
+<p>where <code class="reqn">w_i = \Delta H_1(t_i)</code> is the jump 
+of the cumulative hazard function at <code class="reqn">t_i</code>
+(for first sample), 
+<code class="reqn">D_{1i}</code> is the number of failures
+observed at <code class="reqn">t_i</code>, <code class="reqn">R_{1i}</code> is 
+the number of subjects at risk at
+time <code class="reqn">t_i</code>. Dido for sample two.
+</p>
+<p>For (proper)
+discrete distributions, the jump size of the cumulative hazard at
+the last jump is always 1. So, in the likelihood ratio, it cancels.
+But the last jump of size 1 still matter when computing the constraint.
+</p>
+<p>The constants <code>theta</code> must be inside the so called
+feasible region for the computation to continue. This is similar to the
+requirement that in testing the value of the mean, the value must be
+inside the convex hull of the observations.
+It is always true that the NPMLE values are feasible. So when the
+computation stops, try move the <code>theta</code> closer
+to the NPMLE, which we print out first thing in this function,
+even when other later computations do not go. 
+When the computation stops, the -2LLR should have value
+infinite.
+</p>
+<p>This function uses the llog etc. function, so sometimes it may produce
+different result from the one sample result. which use the regular log function.
+The advantage is that we avoid the possible log(0) situation.
+</p>
+<p>You can also use this function for one sample problems. 
+You need to artificially supply data for sample two of minimal size
+(like size 2q+2), and specify a fun2() that ALWAYS return 0's
+(zero vector, with length=n2 vector length, 
+or zero matrix,  with dim n2 x q as the input).
+Then, look for -2LLR(sample1) in the output.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>The -2Log empirical Likelihood ratio.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>the final value of the Lagrange multiplier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR(sample1)"</code></td>
+<td>
+<p>The -2Log empirical likelihood ratio for sample 
+one only. Useful in one sample problems.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"Llog(sample1)"</code></td>
+<td>
+<p>The numerator only of the above "-2LLR(sample1)", without -2.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Zhou and Fang (2001). 
+“Empirical likelihood ratio for 2 sample problems for censored data”. 
+<em>Tech Report, Univ. of Kentucky, Dept of Statistics</em>
+</p>
+
+
+<h3>See Also</h3>
+
+<p> emplikH2.test </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(require("boot", quietly = TRUE)) {
+####library(boot)
+data(channing)
+ymale &lt;- channing[1:97,2]
+dmale &lt;- channing[1:97,5]
+xmale &lt;- channing[1:97,3]
+yfemale &lt;- channing[98:462,2]
+dfemale &lt;- channing[98:462,5]
+xfemale &lt;- channing[98:462,3]
+fun1 &lt;- function(x) { as.numeric(x &lt;= 960) }
+########################################################
+fun2 &lt;- function(x){ cbind(as.numeric(x &lt;= 960), as.numeric(x &lt;= 860))}
+############ fun2 has matrix output ###############
+emplikHs.test2(x1=xfemale, d1=dfemale, y1=yfemale, 
+ x2=xmale, d2=dmale, y2=ymale, theta=c(0,0), fun1=fun2, fun2=fun2)
+}
+#############################################
+###################### Second example:
+if(require("KMsurv", quietly = TRUE)) {
+####library(KMsurv)
+data(kidney)
+### these functions counts the risk set size, so delta=1 always ###
+temp1 &lt;- Wdataclean3(z=kidney$time[kidney[,3]==1], d=rep(1,43) )
+temp2 &lt;- DnR(x=temp1$value, d=temp1$dd, w=temp1$weight)
+TIME &lt;- temp2$times
+RISK &lt;- temp2$n.risk
+fR1 &lt;- approxfun(x=TIME, y=RISK, method="constant", yright=0, rule=2, f=1)
+temp1 &lt;- Wdataclean3(z=kidney$time[kidney[,3]==2], d=rep(1,76) )
+temp2 &lt;- DnR(x=temp1$value, d=temp1$dd, w=temp1$weight)
+TIME &lt;- temp2$times
+RISK &lt;- temp2$n.risk
+fR2 &lt;- approxfun(x=TIME, y=RISK, method="constant", yright=0, rule=2, f=1)
+
+### the weight function for two sample Gehan-Wilcoxon type test ###
+fun &lt;- function(t){ fR1(t)*fR2(t)/((76*43)*sqrt(119/(76*43)) )}
+### Here comes the test: ###
+emplikHs.test2(x1=kidney[kidney[,3]==1,1],d1=kidney[kidney[,3]==1,2],
+   x2=kidney[kidney[,3]==2,1],d2=kidney[kidney[,3]==2,2],
+   theta=0, fun1= fun, fun2=fun)
+### The results should include this ###
+#$"-2LLR"
+#[1] 0.002473070
+#
+#$lambda
+#[1] -0.1713749
+#######################################
+######### the weight function for log-rank test #####
+funlogrank &lt;- function(t){sqrt(119/(76*43))*fR1(t)*fR2(t)/(fR1(t)+fR2(t))}
+##### Now the log-rank test ###
+emplikHs.test2(x1=kidney[kidney[,3]==1,1],d1=kidney[kidney[,3]==1,2],
+  x2=kidney[kidney[,3]==2,1],d2=kidney[kidney[,3]==2,2],
+  theta=0, fun1=funlogrank, fun2=funlogrank)
+##### The result of log rank test should include this ###
+#
+#$"-2LLR"
+#[1] 2.655808
+#
+#$lambda
+#[1] 3.568833
+#######################################################
+###### the weight function for both type test ####
+funBOTH &lt;- function(t) {
+       cbind(sqrt(119/(76*43))*fR1(t)*fR2(t)/(fR1(t)+fR2(t)), 
+                 fR1(t)*fR2(t)/((76*43)*sqrt(119/(76*43)))) }
+#### The test that combine both tests ###
+emplikHs.test2(x1=kidney[kidney$type==1,1],d1=kidney[kidney$type==1,2],
+    x2=kidney[kidney$type==2,1],d2=kidney[kidney$type==2,2],
+    theta=c(0,0), fun1=funBOTH, fun2=funBOTH)
+#### the result should include this ###
+#
+#$"-2LLR"
+#[1] 13.25476
+#
+#$lambda
+#[1]  14.80228 -21.86733
+##########################################
+}
+</code></pre>
+
+
+</div>

@@ -1,0 +1,148 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rIPCP</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Simulate Inhomogeneous Poisson Cluster Process </h2>
+
+<h3>Description</h3>
+
+<p>Generate a random point pattern, a simulated realisation of the Inhomogeneous Poisson Cluster Process. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rIPCP(x, lambda = NULL, type = 1, lmax = NULL, win = owin(c(0, 1), c(0, 1)), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p> an object of class <code>'ecespa.minconfit'</code>, resulting from the function <code>ipc.estK</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p> Optional. Values of the estimated intensity function as a pixel image (object of class "im" of <code>spatstat</code>) giving the intensity values at all locations. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p> Type of 'prethining' employed in the simulation. See details. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lmax</code></td>
+<td>
+<p> Optional. Upper bound on the values of lambda. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>win</code></td>
+<td>
+<p> Optional. Window of the simulated pattern. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> Optional. Arguments passed to <code>as.im</code>. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function simulates the Inhomogeneous Poisson Cluster process from an object of class <code>'ecespa.minconfit'</code>, resulting from fitting an IPCP to some 'original' point pattern
+using the function <code>ipc.estK</code>.   Following the approach of Waagepetersen (2007), the simulation involves a first step in which an homogeneous aggregated pattern 
+is simulated (from the fitted parameters  of the <code>'ecespa.minconfit'</code> object, using function <code>rThomas</code>   of <code>spatstat</code>) and a second one in which
+the homogeneous pattern is thinned with a spatially varying thinning probability <em>f (s)</em> proportional to the spatially varying intensity, i.e. <em>f (s) = lambda(s) / max[lambda(s)]</em>.
+To obtain a 'final' density similar to that of the original point pattern, a "prethinning" must be performed. There are two alternatives. If the argument <code>'type'</code> is set equal to '1', 
+the expected number of points per cluster (<em>mu</em> parameter of <code>rThomas</code> is thinned as <em>mu &lt;- mu.0 / mean[f(s)]</em>, where <em>mu.0</em> is the 
+mean number of points per cluster of the original pattern. This alternative produces point patterns most similar to the 'original'.  If the argument <code>'type'</code> is set equal to '2', 
+the fitted intensity of the Poisson process of cluster centres (<em>kappa</em> parameter of <code>rThomas</code>, i.e. the intensity of 'parent' points) is thinned 
+as <em>kappa &lt;- kappa / mean[f(s)]</em>. This alternative produces patterns more uniform than the 'original' and it is provided only for experimental purposes.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A point pattern, with the format of the <code>ppp</code> objects of <code>spatstat</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Marcelino de la Cruz Rot </p>
+
+
+<h3>References</h3>
+
+ 
+<p>Waagepetersen, R. P. 2007. An estimating function approach to inference for inhomogeneous Neymann-Scott processes. <em>Biometrics</em> 63: 252-258. <a href="https://doi.org/10.1111/j.1541-0420.2006.00667.x">doi:10.1111/j.1541-0420.2006.00667.x</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>sim.poissonc</code> to simulate homogeneous PCP; <code>rNeymanScott</code> 
+and <code>rThomas</code> in <span class="pkg">spatstat</span> are the basis of this function </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+  
+    data(gypsophylous)
+  
+    plot(gypsophylous) 
+    
+    ## It 'seems' that the pattern is clustered, so 
+    ## fit a Poisson Cluster Process. The limits of integration 
+    ## rmin and rmax are setup to 0 and 60, respectively.
+    
+   cosa.pc2 &lt;- ipc.estK(gypsophylous, r = seq(0, 60, by=0.2))
+
+   ## Create one instance of the fitted PCP:
+
+   pointp &lt;- rIPCP( cosa.pc2)
+   
+   plot(pointp)
+   
+   
+   
+    #####################
+    ## Inhomogeneous example
+
+    data(urkiola)
+
+    # get univariate pp
+    I.ppp &lt;- split.ppp(urkiola)$birch
+
+    plot(I.ppp)
+
+    #estimate inhomogeneous intensity function
+    I.lam &lt;- predict (ppm(I.ppp, ~polynom(x,y,2)), type="trend", ngrid=200)
+
+    # It seems that there is short scale clustering; lets fit an IPCP: 
+
+    I.ki &lt;- ipc.estK(mippp=I.ppp, lambda=I.lam, correction="trans")
+
+    ## Create one instance of the fitted PCP:
+
+    pointpi &lt;- rIPCP( I.ki)
+   
+    plot(pointpi)
+ 
+
+</code></pre>
+
+
+</div>

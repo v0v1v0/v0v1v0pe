@@ -1,0 +1,276 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>control.ergm.bridge</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Auxiliaries for Controlling <code>ergm.bridge.llr()</code> and <code>logLik.ergm()</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>Auxiliary functions as user interfaces for fine-tuning the
+<code>ergm.bridge.llr()</code> algorithm, which approximates log likelihood
+ratios using bridge sampling.
+</p>
+<p>By default, the bridge sampler inherits its control
+parameters from the <code>ergm()</code> fit; <code>control.logLik.ergm()</code> allows
+the user to selectively override them.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">control.ergm.bridge(
+  bridge.nsteps = 16,
+  bridge.target.se = NULL,
+  bridge.bidirectional = TRUE,
+  drop = TRUE,
+  MCMC.burnin = MCMC.interval * 128,
+  MCMC.burnin.between = max(ceiling(MCMC.burnin/sqrt(bridge.nsteps)), MCMC.interval * 16),
+  MCMC.interval = 128,
+  MCMC.samplesize = 16384,
+  obs.MCMC.burnin = obs.MCMC.interval * 128,
+  obs.MCMC.burnin.between = max(ceiling(obs.MCMC.burnin/sqrt(bridge.nsteps)),
+    obs.MCMC.interval * 16),
+  obs.MCMC.interval = MCMC.interval,
+  obs.MCMC.samplesize = MCMC.samplesize,
+  MCMC.prop = trim_env(~sparse + .triadic),
+  MCMC.prop.weights = "default",
+  MCMC.prop.args = list(),
+  obs.MCMC.prop = MCMC.prop,
+  obs.MCMC.prop.weights = MCMC.prop.weights,
+  obs.MCMC.prop.args = MCMC.prop.args,
+  MCMC.maxedges = Inf,
+  MCMC.packagenames = c(),
+  term.options = list(),
+  seed = NULL,
+  parallel = 0,
+  parallel.type = NULL,
+  parallel.version.check = TRUE,
+  parallel.inherit.MT = FALSE,
+  ...
+)
+
+control.logLik.ergm(
+  bridge.nsteps = 16,
+  bridge.target.se = NULL,
+  bridge.bidirectional = TRUE,
+  drop = NULL,
+  MCMC.burnin = NULL,
+  MCMC.interval = NULL,
+  MCMC.samplesize = NULL,
+  obs.MCMC.samplesize = MCMC.samplesize,
+  obs.MCMC.interval = MCMC.interval,
+  obs.MCMC.burnin = MCMC.burnin,
+  MCMC.prop = NULL,
+  MCMC.prop.weights = NULL,
+  MCMC.prop.args = NULL,
+  obs.MCMC.prop = MCMC.prop,
+  obs.MCMC.prop.weights = MCMC.prop.weights,
+  obs.MCMC.prop.args = MCMC.prop.args,
+  MCMC.maxedges = Inf,
+  MCMC.packagenames = NULL,
+  term.options = NULL,
+  seed = NULL,
+  parallel = NULL,
+  parallel.type = NULL,
+  parallel.version.check = TRUE,
+  parallel.inherit.MT = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>bridge.nsteps</code></td>
+<td>
+<p>Number of geometric bridges to use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bridge.target.se</code></td>
+<td>
+<p>If not <code>NULL</code>, if the estimated MCMC standard error of the likelihood estimate exceeds this, repeat the bridge sampling, accumulating samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bridge.bidirectional</code></td>
+<td>
+<p>Whether the bridge sampler first bridges from <code>from</code> to <code>to</code>, then from <code>to</code> to <code>from</code> (skipping the first burn-in), etc. if multiple attempts are required.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>See <code>control.ergm()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.burnin</code></td>
+<td>
+<p>Number of proposals before any MCMC sampling is done. It
+typically is set to a fairly large number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.burnin.between</code></td>
+<td>
+<p>Number of proposals between the bridges; typically, less and less is needed as the number of steps decreases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.interval</code></td>
+<td>
+<p>Number of proposals between sampled statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.samplesize</code></td>
+<td>
+<p>Number of network statistics, randomly drawn from a
+given distribution on the set of all networks, returned by the
+Metropolis-Hastings algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obs.MCMC.burnin, obs.MCMC.burnin.between, obs.MCMC.interval, obs.MCMC.samplesize</code></td>
+<td>
+<p>The <code>obs</code>
+versions of these arguments are for the unobserved data simulation
+algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.prop</code></td>
+<td>
+<p>Specifies the proposal (directly) and/or
+a series of "hints" about the structure of the model being
+sampled. The specification is in the form of a one-sided formula
+with hints separated by <code>+</code> operations. If the LHS exists and is
+a string, the proposal to be used is selected directly.
+</p>
+<p>A common and default "hint" is <code>~sparse</code>, indicating
+that the network is sparse and that the sample should put roughly
+equal weight on selecting a dyad with or without a tie as a
+candidate for toggling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.prop.weights</code></td>
+<td>
+<p>Specifies the proposal
+distribution used in the MCMC Metropolis-Hastings algorithm.  Possible
+choices depending on selected <code>reference</code> and <code>constraints</code>
+arguments of the <code>ergm()</code> function, but often include <code>"TNT"</code>
+and <code>"random"</code>, and the <code>"default"</code> is to use the one with the
+highest priority available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.prop.args</code></td>
+<td>
+<p>An alternative, direct way of
+specifying additional arguments to proposal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obs.MCMC.prop, obs.MCMC.prop.weights, obs.MCMC.prop.args</code></td>
+<td>
+<p>The <code>obs</code> versions of these arguments are for the unobserved data simulation algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.maxedges</code></td>
+<td>
+<p>The maximum number of edges that may occur during the MCMC sampling. If this number is exceeded at any time, sampling is stopped immediately.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.packagenames</code></td>
+<td>
+<p>Names of packages in which to look for change
+statistic functions in addition to those autodetected. This argument should
+not be needed outside of very strange setups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term.options</code></td>
+<td>
+<p>A list of additional arguments to be passed to term initializers. See <code>? term.options</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Seed value (integer) for the random number generator.  See
+<code>set.seed()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>Number of threads in which to run the sampling. Defaults to
+0 (no parallelism). See the entry on parallel processing
+for details and troubleshooting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel.type</code></td>
+<td>
+<p>API to use for parallel processing. Supported values
+are <code>"MPI"</code> and <code>"PSOCK"</code>. Defaults to using the <code>parallel</code>
+package with PSOCK clusters. See <code>ergm-parallel</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel.version.check</code></td>
+<td>
+<p>Logical: If TRUE, check that the version of
+<span class="pkg">ergm</span> running on the slave nodes is the same as
+that running on the master node.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel.inherit.MT</code></td>
+<td>
+<p>Logical: If TRUE, slave nodes and
+processes inherit the <code>set.MT_terms()</code> setting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>A dummy argument to catch deprecated or mistyped control parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>control.ergm.bridge()</code> is only used within a call to the
+<code>ergm.bridge.llr()</code>, <code>ergm.bridge.dindstart.llk()</code>, or
+<code>ergm.bridge.0.llk()</code> functions.
+</p>
+<p><code>control.logLik.ergm()</code> is only used within a call to the
+<code>logLik.ergm()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with arguments as components.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ergm.bridge.llr()</code>
+</p>
+<p><code>logLik.ergm()</code>
+</p>
+
+
+</div>

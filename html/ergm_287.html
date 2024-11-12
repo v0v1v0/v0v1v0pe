@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm_state_cache</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A rudimentary cache for large objects</h2>
+
+<h3>Description</h3>
+
+<p>This cache is intended to store large, infrequently changing data
+structures such as <code>ergm_model</code>s and <code>ergm_proposal</code>s on worker
+nodes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm_state_cache(
+  comm = c("pass", "all", "clear", "insert", "get", "check", "list"),
+  key,
+  object
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>comm</code></td>
+<td>
+<p>a character string giving the desired function; see the
+default argument above for permitted values and Details for
+meanings; partial matching is supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>key</code></td>
+<td>
+<p>a character string, typically a <code>digest::digest()</code> of
+the object or a random string.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>the object to be stored.
+</p>
+<p>Supported tasks are, respectively, to do nothing (the default),
+return all entries (mainly useful for testing), clear the cache,
+insert into cache, retrieve an object by key, check if a key is
+present, or list keys defined.
+</p>
+<p>Deleting an entry can be accomplished by inserting a <code>NULL</code> for
+that key.
+</p>
+<p>Cache is limited to a hard-coded size (currently 4). This should
+accommodate an <code>ergm_model</code> and an <code>ergm_proposal</code> for
+unconstrained and constrained MCMC. When additional objects are
+stored, the oldest object is purged and garbage-collected.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>If called via, say, <code>clusterMap(cl, ergm_state_cache, ...)</code>
+the function will not accomplish anything. This is because
+<code>parallel</code> package will serialise the <code>ergm_state_cache()</code>
+function object, send it to the remote node, evaluate it there,
+and fetch the return value. This will leave the environment of
+the worker's <code>ergm_state_cache()</code> unchanged. To actually
+evaluate it on the worker nodes, it is recommended to wrap it in
+an empty function whose environment is set to <code>globalenv()</code>. See
+Examples below.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Wrap ergm_state_cache() and call it explicitly from ergm:
+call_ergm_state_cache &lt;- function(...) ergm::ergm_state_cache(...)
+
+# Reset the function's environment so that it does not get sent to
+# worker nodes (who have their own instance of ergm namespace
+# loaded).
+environment(call_ergm_state_cache) &lt;- globalenv()
+
+# Now, call the the wrapper function, with ... below replaced by
+# lists of desired arguments.
+clusterMap(cl, call_ergm_state_cache, ...)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

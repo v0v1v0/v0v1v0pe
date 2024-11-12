@@ -1,0 +1,395 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fitmnormgpd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>MLE Fitting of Normal Bulk and GPD Tail Interval Transition Mixture Model</h2>
+
+<h3>Description</h3>
+
+<p>Maximum likelihood estimation for fitting the extreme value 
+mixture model with the normal bulk and GPD tail interval transition mixture model.
+With options for profile likelihood estimation for threshold and interval half-width,
+which can both be fixed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fitmnormgpd(x, eseq = NULL, useq = NULL, fixedeu = FALSE,
+  pvector = NULL, std.err = TRUE, method = "BFGS",
+  control = list(maxit = 10000), finitelik = TRUE, ...)
+
+litmnormgpd(x, nmean = 0, nsd = 1, epsilon = nsd, u = qnorm(0.9,
+  nmean, nsd), sigmau = nsd, xi = 0, log = TRUE)
+
+nlitmnormgpd(pvector, x, finitelik = FALSE)
+
+profleuitmnormgpd(eu, pvector, x, method = "BFGS", control = list(maxit
+  = 10000), finitelik = TRUE, ...)
+
+nleuitmnormgpd(pvector, epsilon, u, x, finitelik = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector of sample data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eseq</code></td>
+<td>
+<p>vector of epsilons (or scalar) to be considered in profile likelihood or
+<code>NULL</code> for no profile likelihood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useq</code></td>
+<td>
+<p>vector of thresholds (or scalar) to be considered in profile likelihood or
+<code>NULL</code> for no profile likelihood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixedeu</code></td>
+<td>
+<p>logical, should threshold and epsilon be fixed
+(at either scalar value in <code>useq</code> and <code>eseq</code>,
+or estimated from maximum of profile likelihood evaluated at
+grid of thresholds and epsilons in <code>useq</code> and <code>eseq</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvector</code></td>
+<td>
+<p>vector of initial values of parameters or <code>NULL</code> for default
+values, see below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>logical, should standard errors be calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>optimisation method (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optimisation control list (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>finitelik</code></td>
+<td>
+<p>logical, should log-likelihood return finite value for invalid parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional inputs passed to <code>optim</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmean</code></td>
+<td>
+<p>scalar normal mean</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsd</code></td>
+<td>
+<p>scalar normal standard deviation (positive)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>interval half-width</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>scalar threshold value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigmau</code></td>
+<td>
+<p>scalar scale parameter (positive)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>scalar shape parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if <code>TRUE</code> then log-likelihood rather than likelihood is output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eu</code></td>
+<td>
+<p>vector of epsilon and threshold pair considered in profile likelihood</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The extreme value mixture model with the normal bulk and GPD tail with interval
+transition is fitted to the entire dataset using maximum likelihood estimation.
+The estimated parameters, variance-covariance matrix and their standard errors are automatically
+output.
+</p>
+<p>See <code>ditmnormgpd</code> for explanation of normal-GPD interval
+transition model, including mixing functions.
+</p>
+<p>See also help for <code>fnormgpd</code> for mixture model fitting details.
+Only the different features are outlined below for brevity.
+</p>
+<p>The full parameter vector is
+(<code>nmean</code>, <code>nsd</code>, <code>epsilon</code>, <code>u</code>, <code>sigmau</code>, <code>xi</code>)
+if threshold and interval half-width are both estimated and
+(<code>nmean</code>, <code>nsd</code>, <code>sigmau</code>, <code>xi</code>)
+for profile likelihood or fixed threshold and epsilon approach.
+</p>
+<p>If the profile likelihood approach is used, then it is applied to both the threshold and
+epsilon parameters together. A grid search over all combinations of epsilons and thresholds
+are considered. The combinations which lead to less than 5 on either side of the interval are 
+not considered.
+</p>
+<p>A fixed threshold and epsilon approach is acheived by setting a single scalar value to each in 
+<code>useq</code> and <code>eseq</code> respectively.
+</p>
+<p>If the profile likelihood approach is used, then a grid search over all combinations of epsilon and threshold
+are carried out. The combinations which lead to less than 5 in any any interval are not considered.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Log-likelihood is given by <code>litmnormgpd</code> and it's
+wrappers for negative log-likelihood from <code>nlitmnormgpd</code>
+and <code>nluitmnormgpd</code>. Profile likelihood for
+threshold and interval half-width given by <code>profluitmnormgpd</code>.
+Fitting function <code>fitmnormgpd</code> returns a simple list
+with the following elements
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+ <code>call</code>:      </td>
+<td style="text-align: left;"> <code>optim</code> call</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>x</code>:         </td>
+<td style="text-align: left;"> data vector <code>x</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>init</code>:      </td>
+<td style="text-align: left;"> <code>pvector</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>fixedeu</code>:   </td>
+<td style="text-align: left;"> fixed epsilon and threshold, logical</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>useq</code>:      </td>
+<td style="text-align: left;"> threshold vector for profile likelihood or scalar for fixed threshold</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>eseq</code>:      </td>
+<td style="text-align: left;"> epsilon vector for profile likelihood or scalar for fixed epsilon</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nllheuseq</code>: </td>
+<td style="text-align: left;"> profile negative log-likelihood at each combination in (eseq, useq)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>optim</code>:     </td>
+<td style="text-align: left;"> complete <code>optim</code> output</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>mle</code>:       </td>
+<td style="text-align: left;"> vector of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>cov</code>:       </td>
+<td style="text-align: left;"> variance-covariance matrix of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>se</code>:        </td>
+<td style="text-align: left;"> vector of standard errors of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nllh</code>:      </td>
+<td style="text-align: left;"> minimum negative log-likelihood</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>n</code>:         </td>
+<td style="text-align: left;"> total sample size</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nmean</code>:     </td>
+<td style="text-align: left;"> MLE of normal shape</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nsd</code>:       </td>
+<td style="text-align: left;"> MLE of normal scale</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>epsilon</code>:   </td>
+<td style="text-align: left;"> MLE of transition half-width</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>u</code>:         </td>
+<td style="text-align: left;"> threshold (fixed or MLE)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>sigmau</code>:    </td>
+<td style="text-align: left;"> MLE of GPD scale</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>xi</code>:        </td>
+<td style="text-align: left;"> MLE of GPD shape</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Acknowledgments</h3>
+
+<p>See Acknowledgments in
+<code>fnormgpd</code>, type <code>help fnormgpd</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>When <code>pvector=NULL</code> then the initial values are:
+</p>
+
+<ul>
+<li>
+<p> MLE of normal parameters assuming entire population is normal; and
+</p>
+</li>
+<li>
+<p> epsilon is MLE of normal standard deviation;
+</p>
+</li>
+<li>
+<p> threshold 90% quantile (not relevant for profile likelihood for threshold or fixed threshold approaches);
+</p>
+</li>
+<li>
+<p> MLE of GPD parameters above threshold. 
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Alfadino Akbar and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://www.math.canterbury.ac.nz/~c.scarrott/evmix">http://www.math.canterbury.ac.nz/~c.scarrott/evmix</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/normal_distribution">http://en.wikipedia.org/wiki/normal_distribution</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Generalized_Pareto_distribution">http://en.wikipedia.org/wiki/Generalized_Pareto_distribution</a>
+</p>
+<p>Holden, L. and Haug, O. (2013). A mixture model for unsupervised tail
+estimation. arxiv:0902.4137
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fnormgpd</code>, <code>dnorm</code>,
+<code>fgpd</code> and <code>gpd</code>
+</p>
+<p>Other normgpd: <code>fgng</code>, <code>fhpd</code>,
+<code>flognormgpd</code>, <code>fnormgpdcon</code>,
+<code>fnormgpd</code>, <code>gngcon</code>,
+<code>gng</code>, <code>hpdcon</code>,
+<code>hpd</code>, <code>itmnormgpd</code>,
+<code>lognormgpdcon</code>, <code>lognormgpd</code>,
+<code>normgpdcon</code>, <code>normgpd</code>
+</p>
+<p>Other itmnormgpd: <code>fitmgng</code>,
+<code>itmgng</code>, <code>itmnormgpd</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(1, 1))
+
+x = rnorm(1000)
+xx = seq(-4, 4, 0.01)
+y = dnorm(xx)
+
+# MLE for complete parameter set
+fit = fitmnormgpd(x)
+hist(x, breaks = seq(-6, 6, 0.1), freq = FALSE, xlim = c(-4, 4))
+lines(xx, y)
+with(fit, lines(xx, ditmnormgpd(xx, nmean, nsd, epsilon, u, sigmau, xi), col="red"))
+abline(v = fit$u + fit$epsilon * seq(-1, 1), col = "red")
+  
+# Profile likelihood for threshold which is then fixed
+fitfix = fitmnormgpd(x, eseq = seq(0, 2, 0.1), useq = seq(0, 2.5, 0.1), fixedeu = TRUE)
+with(fitfix, lines(xx, ditmnormgpd(xx, nmean, nsd, epsilon, u, sigmau, xi), col="blue"))
+abline(v = fitfix$u + fitfix$epsilon * seq(-1, 1), col = "blue")
+legend("topright", c("True Density", "normal-GPD ITM", "Profile likelihood"),
+  col=c("black", "red", "blue"), lty = 1)
+
+## End(Not run)
+  
+</code></pre>
+
+
+</div>

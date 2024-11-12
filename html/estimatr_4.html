@@ -1,0 +1,151 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>declaration_to_condition_pr_mat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Builds condition probability matrices for Horvitz-Thompson estimation from
+<span class="pkg">randomizr</span> declaration</h2>
+
+<h3>Description</h3>
+
+<p>Builds condition probability matrices for Horvitz-Thompson estimation from
+<span class="pkg">randomizr</span> declaration
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">declaration_to_condition_pr_mat(
+  ra_declaration,
+  condition1 = NULL,
+  condition2 = NULL,
+  prob_matrix = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ra_declaration</code></td>
+<td>
+<p>An object of class <code>"ra_declaration"</code>, generated
+by the <code>declare_ra</code> function in <span class="pkg">randomizr</span>. This
+object contains the experimental design that will be represented in a
+condition probability matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition1</code></td>
+<td>
+<p>The name of the first condition, often the control group. If <code>NULL</code>,
+defaults to first condition in randomizr declaration. Either both <code>condition1</code>
+and <code>condition2</code> have to be specified or both left as <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition2</code></td>
+<td>
+<p>The name of the second condition, often the treatment group. If <code>NULL</code>,
+defaults to second condition in randomizr declaration. Either both <code>condition1</code>
+and <code>condition2</code> have to be specified or both left as <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob_matrix</code></td>
+<td>
+<p>An optional probability matrix to override the one in
+<code>ra_declaration</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function takes a <code>"ra_declaration"</code>, generated
+by the <code>declare_ra</code> function in <span class="pkg">randomizr</span> and
+returns a 2n*2n matrix that can be used to fully specify the design for
+<code>horvitz_thompson</code> estimation. This is done by passing this
+matrix to the <code>condition_pr_mat</code> argument of
+<code>horvitz_thompson</code>.
+</p>
+<p>Currently, this function can learn the condition probability matrix for a
+wide variety of randomizations: simple, complete, simple clustered, complete
+clustered, blocked, block-clustered.
+</p>
+<p>A condition probability matrix is made up of four submatrices, each of which
+corresponds to the
+joint and marginal probability that each observation is in one of the two
+treatment conditions.
+</p>
+<p>The upper-left quadrant is an n*n matrix. On the diagonal is the marginal
+probability of being in condition 1, often control, for every unit
+(Pr(Z_i = Condition1) where Z represents the vector of treatment conditions).
+The off-diagonal elements are the joint probabilities of each unit being in
+condition 1 with each other unit, Pr(Z_i = Condition1, Z_j = Condition1)
+where i indexes the rows and j indexes the columns.
+</p>
+<p>The upper-right quadrant is also an n*n matrix. On the diagonal is the joint
+probability of a unit being in condition 1 and condition 2, often the
+treatment, and thus is always 0. The off-diagonal elements are the joint
+probability of unit i being in condition 1 and unit j being in condition 2,
+Pr(Z_i = Condition1, Z_j = Condition2).
+</p>
+<p>The lower-left quadrant is also an n*n matrix. On the diagonal is the joint
+probability of a unit being in condition 1 and condition 2, and thus is
+always 0. The off-diagonal elements are the joint probability of unit i
+being in condition 2 and unit j being in condition 1,
+Pr(Z_i = Condition2, Z_j = Condition1).
+</p>
+<p>The lower-right quadrant is an n*n matrix. On the diagonal is the marginal
+probability of being in condition 2, often treatment, for every unit
+(Pr(Z_i = Condition2)). The off-diagonal elements are the joint probability
+of each unit being in condition 2 together,
+Pr(Z_i = Condition2, Z_j = Condition2).
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric 2n*2n matrix of marginal and joint condition treatment
+probabilities to be passed to the <code>condition_pr_mat</code> argument of
+<code>horvitz_thompson</code>. See details.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>permutations_to_condition_pr_mat</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Learn condition probability matrix from complete blocked design
+library(randomizr)
+n &lt;- 100
+dat &lt;- data.frame(
+  blocks = sample(letters[1:10], size = n, replace = TRUE),
+  y = rnorm(n)
+)
+
+# Declare complete blocked randomization
+bl_declaration &lt;- declare_ra(blocks = dat$blocks, prob = 0.4, simple = FALSE)
+# Get probabilities
+block_pr_mat &lt;- declaration_to_condition_pr_mat(bl_declaration, 0, 1)
+# Do randomiztion
+dat$z &lt;- conduct_ra(bl_declaration)
+
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = block_pr_mat)
+
+# When you pass a declaration to horvitz_thompson, this function is called
+
+# Equivalent to above call
+horvitz_thompson(y ~ z, data = dat, ra_declaration = bl_declaration)
+
+</code></pre>
+
+
+</div>

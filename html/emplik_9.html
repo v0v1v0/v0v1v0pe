@@ -1,0 +1,353 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>el.cen.EM2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical likelihood ratio test for a vector of means 
+with right, left or doubly censored data, by EM algorithm</h2>
+
+<h3>Description</h3>
+
+<p>This function is similar to <code>el.cen.EM()</code>, but for multiple constraints.
+In the input there is a vector of observations 
+<code class="reqn">x = (x_1, \cdots , x_n)</code> and a 
+function <code>fun</code>. The function <code>fun</code> should return the 
+(n by k) matrix
+</p>
+<p style="text-align: center;"><code class="reqn">
+          ( f_1(x), f_2(x), \cdots, f_k (x) ) . 
+</code>
+</p>
+
+<p>Also, the ordering of the observations, when consider censoring or 
+redistributing-to-the-right, 
+is according to the value of <code>x</code>, not <code>fun(x)</code>. 
+So the probability distribution is for values <code>x</code>.
+This program uses EM algorithm to maximize 
+(wrt <code class="reqn">p_i</code>) empirical
+log likelihood function for right, left or doubly censored data with 
+the MEAN constraint:
+</p>
+<p style="text-align: center;"><code class="reqn"> j = 1,2, \cdots ,k ~~~~ 
+   \sum_{d_i=1} p_i f_j(x_i) = \int f_j(t) dF(t) = \mu_j ~. </code>
+</p>
+
+<p>Where <code class="reqn">p_i = \Delta F(x_i)</code> is a probability,
+<code class="reqn">d_i</code> is the censoring indicator, 1(uncensored), 0(right censored),
+2(left censored). 
+It also returns those <code class="reqn">p_i</code>. 
+The log likelihood function is defined as
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_{d_i=1} \log \Delta F(x_i)  + \sum_{d_i=2} \log F(x_i) 
+     + \sum_{d_i=0} \log [ 1-F(x_i)] ~.</code>
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">el.cen.EM2(x,d,xc=1:length(x),fun,mu,maxit=50,error=1e-9,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector containing the observed survival times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>a vector containing the censoring indicators, 
+1-uncensored; 0-right censored; 2-left censored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xc</code></td>
+<td>
+<p>an optional vector of collapsing control values. 
+If xc[i] xc[j] have different values then 
+(x[i], d[i]), (x[j], d[j]) will not merge into one 
+observation with weight two, even 
+if they are identical. Default is not to merge.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a left continuous (weight) function that returns a matrix. 
+The columns (=k) of the matrix is used to calculate
+the means and will be tested in <code class="reqn">H_0</code>.
+<code>fun(t)</code> must be able to take a vector input <code>t</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>a vector of length k. Used in the constraint, 
+as the mean of <code class="reqn">f(X)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>an optional integer, used to control maximum number of
+iterations. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error</code></td>
+<td>
+<p>an optional positive real number specifying the tolerance of
+iteration error. This is the bound of the
+<code class="reqn">L_1</code> norm of the difference of two successive weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional inputs to pass to <code>fun()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This implementation is all in R and have several for-loops in it. 
+A faster version would use C to do the for-loop part.
+(but this version is easier to port to Splus, and seems faster enough). 
+</p>
+<p>We return the log likelihood all the time. Sometimes, (for right censored
+and no censor case) we also return the -2 log likelihood ratio.
+In other cases, you have to plot a curve with many values of the 
+parameter, mu, to
+find out where the log likelihood becomes maximum.
+And from there you can get -2 log likelihood ratio between
+the maximum location and your current parameter in Ho.
+</p>
+<p>In order to get a proper distribution as NPMLE, we automatically
+change the <code class="reqn">d</code> for the largest observation to 1
+(even if it is right censored), similar for the left censored, 
+smallest observation.
+<code class="reqn">\mu</code> is a given constant vector. 
+When the given constants <code class="reqn">\mu</code> is too far
+away from the NPMLE, there will be no distribution
+satisfy the constraint.
+In this case the computation will stop.
+The -2 Log empirical likelihood ratio
+should be infinite. 
+</p>
+<p>The constant vector <code>mu</code> must be inside 
+<code class="reqn">( \min f(x_i) , \max f(x_i) ) </code>
+for the computation to continue. 
+It is always true that the NPMLE values are feasible. So when the
+computation stops, try move the <code>mu</code> closer
+to the NPMLE — 
+</p>
+<p style="text-align: center;"><code class="reqn"> \hat \mu _j = \sum_{d_i=1} p_i^0 f_j(x_i) </code>
+</p>
+ 
+<p>where <code class="reqn">p_i^0</code> taken to be the jumps of the NPMLE of CDF. 
+Or use a different <code>fun</code>. 
+</p>
+<p>Difference to the function <code>el.cen.EM</code>: due to the introduction of
+input <code>xc</code> here in this function, the output <code>loglik</code> may be different
+compared to the function <code>el.cen.EM</code>
+due to not collapsing of duplicated input survival values.
+The <code>-2LLR</code> should be the same from both functions.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>the maximized empirical log likelihood under the constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>locations of CDF that have positive mass.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>the jump size of CDF at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>If available, it is Minus two times the 
+Empirical Log Likelihood Ratio.
+Should be approx. chi-square distributed under Ho.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pval</code></td>
+<td>
+<p>If available, the P-value of the test, 
+using chi-square approximation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lam</code></td>
+<td>
+<p>the Lagrange multiplier in the final EM step. (the M-step)</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Zhou, M. (2005). Empirical likelihood ratio with arbitrary censored/truncated data by EM algorithm. 
+<em>Journal of Computational and Graphical Statistics</em>, 643-656.
+</p>
+<p>Zhou, M. (2002). 
+Computing censored empirical likelihood ratio 
+by EM algorithm. 
+<em>Tech Report, Univ. of Kentucky, Dept of Statistics</em>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## censored regression with one right censored observation.
+## we check the estimation equation, with the MLE inside myfun7. 
+y &lt;- c(3, 5.3, 6.4, 9.1, 14.1, 15.4, 18.1, 15.3, 14, 5.8, 7.3, 14.4)
+x &lt;- c(1, 1.5, 2,   3,   4,    5,    6,    5,    4,  1,   2,   4.5)
+d &lt;- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+### first we estimate beta, the MLE
+lm.wfit(x=cbind(rep(1,12),x), y=y, w=WKM(x=y, d=d)$jump[rank(y)])$coef
+## you should get 1.392885 and 2.845658
+## then define myfun7 with the MLE value
+myfun7 &lt;- function(y, xmat) {
+temp1 &lt;- y - ( 1.392885 +  2.845658 * xmat)
+return( cbind( temp1, xmat*temp1) )
+}
+## now test 
+el.cen.EM2(y,d, fun=myfun7, mu=c(0,0), xmat=x)
+## we should get, Pval = 1 , as the MLE should.
+## for other values of (a, b) inside myfun7, you get other Pval
+##
+rqfun1 &lt;- function(y, xmat, beta, tau = 0.5) {
+temp1 &lt;- tau - (1-myfun55(y-beta*xmat))
+return(xmat * temp1)
+}
+myfun55 &lt;- function(x, eps=0.001){
+u &lt;- x*sqrt(5)/eps
+INDE &lt;- (u &lt; sqrt(5)) &amp; (u &gt; -sqrt(5))
+u[u &gt;= sqrt(5)] &lt;- 0
+u[u &lt;= -sqrt(5)] &lt;- 1
+y &lt;- 0.5 - (u - (u)^3/15)*3/(4*sqrt(5))
+u[ INDE ] &lt;- y[ INDE ]
+return(u)
+}
+## myfun55 is a smoothed indicator fn. 
+## eps should be between (1/sqrt(n), 1/n^0.75) [Chen and Hall]
+el.cen.EM2(x=y,d=d,xc=1:12,fun=rqfun1,mu=0,xmat=x,beta=3.08,tau=0.44769875)
+## default tau=0.5 
+el.cen.EM2(x=y,d=d,xc=1:12,fun=rqfun1,mu=0,xmat=x,beta=3.0799107404)
+###################################################
+### next 2 examples are testing the mean/median residual time
+###################################################
+mygfun &lt;- function(s, age, muage) {as.numeric(s &gt;= age)*(s-(age+muage))}
+mygfun2 &lt;- function(s, age, Mdage) 
+          {as.numeric(s &lt;= (age+Mdage)) - 0.5*as.numeric(s &lt;= age)}
+## Not run: 
+library(survival) 
+time &lt;- cancer$time
+status &lt;- cancer$status-1
+###for mean residual time 
+el.cen.EM2(x=time, d=status, fun=mygfun, mu=0, age=365.25, muage=234)$Pval
+el.cen.EM2(x=time, d=status, fun=mygfun, mu=0, age=365.25, muage=323)$Pval
+### for median resudual time
+el.cen.EM2(x=time, d=status, fun=mygfun2, mu=0.5, age=365.25, Mdage=184)$Pval
+el.cen.EM2(x=time, d=status, fun=mygfun2, mu=0.5, age=365.25, Mdage=321)$Pval
+
+## End(Not run)
+## Not run: 
+#### For right censor only data (Kaplan-Meier) we can use this function to get a faster computation
+#### by calling the kmc 0.2-2 package.
+el.cen.R &lt;- function (x, d, xc = 1:length(x), fun, mu, error = 1e-09, ...)
+{
+xvec &lt;- as.vector(x)
+d &lt;- as.vector(d)
+mu &lt;- as.vector(mu)
+xc &lt;- as.vector(xc)
+n &lt;- length(d)
+if (length(xvec) != n)
+stop("length of d and x must agree")
+if (length(xc) != n)
+stop("length of xc and d must agree")
+if (n &lt;= 2 * length(mu) + 1)
+stop("Need more observations")
+if (any((d != 0) &amp; (d != 1) ))
+stop("d must be 0(right-censored) or 1(uncensored)")
+if (!is.numeric(xvec))
+stop("x must be numeric")
+if (!is.numeric(mu))
+stop("mu must be numeric")
+
+funx &lt;- as.matrix(fun(xvec, ...))
+pp &lt;- ncol(funx)
+if (length(mu) != pp)
+stop("length of mu and ncol of fun(x) must agree")
+temp &lt;- Wdataclean5(z = xvec, d, zc = xc, xmat = funx)
+x &lt;- temp$value
+d &lt;- temp$dd
+w &lt;- temp$weight
+funx &lt;- temp$xxmat
+d[length(d)] &lt;- 1
+xd1 &lt;- x[d == 1]
+if (length(xd1) &lt;= 1)
+stop("need more distinct uncensored obs.")
+funxd1 &lt;- funx[d == 1, ]
+xd0 &lt;- x[d == 0]
+wd1 &lt;- w[d == 1]
+wd0 &lt;- w[d == 0]
+m &lt;- length(xd0)
+
+pnew &lt;- NA
+num &lt;- NA
+if (m &gt; 0) {
+gfun &lt;- function(x) { return( fun(x, ...) - mu ) }
+temp &lt;- kmc.solve(x=x, d=d, g=list(gfun))
+logel &lt;- temp$loglik.h0
+logel00 &lt;- temp$loglik.null
+lam &lt;- - temp$lambda
+}
+if (m == 0) {
+num &lt;- 0
+temp6 &lt;- el.test.wt2(x = funxd1, wt = wd1, mu)
+pnew &lt;- temp6$prob
+lam &lt;- temp6$lambda
+logel &lt;- sum(wd1 * log(pnew))
+logel00 &lt;- sum(wd1 * log(wd1/sum(wd1)))
+}
+tval &lt;- 2 * (logel00 - logel)
+list(loglik = logel, times = xd1, prob = pnew, lam = lam,
+iters = num, `-2LLR` = tval, Pval = 1 - pchisq(tval,
+df = length(mu)))
+}
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

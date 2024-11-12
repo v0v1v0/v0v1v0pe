@@ -1,0 +1,275 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>evgam</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting generalised additive extreme-value family models</h2>
+
+<h3>Description</h3>
+
+<p>Function <code>evgam</code> fits generalised additive extreme-value models. It allows 
+the fitting of various extreme-value models, including the generalised 
+extreme value and Pareto distributions. It can also perform quantile regression
+via the asymmetric Laplace dsitribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">evgam(
+  formula,
+  data,
+  family = "gev",
+  correctV = TRUE,
+  rho0 = 0,
+  inits = NULL,
+  outer = "bfgs",
+  control = NULL,
+  removeData = FALSE,
+  trace = 0,
+  knots = NULL,
+  maxdata = 1e+20,
+  maxspline = 1e+20,
+  compact = FALSE,
+  ald.args = list(),
+  exi.args = list(),
+  pp.args = list(),
+  sandwich.args = list()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a list of formulae for location, scale and shape parameters, as in gam</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>a character string giving the type of family to be fitted; defaults to <code>"gev"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correctV</code></td>
+<td>
+<p>logicial: should the variance-covariance matrix include smoothing parameter uncertainty? Defaults to <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho0</code></td>
+<td>
+<p>a scalar or vector of initial log smoothing parameter values; a scalar will be repeated if there are multiple smoothing terms</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inits</code></td>
+<td>
+<p>a vector or list giving initial values for constant basis coefficients; if a list, a grid is formed using expand.grid, and the ‘best’ used; defaults to <code>NULL</code>, so initial values are automatically found</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outer</code></td>
+<td>
+<p>a character string specifying the outer optimiser is full <code>"Newton"</code>, <code>"BFGS"</code> or uses finite differences, <code>"FD"</code>; defaults to <code>"BFGS"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list of lists of control parameters to pass to inner and outer optimisers; defaults to <code>evgam.control()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>removeData</code></td>
+<td>
+<p>logical: should <code>data</code> be removed from <code>evgam</code> object? Defaults to <code>FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>an integer specifying the amount of information supplied about fitting, with <code>-1</code> suppressing all output; defaults to <code>0</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knots</code></td>
+<td>
+<p>passed to s; defaults to <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxdata</code></td>
+<td>
+<p>an integer specifying the maximum number of <code>data</code> rows. <code>data</code> is sampled if its number of rows exceeds <code>maxdata</code>; defaults to <code>1e20</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxspline</code></td>
+<td>
+<p>an integer specifying the maximum number of <code>data</code> rows used for spline construction; defaults to <code>1e20</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compact</code></td>
+<td>
+<p>logical: should duplicated <code>data</code> rows be compacted? Defaults to <code>FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ald.args</code></td>
+<td>
+<p>a list of arguments for <code>family="ald"</code>; see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exi.args</code></td>
+<td>
+<p>a list of arguments for <code>family="exi"</code>; see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pp.args</code></td>
+<td>
+<p>a list of arguments for <code>family="pp"</code>; see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sandwich.args</code></td>
+<td>
+<p>a list of arguments for sandwich adjustment; see Details</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The following families are currently available: <code>"ald"</code>, the asymmetric Laplace distribution,
+primarily intended for quantile regression, as in Yu &amp; Moyeed (2001); <code>"gev"</code> (default), the
+generalised extreme valued distribution; <code>"exp"</code>, the exponential distribution; <code>"gpd"</code>,
+the generalised Pareto distribution; <code>"gauss"</code>, the Gaussian distribution; <code>"pp"</code>, the 
+point process model for extremes, implemented through <code class="reqn">r</code>-largest order statistics; <code>"weibull"</code>, the Weibull distribution; <code>"exi"</code>, estimation if the
+extremal index, as in Schlather &amp; Tawn (2003).
+</p>
+<p>Arguments for the asymmetric Laplace distribution are given by <code>ald.args</code>. A 
+scalar <code>tau</code> defines the quantile sought, which has no default. The scalar
+<code>C</code> specifies the curvature parameter of Oh et al. (2011).
+</p>
+<p>Arguments for extremal index estimation are given by <code>exi.args</code>. A character
+string <code>id</code> specifies the variable in <code>data</code>over which an <code>nexi</code>
+(default 2) running max. has been taken. The <code>link</code> is specified as a character string,
+which is one of <code>"logistic"</code>, <code>"probit"</code>, <code>"cloglog"</code>; defaults to <code>"logistic"</code>.
+</p>
+<p>Arguments for the point process model are given by <code>pp.args</code>. An integer <code>r</code>
+specifies the number of order statistics from which the model will be estimated.
+If <code>r = -1</code>, all <code>data</code> will be used. The character string <code>id</code> specifies the variable 
+in <code>data</code> over which the point process isn't integrated; e.g. if a map 
+of parameter estimates related to extremes over time is sought, integration isn't 
+over locations. The scalar <code>nper</code> number of data per period of interest; scalar or
+integer vector <code>ny</code> specifies the number of periods; if <code>length(ny) &gt; 1</code>
+then <code>names(ny)</code> must ne supplied and must match to every unique <code>id</code>. 
+logical <code>correctny</code> specifies whether <code>ny</code> is 
+corrected to adjust proportionally for data missingness.
+</p>
+<p>Arguments for the sandwich adjustment are given by <code>sandwich.args</code>. A character
+string <code>id</code> can be supplied to the list, which identifies the name of the 
+variable in <code>data</code> such that independence will be assumed between its values. The
+<code>method</code> for the adjustment is supplied as <code>"magnitude"</code> (default) or <code>"curvature"</code>;
+see Chandler &amp; Bate (2007) for their definitions.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>evgam</code>
+</p>
+
+
+<h3>References</h3>
+
+<p>Chandler, R. E., &amp; Bate, S. (2007). Inference for clustered data
+using the independence loglikelihood. Biometrika, 94(1), 167-183.
+</p>
+<p>Oh, H. S., Lee, T. C., &amp; Nychka, D. W. (2011). Fast nonparametric 
+quantile regression with arbitrary smoothing methods. Journal of 
+Computational and Graphical Statistics, 20(2), 510-526.
+</p>
+<p>Schlather, M., &amp; Tawn, J. A. (2003). A dependence measure for multivariate and 
+spatial extreme values: Properties and inference. Biometrika, 90(1), 139-156.
+</p>
+<p>Wood, S. N., Pya, N., &amp; Safken, B. (2016). Smoothing parameter and model 
+selection for general smooth models. Journal of the American Statistical 
+Association, 111(516), 1548-1563.
+</p>
+<p>Youngman, B. D. (2022). evgam: An R Package for Generalized Additive Extreme
+Value Modules. Journal of Statistical Software. To appear. <a href="https://doi.org/10.18637/jss.v103.i03">doi:10.18637/jss.v103.i03</a>
+</p>
+<p>Yu, K., &amp; Moyeed, R. A. (2001). Bayesian quantile regression. 
+Statistics &amp; Probability Letters, 54(4), 437-447.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>predict.evgam
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(fremantle)
+fmla_gev &lt;- list(SeaLevel ~ s(Year, k=5, bs="cr"), ~ 1, ~ 1)
+m_gev &lt;- evgam(fmla_gev, fremantle, family = "gev")
+
+
+
+data(COprcp)
+
+## fit generalised Pareto distribution to excesses on 20mm
+
+COprcp &lt;- cbind(COprcp, COprcp_meta[COprcp$meta_row,])
+threshold &lt;- 20
+COprcp$excess &lt;- COprcp$prcp - threshold
+COprcp_gpd &lt;- subset(COprcp, excess &gt; 0)
+fmla_gpd &lt;- list(excess ~ s(lon, lat, k=12) + s(elev, k=5, bs="cr"), ~ 1)
+m_gpd &lt;- evgam(fmla_gpd, data=COprcp_gpd, family="gpd")
+
+## fit generalised extreme value distribution to annual maxima
+
+COprcp$year &lt;- format(COprcp$date, "%Y")
+COprcp_gev &lt;- aggregate(prcp ~ year + meta_row, COprcp, max)
+COprcp_gev &lt;- cbind(COprcp_gev, COprcp_meta[COprcp_gev$meta_row,])
+fmla_gev2 &lt;- list(prcp ~ s(lon, lat, k=30) + s(elev, bs="cr"), ~ s(lon, lat, k=20), ~ 1)
+m_gev2 &lt;- evgam(fmla_gev2, data=COprcp_gev, family="gev")
+summary(m_gev2)
+plot(m_gev2)
+predict(m_gev2, newdata=COprcp_meta, type="response")
+
+## fit point process model using r-largest order statistics
+
+# we have `ny=30' years' data and use top 45 order statistics
+pp_args &lt;- list(id="id", ny=30, r=45)
+m_pp &lt;- evgam(fmla_gev2, COprcp, family="pp", pp.args=pp_args)
+
+## estimate 0.98 quantile using asymmetric Laplace distribution
+
+fmla_ald &lt;- prcp ~ s(lon, lat, k=15) + s(elev, bs="cr")
+m_ald &lt;- evgam(fmla_ald, COprcp, family="ald", ald.args=list(tau=.98))
+
+
+
+</code></pre>
+
+
+</div>

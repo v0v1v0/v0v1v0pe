@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>smle</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simple maximum likelihood estimation</h2>
+
+<h3>Description</h3>
+
+<p>By default, this function performs a maximum likelihood estimation for one or
+several parameters, but it can be used for any other optimization problems.
+The interface is intented to be rather simple while allowing more advanced
+parametrizations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">smle(data, ...)
+
+## Default S3 method:
+smle(data, f, param_init, max = TRUE, ...)
+
+## S3 method for class 'intensity'
+smle(data, f, param_init, max = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The data set to work with. It can be a vector (if there is only
+one variable), a data frame (if there is one or more variables) or an
+<code>intensity</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to <code>optim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>A function to be maximized, typically a log-likelihood function.
+This function must have only two arguments: <code>data</code> and <code>param</code>,
+which must correspond to the <code>data</code> argument of <code>smle</code> and a
+named vector of the parameter(s) to be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param_init</code></td>
+<td>
+<p>Either a named vector with proposed initial values of the
+parameter(s), or a function that returns such a vector. This parameter
+is not needed if the parameter <code>param</code> of <code>f</code> is already
+provided with such a named vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max</code></td>
+<td>
+<p>Does <code>f</code> need to be maximized? Set to <code>FALSE</code> to require
+a minimization of <code>f</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>optim</code> tool does the hard work under the hood. Extra
+arguments (e.g. method of optimization to be used) can be passed to
+<code>optim</code> through the <code>...</code> argument. Note that
+contrary to the default <code>optim</code> arguments, <code>smle</code>
+tries to solve a maximization problem using the method "L-BFGS-B" by default
+(see <code>optim</code> documentation for more information).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>smle</code>, which is a list containing the following
+components:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+    <code>call</code>                    </td>
+<td style="text-align: left;"> The call. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>coef</code>                    </td>
+<td style="text-align: left;"> The estimated coefficients. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>coef_se</code>                 </td>
+<td style="text-align: left;"> The standard errors of the estimated coefficients. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>vcov</code>                    </td>
+<td style="text-align: left;"> The variance-covariance matrix of the estimated coefficients. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>data</code>                    </td>
+<td style="text-align: left;"> The <code>data</code> parameter. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>f</code>                       </td>
+<td style="text-align: left;"> The <code>f</code> parameter. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>nobs</code>                    </td>
+<td style="text-align: left;"> The number of observations. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>full_input, full_output</code> </td>
+<td style="text-align: left;"> The full input and output of the <code>optim</code> function. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(12345)
+data &lt;- rlogis(100, location = 5, scale = 2)
+ll_logis &lt;- function(data, param = c(location = 0, scale = 1)) {
+    sum(dlogis(x = data, location = param[["location"]],
+               scale = param[["scale"]], log = TRUE))
+}
+res &lt;- smle(data, ll_logis)
+res
+summary(res)
+
+# Using the magrittr syntax:
+require(magrittr)
+data %&gt;% smle(ll_logis)
+
+# Comparision with the output of fitdistr (MASS package), which works for a
+# limited number of predefined distributions:
+require(MASS)
+fitdistr(data, "logistic")
+
+# Example with an intensity object:
+require(magrittr)
+require(dplyr)
+data &lt;- tomato_tswv$field_1929 %&gt;%
+    filter(t == 1) %&gt;%
+    incidence() %&gt;%
+    clump(unit_size = c(x = 3, y = 3))
+ll_betabinom &lt;- function(data, param) {
+    sum(dbetabinom(x = data[["i"]], size = data[["n"]],
+                   prob = param[["prob"]], theta = param[["theta"]],
+                   log = TRUE))
+}
+epsilon &lt;- 1e-7
+res &lt;- smle(data, ll_betabinom, param_init = c(prob = 0.5, theta = 0.5),
+            lower = c(prob  = 0 + epsilon,
+                      theta = 0 + epsilon),
+            upper = c(prob = 1 - epsilon,
+                      theta = Inf))
+res
+summary(res)
+
+param_init &lt;- data.frame(lower = c(0 + epsilon, 0 + epsilon),
+                         start = c(0.5, 0.5),
+                         upper = c(1 - epsilon, Inf))
+rownames(param_init) &lt;- c("prob", "theta")
+res &lt;- smle(data, ll_betabinom, param_init)
+res
+summary(res)
+
+</code></pre>
+
+
+</div>

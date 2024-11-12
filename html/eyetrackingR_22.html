@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make_time_sequence_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>make_time_sequence_data()</h2>
+
+<h3>Description</h3>
+
+<p>Creates time-bins and summarizes proportion-looking within each time-bin.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">make_time_sequence_data(
+  data,
+  time_bin_size,
+  aois = NULL,
+  predictor_columns = NULL,
+  other_dv_columns = NULL,
+  summarize_by = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The output of <code>make_eyetrackingr_data</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_bin_size</code></td>
+<td>
+<p>How large should each time bin be? Units are whatever units your <code>time</code> column is in</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aois</code></td>
+<td>
+<p>Which AOI(s) is/are of interest? Defaults to all specified in
+<code>make_eyetracking_r_data</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor_columns</code></td>
+<td>
+<p>Which columns indicate predictor variables, and therefore should be
+preserved in grouping operations?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>other_dv_columns</code></td>
+<td>
+<p>Within each time-bin, this function will calculate not only proportion-
+looking, but also the mean of any columns specified here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summarize_by</code></td>
+<td>
+<p>Should the data be summarized along, e.g., participants, items, etc.? If
+so, give column name(s) here. If left blank, will leave trials distinct. The former is needed
+for more traditional analyses (<code>t.test</code>, <code>ANOVA</code>), while the latter is preferable for
+mixed-effects models (<code>lmer</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Aside from proportion looking (<code>Prop</code>), this function returns several columns useful for subsequent
+analysis:
+</p>
+
+<ul>
+<li> <p><code>LogitAdjusted</code> - The logit is defined as <code>log( Prop / (1 - Prop) )</code>. This
+transformation attempts to map bounded <code>0,1</code> data to the real number line. Unfortunately,
+for data that is exactly 0 or 1, this is undefined. One solution is add a very small value to
+any datapoints that equal 0, and subtract a small value to any datapoints that equal 1 (we use
+1/2 the smallest nonzero value for this adjustment).
+</p>
+</li>
+<li> <p><code>Elog</code> - Another way of calculating a corrected logit transformation is to
+add a small value <code>epsilon</code> to both the numerator and denominator of the logit equation (we
+use 0.5).
+</p>
+</li>
+<li> <p><code>Weights</code> - These attempt to further correct the Elog transformation, since the
+variance of the logit depends on the mean. They can be used in a mixed effects model by setting
+the <code>weights=Weights</code> in <code>lmer</code> (note that this is the reciprocal of the
+weights calculated in <a href="https://talklab.psy.gla.ac.uk/tvw/elogit-wt.html">this empirical logit
+walkthrough</a>, so you do *not* set <code>weights = 1/Weights</code> as done there.)
+</p>
+</li>
+<li> <p><code>ArcSin</code> - The arcsine-root transformation of the raw proportions, defined as
+<code>asin(sqrt(Prop))</code>
+</p>
+</li>
+<li> <p><code>ot</code> - These columns (ot1-ot7) represent (centered) orthogonal time polynomials,
+needed for growth curve analysis. See
+<a href="http://www.eyetracking-r.com/vignettes/growth_curve_analysis">the vignette on growth curve
+models</a> for more details.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>Data binned into time-bins, with proportion-looking and transformations as well as orthogonal
+time-polynomials for growth curve analysis
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(word_recognition)
+data &lt;- make_eyetrackingr_data(word_recognition,
+                               participant_column = "ParticipantName",
+                               trial_column = "Trial",
+                               time_column = "TimeFromTrialOnset",
+                               trackloss_column = "TrackLoss",
+                               aoi_columns = c('Animate','Inanimate'),
+                               treat_non_aoi_looks_as_missing = TRUE
+)
+
+# bin data in 250ms bins, and generate a dataframe
+# with a single AOI (Animate) predicted by Sex, and summarized by ParticipantName
+response_time &lt;- make_time_sequence_data(data,
+                                         time_bin_size = 250,
+                                         predictor_columns = c("Sex"),
+                                         aois = "Animate",
+                                         summarize_by = "ParticipantName"
+)
+
+# optionally specify other columns in the data
+# to be included in the generated dataframe
+# (e.g., for use in statistical models)
+# bin data in 250ms bins, and generate a dataframe
+# with Animate and MCDI_Total summarized by ParticipantName
+response_time &lt;- make_time_sequence_data(data,
+                                         time_bin_size = 250,
+                                         predictor_columns = c("Sex","MCDI_Total"),
+                                         aois = "Animate",
+                                         summarize_by = "ParticipantName"
+)
+
+</code></pre>
+
+
+</div>

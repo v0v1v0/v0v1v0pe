@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>in.span</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Is <code>x</code> in the column span of matrix <code>A</code> and what columns are
+linearly dependent?
+</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>in.span</code> checks if the vector <code>x</code> (or
+columns of the matrix <code>x</code>) is in the column span of the matrix
+<code>A</code>. If desired, it returns the coefficient matrix <code>B</code> so that
+<code>AB=x</code>. The function <code>thinCol</code> removes linearly dependent
+columns an returns a matrix of full rank.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">in.span( A,
+         x,
+      coef = FALSE,
+       tol = 1e-08 )
+inSpan( A, x, coef=FALSE, tol=1e-08 )
+id.span( A, B, tol=1e-08 )
+idSpan( A, B, tol=1e-08 )
+thinCol( A, tol = 1e-06, col.num = FALSE )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>A matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>A matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A vector or matrix. <code>length(x)</code> (or <code>nrow(x)</code>) must
+be equal to <code>nrow(A)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>Logical. Should the coefficient matrix (<code>k</code>) be
+returned, so that <code>Ak=x</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>Tolerance for identity of matrices in check
+(<code>in.span</code>) or QR decomposition (<code>thinCol</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col.num</code></td>
+<td>
+<p>Logical. Should the positions of dependent columns be
+returned instead of the full-rank matrix?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>thinCol</code> is mainly a workhorse in
+<code>detrend</code>, but made available because of its general
+usefulness. 
+</p>
+<p><code>in.span</code> and <code>inSpan</code> are just different names for the same
+to accommodate different naming schools.
+</p>
+<p><code>in.span</code> (<code>inSpan</code>) is handy in checking whether different
+parametrizations of a model are identical in the sense of spanning the
+same linear space. Equivalent to checking whether fitted values under
+different parametrizations are identical, but has the further use of
+checking if subspaces of models are equivalent. The function
+simply checks if the regression of (columns of) <code>x</code> on the
+columns of <code>A</code> produces residuals that are all 0.
+</p>
+<p><code>id.span</code> (equivalent to <code>idSpan</code>) checks whether two
+matrices have the same column span.  
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>in.span</code> returns a logical: is <code>x</code> is in
+<code>span(A)</code>? If <code>coef=TRUE</code> it returns a matrix <code>k</code> so
+that <code>Ak=x</code>. <code>k</code> is not necessarily unique (A may not have
+full rank).
+</p>
+<p><code>id.span</code> returns a logical: is <code>span(A)</code> the same as
+<code>span(B)</code>? 
+</p>
+<p><code>thinCol</code> returns a matrix of full rank, formed from <code>A</code> by
+deleting columns linearly dependent on other. If <code>col.num=TRUE</code>
+(one possible set of) positions of columns forming a full rank basis
+for the column space of <code>A</code> is returned.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a> with essential
+help from Lars Jorge Diaz and Peter Dalgaard.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>det</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Matrices and vectors, x in span(A), z (hopefully) not
+A &lt;- matrix(round(rnorm(15)*20),5,3)
+B &lt;- matrix(round(rnorm(15)*20),5,3)
+B &lt;- cbind( B, B%*%c(3,4,2) )
+x &lt;- A %*% c(3,4,2)
+z &lt;- 5:9
+
+# how they look
+data.frame( A=A, x=x, z=z, B=B )
+
+# vectors in span(A)?
+in.span(A,x)
+in.span(x,A)
+in.span(A,x,coef=TRUE)
+
+in.span(A,z)
+in.span(A,z,coef=TRUE)
+
+# Do matrices span the same space ?
+in.span( A, B )
+in.span( B, A )
+
+# B is not in span of a subspace of B columns, but vice versa
+( M &lt;- matrix( rnorm(8)*7, 4, 2 ) )
+in.span( B%*%M, B )
+in.span( B, B%*%M )
+id.span( B, B%*%M )
+
+# But not unique for singular matrices:
+( xx &lt;- in.span( B, B%*%M, coef=TRUE ) )
+cbind( B%*%M, B%*%xx )
+cbind( xx, M )
+
+# Easier for full rank matrices:
+( K &lt;- matrix( rnorm(9)*7, 3, 3 ) )
+in.span( A%*%K, A )
+in.span( A, A%*%K )
+id.span( A, A%*%K )
+in.span( A, A%*%K, coef=TRUE )
+</code></pre>
+
+
+</div>

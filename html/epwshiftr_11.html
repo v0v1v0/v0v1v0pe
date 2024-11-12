@@ -1,0 +1,530 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>init_cmip6_index</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build CMIP6 experiment output file index</h2>
+
+<h3>Description</h3>
+
+<p><code>init_cmip6_index()</code> will search the CMIP6 model output file using <code>esgf_query()</code>
+, return a <code>data.table::data.table()</code> containing the actual NetCDF file url
+to download, and store it into user data directory for future use.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">init_cmip6_index(
+  activity = "ScenarioMIP",
+  variable = c("tas", "tasmax", "tasmin", "hurs", "hursmax", "hursmin", "pr", "rsds",
+    "rlds", "psl", "sfcWind", "clt"),
+  frequency = "day",
+  experiment = c("ssp126", "ssp245", "ssp370", "ssp585"),
+  source = c("AWI-CM-1-1-MR", "BCC-CSM2-MR", "CESM2", "CESM2-WACCM", "EC-Earth3",
+    "EC-Earth3-Veg", "GFDL-ESM4", "INM-CM4-8", "INM-CM5-0", "MPI-ESM1-2-HR",
+    "MRI-ESM2-0"),
+  variant = "r1i1p1f1",
+  replica = FALSE,
+  latest = TRUE,
+  resolution = c("100 km", "50 km"),
+  limit = 10000L,
+  data_node = NULL,
+  years = NULL,
+  save = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>activity</code></td>
+<td>
+<p>A character vector indicating activity identifiers. Default:
+<code>"ScenarioMIP"</code>. Possible values:
+</p>
+
+<ul>
+<li> <p><code>"AerChemMIP"</code>: Aerosols and Chemistry Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"C4MIP"</code>: Coupled Climate Carbon Cycle Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"CDRMIP"</code>: Carbon Dioxide Removal Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"CFMIP"</code>: Cloud Feedback Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"CMIP"</code>: CMIP DECK: 1pctCO2, abrupt4xCO2, amip, esm-piControl, esm-historical, historical, and piControl experiments,
+</p>
+</li>
+<li> <p><code>"CORDEX"</code>: Coordinated Regional Climate Downscaling Experiment,
+</p>
+</li>
+<li> <p><code>"DAMIP"</code>: Detection and Attribution Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"DCPP"</code>: Decadal Climate Prediction Project,
+</p>
+</li>
+<li> <p><code>"DynVarMIP"</code>: Dynamics and Variability Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"FAFMIP"</code>: Flux-Anomaly-Forced Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"GMMIP"</code>: Global Monsoons Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"GeoMIP"</code>: Geoengineering Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"HighResMIP"</code>: High-Resolution Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"ISMIP6"</code>: Ice Sheet Model Intercomparison Project for CMIP6,
+</p>
+</li>
+<li> <p><code>"LS3MIP"</code>: Land Surface, Snow and Soil Moisture,
+</p>
+</li>
+<li> <p><code>"LUMIP"</code>: Land-Use Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"OMIP"</code>: Ocean Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"PAMIP"</code>: Polar Amplification Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"PMIP"</code>: Palaeoclimate Modelling Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"RFMIP"</code>: Radiative Forcing Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"SIMIP"</code>: Sea Ice Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"ScenarioMIP"</code>: Scenario Model Intercomparison Project,
+</p>
+</li>
+<li> <p><code>"VIACSAB"</code>: Vulnerability, Impacts, Adaptation and Climate Services Advisory Board,
+</p>
+</li>
+<li> <p><code>"VolMIP"</code>: Volcanic Forcings Model Intercomparison Project
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variable</code></td>
+<td>
+<p>A character vector indicating variable identifiers. The 12
+most related variables for EPW are set as defaults. If <code>NULL</code>, all
+possible variables are returned. Default: <code>c("tas", "tasmax", "tasmin", "hurs", "hursmax", "hursmin", "psl", "rss", "rls", "sfcWind", "pr", "clt")</code>, where:
+</p>
+
+<ul>
+<li> <p><code>tas</code>: Near-surface (usually, 2 meter) air temperature, units: <code>K</code>.
+</p>
+</li>
+<li> <p><code>tasmax</code>: Maximum near-surface (usually, 2 meter) air temperature, units: <code>K</code>.
+</p>
+</li>
+<li> <p><code>tasmin</code>: Minimum near-surface (usually, 2 meter) air temperature, units: <code>K</code>.
+</p>
+</li>
+<li> <p><code>hurs</code>: Near-surface relative humidity, units: <code style="white-space: pre;">⁠%⁠</code>.
+</p>
+</li>
+<li> <p><code>hursmax</code>: Maximum near-surface relative humidity, units: <code style="white-space: pre;">⁠%⁠</code>.
+</p>
+</li>
+<li> <p><code>hursmin</code>: Minimum near-surface relative humidity, units: <code style="white-space: pre;">⁠%⁠</code>.
+</p>
+</li>
+<li> <p><code>psl</code>: Sea level pressure, units: <code>Pa</code>.
+</p>
+</li>
+<li> <p><code>rsds</code>: Surface downwelling shortwave radiation, units: <code style="white-space: pre;">⁠W m-2⁠</code>.
+</p>
+</li>
+<li> <p><code>rlds</code>: Surface downwelling longwave radiation, units: <code style="white-space: pre;">⁠W m-2⁠</code>.
+</p>
+</li>
+<li> <p><code>sfcWind</code>: Near-surface (usually, 10 meters) wind speed, units: <code style="white-space: pre;">⁠m s-1⁠</code>.
+</p>
+</li>
+<li> <p><code>pr</code>: Precipitation, units: <code style="white-space: pre;">⁠kg m-2 s-1⁠</code>.
+</p>
+</li>
+<li> <p><code>clt</code>: Total cloud area fraction for the whole atmospheric column, as
+seen from the surface or the top of the atmosphere. Units: <code style="white-space: pre;">⁠%⁠</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frequency</code></td>
+<td>
+<p>A character vector of sampling frequency. If <code>NULL</code>, all
+possible frequencies are returned. Default: <code>"day"</code>.
+Possible values:
+</p>
+
+<ul>
+<li> <p><code>"1hr"</code>: sampled hourly,
+</p>
+</li>
+<li> <p><code>"1hrCM"</code>: monthly-mean diurnal cycle resolving each day into 1-hour means,
+</p>
+</li>
+<li> <p><code>"1hrPt"</code>: sampled hourly, at specified time point within an hour,
+</p>
+</li>
+<li> <p><code>"3hr"</code>: sampled every 3 hours,
+</p>
+</li>
+<li> <p><code>"3hrPt"</code>: sampled 3 hourly, at specified time point within the time period,
+</p>
+</li>
+<li> <p><code>"6hr"</code>: sampled every 6 hours,
+</p>
+</li>
+<li> <p><code>"6hrPt"</code>: sampled 6 hourly, at specified time point within the time period,
+</p>
+</li>
+<li> <p><code>"day"</code>: daily mean samples,
+</p>
+</li>
+<li> <p><code>"dec"</code>: decadal mean samples,
+</p>
+</li>
+<li> <p><code>"fx"</code>: fixed (time invariant) field,
+</p>
+</li>
+<li> <p><code>"mon"</code>: monthly mean samples,
+</p>
+</li>
+<li> <p><code>"monC"</code>: monthly climatology computed from monthly mean samples,
+</p>
+</li>
+<li> <p><code>"monPt"</code>: sampled monthly, at specified time point within the time period,
+</p>
+</li>
+<li> <p><code>"subhrPt"</code>: sampled sub-hourly, at specified time point within an hour,
+</p>
+</li>
+<li> <p><code>"yr"</code>: annual mean samples,
+</p>
+</li>
+<li> <p><code>"yrPt"</code>: sampled yearly, at specified time point within the time period
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>experiment</code></td>
+<td>
+<p>A character vector indicating root experiment identifiers.
+The <strong>Tier-1</strong> experiment of activity ScenarioMIP are set as defaults.
+If <code>NULL</code>, all possible experiment are returned.
+Default: <code>c("ssp126", "ssp245", "ssp370", "ssp585")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>source</code></td>
+<td>
+<p>A character vector indicating model identifiers. Defaults are
+set to 11 sources which give outputs of all 4 experiment of activity
+ScenarioMIP with daily frequency, i.e. <code>"AWI-CM-1-1-MR"</code>,
+<code>"BCC-CSM2-MR"</code>, <code>"CESM2"</code>, <code>"CESM2-WACCM"</code>, <code>"EC-Earth3"</code>,
+<code>"EC-Earth3-Veg"</code>, <code>"GFDL-ESM4"</code>, <code>"INM-CM4-8"</code>, <code>"INM-CM5-0"</code>,
+<code>"MPI-ESM1-2-HR"</code> and <code>"MRI-ESM2-0"</code>.
+If <code>NULL</code>, all possible sources are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variant</code></td>
+<td>
+<p>A character vector indicating label constructed from 4
+indices stored as global attributes in format <code style="white-space: pre;">⁠r&lt;k&gt;i&lt;l&gt;p&lt;m&gt;f&lt;n&gt;⁠</code>
+described below. Default: <code>"r1i1p1f1"</code>.
+If <code>NULL</code>, all possible variants are returned.
+</p>
+
+<ul>
+<li> <p><code>r</code>: realization_index (<code style="white-space: pre;">⁠&lt;k&gt;⁠</code>) = realization number (integer &gt;0)
+</p>
+</li>
+<li> <p><code>i</code>: initialization_index (<code style="white-space: pre;">⁠&lt;l&gt;⁠</code>) = index for variant of initialization method (integer &gt;0)
+</p>
+</li>
+<li> <p><code>p</code>: physics_index (<code style="white-space: pre;">⁠&lt;m&gt;⁠</code>) = index for model physics variant (integer &gt;0)
+</p>
+</li>
+<li> <p><code>f</code>: forcing_index (<code style="white-space: pre;">⁠&lt;n&gt;⁠</code>) = index for variant of forcing (integer &gt;0)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replica</code></td>
+<td>
+<p>Whether the record is the "master" copy, or a replica. Use
+<code>FALSE</code> to return only originals and <code>TRUE</code> to return only replicas.
+Use <code>NULL</code> to return both the master and the replicas.
+Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>latest</code></td>
+<td>
+<p>Whether the record is the latest available version, or a
+previous version. Use <code>TRUE</code> to return only the latest version of all
+records and <code>FALSE</code> to return previous versions. Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>A character vector indicating approximate horizontal
+resolution. Default: <code>c("50 km", "100 km")</code>.
+If <code>NULL</code>, all possible resolutions are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>limit</code></td>
+<td>
+<p>An integer indicating the maximum of matched records to return.
+Should be &lt;= 10,000. Default: <code>10000</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_node</code></td>
+<td>
+<p>A character vector indicating data nodes to be queried.
+Default to <code>NULL</code>, which means all possible data nodes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>years</code></td>
+<td>
+<p>An integer vector indicating the target years to be include in
+the data file. All other years will be excluded. If <code>NULL</code>, no
+subsetting on years will be performed. Default: <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save</code></td>
+<td>
+<p>If <code>TRUE</code>, the results will be saved into user data directory.
+Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For details on where the file index is stored, see <code>rappdirs::user_data_dir()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data.table::data.table with 22 columns:</p>
+
+<table>
+<tr>
+<td style="text-align: right;">
+   No. </td>
+<td style="text-align: left;"> Column </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   1 </td>
+<td style="text-align: left;"> <code>file_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Model output file universal identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   2 </td>
+<td style="text-align: left;"> <code>dataset_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Dataset universal identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   3 </td>
+<td style="text-align: left;"> <code>mip_era</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Activity's associated CMIP cycle. Will always be <code>"CMIP6"</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   4 </td>
+<td style="text-align: left;"> <code>activity_drs</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Activity DRS (Data Reference Syntax) </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   5 </td>
+<td style="text-align: left;"> <code>institution_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Institution identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   6 </td>
+<td style="text-align: left;"> <code>source_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Model identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   7 </td>
+<td style="text-align: left;"> <code>experiment_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Root experiment identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   8 </td>
+<td style="text-align: left;"> <code>member_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> A compound construction from <code>sub_experiment_id</code> and <code>variant_label</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   9 </td>
+<td style="text-align: left;"> <code>table_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Table identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   10 </td>
+<td style="text-align: left;"> <code>frequency</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Sampling frequency </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   11 </td>
+<td style="text-align: left;"> <code>grid_label</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Grid identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   12 </td>
+<td style="text-align: left;"> <code>version</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Approximate date of model output file </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   13 </td>
+<td style="text-align: left;"> <code>nominal_resolution</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Approximate horizontal resolution </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   14 </td>
+<td style="text-align: left;"> <code>variable_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Variable identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   15 </td>
+<td style="text-align: left;"> <code>variable_long_name</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Variable long name </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   16 </td>
+<td style="text-align: left;"> <code>variable_units</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Units of variable </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   17 </td>
+<td style="text-align: left;"> <code>datetime_start</code> </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> Start date and time of simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   18 </td>
+<td style="text-align: left;"> <code>datetime_end</code> </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> End date and time of simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   19 </td>
+<td style="text-align: left;"> <code>file_size</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Model output file size in Bytes </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   20 </td>
+<td style="text-align: left;"> <code>data_node</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Data node to download the model output file </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   21 </td>
+<td style="text-align: left;"> <code>dataset_pid</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> A unique string that helps identify the dataset </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   22 </td>
+<td style="text-align: left;"> <code>tracking_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> A unique string that helps identify the output file </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Argument <code>limit</code> will only apply to <code>Dataset</code> query. <code>init_cmip6_index()</code> will
+try to get all model output files which match the dataset id.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+init_cmip6_index()
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,101 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidyst_kms</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tidy and geospatial kernel mean shift clustering</h2>
+
+<h3>Description</h3>
+
+<p>Tidy and geospatial versions of a kernel mean shift clustering for 1- and 2-dimensional data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_kms(data, ...)
+st_kms(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame/tibble of data values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>sf object with point geometry</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters in <code>ks::kms</code> function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Mean shift clustering is a generalisation of <code class="reqn">k</code>-means clustering (aka unsupervised learning) which allows for non-ellipsoidal clusters and does not require the number of clusters to be pre-specified. The mean shift clusters are determined by following the initial observations along the density gradient ascent paths to the cluster centre.
+</p>
+<p>For details of the computation and the bandwidth selection procedure of the kernel mean shift clustering, see <code>?ks::kms</code>. The bandwidth matrix of smoothing parameters is computed as in <code>ks::kdde(deriv_order=1)</code>. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>The output from <code>*_kms</code> have the same structure as the kernel density estimate from <code>*_kde</code>, except that <code>x,y</code> indicate the data points rather than the grid points, and <code>estimate</code> indicates the mean shift cluster label of the data points, rather than the density values. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## tidy 2-d mean shift clustering 
+library(ggplot2) 
+data(crabs, package="MASS")
+crabs2 &lt;- dplyr::select(crabs, FL, CW)
+t1 &lt;- tidy_kms(crabs2)
+## convex hulls of clusters
+t2 &lt;- dplyr::group_by(t1, estimate)
+t2 &lt;- dplyr::slice(t2, chull(FL,CW))
+
+gt &lt;- ggplot(t1, aes(x=FL, y=CW)) 
+gt + geom_point(aes(colour=estimate)) +
+    geom_polygon(data=t2, aes(fill=estimate), alpha=0.1)
+
+## geospatial mean shift clustering 
+data(wa)
+data(grevilleasf)
+hakeoides &lt;- dplyr::filter(grevilleasf, species=="hakeoides")
+s1 &lt;- st_kms(hakeoides)
+## convex hulls of clusters
+s2 &lt;- dplyr::group_by(s1$sf, estimate)
+s2 &lt;- dplyr::summarise(s2, geometry=sf::st_combine(geometry))
+s2 &lt;- sf::st_convex_hull(s2)
+
+## base R plot
+xlim &lt;- c(1.2e5, 1.1e6); ylim &lt;- c(6.1e6, 7.2e6)
+plot(wa, xlim=xlim, ylim=ylim)
+plot(s1, add=TRUE, pch=16, pal=function(.){
+    colorspace::qualitative_hcl(n=., palette="Set2")})
+plot(s2, add=TRUE, lty=3, pal=function(.){
+    colorspace::qualitative_hcl(n=., palette="Set2", alpha=0.15)})
+
+## geom_sf plot
+gs &lt;- ggplot(s1) + geom_sf(data=wa, fill=NA) + ggthemes::theme_map()
+gs + geom_sf(data=s1$sf, aes(colour=estimate), alpha=0.5) + 
+    geom_sf(data=s2, aes(fill=estimate), linetype="dotted", alpha=0.15) + 
+    colorspace::scale_colour_discrete_qualitative(palette="Set2") +
+    colorspace::scale_fill_discrete_qualitative(palette="Set2") +
+    coord_sf(xlim=xlim, ylim=ylim) 
+</code></pre>
+
+
+</div>

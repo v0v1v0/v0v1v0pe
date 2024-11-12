@@ -1,0 +1,146 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>analyze_time_clusters</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bootstrap analysis of time-clusters.</h2>
+
+<h3>Description</h3>
+
+<p>Takes data whose time bins have been clustered by test-statistic (using the <code>make_time_cluster_data</code>
+function) and performs a permutation test (Maris &amp; Oostenveld, 2007). This analysis takes a summed
+statistic for each cluster, and compares it to the "null" distribution of sum statistics obtained by
+shuffling/resampling the data and extracting the largest cluster from each resample.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">analyze_time_clusters(data, ...)
+
+## S3 method for class 'time_cluster_data'
+analyze_time_clusters(
+  data,
+  within_subj,
+  samples = 2000,
+  formula = NULL,
+  shuffle_by = NULL,
+  parallel = FALSE,
+  quiet = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The output of the <code>make_time_cluster_data</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other args for to selected 'test' function; should be identical to those passed to
+<code>make_time_cluster_data</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within_subj</code></td>
+<td>
+<p>Logical indicating whether to perform within-subjects bootstrap resampling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samples</code></td>
+<td>
+<p>How many iterations should be performed in the bootstrap resampling procedure?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Formula for test. Should be identical to that passed to make_time_cluster_data fxn (if
+arg ignored there, can be ignored here)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shuffle_by</code></td>
+<td>
+<p>Along which attribute should the data be resampled? Default is the predictor
+column. But if the predictor_column is numeric *and* within-subjects, then observations with the
+same predictor value could nevertheless correspond to distinct conditions/categories that
+should be shuffled separately. For example, when using vocabulary scores to predict looking
+behavior, a participant might get identical vocab scores for verbs and nouns; these are
+nevertheless distinct categories that should be re-assigned separately when
+bootstrap-resampling data. The 'shuffle_by' argument allows you to specify a column which
+indicates these kinds of distinct categories that should be resampled separately–
+but it's only needed if you've specified a numeric *and* within-subjects predictor column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>Use foreach for speed boost? By default off. May not work on Windows.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>Display progress bar/messages? No progress bar when parallel=TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A cluster-analysis object, which can be plotted and summarized to examine which temporal periods
+show a significant effect of the predictor variable
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul><li> <p><code>analyze_time_clusters(time_cluster_data)</code>: 
+</p>
+</li></ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+data(word_recognition)
+data &lt;- make_eyetrackingr_data(word_recognition,
+                               participant_column = "ParticipantName",
+                               trial_column = "Trial",
+                               time_column = "TimeFromTrialOnset",
+                               trackloss_column = "TrackLoss",
+                               aoi_columns = c('Animate','Inanimate'),
+                               treat_non_aoi_looks_as_missing = TRUE )
+response_window &lt;- subset_by_window(data, window_start_time = 15500, window_end_time = 21000,
+                                    rezero = FALSE)
+response_time &lt;- make_time_sequence_data(response_window, time_bin_size = 500, aois = "Animate",
+                                         predictor_columns = "Sex")
+
+time_cluster_data &lt;- make_time_cluster_data(data = response_time, predictor_column = "SexM",
+                         aoi = "Animate", test = "lmer",
+                         threshold = 1.5,
+                         formula = LogitAdjusted ~ Sex + (1|Trial) + (1|ParticipantName))
+summary(time_cluster_data)
+plot(time_cluster_data)
+
+# analyze time clusters in a non-parametric analysis
+
+tc_analysis &lt;- analyze_time_clusters(time_cluster_data, within_subj = FALSE,
+                                     samples = 2000)
+plot(tc_analysis)
+summary(tc_analysis)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eem_remove_blank</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Blank correction</h2>
+
+<h3>Description</h3>
+
+<p>This function is used to remove blank from eems which can help
+to reduce the effect of scatter bands.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eem_remove_blank(eem, blank = NA)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>eem</code></td>
+<td>
+<p>An object of class <code>eemlist</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blank</code></td>
+<td>
+<p>An object of class <code>eemlist</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function will first try to use the provided <code>blank</code>. If the
+blank is omitted, the function will then try to extract the blank from the
+<code>eemlist</code> object. This is done by looking for sample names containing
+one of these complete or partial strings (ignoring case):
+</p>
+ <ol>
+<li>
+<p> nano </p>
+</li>
+<li>
+<p> miliq </p>
+</li>
+<li>
+<p> milliq </p>
+</li>
+<li>
+<p> mq </p>
+</li>
+<li>
+<p> blank </p>
+</li>
+</ol>
+<p>Note that if <code>blank</code> is omitted, the function will group the
+<code>eemlist</code> based on file location and will assumes that there is a
+blank sample in each folder. In that context, the blank will be used on
+each sample in the same folder. If more than one blank is found they will
+be averaged (a message will be printed if this appends).
+</p>
+<p>Consider the following example where there are two folders that could
+represent scans performed on two different days 'scans_day_1' and
+'scans_day_2'.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;"> scans_day_1</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> nano.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> sample1.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">
+  sample2.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> sample3.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> scans_day_2 </td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> blank.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+<td style="text-align: left;"> s1.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> s2.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> s3.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+</tr>
+</table>
+<p>In each folder there are three samples and one blank files. In that
+context, 'eem_remove_blank()' will use the blank 'nano.csv' from
+'sample1.csv', 'sample2.csv' and 'sample3.csv'. The same strategy will be
+used for files in folder 'scans_day_2' but with blank named 'blank.csv'.
+</p>
+<p>Note that the blanks eem are not returned by the function.
+</p>
+<p>Note that blank correction should be performed before Raman
+normalization (<code>eem_raman_normalisation()</code>). An error will occur
+if trying to perform blank correction after Raman normalization.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>eemlist</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Murphy, K. R., Stedmon, C. a., Graeber, D., &amp; Bro, R. (2013).
+Fluorescence spectroscopy and multi-way techniques. PARAFAC. Analytical
+Methods, 5(23), 6557. http://doi.org/10.1039/c3ay41160e
+</p>
+<p><a href="http://xlink.rsc.org/?DOI=c3ay41160e">http://xlink.rsc.org/?DOI=c3ay41160e</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Example 1
+
+# Open the fluorescence eem
+file &lt;- system.file("extdata/cary/scans_day_1", "sample1.csv", package = "eemR")
+eem &lt;- eem_read(file, import_function = "cary")
+
+plot(eem)
+
+# Open the blank eem
+file &lt;- system.file("extdata/cary/scans_day_1", "nano.csv", package = "eemR")
+blank &lt;- eem_read(file, import_function = "cary")
+
+plot(blank)
+
+# Remove the blank
+eem &lt;- eem_remove_blank(eem, blank)
+
+plot(eem)
+
+## Example 2
+
+# Open the fluorescence eem
+folder &lt;- system.file("extdata/cary/scans_day_1", package = "eemR")
+eems &lt;- eem_read(folder, import_function = "cary")
+
+plot(eems, which = 3)
+
+# Open the blank eem
+file &lt;- system.file("extdata/cary/scans_day_1", "nano.csv", package = "eemR")
+blank &lt;- eem_read(file, import_function = "cary")
+
+plot(blank)
+
+# Remove the blank
+eem &lt;- eem_remove_blank(eems, blank)
+
+plot(eems, which = 3)
+
+# Automatic correction
+folder &lt;- system.file("extdata/cary/", package = "eemR")
+
+# Look at the folder structure
+list.files(folder, "*.csv", recursive = TRUE)
+
+eems &lt;- eem_read(folder, recursive = TRUE, import_function = "cary")
+res &lt;- eem_remove_blank(eems)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,416 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>asNumericDF</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Coerce to numeric dropping commas and info after a blank
+</h2>
+
+<h3>Description</h3>
+
+<p>For <code>asNumericChar</code>, delete leading
+blanks and a leading dollar sign plus
+commas (thousand separators) and drop
+information after a blank (other than
+leading blanks), then coerce to numeric or
+to factors, <code>Dates</code>, or 
+<code>POSIXct</code> as desired.
+</p>
+<p>For a <code>data.frame</code>, apply 
+<code>asNumericChar</code> to all columns and
+drop columns except those in <code>keep</code>,
+<code>ignore</code>, <code>factors</code>, 
+<code>Dates</code>, <code>POSIX</code> and 
+<code>MSdates</code>.
+</p>
+<p>Then order the rows by the 
+<code>orderBy</code> column.  Some Excel 
+imports include commas as thousand
+separators;  this replaces any commas
+with char(0), ”, before trying to
+convert to numeric.  
+</p>
+<p>Similarly, if "%" is found as the last 
+character in any field, drop the percent
+sign and divide the resulting numeric
+conversion by 100 to convert to 
+proportion.  
+</p>
+<p>Also, some character data includes 
+footnote references following the year.  
+</p>
+<p>For example Table F-1 from the US Census 
+Bureau needs all three of these numeric
+conversion features:  It needs 
+<code>orderBy</code>, because the most recent 
+year appears first, just the opposite of
+most other data sets where the most
+recent year appears last.  It has
+footnote references following a character
+string indicating the year.  And it
+includes commas as thousand separators.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">asNumericChar(x, leadingChar='^\\$', 
+    suppressChar=',', pctChar='%$', 
+    class.=NULL, format.=NULL)
+asNumericDF(x, keep=
+    function(x)any(!is.na(x)), 
+  orderBy=NA, ignore=NULL, factors=NULL, 
+  Dates=NULL, POSIX=NULL, MSdates=NULL, 
+  format.=NULL, leadingChar='^\\$', 
+  suppressChar=',', pctChar='%$')
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>For <code>asNumericChar</code>, this is a
+character vector to be converted to
+numeric after <code>gsub(',', '', x)</code>.
+</p>
+<p>For <code>asNumericDF</code>, this is a
+<code>data.frame</code> with all character 
+columns to be converted to numerics.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+
+<p>something to indicate which columns to 
+keep, in addition to columns specified
+in <code>ignore</code>, <code>factors</code>,
+<code>Dates</code>, and <code>POSIX</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>orderBy</code></td>
+<td>
+
+<p>Which columns to order the rows of
+<code>x[, keep]</code> by.  Default is to
+keep the input order.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignore</code></td>
+<td>
+
+<p>vector identifying columns of <code>x</code> 
+to ignore, i.e., to keep and not
+attempt to convert to another data 
+type.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factors</code></td>
+<td>
+
+<p>vector indicating columns of <code>x</code> 
+to convert to <code>factor</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dates</code></td>
+<td>
+
+<p>vector indicating columns of <code>x</code> 
+to convert using 
+<code>as.Date</code>(, <code>format</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>POSIX</code></td>
+<td>
+
+<p>vector indicating columns of <code>x</code> 
+to convert using 
+<code>as.POSIXct</code>(, <code>format</code>).  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>class.</code></td>
+<td>
+
+<p>Desired class of output.  Default is 
+<code>numeric</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format.</code></td>
+<td>
+
+<p>Character vector of length 1 to pass 
+as argument <code>format</code> to 
+<code>as.Date</code> and / or 
+<code>as.POSIXct</code> for conversion
+from <code>character</code>.  
+</p>
+<p>For <code>Dates</code>, <code>as.Date</code>
+is first tried with format = 
+'%Y-%m-%d', then with '%Y/%m/%d',
+'%m-%d-%Y', and '%m/%d/%Y'.  The
+conversion with the fewest NAs is kept.
+If two match for numbers of NAs, the
+one with the minimum absolute 
+deviations from as.Date1970(0) is used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MSdates</code></td>
+<td>
+
+<p>The names or numbers identifying
+columns of x identifying dates as
+integer numbers of days since 
+1899-12-31.  <a href="https://support.office.com/en-us/article/Add-sum-or-subtract-dates-9818b3f7-aa67-4008-8dff-3c3b503886af?ui=en-US&amp;rs=en-US&amp;ad=US">In 
+Microsoft Excel, dates are stored in
+that format</a>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>leadingChar</code></td>
+<td>
+
+<p>A regular expression passed to 
+<code>grep</code> and 
+<code>sub</code> to replace something
+like an initial dollar sign with
+<code>character(0)</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>suppressChar</code></td>
+<td>
+
+<p>a regular expression passed to 
+<code>gsub</code> to replace all 
+occurrences of something like "," (a 
+thousands separator in the U.S.) with 
+<code>character(0)</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pctChar</code></td>
+<td>
+
+<p>A regular expression passed to 
+<code>grep</code> to identify percent 
+columns.  <code>pctChar</code> is then 
+passed to <code>sub</code> to replace 
+<code>pctChar</code> with 
+<code>character(0)</code>, and the converted
+numbers are then divided by 100 to
+convert them to proportions.  
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For <code>asNumericChar</code>:  
+</p>
+<p>1.  Replace commas by nothing
+</p>
+<p>2.  <code>strsplit</code> on ' ' and take only 
+the first part, thereby eliminating the
+footnote references.
+</p>
+<p>3.  Replace any blanks with NAs
+</p>
+<p>4.  <code>as.numeric</code>
+</p>
+<p>for <code>asNumericDF</code>:  
+</p>
+<p>1.  Copy <code>x</code> to <code>X</code>.  
+</p>
+<p>2.  Confirm that <code>ignore</code>, 
+<code>factors</code>, <code>Dates</code>, and
+<code>POSIX</code> all refer to columns 
+of <code>x</code> and do not overlap.  
+[*** NOTE:  as of 2016-07-21, these
+checks have only been implemented
+for <code>ignore</code>.]
+</p>
+<p>3.  Convert <code>factors</code>, <code>Dates</code>,
+and <code>POSIX</code>.  
+</p>
+<p>4.  Apply <code>asNumericChar</code> to all
+columns not in <code>ignore</code>, 
+<code>factors</code>, <code>Dates</code>, or
+<code>POSIX</code>.  
+</p>
+<p>5.  Keep columns specified by 
+<code>keep</code>.  
+</p>
+<p>6.  return the result.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>a <code>data.frame</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://support.office.com/en-us/article/Add-sum-or-subtract-dates-9818b3f7-aa67-4008-8dff-3c3b503886af?ui=en-US&amp;rs=en-US&amp;ad=US">"Add (sum) or subtract dates;  Applies To: Excel 2013"</a>.  Microsoft.  (accessed 2016-08-11)
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>scan</code>
+<code>gsub</code>
+<code>Quotes</code>
+<code>stripBlanks</code>
+<code>as.numeric</code>, 
+<code>factor</code>, 
+<code>as.Date</code>, 
+<code>as.POSIXct</code>
+<code>read.xlsx</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  an example 
+##
+(xDate &lt;- as.Date('1970-01-01')+c(0, 365))
+(xPOSIX &lt;- as.POSIXct(xDate)+c(1, 99))
+xMSdate &lt;- as.Date(1, 
+    as.Date('1899-12-31'))+1:2
+(fakeF1 &lt;- data.frame(yr=c('1948', 
+            '1947 (1)'),
+      q1=c(' 1,234 ', ''), duh=rep(NA, 2), 
+      dol=c('$1,234', ''), 
+      pct=c('1%', '2%'), 
+      xDate=as.character(xDate, 
+        format='%Y-%m-%d'), 
+      xPOSIX=as.character(xPOSIX, 
+        format='%Y-%m-%d %H:%M:%S'), 
+      xMSdate=2:3, junk=c('this is',
+          'junk')))
+            
+# This converts the last 3 columns to NAs and drops them:
+
+str(nF1.1 &lt;- asNumericChar(fakeF1$yr))
+str(nF1.2 &lt;- asNumericChar(fakeF1$q1))
+str(nF1.3 &lt;- asNumericChar(fakeF1$duh))
+(nF1.4 &lt;- asNumericChar('1969-12-31 18:00:01',
+                        class.='POSIXct'))
+
+(nF1 &lt;- asNumericDF(fakeF1))
+(nF2 &lt;- asNumericDF(fakeF1, Dates=6, 
+    MSdate='xMSdate', 
+    ignore=c('junk', 'xPOSIX'), 
+    format.='%Y-%m-%d'))
+# check 
+nF1. &lt;- data.frame(yr=
+        asNumericChar(fakeF1$yr),
+      q1=asNumericChar(fakeF1$q1), 
+      dol=asNumericChar(fakeF1$dol), 
+      pct=c(.01, .02), xMSdate=2:3)
+
+nF1c &lt;- data.frame(yr=1948:1947, 
+      q1=c(1234, NA), dol=c(1234, NA), 
+      pct=c(.01, .02), xMSdate=2:3)
+
+
+all.equal(nF1, nF1.)
+
+
+all.equal(nF1., nF1c)
+
+
+## 
+## 2.  as.Date default example
+##
+  xD &lt;- asNumericChar(
+    as.character(xDate), class.='Date')
+
+  all.equal(xDate, xD)
+
+
+##
+## 3.  as.POSIXct default example 
+##
+xPOSIX
+(xPOSIXch &lt;- as.character(xPOSIX))
+(xP &lt;- asNumericChar(xPOSIXch, class.='POSIXct'))
+attr(xPOSIX, 'tzone')
+attr(xP, 'tzone')
+# R-Devel after 4.2.1 breaks earlier code; fix
+if(is.null(attr(xPOSIX, 'tzone')))
+    attr(xPOSIX, 'tzone') &lt;- attr(xP, 'tzone')
+(dP &lt;- difftime(xPOSIX, xP, units='secs'))
+(madP &lt;- max(abs(as.numeric(dP))))
+
+{
+#all.equal(xPOSIX, xP)
+# As of 2022-10-06 I don't know how to write code
+# that will get a consistent answer with 
+# different version R-devel with differences
+# less than an hour
+if(madP&gt;3600){
+  stop('Discrepancy betw fn and manual comp ', 
+       'too large.')
+}
+TRUE
+}
+
+
+##
+## 4.  orderBy=1:2
+##
+nF. &lt;- asNumericDF(fakeF1, orderBy=1:2)
+
+
+all.equal(nF., nF1c[2:1,])
+
+
+##
+## 5.  Will it work for a tibble?  
+##
+if(require(tibble)){
+  nF1t &lt;- asNumericDF(as_tibble(fakeF1))
+
+  all.equal(nF1, nF1t)
+
+}
+
+</code></pre>
+
+
+</div>

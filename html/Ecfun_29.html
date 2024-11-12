@@ -1,0 +1,314 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>interpChar</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Interpolate between numbers or numbers of
+characters 
+</h2>
+
+<h3>Description</h3>
+
+<p>For <code>x</code> and <code>y</code> logical, integer,
+numeric, Date or POSIX:  
+</p>
+<p><code>xOut &lt;- x*(1-.proportion) + y*.proportion</code> 
+</p>
+<p>Otherwise, coerce to character and return a 
+<code>substring</code> of <code>x</code> or <code>y</code> 
+with number of characters interpolating linearly
+between <code>nchar(x)</code> and <code>nchar(y)</code>;  
+see details.  
+</p>
+<p>*** NOTE:  This function is currently in flux.  
+The results may not match the documentation 
+and may change in the future.  
+</p>
+<p>The current version does character interpolation
+on the cumulative number of characters with
+defaults with only one argument that may not be
+easy to understand and use.  Proposed:  
+</p>
+<p>old:  interpolate on 
+number of characters in each string with the 
+default for a missing argument being 
+<code>character(length(x))</code> [or 
+<code>character(length(y))</code> or 
+<code>numeric(length(x))</code> or ...]
+</p>
+<p>2014-08-08: default with either x or y missing 
+should be to set the other to the one we have, 
+so <code>interpChar</code> becomes a no op – except
+that values with <code>.proportion</code> outside
+(<code>validProportion</code> = [0, 1] by default)
+should be dropped.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">interpChar(x, ...)
+## S3 method for class 'list'
+interpChar(x, .proportion, 
+        argnames=character(3), 
+        message0=character(0), ...)
+## Default S3 method:
+interpChar(x, y, .proportion, 
+        argnames=character(3), 
+        message0=character(0), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>either a vector or a list.  If a list, pass 
+the first two elements as the first two
+arguments of <code>interpChar.default</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p> a vector </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.proportion</code></td>
+<td>
+
+<p>A number or numeric vector assumed to be 
+between 0 and 1.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>argnames</code></td>
+<td>
+
+<p>a character vector of length 3 giving 
+arguments <code>name.x</code>, <code>name.y</code>, 
+and <code>.proportion</code> to pass to 
+<code>compareLengths</code> to improve 
+the value  of any diagnostic message in 
+case lengths are not compatible.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>message0</code></td>
+<td>
+
+<p>A character string to be passed with 
+<code>argnames</code> to <code>compareLengths</code>
+to improve the value of any diagnostic message
+in case lengths are not compatible.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>optional arguments for 
+<code>compareLengths</code>  
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>1.  <code>x</code>, <code>y</code> and <code>.proportion</code> 
+are first compared for compatible lengths using
+<code>compareLengths</code>.  A warning is 
+issued if the lengths are not compatible.  They
+are then all extended to the same length using
+<code>rep</code>.  
+</p>
+<p>2.  If <code>x</code> and <code>y</code> are both numeric,
+<code>interpChar</code> returns the standard linear
+interpolation (described above).  
+</p>
+<p>3.  If <code>x</code>, <code>y</code>, and <code>.proportion</code>
+are all provided with at least one of <code>x</code> 
+and <code>y</code> not being numeric  or logical, the
+algorithm does linear interpolation on the
+difference in the number of characters between 
+<code>x</code> and <code>y</code>.  It returns characters 
+from <code>y</code> except when <code>nchar(x)</code> &gt;
+<code>nchar(y)</code>, in which case it returns
+characters from <code>x</code>.  This meets the end
+conditions that the number of characters matches
+that of <code>x</code> when <code>.proportion</code> is 0 
+and matches that of <code>y</code> when 
+<code>.proportion</code> is 1.  This can be used to
+"erase" characters moving from one frame to 
+the next in a video.  See the examples.   
+</p>
+<p>4.  If either <code>x</code> or <code>y</code> is missing, 
+it is replaced by a default vector of the same
+type and length;  for example, if <code>y</code> is
+missing and <code>x</code> is numeric, <code>y</code> =
+<code>numeric(length(x))</code>.  (If the one supplied
+is not numeric or logical, it is coerced to
+character.)  
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector:  Numeric if <code>x</code> and <code>y</code> are
+both numeric and character otherwise.  The length
+= max length of <code>x</code>, <code>y</code>, and 
+<code>.proportion</code>.  
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves</p>
+
+
+<h3>See Also</h3>
+
+<p><code>interpPairs</code>, which calls 
+<code>interpChar</code>
+</p>
+<p><code>classIndex</code>, which is called by 
+<code>interpChar</code> to help decide the class of 
+the interpolant.  
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  numerics 
+## 
+# 1.1.  standard 
+xNum &lt;- interpChar(1:3, 4:5, (0:3)/4)
+# answer 
+xN. &lt;- c(1, 2.75, 3.5, 4)
+
+all.equal(xNum, xN.)
+
+
+# 1.2.  list of length 1 with a numeric vector: 
+#       return that vector with a warning
+xN1 &lt;- interpChar(list(a.0=1:4), .5)
+# answer 
+xN1. &lt;- 1:4
+
+all.equal(xN1, xN1.)
+
+
+##
+## 2.  Single character vector 
+##
+i.5 &lt;- interpChar(list(c('a', 'bc', 'def')), .p=0.3)
+# If cumulative characters:  
+#        0.3*(total 6 characters) = 1.8 characters
+#
+# However, the current code does something different, 
+# returning "a", "bc", "d" &lt;- like using 1-.p?  
+# This is a problem with the defaults with a single 
+# argument;  ignore this issue for now.  
+# 2014-06-04
+i.5. &lt;- c('a', 'b', '')
+
+#all.equal(i.5, i.5.)
+
+
+##
+## 3.  Reverse character example 
+##
+i.5c &lt;- interpChar(c('a', 'bc', 'def'), '', 0.3)
+# check:  0.7*(total 6 characers) = 4.2 characters
+i.5c. &lt;- c('a', 'bc', 'd')
+
+all.equal(i.5c, i.5c.)
+
+
+#  The same thing specified in a list 
+i.5d &lt;- interpChar(list(c('a', 'bc', 'def'), ''), 0.3)
+
+all.equal(i.5d, i.5c.)
+
+
+##
+## 4.  More complicated example
+##
+xCh &lt;- interpChar(list(c('Do it', 'with R.')), 
+                  c(0, .5, .9)) 
+# answer 
+xCh. &lt;- c('', 'with', 'Do ') 
+# With only one input, it's assumed to be y.  
+# It is replicated to length(.proportion), 
+# With nchar = 5, 7, 5, cum = 5, 12, 17.  
+
+all.equal(xCh, xCh.)
+
+##
+## 5.  Still more complicated 
+##
+xC2 &lt;- interpChar(c('a', 'fabulous', 'bug'), 
+                  c('bigger or', 'just', 'big'), 
+                  c(.3, .3, 1) )
+# answer 
+x.y.longer &lt;- c('bigger or', 'fabulous', 'big')
+# use y with ties 
+# nch smaller        1          4         3
+# nch larger         9          8         3
+# d.char             8,         4,        0 
+# cum characters     8,        12,       12 
+# prop              .3,        .7,        1 
+# prop*12          3.6,       8.4,       12
+# cum.sm             1,         5,        8
+# cum.sm+prop*12     5,        13,       20
+#   -cum(larger[-1]) 5,         4,        3
+xC2. &lt;- c('bigge', 'fabu', 'big')                 
+
+all.equal(xC2, xC2.)
+
+
+##
+## 6.  with one NULL 
+##
+null1 &lt;- interpChar(NULL, 1, 1)
+
+all.equal(null1, 1)
+
+
+null2 &lt;- interpChar('abc', NULL, .3)
+
+all.equal(null2, 'ab')
+
+##
+## 7.  length=0 
+##
+log0 &lt;- interpChar(logical(0), 2, .6)
+
+all.equal(log0, 1.2)
+
+
+##
+## 8.  Date
+##
+
+
+
+##
+## 9.  POSIXct 
+##
+
+</code></pre>
+
+
+</div>

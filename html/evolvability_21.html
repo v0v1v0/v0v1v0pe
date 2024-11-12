@@ -1,0 +1,369 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rate_gls</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generalized least squares rate model</h2>
+
+<h3>Description</h3>
+
+<p><code>rate_gls</code> fits a generalized least squares model to estimate parameters
+of an evolutionary model of two traits x and y, where the evolutionary rate
+of y depends on the value of x. Three models are implemented. In the two
+first, 'predictor_BM' and 'predictor_gBM', the evolution of y follows a
+Brownian motion with variance linear in x, while the evolution of x either
+follows a Brownian motion or a geometric Brownian motion, respectively. In
+the third model, 'recent_evol', the residuals of the macroevolutionary
+predictions of y have variance linear in x. It is highly recommended  to read
+Hansen et al. (in review) and <code>vignette("Analyzing_rates_of_evolution")</code>
+before fitting these models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rate_gls(
+  x,
+  y,
+  species,
+  tree,
+  model = "predictor_BM",
+  startv = list(a = NULL, b = NULL),
+  maxiter = 100,
+  silent = FALSE,
+  useLFO = TRUE,
+  tol = 0.001
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The explanatory variable, which must be equal to the length of
+<code>y</code> and tips on the tree.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The trait values of response variable. Note that the algorithm mean
+centers y.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>species</code></td>
+<td>
+<p>A vector with the names of the species, must be equal in
+length and in the same order as <code>x</code> and <code>y</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tree</code></td>
+<td>
+<p>An object of class <code>phylo</code>, needs to be ultrametric
+and with total length of unit, tips must have the same names as in
+<code>species</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The acronym of the evolutionary model to be fitted. There are
+three options: 'predictor_BM', 'predictor_gBM' or 'recent_evol' (see
+details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startv</code></td>
+<td>
+<p>A vector of optional starting values for the a and b
+parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxiter</code></td>
+<td>
+<p>The maximum number of iterations for updating the GLS.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>logical: if the function should not print the generalized sum
+of squares for each iteration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useLFO</code></td>
+<td>
+<p>logical: whether the focal species should be left out when
+calculating the corresponding species' means. Note that this is only
+relevant for the 'recent_evol' model. The most correct is to use
+<code>TRUE</code>, but in practice it has little effect and <code>FALSE</code> will
+speed up the model fit (particularly useful when bootstrapping). LFO is an
+acronym for 'Leave the Focal species Out'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>tolerance for convergence. If the change in 'a' and 'b' is below
+this limit between the two last iteration, convergence is reached. The
+change is measured in proportion to the standard deviation of the response
+for 'a' and the ratio of the standard deviation of the response to the
+standard deviation of the predictor for 'b'.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>rate_gls</code> is an iterative generalized least squares (GLS)
+model fitting a regression where the response variable is a vector of
+squared mean-centered <code>y</code>-values for the 'predictor_BM' and
+'predictor_gBM' models and squared deviation from the evolutionary
+predictions (see <code>macro_pred</code>) for the 'recent_evol' model.
+Note that the algorithm mean centers <code>x</code> in the 'predictor_BM' and
+'recent_evol' analyses, while it mean standardized <code>x</code> (i.e. divided
+<code>x</code> by its mean) in the 'predictor_gBM'. The evolutionary parameters a
+and b are inferred from the intercept and the slope of the GLS fit. Again,
+it is highly recommended to read Hansen et al. (in review) and
+<code>vignette("Analyzing_rates_of_evolution")</code> before fitting these
+models. In Hansen et al. (2021) the three models 'predictor_BM',
+'predictor_gBM' and 'recent_evol' are referred to as 'Model 1', 'Model 2'
+and 'Model 3', respectively.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of <code>class</code> <code>'rate_gls'</code>, which is a list with the
+following components: </p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <code>model</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The name of the model ('predictor_BM',
+  'predictor_gBM' or 'recent_evolution').
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>param</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The focal parameter estimates and their
+  standard errors, where 'a' and 'b' are parameters of the evolutionary
+  models, and 'sigma(x)^2' is the BM-rate parameter of x for the
+  'predictor_BM' model, the BM-rate parameter for log x for the
+  'predictor_gBM' model, and the variance of x for the 'recent_evolution'
+  model.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>Rsquared</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The generalized R squared of the GLS
+  model fit.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>a_all_iterations</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The values for the parameter a
+  in all iterations.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>b_all_iterations</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The values for the parameter b
+  in all iterations.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>R</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The residual variance matrix.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>Beta</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The intercept and slope of GLS regression
+  (response is y2 and explanatory variable is x).
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>Beta_vcov</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The error variance matrix of
+  <code>Beta</code>.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>tree</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The phylogenetic tree.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>data</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The data used in the GLS regression.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>convergence</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> Whether the algorithm converged or
+  not.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>additional_param</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> Some additional parameter
+  estimates.
+  </td>
+</tr>
+<tr>
+<td style="text-align: left;"> <code>call</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The function call.
+  </td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Geir H. Bolstad
+</p>
+
+
+<h3>References</h3>
+
+<p>Hansen TF, Bolstad GH, Tsuboi M. 2021. Analyzing disparity and rates 
+of morphological evolution with model-based phylogenetic comparative methods. 
+*Systematic Biology*. syab079. doi:10.1093/sysbio/syab079
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Also see vignette("Analyzing_rates_of_evolution").
+## Not run: 
+# Generating a tree with 500 species
+set.seed(102)
+tree &lt;- ape::rtree(n = 500)
+tree &lt;- ape::chronopl(tree, lambda = 1, age.min = 1)
+
+### model = 'predictor_BM' ###
+sim_data &lt;- simulate_rate(tree,
+  startv_x = 0, sigma_x = 0.25, a = 1, b = 1, model =
+    "predictor_BM"
+)
+head(sim_data$tips)
+gls_mod &lt;- rate_gls(
+  x = sim_data$tips$x, y = sim_data$tips$y,
+  species = sim_data$tips$species, tree, model = "predictor_BM"
+)
+gls_mod$param
+par(mfrow = c(1, 2))
+# Response shown on the standard deviation scale (default):
+plot(gls_mod, scale = "SD", cex.legend = 0.8)
+# Response shown on the variance scale, where the regression is linear:
+plot(gls_mod, scale = "VAR", cex.legend = 0.8)
+par(mfrow = c(1, 1))
+# Parametric bootstrapping to get the uncertainty of the parameter estimates
+# taking the complete process into account.
+# (this takes some minutes)
+gls_mod_boot &lt;- rate_gls_boot(gls_mod, n = 1000)
+gls_mod_boot$summary
+
+### model = 'predictor_gBM' ###
+sim_data &lt;- simulate_rate(tree,
+  startv_x = 1, sigma_x = 1, a = 1, b = 1,
+  model = "predictor_gBM"
+)
+head(sim_data$tips)
+gls_mod &lt;- rate_gls(
+  x = sim_data$tips$x, y = sim_data$tips$y, species = sim_data$tips$species,
+  tree, model = "predictor_gBM"
+)
+gls_mod$param
+plot(gls_mod)
+par(mfrow = c(1, 2))
+# Response shown on the standard deviation scale (default):
+plot(gls_mod, scale = "SD", cex.legend = 0.8)
+# Response shown on the variance scale, where the regression is linear:
+plot(gls_mod, scale = "VAR", cex.legend = 0.8)
+# is linear.
+par(mfrow = c(1, 1))
+
+# Parametric bootstrapping to get the uncertainty of the parameter estimates
+# taking the complete process into account. (This takes some minutes.)
+gls_mod_boot &lt;- rate_gls_boot(gls_mod, n = 1000)
+gls_mod_boot$summary
+
+### model = 'recent_evol' ###
+sim_data &lt;- simulate_rate(tree,
+  startv_x = 0, sigma_x = 1, a = 1, b = 1, sigma_y = 1,
+  model = "recent_evol"
+)
+head(sim_data$tips)
+gls_mod &lt;- rate_gls(
+  x = sim_data$tips$x, y = sim_data$tips$y, species = sim_data$tips$species,
+  tree, model = "recent_evol", useLFO = FALSE
+)
+# useLFO = TRUE is somewhat slower, and although more correct it should give
+# very similar estimates in most situations.
+gls_mod$param
+par(mfrow = c(1, 2))
+# Response shown on the standard deviation scale (default):
+plot(gls_mod, scale = "SD", cex.legend = 0.8)
+# Response shown on the variance scale, where the regression is linear:
+plot(gls_mod, scale = "VAR", cex.legend = 0.8)
+# linear.
+par(mfrow = c(1, 1))
+
+# Parametric bootstrapping to get the uncertainty of the parameter estimates
+# taking the complete process into account. Note that x is considered as
+# fixed effect. (This takes a long time.)
+gls_mod_boot &lt;- rate_gls_boot(gls_mod, n = 1000, useLFO = FALSE)
+gls_mod_boot$summary
+
+## End(Not run)
+</code></pre>
+
+
+</div>

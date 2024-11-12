@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sim_psy2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulation of a two-bubble process</h2>
+
+<h3>Description</h3>
+
+<p>The following data generating process is similar to  <code>sim_psy1</code>, with the difference that
+there are two episodes of mildly explosive dynamics.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sim_psy2(
+  n,
+  te1 = 0.2 * n,
+  tf1 = 0.2 * n + te1,
+  te2 = 0.6 * n,
+  tf2 = 0.1 * n + te2,
+  c = 1,
+  alpha = 0.6,
+  sigma = 6.79,
+  seed = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>A positive integer specifying the length of the simulated output series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>te1</code></td>
+<td>
+<p>A scalar in (0, n) specifying the observation in which the first bubble originates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tf1</code></td>
+<td>
+<p>A scalar in  (te1, n) specifying the observation in which the first bubble collapses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>te2</code></td>
+<td>
+<p>A scalar in (tf1, n) specifying the observation in which the second bubble originates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tf2</code></td>
+<td>
+<p>A scalar in (te2, n) specifying the observation in which the second bubble collapses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c</code></td>
+<td>
+<p>A positive scalar determining the autoregressive coefficient in the explosive regime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>A positive scalar in (0, 1) determining the value of the expansion rate in the autoregressive coefficient.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>A positive scalar indicating the standard deviation of the innovations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>An object specifying if and how the random number generator (rng)
+should be initialized. Either NULL or an integer will be used in a call to
+<code>set.seed</code> before simulation. If set, the value is saved as "seed" attribute
+of the returned value. The default, NULL, will not change rng state, and
+return .Random.seed as the "seed" attribute. Results are different between
+the parallel and non-parallel option, even if they have the same seed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The two-bubble data generating process is given by (see also <code>sim_psy1</code>):
+</p>
+<p style="text-align: center;"><code class="reqn">X_t = X_{t-1}1\{t \in N_0\}+ \delta_T X_{t-1}1\{t \in B_1 \cup B_2\} +
+\left(\sum_{k=\tau_{1f}+1}^t \epsilon_k + X_{\tau_{1f}}\right) 1\{t \in N_1\} </code>
+</p>
+
+<p style="text-align: center;"><code class="reqn"> + \left(\sum_{l=\tau_{2f}+1}^t \epsilon_l + X_{\tau_{2f}}\right) 1\{t \in N_2\} +
+\epsilon_t 1\{t \in N_0 \cup B_1 \cup B_2\}</code>
+</p>
+
+<p>where the autoregressive coefficient <code class="reqn">\delta_T</code> is:
+</p>
+<p style="text-align: center;"><code class="reqn">\delta_T = 1 + cT^{-a}</code>
+</p>
+
+<p>with <code class="reqn">c&gt;0</code>, <code class="reqn">\alpha \in (0,1)</code>,
+<code class="reqn">\epsilon \sim iid(0, \sigma^2)</code>,
+<code class="reqn">N_0 = [1, \tau_{1e})</code>,
+<code class="reqn">B_1 = [\tau_{1e}, \tau_{1f}]</code>,
+<code class="reqn">N_1 = (\tau_{1f}, \tau_{2e})</code>,
+<code class="reqn">B_2 = [\tau_{2e}, \tau_{2f}]</code>,
+<code class="reqn">N_2 = (\tau_{2f}, \tau]</code>,
+where <code class="reqn">\tau</code> is the last observation of the sample.
+The observations <code class="reqn">\tau_{1e} = [T r_{1e}]</code>
+and <code class="reqn">\tau_{1f} = [T r_{1f}]</code>
+are the origination and termination dates of the first bubble;
+<code class="reqn">\tau_{2e} = [T r_{2e}]</code> and <code class="reqn">\tau_{2f} = [T r_{2f}]</code>
+are the origination and termination dates of the second bubble.
+After the collapse of the first bubble, <code class="reqn">X_t</code> resumes a martingale path until time
+<code class="reqn">\tau_{2e}-1</code>, and a second episode of exuberance begins at <code class="reqn">\tau_{2e}</code>.
+Exuberance lasts lasts until <code class="reqn">\tau_{2f}</code> at which point the process collapses to a value of
+<code class="reqn">X_{\tau_{2f}}</code>. The process then continues on a martingale path until the end of the
+sample period <code class="reqn">\tau</code>. The duration of the first bubble is assumed to be longer than
+that of the second bubble, i.e. <code class="reqn">\tau_{1f}-\tau_{1e}&gt;\tau_{2f}-\tau_{2e}</code>.
+</p>
+<p>For further details you can refer to Phillips et al., (2015) p. 1055.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric vector of length <code>n</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Phillips, P. C. B., Shi, S., &amp; Yu, J. (2015). Testing for Multiple Bubbles:
+Historical Episodes of Exuberance and Collapse in the S&amp;P 500. International Economic Review, 5
+6(4), 1043-1078.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>sim_psy1</code>, <code>sim_blan</code>, <code>sim_evans</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># 100 periods with bubble origination dates 20/60 and termination dates 40/70
+sim_psy2(n = 100, seed = 123) %&gt;%
+ autoplot()
+
+# 200 periods with bubble origination dates 40/120 and termination dates 80/140
+sim_psy2(n = 200, seed = 123) %&gt;%
+  autoplot()
+</code></pre>
+
+
+</div>

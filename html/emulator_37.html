@@ -1,0 +1,210 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>regressor.basis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Regressor basis function</h2>
+
+<h3>Description</h3>
+
+<p>Creates a regressor basis for a vector. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">regressor.basis(x)
+regressor.multi(x.df,func=regressor.basis)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector of coordinates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.df</code></td>
+<td>
+<p>Matrix whose rows are coordinates of points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>func</code></td>
+<td>
+<p>Regressor basis function to use; defaults to <code>regressor.basis</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The regressor basis specified by <code>regressor.basis()</code> is just the
+addition of a constant term, which is conventionally placed in the
+first position.  This is a very common choice for a set of bases,
+although it is important to investigate both simpler and more
+sophisticated alternatives.  Tony would recommend simpler functions
+(perhaps as simple as <code>function(x){1}</code>, that is, nothing but a
+constant), and Jonty would recommend more complicated bespoke
+functions that reflect prior beliefs.
+</p>
+<p>Function <code>regressor.multi()</code> is just a wrapper for
+<code>regressor.basis()</code> that works for matrices.  This is used
+internally and the user should not need to change it.
+</p>
+<p>Note that the user is free to define and use functions other than this
+one when using, for example, <code>corr()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns simple regressor basis for vectors or matrices.
+</p>
+
+
+<h3>Note</h3>
+
+<p>When writing replacements for <code>regressor.basis()</code>, 
+it is important to return a vector with at least one <strong>named</strong>
+element (see the R source code for function <code>regressor.basis()</code>,
+in which the first element is named “<code>const</code>”).
+</p>
+<p>Returning a vector all of whose elements are unnamed will cause some
+of the package functions to fail in various weird places.  It is good
+practice to use named vectors in any case.
+</p>
+<p>Function <code>regressor.multi()</code> includes an ugly hack to ensure that
+the perfectly reasonable choice of
+<code>regressor.basis=function(x){1}</code> works.  The hack is needed
+because <code>apply()</code> treats functions that return a length-1 value
+argument differently from functions that return a vector: if <code>x
+  &lt;- as.matrix(1:10)</code>
+</p>
+<p>then
+</p>
+<p><code>apply(x,1,function(x){c(1,x)})</code>
+</p>
+<p>returns a matrix (as desired), but
+</p>
+<p><code>apply(x,1,function(x){c(1)})</code>
+</p>
+<p>returns a vector (of <code>1</code>s) which is not what is wanted.  The best
+way to deal with this (IMHO) is to confine the ugliness to a single
+function, here <code>regressor.multi()</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">regressor.basis(rep(5,6))
+m &lt;- matrix(1:27,9,3)
+regressor.multi(m)
+regressor.multi(m,func=function(x){c(a=88,x,x^2,x[1]^4)})
+
+
+# and now a little example where we can choose the basis functions
+# explicitly and see the effect it has.  Note particularly the poor
+# performance of func2() in extrapolation:
+
+
+func1 &lt;- function(x){
+  out &lt;- c(1,cos(x))
+  names(out) &lt;- letters[1:length(x)]
+  return(out)
+}
+
+func2 &lt;- function(x){
+  out &lt;- c(1,cos(x),cos(2*x),cos(3*x))
+  names(out) &lt;- letters[1:length(x)]
+  return(out)
+}
+
+func3 &lt;- function(x){out &lt;- c(1,x)
+names(out)[1] &lt;- "const"
+return(out)
+}
+
+func.chosen &lt;- func1
+
+
+toy &lt;- sort(c(seq(from=0,to=1,len=9),0.2))
+toy &lt;- as.matrix(toy)
+colnames(toy) &lt;- "a"
+rownames(toy) &lt;- paste("obs",1:nrow(toy),sep=".")
+
+d.noisy &lt;- as.vector(toy&gt;0.5)+rnorm(length(toy))/40
+
+fish &lt;- 100
+x &lt;- seq(from=-1,to=2,len=200)
+A &lt;- corr.matrix(toy,scales=fish)
+Ainv &lt;- solve(A)
+
+ ## Now the interpolation.  Change func.chosen() from func1() to func2()
+ ## and see the difference!
+
+jj &lt;- interpolant.quick(as.matrix(x), d.noisy, toy, scales=fish,
+                        func=func.chosen, 
+                         Ainv=Ainv,g=TRUE)
+
+plot(x,jj$mstar.star,xlim=range(x),type="l",col="black",lwd=3)
+lines(x,jj$prior,col="green",type="l")
+lines(x,jj$mstar.star+jj$Z,type="l",col="red",lty=2)
+lines(x,jj$mstar.star-jj$Z,type="l",col="red",lty=2)
+points(toy,d.noisy,pch=16,cex=2)
+legend("topright",lty=c(1,2,1,0),
+    col=c("black","red","green","black"),pch=c(NA,NA,NA,16),
+    legend=c("best estimate","+/-1 sd","prior","training set"))
+
+
+  ## Now we will use O&amp;O 2002.
+
+## First, some simulated design points:
+xdash &lt;- as.matrix(c(-0.5, -0.1, -0.2, 1.1, 1.15))
+
+## create an augmented design set:
+design.augmented &lt;- rbind(toy,xdash)
+
+## And calculate the correlation matrix of the augmented dataset:
+A.augmented &lt;- corr.matrix(design.augmented, scales=fish)
+Ainv.augmented &lt;- solve(A.augmented)
+
+## Now, define a function that samples from the
+## appropriate posterior t-distribution, adds these random
+## variables to the dataset, then calculates a new
+## etahat and evaluates and plots it:
+
+f &lt;- function(...){
+
+ddash &lt;- cond.sample(n=1, x=xdash, xold=toy, d=d.noisy, A=A,
+                           Ainv=Ainv, scales=fish, func=func.chosen)
+
+        jj.aug &lt;-
+          interpolant.quick(x      = as.matrix(x),
+                            d      = c(d.noisy,as.vector(ddash)),
+                            xold   = design.augmented,
+                            Ainv   = Ainv.augmented,
+                            scales = fish,func=func.chosen)
+points(xdash,ddash,type="p",pch=16,col="gray")
+points(x, jj.aug, type="l", col="gray")
+}
+
+
+## Now execute the function a few times to assess the uncertainty in eta:
+f()
+f()
+f()
+
+</code></pre>
+
+
+</div>

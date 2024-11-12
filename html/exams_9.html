@@ -1,0 +1,190 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams2canvas</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Exams for Canvas</h2>
+
+<h3>Description</h3>
+
+<p>Automatic generation of exams in QTI 1.2 with some tweaks
+(still under development) for the learning management system Canvas.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  exams2canvas(file, n = 1L, dir = ".", name = "canvasquiz",
+    maxattempts = 1, duration = NULL, points = NULL,
+    converter = NULL, template = "canvas_qti12.xml",
+    quiztype = "assignment", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The default is the current working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting exercises and ZIP file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxattempts</code></td>
+<td>
+<p>integer. The maximum attempts for one question
+(must be smaller than <code>100000</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>duration</code></td>
+<td>
+<p>integer. Set the duration of the exam in minutes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>integer. How many points should be assigned to each exercise? Note that this
+argument overules any exercise points that are provided within an <code>"\expoints{}"</code> tag
+in the <code>.Rnw</code> file. The vector of points supplied is expanded to the number of exercises in
+the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converter</code></td>
+<td>
+<p>character passed on to <code>make_exercise_transform_html</code>,
+indicating the type of converter from LaTeX/Markdown to HTML. Currently,
+Canvas requires HTML with MathML. Hence, if there are Markdown-based .Rmd
+exercises, the <code>converter</code> needs to be <code>"pandoc-mathml"</code> (or
+equivalently <code>"pandoc"</code>). For only LaTeX-based .Rnw exercises <code>"ttm"</code>
+can be used as an alternative and is currently the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>character. The IMS QTI 1.2 template that should be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiztype</code></td>
+<td>
+<p>character. The type of quiz that should be created in Canvas.
+Defaults to <code>"assignment"</code> with alternative values being <code>"practice_quiz"</code>,
+<code>"graded_survey"</code>, or <code>"survey"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed on to <code>exams2qti12</code>.
+The arguments <code>base64</code> and <code>eval</code> cannot be modified but are
+hard-coded internally (for details see below).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>exams2canvas</code> is a convenience interface to <code>exams2qti12</code>
+for generating QTI 1.2 with some small tweaks for Canvas
+(<a href="https://www.instructure.com/canvas">https://www.instructure.com/canvas</a>). The supported exercise types at the
+moment are num, schoice, mchoice, and string. There is limited support for cloze exercises
+with multiple dropdown menus, i.e., schoice elements placed in the text with ANSWERi tags.
+</p>
+<p>The Canvas-specific tweaks include:
+</p>
+
+<ul>
+<li>
+<p> Canvas necessitates a <code>converter</code> that produces HTML plus MathML.
+Thus, <code>"pandoc-mathml"</code> (or equivalently <code>"pandoc"</code>) can be used
+or alternatively <code>"ttm"</code> for exams with only R/LaTeX .Rnw exercises.
+</p>
+</li>
+<li>
+<p> Supplementary files (images, data, ...) must be embedded without Base 64
+encoding. Thus, <code>base64 = FALSE</code> is hard-coded internally in <code>exams2canvas</code>.
+</p>
+</li>
+<li>
+<p> Multiple-choice exercises (referred to as multiple answer questions in Canvas)
+are always evaluated (aka scored) with partial credits in Canvas. Therefore,
+<code>eval = list(partial = TRUE, negative = FALSE)</code> is hard-coded internally
+in <code>exams2canvas</code>. Negative points are not supported in Canvas.
+</p>
+</li>
+<li>
+<p> The QTI XML file requires a few special tags which are enforced through
+<code>flavor = "canvas"</code> in <code>exams2qti12</code>.
+</p>
+</li>
+</ul>
+<p><em>Technical note:</em> For multiple-choice questions the QTI XML file produced by
+<code>exams2canvas</code> appears to encode an “all-or-nothing” scheme without partial
+credits (i.e., <code>partial = FALSE</code>). However, this is necessary for Canvas to recognize
+the answer alternatives correctly. Despite this, Canvas always applies partial-credit
+evaluation (as explained above).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>exams2canvas</code> returns a list of exams as generated by <code>xexams</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>exams2qti12</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## load package and enforce par(ask = FALSE)
+library("exams")
+options(device.ask.default = FALSE)
+
+## define an exams (= list of exercises)
+myexam &lt;- c(
+  "boxplots.Rmd",
+  "tstat.Rmd",
+  "ttest.Rmd",
+  "regression.Rmd",
+  "relfreq.Rmd"
+)
+
+## output directory
+dir.create(mydir &lt;- tempfile())
+
+## generate .zip with Canvas test in temporary directory
+exams2canvas(myexam, n = 3, dir = mydir)
+dir(mydir)
+
+</code></pre>
+
+
+</div>

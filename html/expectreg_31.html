@@ -1,0 +1,339 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rb</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Creates base for a regression based on covariates
+</h2>
+
+<h3>Description</h3>
+
+<p>Based on given observations a matrix is created that creates a basis e.g.
+of splines or a markov random field that is evaluated for each observation.
+Additionally a penalty matrix is generated. Shape constraint p-spline bases can
+also be specified.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rb(x, type = c("pspline", "2dspline", "markov", "krig", "random", 
+"ridge", "special", "parametric", "penalizedpart_pspline"), B_size = 20, 
+B = NA, P = NA, bnd = NA, center = TRUE, by = NA, ...)
+
+mono(x, constraint = c("increase", "decrease", "convex", "concave", "flatend"), 
+by = NA)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Data vector, matrix or data frame. In case of '2dspline', or 'krig' <code>type</code>
+number of variables of <code>x</code> has to be 2. More dimensions are allowed in 'ridge' and 'special' <code>type</code>.
+'markov' and 'random' <code>type</code> require a vector of a factor.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>Character string defining the type of base that is generated for the given variable(s) <code>x</code>.
+Further description of the possible options is given below in <code>details</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B_size</code></td>
+<td>
+
+<p>Number of basis functions of psplines. Default is 20.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+
+<p>For the 'special' <code>type</code> the base <code>B</code> and penalization matrix <code>P</code>
+are entered manually. The data frame or matrix needs as many rows as observations in <code>x</code>
+and as many columns as <code>P</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+
+<p>Square matrix that has to be provided in 'special' case and with 'markov' <code>type</code>
+if no <code>bnd</code> is given.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bnd</code></td>
+<td>
+
+<p>Object of class <code>bnd</code>, required with 'markov' type if <code>P</code> is not given.
+See <code>read.bnd</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+
+<p>Logical to state whether the basis shall be centered in order to fit additive models
+with one central intercept.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+
+<p>An optional variable defining varying coefficients, either a factor or numeric variable.
+Per default treatment coding is used. Note that the main effect needs to be specified in a separate basis.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraint</code></td>
+<td>
+
+<p>Character string defining the type of shape constraint that is imposed on the spline curve. The last option
+'flatend' results in constant functions at the covariate edges.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Currently not used.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Possible <code>types</code> of bases:
+</p>
+
+<dl>
+<dt>pspline</dt>
+<dd>
+<p>Penalized splines made upon <code>B_size</code> equidistant knots
+with degree 3. The penalization matrix consists 
+of differences of the second order, 
+see <code>diff</code>.</p>
+</dd>
+<dt>2dspline</dt>
+<dd>
+<p>Tensor product of 2 p-spline bases 
+with the same properties as above.</p>
+</dd>
+<dt>markov</dt>
+<dd>
+<p>Gaussian markov random field with a neighbourhood 
+structure given by <code>P</code> or <code>bnd</code>. </p>
+</dd>
+</dl>
+<dl>
+<dt>krig</dt>
+<dd>
+<p>'kriging' produces a 2-dimensional base, which is calculated as exp(-r/phi)*(1+r/phi)
+where <code>phi</code> is the maximum euclidean distance 
+between two knots divided by a constant. </p>
+</dd>
+<dt>random</dt>
+<dd>
+<p>A 'random' effect is like the 'markov' random field 
+based on a categorial variable, 
+and since there is no neighbourhood structure, P = I. </p>
+</dd>
+<dt>ridge</dt>
+<dd>
+<p>In a 'ridge' regression, the base is made 
+from the independent variables while the goal is 
+to determine significant variables from the coefficients. 
+Therefore no penalization is used (P = I). </p>
+</dd>
+<dt>special</dt>
+<dd>
+<p>In the 'special' case, <code>B</code> and <code>P</code> are user defined.</p>
+</dd>
+<dt>parametric</dt>
+<dd>
+<p>A parametric effect. </p>
+</dd>
+<dt>penalizedpart_pspline</dt>
+<dd>
+<p>Penalized splines made upon <code>B_size</code> equidistant knots with degree 3. The penalization matrix consists of differences of the second order, 
+see <code>diff</code>. Generally a P-spline of degree 3 with 2 order penalty can be splited in a linear trend and the deviation of the linear trend. Here only the wiggly deviation of the linear trend is kept. It is possible to combine it with the same covariate of type <code>parametric</code></p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>List consisting of:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>B </code></td>
+<td>
+<p> Matrix of the evaluated base, one row for each observation,
+one column for each base element. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P </code></td>
+<td>
+<p> Penalty square matrix, needed for the smoothing in the regression. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x </code></td>
+<td>
+<p> The observations <code>x</code> given to the function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p> The <code>type</code> as given to the function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bnd</code></td>
+<td>
+<p> The <code>bnd</code> as given to the function, only needed with 'markov' <code>type</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Zspathelp</code></td>
+<td>
+<p> Matrix that is also only needed with 'markov' <code>type</code>
+for calculation of the fitted values. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi</code></td>
+<td>
+<p> Constant only needed with 'kriging' <code>type</code>,
+otherwise 'NA'. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p> The boolean value of the argument <code>center</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p> The variable included in the <code>by</code> argument if available. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xname</code></td>
+<td>
+<p> Name of the variable <code>x</code> given to the function. Modified by its type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraint</code></td>
+<td>
+<p> Part of the penalty matrix. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B_size</code></td>
+<td>
+<p> Same as input </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P_orig</code></td>
+<td>
+<p> Original penalty <code>P</code> before restructuring. Used for model selection. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B_mean</code></td>
+<td>
+<p> Original mean of design matrix <code>B</code> before centering. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param_center</code></td>
+<td>
+<p> Parameters of centering the covariate. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbp</code></td>
+<td>
+<p> Number of penalized parameters in this covariate. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbunp</code></td>
+<td>
+<p> Number of unpenalized parameters in this covariate. </p>
+</td>
+</tr>
+</table>
+<h3>Warning </h3>
+
+<p>The <code>pspline</code> is now centered around its mean. Thus different results compared to old versions of <code>expectreg</code> occure.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Fabian Otto- Sobotka <br>
+Carl von Ossietzky University Oldenburg <br><a href="https://uol.de">https://uol.de</a> <br></p>
+<p>Thomas Kneib, Elmar Spiegel <br>
+Georg August University Goettingen <br><a href="https://www.uni-goettingen.de">https://www.uni-goettingen.de</a> <br></p>
+<p>Sabine Schnabel <br>
+Wageningen University and Research Centre <br><a href="https://www.wur.nl">https://www.wur.nl</a>
+</p>
+<p>Paul Eilers <br>
+Erasmus Medical Center Rotterdam <br><a href="https://www.erasmusmc.nl">https://www.erasmusmc.nl</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Fahrmeir L and Kneib T and Lang S (2009)
+<em> Regression </em>
+Springer, New York
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>quant.bundle</code>, <code>expectreg.ls</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- rnorm(100)
+
+bx &lt;- rb(x,"pspline")
+
+y &lt;- sample(10,100,replace=TRUE)
+
+by &lt;- rb(y,"random")
+</code></pre>
+
+
+</div>

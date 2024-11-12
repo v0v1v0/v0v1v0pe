@@ -1,0 +1,433 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_idf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run simulations of EnergyPlus models.</h2>
+
+<h3>Description</h3>
+
+<p>Run simulations of EnergyPlus models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_idf(
+  model,
+  weather,
+  output_dir,
+  design_day = FALSE,
+  annual = FALSE,
+  expand_obj = TRUE,
+  wait = TRUE,
+  echo = TRUE,
+  eplus = NULL
+)
+
+run_multi(
+  model,
+  weather,
+  output_dir,
+  design_day = FALSE,
+  annual = FALSE,
+  expand_obj = TRUE,
+  wait = TRUE,
+  echo = TRUE,
+  eplus = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A path (for <code>run_idf()</code>) or a vector of paths (for
+<code>run_multi()</code>) of EnergyPlus IDF or IMF files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weather</code></td>
+<td>
+<p>A path (for <code>run_idf()</code>) or a vector of paths (for
+<code>run_multi()</code>) of EnergyPlus EPW weather files.
+If set to <code>NULL</code>, design-day-only simulation will be triggered,
+regardless of the <code>design-day</code> value.
+For <code>run_multi()</code>, <code>weather</code> can also be a single EPW file path. In
+this case, that weather will be used for all simulations; otherwise,
+<code>model</code> and <code>weather</code> should have the same length. You can set to
+design-day-only simulation to some specific simulations by setting the
+corresponding weather to <code>NA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_dir</code></td>
+<td>
+<p>Output directory path (for <code>rum_idf()</code>) or paths (for
+<code>run_mult()</code>). If NULL, the directory of input model is used. For
+<code>run_multi()</code>, <code>output_dir</code>, if not <code>NULL</code>, should have the same
+length as <code>model</code>. Any duplicated combination of <code>model</code> and
+<code>output_dir</code> is prohibited.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design_day</code></td>
+<td>
+<p>Force design-day-only simulation. For <code>rum_multi()</code>,
+<code>design_day</code> can also be a logical vector which has the same length as
+<code>model</code>. Note that <code>design_day</code> and <code>annual</code> cannot be all <code>TRUE</code> at
+the same time. Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>annual</code></td>
+<td>
+<p>Force annual simulation. For <code>rum_multi()</code>,
+<code>annual</code> can also be a logical vector which has the same length as
+<code>model</code>. Note that <code>design_day</code> and <code>annual</code> cannot be all <code>TRUE</code> at
+the same time. Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expand_obj</code></td>
+<td>
+<p>Whether to run ExpandObject preprocessor before simulation.
+Default: TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wait</code></td>
+<td>
+<p>If <code>TRUE</code>, R will hang on and wait all EnergyPlus simulations
+finish. If <code>FALSE</code>, all EnergyPlus simulations are run in the
+background, and a process object is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>echo</code></td>
+<td>
+<p>Only applicable when <code>wait</code> is <code>TRUE</code>. Whether to show standard
+output and error from EnergyPlus for <code>run_idf()</code> and simulation status
+for <code>run_multi()</code>. Default: <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eplus</code></td>
+<td>
+<p>An acceptable input (for <code>run_idf()</code>) or inputs (for
+<code>run_multi()</code>) of <code>use_eplus()</code> and <code>eplus_config()</code>. If <code>NULL</code>, which
+is the default, the version of EnergyPlus to use is determined by the
+version of input model. For <code>run_multi()</code>, <code>eplus</code>, if not <code>NULL</code>,
+should have the same length as <code>model</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>run_idf()</code> is a wrapper of EnergyPlus itself, plus various pre-processors
+and post-processors which enables to run EnergyPlus model with different
+options.
+</p>
+<p><code>run_multi()</code> provides the functionality of running multiple models in
+parallel.
+</p>
+<p>It is suggested to run simulations using EplusJob class and EplusGroupJob
+class, which provide much more detailed controls on the simulation and also
+methods to extract simulation outputs.
+</p>
+
+
+<h3>Value</h3>
+
+
+<ul><li>
+<p> For <code>run_idf()</code>, if <code>wait</code> is <code>TRUE</code>, a named list of 11 elements:
+</p>
+</li></ul>
+<table>
+<tr>
+<td style="text-align: right;">
+   No. </td>
+<td style="text-align: left;"> Column </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   1 </td>
+<td style="text-align: left;"> <code>idf</code> </td>
+<td style="text-align: left;"> <code>character(1)</code> </td>
+<td style="text-align: left;"> Full path of input IDF file </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   2 </td>
+<td style="text-align: left;"> <code>epw</code> </td>
+<td style="text-align: left;"> <code>character(1)</code> or <code>NULL</code> </td>
+<td style="text-align: left;"> Full path of input EPW file </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   3 </td>
+<td style="text-align: left;"> <code>version</code> </td>
+<td style="text-align: left;"> <code>character(1)</code> </td>
+<td style="text-align: left;"> Version of called EnergyPlus </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   4 </td>
+<td style="text-align: left;"> <code>exit_status</code> </td>
+<td style="text-align: left;"> <code>integer(1)</code> or <code>NULL</code> </td>
+<td style="text-align: left;"> Exit status of EnergyPlus. <code>NULL</code> if terminated or <code>wait</code> is <code>FALSE</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   5 </td>
+<td style="text-align: left;"> <code>start_time</code> </td>
+<td style="text-align: left;"> <code>POSIXct(1)</code> </td>
+<td style="text-align: left;"> Start of time of simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   6 </td>
+<td style="text-align: left;"> <code>end_time</code> </td>
+<td style="text-align: left;"> <code>POSIXct(1)</code> or <code>NULL</code> </td>
+<td style="text-align: left;"> End of time of simulation. <code>NULL</code> if <code>wait</code> is <code>FALSE</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   7 </td>
+<td style="text-align: left;"> <code>output_dir</code> </td>
+<td style="text-align: left;"> <code>character(1)</code> </td>
+<td style="text-align: left;"> Full path of simulation output directory </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   8 </td>
+<td style="text-align: left;"> <code>energyplus</code> </td>
+<td style="text-align: left;"> <code>character(1)</code> </td>
+<td style="text-align: left;"> Full path of called EnergyPlus executable </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   9 </td>
+<td style="text-align: left;"> <code>stdout</code> </td>
+<td style="text-align: left;"> <code>character(1)</code> or <code>NULL</code> </td>
+<td style="text-align: left;"> Standard output of EnergyPlus during simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   10 </td>
+<td style="text-align: left;"> <code>stderr</code> </td>
+<td style="text-align: left;"> <code>character(1)</code> or <code>NULL</code> </td>
+<td style="text-align: left;"> Standard error of EnergyPlus during simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   11 </td>
+<td style="text-align: left;"> <code>process</code> </td>
+<td style="text-align: left;"> r_process </td>
+<td style="text-align: left;"> A process object which called EnergyPlus and ran the simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+</td>
+</tr>
+</table>
+<p>If <code>wait</code> is <code>FALSE</code>, the R process is directly returned.
+You can get the results by calling <code>result &lt;- proc$get_result()</code> (<code>proc</code> is
+the returned process). Please note that in this case, <code>result$process</code> will
+alwasy be <code>NULL</code>. But you can easily assign it by running <code>result$process &lt;- proc</code>
+</p>
+
+<ul>
+<li>
+<p> For <code>rum_multi()</code>, if <code>wait</code> is TRUE, a
+data.table of 12 columns:</p>
+
+<table>
+<tr>
+<td style="text-align: right;">
+   No. </td>
+<td style="text-align: left;"> Column </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   1 </td>
+<td style="text-align: left;"> <code>index</code> </td>
+<td style="text-align: left;"> <code>integer</code> </td>
+<td style="text-align: left;"> Index of simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   2 </td>
+<td style="text-align: left;"> <code>status</code> </td>
+<td style="text-align: left;"> <code>character</code> </td>
+<td style="text-align: left;"> Simulation status </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   3 </td>
+<td style="text-align: left;"> <code>idf</code> </td>
+<td style="text-align: left;"> <code>character</code> </td>
+<td style="text-align: left;"> Full path of input IDF file </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   4 </td>
+<td style="text-align: left;"> <code>epw</code> </td>
+<td style="text-align: left;"> <code>character</code> </td>
+<td style="text-align: left;"> Full path of input EPW file. <code>NA</code> for design-day-only simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   5 </td>
+<td style="text-align: left;"> <code>version</code> </td>
+<td style="text-align: left;"> <code>character</code> </td>
+<td style="text-align: left;"> Version of EnergyPlus </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   6 </td>
+<td style="text-align: left;"> <code>exit_status</code> </td>
+<td style="text-align: left;"> <code>integer</code> </td>
+<td style="text-align: left;"> Exit status of EnergyPlus. <code>NA</code> if terminated </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   7 </td>
+<td style="text-align: left;"> <code>start_time</code> </td>
+<td style="text-align: left;"> <code>POSIXct</code> </td>
+<td style="text-align: left;"> Start of time of simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   8 </td>
+<td style="text-align: left;"> <code>end_time</code> </td>
+<td style="text-align: left;"> <code>POSIXct</code> </td>
+<td style="text-align: left;"> End of time of simulation. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   9 </td>
+<td style="text-align: left;"> <code>output_dir</code> </td>
+<td style="text-align: left;"> <code>character</code> </td>
+<td style="text-align: left;"> Full path of simulation output directory </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   10 </td>
+<td style="text-align: left;"> <code>energyplus</code> </td>
+<td style="text-align: left;"> <code>character</code> </td>
+<td style="text-align: left;"> Full path of called EnergyPlus executable </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   11 </td>
+<td style="text-align: left;"> <code>stdout</code> </td>
+<td style="text-align: left;"> <code>list</code> </td>
+<td style="text-align: left;"> Standard output of EnergyPlus during simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   12 </td>
+<td style="text-align: left;"> <code>stderr</code> </td>
+<td style="text-align: left;"> <code>list</code> </td>
+<td style="text-align: left;"> Standard error of EnergyPlus during simulation </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+</td>
+</tr>
+</table>
+<p>For column <code>status</code>, there are 4 possible values:
+</p>
+
+<ul>
+<li> <p><code>"completed"</code>: the simulation job is completed successfully
+</p>
+</li>
+<li> <p><code>"failed"</code>: the simulation job ended with error
+</p>
+</li>
+<li> <p><code>"terminated"</code>: the simulation job started but was terminated
+</p>
+</li>
+<li> <p><code>"cancelled"</code>: the simulation job was cancelled, i.e. did not start at all
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> For <code>run_multi()</code>, if <code>wait</code> is <code>FALSE</code>, a r_process
+object of background R process which handles all simulation jobs is
+returned. You can check if the jobs are completed using <code style="white-space: pre;">⁠$is_alive()⁠</code> and
+get the final data.table using <code style="white-space: pre;">⁠$get_result()⁠</code> method.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>If your input model has external file dependencies, e.g. FMU, schedule files,
+etc. <code>run_idf()</code> and <code>run_multi()</code> will not work if the output directory is
+different that where the input mode lives. If this is the case, parse the
+model using <code>read_idf()</code> and use Idf$run() or <code>eplus_job()</code> instead.
+They are able to automatically change the paths of external files to absolute
+paths or copy them into the output directory, based on your choice.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Hongyuan Jia
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://github.com/NREL/EnergyPlus/blob/develop/doc/running-energyplus-from-command-line.md">Running EnergyPlus from Command Line (EnergyPlus GitHub Repository)</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>EplusJob class and ParametricJob class which provide a more friendly
+interface to run EnergyPlus simulations and collect outputs.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+idf_path &lt;- system.file("extdata/1ZoneUncontrolled.idf", package = "eplusr")
+
+if (is_avail_eplus("8.8")) {
+    # run a single model
+    epw_path &lt;- file.path(
+        eplus_config("8.8")$dir,
+        "WeatherData",
+        "USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+    )
+
+    run_idf(idf_path, epw_path, output_dir = tempdir())
+
+    # run multiple model in parallel
+    idf_paths &lt;- file.path(eplus_config("8.8")$dir, "ExampleFiles",
+        c("1ZoneUncontrolled.idf", "1ZoneUncontrolledFourAlgorithms.idf")
+    )
+    epw_paths &lt;- rep(epw_path, times = 2L)
+    output_dirs &lt;- file.path(tempdir(), tools::file_path_sans_ext(basename(idf_paths)))
+    run_multi(idf_paths, epw_paths, output_dir = output_dirs)
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

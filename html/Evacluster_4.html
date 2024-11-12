@@ -1,0 +1,239 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Evacluster-package</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Evaluation Clustering Methods for Disease Subtypes Diagnosis (Evacluster)</h2>
+
+<h3>Description</h3>
+
+<p>Contains a set of clustering methods and evaluation metrics to select the best number of the clusters based on clustering stability.
+</p>
+
+
+<h3>Details</h3>
+
+
+<table>
+<tr>
+<td style="text-align: left;">
+        Package: </td>
+<td style="text-align: left;"> Evacluster</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+        Type: </td>
+<td style="text-align: left;"> Package</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+        Version: </td>
+<td style="text-align: left;"> 0.1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+        Date: </td>
+<td style="text-align: left;"> 2022-03-25</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+        License: </td>
+<td style="text-align: left;"> LGPL (&gt;= 2)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    </td>
+</tr>
+</table>
+<p>Purpose: The design of clustering models and evaluation metrics for finding the cluster's number via computing clustering stability.
+The best number of clusters is selected via consensus clustering and clustering stability. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Fahimeh Nezhadmoghadam, Jose Gerardo Tamez-Pena,
+Maintainer: &lt;f.nejad.moghadam@gmail.com&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Nezhadmoghadam, Fahimeh, and Jose Tamez-Pena. "Risk profiles for negative and positive COVID-19 hospitalized patients.(2021) <em>Computers in biology and medicine</em> 136 : 104753.<br>
+Fahimeh Nezhadmoghadam, et al., Robust Discovery of Mild Cognitive impairment subtypes and their Risk of Alzheimer's Disease conversion using unsupervised machine learning and Gaussian Mixture Modeling (2021), <em>Current Alzheimer Research</em>, 18 (7), 595-606.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">    ## Not run: 
+    ### Evacluster Package Examples ####
+    library(datasets)
+    data(iris)
+
+   # Split data to training set and testing set
+   rndSamples &lt;- sample(nrow(iris),100)
+   trainData &lt;- iris[rndSamples,]
+   testData &lt;- iris[-rndSamples,]
+
+  
+   ## Expectation Maximization Clustering
+   # Perform Expectation Maximization Clustering on training set with 3 clusters 
+   clsut &lt;- EMCluster(trainData[,1:4],3)
+   
+   # Predict the labels of the cluster for new data based on cluster labels of the training set
+   pre &lt;- predict(clsut,testData[,1:4])
+   
+   
+   ## Fuzzy C-means Clustering
+   # Perform Fuzzy C-means Clustering on training set with 3 clusters 
+   clsut &lt;- FuzzyCluster(trainData[,1:4],3)
+   
+   # Predict the labels of the new data 
+   pre &lt;- predict(clsut,testData[,1:4])
+   
+   
+   ## hierarchical clustering
+   # Perform hierarchical clustering on training set with 3 clusters 
+   clsut &lt;- hierarchicalCluster(trainData[,1:4],distmethod="euclidean",clusters=3)
+   
+   # Predict the labels of the new data 
+   pre &lt;- predict(clsut,testData[,1:4])
+   
+   
+   ## K-means Clustering
+   # Perform K-means Clustering on training set with 3 clusters 
+   clsut &lt;- kmeansCluster(trainData[,1:4],3)
+   
+   # Predict the labels of the new data 
+   pre &lt;- predict(clsut,testData[,1:4])
+   
+   
+   ## Partitioning Around Medoids (PAM) Clustering
+   # Perform pam Clustering on training set with 3 clusters 
+   clsut &lt;- pamCluster(trainData[,1:4],3)
+   
+   # Predict the labels of the new data 
+   pre &lt;- predict(clsut,testData[,1:4])
+   
+   
+   ## Non-negative matrix factorization (NMF)
+   # Perform nmf Clustering on training set with 3 clusters 
+   clsut &lt;- nmfCluster(trainData[,1:4],rank=3)
+   
+   # Predict the labels of the new data 
+   pre &lt;- predict(clsut,testData[,1:4])
+   
+   
+   ## t-Distributed Stochastic Neighbor Embedding (t-SNE)
+   
+   library(mlbench)
+   data(Sonar)
+ 
+   rndSamples &lt;- sample(nrow(Sonar),150)
+   trainData &lt;- Sonar[rndSamples,]
+   testData &lt;- Sonar[-rndSamples,]
+ 
+   # Perform tSNE dimensionality reduction method on training data 
+   tsne_trainData &lt;- tsneReductor(trainData[,1:60],dim = 3,perplexity = 10,max_iter = 1000)
+   
+   # performs an embedding of new data using an existing embedding
+   tsne_testData &lt;- predict(tsne_trainData,k=3,testData[,1:60])
+   
+   
+   ## clustering stability function
+   # Compute the stability of clustering to select the best number of clusters.
+   library(mlbench)
+   data(Sonar)
+ 
+   Sonar$Class &lt;- as.numeric(Sonar$Class)
+   Sonar$Class[Sonar$Class == 1] &lt;- 0
+   Sonar$Class[Sonar$Class == 2] &lt;- 1
+   
+   # Compute the stability of clustering using kmeans clustering, UMAP as 
+   dimensionality reduction method, and feature selection technique
+   
+  ClustStab &lt;- clusterStability(data=Sonar, clustermethod=kmeansCluster, dimenreducmethod="UMAP",
+                              n_components = 3,featureselection="yes", outcome="Class",
+                              fs.pvalue = 0.05,randomTests = 100,trainFraction = 0.7,center=3)
+   
+   
+   # Get the labels of the subjects that share the same connectivity
+   clusterLabels &lt;- getConsensusCluster(ClustStab,who="training",thr=seq(0.80,0.30,-0.1))
+
+
+     # Compute the stability of clustering using PAM clustering, tSNE as
+     dimensionality reduction method, and feature selection technique
+     
+   ClustStab &lt;- clusterStability(data=Sonar, clustermethod=pamCluster, dimenreducmethod="tSNE",
+                              n_components = 3, perplexity=10,max_iter=100,k_neighbor=2,
+                             featureselection="yes", outcome="Class",fs.pvalue = 0.05,
+                               randomTests = 100,trainFraction = 0.7,k=3)
+          
+    # Get the labels of the subjects that share the same connectivity
+   clusterLabels &lt;- getConsensusCluster(ClustStab,who="training",thr=seq(0.80,0.30,-0.1))
+                     
+                     
+    # Compute the stability of clustering using hierarchical clustering,
+    PCA as dimensionality reduction method, and without applying feature selection
+                                 
+   ClustStab &lt;- clusterStability(data=Sonar, clustermethod=hierarchicalCluster, 
+                               dimenreducmethod="PCA", n_components = 3,featureselection="no",
+                               randomTests = 100,trainFraction = 0.7,distmethod="euclidean", 
+                               clusters=3)
+                               
+ # Get the labels of the subjects that share the same connectivity
+   clusterLabels &lt;- getConsensusCluster(ClustStab,who="training",thr=seq(0.80,0.30,-0.1))
+   
+   
+   # Show the clustering stability resuldts
+   mycolors &lt;- c("red","green","blue","yellow")
+ 
+   ordermatrix &lt;- ClustStab$dataConcensus
+ 
+   heatmapsubsample &lt;- sample(nrow(ordermatrix),70)
+ 
+   orderindex &lt;- 10*clusterLabels + ClustStab$trainJaccardpoint
+ 
+   orderindex &lt;- orderindex[heatmapsubsample]
+   orderindex &lt;- order(orderindex)
+   ordermatrix &lt;- ordermatrix[heatmapsubsample,heatmapsubsample]
+   ordermatrix &lt;- ordermatrix[orderindex,orderindex]
+   rowcolors &lt;- mycolors[1+clusterLabels[heatmapsubsample]]
+   rowcolors &lt;- rowcolors[orderindex]
+ 
+ 
+   hplot &lt;- gplots::heatmap.2(as.matrix(ordermatrix),Rowv=FALSE,Colv=FALSE,
+                            RowSideColors = rowcolors,ColSideColors = rowcolors,dendrogram = "none",
+                            trace="none",main="Cluster Co-Association \n (k=3)")
+                            
+   
+   # Compare the PAC values of clustering stability with different numbers of clusters 
+   
+   ClustStab2 &lt;- clusterStability(data=Sonar, clustermethod=kmeansCluster, dimenreducmethod="UMAP",
+                              n_components = 3,featureselection="yes", outcome="Class",
+                              fs.pvalue = 0.05,randomTests = 100,trainFraction = 0.7,center=2)
+ 
+   ClustStab3 &lt;- clusterStability(data=Sonar, clustermethod=kmeansCluster, dimenreducmethod="UMAP",
+                                n_components = 3,featureselection="yes", outcome="Class",
+                                fs.pvalue = 0.05,randomTests = 100,trainFraction = 0.7,center=3)
+ 
+   ClustStab4 &lt;- clusterStability(data=Sonar, clustermethod=kmeansCluster, dimenreducmethod="UMAP",
+                                n_components = 3,featureselection="yes", outcome="Class",
+                                fs.pvalue = 0.05,randomTests = 100,trainFraction = 0.7,center=4)
+                                
+                                
+   color_range&lt;- c(black="#FDFC74", orange="#76FF7A", skyblue="#B2EC5D")
+ 
+ 
+   max.temp &lt;- c(ClustStab2$PAC,ClustStab3$PAC,ClustStab4$PAC) 
+ 
+   barplot(max.temp,xlab = "Number of clusters",ylab = "PAC", names.arg = c( "2","3","4"), 
+          ylim=c(0,0.3),col= color_range[1:length(c(1,6,2,6,1))])
+                            
+   
+## End(Not run)
+</code></pre>
+
+
+</div>

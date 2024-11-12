@@ -1,0 +1,276 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Simple Exams</h2>
+
+<h3>Description</h3>
+
+<p>Old (version 1) interface for Sweave-based automatic generation
+of exams including multiple choice questions and arithmetic problems.
+Now it is recommended to use the (version 2) interface
+<code>exams2pdf</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  exams(file, n = 1, nsamp = NULL, dir = NULL, template = "plain",
+    inputs = NULL, header = list(Date = Sys.Date()), name = NULL,
+    quiet = TRUE, edir = NULL, tdir = NULL, control = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files,
+for details see below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from
+<code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamp</code></td>
+<td>
+<p>integer. The number(s) of exercise files sampled from each
+list element of <code>file</code>. Sampling without replacement is used
+if possible. (Only if some element of <code>nsamp</code> is larger than
+the length of the corresponding element in <code>file</code>, sampling
+with replacement is used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The output directory, this has to be set if
+<code>n</code> is greater than 1 (or <code>template</code> is longer than 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>character. A specification of a LaTeX template. The package
+currently provides <code>"exam"</code>, <code>"solution"</code>, <code>"plain"</code>.
+For details see below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inputs</code></td>
+<td>
+<p>character. Names of files that are needed as inputs during
+LaTeX compilation (e.g., style files, headers). Either the full path
+must be given or the file needs to be in <code>edir</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>header</code></td>
+<td>
+<p>list. A list of further options to be passed to
+the LaTeX files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting exercises, by default
+chosen based on <code>template</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>logical. Should output be suppressed when calling
+<code>Sweave</code> and <code>texi2dvi</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edir</code></td>
+<td>
+<p>character specifying the path of the directory in which
+the files in <code>file</code> are stored (see also below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdir</code></td>
+<td>
+<p>character specifying a temporary directory, by default
+this is chosen via <code>tempfile</code>. Note that this
+is cleaned up and potentially temporary files are deleted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control arguments for the appearance of
+multiple choice results (see ‘Details’).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>exams</code> is the old (version 1) interface for Sweave-based
+generation of PDF exams. It is only provided for backward compatibility
+and is superseded by the far more flexible function
+<code>exams2pdf</code>.
+</p>
+<p><code>exams</code> generates exams from lists of <code>Sweave</code>
+source files by:
+(1) running <code>Sweave</code> on each exercise,
+(2) including the resulting LaTeX files in a <code>template</code>,
+(3) running <code>texi2dvi</code> on the template, and
+(4) storing the resulting PDF file in an output <code>dir</code>
+(or displaying it interactively).
+</p>
+<p>Each exercise in an exam is essentially a standalone Sweave source file
+that <code>exams</code> knows (almost) nothing about, it just calls <code>Sweave</code>
+(<code>n</code> times). The only exception is some meta-information which
+is passed by means of four commands back to <code>exams</code>. The commands
+are ‘<span class="samp">⁠\extype⁠</span>’ (which may be ‘<span class="samp">⁠mchoice⁠</span>’ or ‘<span class="samp">⁠num⁠</span>’),
+‘<span class="samp">⁠\exsolution⁠</span>’ (e.g., <code>3.124</code> for a numeric solution and
+<code>10010</code> for a multiple choice solution), ‘<span class="samp">⁠\exstring⁠</span>’
+(containing a human-readable string with the solution), and
+‘<span class="samp">⁠\extol⁠</span>’ (a tolerance for numeric solutions).
+</p>
+<p>The specification in <code>file</code> should be either of form <code>"foo"</code>
+or equivalently <code>"foo.Rnw"</code>, where the file <code>"foo.Rnw"</code> should
+either be in the local directory, the <code>edir</code> directory or in
+the <code>exercises</code> directory of the package. <code>file</code> can either
+be a simple vector or a list of vectors. In the latter case, exercises
+are chosen randomly within each list element. For example, the specification
+<code>file = list(c("a", "b"), "xyz")</code> will result in an exam with two
+exercises: the first exercise is chosen randomly between <code>"a"</code> and
+<code>"b"</code> while <code>"xyz"</code> is always included as the second exercise.
+</p>
+<p>The <code>template</code> is a (vector of) specification(s) of LaTeX templates.
+It can be <code>"foo"</code> or equivalently <code>"foo.tex"</code> where <code>"foo.tex"</code>
+should either be in the local directory (or provided with the full path)
+or in the <code>tex</code> directory
+of the package. It should specify where in the template the exercises
+are included, using the markup ‘<span class="samp">⁠\exinput{exercises}⁠</span>’. Additionally,
+it may contain ‘<span class="samp">⁠\exinput{questionnaire}⁠</span>’ and ‘<span class="samp">⁠\exinput{header}⁠</span>’.
+<code>template</code> can also be a vector, then for each of the <code>n</code> runs
+several output files (one for each template) are created.
+</p>
+<p>The name prefix for each file is by default the base name of the 
+corresponding <code>template</code> but can also be changed via <code>name</code>.
+</p>
+<p><code>exams</code> creates the PDF files and stores them in an output
+directory together with the solution meta information as ‘<span class="samp">⁠metainfo.rda⁠</span>’
+(see also below). If only a single PDF is created (currently
+the default), <code>dir</code> may be <code>NULL</code> and it is only displayed
+on the screen.
+</p>
+<p>The argument <code>control</code> is specified by a named list with elements
+<code>mchoice.print</code> and <code>mchoice.symbol</code>. The element
+<code>mchoice.print</code> is used for specifying the characters used for
+printing. It is again a named list where element <code>True</code> gives the
+(five) characters used for printing when the answer is correct and
+<code>False</code> if the answer is wrong. The symbol used for the
+questionnaire output in the final PDF file is defined by
+<code>mchoice.symbol</code> which is vector with elements <code>True</code> and
+<code>False</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"exams_metainfo"</code> is returned invisibly. It is a
+list of length <code>n</code>, containing a list of meta informations for each
+exercise:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mchoice</code></td>
+<td>
+<p>logical. Is the exercise a multiple choice exercise?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>length</code></td>
+<td>
+<p>integer. Length of solution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solution</code></td>
+<td>
+<p>either a logical vector (for multiple choice) or numeric
+vector (for arithmetic problems).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>string</code></td>
+<td>
+<p>character. A human-readable version of the solution.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Gruen B, Zeileis A (2009). Automatic Generation of Exams in R.
+<em>Journal of Statistical Software</em>, <b>29</b>(10), 1–14.
+<a href="https://doi.org/10.18637/jss.v029.i10">doi:10.18637/jss.v029.i10</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>exams2pdf</code>,
+<code>Sweave</code>,
+<code>texi2dvi</code>,
+<code>mchoice2string</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+library("exams")
+options(device.ask.default = FALSE)
+
+## define an exams (= list of exercises)
+myexam &lt;- list(
+  "boxplots.Rnw",
+  c("tstat.Rnw", "ttest.Rnw", "confint.Rnw"),
+  c("regression.Rnw", "anova.Rnw"),
+  "scatterplot.Rnw",
+  "relfreq.Rnw"
+)
+
+
+if(interactive()) {
+## compile a single random exam (displayed on screen)
+sol &lt;- exams(myexam)
+sol
+}
+
+## generate multiple exams (stored in output directory)
+odir &lt;- tempfile()
+sol &lt;- exams(myexam, n = 2, dir = odir, template = c("exam", "solution"))
+sol
+
+## inspect solution for a particular exam
+print(sol, 3)
+
+if(interactive()) {
+## modify control argument for printing
+mymchoice.control &lt;- list(mchoice.print = list(True = LETTERS[1:5], False = "_"))
+sol &lt;- exams("boxplots.Rnw", template = "solution",
+  control = mymchoice.control)
+sol
+}
+
+</code></pre>
+
+
+</div>

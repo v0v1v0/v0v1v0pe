@@ -1,0 +1,333 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate.glm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+A "simulate" method for a glm object
+</h2>
+
+<h3>Description</h3>
+
+<p>Simulate predictions for <code>newdata</code> for a
+model of class <code>glm</code> with mean 
+<code>coef(object)</code> and variance 
+<code>vcov(object)</code>. 
+</p>
+<p>NOTES: The <strong>stats</strong> package has a 
+<code>simulate</code> method for 
+"<code>lm</code>" objects which is used for 
+<code>lm</code> and <code>glm</code> objects. 
+It differs from the current <code>simulate.glm</code>
+function in two fundamental and important ways:  
+</p>
+
+<ol>
+<li>
+<p><code>stats::simulate</code>
+returns simulated data consistent with the 
+model fit assuming the estimated model 
+parameters are true and exact, i.e., 
+ignoring the uncertainty in parameter 
+estimation.  Thus, if <code>family = 
+      poisson</code>, 
+<code>stats::simulate</code>
+returns nonnegative integers.  
+</p>
+<p>By contrast the <code>simulate.glm</code>
+function documented here returns optionally 
+simulated <code>coef (coefficients)</code> plus 
+simulated values for the <code>link</code> and / 
+or <code>response</code> but currently <em>NOT</em> 
+pseudo-random numbers on the scale of the 
+response.  
+
+</p>
+</li>
+<li> 
+<p>The <code>simulate.glm</code> function documented
+here also accepts an optional <code>newdata</code>
+argument, not accepted by 
+<code>stats::simulate</code>.  The 
+<code>stats::simulate</code> 
+function only returns simulated values for 
+the cases in the training set with no 
+possibilities for use for different sets 
+of conditions.  
+
+</p>
+</li>
+</ol>
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'glm'
+simulate(object, nsim = 1, 
+    seed = NULL, newdata=NULL, 
+    type = c("coef", "link", "response"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>an object representing a fitted model 
+of class <code>glm</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+
+<p>number of response vectors to simulate. 
+Defaults to 1.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Argument passed as the first argument to 
+<code>set.seed</code> if not NULL.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+
+<p>optionally, a <code>data.frame</code> 
+in which to look for variables with 
+which to predict. If omitted, predictors 
+used in fitting are used.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>the type of simulations required. 
+</p>
+
+<ul>
+<li>
+<p>coef
+Simulated coefficents using 
+<code>mvtnorm::rmvnorm(nsim,
+        coef(object), vcov(object))</code>.  
+
+</p>
+</li>
+<li>
+<p>link
+The default <code>type</code>='link' is on the 
+scale of the linear predictors using 
+<code>rmvnorm</code> applied  
+to randomly selected components of the 
+mixture with <code>mean</code> = 
+<code>coef</code> and <code>sigma</code> = 
+<code>vcov</code> for that component.  
+For a default binomial model, these are 
+of log-odds (probabilities on logit 
+scale).
+
+</p>
+</li>
+<li>
+<p>response
+<code>object[['linkinv']]</code> of <code>
+        type = 'link'</code>.  For a binomial model, 
+these are predicted probabilities.  
+
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>further arguments passed to or from other
+methods.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>1.  Save current <code>seed</code> and optionally set 
+it using code copied from 
+<code>stats:::simulate.lm</code>.  
+</p>
+<p>2.  <code>if(is.null(newdata))newdata</code> gets the
+data used in the call to <code>glm</code>.
+</p>
+<p>3.  <code>newMat &lt;- model.matrix(~., newdata)</code>
+</p>
+<p>4.  <code>simCoef &lt;- mvtnorm::rmvnorm(nsim, 
+  coef(object), vcov(object))</code>
+</p>
+<p>5.  <code>sims &lt;- tcrossprod(newMat, simCoef)</code>
+</p>
+<p>6.  If <code>length(type)</code> == 1:  return a
+<code>data.frame</code> with one column for 
+each desired simulation, consistent with the 
+behavior of the generic <code>simulate</code>
+applied to objects of class <code>lm</code> or 
+<code>glm</code>.  Otherwise, return a list of 
+<code>data.frame</code>s of the desired types.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns either a <code>data.frame</code> or a
+list of  <code>data.frame</code>s depending 
+on 'type':  
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>a <code>data.frame</code> 
+with <code>nsim</code> columns giving simulated
+parameters generated using 
+<code>mvtnorm::rmvnorm(nsim, 
+    coef(object), vcov(object))</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>link</code></td>
+<td>
+
+<p>a <code>data.frame</code> with <code>nsim</code> 
+columns of <code>nobs</code> values each giving 
+the simulations on the <code>link</code> scale by
+applying each set of simulated coefficients 
+to <code>newdata</code> (or to the training set of
+<code>newdata</code> is not supplied).  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+
+<p>a <code>data.frame</code> with <code>nsim</code>
+columns of <code>nobs</code> values each giving the
+simulations on the <code>response</code> scale, 
+being <code>linkinv</code> of the simulations on 
+the <code>link</code> scale.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>if length(type)&gt;1</code></td>
+<td>
+
+<p>a list with simulations on the desired 
+scales.  
+</p>
+</td>
+</tr>
+</table>
+<p>The value also has an attribute "<code>seed</code>". 
+If argument <code>seed</code> is <code>NULL</code>, the
+attribute is the value of 
+<code>.Random.seed</code> before the 
+simulation started.  Otherwise it is the value 
+of the argument with a <code>kind</code> attribute 
+with value <code>as.list(RNGkind())</code>.  
+</p>
+<p>NOTE:  This function currently may not work
+with a model fit that involves a multivariate 
+<code>link</code> or <code>response</code>.  
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>simulate</code>
+<code>glm</code>
+<code>predict.glm</code>
+<code>set.seed</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(mvtnorm)
+##
+## 1.  a factor and a numeric 
+##
+PoisReg2 &lt;- data.frame(y=1:6, 
+    x=factor(rep(0:2, 2)), x1=rep(1:2, e=3))
+GLMpoisR2 &lt;- glm(y~x+x1, poisson, PoisReg2)
+
+newDat. &lt;- data.frame(
+  x=factor(rep(c(0, 2), 2), levels=0:2), 
+  x1=3:6)
+# NOTE:  Force newDat2['x'] to have the same levels
+# as PoisReg2['x']
+
+GLMsim2n &lt;- simulate(GLMpoisR2, nsim=3, seed=2,
+  newdata=newDat.)
+
+##
+## 2.  One variable:  BMA returns
+##     a mixture of constant &amp; linear models
+##
+PoisRegDat &lt;- data.frame(x=1:2, y=c(5, 10))
+GLMex &lt;- glm(y~x, poisson, PoisRegDat)
+
+# Simulate for the model data 
+GLMsig &lt;- simulate(GLMex, nsim=2, seed=1)  
+
+# Simulate for new data
+newDat &lt;- data.frame(x=3:4, 
+      row.names=paste0('f', 3:4))
+GLMsio &lt;- simulate(GLMex, nsim=3, seed=2, 
+                      newdata=newDat)
+
+##
+## 2a.  Compute the correct answers manually 
+##
+newMat &lt;- model.matrix(~., newDat)
+RNGstate &lt;- structure(2, kind = as.list(RNGkind()))
+set.seed(2)
+
+sim &lt;- mvtnorm::rmvnorm(3, coef(GLMex), 
+                         vcov(GLMex))
+rownames(sim) &lt;- paste0('sim_', 1:3)
+simDF &lt;- data.frame(t(sim))
+
+GLMsim.l &lt;- tcrossprod(newMat, sim)
+colnames(GLMsim.l) &lt;- paste0('sim_', 1:3)
+GLMsim.r &lt;- exp(GLMsim.l) 
+GLMsim2 &lt;- list(coef=simDF, 
+  link=data.frame(GLMsim.l), 
+  response=data.frame(GLMsim.r) )
+attr(GLMsim2, 'seed') &lt;- RNGstate  
+
+
+all.equal(GLMsio, GLMsim2)
+
+</code></pre>
+
+
+</div>

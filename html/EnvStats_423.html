@@ -1,0 +1,476 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predIntLnormSimultaneous</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Simultaneous Prediction Interval for a Lognormal Distribution
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the mean and standard deviation on the log-scale for a
+lognormal distribution, or estimate the mean
+and coefficient of variation for a
+lognormal distribution (alternative parameterization),
+and construct a simultaneous prediction
+interval for the next <code class="reqn">r</code> sampling occasions, based on one of three possible
+rules: k-of-m, California, or Modified California.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  predIntLnormSimultaneous(x, n.geomean = 1, k = 1, m = 2, r = 1, rule = "k.of.m",
+    delta.over.sigma = 0, pi.type = "upper", conf.level = 0.95,
+    K.tol = .Machine$double.eps^0.5)
+
+  predIntLnormAltSimultaneous(x, n.geomean = 1, k = 1, m = 2, r = 1, rule = "k.of.m",
+    delta.over.sigma = 0, pi.type = "upper", conf.level = 0.95,
+    K.tol = .Machine$double.eps^0.5, est.arg.list = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>For <code>predIntLnormSimultaneous</code>, <code>x</code> can be a numeric vector of positive
+observations,
+or an object resulting from a call to an estimating function that assumes a
+lognormal distribution (i.e., <code>elnorm</code> or <code>elnormCensored</code>).
+You <em>cannot</em> supply objects resulting from a call to estimating functions that
+use the alternative parameterization such as <code>elnormAlt</code> or
+<code>elnormAltCensored</code>.
+</p>
+<p>For <code>predIntLnormAltSimultaneous</code>, a numeric vector of positive observations.
+</p>
+<p>If <code>x</code> is a numeric vector,
+missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>)
+values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.geomean</code></td>
+<td>
+
+<p>positive integer specifying the sample size associated with future
+geometric means.  The default value is <code>n.geomean=1</code> (i.e., individual
+observations).  Note that all future geometric means must be based on the same
+sample size.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>for the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule (<code>rule="k.of.m"</code>), a positive integer
+specifying the minimum number of observations (or geometric means) out of <code class="reqn">m</code>
+observations (or geometric means) (all obtained on one future sampling “occassion”)
+the prediction interval should contain with confidence level <code>conf.level</code>.
+The default value is <code>k=1</code>.  This argument is ignored when the argument
+<code>rule</code> is not equal to <code>"k.of.m"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+
+<p>positive integer specifying the maximum number of future observations (or
+geometric means) on one future sampling “occasion”.
+The default value is <code>m=2</code>, except when <code>rule="Modified.CA"</code>, in which
+case this argument is ignored and <code>m</code> is automatically set equal to <code>4</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+
+<p>positive integer specifying the number of future sampling “occasions”.
+The default value is <code>r=1</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+
+<p>character string specifying which rule to use.  The possible values are
+<code>"k.of.m"</code> (<code class="reqn">k</code>-of-<code class="reqn">m</code> rule; the default), <code>"CA"</code> (California rule),
+and <code>"Modified.CA"</code> (modified California rule).
+See the DETAILS section below for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta.over.sigma</code></td>
+<td>
+
+<p>numeric scalar indicating the ratio <code class="reqn">\Delta/\sigma</code>.  The quantity
+<code class="reqn">\Delta</code> (delta) denotes the difference between the mean of the population
+(on the log-scale) that was sampled to construct the prediction interval, and the
+mean of the population (on the log-scale) that will be sampled to produce the future
+observations.  The quantity <code class="reqn">\sigma</code> (sigma) denotes the population standard
+deviation (on the log-scale) for both populations.
+See the DETAILS section below for more information.  The default value is
+<code>delta.over.sigma=0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.type</code></td>
+<td>
+
+<p>character string indicating what kind of prediction interval to compute.
+The possible values are <code>pi.type="upper"</code> (the default),
+<code>pi.type="lower"</code> and <code>pi.type="two-sided"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>a scalar between 0 and 1 indicating the confidence level of the prediction interval.
+The default value is <code>conf.level=0.95</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K.tol</code></td>
+<td>
+
+<p>numeric scalar indicating the tolerance to use in the nonlinear search algorithm to
+compute <code class="reqn">K</code>.  The default value is <code>K.tol=.Machine$double.eps^(1/2)</code>.
+For many applications, the value of <code class="reqn">K</code> needs to be known only to the second
+decimal place, in which case setting <code>K.tol=1e-4</code> will speed up computation a
+bit.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est.arg.list</code></td>
+<td>
+
+<p>a list containing arguments to pass to the function
+<code>elnormAlt</code> for estimating the mean and coefficient of variation.
+The default value is <code>est.arg.list=NULL</code>, which implies the default values
+will be used in the call to <code>elnormAlt</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>predIntLnormSimultaneous</code> returns a simultaneous prediction
+interval as well as estimates of the meanlog and sdlog parameters.
+The function <code>predIntLnormAltSimultaneous</code> returns a prediction interval as
+well as estimates of the mean and coefficient of variation.
+</p>
+<p>A simultaneous prediction interval for a lognormal distribution is constructed by
+taking the natural logarithm of the observations and constructing a prediction
+interval based on the normal (Gaussian) distribution by calling
+<code>predIntNormSimultaneous</code>.
+These prediction limits are then exponentiated to produce a prediction interval on
+the original scale of the data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>x</code> is a numeric vector, <code>predIntLnormSimultaneous</code> returns a list of
+class <code>"estimate"</code> containing the estimated parameters, the prediction interval,
+and other information.  See the help file for <br><code>estimate.object</code> for details.
+</p>
+<p>If <code>x</code> is the result of calling an estimation function,
+<code>predIntLnormSimultaneous</code> returns a list whose class is the same as <code>x</code>.
+The list contains the same components as <code>x</code>, as well as a component called
+<code>interval</code> containing the prediction interval information.
+If <code>x</code> already has a component called <code>interval</code>, this component is
+replaced with the prediction interval information.
+</p>
+
+
+<h3>Note</h3>
+
+<p><em>Motivation</em> <br>
+Prediction and tolerance intervals have long been applied to quality control and
+life testing problems (Hahn, 1970b,c; Hahn and Nelson, 1973).  In the context of
+environmental statistics, prediction intervals are useful for analyzing data from
+groundwater detection monitoring programs at hazardous and solid waste facilities.
+</p>
+<p>One of the main statistical problems that plague groundwater monitoring programs at
+hazardous and solid waste facilities is the requirement of testing several wells and
+several constituents at each well on each sampling occasion.  This is an obvious
+multiple comparisons problem, and the naive approach of using a standard t-test at
+a conventional <code class="reqn">\alpha</code>-level (e.g., 0.05 or 0.01) for each test leads to a
+very high probability of at least one significant result on each sampling occasion,
+when in fact no contamination has occurred.  This problem was pointed out years ago
+by Millard (1987) and others.
+</p>
+<p>Davis and McNichols (1987) proposed simultaneous prediction intervals as a way of
+controlling the facility-wide false positive rate (FWFPR) while maintaining adequate
+power to detect contamination in the groundwater.  Because of the ubiquitous presence
+of spatial variability, it is usually best to use simultaneous prediction intervals
+at each well (Davis, 1998a).  That is, by constructing prediction intervals based on
+background (pre-landfill) data on each well, and comparing future observations at a
+well to the prediction interval for that particular well.  In each of these cases,
+the individual <code class="reqn">\alpha</code>-level at each well is equal to the FWFRP divided by the
+product of the number of wells and constituents.
+</p>
+<p>Often, observations at downgradient wells are not available prior to the
+construction and operation of the landfill.  In this case, upgradient well data can
+be combined to create a background prediction interval, and observations at each
+downgradient well can be compared to this prediction interval.  If spatial
+variability is present and a major source of variation, however, this method is not
+really valid (Davis, 1994; Davis, 1998a).
+</p>
+<p>Chapter 19 of USEPA (2009) contains an extensive discussion of using the
+<code class="reqn">1</code>-of-<code class="reqn">m</code> rule and the Modified California rule.
+</p>
+<p>Chapters 1 and 3 of Gibbons et al. (2009) discuss simultaneous prediction intervals
+for the normal and lognormal distributions, respectively.
+<br></p>
+<p><em>The k-of-m Rule</em> <br>
+For the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule, Davis and McNichols (1987) give tables with
+“optimal” choices of <code class="reqn">k</code> (in terms of best power for a given overall
+confidence level) for selected values of <code class="reqn">m</code>, <code class="reqn">r</code>, and <code class="reqn">n</code>.  They found
+that the optimal ratios of <code class="reqn">k</code> to <code class="reqn">m</code> (i.e., <code class="reqn">k/m</code>) are generally small,
+in the range of 15-50%.
+<br></p>
+<p><em>The California Rule</em> <br>
+The California rule was mandated in that state for groundwater monitoring at waste
+disposal facilities when resampling verification is part of the statistical program
+(Barclay's Code of California Regulations, 1991).  The California code mandates a
+“California” rule with <code class="reqn">m \ge 3</code>.  The motivation for this rule may have
+been a desire to have a majority of the observations in bounds (Davis, 1998a).  For
+example, for a <code class="reqn">k</code>-of-<code class="reqn">m</code> rule with <code class="reqn">k=1</code> and <code class="reqn">m=3</code>, a monitoring
+location will pass if the first observation is out of bounds, the second resample
+is out of bounds, but the last resample is in bounds, so that 2 out of 3 observations
+are out of bounds.  For the California rule with <code class="reqn">m=3</code>, either the first
+observation must be in bounds, or the next 2 observations must be in bounds in order
+for the monitoring location to pass.
+</p>
+<p>Davis (1998a) states that if the FWFPR is kept constant, then the California rule
+offers little increased power compared to the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule, and can
+actually decrease the power of detecting contamination.
+<br></p>
+<p><em>The Modified California Rule</em> <br>
+The Modified California Rule was proposed as a compromise between a 1-of-<code class="reqn">m</code>
+rule and the California rule.  For a given FWFPR, the Modified California rule
+achieves better power than the California rule, and still requires at least as many
+observations in bounds as out of bounds, unlike a 1-of-<code class="reqn">m</code> rule.
+<br></p>
+<p><em>Different Notations Between Different References</em> <br>
+For the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule described in this help file, both
+Davis and McNichols (1987) and USEPA (2009, Chapter 19) use the variable
+<code class="reqn">p</code> instead of <code class="reqn">k</code> to represent the minimum number
+of future observations the interval should contain on each of the <code class="reqn">r</code> sampling
+occasions.
+</p>
+<p>Gibbons et al. (2009, Chapter 1) presents extensive lists of the value of
+<code class="reqn">K</code> for both <code class="reqn">k</code>-of-<code class="reqn">m</code> rules and California rules.  Gibbons et al.'s
+notation reverses the meaning of <code class="reqn">k</code> and <code class="reqn">r</code> compared to the notation used
+in this help file.  That is, in Gibbons et al.'s notation, <code class="reqn">k</code> represents the
+number of future sampling occasions or monitoring wells, and <code class="reqn">r</code> represents the
+minimum number of observations the interval should contain on each sampling occasion.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p><b>Barclay's California Code of Regulations</b>. (1991). Title 22,
+Section 66264.97 [concerning hazardous waste facilities] and Title 23,
+Section 2550.7(e)(8) [concerning solid waste facilities].
+Barclay's Law Publishers, San Francisco, CA.
+</p>
+<p>Davis, C.B. (1998a).  <em>Ground-Water Statistics &amp; Regulations:  Principles,
+Progress and Problems</em>.  Second Edition.  Environmetrics &amp; Statistics Limited,
+Henderson, NV.
+</p>
+<p>Davis, C.B. (1998b). Personal Communication, September 3, 1998.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1987).  One-sided Intervals for at Least <code class="reqn">p</code>
+of <code class="reqn">m</code> Observations from a Lognormal Population on Each of <code class="reqn">r</code> Future Occasions.
+<em>Technometrics</em> <b>29</b>, 359–370.
+</p>
+<p>Fertig, K.W., and N.R. Mann. (1977).  One-Sided Prediction Intervals for at Least
+<code class="reqn">p</code> Out of <code class="reqn">m</code> Future Observations From a Lognormal Population.
+<em>Technometrics</em> <b>19</b>, 167–177.
+</p>
+<p>Gibbons, R.D., D.K. Bhaumik, and S. Aryal. (2009).
+<em>Statistical Methods for Groundwater Monitoring</em>, Second Edition.
+John Wiley &amp; Sons, Hoboken.
+</p>
+<p>Hahn, G.J. (1969). Factors for Calculating Two-Sided Prediction Intervals for
+Samples from a Lognormal Distribution.
+<em>Journal of the American Statistical Association</em> <b>64</b>(327), 878-898.
+</p>
+<p>Hahn, G.J. (1970a). Additional Factors for Calculating Prediction Intervals for
+Samples from a Lognormal Distribution.
+<em>Journal of the American Statistical Association</em> <b>65</b>(332), 1668-1676.
+</p>
+<p>Hahn, G.J. (1970b). Statistical Intervals for a Lognormal Population, Part I: Tables,
+Examples and Applications. <em>Journal of Quality Technology</em> <b>2</b>(3), 115-125.
+</p>
+<p>Hahn, G.J. (1970c). Statistical Intervals for a Lognormal Population, Part II:
+Formulas, Assumptions, Some Derivations. <em>Journal of Quality Technology</em>
+<b>2</b>(4), 195-206.
+</p>
+<p>Hahn, G.J., and W.Q. Meeker. (1991). <em>Statistical Intervals: A Guide for
+Practitioners</em>.  John Wiley and Sons, New York.
+</p>
+<p>Hahn, G., and W. Nelson. (1973). A Survey of Prediction Intervals and Their
+Applications.  <em>Journal of Quality Technology</em> <b>5</b>, 178-188.
+</p>
+<p>Hall, I.J., and R.R. Prairie. (1973).  One-Sided Prediction Intervals to Contain at
+Least <code class="reqn">m</code> Out of <code class="reqn">k</code> Future Observations.
+<em>Technometrics</em> <b>15</b>, 897–914.
+</p>
+<p>Millard, S.P. (1987).  Environmental Monitoring, Statistics, and the Law:  Room for
+Improvement (with Comment).  <em>The American Statistician</em> <b>41</b>(4), 249–259.
+</p>
+<p>Millard, S.P., and Neerchal, N.K. (2001). <em>Environmental Statistics with S-PLUS</em>.
+CRC Press, Boca Raton, Florida.
+</p>
+<p>USEPA. (2009).  <em>Statistical Analysis of Groundwater Monitoring Data at RCRA Facilities, Unified Guidance</em>.
+EPA 530/R-09-007, March 2009.  Office of Resource Conservation and Recovery Program Implementation and Information Division.
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (2010).  <em>Errata Sheet - March 2009 Unified Guidance</em>.
+EPA 530/R-09-007a, August 9, 2010.  Office of Resource Conservation and Recovery, Program Information and Implementation Division.
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predIntLnormAltSimultaneousTestPower</code>,
+<code>predIntNorm</code>, <code>predIntNormSimultaneous</code>, <br><code>predIntNormSimultaneousTestPower</code>,
+<code>tolIntLnorm</code>, Lognormal, LognormalAlt, <br><code>estimate.object</code>, <code>elnorm</code>, <code>elnormAlt</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 8 observations from a lognormal distribution with parameters
+  # mean=10 and cv=1, then use predIntLnormAltSimultaneous to estimate the
+  # mean and coefficient of variation of the true distribution and construct an
+  # upper 95% prediction interval to contain at least 1 out of the next
+  # 3 observations.
+  # (Note: the call to set.seed simply allows you to reproduce this example.)
+
+  set.seed(479)
+  dat &lt;- rlnormAlt(8, mean = 10, cv = 1)
+
+  predIntLnormAltSimultaneous(dat, k = 1, m = 3)
+
+  # Compare the 95% 1-of-3 upper prediction limit to the California and
+  # Modified California upper prediction limits.  Note that the upper
+  # prediction limit for the Modified California rule is between the limit
+  # for the 1-of-3 rule and the limit for the California rule.
+
+  predIntLnormAltSimultaneous(dat, k = 1, m = 3)$interval$limits["UPL"]
+
+  predIntLnormAltSimultaneous(dat, m = 3, rule = "CA")$interval$limits["UPL"]
+
+  predIntLnormAltSimultaneous(dat, rule = "Modified.CA")$interval$limits["UPL"]
+
+  # Show how the upper 95% simultaneous prediction limit increases
+  # as the number of future sampling occasions r increases.
+  # Here, we'll use the 1-of-3 rule.
+
+  predIntLnormAltSimultaneous(dat, k = 1, m = 3)$interval$limits["UPL"]
+
+  predIntLnormAltSimultaneous(dat, k = 1, m = 3, r = 10)$interval$limits["UPL"]
+
+  # Compare the upper simultaneous prediction limit for the 1-of-3 rule
+  # based on individual observations versus based on geometric means of
+  # order 4.
+
+  predIntLnormAltSimultaneous(dat, k = 1, m = 3)$interval$limits["UPL"]
+
+  predIntLnormAltSimultaneous(dat, n.geomean = 4, k = 1,
+    m = 3)$interval$limits["UPL"]
+
+  #==========
+
+  # Example 19-1 of USEPA (2009, p. 19-17) shows how to compute an
+  # upper simultaneous prediction limit for the 1-of-3 rule for
+  # r = 2 future sampling occasions.  The data for this example are
+  # stored in EPA.09.Ex.19.1.sulfate.df.
+
+  # We will pool data from 4 background wells that were sampled on
+  # a number of different occasions, giving us a sample size of
+  # n = 25 to use to construct the prediction limit.
+
+  # There are 50 compliance wells and we will monitor 10 different
+  # constituents at each well at each of the r=2 future sampling
+  # occasions.  To determine the confidence level we require for
+  # the simultaneous prediction interval, USEPA (2009) recommends
+  # setting the individual Type I Error level at each well to
+
+  # 1 - (1 - SWFPR)^(1 / (Number of Constituents * Number of Wells))
+
+  # which translates to setting the confidence limit to
+
+  # (1 - SWFPR)^(1 / (Number of Constituents * Number of Wells))
+
+  # where SWFPR = site-wide false positive rate.  For this example, we
+  # will set SWFPR = 0.1.  Thus, the confidence level is given by:
+
+  nc &lt;- 10
+  nw &lt;- 50
+  SWFPR &lt;- 0.1
+  conf.level &lt;- (1 - SWFPR)^(1 / (nc * nw))
+
+  conf.level
+
+  #----------
+
+  # Look at the data:
+
+  names(EPA.09.Ex.19.1.sulfate.df)
+
+  EPA.09.Ex.19.1.sulfate.df[,
+    c("Well", "Date", "Sulfate.mg.per.l", "log.Sulfate.mg.per.l")]
+
+
+
+  # Construct the upper simultaneous prediction limit for the
+  # 1-of-3 plan assuming a lognormal distribution for the
+  # sulfate data
+
+  Sulfate &lt;- EPA.09.Ex.19.1.sulfate.df$Sulfate.mg.per.l
+
+  predIntLnormSimultaneous(x = Sulfate, k = 1, m = 3, r = 2,
+    rule = "k.of.m", pi.type = "upper", conf.level = conf.level)
+
+  #==========
+
+  # NOTE: Two-sided simultaneous prediction intervals computed using
+  # Versions 2.4.0 - 2.8.1 of EnvStats are *NOT* valid.
+  ## Not run: 
+  predIntLnormSimultaneous(x = Sulfate, k = 1, m = 3, r = 2,
+    rule = "k.of.m", pi.type = "two-sided", conf.level = conf.level)
+  
+## End(Not run)
+
+</code></pre>
+
+
+</div>

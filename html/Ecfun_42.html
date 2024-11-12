@@ -1,0 +1,334 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>matchName</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Match surname and givenName in a table
+</h2>
+
+<h3>Description</h3>
+
+<p>Use <code>parseName</code> to split a name into 
+<code>surname</code> and <code>givenName</code>, the look for
+matches in <code>table</code>.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">matchName(x, data, Names=1:2, 
+          nicknames=matrix(character(0), 0, 2), 
+          namesNotFound="attr.replacement", ...)
+matchName1(x1, data, name=data[, 1],     
+          nicknames=matrix(character(0), 0, 2), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>One of the following:  
+</p>
+
+<ul>
+<li>
+<p> A character matrix or <code>data.frame</code>
+with the same number of rows as <code>data</code>.
+The best partial match is sought in 
+<code>Names</code>.  The algorithm stops when a
+unique match is found;  any remaining 
+columns of <code>x</code> are then ignored.  Any 
+<code>nicknames</code> are ignored for the first
+column but not for subsequent columns.   
+</p>
+</li>
+<li>
+<p> A character vector whose length matches
+the number of rows of <code>data</code>.  This
+will be replaced by <code>parseName(x)</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>a character matrix or a 
+<code>data.frame</code>.  If <code>surname</code> 
+and <code>givenName</code> are character vectors of 
+names, their length must match the number of
+rows of <code>data</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Names</code></td>
+<td>
+
+<p>One of the following in which matches for
+<code>x</code> will be sought:  
+</p>
+ 
+<ul>
+<li>
+<p> A character vector or matrix or a
+<code>data.frame</code> for which 
+<code>NROW(Names) == nrow(data)</code>.  
+
+
+
+</p>
+</li>
+<li>
+<p> Something to select columns of 
+<code>data</code> to produce a character vector or
+matrix or <code>data.frame</code> via 
+<code>data[, Names]</code>.  In this case, 
+accents will be stripped using 
+<code>subNonStandardNames</code>.  
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nicknames</code></td>
+<td>
+
+<p>a character matrix with two columns, each row
+giving a pair of names like "Pete" and "Peter"
+that should be regarded as equivalent if no
+exact match(es) is(are) found.   
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+ 
+<p>optional arguments passed to 
+<code>subNonStandardNames</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x1</code></td>
+<td>
+ 
+<p>a character vector of names to match 
+<code>name</code>. 
+</p>
+<p>NOTE:  <code>matchName</code> calls 
+<code>subNonStandardNames</code>, but 
+<code>matchName1</code> does not.  Thus, 
+<code>x1</code> is assumed to NOT to contain 
+characters not in standard English.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+
+<p>A character vector or matrix for which 
+<code>NROW(name)</code> == <code>nrow(data)</code>.  
+</p>
+<p>NOTE:  <code>matchName</code> calls 
+<code>subNonStandardNames</code>, but 
+<code>matchName1</code> does not.  Thus, 
+<code>name</code> is assumed to NOT to contain
+characters not in standard English.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>namesNotFound</code></td>
+<td>
+
+<p>character vector passed to 
+<code>subNonStandardNames</code> and used to 
+compute any <code>namesNotFound</code> attribute 
+of the object returned by <code>parseName</code>.  
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>*** 1.  <code>matchName(x, data, Names, 
+  nicknames, ...)</code>:  
+</p>
+<p>1.1.  <code>if(length(dim(x)&lt;2))x &lt;- 
+  parseName(x, ...)</code>  
+</p>
+<p>1.2.  <code>x1 &lt;- matchName1(x[, 1], 
+  cata, Names[1], ...)</code>
+</p>
+<p>1.3.  For any component i of x1 with multiple 
+rows, let <code>x1i &lt;- matchName1(x[i, 2], 
+  x1[[i]], Name[-1], nicknames=nicknames, ...)</code>.  
+If <code>nrow(x1i)</code>&gt;0, 
+<code>x1[[i]] &lt;- x1i</code>;  else leave unchanged.  
+</p>
+<p>1.4.  return <code>x1</code>.   
+</p>
+<p>===========
+</p>
+<p>*** 2.  <code>matchName1(x1, data, name, 
+  nicknames, ...)</code>:  
+</p>
+<p>2.1.  If name indicates a column of data, 
+replace with <code>data[, name]</code>.  
+</p>
+<p>2.2.  <code>xsplit &lt;- strsplit(x1, ' ')</code>.  
+</p>
+<p>2.3.  <code>nx &lt;- length(x1); 
+  xlist &lt;- vector(nx, mode='list')</code>
+</p>
+<p>2.4.  <code>for(j in 1:nx)</code>:   
+</p>
+<p>2.5.  <code>xj &lt;- xplit[[j]]</code> 
+</p>
+<p>2.6.  let <code>jd</code> = the subset of names that 
+match <code>xj</code> or <code>subNonStandardNames(xj)</code>
+or nicknames of <code>xj;  xlist[j] &lt;- jd</code>.  
+</p>
+<p>2.7.  return <code>xlist</code> 
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>matchName</code> returns a list of the same 
+length as <code>x</code>, each of whose components is
+an object obtained as a subset of rows of 
+<code>data</code> or <code>NULL</code> if no acceptable 
+matches are found.   The list may have an 
+attribute <code>namesNotFound</code> as determined 
+per the argument of that name.  
+</p>
+<p><code>matchNames1</code> returns a list of vectors 
+of integers for subsets of <code>data</code> 
+matching <code>x1</code>.  
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>parseName</code>
+<code>subNonStandardNames</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  Names to match exercising many possibile combinations 
+##     of surname with 0, 1, &gt;1 matches possibly after 
+##     replacing with subNonStandardNames 
+##     combined with possibly multiple givenName combinations 
+##     with 0, 1, &gt;1 matches possibly requiring replacing with 
+##     subNonStandardNames or nicknames 
+##
+# NOTE:  "-" could also be "e" with an accent;  
+#    not included with this documentation, because 
+#    non-English characters generate warnings in standard tests.  
+Names2mtch &lt;- c("Andr_ Bruce C_rdenas", "Dolores Ella Feinstein",
+           "George Homer", "Inez Jane Kappa", "Luke Michael Noel", 
+           "Oscar Papa", "Quincy Ra_l Stevens", 
+           "Thomas U. Vel_zquez", "William X. Young", 
+           "Zebra")
+##
+## 2.  Data = matrix(..., byrow=TRUE) to exercise the combinations 
+##     the combinations from 1 
+##
+Data1 &lt;- matrix(c("Feld", "Don", "789", 
+                  "C_rdenas", "Don", "456", 
+                  "C_rdenas", "Andre B.", "123", 
+                  "Smith", "George", "aaa", 
+                  "Young", "Bill", "369"), 
+                ncol=3, byrow=TRUE)
+Data1. &lt;- subNonStandardNames(Data1)                
+##
+## 3.  matchName1
+##        
+parceNm1 &lt;- parseName(Names2mtch)
+match1.1 &lt;- matchName1(parceNm1[, 'surname'], Data1.)
+
+# check
+match1.1s &lt;- vector('list', 10)
+match1.1s[[1]] &lt;- 2:3
+match1.1s[[9]] &lt;- 5
+names(match1.1s) &lt;- parceNm1[, 'surname'] 
+
+all.equal(match1.1, match1.1s)
+
+
+##
+## 4.  matchName1 with name = multiple columns 
+##
+match1.2 &lt;- matchName1(c('Cardenas', 'Don'), Data1., 
+                       name=Data1.[, 1:2])
+
+# check 
+match1.2a &lt;- list(Cardenas=2:3, Don=1:2)
+
+all.equal(match1.2, match1.2a)
+
+
+##
+## 5.  matchName 
+##
+nickNames &lt;- matrix(c("William", "Bill"), 1, byrow=TRUE)
+
+match1 &lt;- matchName(Names2mtch, Data1, nicknames=nickNames)
+                  
+# check 
+match1a &lt;- list("Cardenas, Andre Bruce"=Data1[3,, drop=FALSE ], 
+                "Feinstein, Dolores Ella"=NULL, 
+                "Homer, George"=NULL, "Kappa, Inez Jane"=NULL, 
+                "Noel, Luke Michael"=NULL, "Papa, Oscar"=NULL, 
+                "Stevens, Quincy Raul"=NULL, 
+                "Velazquez, Thomas U."=NULL, 
+                "Young, William X."=Data1[5,, drop=FALSE], 
+                "Zebra"=NULL)
+
+all.equal(match1, match1a)
+
+##
+## 6.  namesNotFound 
+##
+tstNotFound &lt;- matchName('xx_x', Data1)
+
+# check 
+tstNF &lt;- list('xx_x'=NULL)
+attr(tstNF, 'namesNotFound') &lt;- 'xx_x'
+
+all.equal(tstNotFound, tstNF)
+
+
+##
+## 7.  matchName(NULL) to simplify use 
+##
+mtchNULL &lt;- matchName(NULL, Data1)
+
+all.equal(mtchNULL, NULL)
+
+</code></pre>
+
+
+</div>

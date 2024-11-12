@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>returns</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Compute return values
+</h2>
+
+<h3>Description</h3>
+
+<p>Predicts the probability of future simultaneous exceedances
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">returns(out, summary.mcmc, y, plot=FALSE, labels=NULL, 
+        data=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>out</code></td>
+<td>
+<p>The output of the <code>fExtDep.np</code> function with <code>method="Bayesian"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summary.mcmc</code></td>
+<td>
+<p>The output of the <code>summary_ExtDep</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A 2-column matrix of unobserved thresholds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>A logical value; if <code>TRUE</code>, then the returns are plotted using <code>plot_ExtDep.np</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>As in <code>plot_ExtDep.np</code>. Required if <code>plot=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>As in <code>plot_ExtDep.np</code>. Required if <code>plot=TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Computes for a range of unobserved extremes (larger than those observed in a sample), the pointwise mean from the posterior predictive distribution of such predictive values. The probabilities are calculated through
+</p>
+<p><code class="reqn">
+P(Y_1 &gt; y_1, Y_2 &gt; y_2) = \frac{2}{k} \sum_{j=0}^{k-2} (\eta_{j+1} - \eta_j)
+\times \left(
+\frac{(j+1) B(y_1/(y_1+y_2)| j+2, k-j-1)}{y_1}
+- \frac{(k-j-1) B(y_2/(y_1+y_2)| k-j, j+1)}{y_2}
+\right),
+</code>
+</p>
+<p>where <code class="reqn">B(x|a,b)</code> denotes the cumulative distribution function of a Beta random variable with shape <code class="reqn">a,b&gt;0</code>. See Marcon et al. (2016, p.3323) for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a vector whose length is equal to the number of rows of the input value <code>y</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Simone Padoan, <a href="mailto:simone.padoan@unibocconi.it">simone.padoan@unibocconi.it</a>,
+<a href="https://faculty.unibocconi.it/simonepadoan/">https://faculty.unibocconi.it/simonepadoan/</a>;
+Boris Beranger, <a href="mailto:borisberanger@gmail.com">borisberanger@gmail.com</a>
+<a href="https://www.borisberanger.com">https://www.borisberanger.com</a>;
+Giulia Marcon, <a href="mailto:giuliamarcongm@gmail.com">giuliamarcongm@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Marcon, G., Padoan, S. A. and Antoniano-Villalobos, I. (2016).
+Bayesian inference for the extremal dependence.
+<em>Electronic Journal of Statistics</em>, <b>10</b>, 3310-3337.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#########################################################
+### Example 1 - daily log-returns between the GBP/USD ###
+###             and GBP/JPY exchange rates            ###
+#########################################################
+
+if(interactive()){
+
+data(logReturns)
+
+mm_gbp_usd &lt;- ts(logReturns$USD, start=c(1991,3), end=c(2014,12), frequency=12)
+mm_gbp_jpy &lt;- ts(logReturns$JPY, start=c(1991,3), end=c(2014,12), frequency=12)
+
+### Detect seasonality and trend in the time series of maxima:
+seas_usd &lt;- stl(mm_gbp_usd, s.window="period")
+seas_jpy &lt;- stl(mm_gbp_jpy, s.window="period")
+
+### remove the seasonality and trend from the two series:
+mm_gbp_usd_filt &lt;- mm_gbp_usd - rowSums(seas_usd$time.series[,-3])
+mm_gbp_jpy_filt &lt;- mm_gbp_jpy - rowSums(seas_jpy$time.series[,-3])
+
+### Estimation of margins and dependence
+
+mm_gbp &lt;- cbind(as.vector(mm_gbp_usd_filt), as.vector(mm_gbp_jpy_filt))
+
+hyperparam &lt;- list(mu.nbinom = 3.2, var.nbinom = 4.48)
+gbp_mar &lt;- fExtDep.np(method="Bayesian", data=mm_gbp, par10=rep(0.1, 3), 
+                      par20=rep(0.1,3), sig10=0.0001, sig20=0.0001, k0=5,
+                      hyperparam = hyperparam, nsim=5e+4)
+
+gbp_mar_sum &lt;- summary_ExtDep(mcmc=gbp_mar, burn=3e+4, plot=TRUE)
+
+mm_gbp_range &lt;- apply(mm_gbp,2,quantile,c(0.9,0.995))
+
+y_gbp_usd &lt;- seq(from=mm_gbp_range[1,1], to=mm_gbp_range[2,1], length=20)
+y_gbp_jpy &lt;- seq(from=mm_gbp_range[1,2], to=mm_gbp_range[2,2], length=20)
+y &lt;- as.matrix(expand.grid(y_gbp_usd, y_gbp_jpy, KEEP.OUT.ATTRS = FALSE))
+
+ret_marg &lt;- returns(out=gbp_mar, summary.mcmc=gbp_mar_sum, y=y, plot=TRUE, 
+                    data=mm_gbp, labels=c("GBP/USD exchange rate", "GBP/JPY exchange rate"))
+
+}
+
+#########################################################
+### Example 2 - Reproducing some of the results shown ###
+###             in Marcon et al. (2016, Figure 1)     ###
+#########################################################
+
+## Not run: 
+
+set.seed(1890)
+data &lt;- evd::rbvevd(n=100, dep=0.6, asy=c(0.8,0.3), model="alog", mar1=c(1,1,1))
+
+hyperparam &lt;- list(a.unif=0, b.unif=.5, mu.nbinom=3.2, var.nbinom=4.48)
+pm0 &lt;- list(p0=0.06573614, p1=0.3752118)
+
+mcmc &lt;- fExtDep.np(method="Bayesian", data=data, mar.fit=FALSE, k0=5,
+                   pm0=pm0, prior.k = "nbinom", prior.pm = "unif", 
+                   hyperparam=hyperparam, nsim=5e+5)
+
+w &lt;- seq(0.001, 0.999, length=100)
+summary.mcmc &lt;- summary_ExtDep(w, mcmc, burn=4e+5, plot=TRUE)
+
+plot_ExtDep.np(out=mcmc, type = "A", summary.mcmc=summary.mcmc)
+plot_ExtDep.np(out=mcmc, type = "h", summary.mcmc=summary.mcmc)
+plot_ExtDep.np(out=mcmc, type = "pm", summary.mcmc=summary.mcmc)
+plot_ExtDep.np(out=mcmc, type = "k", summary.mcmc=summary.mcmc)
+
+y &lt;- seq(10,100,2)
+y &lt;- as.matrix(expand.grid(y,y))
+probs &lt;- returns(out=mcmc, summary.mcmc=summary.mcmc, y=y, plot=TRUE)
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

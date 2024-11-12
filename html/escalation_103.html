@@ -1,0 +1,102 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>try_rescue_dose</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Demand that a rescue dose is tried before stopping is permitted.</h2>
+
+<h3>Description</h3>
+
+<p>This method continues a dose-finding trial until a safety dose has been given
+to n patients. Once that condition is met, it delegates dose selelcting and
+stopping responsibility to its parent dose selector, whatever that might be.
+This class is greedy in that it meets its own needs before asking any other
+selectors higher in the chain what they want. Thus, different behaviours may
+be achieved by nesting dose selectors in different orders. See examples.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">try_rescue_dose(parent_selector_factory, n, dose)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>Object of type <code>selector_factory</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Continue at least until there are n at a dose.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dose</code></td>
+<td>
+<p>an integer to identify the sought rescue dose-level.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code> that can fit a
+dose-finding model to outcomes.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">skeleton &lt;- c(0.05, 0.1, 0.25, 0.4, 0.6)
+target &lt;- 0.25
+
+# This model will demand the lowest dose is tried in at least two patients
+# before the trial is stopped for excess toxicity
+model1 &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_when_too_toxic(dose = 1, tox_threshold = 0.35, confidence = 0.8) %&gt;%
+  try_rescue_dose(dose = 1, n = 2)
+
+# In contrast, this model will stop for excess toxicity without trying dose 1
+model2 &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_when_too_toxic(dose = 1, tox_threshold = 0.35, confidence = 0.8)
+
+# For non-toxic outcomes, both designs will continue at sensible doses:
+fit1 &lt;- model1 %&gt;% fit('2NNN')
+fit1 %&gt;% recommended_dose()
+fit1 %&gt;% continue()
+
+fit2 &lt;- model2 %&gt;% fit('2NNN')
+fit2 %&gt;% recommended_dose()
+fit2 %&gt;% continue()
+
+# For toxic outcomes, the design 1 will use dose 1 before stopping is allowed
+fit1 &lt;- model1 %&gt;% fit('2TTT')
+fit1 %&gt;% recommended_dose()
+fit1 %&gt;% continue()
+
+# For toxic outcomes, however, design 2 will stop despite dose 1 being
+# untested:
+fit2 &lt;- model2 %&gt;% fit('2TTT')
+fit2 %&gt;% recommended_dose()
+fit2 %&gt;% continue()
+
+# After dose 1 is given the requisite number of times, dose recommendation
+# and stopping revert to being determined by the underlying dose selector:
+fit1 &lt;- model1 %&gt;% fit('2TTT 1T')
+fit1 %&gt;% recommended_dose()
+fit1 %&gt;% continue()
+
+fit1 &lt;- model1 %&gt;% fit('2TTT 1TT')
+fit1 %&gt;% recommended_dose()
+fit1 %&gt;% continue()
+</code></pre>
+
+
+</div>

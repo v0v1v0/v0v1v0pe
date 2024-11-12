@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>inspectSolution</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Inspect a <code>useSolver</code> output</h2>
+
+<h3>Description</h3>
+
+<p>Process a <code>useSolver</code> output of a successfully solved optimization problem to a list so it becomes humanly readable.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">inspectSolution(
+  solverOut,
+  items,
+  idCol,
+  colNames = names(items),
+  colSums = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>solverOut</code></td>
+<td>
+<p>Object created by <code>useSolver</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>items</code></td>
+<td>
+<p>Original <code>data.frame</code> containing information on item level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idCol</code></td>
+<td>
+<p>Column name in <code>items</code> containing item IDs. These will be used for matching to the solver output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colNames</code></td>
+<td>
+<p>Which columns should be used from the <code>items</code> <code>data.frame</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colSums</code></td>
+<td>
+<p>Should column sums be calculated in the output? Only works if all columns are numeric.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function merges the initial item pool information in <code>items</code> to the solver output in <code>solverOut</code>.
+Relevant columns can be selected via <code>colNames</code>. Column sums within test forms are calculated if possible and
+if <code>colSum</code> is set to <code>TRUE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>list</code> with assembled blocks as entries. Rows are the individual items. A final row is added, containing
+the sums of each column.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Example item pool
+items &lt;- data.frame(ID = 1:10,
+itemValues = c(-4, -4, -2, -2, -1, -1, 20, 20, 0, 0))
+
+## Test Assembly
+usage &lt;- itemUsageConstraint(nForms = 2, operator = "=",
+                             targetValue = 1, itemIDs = items$ID)
+perForm &lt;- itemsPerFormConstraint(nForms = 2, operator = "=",
+                                  targetValue = 5, itemIDs = items$ID)
+target &lt;- minimaxObjective(nForms = 2,
+                               itemValues = items$itemValues,
+                               targetValue = 0, itemIDs = items$ID)
+sol &lt;- useSolver(allConstraints = list(usage, perForm, target),
+                                  solver = "lpSolve")
+
+## Inspect Solution
+out &lt;- inspectSolution(sol, items = items, idCol = 1, colNames = "itemValues")
+
+</code></pre>
+
+
+</div>

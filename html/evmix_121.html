@@ -1,0 +1,199 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>kfun</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Various subsidiary kernel function, conversion of bandwidths and evaluating certain
+kernel integrals.</h2>
+
+<h3>Description</h3>
+
+<p>Functions for checking the inputs to the kernel functions, evaluating 
+integrals <code class="reqn">\int u^l K*(u) du</code> for <code class="reqn">l = 0, 1, 2</code> and conversion between the two bandwidth
+definitions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">check.kinputs(x, lambda, bw, kerncentres, allownull = FALSE)
+
+check.kernel(kernel)
+
+check.kbw(lambda, bw, allownull = FALSE)
+
+klambda(bw = NULL, kernel = "gaussian", lambda = NULL)
+
+kbw(lambda = NULL, kernel = "gaussian", bw = NULL)
+
+ka0(truncpoint, kernel = "gaussian")
+
+ka1(truncpoint, kernel = "gaussian")
+
+ka2(truncpoint, kernel = "gaussian")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>location to evaluate KDE (single scalar or vector)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>bandwidth for kernel (as half-width of kernel) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bw</code></td>
+<td>
+<p>bandwidth for kernel (as standard deviations of kernel) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kerncentres</code></td>
+<td>
+<p>kernel centres (typically sample data vector or scalar)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allownull</code></td>
+<td>
+<p>logical, where TRUE permits NULL values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p>kernel name (<code>default = "gaussian"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncpoint</code></td>
+<td>
+<p>upper endpoint as standardised location <code>x/lambda</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Various boundary correction methods require integral of (partial moments of)
+kernel within the range of support, over the range <code class="reqn">[-1, p]</code> where <code class="reqn">p</code>
+is the <code>truncpoint</code> determined by the standardised distance of location <code class="reqn">x</code>
+where KDE is being evaluated to the lower bound of zero, i.e. <code>truncpoint = x/lambda</code>.
+The exception is the normal kernel which has unbounded support so the <code class="reqn">[-5*\lambda, p]</code> where
+<code>lambda</code> is the standard deviation bandwidth. There is a function for each partial moment
+of degree (0, 1, 2):
+</p>
+
+<ul>
+<li> <p><code>ka0</code> - <code class="reqn">\int_{-1}^{p} K*(z) dz</code>
+</p>
+</li>
+<li> <p><code>ka1</code> - <code class="reqn">\int_{-1}^{p} u K*(z) dz</code>
+</p>
+</li>
+<li> <p><code>ka2</code> - <code class="reqn">\int_{-1}^{p} u^2 K*(z) dz</code>
+</p>
+</li>
+</ul>
+<p>Notice that when evaluated at the upper endpoint on the support <code class="reqn">p = 1</code>
+(or <code class="reqn">p = \infty</code> for normal) these are the zeroth, first and second moments. In the
+normal distribution case the lower bound on the region of integration is <code class="reqn">\infty</code> but
+implemented here as <code class="reqn">-5*\lambda</code>. 
+These integrals are all specified in closed form, there is no need for numerical integration
+(except normal which uses the <code>pnorm</code> function). 
+</p>
+<p>See <code>kpu</code> for list of kernels and discussion of bandwidth 
+definitions (and their default values):
+</p>
+
+<ol>
+<li> <p><code>bw</code> - in terms of number of standard deviations of the kernel, consistent
+with the defined values in the <code>density</code> function in
+the <code>R</code> base libraries
+</p>
+</li>
+<li> <p><code>lambda</code> - in terms of half-width of kernel
+</p>
+</li>
+</ol>
+<p>The <code>klambda</code> function converts the <code>bw</code> to the <code>lambda</code>
+equivalent, and <code>kbw</code> applies converse. These conversions are
+kernel specific as they depend on the kernel standard deviations. If both <code>bw</code> and
+<code>lambda</code> are provided then the latter is used by default. If neither are provided 
+(<code>bw=NULL</code> and <code>lambda=NULL</code>) then default is <code>lambda=1</code>.
+</p>
+<p><code>check.kinputs</code> checks all the kernel function inputs,
+<code>check.klambda</code> checks the pair of inputted bandwidths and
+<code>check.kernel</code> checks the kernel names.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>klambda</code> and <code>kbw</code> return the
+<code>lambda</code> and <code>bw</code> bandwidths respectively.
+</p>
+<p>The checking functions <code>check.kinputs</code>,
+<code>check.klambda</code> and <code>check.kernel</code>
+will stop on errors and return no value.
+</p>
+<p><code>ka0</code>, <code>ka1</code> and <code>ka2</code>
+return the partial moment integrals specified above.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>.
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/Kernel_density_estimation">http://en.wikipedia.org/wiki/Kernel_density_estimation</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Kernel_(statistics)">http://en.wikipedia.org/wiki/Kernel_(statistics)</a>
+</p>
+<p>Wand and Jones (1995). Kernel Smoothing. Chapman &amp; Hall.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>kernels</code>, <code>density</code>, 
+<code>kden</code> and <code>bckden</code>.
+</p>
+<p>Other kernels: <code>kernels</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">xx = seq(-2, 2, 0.01)
+plot(xx, kdgaussian(xx), type = "l", col = "black",ylim = c(0, 1.2))
+lines(xx, kduniform(xx), col = "grey")
+lines(xx, kdtriangular(xx), col = "blue")
+lines(xx, kdepanechnikov(xx), col = "darkgreen")
+lines(xx, kdbiweight(xx), col = "red")
+lines(xx, kdtriweight(xx), col = "purple")
+lines(xx, kdtricube(xx), col = "orange")
+lines(xx, kdparzen(xx), col = "salmon")
+lines(xx, kdcosine(xx), col = "cyan")
+lines(xx, kdoptcosine(xx), col = "goldenrod")
+legend("topright", c("Gaussian", "uniform", "triangular", "Epanechnikov",
+"biweight", "triweight", "tricube", "Parzen", "cosine", "optcosine"), lty = 1,
+col = c("black", "grey", "blue", "darkgreen", "red", "purple",
+  "salmon", "orange", "cyan", "goldenrod"))
+
+</code></pre>
+
+
+</div>

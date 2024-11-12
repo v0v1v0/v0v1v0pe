@@ -1,0 +1,261 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>adjacency</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Derive adjecency matrix from collection of edits</h2>
+
+<h3>Description</h3>
+
+<p>A set of edits can be represented as a graph where every vertex is
+an edit. Two vertices are connected if they have at least one variable
+in <code>vars</code> in common.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">adjacency(
+  E,
+  nodetype = c("all", "rules", "vars"),
+  rules = rownames(E),
+  vars = getVars(E),
+  ...
+)
+
+## S3 method for class 'editmatrix'
+adjacency(
+  E,
+  nodetype = c("all", "rules", "vars"),
+  rules = rownames(E),
+  vars = getVars(E),
+  ...
+)
+
+## S3 method for class 'editarray'
+adjacency(
+  E,
+  nodetype = c("all", "rules", "vars"),
+  rules = rownames(E),
+  vars = getVars(E),
+  ...
+)
+
+## S3 method for class 'editset'
+adjacency(
+  E,
+  nodetype = c("all", "rules", "vars"),
+  rules = c(rownames(E$num), rownames(E$mixcat)),
+  vars = getVars(E),
+  ...
+)
+
+## S3 method for class 'editmatrix'
+as.igraph(
+  x,
+  nodetype = c("all", "rules", "vars"),
+  rules = editnames(x),
+  vars = getVars(x),
+  weighted = TRUE,
+  ...
+)
+
+## S3 method for class 'editarray'
+as.igraph(
+  x,
+  nodetype = c("all", "rules", "vars"),
+  rules = editnames(x),
+  vars = getVars(x),
+  weighted = TRUE,
+  ...
+)
+
+## S3 method for class 'editset'
+as.igraph(
+  x,
+  nodetype = c("all", "rules", "vars"),
+  rules = editnames(x),
+  vars = getVars(x),
+  weighted = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p><code>editmatrix</code>, <code>editarray</code> or <code>editset</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nodetype</code></td>
+<td>
+<p>adjacency between rules, vars or both?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rules</code></td>
+<td>
+<p>selection of edits</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars</code></td>
+<td>
+<p>selection of variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments to be passed to or from other methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class <code>editmatrix</code>, <code>editarray</code> or <code>editset</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weighted</code></td>
+<td>
+<p>see <code>graph.adjacency</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>adjacency</code> returns the adjacency matrix. The elements of the matrix
+count the number of variables shared by the edits indicated in the row- and 
+column names. The adjacency matrix can be converted to an igraph object with 
+<code>graph.adjacency</code>from the <code>igraph</code> package.
+</p>
+<p><code>as.igraph</code> converts a set of edits to an <code>igraph</code> object directly.
+</p>
+
+
+<h3>Value</h3>
+
+<p>the adjacency matrix of edits in <code>E</code> with resect to 
+the variables in <code>vars</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.editmatrix</code>, <code>plot.editarray</code>, <code>plot.editset</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Examples with linear (in)equality edits
+
+# load predefined edits from package
+data(edits)
+edits
+
+# convert to editmatrix
+E &lt;- editmatrix(edits)
+
+## Not run:
+# (Note to reader: the Not run directive only prevents the examle commands from
+# running when package is built)
+
+# Total edit graph
+plot(E)
+
+# Graph with dependent edits
+plot(E, nodetype="rules")
+
+# Graph with dependent variables
+plot(E, nodetype="vars")
+
+# Total edit graph, but with curved lines (option from igraph package)
+plot(E, edge.curved=TRUE)
+
+
+# graph, plotting just the connections caused by variable 't'
+plot(E,vars='t')
+
+## End(Not run) 
+
+# here's an example with a broken record.
+r &lt;- c(ct = 100, ch = 30, cp = 70, p=30,t=130 ) 
+violatedEdits(E,r)
+errorLocalizer(E,r)$searchBest()$adapt
+
+# we color the violated edits and the variables that have to be adapted
+
+## Not run
+set.seed(1) # (for reprodicibility)
+plot(E,
+     adapt=errorLocalizer(E,r)$searchBest()$adapt,   
+     violated=violatedEdits(E,r))
+## End(Not run) 
+
+
+
+# extract total graph (as igraph object)
+as.igraph(E)
+
+# extract graph with edges related to variable 't' and 'ch'
+as.igraph(E,vars=c('t','ch'))
+
+# extract total adjacency matrix
+adjacency(E)
+
+# extract adjacency matrix related to variables t and 'ch'
+adjacency(E,vars=c('t','ch'))
+
+## Examples with categorical edits
+
+# generate an editarray:
+E &lt;- editarray(expression(
+    age %in% c('&lt;15','16-65','&gt;65'),
+    employment %in% c('unemployed','employed','retired'),
+    salary %in% c('none','low','medium','high'),
+    if (age == '&lt;15') employment=='unemployed',
+    if (salary != 'none') employment != 'unemployed',
+    if (employment == 'unemployed') salary == 'none'))
+
+
+## Not run:
+# plot total edit graph
+plot(E)
+
+# plot with a different layout
+plot(E,layout=layout.circle)
+
+# plot edit graph, just the connections caused by 'salary'
+plot(E,vars='salary')
+
+## End(Not run)
+
+# extract edit graph
+as.igraph(E)
+
+# extract edit graph, just the connections caused by 'salary'
+as.igraph(E,vars='salary')
+
+# extract adjacency matrix
+adjacency(E)
+
+# extract adjacency matrix, only caused by 'employment'
+adjacency(E,vars='employment')
+
+
+
+
+
+</code></pre>
+
+
+</div>

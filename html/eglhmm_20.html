@@ -1,0 +1,959 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eglhmm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Fit (extended) generalised linear hidden Markov models.</h2>
+
+<h3>Description</h3>
+
+<p>Fits an (extended) generalised linear model to a data set where the
+response in each “cell” of the model consists of a
+time series whose serial dependence is modelled by a
+hidden Markov model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eglhmm(formula = NULL, response = NULL, data,
+      distr = c("Gaussian", "Poisson", "Binomial", "Dbd", "Multinom", "discnp"),
+      inclTau=TRUE,preSpecSigma=NULL, indep = NULL, size = NULL, nbot = NULL, ntop = NULL,
+      cells = NULL, cf = "singlecell", K = NULL, par0 = NULL, randStart = NULL,
+      method = c("lm", "em", "bf"), optimiser = c("optim", "nlm"),
+      optimMethod = "BFGS", nlmWarn = FALSE, lmc = 10, tolerance = NULL,
+      digits = NULL, verbose = FALSE, itmax = 200,
+      contrast = c("treatment", "sum", "helmert"),
+      crit = c("CLL", "L2", "Linf", "ABSGRD"), breaks = NULL, hessian = FALSE,
+      useAnalGrad = FALSE, ca = FALSE, checkDecrLL=TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>A model formula specifying the linear predictor for the model. The
+formula should <em>not</em> include <code>state</code> as a predictor
+variable.  The variable <code>state</code> gets added to the formula
+automatically.  Ignored if the model is bivariate, i.e. if the
+length of <code>response</code> is 2.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+
+<p>A character scalar or a length-2 vector of such scalars,
+specifying the name or names of the response(s).
+If <code>response</code> is not specified (i.e. if it is left as
+<code>NULL</code>) then <code>formula</code> (see below) <em>must</em> be
+specfied and <code>response</code> is taken to be the left hand side
+of <code>formula</code>.  (In this case, it is of course univariate.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A data frame with columns providing the response(s) and the predictor
+variables in the model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distr</code></td>
+<td>
+
+<p>Character string specifying the distribution of the response(s)
+(“emissions”) variable(s).  Currently (13/02/2024) the only
+distributions accommodated are Gaussian, Poisson, Binomial, Dbd,
+and Multinom.  Note that <code>"discnp"</code> is just an alternative
+expression for <code>"Multinom"</code>.  Ignored if the response is
+bivariate, in which case <code>distr</code> is forcibly set equal
+to <code>"Multinom"</code>.  I.e.  bivariate models are, currently,
+fitted only to data in which the emissions have the <code>"Multinom"</code>
+distribution.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inclTau</code></td>
+<td>
+
+<p>Logical scalar. Should the transition probability matrix parameters
+“<code>tau</code>” be included in those that are estimated via the
+Hessian/gradient pardigm? In this case, they are included in the
+set of parameters to which the gradient and Hessian are applicable.
+If not, they are estimated via the method of moments as is done
+when the EM algorithm is used.  In this latter case the dimensions
+of the Hessian are reduced (by a substantial amount if <code>K</code>
+is “large”).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preSpecSigma</code></td>
+<td>
+
+<p>Numeric vector of length <code>K</code> (see below) with strictly
+positive entries.  Ignored if <code>distr</code> is not equal to
+<code>"Gaussian"</code>. This vector provides “pre-specified”
+values of the standard deviations <code>sigma</code> of the Gaussian
+distribution associated with each state.  If <code>preSpecSigma</code>
+is specified, then it is used as the value of <code>sigma</code>
+throughout the fitting process, and <code>sigma</code> is <em>not</em>
+estimated from the data. If <code>distr</code> is <code>"Gaussian"</code>
+and <code>preSpecSigma</code> is specified, then an error will be thrown
+if the length of <code>preSpecSigma</code> is not equal to <code>K</code>, or
+if any entries of <code>preSpecSigma</code> fail to be strictly positive.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indep</code></td>
+<td>
+
+<p>Logical scalar; should the components of a bivariate
+model be considered to be independent?  Ignored unless the
+model is bivariate (i.e. unless <code>response</code> is of length 2.
+If the model is bivariate and <code>indep</code> is not specified,
+an error is thrown.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+
+<p>Scalar integer specifying the number of trials in the experiment generating
+binomial data (see the <code>size</code> argument of <code>dbinom()</code>).
+Ignored unless <code>distr</code> is equal to <code>"Binomial"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbot</code></td>
+<td>
+
+<p>Scalar integer specifying the lower end (0 or 1) of the range
+of values of the discretised Beta distribution.  Ignored unless
+<code>distr</code> is <code>"Dbd"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntop</code></td>
+<td>
+
+<p>Scalar integer specifying the upper end of the range of values
+of the discretised Beta distribution.  Ignored unless <code>distr</code>
+is <code>"Dbd"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cells</code></td>
+<td>
+<p>A character vector giving the names of the factors
+(columns of the <code>data</code> data frame) which determine what the
+“cells” of the model are considered to be.  The cells
+correspond to the combinations of levels of the factors named
+by <code>cells</code>.  The sequences of observations from each of
+the cells constitute a collection of independent time series,
+all following the specified model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cf</code></td>
+<td>
+<p>A factor (“cell factor”) specifying the cells
+of the model.  If <code>cells</code> is not specified, then <code>cf</code>
+must be.  If <code>cells</code> <em>is</em> specified, then <code>cf</code>
+is ignored.  the model.  If <code>cells</code> is not specified, then
+in most (if not all?) circumstances, <code>cf</code> should be set
+equal <code>factor(rep(1,nrow(data))</code>.  This the effect of making
+the entire observation sequence equal to a single time series,
+following the specified model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+
+<p>Scalar integer specifying the number of states of the hidden Markov
+model in question.  If <code>K</code> is not specified and <code>par0</code>
+(see below) <em>is</em> specified, and has a component <code>tpm</code>,
+then <code>K</code> is set equal to <code>nrow(tpm)</code>.  In this case,
+if <code>par0</code> does not have a <code>tpm</code> component, an error
+is thrown.  An error is also thrown in this setting if <code>K</code>
+is specified to a value different from <code>nrow(tpm)</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par0</code></td>
+<td>
+
+<p>A list comprising starting values for the parameter estimates,
+to be used by the various methods.  (See <code>method</code> below.)
+This list may have components <code>tpm</code> (an estimate of the
+transition probability matrix), <code>phi</code> (a vector of estimates
+of the coefficients in the linear predictor in the generalised
+linear model) and <code>Rho</code> (a matrix, a list of two matrices,
+or a three dimensional array) that specifyies the emission
+probabilities when <code>distr</code> is <code>"Multinomial"</code>.  Note that
+<code>par0</code> may consist of an object of class <code>"eglhmm"</code>
+(see below), i.e. a model previously fitted (perhaps without
+achieving convergence), by <code>eglhmm()</code>.  This provides a
+means whereby a fitting procedure, that failed to converge,
+may be continued from where it left off.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randStart</code></td>
+<td>
+
+<p>Either a logical scalar or a list of three logical scalars
+named <code>tpm</code>, <code>phi</code>, and <code>Rho</code>.  If the former,
+it is converted internally into a list with entries named
+<code>tpm</code>, <code>phi</code> and <code>Rho</code>, all having the same
+value as the original argument.  If <code>tpm</code> is TRUE then the
+(undocumented) function <code>inititialise()</code> chooses entries
+for the starting value of <code>tpm</code> at random; likewise for
+<code>phi</code> and <code>Rho</code>.  If left <code>NULL</code>, this argument
+defaults to <code>list(tpm=FALSE,phi=FALSE,Rho=FALSE)</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>Character string specifying the method used to fit the model. This
+may be <code>"lm"</code> (Levenberg-Marquardt algorithm), <code>"em"</code>
+(EM algorithm) or <code>"bf"</code> (“brute force”).  The latter
+calls upon <code>optim()</code> or <code>nlm()</code> to do the
+heavy lifting).  If the response is bivariate, then <code>method</code>
+is forcibly (and silently) set equal to <code>"em"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimiser</code></td>
+<td>
+
+<p>Character string specifying which of <code>optim()</code> or <code>nlm()</code>
+should be used when <code>method</code> is <code>"bf"</code>.  Ignored unless
+<code>method</code> is <code>"bf"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimMethod</code></td>
+<td>
+
+<p>Character string specifying the optimisation method to be used
+by <code>optim()</code>.  See <code>optim()</code> for details.
+Ignored unless <code>method</code> is <code>"bf"</code> and <code>optimiser</code>
+is <code>"optim"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nlmWarn</code></td>
+<td>
+
+<p>The <code>nlm()</code> function sometimes produces, in the first few
+iterations,  warnings to the effect “NA/Inf
+replaced by maximum positive value”.  These warnings are almost
+surely irrelevant and are annoying.  If <code>nlmWarn</code> is <code>FALSE</code>
+(the default) then these warnings are suppressed.  This argument
+is provided to allow for the remote possibilty that the user might
+want to see these warnings.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lmc</code></td>
+<td>
+
+<p>Positive numeric scalar.  The initial “Levenberg-Marquardt
+constant”.  Ignored unless <code>method</code> is <code>"lm"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance</code></td>
+<td>
+
+<p>Positive numeric scalar.  The convergence tolerance to be used.
+What this value actually <em>means</em> depends upon <code>method</code>.
+If left as <code>NULL</code> it defaults to <code>1e-6</code> for the bivariate
+methods, to <code>sqrt(.Machine$double.eps</code> for the <code>"em"</code>
+and <code>"lm"</code> methods, and to the default value of <code>reltol</code>
+used by <code>optim()</code> when <code>method</code> is <code>"bf"</code> and
+<code>optimiser</code> is <code>"optim"</code>.  It is ignored if <code>method</code>
+is <code>"bf"</code> and <code>optimiser</code> is <code>"nlm"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+
+<p>Integer scalar. The number of digits to which “progress
+reports” are printed when <code>verbose</code> (see below) is
+<code>TRUE</code>.  There is a “sensible” default which is
+calculated in terms of <code>tolerance</code>.  This argument is ignored
+if <code>method</code> is <code>"bf"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>Logical scalar; if <code>TRUE</code>, rudimentary “progress
+reports” are printed out at appropriate points during the
+iteration process.  The nature of these “reports” varies
+with <code>method</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itmax</code></td>
+<td>
+
+<p>Integer scalar.  The maximum number of iterative steps to
+take.  Has a somewhat different meaning when <code>method</code> is
+<code>"bf"</code>, in which case the meaning depends on <code>optimiser</code>.
+For methods <code>"em"</code> and <code>"lm"</code>, if convergence is
+not achieved by <code>itmax</code> steps, the function gives up,
+prints a message to this effect, and returns a value with a
+component <code>converged=FALSE</code>.  This returned value may be
+used as a starting (the value of the argument <code>par0</code>) so
+that the iterations may be continued from where they left off.
+Unfortunately this facility is not available when <code>method</code>
+is <code>"bf"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+
+<p>Text string specifying the contrast (in respect of
+unordered factors) (see <code>contrasts()</code> and
+<code>options()</code>) that will be used when the design matrix
+is constructed from the model formula.  May be abbreviated
+(e.g. to "t", "s" or "h").
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit</code></td>
+<td>
+
+<p>Text string specifying the stopping criterion to be used.
+Possible values are “CLL” (scaled change in log likelihood),
+“L2” (scaled square root of the sum of squares of the
+changes in the parameter estimates), “Linf” (scaled maximum
+of the absolute value of the changes in the parameter estimates),
+and “ABSGRD” (scaled maximum of the absolute values of
+the entries of the gradient vector).  The latter only makes sense
+for the Levenberg-Marquardt algorithm.
+</p>
+<p>This argument is ignored if <code>method</code> is <code>"bf"</code>.
+It seems that the <code>"bf"</code> method effectively uses “CLL”
+when <code>optimiser</code> is <code>"optim"</code>.  When <code>optimiser</code>
+is <code>"nlm"</code> it seems that a combination of (something like)
+“ABSGRD” and “CLL” is used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+
+<p>A vector of <code>K+1</code> values used to construct a set of guesses
+at the states corresponding to each observation.  These are
+in turn used to calculate an initial estimate of the transition
+probability matrix.  There is a “sensible” default (produced
+by the undocumented function <code>breaker()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hessian</code></td>
+<td>
+
+<p>Logical scalar; should a Hessian matrix obtained by numerical
+differentiation be returned?  Ignored unless <code>method</code>
+is <code>"bf"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useAnalGrad</code></td>
+<td>
+
+<p>Logical scalar; should “analytical” calculation of the
+gradient be conducted?  This argument is ignored unless the method
+is <code>"bf"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ca</code></td>
+<td>
+
+<p>Logical scalar; “check analyticals”.  Used only when
+the method is <code>"bf"</code> and <code>optimiser</code> is <code>"nlm"</code>,
+and is passed on to <code>nlm()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>checkDecrLL</code></td>
+<td>
+
+<p>Logical scalar; “check for a <em>decrease</em> in the log likelihood”.
+Ignored unless the <code>method</code> is <code>"em"</code>.  Should the software
+check for a decrease in the log likelihood after an EM step?  See
+the <b>Remarks</b> for further discussion.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>"eglhmm"</code>, consisting of a list with
+components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call by which this object was created.  Present
+so that <code>update()</code> can be applied to objects returned by
+<code>eglhmm()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tpm</code></td>
+<td>
+<p>The estimated transition probability matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ispd</code></td>
+<td>
+<p>The estimated initial state probability distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi</code></td>
+<td>
+<p>Except for the <code>"Multinom"</code> distribution this
+is the vector of estimated coefficients of the linear predictor
+in the generalised linear model.  For the <code>"Multinom"</code>
+distribution it consists of the entries of <code>Rho</code> (see below)
+with the final all-zero column remove.  In this case <code>phi</code>
+is of course redundant.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>The vector of parameter estimates that the estimation
+procedure actually works with. It consists of the catenation of
+the non-redundant parameterization of the transition probability
+matrix and the vector <code>phi</code>. It is redundant in the case of
+the <code>"Multinom"</code> distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Rho</code></td>
+<td>
+<p>A matrix, or a list of two matrices or a three dimensional
+array specifying the emissions probabilities for a multinomial
+distribution.  Present only if <code>distr</code> is <code>"Multinom"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.like</code></td>
+<td>
+<p>The value of the log likelihood of the model
+evaluated at the parameter estimates, i.e. the (approximately)
+maximal value of the log likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gradient</code></td>
+<td>
+<p>(Not present for the <code>"em"</code> method.) The gradient
+vector of the log likelihood at the final parameter estimates;
+it <em>should</em> be effectively the zero vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numHess</code></td>
+<td>
+<p>(Present only if <code>method</code> is <code>"bf"</code>
+and only if the argument <code>hessian</code> is <code>TRUE</code>.)  A value
+of the Hessian matrix (see below), obtained by means of numerical
+differentiation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Hessian</code></td>
+<td>
+<p>(Present only if <code>method</code> is <code>"lm"</code>.) The
+Hessian matrix, i.e. the matrix of second partial derivatives of
+the log likelihood, evaluated at the final parameter estimates.
+The inverse of the negative of this matrix constitutes an estimate
+of the covariance matrix of the parameter estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>A data frame with <code>npred+1</code> columns where <code>npred</code>
+is the number of predictors in the model.  The rows contain, in their
+first <code>npred</code> entries, all possible combinations of the predictor
+values.  The last (<code>npred+1</code>) entry of each row is the fitted mean
+of the Gaussian distribution, as determined by that combination
+of predictors.  Present only if <code>distr</code> is <code>"Gaussian"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>Numeric vector of length <code>K</code> whose entries
+consist of the fitted standard deviations for the underlying
+Gaussian distribution, corresponding to each of the states.
+Present only if <code>distr</code> is <code>"Gaussian"</code> and
+<code>preSpecSigma</code> is <em>not</em> supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preSpecSigma</code></td>
+<td>
+<p>Numeric vector equal to the <code>preSpecSigma</code>
+argument, with names <code>"sigma1"</code>, <code>"sigma2"</code>, ...,
+<code>"sigmaK"</code> added.  Present only if <code>distr</code> is
+<code>"Gaussian"</code> and <code>preSpecSigma</code> is supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stopCritVal</code></td>
+<td>
+<p>Numeric scalar equal to the value, assumed by the
+stopping criterion specified by the argument <code>crit</code>, at
+the termination of the algorithm.  If the algorithm converged
+then <code>stopCritVal</code> will be less than <code>tolerance</code>.
+Not present if <code>method</code> is <code>"bf"</code>.  If <code>converged</code>
+(see below) is <code>NA</code> then <code>stopCritVal</code> is <code>NA</code>
+also.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anomaly</code></td>
+<td>
+<p>Logical scalar.  Did an “anomaly” occur
+in an application of the EM algorithm?  (See <b>Remarks</b>.) '
+Present only if <code>method</code> was equal to <code>"em"</code>.  This
+entry of the returned value is provided mainly for use by the
+<code>bcov()</code> function. Note that <code>anomaly</code> is added to the
+returned object, irrespective of the value of <code>checkDecrLL</code>.
+When <code>checkDecrLL</code> is <code>TRUE</code>, <code>anomaly</code> is
+somewhat redundant, since it will be <code>TRUE</code> if aand only if
+<code>converged</code> is <code>NA</code>.  However when <code>checkDecrLL</code>
+is <code>FALSE</code>, <code>anomaly</code> is informtive, since it is not
+possible to tell from other entries of the returned value when
+an anomaly has occurred.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converged</code></td>
+<td>
+<p>A logical scalar.  For the <code>"lm"</code>, and
+<code>"em"</code> methods it is <code>TRUE</code> if convergence is achieved
+within <code>itmax</code> iterations and <code>FALSE</code> otherwise.
+For the <code>"em"</code> method, if <code>checkDecrLL</code> is <code>TRUE</code>,
+then <code>converged</code> may be <code>NA</code>.  See <b>Remarks</b>
+for some discussion.
+</p>
+<p>For the <code>"bf"</code> method <code>converged</code> is <code>TRUE</code>
+if the <code>convergence</code> component of the object returned by
+<code>optim()</code> is equal to 0 or if the <code>code</code>
+component of the object returned by <code>nlm()</code> is
+less than or equal to 2, and is <code>FALSE</code> otherwise.  When
+<code>nlm()</code> is used, the value of <code>converged</code> has an attribute
+<code>"code"</code> equal to the actual value of the <code>code</code>
+component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstep</code></td>
+<td>
+<p>The number of steps (iterations) actually used by
+the algorithm.  For the <code>"lm"</code> and <code>"em"</code> methods
+this is the number of Levenberg-Marquardt steps, or EM steps,
+respectively, taken by the algorithm.  For the <code>"bf"</code>
+method it is the <code>counts</code> component of the object returned
+by <code>optim()</code> when <code>optimiser</code> is <code>"optim"</code>
+and it is the <code>iterations</code> component of the object returned by
+<code>nlm()</code> when <code>optimiser</code> is <code>"nlm"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean</code></td>
+<td>
+<p>A vector of the fitted mean values underlying each
+combination of observed predictors and state (i.e. corresponding to each
+entry of <code>y</code> in the data frame used to fit the model.
+See the description of <code>data</code> below.  Present only if
+<code>distr</code> is <code>"Gaussian"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd</code></td>
+<td>
+<p>A vector of the fitted values of the standard
+deviations underlying each combination of observed predictors and state,
+i.e. corresponding to each entry of <code>y</code> in the data frame
+used to fit the model.  See the description of <code>data</code> below.
+Present only if <code>distr</code> is <code>"Gaussian"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>A vector of estimated values of the Poisson
+parameter associated with each combination of observed predictors and state,
+i.e. corresponding to each entry of <code>y</code> in the data frame
+used to fit the model.  See the description of <code>data</code> below.
+Present only if <code>distr</code> is <code>"Poisson"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>A vector of estimated values of the “success”
+probabilities associated with each combination of observed
+predictors and state, i.e. corresponding to each entry of
+<code>y</code> in the data frame used to fit the model.  See the
+description of <code>data</code> below.  Present only if <code>distr</code>
+is <code>"Binomial"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>A numeric vector of the fitted “alpha”
+parameters, of the discretised Beta distribution, corresponding to
+each observation.  Present only if <code>distr</code> is <code>"Dbd"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>A numeric vector of the fitted “beta”
+parameters, of the discretised Beta distribution, corresponding to
+each observation.  Present only if <code>distr</code> is <code>"Dbd"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fy</code></td>
+<td>
+<p>The values of the “emission probability (density)”
+function, calculated at each observed value, for each state
+(i.e. at each entry of <code>y</code> in <code>data</code>.  See below.)
+These values are calculated using the (final) fitted parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>message</code></td>
+<td>
+<p>A (long) text string that is produced if the EM
+algorithm encounters the anomaly of a decrease in the log
+likelihood after an EM step.  It warns the user that this has
+occurred and suggests consulting the help file for an explanation.
+Present only if <code>method=="em"</code>, the anomaly referred to
+has occurred, and <code>checkDecrLL</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par0</code></td>
+<td>
+<p>The starting values used in the estimation procedure.
+Either those provided by the argument <code>par0</code> or those created
+by the (undocumented) function <code>initialise</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cells</code></td>
+<td>
+<p>A character vector indicating the names of the
+factors specifying the “cells” of the model.  (Equal to
+the <code>cells</code> argument.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>The formula for the model that was fitted; equal
+to the <code>formula</code> argument, augmented by <code>state</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distr</code></td>
+<td>
+<p>Text string specifying the distribution of the
+response variable.  Equal to the <code>distr</code> argument of this
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbot</code></td>
+<td>
+<p>Integer scalar. The lower endpoint of the range of
+values of the discretised beta distribution.  Equal to the value
+of the <code>nbot</code> argument of this function.  Present only if
+<code>distr</code> is <code>"Dbd"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntop</code></td>
+<td>
+<p>Integer scalar. The upper endpoint of the range of
+values of the discretised beta distribution.  Equal to the value
+of the <code>nbot</code> argument of this function.  Present only if
+<code>distr</code> is <code>"Dbd"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+<p>Scalar integer equal to the number of trials in the
+“experiments” generating the data.  Equal to the <code>size</code>
+argument of this function.  Present only if <code>distr</code> is
+<code>"Binomial"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance</code></td>
+<td>
+<p>The convergence tolerance used to fit the model.
+Equal to the <code>tolerance</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit</code></td>
+<td>
+<p>Character scalar specifying the stopping criterion
+that was used. Equal to the <code>crit</code> argument of this function.
+Not present if <code>method</code> is <code>"bf"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+<p>Text string specifying the contrast for unordered
+factors that was used in fitting the model.  Equal to the
+<code>contrast</code> argument of this function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The method (<code>"lm"</code>, <code>"em"</code>, or <code>"bf"</code>
+used to fit the model.  Equal to the <code>method</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stationary</code></td>
+<td>
+<p>Logical scalar.  Was a stationary Markov
+chain fitted?  Currently (13/02/2024) <code>stationary</code> is always
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The data frame to which the model was fitted.
+It is a rearrangement of the <code>data</code> argument, with rows of
+that argument replicated <code>K</code> times (once for each state).
+A <code>state</code> column (factor) has been added, as has a column
+<code>cf</code> (“cell factor”), which indicates, by means of a
+single factor, which cell of the model a given row of <code>data</code>
+corresponds to.  The aforementioned rearrangement consists of
+ordering the cells in the order of the levels of <code>cf</code>.
+When <code>distr</code> is <code>"Multinom"</code> the <code>"response"</code>
+variables are coerced into factors. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bicm</code></td>
+<td>
+<p>Numerical scalar.  The number by which <code>npar</code>
+is multiplied to form the <code>BIC</code> criterion.  It is
+essentially the log of the number of observations.  See the
+code of <code>eglhmm()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AIC</code></td>
+<td>
+<p>Numerical scalar.  The Akaike Information criterion,
+calculated as <code>-2*ll + 2*npar</code> where <code>ll</code> is the log
+likelihood of the fitted model and <code>npar</code> is the number of
+fitted parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BIC</code></td>
+<td>
+<p>Numerical scalar.  The Bayesian Information criterion,
+calculated as <code>-2*ll + bicm*npar</code> where <code>ll</code> is the log
+likelihood of the fitted model, <code>npar</code> is the number of
+fitted parameters, and <code>bicm</code> is the log of the number of
+observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missFrac</code></td>
+<td>
+<p>The fraction or proportion of missing values in
+the observations.</p>
+</td>
+</tr>
+</table>
+<h3>Remarks</h3>
+
+
+<dl>
+<dt><b>Available models:</b></dt>
+<dd>
+<p>Although this documentation refers to
+(extended) “generalised linear models”, the only such
+models currently (13/02/2024) available are the Gaussian model
+with the identity link, the Poisson model, with the log link,
+and the Binomial model with the logit link.  When <code>distr</code>
+is <code>"Dbd"</code> or <code>"Multinom"</code> the model fitted is is
+a generalised linear model only in a rather extended sense.
+Even the Gaussian model is not strictly speaking a generalised
+linear model, since the (state dependent) standard deviations
+are estimated by a method separate from the generalised linear
+model paradigm.  Other models may be added at a future date.</p>
+</dd>
+<dt><b>Decrease in the log likelihood:</b></dt>
+<dd>
+<p>If <code>method</code> is equal to <code>"EM"</code> there may be a
+<em>decrease</em> (!!!) in the log likelihood at some EM step.
+This is “theoretically impossible” but can occur in
+practice due to an intricacy in the way that the EM algorithm
+treats <code>ispd</code> when <code>stationary</code> is <code>TRUE</code>.
+It turns out to be effectively impossible to maximise the expected
+log likelihood unless the term in that quantity corresponding
+to <code>ispd</code> is ignored (whence it <em>is</em> ignored).
+Ignoring this term is “asymptotically negligible” but
+can have the unfortunate effect of occasionally leading to a
+decrease in the log likelihood.  If <code>method</code> is equal
+to <code>"em"</code>, then the object returned by <code>eglhmm()</code>
+has a component <code>anomaly</code> which is <code>TRUE</code> if such
+a decrease in the log likelihood was detected, and <code>FALSE</code>
+otherwise.
+</p>
+<p>If such a decrease/anomaly is detected, then (provided that
+<code>checkDecrLL</code> is <code>TRUE</code>) the algorithm terminates and
+the <code>converged</code> component of the returned value is set equal
+to <code>NA</code>.  The algorithm issues a message to the effect that
+the decrease occurred.  The message suggests that another method
+be used and that perhaps the results from the penultimate EM step
+(which are returned by this function) be used as starting values.
+This of course is not possible if the response is bivariate,
+in which case only the EM algorithm is applicable.
+</p>
+<p>Note that if <code>checkDecrLL</code> is <code>FALSE</code>, then the algorithm
+proceeds “normally”.  That is, it treats the decrease in
+the log likelihood to mean that the “increase” in the
+log likeihood is less than <code>tolerance</code> and deems convergence
+to be achieved.
+</p>
+<p>The value of <code>checkDecrLL</code> is set to <code>FALSE</code> in the
+function <code>bcov()</code> so as to speed up the rate at which
+the iterations proceed.  In other circumstances it is probably
+judicious to leave it at its default value of <code>TRUE</code>.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:rolfturner@posteo.net">rolfturner@posteo.net</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>T. Rolf Turner, Murray A. Cameron, and Peter J. Thomson
+(1998).  Hidden Markov chains in generalized linear models.
+<em>Canadian Journal of Statististics</em> <b>26</b>, pp. 107 –
+125, DOI: https://doi.org/10.2307/3315677.
+</p>
+<p>Rolf Turner (2008).  Direct maximization of the likelihood of a
+hidden Markov model. <em>Computational Statistics
+and Data Analysis</em> <b>52</b>, pp. 4147 – 4160, DOI:
+https://doi.org/10.1016/j.csda.2008.01.029
+</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>fitted.eglhmm()</code> <code>reglhmm.default()</code>
+<code>reglhmm.eglhmm()</code> <code>bcov()</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">    loc4 &lt;- c("LngRf","BondiE","BondiOff","MlbrOff")
+    SCC4 &lt;- SydColCount[SydColCount$locn %in% loc4,] 
+    SCC4$locn &lt;- factor(SCC4$locn) # Get rid of unused levels.
+    rownames(SCC4) &lt;- 1:nrow(SCC4)
+    fitP.em &lt;- eglhmm(y~locn+depth,data=SCC4,distr="P",cells=c("locn","depth"),
+                    K=2,method="em",verb=TRUE)
+    ## Not run: 
+        fitP.lm &lt;- eglhmm(y~locn+depth,data=SCC4,distr="P",cells=c("locn","depth"),
+                        K=2,verb=TRUE)
+        fitD.lm &lt;- eglhmm(formula=y~ma.com+nh.com+bo.com,data=SCC4,nbot=0,ntop=11,
+                      cells=c("locn","depth"),distr="Dbd",K=2,method="lm",verb=TRUE,
+                      tolerance=NULL)
+        SCD4 &lt;- SydColDisc[SydColDisc$locn %in% loc4,] 
+        SCD4$locn &lt;- factor(SCD4$locn) # Get rid of unused levels.
+        fitM.lm  &lt;- eglhmm(formula=y~ma.com+nh.com+bo.com,data=SCD4,
+                      cells=c("locn","depth"),distr="Multinom",K=2,
+                      verb=TRUE)
+        xxx &lt;- split(SCD4,f=SCD4$locn)
+        X   &lt;- with(xxx,data.frame(y.LngRf=LngRf$y,y.BondiE=BondiE$y,depth=LngRf$depth))
+        fitBiv &lt;- eglhmm(response=c("y.LngRf","y.BondiE"),data=X,K=2,cells="depth",
+                         indep=FALSE,verb=TRUE)
+    
+## End(Not run)
+# See the help for ionChannelData for more examples involving the
+# ion channel data.
+</code></pre>
+
+
+</div>

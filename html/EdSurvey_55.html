@@ -1,0 +1,498 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lm.sdf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>EdSurvey Linear Models</h2>
+
+<h3>Description</h3>
+
+<p>Fits a linear model that uses weights and variance estimates appropriate for the data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lm.sdf(formula, data, weightVar = NULL, relevels = list(),
+              varMethod = c("jackknife", "Taylor"), jrrIMax = 1,
+              dropOmittedLevels = TRUE, defaultConditions = TRUE, recode = NULL,
+              returnVarEstInputs = FALSE, returnNumberOfPSU = FALSE,
+              standardizeWithSamplingVar = FALSE, verbose=TRUE,
+              omittedLevels = deprecated())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a <code>formula</code> for the
+linear model. See <code>lm</code>.
+If <em>y</em> is left blank, the default subject scale or subscale variable
+will be used. (You can find the default using
+<code>showPlausibleValues</code>.)
+If <em>y</em> is a variable for a subject scale or subscale (one of the
+names shown by <code>showPlausibleValues</code>),
+then that subject scale or subscale is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an <code>edsurvey.data.frame</code>, a <code>light.edsurvey.data.frame</code>,
+or an <code>edsurvey.data.frame.list</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weightVar</code></td>
+<td>
+<p>a character indicating the weight variable to use (see Details).
+The <code>weightVar</code> must be one of the weights for the
+<code>edsurvey.data.frame</code>. If <code>NULL</code>, it  uses the default
+for the <code>edsurvey.data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relevels</code></td>
+<td>
+<p>a list. Used to change the contrasts from the
+default treatment contrasts to the treatment contrasts with a chosen omitted
+group (the reference group). The name of each element should be the variable name, and the value
+should be the group to be omitted (the reference group).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varMethod</code></td>
+<td>
+<p>a character set to “jackknife” or “Taylor” that indicates the variance
+estimation method to be used. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jrrIMax</code></td>
+<td>
+<p>a numeric value; when using the jackknife variance estimation method, the default estimation option, <code>jrrIMax=1</code>, uses the
+sampling variance from the first plausible value as the component for sampling variance estimation. The <code>Vjrr</code>
+term (see
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>)
+can be estimated with any number of plausible values, and values larger than the number of
+plausible values on the survey (including <code>Inf</code>) will result in all plausible values being used.
+Higher values of <code>jrrIMax</code> lead to longer computing times and more accurate variance estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dropOmittedLevels</code></td>
+<td>
+<p>a logical value. When set to the default value of <code>TRUE</code>, drops
+those levels of all factor variables that are specified
+in an <code>edsurvey.data.frame</code>. Use <code>print</code> on an
+<code>edsurvey.data.frame</code> to see the omitted levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>defaultConditions</code></td>
+<td>
+<p>a logical value. When set to the default value of <code>TRUE</code>, uses
+the default conditions stored in an <code>edsurvey.data.frame</code>
+to subset the data. Use <code>print</code> on an
+<code>edsurvey.data.frame</code> to see the default conditions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recode</code></td>
+<td>
+<p>a list of lists to recode variables. Defaults to <code>NULL</code>. Can be set as
+<code>recode=</code><code>list(</code><code>var1</code> <code>=</code> <code>list(</code><code>from=</code> <code>c("a",</code> <code>"b",</code> <code>"c"),</code> <code>to=</code> <code>"d"))</code>. See Examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnVarEstInputs</code></td>
+<td>
+<p>a logical value set to <code>TRUE</code> to return the
+inputs to the jackknife and imputation variance
+estimates, which allow for the computation
+of covariances between estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnNumberOfPSU</code></td>
+<td>
+<p>a logical value set to <code>TRUE</code> to return the number of
+primary sampling units (PSUs)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standardizeWithSamplingVar</code></td>
+<td>
+<p>a logical value indicating if the standardized coefficients
+should have the variance of the regressors and outcome measured
+with sampling variance. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; indicates whether a detailed printout should display during execution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omittedLevels</code></td>
+<td>
+<p>this argument is deprecated. Use <code>dropOmittedLevels</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function implements an estimator that correctly handles left-hand
+side variables that are either numeric or plausible values and allows for survey
+sampling weights and estimates variances using the jackknife replication method.
+The vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>
+describes estimation of the reported statistics.
+</p>
+<p>Regardless of the variance estimation, the coefficients are estimated
+using the sample weights according to the sections
+“Estimation of Weighted Means When Plausible Values Are Not Present”
+or
+“Estimation of Weighted Means When Plausible Values Are Present,”
+depending on if there are assessment variables or variables with plausible values
+in them.
+</p>
+<p>How the standard errors of the coefficients are estimated depends on the
+value of <code>varMethod</code> and the presence of plausible values (assessment variables),
+But once it is obtained, the <em>t</em> statistic
+is given by </p>
+<p style="text-align: center;"><code class="reqn">t=\frac{\hat{\beta}}{\sqrt{\mathrm{var}(\hat{\beta})}}</code>
+</p>
+<p> where
+<code class="reqn"> \hat{\beta} </code> is the estimated coefficient and <code class="reqn">\mathrm{var}(\hat{\beta})</code> is
+the variance of that estimate.
+</p>
+<p>The <b>coefficient of determination (<em>R</em>-squared value)</b> is similarly estimated by finding
+the average <em>R</em>-squared using the average across the plausible values.
+</p>
+
+
+<h4>Standardized regression coefficients</h4>
+
+<p>Standardized regression coefficients can be returned in a call to <code>summary</code>,
+by setting the argument <code>src</code> to <code>TRUE</code>. See Examples.
+</p>
+<p>By default, the standardized coefficients are calculated using standard
+deviations of the variables themselves, including averaging the standard
+deviation across any plausible values. When <code>standardizeWithSamplingVar</code>
+is set to <code>TRUE</code>, the variance of the standardized coefficient is
+calculated similar to a regression coefficient and therefore includes the
+sampling variance in the variance estimate of the outcome variable.
+</p>
+
+
+
+<h4>Variance estimation of coefficients</h4>
+
+<p>All variance estimation methods are shown in the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>.
+When <code>varMethod</code> is set to the <code>jackknife</code> and the predicted
+value does not have plausible values, the variance of the coefficients
+is estimated according to the section
+“Estimation of Standard Errors of Weighted Means When
+Plausible Values Are Not Present, Using the Jackknife Method.”
+</p>
+<p>When plausible values are present and <code>varMethod</code> is <code>jackknife</code>, the
+variance of the coefficients is estimated according to the section
+“Estimation of Standard Errors of Weighted Means When
+Plausible Values Are Present, Using the Jackknife Method.”
+</p>
+<p>When plausible values are not present and <code>varMethod</code> is <code>Taylor</code>, the
+variance of the coefficients is estimated according to the section
+“Estimation of Standard Errors of Weighted Means When Plausible
+Values Are Not Present, Using the Taylor Series Method.”
+</p>
+<p>When plausible values are present and <code>varMethod</code> is <code>Taylor</code>, the
+variance of the coefficients is estimated according to the section
+“Estimation of Standard Errors of Weighted Means When Plausible
+Values Are Present, Using the Taylor Series Method.”
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>An <code>edsurvey.lm</code> with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>the formula used to fit the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>the estimates of the coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>the standard error estimates of the coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Vimp</code></td>
+<td>
+<p>the estimated variance from uncertainty in the scores (plausible value variables)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Vjrr</code></td>
+<td>
+<p>the estimated variance from sampling</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>the number of plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varm</code></td>
+<td>
+<p>the variance estimates under the various plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefm</code></td>
+<td>
+<p>the values of the coefficients under the various plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefmat</code></td>
+<td>
+<p>the coefficient matrix (typically produced by the summary of a model)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.squared</code></td>
+<td>
+<p>the coefficient of determination</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>the name of the weight variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npv</code></td>
+<td>
+<p>the number of plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jrrIMax</code></td>
+<td>
+<p>the <code>jrrIMax</code> value used in computation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>njk</code></td>
+<td>
+<p>the number of the jackknife replicates used; set to <code>NA</code>
+when Taylor series variance estimates are used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varMethod</code></td>
+<td>
+<p>one of <code>Taylor series</code> or the <code>jackknife</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>residuals from the average regression coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PV.residuals</code></td>
+<td>
+<p>residuals from the by plausible value coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PV.fitted.values</code></td>
+<td>
+<p>fitted values from the by plausible value coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>imputation variance covariance matrix, before multiplication by (M+1)/M</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>U</code></td>
+<td>
+<p>sampling variance covariance matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rbar</code></td>
+<td>
+<p>average relative increase in variance; see van Buuren (2012, eq. 2.29)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nPSU</code></td>
+<td>
+<p>number of PSUs used in calculation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n0</code></td>
+<td>
+<p>number of rows on an <code>edsurvey.data.frame</code> before any conditions were applied</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nUsed</code></td>
+<td>
+<p>number of observations with valid data and weights larger than zero</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data used for the computation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xstdev</code></td>
+<td>
+<p>standard deviations of regressors, used for computing standardized
+regression coefficients when <code>standardizeWithSamplingVar</code> is set to
+<code>FALSE</code> (the default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varSummary</code></td>
+<td>
+<p>the result of running <code>summary2</code> (unweighted) on each variable in the
+regression</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varEstInputs</code></td>
+<td>
+<p>when <code>returnVarEstInputs</code> is <code>TRUE</code>,
+this element is returned. These are
+used for calculating covariances with
+<code>varEstToCov</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standardizeWithSamplingVar</code></td>
+<td>
+<p>when <code>standardizeWithSamplingVar</code>
+is set to <code>TRUE</code>, this element is
+returned. Calculates the standard deviation
+of the standardized
+regression coefficients like any other
+variable.</p>
+</td>
+</tr>
+</table>
+<h3>Testing</h3>
+
+<p>Of the common hypothesis tests for joint parameter testing, only the Wald
+test is widely used with plausible values and sample weights. As such, it
+replaces, if imperfectly, the Akaike Information Criteria (AIC), the
+likelihood ratio test, chi-squared, and analysis of variance (ANOVA, including <em>F</em>-tests). See <code>waldTest</code> or
+the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-WaldTest.pdf"><em>Methods and Overview of Using EdSurvey for Running Wald Tests</em></a>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Paul Bailey
+</p>
+
+
+<h3>References</h3>
+
+<p>Binder, D. A. (1983). On the variances of asymptotically normal estimators from complex surveys. <em>International Statistical Review</em>, <em>51</em>(3), 279–292.
+</p>
+<p>Rubin, D. B. (1987). <em>Multiple imputation for nonresponse in surveys</em>. New York, NY: Wiley.
+</p>
+<p>van Buuren, S. (2012). <em>Flexible imputation of missing data</em>. New York, NY: CRC Press.
+</p>
+<p>Weisberg, S. (1985). <em>Applied linear regression</em> (2nd ed.). New York, NY: Wiley.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# read in the example data (generated, not real student data)
+sdf &lt;- readNAEP(path=system.file("extdata/data", "M36NT2PM.dat", package = "NAEPprimer"))
+
+# by default uses jackknife variance method using replicate weights
+lm1 &lt;- lm.sdf(formula=composite ~ dsex + b017451, data=sdf)
+lm1
+
+# the summary function displays detailed results
+summary(lm1)
+
+# to show standardized regression coefficients
+summary(lm1, src=TRUE)
+
+# to specify a variance method, use varMethod
+lm2 &lt;- lm.sdf(formula=composite ~ dsex + b017451, data=sdf, varMethod="Taylor")
+lm2
+summary(lm2)
+
+# use relevel to set a new omitted category
+lm3 &lt;- lm.sdf(formula=composite ~ dsex + b017451, data=sdf, relevels=list(dsex="Female"))
+summary(lm3)
+# test of a simple joint hypothesis
+waldTest(lm3, "b017451")
+
+# use recode to change values for specified variables
+lm4 &lt;- lm.sdf(formula=composite ~ dsex + b017451, data=sdf,
+              recode=list(b017451=list(from=c("Never or hardly ever",
+                                              "Once every few weeks",
+                                              "About once a week"),
+                                       to=c("Infrequently")),
+                          b017451=list(from=c("2 or 3 times a week","Every day"),
+                                       to=c("Frequently"))))
+# Note: "Infrequently" is the dropped level for the recoded b017451
+summary(lm4)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

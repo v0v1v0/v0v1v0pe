@@ -1,0 +1,98 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>construct_question_frame</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert from choice_sets to a question data</h2>
+
+<h3>Description</h3>
+
+<p>Convert from choice_sets to a question data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">construct_question_frame(
+  augmented_full_factorial,
+  choice_sets,
+  randomise_choice_sets = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>augmented_full_factorial</code></td>
+<td>
+<p>The augmented full factorial object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>choice_sets</code></td>
+<td>
+<p>The choice sets list generated from one of the methods. (See Step 6 of the tutorial)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomise_choice_sets</code></td>
+<td>
+<p>A binary variable indicating if the order of the choice sets should be randomised. Some methods create choice sets which have a systematic order. Randomising the order of the choice sets does not change the alternatives within the choice sets. It simply rearranges the choice_set object in a random manner.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a data.frame object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#See Step 9 of Practical Introduction to ExpertChoice vignette.
+
+# Step 1
+attrshort  = list(condition = c("0", "1", "2"),
+technical =c("0", "1", "2"),
+provenance = c("0", "1"))
+
+#Step 2
+# ff stands for "full fatorial"
+ ff  &lt;-  full_factorial(attrshort)
+ af  &lt;-  augment_levels(ff)
+# af stands for "augmented factorial"
+
+# Step 3
+# Choose a design type: Federov or Orthogonal. Here an Orthogonal one is used.
+nlevels &lt;- unlist(purrr::map(ff, function(x){length(levels(x))}))
+fractional_factorial &lt;- DoE.base::oa.design(nlevels = nlevels, columns = "min34")
+
+# Step 4 &amp; 5
+# The functional draws out the rows from the original augmented full factorial design.
+colnames(fractional_factorial) &lt;- colnames(ff)
+fractional &lt;- search_design(ff, fractional_factorial)
+# Step 5 (skipped, but important, see vignette)
+
+# Step 6
+# Two modulators c(1,1,1) and c(0,1,1) are specified.
+dce_modulo &lt;- modulo_method(
+fractional,
+list(c(1,1,1),c(0,1,1))
+)
+
+# Step 7 and Step 8 are very important for the design, but skipped here.
+
+# Step 9! -- Construct a question frame to use with your study.
+# Note the use of af here.
+questions &lt;- construct_question_frame(af, dce_modulo)
+levels(questions$condition) &lt;- c("bad", "good", "excellent")
+levels(questions$technical) &lt;- c("poor", "fair", "skilled")
+levels(questions$provenance) &lt;- c("none", "present")
+questions
+</code></pre>
+
+
+</div>

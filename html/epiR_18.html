@@ -1,0 +1,98 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epi.empbayes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical Bayes estimates of observed event counts</h2>
+
+<h3>Description</h3>
+
+<p>Computes empirical Bayes estimates of observed event counts using the method of moments.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epi.empbayes(obs, pop)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obs</code></td>
+<td>
+<p>a vector representing the observed event counts in each unit of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pop</code></td>
+<td>
+<p>a vector representing the population count in each unit of interest.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The gamma distribution is parameterised in terms of shape (<code class="reqn">\alpha</code>) and scale (<code class="reqn">\nu</code>) parameters. The mean of a given gamma distribution equals <code class="reqn">\nu / \alpha</code>. The variance equals <code class="reqn">\nu / \alpha^{2}</code>. The empirical Bayes estimate of event risk in each unit of interest equals <code class="reqn">(obs + \nu) / (pop + \alpha)</code>.
+</p>
+<p>This technique performs poorly when your data contains large numbers of zero event counts. In this situation a Bayesian approach for estimating <code class="reqn">\alpha</code> and <code class="reqn">\nu</code> would be advised.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame with four elements: <code>gamma</code> the mean event risk across all units, <code>phi</code> the variance of event risk across all units, <code>alpha</code> the estimated shape parameter of the gamma distribution, and <code>nu</code> the estimated scale parameter of the gamma distribution.
+</p>
+
+
+<h3>References</h3>
+
+<p>Bailey TC,  Gatrell AC (1995). Interactive Spatial Data Analysis. Longman Scientific &amp; Technical. London, pp. 303 - 308. 
+</p>
+<p>Langford IH (1994). Using empirical Bayes estimates in the geographical analysis of disease risk. Area 26: 142 - 149. 
+</p>
+<p>Meza J (2003). Empirical Bayes estimation smoothing of relative risks in disease mapping. Journal of Statistical Planning and Inference 112: 43 - 62.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## EXAMPLE 1:
+data(epi.SClip)
+obs &lt;- epi.SClip$cases; pop &lt;- epi.SClip$population
+
+est &lt;- epi.empbayes(obs, pop)
+crude.p &lt;- ((obs) / (pop)) * 100000
+crude.r &lt;- rank(crude.p)
+ebay.p &lt;- ((obs + est[4]) / (pop + est[3])) * 100000
+
+dat.df01 &lt;- data.frame(rank = c(crude.r, crude.r), 
+   Method = c(rep("Crude", times = length(crude.r)), 
+      rep("Empirical Bayes", times = length(crude.r))),
+   est = c(crude.p, ebay.p)) 
+
+## Scatter plot showing the crude and empirical Bayes adjusted lip cancer 
+## incidence rates as a function of district rank for the crude lip 
+## cancer incidence rates: 
+                          
+## Not run: 
+library(ggplot2)
+
+ggplot(dat = dat.df01, aes(x = rank, y = est, colour = Method)) +
+  theme_bw() +
+  geom_point() +
+  scale_x_continuous(name = "District rank", 
+     breaks = seq(from = 0, to = 60, by = 10), 
+     labels = seq(from = 0, to = 60, by = 10), 
+     limits = c(0,60)) +
+  scale_y_continuous(limits = c(0,30), name = "Lip cancer incidence rates 
+     (cases per 100,000 person years)") 
+
+## End(Not run)
+</code></pre>
+
+
+</div>

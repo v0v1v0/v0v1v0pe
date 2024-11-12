@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hybrid_Exponential</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate survival function, as hybrid between Kaplan-Meier and Exponential tail</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the values of the survival function as a hybrid of Kaplan-Meier for times smaller than the specified change point and an Exponential fit to the tail of the survival function. The Exponential tail fit is computed assuming a piecewise constant hazard with one change point.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">hybrid_Exponential(t0, time = time, event = event, changepoint)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>t0</code></td>
+<td>
+<p>Value at which to compute value of survival function. Can be a vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>Event times, censored or observed, in months.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>event</code></td>
+<td>
+<p>Censoring indicator, 1 for event, 0 for censored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>changepoint</code></td>
+<td>
+<p>Pre-specified change point.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A vector of the same dimension as <code>t0</code> containing the values of the estimated survival function at <code>t0</code>.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Kaspar Rufibach (maintainer) <br><a href="mailto:kaspar.rufibach@roche.com">kaspar.rufibach@roche.com</a> 
+</p>
+
+
+<h3>References</h3>
+
+<p>Fang, L., Zheng, S. (2011).
+A hybrid approach to predicting events in clinical trials with time-to-event outcomes.
+<em>Contemp. Clin. Trials</em>, <b>32</b>, 755–759. 
+</p>
+<p>Goodman, M.S., Li, Y., Tiwari, R.C. (2011).
+Detecting multiple change points in piecewise constant hazard functions.
+<em>J. Appl. Stat</em>, <b>38(11)</b>, 2523–2532.
+</p>
+<p>Rufibach, K. (2016).
+<em>Event projection: quantify uncertainty and manage expectations of broader teams.</em>
+Slides for talk given in Basel Biometric Section Seminar on 28th April 2016.
+<a href="https://baselbiometrics.github.io/home/docs/talks/20160428/1_Rufibach.pdf">https://baselbiometrics.github.io/home/docs/talks/20160428/1_Rufibach.pdf</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# --------------------------------------------------
+# simulate data 
+# --------------------------------------------------
+set.seed(2021)
+n &lt;- 600
+time0 &lt;- rexp(n, rate = log(2) / 20)
+cens &lt;- rexp(n, rate = log(2) / 50)
+time &lt;- pmin(time0, cens)
+event &lt;- as.numeric(time0 &lt; cens)
+accrual_after_ccod &lt;- 1:(n - length(time)) / 30
+
+# --------------------------------------------------
+# compute hybrid estimate and predict timepoint
+# --------------------------------------------------
+plot(survfit(Surv(time, event) ~ 1), mark = "", xlim = c(0, 200), 
+     ylim = c(0, 1), conf.int = FALSE, xaxs = "i", yaxs = "i",
+     main = "estimated survival functions", xlab = "time", 
+     ylab = "survival probability", col = grey(0.75), lwd = 5)
+
+# how far out should we predict monthly number of events?
+future.units &lt;- 15
+tab &lt;- matrix(NA, ncol = 2, nrow = future.units)
+tab[, 1] &lt;- 1:nrow(tab)
+ts &lt;- seq(0, 100, by = 0.01)
+
+# --------------------------------------------------
+# starting from a piecewise Exponential hazard with 
+# K = 5 change points, infer the last "significant"
+# change point
+# --------------------------------------------------
+pe5 &lt;- piecewiseExp_MLE(time = time, event = event, K = 5)
+pe5.tab &lt;- piecewiseExp_test_changepoint(peMLE = pe5, alpha = 0.05)
+cp.select &lt;- max(c(0, as.numeric(pe5.tab[, "established change point"])), na.rm = TRUE)
+
+# the function predictEvents takes as an argument any survival function
+# hybrid exponential with cp.select
+St1 &lt;- function(t0, time, event, cp){
+     return(hybrid_Exponential(t0 = t0, time = time, event = event, 
+     changepoint = cp))}
+
+pe1 &lt;- predictEvents(time = time, event = event, 
+          St = function(t0){St1(t0, time = time, 
+          event = event, cp.select)}, accrual_after_ccod, 
+          future.units = future.units)
+tab[, 2] &lt;- pe1[, 2]
+lines(ts, St1(ts, time, event, cp.select), col = 2, lwd = 2)
+
+# --------------------------------------------------
+# compute exact date when we see targeted number of events
+# for hybrid Exponential model, through linear interpolation
+# --------------------------------------------------
+exactDatesFromMonths(predicted = tab, 450)
+</code></pre>
+
+
+</div>

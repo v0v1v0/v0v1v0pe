@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>evaluate_data_package</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Evaluate data package</h2>
+
+<h3>Description</h3>
+
+<p>Evaluate data package
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">evaluate_data_package(eml, useChecksum = FALSE, env = "production")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>eml</code></td>
+<td>
+<p>(character) Full path to an EML file describing the data package
+to be evaluated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useChecksum</code></td>
+<td>
+<p>(logical) Use data entities from a previous version of
+the data package? See details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>(character) Repository environment. Can be: "production",
+"staging", or "development".</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Each data entity described in <code>eml</code> must be accompanied by a
+web accessible URL at the EML XPath ".//physical/distribution/online/url".
+The EDI data repository downloads the data entities via this URL. The URLs
+must be static and not have any redirects otherwise the data entities will
+not be downloaded.
+</p>
+<p>An optional query parameter, "useChecksum", can be appended to the URL. When
+specified, the useChecksum query parameter directs the repository to
+determine whether it can use an existing copy of a data entity from a
+previous revision of the data package based on matching a
+metadata-documented checksum value (MD5 or SHA-1) to the checksum of the
+existing copy. If a match is found, the repository will skip the upload of
+the data entity from the remote URL and instead use its matching copy.
+Specifying "useChecksum" can save time by eliminating data uploads, but
+clients should take care to ensure that metadata-documented checksum values
+are accurate and up to date.
+</p>
+
+
+<h3>Value</h3>
+
+<p>transaction (character) Transaction identifier. May be used in a
+subsequent call to:
+</p>
+
+<ul>
+<li> <p><code>check_status_evaluate()</code> to determine the operation status
+</p>
+</li>
+<li> <p><code>read_evaluate_report()</code> to read the evaluation report
+</p>
+</li>
+<li> <p><code>read_evaluate_report_summary()</code> to summarize the evaluation
+report and raise exceptions
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>User authentication is required (see <code>login()</code>)
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other Evaluation and Upload: 
+<code>check_status_create()</code>,
+<code>check_status_evaluate()</code>,
+<code>check_status_update()</code>,
+<code>create_data_package()</code>,
+<code>update_data_package()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+login()
+
+transaction &lt;- evaluate_data_package(
+  eml = paste0(tempdir(), "/edi.595.1.xml"),
+  env = "staging"
+)
+transaction
+#&gt; [1] "evaluate_163966785813042760"
+
+# Check evaluation status
+status &lt;- check_status_evaluate(transaction, env = "staging")
+status
+#&gt; [1] TRUE
+
+# Read evaluation report
+report &lt;- read_evaluate_report(transaction, env = "staging")
+report
+#&gt; {xml_document}
+#&gt; &lt;qualityReport schemaLocation="eml://ecoinformatics.org/qualityReport ...
+#&gt; [1] &lt;creationDate&gt;2021-12-15T17:46:33&lt;/creationDate&gt;
+#&gt; [2] &lt;packageId&gt;edi.595.1&lt;/packageId&gt;
+#&gt; [3] &lt;includeSystem&gt;lter&lt;/includeSystem&gt;
+#&gt; [4] &lt;includeSystem&gt;knb&lt;/includeSystem&gt;
+#&gt; [5] &lt;datasetReport&gt;\n  &lt;qualityCheck qualityType="metadata" system=" ...
+#&gt; [6] &lt;entityReport&gt;\n  &lt;entityName&gt;data.txt&lt;/entityName&gt;\n  &lt;qualityC ...
+
+# Summarize evaluation report
+read_evaluate_report_summary(transaction, env = "staging")
+#&gt; ===================================================
+#&gt;   EVALUATION REPORT
+#&gt; ===================================================
+#&gt;
+#&gt; PackageId: edi.595.1
+#&gt; Report Date/Time: 2021-12-15T17:46:33
+#&gt; Total Quality Checks: 29
+#&gt; Valid: 21
+#&gt; Info: 8
+#&gt; Warn: 0
+#&gt; Error: 0
+
+logout()
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

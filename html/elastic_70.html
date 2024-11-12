@@ -1,0 +1,147 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>field_stats</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Search field statistics</h2>
+
+<h3>Description</h3>
+
+<p>Search field statistics
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">field_stats(
+  conn,
+  fields = NULL,
+  index = NULL,
+  level = "cluster",
+  body = list(),
+  raw = FALSE,
+  asdf = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>an Elasticsearch connection object, see <code>connect()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fields</code></td>
+<td>
+<p>A list of fields to compute stats for. optional</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>Index name, one or more</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>Defines if field stats should be returned on a per index level
+or on a cluster wide level. Valid values are 'indices' and 'cluster'
+(default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>body</code></td>
+<td>
+<p>Query, either a list or json</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw</code></td>
+<td>
+<p>(logical) Get raw JSON back or not</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asdf</code></td>
+<td>
+<p>(logical) If <code>TRUE</code>, use <code>fromJSON</code>
+to parse JSON directly to a data.frame. If <code>FALSE</code> (Default), list
+output is given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Curl args passed on to crul::HttpClient</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The field stats api allows you to get statistical properties of a
+field without executing a search, but looking up measurements that are
+natively available in the Lucene index. This can be useful to explore a
+dataset which you don't know much about. For example, this allows creating
+a histogram aggregation with meaningful intervals based on the min/max range
+of values.
+</p>
+<p>The field stats api by defaults executes on all indices, but can execute on
+specific indices too.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Deprecated in Elasticsearch versions equal to/greater than 5.4.0
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-field-stats.html">https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-field-stats.html</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>field_caps()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+x &lt;- connect()
+
+if (gsub("\\.", "", x$ping()$version$number) &lt; 500) {
+  field_stats(x, body = '{ "fields": ["speaker"] }', index = "shakespeare")
+  ff &lt;- c("scientificName", "continent", "decimalLatitude", "play_name", 
+    "speech_number")
+  field_stats(x, "play_name")
+  field_stats(x, "play_name", level = "cluster")
+  field_stats(x, ff, level = "indices")
+  field_stats(x, ff)
+  field_stats(x, ff, index = c("gbif", "shakespeare"))
+
+  # can also pass a body, just as with Search()
+  # field_stats(x, body = list(fields = "rating")) # doesn't work
+  field_stats(x, body = '{ "fields": ["scientificName"] }', index = "gbif")
+
+  body &lt;- '{
+    "fields" : ["scientificName", "decimalLatitude"]
+  }'
+  field_stats(x, body = body, level = "indices", index = "gbif")
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

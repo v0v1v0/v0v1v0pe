@@ -1,0 +1,191 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>srtFREQ</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Analysis of Simple Randomised Education Trial using Linear Regression Model.</h2>
+
+<h3>Description</h3>
+
+<p><code>srtFREQ</code> performs analysis of educational trials under the assumption of independent errors among pupils.
+This can also be used with schools as fixed effects.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">srtFREQ(formula, intervention, baseln, nBoot, nPerm, ci, seed, data)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>the model to be analysed is of the form y~x1+x2+.... Where y is the outcome variable and Xs are the independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervention</code></td>
+<td>
+<p>a string variable specifying the "intervention variable" as appearing in the formula and the data. See example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>baseln</code></td>
+<td>
+<p>A string variable allowing the user to specify the reference category for intervention variable. When not specified, the first level will be used as a reference.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nBoot</code></td>
+<td>
+<p>number of bootstraps required to generate bootstrap confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nPerm</code></td>
+<td>
+<p>number of permutations required to generate permutated p-value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+<p>method for bootstrap confidence interval calculations; options are the Basic (Hall's) confidence interval "basic" or the simple percentile confidence interval "percentile". If not provided default will be percentile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>seed required for bootstrapping and permutation procedure, if not provided default seed will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame containing the data to be analysed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>S3 object; a list consisting of
+</p>
+
+<ul>
+<li> <p><code>Beta</code>: Estimates and confidence intervals for the variables specified in the model.
+</p>
+</li>
+<li> <p><code>ES</code>: Conditional Hedges'g effect size and its 95% confidence intervals. If nBoot is not specified, 95% confidence intervals are based on standard errors. If nBoot is specified, they are non-parametric bootstrapped confidence intervals.
+</p>
+</li>
+<li> <p><code>sigma2</code>: Residual variance.
+</p>
+</li>
+<li> <p><code>Perm</code>: A "nPerm x w" matrix containing permutated effect sizes using residual variance. "w" denotes number of intervention. "w=1" for two arm trial and "w=2" for three arm trial excluding the control group. It is produced only if <code>nPerm</code> is specified.
+</p>
+</li>
+<li> <p><code>Bootstrap</code>: A "nBoot x w" matrix containing the bootstrapped effect sizes using residual variance. "w" denotes number of intervention. "w=1" for two arm trial and "w=2" for three arm trial excluding the control group. It is produced only if <code>nBoot</code> is specified.
+</p>
+</li>
+<li> <p><code>Unconditional</code>: A list of unconditional effect size, sigma2, Perm and Bootstrap obtained based on variances from the unconditional model (model with only intercept as fixed effect).
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(interactive()){
+
+data(mstData)
+
+###################################################################
+## Analysis of simple randomised trials using Hedges Effect Size ##
+###################################################################
+
+output1 &lt;- srtFREQ(Posttest~ Intervention+Prettest,
+		intervention="Intervention",data=mstData )
+ES1 &lt;- output1$ES
+ES1
+
+###################################################################
+## Analysis of simple randomised trials using Hedges Effect Size ##
+## with Permutation p-value                                      ##
+###################################################################
+
+output2 &lt;- srtFREQ(Posttest~ Intervention+Prettest,
+		intervention="Intervention",nPerm=1000,data=mstData )
+
+ES2 &lt;- output2$ES
+ES2
+
+
+#### plot permutated values
+
+plot(output2, group=1)
+
+
+
+###################################################################
+## Analysis of simple randomised trials using Hedges Effect Size ##
+## with non-parametric Basic bootstrap confidence intervals      ##
+###################################################################
+
+output3 &lt;- srtFREQ(Posttest~ Intervention+Prettest,
+		intervention="Intervention",nBoot=1000,ci="basic",data=mstData)
+
+ES3 &lt;- output3$ES
+ES3
+
+### plot bootstrapped values
+
+plot(output3, group=1)
+
+####################################################################
+## Analysis of simple randomised trials using Hedges' effect size  ##
+##  with schools as fixed effects                                  ##
+####################################################################
+
+output4 &lt;- srtFREQ(Posttest~ Intervention+Prettest+as.factor(School),
+		intervention="Intervention",data=mstData )
+
+ES4 &lt;- output4$ES
+ES4
+
+####################################################################
+## Analysis of simple randomised trials using Hedges' effect size ##
+## with schools as fixed effects and with permutation p-value     ##
+####################################################################
+
+output5 &lt;- srtFREQ(Posttest~ Intervention+Prettest+as.factor(School),
+		intervention="Intervention",nPerm=1000,data=mstData )
+
+ES5 &lt;- output5$ES
+ES5
+
+#### plot permutated values
+
+plot(output5, group=1)
+
+####################################################################
+## Analysis of simple randomised trials using Hedges' effect size ##
+## with schools as fixed effects and with permutation p-value      ##
+####################################################################
+
+output6 &lt;- srtFREQ(Posttest~ Intervention+Prettest+as.factor(School),
+		intervention="Intervention",nBoot=1000,data=mstData)
+
+ES6 &lt;- output6$ES
+ES6
+
+### plot bootstrapped values
+
+plot(output6, group=1)
+}
+</code></pre>
+
+
+</div>

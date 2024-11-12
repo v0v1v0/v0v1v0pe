@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm.mple</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Find a maximizer to the psuedolikelihood function</h2>
+
+<h3>Description</h3>
+
+<p>The <code>ergm.mple</code> function finds a maximizer to the psuedolikelihood
+function (MPLE). It is the default method for finding the ERGM starting
+coefficient values. It is normally called internally the ergm process and
+not directly by the user. Generally <code>ergmMPLE()</code> would be called
+by users instead.
+</p>
+<p><code>ergm.pl</code> is an even more internal workhorse
+function that prepares many of the components needed by
+<code>ergm.mple</code> for the regression routines that are used to
+find the MPLE estimated ergm. It should not be called directly by
+the user.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm.mple(
+  s,
+  s.obs,
+  init = NULL,
+  family = "binomial",
+  control = NULL,
+  verbose = FALSE,
+  ...
+)
+
+ergm.pl(
+  state,
+  state.obs,
+  dummy,
+  theta.offset = NULL,
+  control,
+  ignore.offset = FALSE,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>a vector of initial theta coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>the family to use in the R native routine
+<code>glm()</code>; only applicable if "glm" is the 'MPLEtype';
+default="binomial"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters for algorithm tuning,
+typically constructed with <code>control.ergm()</code>. Its documentation
+gives the the list of recognized control parameters and their
+meaning. The more generic utility <code>snctrl()</code> (StatNet ConTRoL)
+also provides argument completion for the available control
+functions and limited argument name checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameters passed from within; all will be
+ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>state, state.obs</code></td>
+<td>
+<p><code>ergm_state</code> objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dummy</code></td>
+<td>
+<p>A dummy parameter for backwards compatibility. It will
+be removed in a future version.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta.offset</code></td>
+<td>
+<p>a numeric vector of length equal to the number
+of statistics of the model, specifying (positionally) the
+coefficients of the offset statistics; elements corresponding to
+free parameters are ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignore.offset</code></td>
+<td>
+<p>If <code>FALSE</code> (the default), columns
+corresponding to terms enclosed in <code>offset()</code> are not
+returned with others but are instead processed by multiplying
+them by their corresponding coefficients (which are fixed, by
+virtue of being offsets) and the results stored in a separate
+column.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>According to Hunter et al. (2008): "The maximizer of the pseudolikelihood
+may thus easily be found (at least in principle) by using logistic
+regression as a computational device." In order for this to work, the
+predictors of the logistic regression model must be calculated.  These are
+the change statistics as described in Section 3.2 of Hunter et al. (2008),
+put into matrix form so that each pair of nodes is one row whose values are
+the vector of change statistics for that node pair.  The ergm.pl function
+computes these change statistics and the ergm.mple function implements the
+logistic regression using <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s <code>glm()</code> function.  Generally, neither ergm.mple
+nor ergm.pl should be called by users if the logistic regression output is
+desired; instead, use the <code>ergmMPLE()</code> function.
+</p>
+<p>In the case where the ERGM is a dyadic independence model, the MPLE is the
+same as the MLE.  However, in general this is not the case and, as van Duijn et al. (2009)
+warn, the statistical properties of MPLEs in general are
+somewhat mysterious.
+</p>
+<p>MPLE values are used even in the case of dyadic dependence models as
+starting points for the MCMC algorithm.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>ergm.mple</code> returns an ergm object as a list
+containing several items; for details see the return list of
+<code>ergm()</code>
+</p>
+<p><code>ergm.pl</code> returns a list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>xmat</code></td>
+<td>
+<p>the compressed and possibly sampled matrix of change
+statistics</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xmat.full</code></td>
+<td>
+<p>as <code>xmat</code> but with offset terms</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zy</code></td>
+<td>
+<p>the corresponding vector of responses, i.e. tie values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>foffset</code></td>
+<td>
+<p>if <code>ignore.offset==FALSE</code>, the combined offset statistics multiplied by their parameter values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wend</code></td>
+<td>
+<p>the vector of weights for <code>xmat</code>
+and <code>zy</code></p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008).
+“ergm: A Package to Fit, Simulate and Diagnose Exponential-Family Models for Networks.”
+<em>Journal of Statistical Software</em>, <b>24</b>(3), 1–29.
+<a href="https://doi.org/10.18637/jss.v024.i03">doi:10.18637/jss.v024.i03</a>.<br><br> van Duijn MAJ, Gile KJ, Handcock MS (2009).
+“A Framework for the Comparison of Maximum Pseudo-likelihood and Maximum Likelihood Estimation of Exponential Family Random Graph Models.”
+<em>Social Networks</em>, <b>31</b>(1), 52–62.
+<a href="https://doi.org/10.1016/j.socnet.2008.10.003">doi:10.1016/j.socnet.2008.10.003</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ergmMPLE()</code>,
+<code>ergm()</code>,<code>control.ergm()</code>
+</p>
+
+
+</div>

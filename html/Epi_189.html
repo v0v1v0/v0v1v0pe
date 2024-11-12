@@ -1,0 +1,180 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>stat.table</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tables of summary statistics</h2>
+
+<h3>Description</h3>
+
+<p><code>stat.table</code> creates tabular summaries of the data, using a
+limited set of functions. A list of index variables is used
+to cross-classify summary statistics. It does NOT work inside <code>with()</code>!
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">stat.table(index, contents = count(), data, margins = FALSE)
+## S3 method for class 'stat.table'
+print(x, width=7, digits,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>A factor, or list of factors, used for cross-classification.
+If the list is named, then the names will be used when printing the
+table. This feature can be used to give informative labels to the
+variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contents</code></td>
+<td>
+<p>A function call, or list of function calls. Only a
+limited set of functions may be called (See Details below).  If the
+list is named, then the names will be used when printing the table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an optional data frame containing the variables to be
+tabulated. If this is omitted, the variables will be searched for in the
+calling environment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>margins</code></td>
+<td>
+<p>a logical scalar or vector indicating which  marginal
+tables are to be calculated.  If a vector, it should be the same
+length as the <code>index</code> argument: values corresponding to
+<code>TRUE</code> will be retained in marginal tables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of class <code>stat.table</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>width</code></td>
+<td>
+<p>a scalar giving the minimum column width when printing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>a scalar, or named vector, giving the number
+of digits to print after the decimal point. If a named vector is used,
+the names should correspond to one of the permitted functions (See
+Details below) and all results obtained with that function will be
+printed with the same precision.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to other print methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is similar to <code>tapply</code>, with some enhancements:
+multiple summaries of multiple variables may be mixed in the
+same table; marginal tables may be calculated; columns and rows may
+be given informative labels; pretty printing may be controlled by the
+associated print method.
+</p>
+<p>This function is not a replacement for <code>tapply</code> as it also has
+some limitations.  The only functions that may be used in the
+<code>contents</code> argument  are: <code>count</code>,
+<code>mean</code>, <code>weighted.mean</code>, <code>sum</code>,
+<code>quantile</code>, <code>median</code>, <code>IQR</code>,
+<code>max</code>, <code>min</code>, <code>ratio</code>, 
+<code>percent</code>, and <code>sd</code>.
+</p>
+<p>The <code>count()</code> function, which is the default, simply creates a
+contingency table of counts.  The other functions are applied to
+each cell created by combinations of the <code>index</code> variables.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>stat.table</code>, which is a multi-dimensional
+array. A print method is available to create formatted one-way and
+two-way tables.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The permitted functions in the contents list 
+are defined inside <code>stat.table</code>.  They have the same interface as
+the functions callable from the command line, except for two
+differences. If there is an argument <code>na.rm</code> then its default
+value is always <code>TRUE</code>. A second difference is that the
+<code>quantile</code> function can only produce a single quantile in each call.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martyn Plummer</p>
+
+
+<h3>See Also</h3>
+
+<p><code>table</code>, <code>tapply</code>,
+<code>mean</code>, <code>weighted.mean</code>,
+<code>sum</code>, <code>quantile</code>,
+<code>median</code>, <code>IQR</code>,
+<code>max</code>, <code>min</code>, <code>ratio</code>,
+<code>percent</code>, <code>count</code>, <code>sd</code>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(warpbreaks)
+# A one-way table
+stat.table(tension,list(count(),mean(breaks)),data=warpbreaks)
+# The same table with informative labels
+stat.table(index=list("Tension level"=tension),list(N=count(),
+           "mean number of breaks"=mean(breaks)),data=warpbreaks)
+
+# A two-way table
+stat.table(index=list(tension,wool),mean(breaks),data=warpbreaks)  
+# The same table with margins over tension, but not wool
+stat.table(index=list(tension,wool),mean(breaks),data=warpbreaks,
+           margins=c(TRUE, FALSE))
+
+# A table of column percentages
+stat.table(list(tension,wool), percent(tension), data=warpbreaks)
+# Cell percentages, with margins
+stat.table(list(tension,wool),percent(tension,wool), margin=TRUE,
+           data=warpbreaks)
+
+# A table with multiple statistics
+# Note how each statistic has its own default precision
+a &lt;- stat.table(index=list(wool,tension),
+                contents=list(count(),mean(breaks),percent (wool)),
+                data=warpbreaks)
+print(a)
+# Print the percentages rounded to the nearest integer
+print(a, digits=c(percent=0))
+
+</code></pre>
+
+
+</div>

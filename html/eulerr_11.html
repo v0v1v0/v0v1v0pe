@@ -1,0 +1,336 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>euler</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Area-proportional Euler diagrams</h2>
+
+<h3>Description</h3>
+
+<p>Fit Euler diagrams (a generalization of Venn diagrams) using numerical
+optimization to find exact or approximate solutions to a specification of set
+relationships. The shape of the diagram may be a circle or an ellipse.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">euler(combinations, ...)
+
+## Default S3 method:
+euler(
+  combinations,
+  input = c("disjoint", "union"),
+  shape = c("circle", "ellipse"),
+  loss = c("square", "abs", "region"),
+  loss_aggregator = c("sum", "max"),
+  control = list(),
+  ...
+)
+
+## S3 method for class 'data.frame'
+euler(
+  combinations,
+  weights = NULL,
+  by = NULL,
+  sep = "_",
+  factor_names = TRUE,
+  ...
+)
+
+## S3 method for class 'matrix'
+euler(combinations, ...)
+
+## S3 method for class 'table'
+euler(combinations, ...)
+
+## S3 method for class 'list'
+euler(combinations, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>combinations</code></td>
+<td>
+<p>set relationships as a named numeric vector, matrix, or
+data.frame (see <strong>methods (by class)</strong>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed down to other methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>input</code></td>
+<td>
+<p>type of input: disjoint identities
+(<code>'disjoint'</code>) or unions (<code>'union'</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape</code></td>
+<td>
+<p>geometric shape used in the diagram</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss</code></td>
+<td>
+<p>type of loss to minimize over. If <code>"square"</code> is used together
+with the value <code>"sum"</code> for <code>loss_aggregator</code>, then the resulting loss
+function is the sum of squared errors, which is the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss_aggregator</code></td>
+<td>
+<p>how the final loss is computed. <code>"sum"</code> indicates that
+the sum of the losses computed by <code>loss</code> are summed up. <code>"max"</code> indicates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list of control parameters.
+</p>
+
+<ul>
+<li> <p><code>extraopt</code>: should the more thorough optimizer (currently
+<code>GenSA::GenSA()</code>) kick in (provided <code>extraopt_threshold</code> is exceeded)? The
+default is <code>TRUE</code> for ellipses and three sets and <code>FALSE</code> otherwise.
+</p>
+</li>
+<li> <p><code>extraopt_threshold</code>: threshold, in terms of <code>diagError</code>, for when
+the extra optimizer kicks in. This will almost always slow down the
+process considerably. A value of 0 means
+that the extra optimizer will kick in if there is <em>any</em> error. A value of
+1 means that it will never kick in. The default is <code>0.001</code>.
+</p>
+</li>
+<li> <p><code>extraopt_control</code>: a list of control parameters to pass to the
+extra optimizer, such as <code>max.call</code>. See <code>GenSA::GenSA()</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>a numeric vector of weights of the same length as
+the number of rows in <code>combinations</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>a factor or character matrix to be used in <code>base::by()</code> to
+split the data.frame or matrix of set combinations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+<p>a character to use to separate the dummy-coded factors
+if there are factor or character vectors in 'combinations'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factor_names</code></td>
+<td>
+<p>whether to include factor names when
+constructing dummy codes</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the input is a matrix or data frame and argument <code>by</code> is specified,
+the function returns a list of euler diagrams.
+</p>
+<p>The function minimizes the residual sums of squares,
+</p>
+<p style="text-align: center;"><code class="reqn">
+  \sum_{i=1}^n (A_i - \omega_i)^2,
+</code>
+</p>
+
+<p>by default, where <code class="reqn">\omega_i</code> the size of the ith disjoint subset, and
+<code class="reqn">A_i</code> the corresponding area in the diagram, that is, the unique
+contribution to the total area from this overlap. The loss function
+can, however, be controlled via the <code>loss</code> argument.
+</p>
+<p><code>euler()</code> also returns <code>stress</code> (from <span class="pkg">venneuler</span>), as well as
+<code>diagError</code>, and <code>regionError</code> from <span class="pkg">eulerAPE</span>.
+</p>
+<p>The <em>stress</em> statistic is computed as
+</p>
+<p style="text-align: center;"><code class="reqn">
+  \frac{\sum_{i=1}^n (A_i - \beta\omega_i)^2}{\sum_{i=1}^n A_i^2},
+</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">
+  \beta = \sum_{i=1}^n A_i\omega_i / \sum_{i=1}^n \omega_i^2.
+</code>
+</p>
+
+<p><code>regionError</code> is computed as
+</p>
+<p style="text-align: center;"><code class="reqn">
+  \left| \frac{A_i}{\sum_{i=1}^n A_i} - \frac{\omega_i}{\sum_{i=1}^n \omega_i}\right|.
+</code>
+</p>
+
+<p><code>diagError</code> is simply the maximum of regionError.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list object of class <code>'euler'</code> with the following parameters.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>ellipses</code></td>
+<td>
+<p>a matrix of <code>h</code> and <code>k</code> (x and y-coordinates for the
+centers of the shapes), semiaxes <code>a</code> and <code>b</code>, and rotation angle <code>phi</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>original.values</code></td>
+<td>
+<p>set relationships in the input</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.values</code></td>
+<td>
+<p>set relationships in the solution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>residuals</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>regionError</code></td>
+<td>
+<p>the difference in percentage points between each
+disjoint subset in the input and the respective area in the output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diagError</code></td>
+<td>
+<p>the largest <code>regionError</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stress</code></td>
+<td>
+<p>normalized residual sums of squares</p>
+</td>
+</tr>
+</table>
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>euler(default)</code>: a named numeric vector, with
+combinations separated by an ampersand, for instance <code>A&amp;B = 10</code>.
+Missing combinations are treated as being 0.
+</p>
+</li>
+<li> <p><code>euler(data.frame)</code>: a <code>data.frame</code> of logicals, binary integers, or
+factors.
+</p>
+</li>
+<li> <p><code>euler(matrix)</code>: a matrix that can be converted to a data.frame of logicals
+(as in the description above) via <code>base::as.data.frame.matrix()</code>.
+</p>
+</li>
+<li> <p><code>euler(table)</code>: A table with <code>max(dim(x)) &lt; 3</code>.
+</p>
+</li>
+<li> <p><code>euler(list)</code>: a list of vectors, each vector giving the contents of
+that set (with no duplicates). Vectors in the list must be named.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Wilkinson L. Exact and Approximate Area-Proportional Circular
+Venn and Euler Diagrams. IEEE Transactions on Visualization and Computer
+Graphics (Internet). 2012 Feb (cited 2016 Apr 9);18(2):321-31. Available
+from: <a href="https://doi.org/10.1109/TVCG.2011.56">doi:10.1109/TVCG.2011.56</a>
+</p>
+<p>Micallef L, Rodgers P. eulerAPE: Drawing Area-Proportional 3-Venn Diagrams
+Using Ellipses. PLOS ONE (Internet). 2014 Jul (cited 2016 Dec
+10);9(7):e101717. Available from:
+<a href="https://doi.org/10.1371/journal.pone.0101717">doi:10.1371/journal.pone.0101717</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.euler()</code>, <code>print.euler()</code>, <code>eulerr_options()</code>, <code>venn()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Fit a diagram with circles
+combo &lt;- c(A = 2, B = 2, C = 2, "A&amp;B" = 1, "A&amp;C" = 1, "B&amp;C" = 1)
+fit1 &lt;- euler(combo)
+
+# Investigate the fit
+fit1
+
+# Refit using ellipses instead
+fit2 &lt;- euler(combo, shape = "ellipse")
+
+# Investigate the fit again (which is now exact)
+fit2
+
+# Plot it
+plot(fit2)
+
+# A set with no perfect solution
+euler(c(
+  "a" = 3491, "b" = 3409, "c" = 3503,
+  "a&amp;b" = 120, "a&amp;c" = 114, "b&amp;c" = 132,
+  "a&amp;b&amp;c" = 50
+))
+
+
+# Using grouping via the 'by' argument through the data.frame method
+euler(fruits, by = list(sex, age))
+
+
+# Using the matrix method
+euler(organisms)
+
+# Using weights
+euler(organisms, weights = c(10, 20, 5, 4, 8, 9, 2))
+
+# The table method
+euler(pain, factor_names = FALSE)
+
+# A euler diagram from a list of sample spaces (the list method)
+euler(plants[c("erigenia", "solanum", "cynodon")])
+</code></pre>
+
+
+</div>

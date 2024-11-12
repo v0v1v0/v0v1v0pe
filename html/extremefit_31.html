@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.cox.adapt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict the survival or quantile function from the extreme procedure for the Cox model</h2>
+
+<h3>Description</h3>
+
+<p>Give the survival or quantile function from the extreme procedure for the Cox model
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'cox.adapt'
+predict(object, newdata = NULL, input = NULL,
+  type = "quantile", aggregation = "none", AggInd = object$kadapt,
+  M = 10, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>output object of the function cox.adapt.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>a data frame with which to predict.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>input</code></td>
+<td>
+<p>optionnaly, the name of the variable to estimate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>either "quantile" or "survival".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregation</code></td>
+<td>
+<p>either "none", "simple" or "adaptive".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AggInd</code></td>
+<td>
+<p>Indices of thresholds to be aggregated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>Number of thresholds to be aggregated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to or from other methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code class="reqn">newdata</code> must be a data frame with the co-variables from which to predict and a variable of probabilities with its name starting with a "p" if type = "quantile" or a variable of quantiles with its name starting with a "x" if type = "survival".
+The name of the variable from which to predict can also be written as <code class="reqn">input</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function provide the quantile assiociated to the adaptive model for the probability grid if type = "quantile". And the survival function assiociated to the adaptive model for the quantile grid if type = "survival".
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cox.adapt</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(survival)
+data(bladder)
+
+X &lt;- bladder2$stop-bladder2$start
+Z &lt;- as.matrix(bladder2[, c(2:4, 8)])
+delta &lt;- bladder2$event
+
+ord &lt;- order(X)
+X &lt;- X[ord]
+Z &lt;- Z[ord,]
+delta &lt;- delta[ord]
+
+cph&lt;-coxph(Surv(X, delta) ~ Z)
+
+ca &lt;- cox.adapt(X, cph, delta, bladder2[ord,])
+
+xgrid &lt;- X
+newdata &lt;- as.data.frame(cbind(xgrid,bladder2[ord,]))
+
+Plac &lt;- predict(ca, newdata = newdata, type = "survival")
+Treat &lt;- predict(ca, newdata = newdata, type = "survival")
+
+PlacSA &lt;- predict(ca, newdata = newdata,
+                          type = "survival", aggregation = "simple", AggInd = c(10,20,30,40))
+TreatSA &lt;- predict(ca, newdata = newdata,
+                          type = "survival", aggregation = "simple", AggInd = c(10,20,30,40))
+
+
+PlacAA &lt;- predict(ca, newdata = newdata,
+                          type = "survival", aggregation = "adaptive", M=10)
+TreatAA &lt;- predict(ca, newdata = newdata,
+                          type = "survival", aggregation = "adaptive", M=10)
+
+</code></pre>
+
+
+</div>

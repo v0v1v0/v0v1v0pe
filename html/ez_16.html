@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ezResample</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Resample data from a factorial experiment</h2>
+
+<h3>Description</h3>
+
+<p>This function resamples data (useful when bootstrapping and used by <code>ezBoot</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ezResample(
+    data
+    , wid
+    , within = NULL
+    , between = NULL
+    , resample_within = FALSE
+    , resample_between = TRUE
+    , check_args = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Data frame containing the data to be analyzed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wid</code></td>
+<td>
+
+<p>.() object specifying the column in <code>data</code> that contains the variable specifying the case/Ss identifier.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within</code></td>
+<td>
+
+<p>Optional .() object specifying one or more columns in <code>data</code> that contain predictor variables that are manipulated (or observed) within-Ss.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>between</code></td>
+<td>
+
+<p>Optional .() object specifying one or more columns in <code>data</code> that contain predictor variables that are manipulated (or observed) between-Ss.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample_within</code></td>
+<td>
+
+<p>Logical. If TRUE, and if there are multiple observations per subject within each cell of the design specified by the factorial combination of variables supplied to <code>within</code> and <code>between</code>, then these observations-within-cells are resampled with replacement.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample_between</code></td>
+<td>
+
+<p>Logical. If TRUE (default), levels of <code>wid</code> are resampled.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_args</code></td>
+<td>
+
+<p>Users should leave this as its default (TRUE) value. This argument is intended for internal use only.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame consisting of the resampled data
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael A. Lawrence <a href="mailto:mike.lwrnc@gmail.com">mike.lwrnc@gmail.com</a><br>
+Visit the <code>ez</code> development site at <a href="http://github.com/mike-lawrence/ez">http://github.com/mike-lawrence/ez</a><br>
+for the bug/issue tracker and the link to the mailing list.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ezBoot</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(plyr)
+#Read in the ANT data (see ?ANT).
+data(ANT)
+head(ANT)
+ezPrecis(ANT)
+
+
+#Bootstrap the within-cell variances
+var_boots = ldply(
+    .data = 1:1e1 #1e3 or higher should be used for publication
+    , .fun = function(x){
+        this_resample = ezResample(
+            data = ANT[ANT$error==0,]
+            , wid = .(subnum)
+            , within = .(cue,flank)
+            , between = .(group)
+        )
+        cell_vars = ddply(
+            .data = idata.frame(this_resample)
+            , .variables = .(subnum,cue,flank,group)
+            , .fun = function(x){
+                to_return = data.frame(
+                    value = var(x$rt)
+                )
+                return(to_return)
+            }
+        )
+        mean_cell_vars = ddply(
+            .data = idata.frame(cell_vars)
+            , .variables = .(cue,flank,group)
+            , .fun = function(x){
+                to_return = data.frame(
+                    value = mean(x$value)
+                )
+                return(to_return)
+            }
+        )
+        mean_cell_vars$iteration = x
+        return(mean_cell_vars)
+    }
+    , .progress = 'time'
+)
+
+
+
+</code></pre>
+
+
+</div>

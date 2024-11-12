@@ -1,0 +1,117 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>stack.Lexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Functions to facilitate analysis of multistate models.
+</h2>
+
+<h3>Description</h3>
+
+<p><code>stack.Lexis</code> produces a stacked object suited for analysis of
+several transition intensities simultaneously.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'Lexis'
+stack(x, ...)
+tmat( x, ... )
+## S3 method for class 'Lexis'
+tmat(x, Y=FALSE, mode = "numeric", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>Lexis</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>Logical. Should the risk time be put in the diagonal? This is
+a facility which is used by <code>boxes.Lexis</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>Should the matrix be returned as a numeric matrix with
+<code>NA</code>s at unused places or (<code>mode="logical"</code>) as a logical
+matrix with <code>FALSE</code> on the diagonal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Not used.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>tmat.Lexis</code> returns a square transition matrix, classified by the
+levels of <code>lex.Cst</code> and <code>lex.Xst</code>, for every transition
+occurring the entry is the number of transitions occurring and <code>NA</code>
+in all oter entries. If <code>Y=TRUE</code>, the diagonal will contain the
+risk time in each of the states.
+</p>
+<p><code>stack.Lexis</code> returns a dataframe to be used for analysis of
+multistate data when all transitions are modelled together, for example
+if some parameters are required to be the same for different transitions.
+The dataframe has class <code>stacked.Lexis</code>, and inherits the
+attributes <code>time.scales</code> and <code>breaks</code> from the <code>Lexis</code>
+object, and so function <code>timeBand</code> applies to a
+<code>stacked.Lexis</code> object too.
+</p>
+<p>The dataframe has same variables as the original <code>Lexis</code> object,
+but with each record duplicated as many times as there are possible
+exits from the current state, <code>lex.Cst</code>. Two variables are added:
+<code>lex.Fail</code>, an indicator of wheter an event for the transition
+named in the factor <code>lex.Tr</code> has occurred or not. <code>lex.Tr</code> is
+a factor with levels made up of combinations of the levels of
+<code>lex.Cst</code> and <code>lex.Xst</code> that do occur together in <code>x</code>,
+joined by a "<code>-&gt;</code>".</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="mailto:b@bxc.dk">b@bxc.dk</a>, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>splitLexis</code>
+<code>cutLexis</code>
+<code>Lexis</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(DMlate)
+str(DMlate)
+dml &lt;- Lexis( entry=list(Per=dodm, Age=dodm-dobth, DMdur=0 ),
+               exit=list(Per=dox),
+        exit.status=factor(!is.na(dodth),labels=c("DM","Dead")),
+               data=DMlate )
+dmi &lt;- cutLexis( dml, cut=dml$doins, new.state="Ins", pre="DM" )
+summary( dmi )
+ls.dmi &lt;- stack( dmi )
+str( ls.dmi )
+# Check that all the transitions and person-years got across.
+with( ls.dmi, rbind( table(lex.Fail,lex.Tr),
+                     tapply(lex.dur,lex.Tr,sum) ) )
+</code></pre>
+
+
+</div>

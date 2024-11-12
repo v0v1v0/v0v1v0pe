@@ -1,0 +1,253 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ci.Crisk</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Compute cumulative risks and expected sojourn times from models for
+cause-specific rates.  
+</h2>
+
+<h3>Description</h3>
+
+<p>Consider a list of parametric models for rates of competing events, such
+as different causes of death, A, B, C, say. From estimates of the
+cause-specific rates we can compute 1) the cumulative risk of being in
+each state ('Surv' (=no event) and A, B and C) at different times, 2)
+the stacked cumulative rates such as A, A+C, A+C+Surv and 3) the
+expected (truncated) sojourn times in each state up to each time point.
+</p>
+<p>This can be done by simple numerical integration using estimates from
+models for the cause specific rates. But the standard errors of the
+results are analytically intractable.
+</p>
+<p>The function <code>ci.Crisk</code> computes estimates with confidence
+intervals using simulated samples from the parameter vectors of supplied
+model objects. Some call this a parametric bootstrap.
+</p>
+<p>The times and other covariates determining the cause-specific rates must
+be supplied in a data frame which will be used for predicting rates for
+all transitions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ci.Crisk(mods,
+           nd,
+         tnam = names(nd)[1],
+           nB = 1000,
+         perm = length(mods):0 + 1,
+        alpha = 0.05, 
+      sim.res = 'none')
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mods</code></td>
+<td>
+<p>A named list of <code>glm</code>/<code>gam</code> model objects
+representing the cause-specific rates. If the list is not named the
+function will crash. The names will be used as names for the states
+(competing risks), while the state without any event will be called
+"<code>Surv</code>".
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nd</code></td>
+<td>
+<p>A data frame of prediction points and covariates to be used
+on all models supplied in <code>mods</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tnam</code></td>
+<td>
+<p>Name of the column in <code>nd</code> which is the time scale.It
+must represent endpoints of equidistant intervals.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nB</code></td>
+<td>
+<p>Scalar. The number of simulations from the (posterior)
+distribution of the model parameters to be used in computing
+confidence limits.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>perm</code></td>
+<td>
+<p>Numerical vector of length <code>length(mods)+1</code> indicating
+the order in which states are to be stacked. The <code>'Surv'</code> state
+is taken to be the first, the remaining in the reverse order supplied
+in the <code>mods</code> argument. The default is therefore to stack with
+the survival as the first, which may not be what you normally want.   
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric. 1 minus the confidence level used in calculating
+the c.i.s 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sim.res</code></td>
+<td>
+<p>Character. What simulation samples should be
+returned. If <code>'none'</code> (the default) the function returns a list
+of 3 arrays (see under 'value'). If <code>'rates'</code> it returns an
+array of dimension <code>nrow(nd)</code> x <code>length(mod)</code> x <code>nB</code>
+of bootstrap samples of the rates. If <code>'crisk'</code> it returns an
+array of dimension <code>nrow(nd)</code> x <code>length(mod)+1</code> x
+<code>nB</code> of bootstrap samples of the cumulative rates.  Only the
+first letter matters, regardless of whether it is in upper lower
+case.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>If <code>sim.res='none'</code> a named list with 4 components, the first 3
+are 3-way arrays classified by time, state and estimate/confidence
+interval:  
+</p>
+
+<ul>
+<li> <p><code>Crisk</code> Cumulative risks for the <code>length(mods)</code>
+events <em>and</em> the survival
+</p>
+</li>
+<li> <p><code>Srisk</code> Stacked versions of the cumulative risks
+</p>
+</li>
+<li> <p><code>Stime</code> Sojourn times in each states
+</p>
+</li>
+<li> <p><code>time</code> Endpoints of intervals. It is just the numerical
+version of the names of the first dimension of the three arrays
+</p>
+</li>
+</ul>
+<p>All three arrays have (almost) the same dimensions:
+</p>
+
+<ul>
+<li>
+<p> time, named as <code>tnam</code>; endpoints of intervals. Length
+<code>nrow(nd)</code>.
+</p>
+</li>
+<li> <p><code>cause</code>. The arrays <code>Crisk</code> and <code>Stime</code> have
+values "<code>Surv</code>" plus the names of the list <code>mods</code> (first
+argument). <code>Srisk</code> has length <code>length(mod)</code>, with each
+level representing a cumulative sum of cumulative risks, in order
+indicated by the <code>perm</code> argument.
+</p>
+</li>
+<li>
+<p> Unnamed, <code>ci.50%</code>, <code>ci.2.5%</code>, <code>ci.97.5%</code>
+representing quantiles of the quantities derived from the bootstrap
+samples. If <code>alpha</code> is different from 0.05, names are of course
+different.
+</p>
+</li>
+</ul>
+<p>If <code>sim.res='rates'</code> the function returns bootstrap samples of
+rates for each cause as an array
+classified by time, cause and bootstrap sample.
+</p>
+<p>If <code>sim.res='crisk'</code> the function returns bootstrap samples of
+cumulative risks for each cause (including survival) as an array
+classified by time, state (= causes + surv) and bootstrap sample.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mat2pol</code>
+<code>simLexis</code>
+<code>plotCIF</code>
+<code>ci.surv</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(Epi)
+data(DMlate)
+
+# A Lexis object for survival
+Ldm &lt;- Lexis(entry = list( per = dodm,
+                           age = dodm-dobth, 
+                           tfd = 0 ),
+              exit = list( per = dox ),
+       exit.status = factor( !is.na(dodth), labels = c("DM","Dead") ),
+              data = DMlate[sample(1:nrow(DMlate),1000),] )
+summary(Ldm, timeScales = TRUE)
+
+# Cut at OAD and Ins times
+Mdm &lt;- mcutLexis(Ldm,
+                  wh = c('dooad','doins'),
+          new.states = c('OAD','Ins'),
+          seq.states = FALSE,
+                ties = TRUE)
+summary(Mdm$lex.dur)
+
+# restrict to DM state and split
+Sdm &lt;- splitLexis(factorize(subset(Mdm, lex.Cst == "DM")),
+                  time.scale = "tfd",
+                  breaks = seq(0,20,1/12))
+summary(Sdm)
+summary(Relevel(Sdm, c(1, 4, 2, 3)))
+
+boxes(Relevel(Sdm, c(1, 4, 2, 3)), 
+      boxpos = list(x = c(15, 85, 80, 15),
+                    y = c(85, 85, 20, 15)),
+      scale.R = 100)
+
+# glm models for the cause-specific rates
+system.time(
+mD &lt;- glm.Lexis(Sdm, ~ Ns(tfd, knots=0:6*2), to = 'Dead') )
+system.time(
+mO &lt;- glm.Lexis(Sdm, ~ Ns(tfd, knots=0:6*2), to = 'OAD' ) )
+system.time(
+mI &lt;- glm.Lexis(Sdm, ~ Ns(tfd, knots=0:6*2), to = 'Ins' ) )
+
+# intervals for calculation of predicted rates
+int &lt;- 1 / 100
+nd &lt;- data.frame(tfd = seq(0, 10, int)) # not the same as the split, 
+                                        # and totally unrelated to it
+
+# cumulaive risks with confidence intervals
+# (too few timepoints, too few simluations)
+system.time(
+res &lt;- ci.Crisk(list(OAD = mO, 
+                     Ins = mI, 
+                    Dead = mD),
+                            nd = data.frame(tfd = 0:100 / 10),
+                            nB = 100,
+                          perm = 4:1))
+str(res)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,383 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plotenvelope</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Diagnostic Plots for a Fitted Object with Simulation Envelopes</h2>
+
+<h3>Description</h3>
+
+<p>Produces diagnostic plots of a fitted model <code>y</code>, and
+adds global envelopes constructed by simulating new residuals, to see how
+departures from expected trends compare to what might be expected if the 
+fitted model were correct. Global envelopes are constructed using the
+<code>GET</code> package (Myllymäki et al 2017) for simultaneous control of error rates over the
+whole plot, by simulating new responses from the fitted model then recomputing residuals
+(which can be computationally intensive), or alternatively, by simulating residuals directly from the (multivariate) normal distribution
+(faster, but not always a smart move). Options for diagnostic plots to construct are a residual vs fits,
+a normal quantile plot, or scale-location plot, along the lines of <code>plot.lm</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plotenvelope(
+  y,
+  which = 1:2,
+  sim.method = "refit",
+  n.sim = 199,
+  conf.level = 0.95,
+  type = "st",
+  overlay = TRUE,
+  transform = NULL,
+  main = c("Residuals vs Fitted Values", "Normal Quantile Plot", "Scale-Location Plot"),
+  xlab = c("Fitted values", "Theoretical Quantiles", "Fitted Values"),
+  ylab = c("Residuals", "Residuals", expression(sqrt("|Residuals|"))),
+  col = NULL,
+  line.col = if (add.smooth) c("slateblue4", "olivedrab", "slateblue4") else
+    rep("olivedrab", 3),
+  envelope.col = adjustcolor(line.col, 0.1),
+  add.smooth = TRUE,
+  plot.it = TRUE,
+  resFunction = NULL,
+  predFunction = NULL,
+  fitMin = if (inherits(y, "glm") | inherits(y, "manyglm")) -6 else -Inf,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>is <em>any</em> object that responds to <code>residuals</code>, <code>predict</code> and 
+(if <code>sim.method="refit"</code>) <code>simulate</code> and <code>update</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which</code></td>
+<td>
+<p>a vector specifying the diagnostic plots to construct: </p>
+
+<ol>
+<li>
+<p>residual vs fits, with a smoother
+</p>
+</li>
+<li>
+<p>normal quantile plot
+</p>
+</li>
+<li>
+<p>scale-location plot, with smoother
+</p>
+</li>
+</ol>
+<p>These are the first three options in <code>plot.lm</code> and a little is borrowed 
+from that code. A global envelope is included with each plot around where we expect to see
+the data (or the smoother, if requested, for plots 1 and 3) when model assumptions are satisfied.
+If not fully captured by the global envelope, there is some evidence that the model assumptions are not satisfied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sim.method</code></td>
+<td>
+<p>How should residuals be simulated? The default for most objects is <code>"refit"</code>, which constructs new responses (via <code>simulate</code>),
+refits the model (via <code>update</code>), then recomputes residuals, often known as a <em>parametric bootstrap</em>.
+This is computationally intensive but gives a robust answer. This is the only suitable option if
+residuals are not expected to be normal when assumptions are satisfied (like when using <code>glm</code> with a non-Gaussian family). 
+Alternatively, <code>"norm"</code> simulates from a normal distribution, matches means and variances (and covariances for multivariate responses) to the observed residuals.
+The <code>"stand.norm"</code> option sets means to zero and variances to one, which is appropriate when residuals
+should be standard normal when assumptions are satisfied (as for any object fitted using the <code>mvabund</code>
+package, for example). These options are faster but more approximate than <code>"refit"</code>, in fact <code>"stand.norm"</code> is 
+used as the default for <code>manyglm</code> objects, for computational reasons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.sim</code></td>
+<td>
+<p>the number of simulated sets of residuals to be generated, to which
+the observed residuals will be compared. The default is 199 datasets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+<p>the confidence level to use in constructing the envelope.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>the type of global envelope to construct, see 
+<code>global_envelope_test</code> for details. Default <code>"st"</code> uses 
+studentized envelope tests to protect for unequal variance, which has performed well
+in simulations in this context.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overlay</code></td>
+<td>
+<p>logical. For multivariate data, determines whether residuals from 
+different responses are overlaid on a single plot (default), or plotted separately.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transform</code></td>
+<td>
+<p>a character vector pointing to a function that should be applied to both
+axes of the normal quantile plot. The most common use is to set <code>transform="pnorm"</code>
+for a PP-plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main</code></td>
+<td>
+<p>the plot title (if a plot is produced). A vector of three titles, one for each plot.
+If only one value is given that will be used for all plots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab</code></td>
+<td>
+<p><code>x</code> axis label (if a plot is produced). A vector of three labels, one for each plot.
+If only one value is given that will be used for all plots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylab</code></td>
+<td>
+<p><code>y</code> axis label (if a plot is produced). A vector of three labels, one for each plot.
+If only one value is given that will be used for all plots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col</code></td>
+<td>
+<p>color of points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>line.col</code></td>
+<td>
+<p>a vector of length three containing the colors of the lines on the three diagnostic plots.
+Defaults to "slateblue4" for smoothers and to "olivedrab" otherwise. Because it's cool.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envelope.col</code></td>
+<td>
+<p>color of the global envelope around the expected trend. All data points should always stay within this envelope
+(and will for a proportion <code>conf.level</code> of datasets satisfying model assumptions). If a smoother has been used on
+the residual vs fits or scale-location plot, the envelope is constructed around the smoother, that is, the smoother should always stay
+within the envelope.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.smooth</code></td>
+<td>
+<p>logical defaults to <code>TRUE</code>, which adds a smoother to residual vs fits and
+scale-location plots, and computes a global envelope around the <em>smoother</em> rather than the data (<code>add.smooth=FALSE</code>). No smoother is added to the normal quantile plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.it</code></td>
+<td>
+<p>logical. Should the result be plotted? If not, a list of analysis outputs is returned, see <em>Value</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resFunction</code></td>
+<td>
+<p>the function used to compute residuals for all diagnostic plots. Defaults
+to <code>cresiduals</code> for multivariate linear models, <code>rstandard</code> for linear
+models, or <code>residuals</code> in other cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predFunction</code></td>
+<td>
+<p>the function used to compute predicted values in residual vs fits or
+scale-location plots. Defaults to <code>cpredict</code> for multivariate linear models
+and to <code>cpredict</code> otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitMin</code></td>
+<td>
+<p>the minimum fitted value to use in plots, any fitted value less than this will be truncated to
+<code>fitMin</code>. This is useful for generalised linear models, where small fitted values correspond to
+predictions that are numerically zero. The default is to set <code>fitMin</code> to <code>-6</code> for GLMs, otherwise no truncation (<code>-Inf</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments sent through to <code>plot</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A challenge when interpreting diagnostic plots is understanding the extent to which
+deviations from the expected pattern could be due to random noise (sampling variation)
+rather than actual assumption violations. This function is intended to assess this, 
+by simulating multiple realizations of residuals (and fitted values) in situations where 
+assumptions are satisfied, and plotting a global simulation envelope around these at level <code>conf.level</code>.
+</p>
+<p>This function can take any fitted model, and construct any of three diagnostic plots, as determined by <code>which</code>:
+</p>
+
+<ol>
+<li>
+<p> Residual vs fits plot (optionally, with a smoother)
+</p>
+</li>
+<li>
+<p> Normal quantile plot
+</p>
+</li>
+<li>
+<p> Scale-Location plot (optionally, with smoother)
+</p>
+</li>
+</ol>
+<p>and see if the trend is behaving as expected if the model were true. As long as 
+the fitted model responds to <code>residuals</code> and <code>predict</code> 
+(and when <code>sim.method="refit"</code>, <code>simulate</code> and <code>update</code>) then a simulation envelope
+will be constructed for each plot.
+</p>
+<p>Simulation envelopes are global, constructed using the <code>GET-package</code>, meaning that
+(for example) a 95% global envelope on a quantile plot should contain <em>all</em> residuals for 95% of datasets
+that satisfy model assumptions. So if <em>any</em> data points lie outside the
+quantile plot's envelope we have evidence that assumptions of the fitted model are not satisfied. 
+The <code>GET-package</code> was originally constructed to place envelopes around functions, motivated by
+the problem of diagnostic testing of spatial processes (Myllymäki et al 2017), but it can equally
+well be applied here, by treating the set of residuals (ordered according to the x-axis) as point-wise evaluations of a function.
+For residual vs fits and scale-location plots, if <code>do.smooth=TRUE</code>, global envelopes are constructed for
+the <em>smoother</em>, not for the data, hence we are looking to see if the smoother
+is wholly contained within the envelope. The smoother is constructed using <code>gam</code> from the <code>mgcv</code> 
+package with maximum likelihood estimation (<code>method="ML"</code>).
+</p>
+<p>Note that the global envelopes only tell you if there is evidence of violation of model
+assumptions – they do not tell you whether the violations are large enough to worry about. For example, in linear models,
+violations of normality are usually much less important than violations of linearity or equal variance. And in all cases,
+modest violations tend to only have modest effects on the validity of inferences, so you need to think about how big
+observed violations are rather than just thinking about whether or not anything is outside its simulation envelope.
+</p>
+<p>The method used to simulate data for the global envelopes is controlled by <code>sim.method</code>.
+The default method (<code>sim.method="refit"</code>) uses a <em>parametric bootstrap</em> approach: simulate 
+new responses from the fitted model, refit the model and recompute residuals and fitted values. 
+This directly assesses whether trends in observed trends depart from what would be expected if the fitted model
+were correct, without any further assumptions. For complex models or large datasets this would however be super-slow.
+A fast, more approximate alternative (<code>sim.method="norm"</code>) is to simulate new (multivariate) normal residuals 
+repeatedly and use these to assess whether trends in the observed data depart from what would be expected
+for independent (multivariate) normal residuals. If residuals are expected to be standard
+normal, a more refined check is to simulate from the standard normal using (<code>sim.method="stand.norm"</code>).
+This might for example be useful when diagnosing a model fitted using the <code>mvabund</code> package (Wang et al. 2012),
+since this calculates Dunn-Smyth residuals (Dunn &amp; Smyth 1996), which are approximately standard normal when assumptions are satisfied.  
+If <code>y</code> is a <code>glm</code> with non-Gaussian family then residuals will not be normal and <code>"refit"</code> is the
+only appropriate option, hence other choices will be overridden with a warning reporting that this
+has been done. 
+</p>
+<p>Note that for Multivariate Linear Models (<code>mlm</code>), <code>cresiduals</code> and <code>cpredict</code> 
+are used to construct residuals and fitted values (respectively) from the <em>full conditional models</em>
+(that is, models constructed by regressing each response against all other responses
+together with predictors). This is done because full conditionals are diagnostic of joint 
+distributions, so <em>any</em> violation of multivariate normality is expressed as a violation of 
+linear model assumptions on full conditionals. Results for all responses are overlaid on a single plot,
+future versions of this function may have an overlay option to separately plot each response.
+</p>
+<p>The simulated data and subsequent analysis are also used to obtain a <em>P</em>-value 
+for the test that model assumptions are correct, for each plot. This tests if sample residuals or their smoothers
+are unusually far from the values expected of them if model assumptions were satisfied. For details see
+<code>global_envelope_test</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Up to three diagnostic plots with simulation envelopes are returned, and additionally a list of 
+three objects used in plotting, for plots 1-3 respectively. Each is a list with five components:</p>
+
+<dl>
+<dt><code>x</code></dt>
+<dd>
+<p><em>X</em>-values used for the envelope. In plots 1 and 3 this is the fitted values, or if <code>add.smooth=TRUE</code>, this is 500 equally spaced points covering
+the range of fitted values. For plot 2, this is sorted normal quantiles corresponding to observed data.</p>
+</dd>
+<dt><code>y</code></dt>
+<dd>
+<p>The <em>Y</em>-values used for the envelope. In plots 1 and 3 this is the residuals, or with <code>add.smooth=TRUE</code>, this is the values of the smoother corresponding to <code>x</code>. For plot 2,
+this is the sorted residuals.</p>
+</dd>
+<dt><code>lo</code></dt>
+<dd>
+<p>The lower bound on the global envelope, for each value of <code>x</code>.</p>
+</dd>
+<dt><code>hi</code></dt>
+<dd>
+<p>The upper bound on the global envelope, for each value of <code>x</code>.</p>
+</dd>
+<dt><code>p.value</code></dt>
+<dd>
+<p>A <em>P</em>-value for the test that observed smoother or data are consistent with what
+would be expected if the fitted model were correct, computed in <code>global_envelope_test</code>.</p>
+</dd> 
+</dl>
+<h3>Author(s)</h3>
+
+<p>David Warton &lt;david.warton@unsw.edu.au&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Dunn, P. K., &amp; Smyth, G. K. (1996), Randomized quantile residuals. J. Comp. Graphical Stat. 5, 236-244. doi:10.1080/10618600.1996.10474708
+</p>
+<p>Myllymäki, M., Mrkvička, T., Grabarnik, P., Seijo, H. and Hahn, U. (2017), Global envelope tests for spatial processes. J. R. Stat. Soc. B, 79: 381-404. doi:10.1111/rssb.12172
+</p>
+<p>Wang, Y. I., Naumann, U., Wright, S. T., &amp; Warton, D. I. (2012), <code>mvabund</code> - an <code>R</code> package for model-based analysis of multivariate abundance data. Methods in Ecology and Evolution, 3, 471-474. doi:10.1111/j.2041-210X.2012.00190.x
+</p>
+<p>Warton DI (2022) Eco-Stats - Data Analysis in Ecology, from <em>t</em>-tests to multivariate abundances. Springer, ISBN 978-3-030-88442-0
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cpredict</code>, <code>cresiduals</code>, <code>qqenvelope</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># fit a Poisson regression to random data:
+y = rpois(50,lambda=1)
+x = 1:50
+rpois_glm = glm(y~x,family=poisson())
+plotenvelope(rpois_glm,n.sim=59)
+
+# Fit a multivariate linear model to the iris dataset:
+data(iris)
+Y = with(iris, cbind(Sepal.Length,Sepal.Width,Petal.Length,Petal.Width))
+iris_mlm=lm(Y~Species,data=iris)
+# check normality assumption:
+plotenvelope(iris_mlm,n.sim=59,which=2)
+
+# A few more plots, with envelopes around data not smoothers:
+## Not run: plotenvelope(iris_mlm, which=1:3, add.smooth=FALSE)
+# Note minor violation on the scale/location plot.
+## End(Not run)
+
+# Repeat but with smoothers and with separate plots for each response and 
+# a multiple testing adjustment to sim envelopes:
+## Not run: plotenvelope(iris_mlm, which=1:3, overlay=FALSE, conf.level=1-0.05/4)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,589 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predIntNpar</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Nonparametric Prediction Interval for a Continuous Distribution
+</h2>
+
+<h3>Description</h3>
+
+<p>Construct a nonparametric prediction interval to contain at least <code class="reqn">k</code> out of the 
+next <code class="reqn">m</code> future observations with probability <code class="reqn">(1-\alpha)100\%</code> for a 
+continuous distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  predIntNpar(x, k = m, m = 1,  lpl.rank = ifelse(pi.type == "upper", 0, 1), 
+    n.plus.one.minus.upl.rank = ifelse(pi.type == "lower", 0, 1), 
+    lb = -Inf, ub = Inf, pi.type = "two-sided")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>a numeric vector of observations.  Missing (<code>NA</code>), undefined (<code>NaN</code>), and 
+infinite (<code>Inf</code>, <code>-Inf</code>) values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>positive integer specifying the minimum number of future observations out of <code>m</code> 
+that should be contained in the prediction interval. The default value is <code>k=m</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+
+<p>positive integer specifying the number of future observations.  The default value is 
+<code>m=1</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lpl.rank</code></td>
+<td>
+
+<p>positive integer indicating the rank of the order statistic to use for the lower 
+bound of the prediction interval.  If <code>pi.type="two-sided"</code> or 
+<code>pi.type="lower"</code>, the default value is <code>lpl.rank=1</code> (implying the 
+minimum value of <code>x</code> is used as the lower bound of the prediction interval).  
+If <code>pi.type="upper"</code>, this argument is set equal to <code>0</code> and the value of 
+<code>lb</code> is used as the lower bound of the tolerance interval.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.plus.one.minus.upl.rank</code></td>
+<td>
+
+<p>positive integer related to the rank of the order statistic to use for the upper 
+bound of the prediction interval.  A value of <code>n.plus.one.minus.upl.rank=1</code> 
+(the default when <code>pi.type="two.sided"</code> or <code>pi.type="upper"</code>) means use 
+the first largest value, and in general a value of 
+<code>n.plus.one.minus.upl.rank=</code><code class="reqn">i</code> means use the <code class="reqn">i</code>'th largest value.  
+If <code>pi.type="lower"</code>, this argument is set equal to <code>0</code> and the value of 
+<code>ub</code> is used as the upper bound of the prediction interval.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lb, ub</code></td>
+<td>
+
+<p>scalars indicating lower and upper bounds on the distribution.  By default, <br><code>lb=-Inf</code> and <code>ub=Inf</code>.  If you are constructing a prediction interval for 
+a distribution that you know has a lower bound other than <code>-Inf</code> 
+(e.g., <code>0</code>), set <code>lb</code> to this value.  Similarly, if you know the 
+distribution has an upper bound other than <code>Inf</code>, set <code>ub</code> to this value.  
+The argument <code>lb</code> is ignored if <code>pi.type="two-sided"</code> or 
+<code>pi.type="lower"</code>.  The argument <code>ub</code> is ignored if 
+<code>pi.type="two-sided"</code> or <code>pi.type="upper"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.type</code></td>
+<td>
+
+<p>character string indicating what kind of prediction interval to compute.  
+The possible values are <code>"two-sided"</code> (the default), <code>"lower"</code>, and 
+<code>"upper"</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><b>What is a Nonparametric Prediction Interval?</b> <br>
+A nonparametric prediction interval for some population is an interval on the 
+real line constructed so that it will contain at least <code class="reqn">k</code> of <code class="reqn">m</code> future 
+observations from that population with some specified probability 
+<code class="reqn">(1-\alpha)100\%</code>, where <code class="reqn">0 &lt; \alpha &lt; 1</code> and <code class="reqn">k</code> and <code class="reqn">m</code> are 
+pre-specified positive integer where <code class="reqn">k \le m</code>.  
+The quantity <code class="reqn">(1-\alpha)100\%</code> is called  
+the confidence coefficient or confidence level associated with the prediction 
+interval.
+</p>
+<p><b>The Form of a Nonparametric Prediction Interval</b> <br>
+Let <code class="reqn">\underline{x} = x_1, x_2, \ldots, x_n</code> denote a vector of <code class="reqn">n</code> 
+independent observations from some continuous distribution, and let 
+<code class="reqn">x_{(i)}</code> denote the the <code class="reqn">i</code>'th order statistics in <code class="reqn">\underline{x}</code>.  
+A two-sided nonparametric prediction interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(v)}] \;\;\;\;\;\; (1)</code>
+</p>
+
+<p>where <code class="reqn">u</code> and <code class="reqn">v</code> are positive integers between 1 and <code class="reqn">n</code>, and 
+<code class="reqn">u &lt; v</code>.  That is, <code class="reqn">u</code> denotes the rank of the lower prediction limit, and 
+<code class="reqn">v</code> denotes the rank of the upper prediction limit.  To make it easier to write 
+some equations later on, we can also write the prediction interval (1) in a slightly 
+different way as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(n + 1 - w)}] \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">w = n + 1 - v \;\;\;\;\;\; (3)</code>
+</p>
+
+<p>so that <code class="reqn">w</code> is a positive integer between 1 and <code class="reqn">n-1</code>, and 
+<code class="reqn">u &lt; n+1-w</code>.  In terms of the arguments to the function <code>predIntNpar</code>, 
+the argument <code>lpl.rank</code> corresponds to <code class="reqn">u</code>, and the argument 
+<code>n.plus.one.minus.upl.rank</code> corresponds to <code class="reqn">w</code>.
+</p>
+<p>If we allow <code class="reqn">u=0</code> and <code class="reqn">w=0</code> and define lower and upper bounds as:
+</p>
+<p style="text-align: center;"><code class="reqn">x_{(0)} = lb \;\;\;\;\;\; (4)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">x_{(n+1)} = ub \;\;\;\;\;\; (5)</code>
+</p>
+
+<p>then Equation (2) above can also represent a one-sided lower or one-sided upper 
+prediction interval as well.  That is, a one-sided lower nonparametric prediction 
+interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(n + 1)}] =  [x_{(u)}, ub] \;\;\;\;\;\; (6)</code>
+</p>
+
+<p>and a one-sided upper nonparametric prediction interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(0)}, x_{(n + 1 - w)}]  = [lb, x_{(n + 1 - w)}] \;\;\;\;\;\; (7)</code>
+</p>
+
+<p>Usually, <code class="reqn">lb = -\infty</code> or <code class="reqn">lb = 0</code> and <code class="reqn">ub = \infty</code>.
+</p>
+<p><b>Constructing Nonparametric Prediction Intervals for Future Observations</b> <br>
+Danziger and Davis (1964) show that the probability that at least <code class="reqn">k</code> out of 
+the next <code class="reqn">m</code> observations will fall in the interval defined in Equation (2) 
+is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">(1 - \alpha) = [\sum_{i=k}^m {{m-i+u+w-1} \choose {m-i}} {{i+n-u-w} \choose i}] / {{n+m} \choose m} \;\;\;\;\;\; (8)</code>
+</p>
+
+<p>(Note that computing a nonparametric prediction interval for the case 
+<code class="reqn">k = m = 1</code> is equivalent to computing a nonparametric <code class="reqn">\beta</code>-expectation 
+tolerance interval with coverage <code class="reqn">(1-\alpha)100\%</code>; see <code>tolIntNpar</code>).
+<br></p>
+<p><em>The Special Case of Using the Minimum and the Maximum</em> <br>
+Setting <code class="reqn">u = w = 1</code> implies using the smallest and largest observed values as 
+the prediction limits.  In this case, it can be shown that the probability that at 
+least <code class="reqn">k</code> out of the next <code class="reqn">m</code> observations will fall in the interval
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(1)}, x_{(n)}] \;\;\;\;\;\; (9)</code>
+</p>
+
+<p>is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">(1 - \alpha) = [\sum_{i=k}^m (m-i-1){{n+i-2} \choose i}] / {{n+m} \choose m} \;\;\;\;\;\; (10)</code>
+</p>
+
+<p>Setting <code class="reqn">k=m</code> in Equation (10), the probability that all of the next <code class="reqn">m</code> 
+observations will fall in the interval defined in Equation (9) is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">(1 - \alpha) = \frac{n(n-1)}{(n+m)(n+m-1)} \;\;\;\;\;\; (11)</code>
+</p>
+
+<p>For one-sided prediction limits, the probability that all <code class="reqn">m</code> future 
+observations will fall below <code class="reqn">x_{(n)}</code> (upper prediction limit; 
+<code>pi.type="upper"</code>) and the probabilitiy that all <code class="reqn">m</code> future observations 
+will fall above <code class="reqn">x_{(1)}</code> (lower prediction limit; <code>pi.type="lower"</code>) are 
+both given by:
+</p>
+<p style="text-align: center;"><code class="reqn">(1 - \alpha) = \frac{n}{n+m} \;\;\;\;\;\; (12)</code>
+</p>
+
+<p><br></p>
+<p><b>Constructing Nonparametric Prediction Intervals for Future Medians</b> <br>
+To construct a nonparametric prediction interval for a future median based on 
+<code class="reqn">s</code> future observations, where <code class="reqn">s</code> is odd, note that this is equivalent to 
+constructing a nonparametric prediction interval that must hold 
+at least <code class="reqn">k = (s+1)/2</code> of the next <code class="reqn">m = s</code> future observations.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list of class <code>"estimate"</code> containing the prediction interval and other 
+information.  See the help file for <code>estimate.object</code> for details.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Prediction and tolerance intervals have long been applied to quality control and 
+life testing problems (Hahn, 1970b,c; Hahn and Nelson, 1973; 
+Krishnamoorthy and Mathew, 2009).  
+In the context of environmental statistics, prediction intervals are useful for 
+analyzing data from groundwater detection monitoring programs at hazardous and 
+solid waste facilities (e.g., Gibbons et al., 2009; Millard and Neerchal, 2001; 
+USEPA, 2009).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Danziger, L., and S. Davis. (1964).  Tables of Distribution-Free Tolerance Limits.  
+<em>Annals of Mathematical Statistics</em> <b>35</b>(5), 1361–1365.
+</p>
+<p>Davis, C.B. (1994).  Environmental Regulatory Statistics.  In Patil, G.P., 
+and C.R. Rao, eds., <em>Handbook of Statistics, Vol. 12: Environmental Statistics</em>.  
+North-Holland, Amsterdam, a division of Elsevier, New York, NY, Chapter 26, 817–865.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1987).  One-sided Intervals for at Least p of m 
+Observations from a Normal Population on Each of r Future Occasions.  
+<em>Technometrics</em> <b>29</b>, 359–370.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1994a).  Ground Water Monitoring Statistics Update:  
+Part I: Progress Since 1988.  <em>Ground Water Monitoring and Remediation</em> 
+<b>14</b>(4), 148–158.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1994b).  Ground Water Monitoring Statistics Update:  
+Part II:  Nonparametric Prediction Limits.  
+<em>Ground Water Monitoring and Remediation</em> <b>14</b>(4), 159–175.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1999).  Simultaneous Nonparametric Prediction 
+Limits (with Discusson).  <em>Technometrics</em> <b>41</b>(2), 89–112.
+</p>
+<p>Gibbons, R.D. (1987a).  Statistical Prediction Intervals for the Evaluation of 
+Ground-Water Quality.  <em>Ground Water</em> <b>25</b>, 455–465.
+</p>
+<p>Gibbons, R.D. (1991b).  Statistical Tolerance Limits for Ground-Water Monitoring.  
+<em>Ground Water</em> <b>29</b>, 563–570.
+</p>
+<p>Gibbons, R.D., and J. Baker. (1991).  The Properties of Various Statistical 
+Prediction Intervals for Ground-Water Detection Monitoring.  
+<em>Journal of Environmental Science and Health</em> <b>A26</b>(4), 535–553.
+</p>
+<p>Gibbons, R.D., D.K. Bhaumik, and S. Aryal. (2009). 
+<em>Statistical Methods for Groundwater Monitoring</em>, Second Edition.  
+John Wiley &amp; Sons, Hoboken.
+</p>
+<p>Hahn, G.J., and W.Q. Meeker. (1991).  
+<em>Statistical Intervals: A Guide for Practitioners</em>.  John Wiley and Sons, 
+New York, 392pp.
+</p>
+<p>Hahn, G., and W. Nelson. (1973).  A Survey of Prediction Intervals and Their 
+Applications.  <em>Journal of Quality Technology</em> <b>5</b>, 178–188.
+</p>
+<p>Hall, I.J., R.R. Prairie, and C.K. Motlagh. (1975).  Non-Parametric Prediction 
+Intervals.  <em>Journal of Quality Technology</em> <b>7</b>(3), 109–114.
+</p>
+<p>Millard, S.P., and Neerchal, N.K. (2001). <em>Environmental Statistics with S-PLUS</em>. 
+CRC Press, Boca Raton, Florida.
+</p>
+<p>USEPA. (2009).  <em>Statistical Analysis of Groundwater Monitoring Data at RCRA Facilities, Unified Guidance</em>.
+EPA 530/R-09-007, March 2009.  Office of Resource Conservation and Recovery Program Implementation and Information Division.  
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (2010).  <em>Errata Sheet - March 2009 Unified Guidance</em>.
+EPA 530/R-09-007a, August 9, 2010.  Office of Resource Conservation and Recovery, Program Information and Implementation Division.
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>estimate.object</code>, <code>predIntNparN</code>, 
+<code>predIntNparConfLevel</code>, <code>plotPredIntNparDesign</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 20 observations from a lognormal mixture distribution with 
+  # parameters mean1=1, cv1=0.5, mean2=5, cv2=1, and p.mix=0.1.  Use 
+  # predIntNpar to construct a two-sided prediction interval using the 
+  # minimum and maximum observed values.  Note that the associated confidence 
+  # level is 90%.  A larger sample size is required to obtain a larger 
+  # confidence level (see the help file for predIntNparN). 
+  # (Note: the call to set.seed simply allows you to reproduce this example.)
+
+  set.seed(250) 
+  dat &lt;- rlnormMixAlt(n = 20, mean1 = 1, cv1 = 0.5, 
+    mean2 = 5, cv2 = 1, p.mix = 0.1) 
+
+  predIntNpar(dat) 
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Prediction Interval Method:      Exact
+  #
+  #Prediction Interval Type:        two-sided
+  #
+  #Confidence Level:                90.47619%
+  #
+  #Prediction Limit Rank(s):        1 20 
+  #
+  #Number of Future Observations:   1
+  #
+  #Prediction Interval:             LPL = 0.3647875
+  #                                 UPL = 1.8173115
+
+  #----------
+
+  # Repeat the above example, but specify m=5 future observations should be 
+  # contained in the prediction interval.  Note that the confidence level is 
+  # now only 63%.
+
+  predIntNpar(dat, m = 5) 
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Prediction Interval Method:      Exact
+  #
+  #Prediction Interval Type:        two-sided
+  #
+  #Confidence Level:                63.33333%
+  #
+  #Prediction Limit Rank(s):        1 20 
+  #
+  #Number of Future Observations:   5
+  #
+  #Prediction Interval:             LPL = 0.3647875
+  #                                 UPL = 1.8173115
+
+  #----------
+
+  # Repeat the above example, but specify that a minimum of k=3 observations 
+  # out of a total of m=5 future observations should be contained in the 
+  # prediction interval.  Note that the confidence level is now 98%.
+
+  predIntNpar(dat, k = 3, m = 5) 
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Prediction Interval Method:      Exact
+  #
+  #Prediction Interval Type:        two-sided
+  #
+  #Confidence Level:                98.37945%
+  #
+  #Prediction Limit Rank(s):        1 20 
+  #
+  #Minimum Number of
+  #Future Observations
+  #Interval Should Contain:         3
+  #
+  #Total Number of
+  #Future Observations:             5
+  #
+  #Prediction Interval:             LPL = 0.3647875
+  #                                 UPL = 1.8173115
+
+  #==========
+
+  # Example 18-3 of USEPA (2009, p.18-19) shows how to construct 
+  # a one-sided upper nonparametric prediction interval for the next 
+  # 4 future observations of trichloroethylene (TCE) at a downgradient well.  
+  # The data for this example are stored in EPA.09.Ex.18.3.TCE.df.  
+  # There are 6 monthly observations of TCE (ppb) at 3 background wells, 
+  # and 4 monthly observations of TCE at a compliance well.
+
+  # Look at the data
+  #-----------------
+
+  EPA.09.Ex.18.3.TCE.df
+
+  #   Month Well  Well.type TCE.ppb.orig TCE.ppb Censored
+  #1      1 BW-1 Background           &lt;5     5.0     TRUE
+  #2      2 BW-1 Background           &lt;5     5.0     TRUE
+  #3      3 BW-1 Background            8     8.0    FALSE
+  #...
+  #22     4 CW-4 Compliance           &lt;5     5.0     TRUE
+  #23     5 CW-4 Compliance            8     8.0    FALSE
+  #24     6 CW-4 Compliance           14    14.0    FALSE
+
+
+  longToWide(EPA.09.Ex.18.3.TCE.df, "TCE.ppb.orig", "Month", "Well", 
+    paste.row.name = TRUE)
+
+  #        BW-1 BW-2 BW-3 CW-4
+  #Month.1   &lt;5    7   &lt;5     
+  #Month.2   &lt;5  6.5   &lt;5     
+  #Month.3    8   &lt;5 10.5  7.5
+  #Month.4   &lt;5    6   &lt;5   &lt;5
+  #Month.5    9   12   &lt;5    8
+  #Month.6   10   &lt;5    9   14
+
+
+  # Construct the prediction limit based on the background well data 
+  # using the maximum value as the upper prediction limit.  
+  # Note that since all censored observations are censored at one 
+  # censoring level and the censoring level is less than all of the 
+  # uncensored observations, we can just supply the censoring level 
+  # to predIntNpar.
+  #-----------------------------------------------------------------
+
+  with(EPA.09.Ex.18.3.TCE.df, 
+    predIntNpar(TCE.ppb[Well.type == "Background"], 
+      m = 4, pi.type = "upper", lb = 0))
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            TCE.ppb[Well.type == "Background"]
+  #
+  #Sample Size:                     18
+  #
+  #Prediction Interval Method:      Exact
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                81.81818%
+  #
+  #Prediction Limit Rank(s):        18 
+  #
+  #Number of Future Observations:   4
+  #
+  #Prediction Interval:             LPL =  0
+  #                                 UPL = 12
+
+  # Since the value of 14 ppb for Month 6 at the compliance well exceeds 
+  # the upper prediction limit of 12, we might conclude that there is 
+  # statistically significant evidence of an increase over background 
+  # at CW-4.  However, the confidence level associated with this 
+  # prediction limit is about 82%, which implies a Type I error level of 
+  # 18%.  This means there is nearly a one in five chance of a false positive. 
+  # Only additional background data and/or use of a retesting strategy 
+  # (see predIntNparSimultaneous) would lower the false positive rate.
+
+  #==========
+
+  # Example 18-4 of USEPA (2009, p.18-19) shows how to construct 
+  # a one-sided upper nonparametric prediction interval for the next 
+  # median of order 3 of xylene at a downgradient well.  
+  # The data for this example are stored in EPA.09.Ex.18.4.xylene.df.  
+  # There are 8 monthly observations of xylene (ppb) at 3 background wells, 
+  # and 3 montly observations of TCE at a compliance well.
+
+  # Look at the data
+  #-----------------
+
+  EPA.09.Ex.18.4.xylene.df
+
+  #   Month   Well  Well.type Xylene.ppb.orig Xylene.ppb Censored
+  #1      1 Well.1 Background              &lt;5        5.0     TRUE
+  #2      2 Well.1 Background              &lt;5        5.0     TRUE
+  #3      3 Well.1 Background             7.5        7.5    FALSE
+  #...
+  #30     6 Well.4 Compliance              &lt;5        5.0     TRUE
+  #31     7 Well.4 Compliance             7.8        7.8    FALSE
+  #32     8 Well.4 Compliance            10.4       10.4    FALSE
+
+  longToWide(EPA.09.Ex.18.4.xylene.df, "Xylene.ppb.orig", "Month", "Well", 
+    paste.row.name = TRUE)
+
+  #        Well.1 Well.2 Well.3 Well.4
+  #Month.1     &lt;5    9.2     &lt;5       
+  #Month.2     &lt;5     &lt;5    5.4       
+  #Month.3    7.5     &lt;5    6.7       
+  #Month.4     &lt;5    6.1     &lt;5       
+  #Month.5     &lt;5      8     &lt;5       
+  #Month.6     &lt;5    5.9     &lt;5     &lt;5
+  #Month.7    6.4     &lt;5     &lt;5    7.8
+  #Month.8      6     &lt;5     &lt;5   10.4
+
+  # Construct the prediction limit based on the background well data 
+  # using the maximum value as the upper prediction limit. 
+  # Note that since all censored observations are censored at one 
+  # censoring level and the censoring level is less than all of the 
+  # uncensored observations, we can just supply the censoring level 
+  # to predIntNpar.
+  #
+  # To compute a prediction interval for a median of order 3 (i.e., 
+  # a median based on 3 observations), this is equivalent to 
+  # constructing a nonparametric prediction interval that must hold 
+  # at least 2 of the next 3 future observations.
+  #-----------------------------------------------------------------
+
+  with(EPA.09.Ex.18.4.xylene.df, 
+    predIntNpar(Xylene.ppb[Well.type == "Background"], 
+      k = 2, m = 3, pi.type = "upper", lb = 0))
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            Xylene.ppb[Well.type == "Background"]
+  #
+  #Sample Size:                     24
+  #
+  #Prediction Interval Method:      Exact
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                99.1453%
+  #
+  #Prediction Limit Rank(s):        24 
+  #
+  #Minimum Number of
+  #Future Observations
+  #Interval Should Contain:         2
+  #
+  #Total Number of
+  #Future Observations:             3
+  #
+  #Prediction Interval:             LPL = 0.0
+  #                                 UPL = 9.2
+
+  # The Month 8 observation at the Complance well is 10.4 ppb of Xylene, 
+  # which is greater than the upper prediction limit of 9.2 ppb, so
+  # conclude there is evidence of contamination at the 
+  # 100% - 99% = 1% Type I Error Level
+
+  #==========
+
+  # Cleanup
+  #--------
+
+  rm(dat)
+</code></pre>
+
+
+</div>

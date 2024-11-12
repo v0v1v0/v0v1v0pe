@@ -1,0 +1,149 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>search_body</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Full text search of Elasticsearch - body requests.</h2>
+
+<h3>Description</h3>
+
+<p>Full text search of Elasticsearch - body requests.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">search_body(
+  conn,
+  index = NULL,
+  type = NULL,
+  raw = FALSE,
+  callopts = list(),
+  query = list(),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>an Elasticsearch connection object, see <code>connect()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>Index name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Document type</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw</code></td>
+<td>
+<p>If <code>TRUE</code> (default), data is parsed to list. If <code>FALSE</code>, then
+raw JSON.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>callopts</code></td>
+<td>
+<p>Curl args passed on to crul::verb-POST</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>query</code></td>
+<td>
+<p>Query, either a list or json.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further args passed on to elastic search HTTP API as parameters.
+Not used right now.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# connection setup
+# x &lt;- connect()
+# x$ping()
+
+# pass in as an R list
+aggs &lt;- list(aggs = list(stats = list(terms = list(field = "text_entry"))))
+# search_body(x, index="shakespeare", query=aggs)
+
+# or pass in as json query with newlines, easy to read
+aggs &lt;- '{
+    "aggs": {
+        "stats" : {
+            "terms" : {
+                "field" : "text_entry"
+            }
+        }
+    }
+}'
+# search_body(x, index="shakespeare", query=aggs)
+
+
+# or pass in collapsed json string
+aggs &lt;- '{"aggs":{"stats":{"terms":{"field":"text_entry"}}}}'
+# search_body(x, index="shakespeare", query=aggs)
+
+# match query
+match &lt;- '{"query": {"match" : {"text_entry" : "Two Gentlemen"}}}'
+# search_body(x, index="shakespeare", query=match)
+
+# multi-match (multiple fields that is) query
+mmatch &lt;- '{"query": {"multi_match" : {"query" : "henry", "fields": 
+["text_entry","play_name"]}}}'
+# search_body(x, index="shakespeare", query=mmatch)
+
+# bool query
+mmatch &lt;- '{
+ "query": {
+   "bool" : {
+     "must_not" : {
+       "range" : {
+         "speech_number" : {
+           "from" : 1, "to": 5
+}}}}}}'
+# search_body(x, index="shakespeare", query=mmatch)
+
+# Boosting query
+boost &lt;- '{
+ "query" : {
+  "boosting" : {
+      "positive" : {
+          "term" : {
+              "play_name" : "henry"
+          }
+      },
+      "negative" : {
+          "term" : {
+              "text_entry" : "thou"
+          }
+      },
+      "negative_boost" : 0.2
+    }
+ }
+}'
+# search_body(x, index="shakespeare", query=mmatch)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

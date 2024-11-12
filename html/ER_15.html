@@ -1,0 +1,149 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pls</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Partial Least Squares modelling of ER objects.</h2>
+
+<h3>Description</h3>
+
+<p>The output of <code>ER</code> is used as input to a PLS classification with the selected
+effect as response. It is possible to compare two models using the <code>er2</code> argument. Variable
+selection is available through Jackknifing (from package <code>pls</code>) and Shaving (from package <code>plsVarSel</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pls(er, ...)
+
+## S3 method for class 'ER'
+pls(
+  er,
+  effect,
+  ncomp,
+  newdata = NULL,
+  er2,
+  validation,
+  jackknife = NULL,
+  shave = NULL,
+  df.used = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>er</code></td>
+<td>
+<p>Object of class <code>ER</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments for <code>plsr</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effect</code></td>
+<td>
+<p>The effect to be used as response.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncomp</code></td>
+<td>
+<p>Number of PLS components.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>Optional new data matrix for prediction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>er2</code></td>
+<td>
+<p>Second object of class <code>ER</code> for comparison.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>validation</code></td>
+<td>
+<p>Optional validation parameters for <code>plsr</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jackknife</code></td>
+<td>
+<p>Optional argument specifying if jackknifing should be applied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shave</code></td>
+<td>
+<p>Optional argument indicating if variable shaving should be used. <code>shave</code> should be a list with two elements: the PLS filter method and the proportion to remove. <code>shave = TRUE</code> uses defaults: <code>list("sMC", 0.2)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df.used</code></td>
+<td>
+<p>Optional argument indicating how many degrees of freedom have been consumed during deflation. Default value from input object.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If using the <code>shave</code> options, the segment type is given as <code>type</code> instead of <code>segment.type</code> (see examples).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ER</code>, <code>elastic</code> and <code>confints</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(MS, package = "ER")
+er &lt;- ER(proteins ~ MS * cluster, data = MS[-1,])
+
+# Simple PLS using interleaved cross-validation
+plsMod &lt;- pls(er, 'MS', 6, validation = "CV",
+              segment.type = "interleaved", length.seg = 25)
+scoreplot(plsMod, labels = "names")
+
+# PLS with shaving of variables (mind different variable for cross-validation type)
+plsModS &lt;- pls(er, 'MS', 6, validation = "CV",
+              type = "interleaved", length.seg=25, shave = TRUE)
+# Error as a function of remaining variables
+plot(plsModS$shave)
+# Selected variables for minimum error
+with(plsModS$shave, colnames(X)[variables[[min.red+1]]])
+
+ # Time consuming due to leave-one-out cross-validation
+plsModJ &lt;- pls(er, 'MS', 5, validation = "LOO",
+              jackknife = TRUE)
+colSums(plsModJ$classes == as.numeric(MS$MS[-1]))
+# Jackknifed coefficient P-values (sorted)
+plot(sort(plsModJ$jack[,1,1]), pch = '.', ylab = 'P-value')
+abline(h=c(0.01,0.05),col=2:3)
+
+scoreplot(plsModJ)
+scoreplot(plsModJ, comps=c(1,3))   # Selected components
+# Use MS categories for colouring and clusters for plot characters.
+scoreplot(plsModJ, col = er$symbolicDesign[['MS']],
+                  pch = 20+as.numeric(er$symbolicDesign[['cluster']]))
+loadingplot(plsModJ, scatter=TRUE) # scatter=TRUE for scatter plot
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,299 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eicm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit and select an Explicit Interaction Community Model (EICM)</h2>
+
+<h3>Description</h3>
+
+<p>Given species occurrence data and (optionally) measured environmental predictors,
+fits and selects an EICM that models species occurrence probability as a function of
+measured predictors, unmeasured predictors (latent variables) and direct species interactions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eicm(
+  occurrences,
+  env = NULL,
+  traits = NULL,
+  intercept = TRUE,
+  n.latent = 0,
+  rotate.latents = FALSE,
+  scale.latents = TRUE,
+  forbidden = NULL,
+  allowed = NULL,
+  mask.sp = NULL,
+  exclude.prevalence = 0,
+  regularization = c(ifelse(n.latent &gt; 0, 6, 0.5), 1),
+  regularization.type = "hybrid",
+  penalty = 4,
+  theta.threshold = 0.5,
+  latent.lambda = 1,
+  fit.all.with.latents = TRUE,
+  popsize.sel = 2,
+  n.cores = parallel::detectCores(),
+  parallel = FALSE,
+  true.model = NULL,
+  do.selection = TRUE,
+  do.plots = TRUE,
+  fast = FALSE,
+  refit.selected = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>occurrences</code></td>
+<td>
+<p>a binary (0/1) sample x species matrix, possibly including NAs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>an optional sample x environmental variable matrix, for the known environmental predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>traits</code></td>
+<td>
+<p>an optional species x trait matrix. Currently, it is only used for excluding
+species interactions <em>a priori</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>logical specifying whether to add a column for the species-level intercepts.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.latent</code></td>
+<td>
+<p>the number of latent variables to estimate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rotate.latents</code></td>
+<td>
+<p>logical. Rotate the estimated latent variable values (the values of the
+latents at each sample) in the first step with PCA? Defaults to FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale.latents</code></td>
+<td>
+<p>logical. Standardize the estimated latent variable values (the values of the
+latents at each sample) in the first step? Defaults to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forbidden</code></td>
+<td>
+<p>a formula (or list of) defining which species interactions are not to be estimated. See details.
+This constraint is cumulative with other constraints (<code>mask.sp</code> and <code>exclude.prevalence</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allowed</code></td>
+<td>
+<p>a formula (or list of) defining which species interactions are to be estimated. See details.
+This constraint is cumulative with other constraints (<code>mask.sp</code> and <code>exclude.prevalence</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mask.sp</code></td>
+<td>
+<p>a scalar or a binary square species x species matrix defining which species interactions to exclude
+(0) or include (1) <em>a priori</em>. If a scalar (0 or 1), 0 excludes all interactions, 1 allows all interactions.
+If a matrix, species in the columns affect species in the rows, so, setting <code>mask.sp[3, 8] &lt;- 0</code>
+means that species #8 is assumed <em>a priori</em> to not affect species #3.
+This constraint is cumulative with other constraints (<code>forbidden</code> and <code>exclude.prevalence</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude.prevalence</code></td>
+<td>
+<p>exclude species interactions which are caused by species
+with prevalence equal or lower than this value. This constraint is cumulative with
+other constraints (<code>forbidden</code> and <code>mask.sp</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>regularization</code></td>
+<td>
+<p>a two-element numeric vector defining the regularization lambdas used for
+environmental coefficients and for species interactions respectively. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>regularization.type</code></td>
+<td>
+<p>one of "lasso", "ridge" or "hybrid", defining the type of penalty to apply.
+Type "hybrid" applies ridge penalty to environmental coefficients and LASSO to interaction coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalty</code></td>
+<td>
+<p>the penalty applied to the number of species interactions to include, during variable selection.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta.threshold</code></td>
+<td>
+<p>exclude species interactions (from network selection) whose preliminary coefficient (in absolute value)
+is lower than this value. This exclusion criterion is cumulative with the other user-defined exclusions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>latent.lambda</code></td>
+<td>
+<p>the regularization applied to latent variables and respective coefficients
+when estimating their values in samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit.all.with.latents</code></td>
+<td>
+<p>logical. Whether to use the previously estimated latent variables
+when estimating the preliminary species interactions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>popsize.sel</code></td>
+<td>
+<p>the population size for the genetic algorithm, expressed as the factor to multiply
+by the recommended minimum. Ignored if <code>do.selection=FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.cores</code></td>
+<td>
+<p>the number of CPU cores to use in the variable selection stage and in the optimization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>logical. Whether to use <code>optimParallel</code> during optimizations
+instead of <code>optim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>true.model</code></td>
+<td>
+<p>for validation purposes only: the true model that has generated the data, to which
+the estimated coefficients will be compared in each selection algorithm iteration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do.selection</code></td>
+<td>
+<p>logical. Conduct the variable selection stage, over species interaction network topology?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do.plots</code></td>
+<td>
+<p>logical. Plot diagnostic and trace plots?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fast</code></td>
+<td>
+<p>a logical defining whether to do a fast - but less accurate - estimation, or a normal estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refit.selected</code></td>
+<td>
+<p>logical. Refit with exact estimates the best model after network selection? Note that,
+for performance reasons, the models fit during the network selection stage use an approximate likelihood.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>An Explicit Interaction Community Model (EICM) is a simultaneous equation linear model in which each
+species model integrates all the other species as predictors, along with measured and latent variables.
+</p>
+<p>This is the main function for fitting EICM models, and is preferred over using <code>eicm.fit</code> directly.
+</p>
+<p>This function conducts the fitting and network topology selection workflow, which includes three stages:
+1) estimate latent variable values; 2) make preliminary estimates for species interactions;
+3) conduct network topology selection over a reduced model (based on the preliminary estimates).
+</p>
+<p>The selection stage is optional. If not conducted, the species interactions are estimated
+(all or a subset according to the user-provided constraints), but not selected.
+See <code>vignette("eicm")</code> for commented examples on a priori excluding interactions.
+</p>
+<p>Missing data in the response matrix is allowed.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>eicm.list</code> with the following components:
+</p>
+
+<dl>
+<dt>true.model:</dt>
+<dd>
+<p>a copy of the <code>true.model</code> argument.</p>
+</dd>
+<dt>latents.only:</dt>
+<dd>
+<p>the model with only the latent variables estimated.</p>
+</dd>
+<dt>fitted.model</dt>
+<dd>
+<p>the model with only the species interactions estimated.</p>
+</dd>
+<dt>selected.model:</dt>
+<dd>
+<p>the final model with all coefficients estimated, after network topology selection.
+This is the "best" model given the selection criterion (which depends on
+<code>regularization</code> and <code>penalty</code>.</p>
+</dd>
+</dl>
+<p>When accessing the results, remember to pick the model you want (usually, <code>selected.model</code>).
+<code>plot</code> automatically picks <code>selected.model</code> or, if NULL, <code>fitted.model</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>eicm-package</code>, <code>eicm.fit</code>, <code>plot.eicm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># refer to the vignette for a more detailed explanation
+
+# This can take some time to run
+
+# Load the included parameterized model
+data(truemodel)
+
+# make one realization of the model
+occurrences &lt;- predict(truemodel, nrepetitions=1)
+
+# Fit and select a model with 2 latent variables to be estimated and all
+# interactions possible
+m &lt;- eicm(occurrences, n.latent=2, penalty=4, theta.threshold=0.5, n.cores=2)
+
+plot(m)
+
+</code></pre>
+
+
+</div>

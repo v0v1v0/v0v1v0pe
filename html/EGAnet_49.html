@@ -1,0 +1,191 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>network.predictability</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict New Data based on Network</h2>
+
+<h3>Description</h3>
+
+<p>General function to compute a network's predictive power on new data,
+following Haslbeck and Waldorp (2018) and Williams and Rodriguez (2022)
+</p>
+<p>This implementation is different from the <code>predictability</code> in the <code>mgm</code> package
+(Haslbeck), which is based on (regularized) regression. This implementation uses
+the network directly, converting the partial correlations into an implied
+precision (inverse covariance) matrix. See <strong>Details</strong> for more information
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">network.predictability(network, original.data, newdata, ordinal.categories = 7)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p>Matrix or data frame.
+A partial correlation network</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>original.data</code></td>
+<td>
+<p>Matrix or data frame.
+Must consist only of variables to be used to estimate the <code>network</code>.
+See <strong>Examples</strong></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>Matrix or data frame.
+Must consist of the same variables in the same order as <code>original.data</code>.
+See <strong>Examples</strong></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ordinal.categories</code></td>
+<td>
+<p>Numeric (length = 1).
+<em>Up to</em> the number of categories <em>before</em> a variable is considered continuous.
+Defaults to <code>7</code> categories before <code>8</code> is considered continuous</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This implementation of network predictability proceeds in several steps
+with important assumptions:
+</p>
+<p>1. Network was estimated using (partial) correlations (not regression like the
+<code>mgm</code> package!)
+</p>
+<p>2. Original data that was used to estimate the network in 1. is necessary to
+apply the original scaling to the new data
+</p>
+<p>3. (Linear) regression-like coefficients are obtained by reserve engineering the
+inverse covariance matrix using the network's partial correlations (i.e.,
+by setting the diagonal of the network to -1 and computing the inverse
+of the opposite signed partial correlation matrix; see <code>EGAnet:::pcor2inv</code>)
+</p>
+<p>4. Predicted values are obtained by matrix multiplying the new data with these
+coefficients
+</p>
+<p>5. <strong>Dichotomous and polytomous</strong> data are given categorical values based
+on the <strong>original data's</strong> thresholds and these thresholds are used to
+convert the continuous predicted values into their corresponding categorical values
+</p>
+<p>6. Evaluation metrics:
+</p>
+
+<ul>
+<li>
+<p> dichotomous — <code>"Accuracy"</code> or the percent correctly predicted for the 0s and 1s
+and <code>"Kappa"</code> or Cohen's Kappa (see cite)
+</p>
+</li>
+<li>
+<p> polytomous — <code>"Linear Kappa"</code> or linearly weighted Kappa and
+<code>"Krippendorff's alpha"</code> (see cite)
+</p>
+</li>
+<li>
+<p> continuous — R-squared (<code>"R2"</code>) and root mean square error (<code>"RMSE"</code>)
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>Returns a list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>predictions</code></td>
+<td>
+<p>Predicted values of <code>newdata</code> based on the <code>network</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>betas</code></td>
+<td>
+<p>Beta coefficients derived from the <code>network</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>results</code></td>
+<td>
+<p>Performance metrics for each variable in <code>newdata</code></p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Hudson Golino &lt;hfg9s at virginia.edu&gt; and Alexander P. Christensen &lt;alexpaulchristensen@gmail.com&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p><strong>Original Implementation of Node Predictability</strong> <br>
+Haslbeck, J. M., &amp; Waldorp, L. J. (2018).
+How well do network models predict observations? On the importance of predictability in network models.
+<em>Behavior Research Methods</em>, <em>50</em>(2), 853–861.
+</p>
+<p><strong>Derivation of Regression Coefficients Used (Formula 3)</strong> <br>
+Williams, D. R., &amp; Rodriguez, J. E. (2022).
+Why overfitting is not (usually) a problem in partial correlation networks.
+<em>Psychological Methods</em>, <em>27</em>(5), 822–840.
+</p>
+<p><strong>Cohen's Kappa</strong> <br>
+Cohen, J. (1960). A coefficient of agreement for nominal scales.
+<em>Educational and Psychological Measurement</em>, <em>20</em>(1), 37-46.
+</p>
+<p>Cohen, J. (1968). Weighted kappa: nominal scale agreement provision for scaled disagreement or partial credit.
+<em>Psychological Bulletin</em>, <em>70</em>(4), 213-220.
+</p>
+<p><strong>Krippendorff's alpha</strong> <br>
+Krippendorff, K. (2013).
+Content analysis: An introduction to its methodology (3rd ed.).
+Thousand Oaks, CA: Sage.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load data
+wmt &lt;- wmt2[,7:24]
+
+# Set seed (to reproduce results)
+set.seed(42)
+
+# Split data
+training &lt;- sample(
+  1:nrow(wmt), round(nrow(wmt) * 0.80) # 80/20 split
+)
+
+# Set splits
+wmt_train &lt;- wmt[training,]
+wmt_test &lt;- wmt[-training,]
+
+# EBICglasso (default for EGA functions)
+glasso_network &lt;- network.estimation(
+  data = wmt_train, model = "glasso"
+)
+
+# Check predictability
+network.predictability(
+  network = glasso_network, original.data = wmt_train,
+  newdata = wmt_test
+)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,146 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>PSP-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Penalized Single Predictor (PSP) S4-class as a member of PEP-ensembles</h2>
+
+<h3>Description</h3>
+
+<p>PSP is a single penalized Cox regression model, where an alpha/lambda grid has been optimized using cross-validation and a chosen prediction metric. PSPs are single entities that will compile together into PEPs, the ensemble objects that will average over multiple PSPs to generate an ensemble prediction. Typically a single PSP models a part of the data, such as a cohort strata.
+</p>
+
+
+<h3>Slots</h3>
+
+
+<dl>
+<dt><code>description</code></dt>
+<dd>
+<p>A general user-provided string describing the PSP</p>
+</dd>
+<dt><code>features</code></dt>
+<dd>
+<p>A character vector indicating feature names</p>
+</dd>
+<dt><code>strata</code></dt>
+<dd>
+<p>Information whether data matrix x included substrata (will be used in plotting functions etc)</p>
+</dd>
+<dt><code>alphaseq</code></dt>
+<dd>
+<p>The sequence of alpha values to test, ranging between [0,1]; alpha = 0 being ridge regression, 0 &lt; alpha &lt; 1 being elastic net and alpha = 1 being LASSO</p>
+</dd>
+<dt><code>cvfolds</code></dt>
+<dd>
+<p>The number of cross-validation folds to utilize; by default 10</p>
+</dd>
+<dt><code>nlambda</code></dt>
+<dd>
+<p>The amount of lambda values utilized in each regularization path; by default 100 as in glmnet-package</p>
+</dd>
+<dt><code>cvmean</code></dt>
+<dd>
+<p>A matrix indicating the mean CV performance in alpha/lambda grid (preferred over median)</p>
+</dd>
+<dt><code>cvmedian</code></dt>
+<dd>
+<p>A matrix indicating the median CV performance in alpha/lambda grid</p>
+</dd>
+<dt><code>cvstdev</code></dt>
+<dd>
+<p>A matrix indicating the standard deviation in CV performance over the folds in the alpha/lambda grid</p>
+</dd>
+<dt><code>cvmin</code></dt>
+<dd>
+<p>A matrix indicating minimum CV performance in alpha/lambda grid</p>
+</dd>
+<dt><code>cvmax</code></dt>
+<dd>
+<p>A matrix indicating maximum CV performance in alpha/lambda grid</p>
+</dd>
+<dt><code>score</code></dt>
+<dd>
+<p>The scoring function, user-defined or one provided by ePCR package such as score.cindex or score.iAUC</p>
+</dd>
+<dt><code>cvrepeat</code></dt>
+<dd>
+<p>Number of cross-validation procedures to run multiple times and then average over, in order to reduce the effect of binning samples</p>
+</dd>
+<dt><code>impute</code></dt>
+<dd>
+<p>The imputation function used if provided matrix 'x' includes missing values; by default the impute.knn-function from BioConductor package 'impute'</p>
+</dd>
+<dt><code>optimum</code></dt>
+<dd>
+<p>The optimum in alpha/lambda grid, with optimal alpha and similarly for lambda</p>
+</dd>
+<dt><code>seed</code></dt>
+<dd>
+<p>The initial random seed used for cross-validation</p>
+</dd>
+<dt><code>x</code></dt>
+<dd>
+<p>The input data matrix</p>
+</dd>
+<dt><code>x.expand</code></dt>
+<dd>
+<p>A function that allows expansion of matrix 'x' to include interactions between variables; if no such are desired, this should be an identity function</p>
+</dd>
+<dt><code>y</code></dt>
+<dd>
+<p>The Surv-object as in survival-package, which serves as the response y</p>
+</dd>
+<dt><code>fit</code></dt>
+<dd>
+<p>The glmnet coxnet-object obtained with optimal alpha</p>
+</dd>
+<dt><code>criterion</code></dt>
+<dd>
+<p>The optimizing criterion; by default "min" for minimizing CV-error</p>
+</dd>
+<dt><code>dictionary</code></dt>
+<dd>
+<p>A list of discriptions for each variable</p>
+</dd>
+<dt><code>regAUC</code></dt>
+<dd>
+<p>A numeric vector for the AUC under regularization curve as computed by integrateRegCurve-function</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># As an example, illustrate a naive PSP built on the small medication cohort
+data(TYKSSIMU)
+library(survival)
+# Minimal example with much fewer patients and variables
+psp_ex &lt;- new("PSP", alphaseq=c(0.2, 0.8), nlambda=20, folds=3,
+	x = xMEDISIMU[1:80,c(1:20,40:50)], y = yMEDISIMU[1:80,"surv"],
+seeds = 1, score=score.cindex)
+
+plot(psp_ex) # Optimization surface of alpha/lambda
+
+# Illustrate the use of some PSP-methods:
+PSP.KM(psp_ex, cutoff = 0.5) # Kaplan-Meier
+PSP.PCA(psp_ex) # PCA plot of training data
+PSP.BOX(psp_ex) # Boxplots, here for the first training variable
+PSP.CSP(psp_ex) # Cumulative survival probabilities for the training data
+invisible(PSP.NA(psp_ex)) # Time-to-event Nelson-Aalen heuristic algorithm
+
+## Not run: 
+# Computationally intensive novel PSP-fitting is omitted from the test runs
+# Functions for readily fitted PSP-objects are illustrated above
+data(TYKSSIMU)
+library(survival)
+psp_meditext &lt;- new("PSP", x = rbind(xMEDISIMU, xTEXTSIMU), 
+y = Surv(rbind(yMEDISIMU, yTEXTSIMU)[,"surv"]),
+plot = TRUE, alphaseq = seq(0, 1, by=.01), scorefunc = score.cindex, 
+seed = 1, folds = 10, nlambda = 100)
+plot(psp_meditext)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

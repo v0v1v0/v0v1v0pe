@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emplikH2P</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Return Poisson Empirical likelihood ratio for the given lambda, with 2-sample right censored data</h2>
+
+<h3>Description</h3>
+
+<p>Compute the Poisson empirical likelihood ratio for the given tilt parameter lambda.
+Most useful when construct Wilks confidence intervals. 
+The null hypothesis or constraint is defined by the parameter <code class="reqn">\theta</code>, where 
+</p>
+<p style="text-align: center;"><code class="reqn">\int fun1(t) dH_1(t) - \int fun2(t) dH_2(t) = \theta </code>
+</p>
+<p>.
+</p>
+<p>If the lambda value set to zero, you get the Nelson-Aalen (NPMLE) and output -2LLR =0.
+For other values of lambda, this is not scaled (like in one sample) since there are two samples and it can be
+confusing which sample size to use. So here, the lambda is larger (with a scale of sample size) than those in 
+one sample: <code>emplikH1P</code>.
+</p>
+<p>Where <code class="reqn">H_1(t)</code> is the unknown
+cumulative hazard
+function of sample one; <code class="reqn">H_2(t)</code> is the cumulative function of sample two; 
+<code class="reqn">fun1(t)</code> can be any given function. 
+In the future, the function <code class="reqn">fun1</code> may replaced by the vector of <code class="reqn">fun(x)</code>, 
+since this is more flexible. Same for <code class="reqn">fun2</code>.
+</p>
+<p>Input data can be right censored. If no censoring, set <code>d1=rep(1, length(x1))</code>, and/or <code>d2=rep(1, length(x2))</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emplikH2P(lambda, x1, d1, x2, d2, fun1, fun2, CIforTheta=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>a scalar. Can be positive or negative. The amount of tiling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x1</code></td>
+<td>
+<p>a vector of the censored survival times. sample one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d1</code></td>
+<td>
+<p>a vector of the censoring indicators, 1-uncensor; 0-right censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x2</code></td>
+<td>
+<p>a vector of the censored survival times. sample two.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d2</code></td>
+<td>
+<p>a vector of the censoring indicators, 1-uncensor; 0-right censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun1</code></td>
+<td>
+<p>a left continuous (weight) function used to calculate 
+the weighted hazard in the parameter <code class="reqn">\theta</code>. <code>fun1</code> must be able 
+to take a vector input. See example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun2</code></td>
+<td>
+<p>Ditto.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CIforTheta</code></td>
+<td>
+<p>an optional logical value. Default to FALSE. If set to TRUE,
+will return the integrated hazard value for the given lambda.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is for calculate lambda confidence intervals for <code class="reqn">\theta</code>.
+</p>
+<p>This function is designed for the case where the 
+true distribution should be continuous.
+So there should be no tie in the data.
+</p>
+<p>The log empirical likelihood used here is the ‘Poisson’ version empirical likelihood:
+</p>
+<p style="text-align: center;"><code class="reqn">  
+EL1 = \sum_{i=1}^n \delta_i \log (dH_1(x_i))  - [ H_1(x_i) ]  ~,
+</code>
+</p>
+
+<p>(similarly defined for sample 2) and the final EL is the sum of EL1 and EL2.
+</p>
+<p>If there are ties in the data that are resulted from rounding,
+you may break the tie by adding a different tiny number to the tied
+observation(s). For example: 2, 2, 2, change to 2.00001, 2.00002, 2.00003.
+If those are true ties 
+(thus the true distribution must be discrete)
+we recommend use <code>emplikH2B</code>. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>the -2Log Empirical Likelihood ratio, Poisson version.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>The tilt parameter used. It is also the Lagrange multiplier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR(sample1)"</code></td>
+<td>
+<p>the -2Log EL ratio, sample 1, Poisson version. "-2LLR" = -2LLR(sample1) + -2LLR(sample2)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>HazDiff</code></td>
+<td>
+<p>Average hazard for the constrained hazard integral, if CIforTheta =TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Pan, X. and Zhou, M. (2002),
+“Empirical likelihood in terms of hazard for censored data”. 
+<em>Journal of Multivariate Analysis</em> <b>80</b>, 166-188.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## fun &lt;- function(x) { as.numeric(x &lt;= 6.5) }
+## emplikH1.test( x=c(1,2,3,4,5), d=c(1,1,0,1,1), theta=2, fun=fun) 
+## fun2 &lt;- function(x) {exp(-x)}  
+## emplikH1.test( x=c(1,2,3,4,5), d=c(1,1,0,1,1), theta=0.2, fun=fun2) 
+</code></pre>
+
+
+</div>

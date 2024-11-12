@@ -1,0 +1,78 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>setup</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Set up parameters for evolutionary operator.</h2>
+
+<h3>Description</h3>
+
+<p>This function builds a simple wrapper around an evolutionary operator, i.e.,
+mutator, recombinator or selector and defines its parameters. The result is a
+function that does not longer depend on the parameters. E.g., <code>fun = setup(mutBitflip, p = 0.3)</code>
+initializes a bitflip mutator with mutation probability 0.3. Thus,
+the following calls have the same behaviour: <code>fun(c(1, 0, 0))</code> and
+<code>mutBitflip(fun(c(1, 0, 0), p = 0.3)</code>.
+Basically, this type of preinitialization is only neccessary if operators
+with additional parameters shall be initialized in order to use the black-box
+<code>ecr</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">setup(operator, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>operator</code></td>
+<td>
+<p>[<code>ecr_operator</code>]<br>
+Evolutionary operator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>[any]<br>
+Furhter parameters for <code>operator</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>[<code>function</code>] Wrapper evolutionary operator with parameters <code>x</code> and <code>...</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># initialize bitflip mutator with p = 0.3
+bf = setup(mutBitflip, p = 0.3)
+# sample binary string
+x = sample(c(0, 1), 100, replace = TRUE)
+
+set.seed(1)
+# apply preinitialized function
+print(bf(x))
+
+set.seed(1)
+# apply raw function
+print(mutBitflip(x, p = 0.3))
+
+# overwrite preinitialized values with mutate
+ctrl = initECRControl(fitness.fun = function(x) sum(x), n.objectives = 1L)
+# here we define a mutation probability of 0.3
+ctrl = registerECROperator(ctrl, "mutate", setup(mutBitflip, p = 0.3))
+# here we overwrite with 1, i.e., each bit is flipped
+print(x)
+print(mutate(ctrl, list(x), p.mut = 1, p = 1)[[1]])
+</code></pre>
+
+
+</div>

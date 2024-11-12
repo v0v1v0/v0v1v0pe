@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>load.data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Import your ERP data files.</h2>
+
+<h3>Description</h3>
+
+<p><code>load.data</code> imports your individual ERP data files. File extensions must be .txt and
+file names must be in the format: YourFile_Condition.txt (e.g., SS34_Positive.txt). Raw data files to be
+imported should be organized as follows:
+</p>
+
+<ul>
+<li>
+<p> each electrode must be a separate column
+</p>
+</li>
+<li>
+<p> voltages at each time point should be listed under the appropriate electrode
+column as rows
+</p>
+</li>
+<li>
+<p> no other data should be present in the raw data file (e.g., subject, condition,
+time, etc.)
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">load.data(path, condition, num.subs, epoch.st, epoch.end, bsln.cor = "n",
+  header = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>The folder path containing your ERP files</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition</code></td>
+<td>
+<p>In quotes, a string indicating which trial
+type to be imported (i.e., the condition indicated in the file name)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.subs</code></td>
+<td>
+<p>The number of files (subjects) to import for a given condition</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epoch.st</code></td>
+<td>
+<p>The earliest time point sampled in the ERP files, including
+the basline (e.g., -200)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epoch.end</code></td>
+<td>
+<p>The final time point sampled in the ERP files (typically <code class="reqn">
+final time point - 1</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bsln.cor</code></td>
+<td>
+<p>If "y", applies baseline correction to the imported data.  Baseline
+correction is achieved by subtracting the mean voltage prior to 0 ms on a channel-
+by-channel basis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>header</code></td>
+<td>
+<p>Only accepts values of TRUE or FALSE. Used to specify whether or not there
+is an existing header row in the ERP files.  If there is no header, <code>load.data</code>
+will supply one (see details below).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See also <code>easy.load</code> for a more user-friendly way to
+generate the appropriate code.
+</p>
+
+<ul>
+<li>
+<p> Name each individual file following the format mentioned above (e.g., SS34_Positive.txt).
+<code>load.data</code> will ignore all text preceding the "_", and treat all text following the "_"
+as the <code>condition</code>, (e.g., Positive).  Use only one "_" in the file name (i.e., to separate
+your own naming convention from the <code>condition</code>); using multiple "_" characters will lead to
+faulty importing of data.  The erp.easy convention for subjects is a capital "S" followed by the
+number corresponding to the order in which the file was loaded (e.g., S1, S2, etc.). Subjects will
+be loaded into the "Subject" column of the returned data frame.
+</p>
+</li>
+<li>
+<p> If no header is present in the ERP files, one will be supplied, using the standard R
+convention of a capital "V" followed by increasing integers (e.g., V1, V2, V3). Use these
+automatically assigned column name values to refer to the electrodes (unless a header is provided
+in the raw data file).
+</p>
+</li>
+<li>
+<p> Enter the starting time of the baseline, if present in your individual files, in
+<code>epoch.st</code> (e.g., -200).
+</p>
+</li>
+<li>
+<p> Once the desired data frames have been loaded, they can be
+<a href="http://www.statmethods.net/input/exportingdata.html">exported</a> as a number of
+different file types.
+</p>
+</li>
+<li>
+<p> The sample rate will be calculated for you, based on the starting (<code>epoch.st</code>)
+and ending (<code>epoch.end</code>) time points of the recording epoch and the number of time
+points in a given condition (the number of rows in your file for each condition).
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>A single, concatenated data frame of all electrode data for all
+subjects organized into columns, with three added columns:
+</p>
+
+<ol>
+<li>
+<p> "Subject" containing repeating subject names
+</p>
+</li>
+<li>
+<p> "Stimulus" containing repeating condition names (e.g., Neutral)
+</p>
+</li>
+<li>
+<p> "Time" containing a repeating list of timepoints sampled
+</p>
+</li>
+</ol>
+<h3>Note</h3>
+
+<p>While importing data must be done using a separate function call for each condition,
+it can be convenient to use R's native <code>rbind.data.frame()</code> command to bind
+several loaded conditions (variables) into a single data frame consisting of multiple
+conditions. All erp.easy functions will act on all conditions included in the data frame
+passed to the function. For example, if you'd like to see all conditions plotted, simply
+use <code>rbind.data.frame()</code> to make a single data frame to pass to an erp.easy plotting
+function, and you will see all added conditions plotted simultaneously in the same figure
+(as opposed to making separate data frames for each condition, then passing each data
+frame separately to a function).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Travis Moore
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Importing data for a condition named "Neutral" (file names: "Sub1_Neutral.txt",
+"Sub2_Neutral.txt", etc.)
+neutral &lt;- load.data(path = "/Users/Username/Folder/", condition = "Neutral",
+num.subs = 20, epoch.st = -200, epoch.end = 899, header = FALSE)
+
+# Adding imported data named "positive" to the imported "neutral" data
+combo &lt;- rbind.data.frame(neutral, positive)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

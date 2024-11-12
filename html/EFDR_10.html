@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>test.efdr.condsim</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Test for anomalies in wavelet space via conditional simulation</h2>
+
+<h3>Description</h3>
+
+<p>Test for anomalies using <code>EFDR</code> and conditional simulation. The noisy image 
+can be partially observed, or/and aggregated at different resolutions
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">test.efdr.condsim(
+  Zvec,
+  H,
+  n1,
+  n2,
+  rho_est_method = c("CPL", "MOM"),
+  iter.cs = 100,
+  wf = "la8",
+  J = 2,
+  alpha = 0.05,
+  n.hyp = 100,
+  b = 11,
+  iteration = 200,
+  parallel = 1L
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Zvec</code></td>
+<td>
+<p>vector of observations such that <code class="reqn">Ztilde = H.Z</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>matrix mapping the fine-resolution image <code>Z</code> in vector form to <code>Ztllde</code>. Must have 
+as many rows as <code>Ztilde</code> and <code>n1</code> x <code>n2</code> columns</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n1</code></td>
+<td>
+<p>number of rows in fine-resolution image</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n2</code></td>
+<td>
+<p>number of columns in fine-resolution image</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho_est_method</code></td>
+<td>
+<p>method with which to estimate the level of exchangeability rho; can be either "CPL" (copula model) or "MOM" (method of moments)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter.cs</code></td>
+<td>
+<p>number of conditional simulations to carry out</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wf</code></td>
+<td>
+<p>type of wavelet to employ. Defaults to ‘la8’, the Daubechies orthonormal compactly supported wavelet of length <code>L = 8</code> (Daubechies, 1992), least asymmetric family. Other options include ‘haar’ (Haar wavelet), ‘fk8’ (Fejer-Korovkin wavelet with <code>L=8</code>) and ‘mb8’ (minimum-bandwidth wavelet with <code>L=8</code>). Please type '<code>waveslim::wave.filter</code>' in the console for a full list of wavelet names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>J</code></td>
+<td>
+<p>number of resolutions to employ in wavelet decomposition</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>significance level at which tests are carried out</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.hyp</code></td>
+<td>
+<p>number of hypotheses tests to carry out with EFDR. If a vector is supplied, the optimal one from 
+the set of proposed number of tests is chosen</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>the number of neighbours to consider in EFDR</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iteration</code></td>
+<td>
+<p>number of Monte Carlo iterations to employ when determining which of the proposed number of tests 
+in <code>n.hyp</code> is the optimal number of tests</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>number of cores to use with parallel backend; needs to be an integer less than or equal to the number of available cores</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List with three fields:
+</p>
+
+<dl>
+<dt><code>filtered</code></dt>
+<dd>
+<p>the discrete wavelet transform containing the anomalous wavelet coefficients in the signal</p>
+</dd>
+<dt><code>Z</code></dt>
+<dd>
+<p>the image containing the anomalous wavelets in the signal</p>
+</dd>
+<dt><code>reject_coeff</code></dt>
+<dd>
+<p>indices of wavelets under which the null hypothesis of no anomaly was rejected</p>
+</dd>
+<dt><code>pvalue_ordered</code></dt>
+<dd>
+<p>ordered p-values under the null hypothesis. The column names indicate the 
+wavelet to which the p-value belongs</p>
+</dd>
+<dt><code>nhat</code></dt>
+<dd>
+<p>the number of tests carried out.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Daubechies, I. (1992) Ten Lectures on Wavelets, CBMS-NSF Regional Conference Series in Applied Mathematics, SIAM: Philadelphia.
+</p>
+<p>Shen, X., Huang, H.-C., and Cressie, N. 'Nonparametric hypothesis testing for a spatial signal.' Journal of the American Statistical Association 97.460 (2002): 1122-1140.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Set up experiment
+n &lt;- 32       # 32 x 32 images
+r &lt;- 10       # signal of size 10 x 10
+h &lt;- 5        # intensity of 5
+grid &lt;- 8     # aggregated to 8 x 8 image
+parallel &lt;- 4 # use 4 cores
+
+## Simulate the pixel-level data
+raw_grid &lt;- expand.grid(x = seq(1, n), y = seq(1, n))
+df &lt;- data.frame(raw_grid)                        # spatial grid
+dd &lt;- as.matrix(dist(raw_grid, diag = TRUE))      # distance matrix
+Sigma &lt;- exp(-dd/5)                               # cov. fn.
+diag(Sigma) &lt;- 1                                  # fix diagonal
+L &lt;- t(chol(Sigma))                               # lower Cholesky factor
+mu &lt;- matrix(0, n, n)                             # zero mean
+mu[(n/2-r/2):(n/2+r/2), (n/2-r/2):(n/2+r/2)] &lt;- h # add signal
+Z &lt;- mu + matrix(L %*% rnorm(n^2), n, n)          # simulate data
+
+## Construct H (aggregation) matrix
+H &lt;- matrix(0, grid^2, n^2)
+for(i in 1:grid^2) {
+  ind &lt;- rep(rep(c(0L,1L,0L),
+             c((n/grid)*((i-1)%%grid),n/grid,(n-n/grid-n/grid*((i-1)%%grid)))),
+          n/grid)
+  H[i,which(c(rep(0L,(ceiling(i/grid)-1)*n^2/grid),ind) == TRUE)] &lt;- 1/(n/grid)^2
+}
+
+## Aggregate the signal
+z_tilde &lt;- c(H %*% c(Z))
+
+## Run EFDR using conditional simulation
+## Not run: out2 &lt;- test.efdr.condsim(Zvec = z_tilde, H = H, n1 = n, n2 = n, 
+                                   parallel = parallel)
+## End(Not run)
+</code></pre>
+
+
+</div>

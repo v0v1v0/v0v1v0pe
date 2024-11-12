@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emxIndependentPathwayComponent</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Creates component for a Biometric Independent Pathway Model</h2>
+
+<h3>Description</h3>
+
+<p>UNDER ACTIVE DEVELOPMENT. DO NOT TRUST. This function creates all the objects needed for an Independent Pathway component.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emxIndependentPathwayComponent(x, xname, xvalues=.8, xfree=TRUE, xlbound=NA, xubound=NA,
+                               h=2, hname=paste0('H', xname), hvalues, hlabels)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>character vector. The base names of the variables used for the matrix with no repetition for twins (x, y, z not x1, y1, z1, x2, y2, z2).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xname</code></td>
+<td>
+<p>character. Name of the component matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xvalues</code></td>
+<td>
+<p>Matrix of fixed and/or starting values of parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xfree</code></td>
+<td>
+<p>Matrix of TRUE (for free) and FALSE (for fixed) values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlbound</code></td>
+<td>
+<p>Matrix of numeric lower bounds for parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xubound</code></td>
+<td>
+<p>Matrix of numeric upper bounds for parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>numeric. The number of variables for the relatedness matrix, i.e. the number of critters with relationships</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hname</code></td>
+<td>
+<p>character. Name of the relatedness matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hvalues</code></td>
+<td>
+<p>numeric vector. Values for the relatedness matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hlabels</code></td>
+<td>
+<p>character vector. Labels for the relatedness matrix.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is a combination of emxCholeskyVariance, emxRelatednessMatrix, and emxKroneckerVariance.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with elements (1) the lower triangular matrix for the Cholesky, (2) the full positive definite variance matrix, (3) the relatedness matrix, and (4) the Kronecker product of the variance matrix and the relatedness matrix.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>emxGeneticFactorComponent
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">   
+# Create an ACE model in 22 lines
+require(EasyMx)
+require(OpenMx)
+data(twinData)
+twinVar = names(twinData)
+selVars &lt;- c('ht1', 'bmi1','ht2','bmi2')
+mzdzData &lt;- subset(twinData, zyg %in% c(1, 3), c(selVars, 'zyg'))
+mzdzData$RCoef &lt;- c(1, NA, .5)[mzdzData$zyg]
+nVar = length(selVars)/2
+x &lt;- paste0('x', 1:nVar)
+
+acomp &lt;- emxCholeskyComponent(x, 'A', hvalues=c(1, .5, 1), hlabels=c(NA, 'data.RCoef', NA))
+ccomp &lt;- emxCholeskyComponent(x, 'C', hvalues=c(1, 1, 1))
+ecomp &lt;- emxCholeskyComponent(x, 'E', hvalues=c(1, 0, 1))
+totalVar &lt;- mxAlgebra(AKron + CKron + EKron, 'V', dimnames=list(selVars, selVars))
+totalMean &lt;- emxMeans(selVars, type='twin')
+expect &lt;- mxExpectationNormal(totalVar$name, totalMean$name)
+fitfun &lt;- mxFitFunctionML()
+
+comlist &lt;- c(acomp, ccomp, ecomp, list(totalVar, totalMean, expect, fitfun))
+
+model &lt;- mxModel('model', comlist, mxData(mzdzData, 'raw'))
+## Not run: 
+run2 &lt;- mxRun(model)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,337 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ordIRT</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Two-parameter Ordinal IRT estimation via EM </h2>
+
+<h3>Description</h3>
+
+ 
+<p><code>ordIRT</code> estimates an ordinal IRT model with three ordered response categories. Estimation
+is conducted using the EM algorithm described in the reference paper below. The algorithm will
+produce point estimates that are comparable to those of <code>MCMCordfactanal</code>,
+but will do so much more rapidly and also scale better with larger data sets.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  ordIRT(.rc, .starts = NULL, .priors = NULL, .D = 1L, .control = NULL) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.rc</code></td>
+<td>
+<p>  matrix of numeric values containing the data to be scaled.  Respondents are
+assumed to be on rows, and items assumed to be on columns, so the matrix is assumed to be
+of dimension (N x J).  For each item, only 3 ordered category responses are accepted, and the
+only allowable responses are ‘1’, ‘2’, and ‘3’, with ‘0’ as a missing data record. If data
+of more than 3 categories are to be rescaled, they should be collapsed into 3 categories and
+recoded accordingly before proceeding.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.starts</code></td>
+<td>
+<p> a list containing several matrices of starting values for the parameters. Note that
+the parameters here correspond to the re-parameterized version of the model (i.e. alpha is <code class="reqn">alpha^*</code>,
+not the original <code class="reqn">alpha_{1j}</code>  The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of starting values for the reparameterized item discrimination parameter <code class="reqn">\beta^*</code>.</p>
+</dd>
+<dt><code>x</code></dt>
+<dd>
+<p>  An (N x 1) matrix of starting values for the respondent ideal points <code class="reqn">x_t</code>.</p>
+</dd>
+<dt><code>tau</code></dt>
+<dd>
+<p>  A (J x 1) matrix of starting values for the bill cutpoint <code class="reqn">\tau_j</code>.</p>
+</dd>
+<dt><code>DD</code></dt>
+<dd>
+<p>  A (J x 1) matrix of starting values for the squared bill cutpoint difference <code class="reqn">\tau_j^2</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.priors</code></td>
+<td>
+<p>  list, containing several matrices of starting values for the parameters. Note that
+the parameters here correspond to the re-parameterized version of the model (i.e. alpha is <code class="reqn">\alpha^*</code>,
+not the original <code class="reqn">\alpha_{1j}</code>  The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>x$mu</code></dt>
+<dd>
+<p>  A (1 x 1) prior means matrix for respondent ideal points <code class="reqn">x_t</code>.</p>
+</dd>
+<dt><code>x$sigma</code></dt>
+<dd>
+<p>  A (1 x 1) prior covariance matrix for respondent ideal points <code class="reqn">x_t</code>.</p>
+</dd>
+<dt><code>beta$mu</code></dt>
+<dd>
+<p>  A (2 x 1) prior means matrix for <code class="reqn">\tau_j</code> and <code class="reqn">\beta^*</code>.</p>
+</dd>
+<dt><code>beta$sigma</code></dt>
+<dd>
+<p>  A (2 x 2) prior covariance matrix for <code class="reqn">\tau_j</code> and <code class="reqn">\beta^*</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.D</code></td>
+<td>
+<p> integer, indicates number of dimensions. Only one dimension is implemented and this argument is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.control</code></td>
+<td>
+<p>list, specifying some control functions for estimation.  Options include the following:
+</p>
+
+<dl>
+<dt><code>threads</code></dt>
+<dd>
+<p>  integer, indicating number of cores to use. Default is to use a single core, but more can be
+supported if more speed is desired.</p>
+</dd>
+<dt><code>verbose</code></dt>
+<dd>
+<p>  boolean, indicating whether output during estimation should be verbose or not.  Set FALSE by default.</p>
+</dd>
+<dt><code>thresh</code></dt>
+<dd>
+<p>  numeric. Algorithm will run until all parameters correlate at 1 - thresh across
+consecutive iterations. Set at 1e-6 by default.</p>
+</dd>
+<dt><code>maxit</code></dt>
+<dd>
+<p>  integer. Sets the maximum number of iterations the algorithm can run. Set at 500 by default.</p>
+</dd>
+<dt><code>checkfreq</code></dt>
+<dd>
+<p>  integer. Sets frequency of verbose output by number of iterations. Set at 50 by default.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>ordIRT</code>.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>means</code></td>
+<td>
+<p> list, containing several matrices of point estimates for the parameters corresponding
+to the inputs for the priors.  The list should contain the following matrices.
+</p>
+
+<dl>
+<dt><code>x</code></dt>
+<dd>
+<p>  A (N x 1) matrix of point estimates for the respondent ideal points <code class="reqn">x_t</code>.</p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of point estimates for the reparameterized item discrimination parameter <code class="reqn">\beta^*</code>.</p>
+</dd>
+<dt><code>tau</code></dt>
+<dd>
+<p>  A (J x 1) matrix of point estimates for the bill cutpoint <code class="reqn">\alpha^*</code>.</p>
+</dd>
+<dt><code>Delta_sq</code></dt>
+<dd>
+<p>  A (J x 1) matrix of point estimates for the squared bill cutpoint difference <code class="reqn">\tau_j^2</code>.</p>
+</dd>
+<dt><code>Delta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of point estimates for the bill cutpoint difference <code class="reqn">\tau_j</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars</code></td>
+<td>
+<p> list, containing several matrices of variance estimates for parameters corresponding
+to the inputs for the priors.  Note that these variances are those recovered via variational approximation,
+and in most cases they are known to be far too small and generally unusable.  Better estimates of variances
+can be obtained manually via the parametric bootstrap.  The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>x</code></dt>
+<dd>
+<p>  A (N x 1) matrix of variances for the respondent ideal points <code class="reqn">x_t</code>.</p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of variances for the reparameterized item discrimination parameter <code class="reqn">\beta^*</code>.</p>
+</dd>
+<dt><code>tau</code></dt>
+<dd>
+<p>  A (J x 1) matrix of variances for the bill cutpoint <code class="reqn">\tau_j</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runtime</code></td>
+<td>
+<p> A list of fit results, with elements listed as follows:</p>
+</td>
+</tr>
+</table>
+<dl>
+<dt><code>iters</code></dt>
+<dd>
+<p>  integer, number of iterations run.</p>
+</dd>
+<dt><code>conv</code></dt>
+<dd>
+<p>  integer, convergence flag. Will return 1 if threshold reached, and 0 if maximum number of iterations reached.</p>
+</dd>
+<dt><code>threads</code></dt>
+<dd>
+<p>  integer, number of threads used to estimated model.</p>
+</dd>
+<dt><code>tolerance</code></dt>
+<dd>
+<p>  numeric, tolerance threshold for convergence.  Identical to thresh argument in input to .control list.</p>
+</dd>
+</dl>
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p> Number of respondents in estimation, should correspond to number of rows in roll call matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>j</code></td>
+<td>
+<p> Number of items in estimation, should correspond to number of columns in roll call matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p> Function call used to generate output.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+ 
+<p>Kosuke Imai <a href="mailto:imai@Harvard.edu">imai@Harvard.edu</a>
+</p>
+<p>James Lo <a href="mailto:jameslo@princeton.edu">jameslo@princeton.edu</a>
+</p>
+<p>Jonathan Olmsted <a href="mailto:jpolmsted@gmail.com">jpolmsted@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Kosuke Imai, James Lo, and Jonathan Olmsted (2016). “Fast Estimation of Ideal
+Points with Massive Data.” American Political Science Review, Vol. 110, No. 4 (December), pp. 631-656.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>'AsahiTodai'.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+### Real data example: Asahi-Todai survey (not run)
+## Collapses 5-category ordinal survey items into 3 categories for estimation
+data(AsahiTodai)
+out.varinf &lt;- ordIRT(.rc = AsahiTodai$dat.all, .starts = AsahiTodai$start.values,
+					.priors = AsahiTodai$priors, .D = 1,
+					.control = {list(verbose = TRUE,
+                     thresh = 1e-6, maxit = 500)})
+
+## Compare against MCMC estimates using 3 and 5 categories
+cor(ideal3, out.varinf$means$x)
+cor(ideal5, out.varinf$means$x)  
+
+## End(Not run)
+
+
+### Monte Carlo simulation of ordIRT() model vs. known parameters
+## Set number of legislators and items
+set.seed(2)
+NN &lt;- 500
+JJ &lt;- 100
+
+## Simulate true parameters from original model
+x.true &lt;- runif(NN, -2, 2)
+beta.true &lt;- runif(JJ, -1, 1)
+tau1 &lt;- runif(JJ, -1.5, -0.5)
+tau2 &lt;- runif(JJ, 0.5, 1.5)
+ystar &lt;- x.true %o% beta.true + rnorm(NN *JJ)
+
+## These parameters are not needed, but correspond to reparameterized model
+#d.true &lt;- tau2 - tau1
+#dd.true &lt;- d.true^2
+#tau_star &lt;- -tau1/d.true
+#beta_star &lt;- beta.true/d.true
+
+## Generate roll call matrix using simulated parameters
+newrc &lt;- matrix(0, NN, JJ)
+for(j in 1:JJ) newrc[,j] &lt;- cut(ystar[,j], c(-100, tau1[j], tau2[j],100), labels=FALSE)
+
+## Generate starts and priors
+cur &lt;- vector(mode = "list")
+cur$DD &lt;- matrix(rep(0.5,JJ), ncol=1)
+cur$tau &lt;- matrix(rep(-0.5,JJ), ncol=1)
+cur$beta &lt;- matrix(runif(JJ,-1,1), ncol=1) 
+cur$x &lt;- matrix(runif(NN,-1,1), ncol=1) 
+priors &lt;- vector(mode = "list")
+priors$x &lt;- list(mu = matrix(0,1,1), sigma = matrix(1,1,1) )
+priors$beta &lt;- list(mu = matrix(0,2,1), sigma = matrix(diag(25,2),2,2))
+
+## Call ordIRT() with inputs
+time &lt;- system.time({
+    lout &lt;- ordIRT(.rc = newrc,
+                    .starts = cur,
+                    .priors = priors,
+                    .control = {list(
+                        threads = 1,
+                        verbose = TRUE,
+                        thresh = 1e-6,
+			maxit=300,
+			checkfreq=50
+                        )})
+})
+
+## Examine runtime and correlation of recovered ideal points vs. truth
+time
+cor(x.true,lout$means$x)
+
+</code></pre>
+
+
+</div>

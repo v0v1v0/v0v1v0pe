@@ -1,0 +1,254 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>TTTE_Analytical</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical Total Time on Test (TTT), analytic version.</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>
+</p>
+<p>This function allows to compute the TTT curve from a formula
+containing a factor type variable (classification variable).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">TTTE_Analytical(
+  formula,
+  response = NULL,
+  scaled = TRUE,
+  data = NULL,
+  method = c("Barlow", "censored"),
+  partition_method = NULL,
+  silent = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>an object of class <code>formula</code> with the response on
+the left of an operator <code>~</code>. The right side can be a factor
+variable as term or an <code>1</code> if a classification by factor
+levels is not desired.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>an optional numeric vector with data of the response variable.
+Using this argument is equivalent to define a formula with the
+right side such as <code>~ 1</code>. See the fourth example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaled</code></td>
+<td>
+<p>logical. If <code>TRUE</code> (default value), scaled TTT is computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an optional data frame containing the variables (response and the
+factor, if it is desired). If data is not specified, the variables
+are taken from the environment from which <code>TTT_analytical</code>
+is called.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>a character specifying the method of computation. There are two
+options available: <code>'Barlow'</code> and <code>'censored'</code>. Further
+information can be found in the <strong>Details</strong> section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partition_method</code></td>
+<td>
+<p>a list specifying cluster formation when the covariate in
+<code>formula</code> is numeric, or when the data has several
+covariates. 'quantile-based' method is the only one
+currently available (See the last example).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>logical. If TRUE, warnings of <code>TTTE_Analytical</code> are suppressed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passing to <code>survfit</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When <code>method</code> argument is set as <code>'Barlow'</code>, this function
+uses the original expression of empirical TTT presented by
+Barlow (1979)  and used by
+Aarset (1987):
+</p>
+<p style="text-align: center;"><code class="reqn">\phi_n\left( \frac{r}{n}\right) = \frac{\left( \sum_{i=1}^{r} T_{(i)} \right) +
+(n-r)T_{(r)}}{\sum_{i=1}^{n} T_i}</code>
+</p>
+
+<p>where <code class="reqn">T_{(r)}</code> is the <code class="reqn">r^{th}</code> order statistic, with
+<code class="reqn">r=1,2,\dots, n</code>, and <code class="reqn">n</code> is the sample size. On the other hand, the option
+<cite>'censored'</cite> is an implementation based on integrals presented in
+Westberg and Klefsjö (1994), and using
+<code>survfit</code> to compute the Kaplan-Meier estimator:
+</p>
+<p style="text-align: center;"><code class="reqn">\phi_n\left( \frac{r}{n}\right) = \sum_{j=1}^{r} \left[ \prod_{i=1}^{j}
+\left( 1 - \frac{d_i}{n_i}\right) \right] \left(T_{(j)} - T_{(j-1)} \right)</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>A list with class object <code>Empirical.TTT</code> containing a list with the
+following information:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>i/n'</code></td>
+<td>
+<p>A matrix containing the empirical quantiles. This matrix has the
+number of columns equals to the number of levels of the factor
+considered (number of strata).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi_n</code></td>
+<td>
+<p>A matrix containing the values of empirical TTT. his matrix has the
+number of columns equals to the number of levels of the factor
+considered (number of strata).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata</code></td>
+<td>
+<p>A numeric named vector storing the number of observations per strata,
+and the name of each strata (names of the levels of the factor).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Jaime Mosquera Gutiérrez, <a href="mailto:jmosquerag@unal.edu.co">jmosquerag@unal.edu.co</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Barlow RE (1979).
+“Geometry of the total time on test transform.”
+<em>Naval Research Logistics Quarterly</em>, <b>26</b>(3), 393–402.
+ISSN 00281441, <a href="https://doi.org/10.1002/nav.3800260303">doi:10.1002/nav.3800260303</a>.
+</p>
+<p>Aarset MV (1987).
+“How to Identify a Bathtub Hazard Rate.”
+<em>IEEE Transactions on Reliability</em>, <b>R-36</b>(1), 106–108.
+ISSN 15581721, <a href="https://doi.org/10.1109/TR.1987.5222310">doi:10.1109/TR.1987.5222310</a>.
+</p>
+<p>Klefsjö B (1991).
+“TTT-plotting - a tool for both theoretical and practical problems.”
+<em>Journal of Statistical Planning and Inference</em>, <b>29</b>(1-2), 99–110.
+ISSN 03783758, <a href="https://doi.org/10.1016/0378-3758%2892%2990125-C">doi:10.1016/0378-3758(92)90125-C</a>, <a href="https://linkinghub.elsevier.com/retrieve/pii/037837589290125C">https://linkinghub.elsevier.com/retrieve/pii/037837589290125C</a>.
+</p>
+<p>Westberg U, Klefsjö B (1994).
+“TTT-plotting for censored data based on the piecewise exponential estimator.”
+<em>International Journal of Reliability, Quality and Safety Engineering</em>, <b>01</b>(01), 1–13.
+ISSN 0218-5393, <a href="https://doi.org/10.1142/S0218539394000027">doi:10.1142/S0218539394000027</a>, <a href="https://www.worldscientific.com/doi/abs/10.1142/S0218539394000027">https://www.worldscientific.com/doi/abs/10.1142/S0218539394000027</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.EmpiricalTTT</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(EstimationTools)
+
+#--------------------------------------------------------------------------------
+# Example 1: Scaled empirical TTT from 'mgus1' data from 'survival' package.
+
+TTT_1 &lt;- TTTE_Analytical(Surv(stop, event == 'pcm') ~1, method = 'cens',
+                         data = mgus1, subset=(start == 0))
+head(TTT_1$`i/n`)
+head(TTT_1$phi_n)
+print(TTT_1$strata)
+
+
+#--------------------------------------------------------------------------------
+# Example 2: Scaled empirical TTT using a factor variable with 'aml' data
+# from 'survival' package.
+
+TTT_2 &lt;- TTTE_Analytical(Surv(time, status) ~ x, method = "cens", data = aml)
+head(TTT_2$`i/n`)
+head(TTT_2$phi_n)
+print(TTT_2$strata)
+
+#--------------------------------------------------------------------------------
+# Example 3: Non-scaled empirical TTT without a factor (arbitrarily simulated
+# data).
+
+set.seed(911211)
+y &lt;- rweibull(n=20, shape=1, scale=pi)
+TTT_3 &lt;- TTTE_Analytical(y ~ 1, scaled = FALSE)
+head(TTT_3$`i/n`)
+head(TTT_3$phi_n)
+print(TTT_3$strata)
+
+
+#--------------------------------------------------------------------------------
+# Example 4: non-scaled empirical TTT without a factor (arbitrarily simulated
+# data) using the 'response' argument (this is equivalent to Third example).
+
+set.seed(911211)
+y &lt;- rweibull(n=20, shape=1, scale=pi)
+TTT_4 &lt;- TTTE_Analytical(response = y, scaled = FALSE)
+head(TTT_4$`i/n`)
+head(TTT_4$phi_n)
+print(TTT_4$strata)
+
+#--------------------------------------------------------------------------------
+# Eample 5: empirical TTT with a continuously variant term for the shape
+# parameter in Weibull distribution.
+
+x &lt;- runif(50, 0, 10)
+shape &lt;- 0.1 + 0.1*x
+y &lt;- rweibull(n = 50, shape = shape, scale = pi)
+
+partitions &lt;- list(method='quantile-based',
+                   folds=5)
+TTT_5 &lt;- TTTE_Analytical(y ~ x, partition_method = partitions)
+head(TTT_5$`i/n`)
+head(TTT_5$phi_n)
+print(TTT_5$strata)
+plot(TTT_5) # Observe changes in Empirical TTT
+
+#--------------------------------------------------------------------------------
+
+</code></pre>
+
+
+</div>

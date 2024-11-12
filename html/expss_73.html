@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compare_proportions</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate significance (p-values) of differences between proportions/means</h2>
+
+<h3>Description</h3>
+
+<p><code>compare_proportions</code> calculates p-values (via z-test) for comparison
+between each proportion in the <code>prop1</code> and <code>prop2</code>. Results are calculated
+with the same formula as in prop.test without continuity
+correction.
+<code>compare_means</code> calculates p-values (via t-test) for comparison between 
+each mean in the <code>mean1</code> and <code>mean2</code>. Results are calculated on the
+aggregated statistics (means, std. devs, N) with the same formula as in
+t.test.
+These functions mainly intended for usage inside significance_cpct and
+significance_means.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compare_proportions(prop1, prop2, base1, base2, common_base = 0)
+
+compare_means(
+  mean1,
+  mean2,
+  sd1,
+  sd2,
+  base1,
+  base2,
+  common_base = 0,
+  var_equal = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>prop1</code></td>
+<td>
+<p>a numeric vector of proportions in the group 1. Values should be
+between 0 and 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop2</code></td>
+<td>
+<p>a numeric vector of proportions in the group 2. Values should be
+between 0 and 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base1</code></td>
+<td>
+<p>a numeric vector for <code>compare_means</code> and single number for 
+<code>compare_proportions</code>. Number of valid cases for each mean in the first group for 
+<code>compare_means</code> and number of cases for <code>compare_proportions</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base2</code></td>
+<td>
+<p>a numeric vector for <code>compare_means</code> and single number for 
+<code>compare_proportions</code>. Number of valid cases for each mean in the
+second group for <code>compare_means</code> and number of cases for
+<code>compare_proportions</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>common_base</code></td>
+<td>
+<p>numeric. Number of cases that belong to both values in the
+first and the second argument. It can occur in the case of overlapping
+samples. Calculations are made according to algorithm in IBM SPSS Statistics
+Algorithms v20, p. 263. Note that with these adjustments t-tests between
+means are made with equal variance assumed (as with <code>var_equal =
+TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean1</code></td>
+<td>
+<p>a numeric vector of the means in the first group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean2</code></td>
+<td>
+<p>a numeric vector of the means in the second group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd1</code></td>
+<td>
+<p>a numeric vector of the standard deviations in the first group.
+Values should be non-negative.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd2</code></td>
+<td>
+<p>a numeric vector of the standard deviations in the second group.
+Values should be non-negative.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var_equal</code></td>
+<td>
+<p>a logical variable indicating whether to treat the variances
+in the groups as being equal. For details see t.test.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>numeric vector with p-values
+</p>
+
+
+<h3>See Also</h3>
+
+<p>significance_cpct, significance_means, 
+prop.test, t.test
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># proportions
+data(mtcars)
+counts = table(mtcars$am, mtcars$vs)
+props = prop.table(counts)
+compare_proportions(props[,1], props[,2], 
+                    colSums(counts)[1], colSums(counts)[1])
+                    
+# means
+t.test(mpg ~ am, data = mtcars)$p.value 
+# the same result
+with(mtcars, 
+          compare_means(
+              mean(mpg[am==0]), mean(mpg[am==1]), 
+              sd(mpg[am==0]),  sd(mpg[am==1]),
+              length(mpg[am==0]), length(mpg[am==1])
+          ))
+</code></pre>
+
+
+</div>

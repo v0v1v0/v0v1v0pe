@@ -1,0 +1,215 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate_trials</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate clinical trials.</h2>
+
+<h3>Description</h3>
+
+<p>This function takes a <code>selector_factory</code>, such as
+that returned by <code>get_dfcrm</code>, <code>get_boin</code> or
+<code>get_three_plus_three</code>, and conducts many notional clinical
+trials. We conduct simulations to learn about the operating characteristics
+of adaptive trial designs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulate_trials(
+  selector_factory,
+  num_sims,
+  true_prob_tox,
+  true_prob_eff = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>selector_factory</code></td>
+<td>
+<p>Object of type <code>selector_factory</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_sims</code></td>
+<td>
+<p>integer, number of trial iterations to simulate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>true_prob_tox</code></td>
+<td>
+<p>numeric vector of true but unknown toxicity
+probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>true_prob_eff</code></td>
+<td>
+<p>numeric vector of true but unknown efficacy
+probabilities. NULL if efficacy not analysed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra args are passed onwards.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>By default, dose decisions in simulated trials are made after each
+cohort of 3 patients. This can be changed by providing a function by the
+<code>sample_patient_arrivals</code> parameter that simulates the arrival of new
+patients. The new patients will be added to the existing patients and the
+model will be fit to the set of all patients. The function that simulates
+patient arrivals should take as a single parameter a data-frame with one
+row for each existing patient and columns including cohort, patient, dose,
+tox, time (and possibly also eff and weight, if a phase I/II or
+time-to-event method is used). The provision of data on the existing
+patients allows the patient sampling function to be adaptive. The function
+should return a data-frame with a row for each new patient and a column for
+time_delta, the time between the arrival of this patient and the previous,
+as in <code>cohorts_of_n</code>. See Examples.
+</p>
+<p>This method can simulate the culmination of trials that are partly
+completed. We just have to specify the outcomes already observed via the
+<code>previous_outcomes</code> parameter. Each simulated trial will commence from
+those outcomes seen thus far. See Examples.
+</p>
+<p>We can specify the immediate next dose by specifying <code>next_dose</code>. If
+omitted, the next dose is calculated by invoking the model on the outcomes
+seen thus far.
+</p>
+<p>Designs must eventually choose to stop the trial. Some designs, like 3+3,
+have intrinsic stopping rules. However, some selectors like those derived
+from <code>get_dfcrm</code> offer no default stopping method. You may need
+to append stopping behaviour to your selector via something like
+<code>stop_at_n</code> or <code>stop_when_n_at_dose</code>, etc. To
+safeguard against simulating runaway trials that never end, the function
+will halt a simulated trial after 30 invocations of the dose-selection
+decision. To breach this limit, specify <code>i_like_big_trials = TRUE</code> in
+the function call. However, when you forego the safety net, the onus is on
+you to write selectors that will eventually stop the trial! See Examples.
+</p>
+<p>The model is fit to the prevailing data at each dose selection point. By
+default, only the final model fit for each simulated trial is retained.
+This is done to conserve memory. With a high number of simulated trials,
+storing many model fits per trial may cause the executing machine to run
+out of memory. However, you can force this method to retain all model fits
+by specifying <code>return_all_fits = TRUE</code>. See Examples.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of type <code>simulations</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>simulations</code>
+</p>
+<p><code>selector_factory</code>
+</p>
+<p><code>get_dfcrm</code>
+</p>
+<p><code>get_boin</code>
+</p>
+<p><code>get_three_plus_three</code>
+</p>
+<p><code>cohorts_of_n</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># In a five-dose scenario, we have assumed probabilities for Prob(tox):
+true_prob_tox &lt;- c(0.12, 0.27, 0.44, 0.53, 0.57)
+
+# Simulate ten 3+3 trials:
+sims &lt;- get_three_plus_three(num_doses = 5) %&gt;%
+  simulate_trials(num_sims = 10, true_prob_tox = true_prob_tox)
+# Likewise, simulate 10 trials using a continual reassessment method:
+skeleton &lt;- c(0.05, 0.1, 0.25, 0.4, 0.6)
+target &lt;- 0.25
+sims &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_at_n(n = 12) %&gt;%
+  simulate_trials(num_sims = 10, true_prob_tox = true_prob_tox)
+
+# Lots of useful information is contained in the returned object:
+sims %&gt;% num_patients()
+sims %&gt;% num_doses()
+sims %&gt;% dose_indices()
+sims %&gt;% n_at_dose()
+sims %&gt;% n_at_recommended_dose()
+sims %&gt;% tox_at_dose()
+sims %&gt;% num_tox()
+sims %&gt;% recommended_dose()
+sims %&gt;% prob_administer()
+sims %&gt;% prob_recommend()
+sims %&gt;% trial_duration()
+
+# By default, dose decisions are made after each cohort of 3 patients. See
+# Details. To override, specify an alternative function via the
+# sample_patient_arrivals parameter. E.g. to use cohorts of 2, we run:
+patient_arrivals_func &lt;- function(current_data) cohorts_of_n(n = 2)
+sims &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_at_n(n = 12) %&gt;%
+  simulate_trials(num_sims = 10, true_prob_tox = true_prob_tox,
+    sample_patient_arrivals = patient_arrivals_func)
+
+# To simulate the culmination of trials that are partly completed, specify
+# the outcomes already observed via the previous_outcomes parameter. Imagine
+# one cohort has already been evaluated, returning outcomes 1NTN. We can
+# simulate the remaining part of the trial with:
+sims &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_at_n(n = 12) %&gt;%
+  simulate_trials(num_sims = 10, true_prob_tox = true_prob_tox,
+                  previous_outcomes = '1NTN')
+# Outcomes can be described by the above outcome string method or data-frame:
+  previous_outcomes &lt;- data.frame(
+    patient = 1:3,
+    cohort = c(1, 1, 1),
+    tox = c(0, 1, 0),
+    dose = c(1, 1, 1)
+  )
+sims &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_at_n(n = 12) %&gt;%
+  simulate_trials(num_sims = 10, true_prob_tox = true_prob_tox,
+                  previous_outcomes = previous_outcomes)
+
+# We can specify the immediate next dose:
+sims &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_at_n(n = 12) %&gt;%
+  simulate_trials(num_sims = 10, true_prob_tox = true_prob_tox,
+                  next_dose = 5)
+
+# By default, the method will stop simulated trials after 30 dose selections.
+# To suppress this, specify i_like_big_trials = TRUE. However, please take
+# care to specify selectors that will eventually stop!
+sims &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_at_n(n = 99) %&gt;%
+  simulate_trials(num_sims = 1, true_prob_tox = true_prob_tox,
+                  i_like_big_trials = TRUE)
+
+# By default, only the final model fit is retained for each simulated trial.
+# To retain all interim model fits, specify return_all_fits = TRUE.
+sims &lt;- get_three_plus_three(num_doses = 5) %&gt;%
+  simulate_trials(num_sims = 10, true_prob_tox = true_prob_tox,
+                  return_all_fits = TRUE)
+# Verify that there are now many analyses per trial with:
+sapply(sims$fits, length)
+</code></pre>
+
+
+</div>

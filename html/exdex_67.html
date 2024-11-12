@@ -1,0 +1,335 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spm_confint</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Confidence intervals for the extremal index <code class="reqn">\theta</code> for <code>"spm"</code>
+objects</h2>
+
+<h3>Description</h3>
+
+<p><code>confint</code> method for objects of class <code>c("spm", "exdex")</code>.
+Computes confidence intervals for <code class="reqn">\theta</code> based on an object returned
+from <code>spm</code>.  Two types of interval may be returned:
+(a) intervals that are based on approximate large-sample normality of the
+estimators of <code class="reqn">\theta</code> (or of <code class="reqn">\log\theta</code> if
+<code>conf_scale = "log"</code>), and which are symmetric about the respective
+point estimates, and (b) likelihood-based intervals based on an adjustment
+of a naive (pseudo-) loglikelihood, using the
+<code>adjust_loglik</code> function in the
+<code>chandwich</code> package. The <code>plot</code> method plots the
+log-likelihood for <code class="reqn">\theta</code>, with the required confidence interval(s)
+indicated on the plot.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'spm'
+confint(
+  object,
+  parm = "theta",
+  level = 0.95,
+  maxima = c("sliding", "disjoint"),
+  interval_type = c("norm", "lik", "both"),
+  conf_scale = c("theta", "log"),
+  constrain = TRUE,
+  bias_adjust = TRUE,
+  type = c("vertical", "cholesky", "spectral", "none"),
+  ...
+)
+
+## S3 method for class 'confint_spm'
+plot(x, estimator = "all", ndec = 2, ...)
+
+## S3 method for class 'confint_spm'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of class <code>c("spm", "exdex")</code>, returned by
+<code>spm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parm</code></td>
+<td>
+<p>Specifies which parameter is to be given a confidence interval.
+Here there is only one option: the extremal index <code class="reqn">\theta</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>A numeric scalar in (0, 1). The confidence level required.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxima</code></td>
+<td>
+<p>A character scalar specifying whether to estimate
+confidence intervals based on sliding maxima or disjoint maxima.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval_type</code></td>
+<td>
+<p>A character scalar: <code>"norm"</code> for intervals of
+type (a), <code>"lik"</code> for intervals of type (b).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf_scale</code></td>
+<td>
+<p>A character scalar.  If <code>interval_type = "norm"</code> then
+<code>conf_scale</code> determines the scale on which we use approximate
+large-sample normality of the estimators to estimate confidence intervals
+of type (a).
+</p>
+<p>If <code>conf_scale = "theta"</code>
+then confidence intervals are estimated for <code class="reqn">\theta</code> directly.
+If <code>conf_scale = "log"</code> then confidence intervals are first
+estimated for <code class="reqn">\log\theta</code> and then transformed back
+to the <code class="reqn">\theta</code>-scale.
+</p>
+<p>Any bias-adjustment requested in the original call to <code>spm</code>,
+using it's <code>bias_adjust</code> argument, is automatically applied here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constrain</code></td>
+<td>
+<p>A logical scalar.  If <code>constrain = TRUE</code> then
+any confidence limits that are greater than 1 are set to 1,
+that is, they are constrained to lie in (0, 1].  Otherwise,
+limits that are greater than 1 may be obtained.
+If <code>constrain = TRUE</code> then any lower confidence limits that are
+less than 0 are set to 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bias_adjust</code></td>
+<td>
+<p>A logical scalar.  If <code>bias_adjust = TRUE</code> then,
+if appropriate, bias-adjustment is also applied to the loglikelihood
+before it is adjusted using <code>adjust_loglik</code>.
+This is performed only if, in the call to
+<code>spm</code>, <code>bias_adjust = "BB3"</code> or
+<code>"BB1"</code> was specified, that is, we have
+<code>object$bias_adjust = "BB3"</code>
+or <code>"BB1"</code>.  In these cases the relevant
+component of <code>object$bias_sl</code> or <code>object$bias_dj</code>
+is used to scale <code class="reqn">\theta</code> so
+that the location of the maximum of the loglikelihood lies at the
+bias-adjusted estimate of <code class="reqn">\theta</code>.
+</p>
+<p>If <code>bias_adjust = FALSE</code> or <code>object$bias_adjust = "none"</code>
+or <code>"N"</code> then no bias-adjustment of the
+intervals is performed.  In the latter case this is because the
+bias-adjustment is applied in the creation of the data in
+<code>object$N2015_data</code> and <code>object$BB2018_data</code>, on which the
+naive likelihood is based.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>A character scalar.  The argument <code>type</code> to be passed to
+<code>conf_intervals</code> in the
+<code>chandwich</code> package in order to estimate the
+likelihood-based intervals.
+Using <code>type = "none"</code> is <em>not</em> advised because then the
+intervals are based on naive estimated standard errors.  In particular,
+if (the default) <code>sliding = TRUE</code> was used in the call to
+<code>spm</code> then the unadjusted likelihood-based confidence
+intervals provide <em>vast</em> underestimates of uncertainty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional optional arguments to be passed to
+<code>print.default</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of class <code>c("confint_spm", "exdex")</code>, a result of
+a call to <code>confint.spm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimator</code></td>
+<td>
+<p>A character vector specifying which of the three variants
+of the semiparametric maxima estimator to include in the plot:
+<code>"N2015", "BB2018"</code> or <code>"BB2018b"</code>.  See <code>spm</code> for
+details. If <code>estimator = "all"</code> then all three are included.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ndec</code></td>
+<td>
+<p>An integer scalar.  The legend (if included on the plot)
+contains the confidence limits rounded to <code>ndec</code> decimal places.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The likelihood-based intervals are estimated using the
+<code>adjust_loglik</code> function in the
+<code>chandwich</code> package, followed by a call to
+<code>conf_intervals</code>.
+This adjusts the naive (pseudo-)loglikelihood so that the curvature of
+the adjust loglikelihood agrees with the estimated standard errors of
+the estimators.  The option <code>type = "none"</code> should not be used in
+practice because the resulting confidence intervals will be wrong.
+In particular, in the intervals based on sliding maxima will provide
+<em>vast</em> underestimates of uncertainty.
+</p>
+<p>If <code>object$se</code> contains <code>NA</code>s, because the block size <code>b</code>
+was too small or too large in the call to <code>spm</code> then
+confidence intervals cannot be estimated.  A matrix of <code>NA</code>s
+will be returned.  See the <strong>Details</strong> section of the
+<code>spm</code> documentation for more information.
+</p>
+<p><code>print.confint_spm</code> prints the matrix of confidence
+intervals for <code class="reqn">\theta</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class c("confint_spm", "exdex") containing the
+following components.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>cis</code></td>
+<td>
+<p>A matrix with columns giving the lower and upper confidence
+limits. These are labelled as (1 - level)/2 and 1 - (1 - level)/2 in
+% (by default 2.5% and 97.5%).
+The row names are a concatenation of the variant of the estimator
+(<code>N2015</code> for Northrop (2015), <code>BB2018</code> for
+Berghaus and Bucher (2018)), <code>BB2018b</code> for the modified
+(by subtracting <code>1 / b</code>) Berghaus and Bucher (2018)
+and the type of interval (<code>norm</code> for symmetric and <code>lik</code> for
+likelihood-based).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ciN</code></td>
+<td>
+<p>The object returned from
+<code>conf_intervals</code> that contains information about
+the adjusted loglikelihood for the Northrop (2015) variant of the
+estimator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ciBB</code></td>
+<td>
+<p>The object returned from
+<code>conf_intervals</code> that contains information about
+the adjusted loglikelihood for the Berghaus and Bucher (2018) variant of
+the estimator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ciBBb</code></td>
+<td>
+<p>The object returned from
+<code>conf_intervals</code> that contains information about
+the adjusted loglikelihood for the modified Berghaus and Bucher (2018)
+variant of the estimator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call to <code>spm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>The input <code>object</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxima</code></td>
+<td>
+<p>The input <code>maxima</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>The relevant estimates of <code class="reqn">\theta</code> returned from
+<code>adjust_loglik</code>.  These are equal to
+<code>object$theta_sl</code> if <code>maxima = "sliding"</code>,
+<code>object$theta_dj</code> if <code>maxima = "disjoint"</code>,
+which provides a check that the results are correct.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>The input <code>level</code>.</p>
+</td>
+</tr>
+</table>
+<p><code>plot.confint_spm</code>: nothing is returned.
+</p>
+<p><code>print.confint_spm</code>: the argument <code>x</code>, invisibly.
+</p>
+
+
+<h3>References</h3>
+
+<p>Northrop, P. J. (2015) An efficient semiparametric maxima
+estimator of the extremal index. <em>Extremes</em> <strong>18</strong>(4), 585-603.
+<a href="https://doi.org/10.1007/s10687-015-0221-5">doi:10.1007/s10687-015-0221-5</a>
+</p>
+<p>Berghaus, B., Bucher, A. (2018) Weak convergence of a pseudo
+maximum likelihood estimator for the extremal index. <em>Ann. Statist.</em>
+<strong>46</strong>(5), 2307-2335. <a href="https://doi.org/10.1214/17-AOS1621">doi:10.1214/17-AOS1621</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>spm</code> for estimation of the extremal index
+<code class="reqn">\theta</code> using a semiparametric maxima method.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Newlyn sea surges
+theta &lt;- spm(newlyn, 20)
+confint(theta)
+cis &lt;- confint(theta, interval_type = "lik")
+cis
+plot(cis)
+
+# S&amp;P 500 index
+theta &lt;- spm(sp500, 100)
+confint(theta)
+cis &lt;- confint(theta, interval_type = "lik")
+cis
+plot(cis)
+</code></pre>
+
+
+</div>

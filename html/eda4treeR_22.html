@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Exam6.2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Example 6.2 from Experimental Design and Analysis for Tree Improvement</h2>
+
+<h3>Description</h3>
+
+<p>Exam 6.2 Dbh mean, Dbh varince and number of trees per plot from 3 provinces("PNG","Sabah","Queensland") with 4 replications of 48 families.
+</p>
+
+
+<h3>Author(s)</h3>
+
+
+<ol>
+<li>
+<p>  Muhammad Yaseen (<a href="mailto:myaseen208@gmail.com">myaseen208@gmail.com</a>)
+</p>
+</li>
+<li>
+<p>  Sami Ullah (<a href="mailto:samiullahuos@gmail.com">samiullahuos@gmail.com</a>)
+</p>
+</li>
+</ol>
+<h3>References</h3>
+
+
+<ol><li>
+<p> E.R. Williams, C.E. Harwood and A.C. Matheson (2023). <em>Experimental Design and Analysis for Tree Improvement</em>.
+CSIRO Publishing (<a href="https://www.publish.csiro.au/book/3145/">https://www.publish.csiro.au/book/3145/</a>).
+</p>
+</li></ol>
+<h3>See Also</h3>
+
+<p><code>DataExam6.2</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(car)
+library(dae)
+library(dplyr)
+library(emmeans)
+library(ggplot2)
+library(lmerTest)
+library(magrittr)
+library(predictmeans)
+
+data(DataExam6.2)
+
+DataExam6.2.1 &lt;-
+    DataExam6.2 %&gt;%
+    filter(Province == "PNG")
+
+# Pg. 94
+fm6.3 &lt;-
+     lm(
+          formula = Dbh.mean ~ Replication + Family
+        , data    = DataExam6.2.1
+       )
+
+b    &lt;- anova(fm6.3)
+
+
+HM      &lt;- function(x){length(x)/sum(1/x)}
+w       &lt;- HM(DataExam6.2.1$Dbh.count)
+S2      &lt;- b[["Mean Sq"]][length(b[["Mean Sq"]])]
+Sigma2t &lt;- mean(DataExam6.2.1$Dbh.variance)
+sigma2m &lt;- S2-(Sigma2t/w)
+
+fm6.3.1 &lt;-
+  lmer(
+      formula = Dbh.mean ~ 1 + Replication + (1|Family)
+    , data    = DataExam6.2.1
+    , REML    = TRUE
+    )
+
+# Pg. 104
+# summary(fm6.3.1)
+varcomp(fm6.3.1)
+sigma2f &lt;- 0.2584
+h2 &lt;- (sigma2f/(0.3))/(Sigma2t + sigma2m + sigma2f)
+cbind(hmean = w, Sigma2t, sigma2m, sigma2f, h2)
+
+fm6.4 &lt;-
+  lm(
+      formula = Dbh.mean ~ Replication+Family
+     , data   = DataExam6.2
+     )
+
+b    &lt;- anova(fm6.4)
+HM      &lt;- function(x){length(x)/sum(1/x)}
+w       &lt;- HM(DataExam6.2$Dbh.count)
+S2      &lt;- b[["Mean Sq"]][length(b[["Mean Sq"]])]
+Sigma2t &lt;- mean(DataExam6.2$Dbh.variance)
+sigma2m &lt;- S2-(Sigma2t/w)
+
+fm6.4.1 &lt;-
+ lmer(
+   formula = Dbh.mean ~ 1 + Replication + Province + (1|Family)
+ , data    = DataExam6.2
+ , REML    = TRUE
+    )
+
+# Pg. 107
+varcomp(fm6.4.1)
+sigma2f &lt;- 0.3514
+h2 &lt;- (sigma2f/(0.3))/(Sigma2t+sigma2m+sigma2f)
+cbind(hmean = w, Sigma2t, sigma2m, sigma2f, h2)
+
+fm6.7.1 &lt;-
+ lmer(
+   formula = Dbh.mean ~ 1+Replication+(1|Family)
+ , data    = DataExam6.2.1
+ , REML = TRUE
+ )
+
+# Pg. 116
+varcomp(fm6.7.1)
+sigma2f[1] &lt;- 0.2584
+
+fm6.7.2&lt;-
+ lmer(
+   formula = Ht.mean ~ 1 + Replication + (1|Family)
+ , data    = DataExam6.2.1
+ , REML    = TRUE
+   )
+
+# Pg. 116
+varcomp(fm6.7.2)
+sigma2f[2] &lt;- 0.2711
+
+fm6.7.3 &lt;-
+ lmer(
+   formula = Sum.means ~ 1 + Replication + (1|Family)
+ , data    = DataExam6.2.1
+ , REML    = TRUE
+ , control = lmerControl()
+ )
+
+# Pg. 116
+varcomp(fm6.7.3)
+sigma2f[3] &lt;- 0.873
+sigma2xy   &lt;- 0.5*(sigma2f[3]-sigma2f[1]-sigma2f[2])
+GenCorr &lt;- sigma2xy/sqrt(sigma2f[1]*sigma2f[2])
+cbind(
+     S2x = sigma2f[1]
+   , S2y = sigma2f[2]
+   , S2.x.plus.y = sigma2f[3]
+   , GenCorr
+   )
+</code></pre>
+
+
+</div>

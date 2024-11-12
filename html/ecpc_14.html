@@ -1,0 +1,248 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>postSelect</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+
+Perform posterior selection
+</h2>
+
+<h3>Description</h3>
+
+
+<p>Given data and estimated parameters from a previously fit multi-group ridge penalised model, perform posterior selection to find a parsimonious model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">postSelect(object, X, Y, beta=NULL, intrcpt = 0, penfctr=NULL, 
+           postselection = c("elnet,dense","elnet,sparse","BRmarginal,dense",
+           "BRmarginal,sparse","DSS"), maxsel = 30, penalties=NULL, 
+           model=c("linear","logistic","cox"), tauglobal=NULL, sigmahat = NULL, 
+           muhatp = 0, X2 = NULL, Y2 = NULL, silent=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+
+<p>An 'ecpc' object returned by <code>ecpc</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+
+<p>Observed data: data of p penalised and unpenalised covariates on n samples; (nxp)-dimensional matrix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+
+<p>Response data; n-dimensional vector (linear, logistic) or <code>Surv</code> object (Cox survival).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+
+
+<p>Estimated regression coefficients from the previously fit model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intrcpt</code></td>
+<td>
+
+
+<p>Estimated intercept from the previously fit model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penfctr</code></td>
+<td>
+
+
+<p>As in glmnet penalty.factor; p-dimensional vector with a 0 if covariate is not penalised, 1 if covariate is penalised.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>postselection</code></td>
+<td>
+
+
+<p>Posterior selection method to be used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxsel</code></td>
+<td>
+
+
+<p>Maximum number of covariates to be selected a posteriori, in addition to all unpenalised covariates. If maxsel is a vector, multiple parsimonious models are returned.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalties</code></td>
+<td>
+
+
+<p>Estimated multi-group ridge penalties for all penalised covariates from the previously fit model; vector of length the number of penalised covariates.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+
+<p>Type of model for the response.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tauglobal</code></td>
+<td>
+
+
+<p>Estimated global prior variance from the previously fit model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigmahat</code></td>
+<td>
+
+
+<p>(linear model only) estimated variance parameter from the previously fit model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>muhatp</code></td>
+<td>
+
+
+<p>(optional) Estimated multi-group prior means for the penalised covariates from the previously fit model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X2</code></td>
+<td>
+
+
+<p>(optional) Independent observed data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y2</code></td>
+<td>
+
+
+<p>(optional) Independent response data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+
+
+<p>Should output messages be suppressed (default FALSE)?
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+
+
+
+
+<p>A list with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>betaPost</code></td>
+<td>
+<p>Estimated regression coefficients for parsimonious models. If 'maxsel' is a vector,
+'betaPost' is a matrix with each column the vector estimate corresponding to the maximum number of 
+selected covariates given in 'maxsel'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a0</code></td>
+<td>
+<p>Estimated intercept coefficient for parsimonious models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>YpredPost</code></td>
+<td>
+<p>If independent test set 'X2' is given, posterior selection model predictions for the test set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MSEPost</code></td>
+<td>
+<p>If independent test set 'X2', 'Y2' is given, mean squared error of the posterior selection model predictions.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#####################
+# Simulate toy data #
+#####################
+p&lt;-300 #number of covariates
+n&lt;-100 #sample size training data set
+n2&lt;-100 #sample size test data set
+
+#simulate all betas i.i.d. from beta_k~N(mean=0,sd=sqrt(0.1)):
+muBeta&lt;-0 #prior mean
+varBeta&lt;-0.1 #prior variance
+indT1&lt;-rep(1,p) #vector with group numbers all 1 (all simulated from same normal distribution)
+
+#simulate test and training data sets:
+Dat&lt;-simDat(n,p,n2,muBeta,varBeta,indT1,sigma=1,model='linear') 
+str(Dat) #Dat contains centered observed data, response data and regression coefficients
+
+####################################### 
+# Fit ecpc and perform post-selection #
+#######################################
+fit &lt;- ecpc(Y=Dat$Y,X=Dat$Xctd,groupsets=list(list(1:p)),
+            groupsets.grouplvl=list(NULL),
+            hypershrinkage=c("none"),
+            model="linear",maxsel=c(5,10,15,20),
+            Y2=Dat$Y2,X2=Dat$X2ctd)
+
+fitPost &lt;- postSelect(fit, Y=Dat$Y, X=Dat$Xctd, maxsel = c(5,10,15,20))
+summary(fit$betaPost[,1]); summary(fitPost$betaPost[,1])
+
+</code></pre>
+
+
+</div>

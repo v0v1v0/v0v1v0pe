@@ -1,0 +1,311 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>s_mars_separate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit Multivariate Adaptive Regression Splines on Simulated Data</h2>
+
+<h3>Description</h3>
+
+<p>This function can run Friedman's MARS models on the
+untransformed design matrix. To be used with simulated data where the
+'truth' is known i.e., you know which features are associated with the
+response. This function was used to produce the simulation results in
+Bhatnagar et al. 2016. Uses caret functions to tune the degree and the
+nprune parameters
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">s_mars_separate(x_train, x_test, y_train, y_test, s0, model = c("MARS"),
+  exp_family = c("gaussian", "binomial"), topgenes = NULL, stability = F,
+  filter = F, include_E = T, include_interaction = F, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x_train</code></td>
+<td>
+<p><code>ntrain x p</code> matrix of simulated training set where
+<code>ntrain</code> is the number of training observations  and <code>p</code> is total
+number of predictors. This matrix needs to have named columns representing
+the feature names or the gene names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_test</code></td>
+<td>
+<p><code>ntest x p</code> matrix of simulated training set where
+<code>ntest</code> is the number of training observations  and <code>p</code> is total
+number of predictors. This matrix needs to have named columns representing
+the feature names or the gene names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_train</code></td>
+<td>
+<p>numeric vector of length <code>ntrain</code> representing the
+responses for the training subjects. If continuous then you must set
+<code>exp_family = "gaussion"</code>. For <code>exp_family="binomial"</code> should be
+either a factor with two levels, or a two-column matrix of counts or
+proportions (the second column is treated as the target class; for a
+factor, the last level in alphabetical order is the target class)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_test</code></td>
+<td>
+<p>numeric vector of length <code>ntest</code> representing the
+responses for the test subjects. If continuous then you must set
+<code>exp_family = "gaussion"</code>. For <code>exp_family="binomial"</code> should be
+either a factor with two levels, or a two-column matrix of counts or
+proportions (the second column is treated as the target class; for a
+factor, the last level in alphabetical order is the target class).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s0</code></td>
+<td>
+<p>chracter vector of the active feature names, i.e., the features in
+<code>x_train</code> that are truly associated with the response.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Type of non-linear model to be fit. Currently only Friedman's
+MARS is supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exp_family</code></td>
+<td>
+<p>Response type. See details for <code>y_train</code> argument
+above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>topgenes</code></td>
+<td>
+<p>List of features to keep if <code>filter=TRUE</code>. Default is
+<code>topgenes = NULL</code> which means all features are kept for the analysis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stability</code></td>
+<td>
+<p>Should stability measures be calculated. Default is
+<code>stability=FALSE</code>. See details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filter</code></td>
+<td>
+<p>Should analysis be run on a subset of features. Default is
+<code>filter = FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_E</code></td>
+<td>
+<p>Should the environment variable be included in the
+regression analysis. Default is <code>include_E = TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_interaction</code></td>
+<td>
+<p>Should interaction effects between the features in
+<code>x_train</code> and the environment variable be fit. Default is
+<code>include_interaction=TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters passed to <code>trainControl</code>
+function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function first does 10 fold cross-validation to tune the degree
+(either 1 or 2) using the <code>train</code> function with
+<code>method="earth"</code> and nprune is fixed at 1000. Then the
+<code>earth</code> function is used, with <code>nk = 1000</code> and
+<code>pmethod = "backward"</code> to fit the MARS model using the optimal degree
+from the 10-fold CV.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function has two different outputs depending on whether
+<code>stability = TRUE</code> or <code>stability = FALSE</code>
+</p>
+<p>If <code>stability = TRUE</code> then this function returns a <code>p x 2</code>
+data.frame or data.table of regression coefficients without the intercept.
+The output of this is used for subsequent calculations of stability.
+</p>
+<p>If <code>stability = FALSE</code> then returns a vector with the following
+elements (See Table 3: Measures of Performance in Bhatnagar et al (2016+)
+for definitions of each measure of performance): </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mse or AUC</code></td>
+<td>
+<p>Test set
+mean squared error if <code>exp_family = "gaussion"</code> or test set Area under
+the curve if <code>exp_family = "binomial"</code> calculated using the
+<code>roc</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RMSE</code></td>
+<td>
+<p>Square root of the mse. Only
+applicable if <code>exp_family = "gaussion"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Shat</code></td>
+<td>
+<p>Number of
+non-zero estimated regression coefficients. The non-zero estimated
+regression coefficients are referred to as being selected by the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TPR</code></td>
+<td>
+<p>true positive rate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FPR</code></td>
+<td>
+<p>false positive rate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Correct Sparsity</code></td>
+<td>
+<p>Correct true positives + correct true negative
+coefficients divided by the total number of features</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CorrectZeroMain</code></td>
+<td>
+<p>Proportion of correct true negative main effects</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CorrectZeroInter</code></td>
+<td>
+<p>Proportion of correct true negative interactions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IncorrectZeroMain</code></td>
+<td>
+<p>Proportion of incorrect true negative main
+effects</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IncorrectZeroInter</code></td>
+<td>
+<p>Proportion of incorrect true negative
+interaction effects</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(magrittr)
+
+# simulation parameters
+rho = 0.90; p = 500 ;SNR = 1 ; n = 200; n0 = n1 = 100 ; nActive = p*0.10 ; cluster_distance = "tom";
+Ecluster_distance = "difftom"; rhoOther = 0.6; betaMean = 2;
+alphaMean = 1; betaE = 3; distanceMethod = "euclidean"; clustMethod = "hclust";
+cutMethod = "dynamic"; agglomerationMethod = "average"
+
+#in this simulation its blocks 3 and 4 that are important
+#leaveOut:  optional specification of modules that should be left out
+#of the simulation, that is their genes will be simulated as unrelated
+#("grey"). This can be useful when simulating several sets, in some which a module
+#is present while in others it is absent.
+d0 &lt;- s_modules(n = n0, p = p, rho = 0, exposed = FALSE,
+                modProportions = c(0.15,0.15,0.15,0.15,0.15,0.25),
+                minCor = 0.01,
+                maxCor = 1,
+                corPower = 1,
+                propNegativeCor = 0.3,
+                backgroundNoise = 0.5,
+                signed = FALSE,
+                leaveOut = 1:4)
+
+d1 &lt;- s_modules(n = n1, p = p, rho = rho, exposed = TRUE,
+                modProportions = c(0.15,0.15,0.15,0.15,0.15,0.25),
+                minCor = 0.4,
+                maxCor = 1,
+                corPower = 0.3,
+                propNegativeCor = 0.3,
+                backgroundNoise = 0.5,
+                signed = FALSE)
+
+truemodule1 &lt;- d1$setLabels
+
+X &lt;- rbind(d0$datExpr, d1$datExpr) %&gt;%
+  magrittr::set_colnames(paste0("Gene", 1:p)) %&gt;%
+  magrittr::set_rownames(paste0("Subject",1:n))
+
+betaMainEffect &lt;- vector("double", length = p)
+
+# the first nActive/2 in the 3rd block are active
+betaMainEffect[which(truemodule1 %in% 3)[1:(nActive/2)]] &lt;- runif(
+  nActive/2, betaMean - 0.1, betaMean + 0.1)
+
+# the first nActive/2 in the 4th block are active
+betaMainEffect[which(truemodule1 %in% 4)[1:(nActive/2)]] &lt;- runif(
+  nActive/2, betaMean+2 - 0.1, betaMean+2 + 0.1)
+beta &lt;- c(betaMainEffect, betaE)
+
+result &lt;- s_generate_data_mars(p = p, X = X,
+                               beta = beta,
+                               binary_outcome = FALSE,
+                               truemodule = truemodule1,
+                               nActive = nActive,
+                               include_interaction = FALSE,
+                               cluster_distance = cluster_distance,
+                               n = n, n0 = n0,
+                               eclust_distance = Ecluster_distance,
+                               signal_to_noise_ratio = SNR,
+                               distance_method = distanceMethod,
+                               cluster_method = clustMethod,
+                               cut_method = cutMethod,
+                               agglomeration_method = agglomerationMethod,
+                               nPC = 1)
+
+
+mars_res &lt;- s_mars_separate(x_train = result[["X_train"]],
+                            x_test = result[["X_test"]],
+                            y_train = result[["Y_train"]],
+                            y_test = result[["Y_test"]],
+                            s0 = result[["S0"]],
+                            exp_family = "gaussian")
+unlist(mars_res)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

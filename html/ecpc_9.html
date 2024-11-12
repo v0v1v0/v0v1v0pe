@@ -1,0 +1,664 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecpc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+
+Fit adaptive multi-group ridge GLM with hypershrinkage
+</h2>
+
+<h3>Description</h3>
+
+
+<p>Fits a generalised linear (linear, logistic) or Cox survival model, penalised with adaptive co-data learnt ridge penalties.
+The ridge penalties correspond to normal prior variances which are regressed on (multiple) co-data sources, e.g. for categorical co-data, each group of variables obtains a group-specific ridge penalty. 
+Co-data weights are estimated with an empirical Bayes method of moments, penalised with an extra level of hypershrinkage and possibly constrained by linear constraints.
+Various types of hypershrinkage may be used for various co-data, including overlapping groups, hierarchical groups and continuous co-data.
+P-splines may be used to estimate the relation between the prior variance and continuous co-data variables. This may be combined with linear constraints to estimate shape-constrained functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecpc(Y, X,
+Z=NULL, paraPen=NULL, paraCon=NULL, intrcpt.bam=TRUE, bam.method="ML",
+groupsets=NULL, groupsets.grouplvl = NULL, hypershrinkage=NULL, 
+unpen = NULL, intrcpt = TRUE, model=c("linear","logistic","cox"), 
+postselection = "elnet,dense", maxsel = 10,
+lambda = NULL, fold = 10, sigmasq = NaN, w = NULL,
+nsplits = 100, weights = TRUE, profplotRSS = FALSE, Y2 = NULL, X2 = NULL,
+compare = TRUE, mu = FALSE, normalise = FALSE, silent = FALSE,
+datablocks = NULL, est_beta_method=c("glmnet","multiridge"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+
+<p>Response data; n-dimensional vector (n: number of samples) for linear and logistic outcomes, or <code>Surv</code> object for Cox survival.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+
+<p>Observed data; (nxp)-dimensional matrix (p: number of covariates) with each row the observed high-dimensional feature vector of a sample.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+
+<p>List with m co-data matrices. Each element is a (pxG)-dimensional co-data matrix containing co-data on the p   variables. Co-data should either be provided in ‘Z’ or ‘groupsets’. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paraPen</code></td>
+<td>
+
+<p>A list with generalised ridge penalty matrices used as hypershrinkage in estimating co-data weights, e.g. <code>list("Z2" = list("S1" = M1,"S2"= M2))</code> when the second co-data source given in ‘Z’ should be penalised by a penalty matrix ‘M1’ and ‘M2’. The names of the elements of the list should  be equal to ‘Zi’ where ‘i’ matches the index of the co-data matrix. The list elements should again be lists with elements ‘Si’ for i=1,2,.. different generalised ridge penalty matrices. 
+Same as the argument ‘paraPen’ used in <code>bam</code> of ‘mgcv’.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paraCon</code></td>
+<td>
+
+<p>A list with linear inequality and or equality constraints used in estimating co-data weights, e.g. <code>list("Z2" = list("M.ineq" = M1,"b.ineq"= b.ineq, "M.eq" = M2,"b.eq"= b.eq))</code>.
+The names of the elements of the list should  be equal to ‘Zi’ where ‘i’ matches the index of the co-data matrix. The list elements should again be lists with elements ‘M.ineq’, ‘b.ineq’ for inequality constraints and ‘M.eq’, ‘b.eq’ for equality constraints, similar to the arguments used in <code>lsqlincon</code> of ‘pracma’.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intrcpt.bam</code></td>
+<td>
+
+<p>Should an intercept be included in the co-data model?
+Is used only when ‘Z’ is provided, for which the function <code>bam</code> of ‘mgcv’ is used to fit a generalised additive model. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bam.method</code></td>
+<td>
+
+<p>When ‘Z’ is provided, ‘bam.method’ indicates the method used in <code>bam</code> of ‘mgcv’ to estimate the hyperpenalties corresponding to the generalised ridge penalty matrices given in ‘paraPen’.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groupsets</code></td>
+<td>
+
+
+<p>Co-data group sets; list with m (m: number of group sets) group sets. Each group set is a list of all groups in that set. Each group is a vector containing the indices of the covariates in that group.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groupsets.grouplvl</code></td>
+<td>
+
+
+<p>(optional) Group sets on group level used in hypershrinkage; list of m elements (corresponding to 'groupsets'), with NULL if there is no structure on group level, or with a list of groups containing the indices of groups of covariates in that group. May be used for hierarchical groups and to adaptively discretise continuous co-data, see <code>obtainHierarchy</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hypershrinkage</code></td>
+<td>
+
+
+<p>Type of shrinkage that is used on the group level; vector of m strings indicating the shrinkage type (or penalty) that is used for each of the m group sets. String may be of the simple form "type1", or "type1,type2", in which type1 is used to select groups and type2 to estimate the group weights of the selected groups. Possible hypershrinkage types are:
+</p>
+<p>c("none","ridge","lasso","hierLasso","lasso,ridge","hierLasso,ridge"); 
+</p>
+<p>"none" for no hypershrinkage, "ridge" (default), "lasso" and "hierLasso" (hierarchical lasso using a latent overlapping group lasso penalty) for group selection possibly be combined with ridge shrinkage.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unpen</code></td>
+<td>
+
+
+<p>Unpenalised covariates; vector with indices of covariates that should not be penalised.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intrcpt</code></td>
+<td>
+
+
+<p>Should an intercept be included? Included by default for linear and logistic, excluded for Cox for which the baseline hazard is estimated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+
+<p>Type of model for the response; linear, logistic or cox.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>postselection</code></td>
+<td>
+
+
+<p>Type of posterior selection method used to obtain a parsimonious model of maxsel covariates, or FALSE if no parsimonious model is needed. Possible options are "elnet,dense" (default), "elnet,sparse", "BRmarginal,dense", "BRmarginal,sparse" or "DSS".
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxsel</code></td>
+<td>
+
+
+<p>Maximum number of covariates to be selected a posteriori, in addition to all unpenalised covariates. If maxsel is a vector, multiple parsimonious models are returned.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+
+<p>Global ridge penalty; if given, numeric value to fix the global ridge penalty and equivalently, the global prior variance. When not given, for linear, by default "ML" is used for estimation for maximum marginal likelihood estimation and "CV" for other models for cross-validation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fold</code></td>
+<td>
+
+
+<p>Number of folds used in inner cross-validation to estimate global ridge penalty lambda.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigmasq</code></td>
+<td>
+
+
+<p>(linear model only) If given, noise level is fixed (Y~N(X*beta,sd=sqrt(sigmasq))).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+
+
+<p>Group set weights: m-dimensional vector. If given, group set weights are fixed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsplits</code></td>
+<td>
+
+
+<p>Number of splits used in the Residual Sum of Squares (RSS) criterion to estimate the optimal hyperlambda.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+
+<p>Should weights be used in hypershrinkage to correct for group size (default TRUE)?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>profplotRSS</code></td>
+<td>
+
+<p>Should a profile plot of the residual sum of squares (RSS) criterium be shown?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y2</code></td>
+<td>
+
+
+<p>(optional) Independent response data to compare with predicted response.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X2</code></td>
+<td>
+
+
+<p>(optional) Independent observed data for which response is predicted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compare</code></td>
+<td>
+
+
+<p>Should an ordinary ridge model be fitted to compare with?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+
+
+<p>Should group prior means be included (default FALSE)?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalise</code></td>
+<td>
+
+
+<p>Should group variances be normalised to sum to 1 (default FALSE)?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+
+
+<p>Should output messages be suppressed (default FALSE)?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>datablocks</code></td>
+<td>
+
+
+<p>(optional) for multiple data types, the corresponding blocks of data may be given in datablocks; a list of B vectors of the indices of covariates in ‘X’ that belong to each of the B data blocks. Unpenalised covariates should not be given as seperate block, but can be omitted or included in blocks with penalised covariates. Each datatype obtains a datatype-specific ‘tauglobal’ as in multiridge.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est_beta_method</code></td>
+<td>
+
+<p>Package used for estimating regression coefficients, either "glmnet" or "multiridge".
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<p><strong>Model:</strong>
+</p>
+<p>The response is modeled with a generalised linear model with variance <code class="reqn">Var(Y)=\sigma^2*V(Y)</code>. For the linear model, <code class="reqn">\sigma^2</code> is the error variance parameter. For the logistic and Cox model, <code class="reqn">\sigma^2=1</code>.
+The regression coefficients are independently modeled with a normal prior with prior variance <code class="reqn">v</code> regressed on (possibly multiple sources of) co-data
+</p>
+<p style="text-align: center;"><code class="reqn">\beta~N(0,v),   v = \tau_global^2* sum_d [w_d*Z_d*\gamma_d]</code>
+</p>
+
+<p>with <code class="reqn">\tau_global^2</code> the global scaling parameter, the scalar <code class="reqn">w_d</code> the importance weight of co-data set <code class="reqn">d</code>, <code class="reqn">Z_d</code> the co-data matrix for source d and <code class="reqn">\gamma_d</code> the vector of co-data variable weights of source <code class="reqn">d</code>.
+</p>
+<p><strong>Co-data and hypershrinkage input:</strong>
+</p>
+<p>Co-data should be provided in a list of co-data matrices given in argument 'Z' or in a list of group sets given in 'groupsets'. The latter may be used only for (overlapping) groups of variables, whereas the first may be used for continuous co-data too. In most cases, providing co-data in 'Z' is faster, so users may want to transform co-data from a group set to a co-data matrix with <code>createZforGroupset</code>. 
+</p>
+<p>The co-data variable weights are estimated with an extra level of hypershrinkage, i.e. with a penalised estimator (see below). The type of hypershrinkage may differ per co-data source. Providing these types depends on whether the co-data is provided in 'Z' or 'groupsets'. 
+When co-data is provided in 'Z', the hypershrinkage may be provided in the arguments 'paraPen', 'paraCon', 'intrcpt.bam' and 'bam.method' (second line above in usage).
+When co-data is provided in 'groupsets', the hypershrinkage may be provided in the arguments 'groupsets.grouplvl' and 'hypershrinkage' (third line above in usage).
+</p>
+<p><strong>Estimation:</strong>
+</p>
+<p>The regression coefficients are estimated by maximising the penalised likelihood (equiv. maximum a posteriori estimate) for estimated prior parameters:
+</p>
+<p style="text-align: center;"><code class="reqn">\beta' = argmax_\beta[ loglik + sum_k (\beta_k^2 / (2 v_k) ]</code>
+</p>
+
+<p>The prior parameters are estimated from the data using an empirical Bayes approach; <code class="reqn">\tau_global^2</code> is estimated by maximising the marginal likelihood (linear, default, jointly optimised with <code class="reqn">\sigma^2</code>) or by cross-validation (linear, logistic, Cox). 
+<code class="reqn">\gamma_d</code> is estimated per co-data source by finding the minimum (penalised) least squares solution corresponding to the marginal moment equations:
+</p>
+<p style="text-align: center;"><code class="reqn">\gamma_d = argmin_\gamma[ ||A\gamma - b||_2^2 + f_pen(\gamma;\lambda_d)]</code>
+</p>
+
+<p>with <code class="reqn">f_pen</code> some penalty function ('hypershrinkage', see below) depending on hyperpenalty parameter <code class="reqn">\lambda_d</code>.
+Co-data weights <code class="reqn">w</code> are estimated with a similar, unpenalised marginal moment estimator.
+</p>
+
+<p>'ecpc' is the first implementation of marginal moment estimation with the additional layer of hypershrinkage. Moment-based estimates without hypershrinkage have been implemented in the R-package 'GRridge'.
+</p>
+<p><strong>Hypershrinkage:</strong>
+</p>
+<p>For co-data provided in the argument 'Z', a generalised ridge penalty may be used of the type:
+</p>
+<p style="text-align: center;"><code class="reqn">\lambda_d*\gamma_d^T * S * \gamma_d</code>
+</p>
+
+<p>with the penalty matrix <code class="reqn">S</code> possibly a sum of multiple penalty matrices and given in argument 'paraPen'.
+Additionally, linear (in)equality constraints may be added with the argument 'paraCon', i.e. the least squares estimate is subject to <code class="reqn">M_ineq*\gamma_d &lt;= b_ineq</code> and <code class="reqn">M_eq*\gamma_d = b_ineq</code>.
+</p>
+<p>For co-data provided in the argument 'groupsets', the types of hypershrinkage include the ridge penalty (<code class="reqn">\lambda_d*||\gamma||^2_2</code>), lasso penalty (<code class="reqn">\lambda_d*||\gamma||_1</code>) and hierarchical lasso penalty with hierarchy defined in 'groupsets.grouplvl'.
+</p>
+
+
+<h3>Value</h3>
+
+
+
+
+
+
+<p>An object of the class ‘ecpc’ with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>Estimated regression coefficients; p-dimensional vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>If included, the estimated intercept; scalar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tauglobal</code></td>
+<td>
+<p>Estimated global prior variance; scalar (or vector with datatype-specific global prior variances when multiple ‘datablocks’ are given).)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gammatilde</code></td>
+<td>
+<p>Estimated group weights before truncating negative weights to 0; vector of dimension the total number of groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>Final estimated group weights; vector of dimension the total number of groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma0</code></td>
+<td>
+<p>Estimated co-data variable intercept; scalar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+<p>Estimated group set weights; m-dimensional vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalties</code></td>
+<td>
+<p>Estimated multi-group ridge penalties; p-dimensional vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hyperlambdas</code></td>
+<td>
+<p>Estimated hyperpenalty parameters used in hypershrinkage; m-dimensional vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ypred</code></td>
+<td>
+<p>If independent test set 'X2' is given, predictions for the test set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MSEecpc</code></td>
+<td>
+<p>If independent test set 'X2', 'Y2' is given, mean squared error of the predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigmahat</code></td>
+<td>
+<p>(linear model) Estimated sigma^2.</p>
+</td>
+</tr>
+</table>
+<p>If 'compare'=TRUE, ordinary ridge estimates and predictions are given. If in addition multiple ‘datablocks’ are given, the estimates and predictions for multiridge penalty are given;
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Type of model fitted for the response; linear, logistic or cox.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>betaridge</code></td>
+<td>
+<p>Estimated regression coefficients for ordinary ridge (or multiridge) penalty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interceptridge</code></td>
+<td>
+<p>Estimated intercept for ordinary ridge (or multiridge) penalty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdaridge</code></td>
+<td>
+<p>Estimated (multi)ridge penalty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ypredridge</code></td>
+<td>
+<p>If independent test set 'X2' is given, ordinary ridge (or multiridge) predictions for the test set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MSEridge</code></td>
+<td>
+<p>If independent test set 'X2', 'Y2' is given, mean squared error of the ordinary ridge (or multiridge) predictions.</p>
+</td>
+</tr>
+</table>
+<p>If posterior selection is performed;
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>betaPost</code></td>
+<td>
+<p>Estimated regression coefficients for parsimonious models. If 'maxsel' is a vector, 'betaPost' is a matrix with each column the vector estimate corresponding to the maximum number of selected covariates given in 'maxsel'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interceptPost</code></td>
+<td>
+<p>Estimated intercept coefficient for parsimonious models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>YpredPost</code></td>
+<td>
+<p>If independent test set 'X2' is given, posterior selection model predictions for the test set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MSEPost</code></td>
+<td>
+<p>If independent test set 'X2', 'Y2' is given, mean squared error of the posterior selection model predictions.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+
+<p>Mirrelijn van Nee, Lodewyk Wessels, Mark van de Wiel
+</p>
+
+
+<h3>References</h3>
+
+
+
+<p>van Nee, Mirrelijn M., Lodewyk FA Wessels, and Mark A. van de Wiel. "Flexible co-data learning for high-dimensional prediction." Statistics in medicine 40.26 (2021): 5910-5925.
+</p>
+<p>van de Wiel, Mark A., Mirrelijn M. van Nee, and Armin Rauschenberger. "Fast cross-validation for multi-penalty high-dimensional ridge regression." Journal of Computational and Graphical Statistics 30.4 (2021): 835-847.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> 
+#####################
+# Simulate toy data #
+#####################
+p&lt;-300 #number of covariates
+n&lt;-100 #sample size training data set
+n2&lt;-100 #sample size test data set
+
+#simulate all betas i.i.d. from beta_k~N(mean=0,sd=sqrt(0.1)):
+muBeta&lt;-0 #prior mean
+varBeta&lt;-0.1 #prior variance
+indT1&lt;-rep(1,p) #vector with group numbers all 1 (all simulated from same normal distribution)
+
+#simulate test and training data sets:
+Dat&lt;-simDat(n,p,n2,muBeta,varBeta,indT1,sigma=1,model='linear') 
+str(Dat) #Dat contains centered observed data, response data and regression coefficients
+
+###################################
+# Provide co-data in group sets.. #
+###################################
+#Group set 1: G random groups
+G &lt;- 5 #number of groups
+#sample random categorical co-data:
+categoricalRandom &lt;- as.factor(sample(1:G,p,TRUE))
+#make group set, i.e. list with G groups:
+groupsetRandom &lt;- createGroupset(categoricalRandom)
+
+#Group set 2: informative hierarchical group set
+continuousCodata &lt;- abs(Dat$beta) #use the magnitude of beta as continuous co-data
+#Use adaptive discretisation to find a good discretisation of the continuous co-data;
+# discretise in groups of covariates of various sizes:
+groupsetHierarchical &lt;- splitMedian(values=continuousCodata,index = 1:p,
+                        minGroupSize = 50,split="both") 
+# and obtain group set on group level that defines the hierarchy:
+hierarchy.grouplevel &lt;- obtainHierarchy(groupset = groupsetHierarchical) 
+#visualise hierarchical groups:
+#visualiseGroupset(Groupset = groupsetHierarchical,groupset.grouplvl = hierarchy.grouplevel) 
+
+############################
+# ..or in co-data matrices #
+############################
+#Setting 1: some transformations of informative, continuous co-data
+Z1 &lt;- cbind(continuousCodata,sqrt(continuousCodata))
+
+#setting 2: splines for informative continuous
+Z2 &lt;- createZforSplines(values=continuousCodata)
+S1.Z2 &lt;- createS(orderPen=2, G=dim(Z2)[2]) #create difference penalty matrix
+Con2 &lt;- createCon(G=dim(Z2)[2], shape="positive+monotone.i") #create constraints
+
+#setting 3: 5 random groups
+Z3 &lt;- createZforGroupset(groupsetRandom,p=p)
+S1.Z3 &lt;- createS(G=G, categorical = TRUE) #create difference penalty matrix
+Con3 &lt;- createCon(G=dim(Z3)[2], shape="positive") #create constraints
+
+
+############################
+# Fit ecpc on group sets.. #
+############################
+
+#fit ecpc for the two group sets, with ridge hypershrinkage for group set 1, 
+# and hierarchical lasso and ridge for group set 2.
+tic&lt;-proc.time()[[3]]
+fit &lt;- ecpc(Y=Dat$Y,X=Dat$Xctd,groupsets=list(groupsetRandom,groupsetHierarchical),
+           groupsets.grouplvl=list(NULL,hierarchy.grouplevel),
+           hypershrinkage=c("ridge","hierLasso,ridge"),
+           model="linear",maxsel=c(5,10,15,20),
+           Y2=Dat$Y2,X2=Dat$X2ctd)
+toc &lt;- proc.time()[[3]]-tic
+
+fit$tauglobal #estimated global prior variance
+fit$gamma #estimated group weights (concatenated for the group sets)
+fit$w #estimated group set weights
+summary(fit$beta) #estimated regression coefficients
+summary(fit$betaPost) #estimated regression coefficients after posterior selection
+
+c(fit$MSEecpc,fit$MSEridge) #mean squared error on test set for ecpc and ordinary ridge
+fit$MSEPost #MSE on the test set of ecpc after posterior selection
+
+############################
+# ..or on co-data matrices #
+############################
+
+#fit ecpc for the three co-data matrices with following penalty matrices and constraints
+#note: can also be fitted without paraPen and/or paraCon
+Z.all &lt;- list(Z1=Z1,Z2=Z2,Z3=Z3)
+paraPen.all &lt;- list(Z2=list(S1=S1.Z2), Z3=list(S1=S1.Z3))
+paraCon &lt;- list(Z2=Con2, Z3=Con3)
+
+tic&lt;-proc.time()[[3]]
+fit &lt;- ecpc(Y=Dat$Y,X=Dat$Xctd,
+           Z = Z.all, paraPen = paraPen.all, paraCon = paraCon,
+           model="linear",maxsel=c(5,10,15,20),
+           Y2=Dat$Y2,X2=Dat$X2ctd)
+toc &lt;- proc.time()[[3]]-tic
+
+fit$tauglobal #estimated global prior variance
+fit$gamma #estimated group weights (concatenated for the co-data sources)
+fit$gamma0 #estimated co-data intercept
+
+#plot contribution of one co-data source
+i &lt;-1
+groupsetNO &lt;- c(unlist(sapply(1:length(Z.all),function(i) rep(i,dim(Z.all[[i]])[2]))))
+vk &lt;- as.vector(Z.all[[i]]%*%fit$gamma[groupsetNO==i])*fit$tauglobal
+plot(continuousCodata,vk)
+
+summary(fit$beta) #estimated regression coefficients
+summary(fit$betaPost) #estimated regression coefficients after posterior selection
+
+c(fit$MSEecpc,fit$MSEridge) #mean squared error on test set for ecpc and ordinary ridge
+fit$MSEPost #MSE on the test set of ecpc after posterior selection
+
+###################################
+# Fit ecpc for multiple datatypes #
+###################################
+rankBeta&lt;-order(abs(Dat$beta)) #betas ranked in order of magnitude
+ 
+#with multiple datatypes (given in datablocks) and informative groups
+fit2 &lt;- ecpc(Y=Dat$Y,X=Dat$Xctd[,rankBeta],groupsets=list(list(1:75,76:150,151:225,226:300)),
+            groupsets.grouplvl=list(NULL),
+            hypershrinkage=c("none"),
+            model="linear",maxsel=c(5,10,15,20),
+            Y2=Dat$Y2,X2=Dat$X2ctd[,rankBeta],
+            datablocks = list(1:floor(p/2),(floor(p/2)+1):p))
+
+
+</code></pre>
+
+
+</div>

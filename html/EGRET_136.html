@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>stitch</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>stitch surfaces</h2>
+
+<h3>Description</h3>
+
+<p>This function creates a continuous surfaces object that starts just before 
+surfaceStart and ends just after surfaceEnd. It is made up from two surfaces 
+objects created when there is a wall specified for the analysis.  The first 
+surfaces object is based on data prior to the wall and the second surfaces object 
+is based on data after the wall.  The wall is located just after sample1EndDate.
+The Daily data frame is used only to set the minimum and maximum discharges used 
+to construct the indices for discharges in the surfaces.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">stitch(eList, sample1StartDate, sample1EndDate, sample2StartDate,
+  sample2EndDate, surfaceStart = NA, surfaceEnd = NA, minNumObs = 100,
+  minNumUncen = 50, fractMin = 0.75, windowY = 7, windowQ = 2,
+  windowS = 0.5, edgeAdjust = TRUE, verbose = FALSE,
+  run.parallel = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>eList</code></td>
+<td>
+<p>named list with at least the Daily, Sample, and INFO dataframes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample1StartDate</code></td>
+<td>
+<p>The Date (or character in YYYY-MM-DD) of the first sample to be used in estimating the first segment of the surfaces object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample1EndDate</code></td>
+<td>
+<p>The Date (or character in YYYY-MM-DD) of the last sample to be used in the first segment of the surfaces object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample2StartDate</code></td>
+<td>
+<p>The Date (or character in YYYY-MM-DD) of the first sample to be used in the second segment of the surfaces object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample2EndDate</code></td>
+<td>
+<p>The Date (or character in YYYY-MM-DD) of the last sample to be used in the second segment of the surfaces object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>surfaceStart</code></td>
+<td>
+<p>The Date (or character in YYYY-MM-DD) that is the start of the WRTDS model to be estimated and the first of the 
+daily outputs to be generated. Default is NA, which means that the surfaceStart is based on the date of the first sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>surfaceEnd</code></td>
+<td>
+<p>The Date (or character in YYYY-MM-DD) that is the end of the WRTDS model to be estimated and the last of the daily outputs 
+to be generated.  Default is NA, which means that the surfaceEnd is based on the date of the last sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minNumObs</code></td>
+<td>
+<p>numeric specifying the miniumum number of observations required to run the weighted regression, default is 100</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minNumUncen</code></td>
+<td>
+<p>numeric specifying the minimum number of uncensored observations to run the weighted regression, default is 50</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fractMin</code></td>
+<td>
+<p>numeric specifying the minimum fraction of the observations required to run the weighted regression, default is 0.75. The
+minimum number will be the maximum of minNumObs and fractMin multiplied by total number of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windowY</code></td>
+<td>
+<p>numeric specifying the half-window width in the time dimension, in units of years, default is 7</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windowQ</code></td>
+<td>
+<p>numeric specifying the half-window width in the discharge dimension, units are natural log units, default is 2</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windowS</code></td>
+<td>
+<p>numeric specifying the half-window with in the seasonal dimension, in units of years, default is 0.5</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edgeAdjust</code></td>
+<td>
+<p>logical specifying whether to use the modified method for calculating the windows at the edge of the record.
+The edgeAdjust method tends to reduce curvature near the start and end of record.  Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical specifying whether or not to display progress message</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>run.parallel</code></td>
+<td>
+<p>logical to run bootstrapping in parallel or not</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">eList &lt;- Choptank_eList
+
+surfaceStart &lt;- "1986-10-01"
+surfaceEnd &lt;- "2010-09-30"
+
+# Surface skips a few years:
+sample1StartDate &lt;- "1986-10-01"
+sample1EndDate &lt;- "1992-09-30"
+sample2StartDate &lt;- "1996-10-01"
+sample2EndDate &lt;- "2011-09-30"
+
+
+surface_skip &lt;- stitch(eList, 
+                         sample1StartDate, sample1EndDate, 
+                         sample2StartDate, sample2EndDate,
+                         surfaceStart, surfaceEnd)
+
+# Surface overlaps a few years:
+sample1StartDate &lt;- "1986-10-01"
+sample1EndDate &lt;- "1996-09-30"
+sample2StartDate &lt;- "1992-10-01"
+sample2EndDate &lt;- "2011-09-30"
+
+surface_overlap &lt;- stitch(eList, 
+                         sample1StartDate, sample1EndDate, 
+                         sample2StartDate, sample2EndDate)
+
+</code></pre>
+
+
+</div>

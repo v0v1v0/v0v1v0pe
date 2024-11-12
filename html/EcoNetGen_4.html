@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>netsampler</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Network Sampling Routine</h2>
+
+<h3>Description</h3>
+
+<p>Network Sampling Routine
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">netsampler(network_in, key_nodes_sampler = c("random", "lognormal",
+  "Fisher log series", "exponential", "degree", "module"),
+  neighbors_sampler = c("random", "exponential"), n_key_nodes = 10,
+  n_neighbors = 0.5, hidden_modules = NULL, module_sizes = NULL,
+  cluster_fn = igraph::cluster_edge_betweenness)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>network_in</code></td>
+<td>
+<p>input network (as igraph object)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>key_nodes_sampler</code></td>
+<td>
+<p>sampling criteria for key nodes. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neighbors_sampler</code></td>
+<td>
+<p>sampling criteria for neighbors. see details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_key_nodes</code></td>
+<td>
+<p>number of key nodes to sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_neighbors</code></td>
+<td>
+<p>number of first neighbors or fraction of first neighbors.
+See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hidden_modules</code></td>
+<td>
+<p>list of the modules to exclude
+(max 10 modules; only the first numb_hidden are used)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>module_sizes</code></td>
+<td>
+<p>integer vector giving the size of each module. see details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster_fn</code></td>
+<td>
+<p>a clustering function, from <code>igraph::cluster_*</code>. Default is
+<code>igraph::cluster_edge_betweeness</code>.  Only used to compute module sizes if not
+provided.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Algorithm first samples n_key_nodes according the the requested <code>key_nodes_sampler</code>
+criterion.  For each key node, the requested number or fraction of neighbors is
+then sampled according to the <code>neighbors_sampler</code> criterion.  Optionally, a list of
+modules can be designated as "hidden" and will be excluded from sampling.
+</p>
+<p>if <code>n_neighbors is greater than 1, assumes this is the number to sample.  If </code>n_neighbors<code>is between 0 and 1, assumes this is the fration of neighbors to sample.  (To sample 1 neighbor, use an explicit integer,</code>1L<code> (or as.</code>integer(1)')
+to sample 100
+</p>
+<p>Provide <code>module_sizes</code> list to improve performance.  If not provided, this will
+will be calculated based on <code>igraph::cluster_edge_betweeness</code>.  Be sure to
+provide a <code>module_sizes</code> vector whenever calling <code>netsampler</code> repeatedly on the
+same network to avoid unnecessary performance hit from recalculating modules every
+time.  See examples.
+</p>
+
+
+<h3>Value</h3>
+
+<p>the original input network (as an igraph network object),
+with the attribute <code>label</code> added to the edges and vertices indicating
+if that edge or vertex was <code>sampled</code> or <code>unsampled</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(12345)
+net &lt;- netgen()
+sample &lt;- netsampler(net)
+
+## Precompute `module_sizes` for replicate sampling of the same network:
+ library(igraph)
+ modules &lt;- cluster_edge_betweenness(as.undirected(net))
+ module_sizes &lt;- vapply(igraph::groups(modules), length, integer(1))
+ sample &lt;- netsampler(net, module_sizes = module_sizes)
+
+
+
+</code></pre>
+
+
+</div>

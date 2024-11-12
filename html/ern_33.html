@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_diagnostic_cl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Diagnostic plot for R estimation from clinical report data</h2>
+
+<h3>Description</h3>
+
+<p>Diagnostic plot for R estimation from clinical report data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_diagnostic_cl(r.estim, caption = NULL, wrap.plots = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>r.estim</code></td>
+<td>
+<p>List. Output of <code>estimate_R_cl()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>caption</code></td>
+<td>
+<p>String. Caption to be inserted in the plot.
+Default is <code>caption = NULL</code> which disables the caption.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wrap.plots</code></td>
+<td>
+<p>Logical. Wrap the plots together into a single ggplot object?
+If <code>wrap.plots = TRUE</code> (the default) will return wrapped plots in a single object,
+else will return a list of separate ggplot objects.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Plots of the clinical data used, the inferred daily incidence and
+Rt estimates. If <code>wrap.plots = TRUE</code> (the default) will return
+wrapped plots (with x-axis aligned to facilitate the comaprison)
+in a single object,
+else will return a list of separate ggplot objects.
+</p>
+<p>A <code>ggplot</code> object (or a list of ggplot objects
+if <code>wrap.plots = FALSE</code>).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>estimate_R_cl()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# -- THIS EXAMPLE TAKES ABOUT 30 SECONDS TO RUN --
+# Estimate Rt
+
+## Not run: 
+# Load SARS-CoV-2 reported cases in Quebec
+# during the Summer 2021
+dat &lt;- (ern::cl.data
+    |&gt; dplyr::filter(
+      pt == "qc", 
+      dplyr::between(date, as.Date("2021-06-01"), as.Date("2021-09-01"))
+    )
+)
+# distributions
+dist.repdelay = ern::def_dist(
+    dist = 'gamma',
+    mean = 5, 
+    mean_sd = 1,
+    sd = 1,
+    sd_sd = 0.1,
+    max = 10
+)
+dist.repfrac = ern::def_dist(
+    dist = "unif",
+    min = 0.1,
+    max = 0.3
+)
+dist.incub = ern::def_dist(
+    dist = "gamma",
+    mean = 3.49,
+    mean_sd = 0.1477,
+    shape = 8.5,
+    shape_sd = 1.8945,
+    max = 8
+)
+dist.gi = ern::def_dist(
+    dist = "gamma",
+    mean = 6,
+    mean_sd = 0.75,
+    shape = 2.4,
+    shape_sd = 0.3,
+    max = 10
+)
+
+# settings
+prm.daily &lt;- list(
+    method = "renewal",
+    popsize = 8.5e6, # Q3 (July 1) 2022 estimate for Quebec
+    burn = 500,
+    iter = 500,
+    chains = 2,
+    prior_R0_shape = 1.1, prior_R0_rate = 0.6, 
+    prior_alpha_shape = 1, prior_alpha_rate = 1
+)
+prm.daily.check &lt;- list(
+    agg.reldiff.tol = 10
+)
+prm.smooth &lt;- list(
+    method = "rollmean",
+    align = "center",
+    window = 7
+)
+prm.R &lt;- list(
+    iter = 20, 
+    CI = 0.95, 
+    window = 7, 
+    config.EpiEstim = NULL
+)
+
+x &lt;- estimate_R_cl(
+  dat,
+  dist.repdelay,
+  dist.repfrac,
+  dist.incub,
+  dist.gi,
+  prm.daily,
+  prm.daily.check,
+  prm.smooth,
+  prm.R
+)
+
+# Diagnostic plot for Rt estimates 
+# from clinical data
+g = plot_diagnostic_cl(x)
+plot(g)
+
+g2 = plot_diagnostic_cl(x, caption = 'This is your caption', wrap.plots = FALSE)
+plot(g2$clinical_data)
+plot(g2$inferred_incidence)
+plot(g2$Rt)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

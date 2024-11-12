@@ -1,0 +1,221 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>etl_cleanup</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>ETL functions for working with medium sized data</h2>
+
+<h3>Description</h3>
+
+<p>These generic functions provide a systematic approach
+for performing ETL (exchange-transform-load) operations on medium
+sized data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">etl_cleanup(obj, ...)
+
+## Default S3 method:
+etl_cleanup(
+  obj,
+  delete_raw = FALSE,
+  delete_load = FALSE,
+  pattern = "\\.(csv|zip)$",
+  ...
+)
+
+etl_create(obj, ...)
+
+## Default S3 method:
+etl_create(obj, ...)
+
+etl_update(obj, ...)
+
+## Default S3 method:
+etl_update(obj, ...)
+
+etl_extract(obj, ...)
+
+## Default S3 method:
+etl_extract(obj, ...)
+
+## S3 method for class 'etl_mtcars'
+etl_extract(obj, ...)
+
+## S3 method for class 'etl_cities'
+etl_extract(obj, ...)
+
+etl_load(obj, ...)
+
+## Default S3 method:
+etl_load(obj, ...)
+
+etl_transform(obj, ...)
+
+## Default S3 method:
+etl_transform(obj, ...)
+
+## S3 method for class 'etl_cities'
+etl_transform(obj, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>an <code>etl</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed to methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete_raw</code></td>
+<td>
+<p>should files be deleted from the <code>raw_dir</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete_load</code></td>
+<td>
+<p>should files be deleted from the <code>load_dir</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pattern</code></td>
+<td>
+<p>regular expression matching file names to be deleted. By default,
+this matches filenames ending in <code>.csv</code> and <code>.zip</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The purposes of these functions are to download data from a
+particular data source from the Internet, process it, and load it
+into a SQL database server.
+</p>
+<p>There are five primary functions:
+</p>
+
+<dl>
+<dt><code>etl_init</code></dt>
+<dd>
+<p>Initialize the database schema.</p>
+</dd>
+<dt>etl_extract</dt>
+<dd>
+<p>Download data from the Internet and store it locally in
+its raw form.</p>
+</dd>
+<dt>etl_transform</dt>
+<dd>
+<p>Manipulate the raw data such that it can be loaded
+into a database table. Usually, this means converting the raw data to
+(a series of) CSV files, which are also stored locally.</p>
+</dd>
+<dt>etl_load</dt>
+<dd>
+<p>Load the transformed data into the database.</p>
+</dd>
+<dt>etl_cleanup</dt>
+<dd>
+<p>Perform housekeeping, such as deleting unnecessary
+raw data files.</p>
+</dd>
+</dl>
+<p>Additionally, two convenience functions chain these operations together:
+</p>
+
+<dl>
+<dt>etl_create</dt>
+<dd>
+<p>Run all five functions in succession.
+This is useful when you want
+to create the database from scratch.</p>
+</dd>
+<dt>etl_update</dt>
+<dd>
+<p>Run the <code>etl_extract</code>-<code>etl_transform</code>-<code>etl_load</code> functions
+in succession.
+This is useful
+when the database already exists, but you want to insert some new data. </p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>Each one of these functions returns an <code>etl</code> object, invisibly.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>etl</code>, <code>etl_init</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+if (require(RPostgreSQL)) {
+  db &lt;- src_postgres(dbname = "mtcars", user = "postgres", host = "localhost")
+  cars &lt;- etl("mtcars", db)
+}
+if (require(RMySQL) &amp;&amp; mysqlHasDefault()) {
+  db &lt;- src_mysql(dbname = "mtcars", user = "r-user",
+                  host = "localhost", password = "mypass")
+  cars &lt;- etl("mtcars", db)
+}
+
+## End(Not run)
+cars &lt;- etl("mtcars")
+cars %&gt;%
+ etl_extract() %&gt;%
+ etl_transform() %&gt;%
+ etl_load() %&gt;%
+ etl_cleanup()
+cars
+
+cars %&gt;%
+ tbl(from = "mtcars") %&gt;%
+ group_by(cyl) %&gt;%
+ summarise(N = n(), mean_mpg = mean(mpg))
+
+ # do it all in one step, and peek at the SQL creation script
+ cars %&gt;%
+   etl_create(echo = TRUE)
+ # specify a directory for the data
+ ## Not run: 
+ cars &lt;- etl("mtcars", dir = "~/dumps/mtcars/")
+ str(cars)
+ 
+## End(Not run)
+cars &lt;- etl("mtcars")
+# Do it step-by-step
+cars %&gt;%
+  etl_extract() %&gt;%
+  etl_transform() %&gt;%
+  etl_load()
+
+# Note the somewhat imprecise data types for the columns. These are the default.
+tbl(cars, "mtcars")
+
+# But you can also specify your own schema if you want
+schema &lt;- system.file("sql", "init.sqlite", package = "etl")
+cars %&gt;%
+  etl_init(schema) %&gt;%
+  etl_load()
+</code></pre>
+
+
+</div>

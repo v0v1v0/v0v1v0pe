@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EIglm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Perform a GLM on times of events</h2>
+
+<h3>Description</h3>
+
+<p>Perform a GLM with the intervals between events as the response 
+and the times of the events as a predictor.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R"> EIglm(event_times,event_vars=list(),formula=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>event_times</code></td>
+<td>
+<p>A numeric vector of times of occurrence of events.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>event_vars</code></td>
+<td>
+<p>Optional predictors to include in the GLM.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A optional string that can be coerced to a valid formula.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>‘<span class="samp">⁠EIglm⁠</span>’ calculates the intervals between the times passed in 
+‘<span class="samp">⁠event_times⁠</span>’ and calls ‘<span class="samp">⁠glm⁠</span>’ with ‘<span class="samp">⁠family="Gamma"⁠</span>’.
+If the times are not in increasing order, they will be sorted. If there are
+any zero length intervals, the events that occur in the same time increment
+are spread out over that time increment. 
+</p>
+<p>If more predictors are passed in ‘<span class="samp">⁠event_vars⁠</span>’ these will be added to
+the formula passed to ‘<span class="samp">⁠glm⁠</span>’. When passing predictors based on the events,
+remember to discard the first value as the intervals are calculated between
+events. This means that the interval is unknown for the first event.
+</p>
+<p>‘<span class="samp">⁠EIglm⁠</span>’ only tests the effects of the variables specified and does not
+test interactions. If a more complex model is to be tested, the user must
+directly call ‘<span class="samp">⁠glm⁠</span>’ and compose a formula for the model (see the last 
+example). Note that because there is no ‘<span class="samp">⁠data⁠</span>’ argument in EIglm, 
+each term in the model must be specified explicitly.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class ‘<span class="samp">⁠glm⁠</span>’.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Jim Lemon</p>
+
+
+<h3>References</h3>
+
+<p>Blake, E.S., Rappaport, E.N. &amp; Landsea, C.W. (2007)
+The deadliest, costliest, and most intense United States tropical
+cyclones from 1851 to 2006 (and other frequently requested hurricane facts).
+NOAA Technical Memorandum NWS TPC-5, Miami: National Weather Service.
+</p>
+<p>Florida Climate Center (2013)
+Florida statewide averaged temperature data (in degrees Fahrenheit).
+URL: http://climatecenter.fsu.edu/products-services/data/statewide-averages/temperature
+accessed 28/5/2013
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> ## Not run: 
+  # Florida hurricane analysis (20th century)
+  data(florida_hurr20)
+  oldloc&lt;-Sys.setlocale("LC_TIME", "C")
+  fh_dates&lt;-
+   as.Date(paste(florida_hurr20$day,florida_hurr20$month,
+   florida_hurr20$year,sep="-"),"%d-%B-%Y")
+  fh_days&lt;-as.numeric(fh_dates)
+  fh_ints&lt;-diff(fh_days)
+  fh_counts&lt;-tabulate(florida_hurr20$year[-1]-1899,nbins=100)
+  # run a Poisson analysis on the counts
+  print(summary(glm(fh_counts~I(1900:1999),family="poisson")))
+  EIglm(fh_days)
+  data(florida_temp20)
+  plot(florida_temp20$year,florida_temp20$Annual,type="b",
+    main="Average temperature in Florida",xlab="Year",ylab="degrees F")
+  lines(supsmu(florida_temp20$year,florida_temp20$Annual),lwd=2)
+  # define a function to match values
+  findval&lt;-
+   function(x,set) return(which(set %in% x))
+  ftemp_years&lt;-florida_temp20$Annual[unlist(sapply(florida_hurr20$year,
+   FUN=findval,florida_temp20$year))]
+  EIglm(fh_days,list(ft=ftemp_years[-1]))
+  Sys.setlocale("LC_TIME", oldloc)
+ 
+## End(Not run)
+ # manually performing an event interval GLM
+ # get the Florida hurricane data
+ data(florida_hurr20)
+ # create date values for the events
+ florida_hurr20$date&lt;-
+  as.Date(paste(florida_hurr20$day,florida_hurr20$month,
+  florida_hurr20$year,sep="-"),"%d-%B-%Y")
+ # convert the dates to numeric values (offsets from 1/1/1970)
+ florida_hurr20$days&lt;-as.numeric(florida_hurr20$date)
+ # calculate the intervals, adding NA for the first unknown value
+ florida_hurr20$ints&lt;-c(NA,diff(florida_hurr20$days))
+ # first test the default model in EIglm, dropping the first event
+ summary(glm(ints~days,florida_hurr20[-1,],family="Gamma"))
+ # test a model predicting intervals with times of occurrence,
+ # the intensities of the hurricanes and their interaction,
+ # again dropping the first event
+ summary(glm(ints~days*category,florida_hurr20[-1,],family="Gamma"))
+</code></pre>
+
+
+</div>

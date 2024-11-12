@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>set_cache</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create or renew a cache for this session</h2>
+
+<h3>Description</h3>
+
+<p>By default, epidatr re-requests data from the API on every call of <code>fetch</code>.
+In case you find yourself repeatedly calling the same data, you can enable
+the cache using either this function for a given session, or environmental
+variables for a persistent cache.
+The typical recommended workflow for using the cache is to set the
+environmental variables <code>EPIDATR_USE_CACHE=TRUE</code> and
+<code>EPIDATR_CACHE_DIRECTORY="/your/directory/here"</code>in your <code>.Renviron</code>, for
+example by calling <code>usethis::edit_r_environ()</code>.
+See the parameters below for some more configurables if you're so inclined.
+</p>
+<p><code>set_cache</code> (re)defines the cache to use in a particular R session. This does
+not clear existing data at any previous location, but instead creates a
+handle to the new cache using <a href="https://cachem.r-lib.org/index.html">cachem</a>
+that seamlessly handles caching for you.
+Say your cache is normally stored in some default directory, but for the
+current session you want to save your results in
+<code style="white-space: pre;">⁠~/my/temporary/savedirectory⁠</code>, then you would call <code>set_cache(dir = "~/my/temporary/savedirectory")</code>.
+Or if you know the data from 2 days ago is wrong, you could call
+<code>set_cache(days = 1)</code> to clear older data whenever the cache is referenced.
+In both cases, these changes would only last for a single session (though the
+deleted data would be gone permanently!).
+</p>
+<p>An important feature of the caching in this package is that only calls which
+specify either <code>issues</code> before a certain date, or <code>as_of</code> before a certain
+date will actually cache. For example the call
+</p>
+<div class="sourceCode"><pre>pub_covidcast(
+  source = "jhu-csse",
+  signals = "confirmed_7dav_incidence_prop",
+  geo_type = "state",
+  time_type = "day",
+  geo_values = "ca,fl",
+  time_values = epirange(20200601, 20230801)
+)
+</pre></div>
+<p><em>won't</em> cache, since it is possible for the cache to be invalidated by new
+releases with no warning. On the other hand, the call
+</p>
+<div class="sourceCode"><pre>pub_covidcast(
+  source = "jhu-csse",
+  signals = "confirmed_7dav_incidence_prop",
+  geo_type = "state",
+  time_type = "day",
+  geo_values = "ca,fl",
+  time_values = epirange(20200601, 20230801),
+  as_of = "2023-08-01"
+)
+</pre></div>
+<p><em>will</em> cache, since normal new versions of data can't invalidate it (since
+they would be <code>as_of</code> a later date). It is still possible that Delphi may
+patch such data, but the frequency is on the order of months rather than
+days. We are working on creating a public channel to communicate such
+updates. While specifying <code>issues</code> will usually cache, a call with
+<code>issues="*"</code> won't cache, since its subject to cache invalidation by normal
+versioning.
+</p>
+<p>On the backend, the cache uses cachem, with filenames generated using an md5
+encoding of the call url. Each file corresponds to a unique epidata-API
+call.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">set_cache(
+  cache_dir = NULL,
+  days = NULL,
+  max_size = NULL,
+  logfile = NULL,
+  confirm = TRUE,
+  startup = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cache_dir</code></td>
+<td>
+<p>the directory in which the cache is stored. By default, this
+is <code>rappdirs::user_cache_dir("R", version = "epidatr")</code>. The path can be
+either relative or absolute. The environmental variable is
+<code>EPIDATR_CACHE_DIR</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>days</code></td>
+<td>
+<p>the maximum length of time in days to keep any particular cached
+call. By default this is <code>1</code>. The environmental variable is
+<code>EPIDATR_CACHE_MAX_AGE_DAYS</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_size</code></td>
+<td>
+<p>the size of the entire cache, in MB, at which to start
+pruning entries. By default this is <code>1024</code>, or 1GB. The environmental
+variable is <code>EPIDATR_CACHE_MAX_SIZE_MB</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logfile</code></td>
+<td>
+<p>where cachem's log of transactions is stored, relative to the
+cache directory. By default, it is <code>"logfile.txt"</code>. The environmental
+variable is <code>EPIDATR_CACHE_LOGFILE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confirm</code></td>
+<td>
+<p>whether to confirm directory creation. default is <code>TRUE</code>;
+should only be set in non-interactive scripts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startup</code></td>
+<td>
+<p>indicates whether the function is being called on
+startup. Affects suppressability of the messages. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>NULL</code> no return value, all effects are stored in the package
+environment
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>clear_cache</code> to delete the old cache while making a new one,
+<code>disable_cache</code> to disable without deleting, and <code>cache_info</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set_cache(
+  cache_dir = tempdir(),
+  days = 14,
+  max_size = 512,
+  logfile = "logs.txt"
+)
+
+</code></pre>
+
+
+</div>

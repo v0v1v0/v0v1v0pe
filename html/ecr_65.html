@@ -1,0 +1,181 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>initLogger</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Initialize a log object.</h2>
+
+<h3>Description</h3>
+
+<p>Logging is a central aspect of each EA. Besides the final solution(s)
+especially in research often we need to keep track of different aspects of the
+evolutionary process, e.g., fitness statistics. The logger of ecr keeps
+track of different user-defined statistics and the population.
+It may also be used to check stopping conditions (see <code>makeECRTerminator</code>). Most
+important this logger is used internally by the <code>ecr</code> black-box interface.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">initLogger(
+  control,
+  log.stats = list(fitness = list("min", "mean", "max")),
+  log.extras = NULL,
+  log.pop = FALSE,
+  init.size = 1000L
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>[<code>ecr_control</code>]<br>
+Control object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.stats</code></td>
+<td>
+<p>[<code>list</code>]<br>
+List of lists for statistic computation on attributes of the individuals
+of the population. Each entry should be named by the attribute it should be
+based on, e.g., fitness, and should contain a list of R functions as a
+character string or a a list with elements <code>fun</code> for the function, and <code>pars</code> for additional
+parameters which shall be passed to the corresponding function.
+Each function is required to return a scalar numeric value.
+By default the minimum, mean and maximum of the fitness values is computed.
+Since fitness statistics are the most important ones these do not have to
+be stored as attributes, but can be passed as a matrix to the update function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.extras</code></td>
+<td>
+<p>[<code>character</code>]<br>
+Possibility to instruct the logger to store additional
+scalar values in each generation. Named character vector where the names
+indicate the value to store and the value indicates the corresponding data types.
+Currently we support all atomic modes of <code>vector</code> expect “factor”
+and “raw”.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.pop</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br>
+Shall the entire population be saved in each generation?
+Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init.size</code></td>
+<td>
+<p>[<code>integer(1)</code>]<br>
+Initial number of rows of the slot of the logger, where the fitness
+statistics are stored. The size of the statistics log is doubled each time an
+overflow occurs.
+Default is 1000.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>[<code>ecr_logger</code>]
+An S3 object of class <code>ecr_logger</code> with the following components:
+</p>
+
+<dl>
+<dt>log.stats</dt>
+<dd>
+<p>The <code>log.stats</code> list.</p>
+</dd>
+<dt>log.pop</dt>
+<dd>
+<p>The <code>log.pop</code> parameter.</p>
+</dd>
+<dt>init.size</dt>
+<dd>
+<p>Initial size of the log.</p>
+</dd>
+<dt>env</dt>
+<dd>
+<p>The actual log. This is an R environment which ensures, that
+in-place modification is possible.</p>
+</dd>
+</dl>
+<h3>Note</h3>
+
+<p>Statistics are logged in a <code>data.frame</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other logging: 
+<code>getPopulationFitness()</code>,
+<code>getPopulations()</code>,
+<code>getStatistics()</code>,
+<code>updateLogger()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">control = initECRControl(function(x) sum(x), minimize = TRUE,
+  n.objectives = 1L)
+control = registerECROperator(control, "mutate", mutBitflip, p = 0.1)
+control = registerECROperator(control, "selectForMating", selTournament, k = 2)
+control = registerECROperator(control, "selectForSurvival", selGreedy)
+
+log = initLogger(control,
+  log.stats = list(
+    fitness = list("mean", "myRange" = function(x) max(x) - min(x)),
+    age = list("min", "max")
+  ), log.pop = TRUE, init.size = 1000L)
+
+ # simply pass stuff down to control object constructor
+population = initPopulation(mu = 10L, genBin, n.dim = 10L)
+fitness = evaluateFitness(control, population)
+
+# append fitness to individuals and init age
+for (i in seq_along(population)) {
+  attr(population[[i]], "fitness") = fitness[, i]
+  attr(population[[i]], "age") = 1L
+}
+
+for (iter in seq_len(10)) {
+  # generate offspring
+  offspring = generateOffspring(control, population, fitness, lambda = 5)
+  fitness.offspring = evaluateFitness(control, offspring)
+
+  # update age of population
+  for (i in seq_along(population)) {
+    attr(population[[i]], "age") = attr(population[[i]], "age") + 1L
+  }
+
+  # set offspring attributes
+  for (i in seq_along(offspring)) {
+    attr(offspring[[i]], "fitness") = fitness.offspring[, i]
+    # update age
+    attr(offspring[[i]], "age") = 1L
+  }
+
+  sel = replaceMuPlusLambda(control, population, offspring)
+
+  population = sel$population
+  fitness = sel$fitness
+
+  # do some logging
+  updateLogger(log, population, n.evals = 5)
+}
+head(getStatistics(log))
+</code></pre>
+
+
+</div>

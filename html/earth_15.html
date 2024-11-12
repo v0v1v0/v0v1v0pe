@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>model.matrix.earth</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get the earth basis matrix</h2>
+
+<h3>Description</h3>
+
+<p>Get the basis matrix of an <code>earth</code> model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'earth'
+model.matrix(object = stop("no 'object' argument"),
+    x = NULL, subset = NULL, which.terms = NULL,
+    trace = 0,
+    ...,
+    Env = parent.frame(),
+    Callers.name = "model.matrix.earth")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>An <code>earth</code> model.
+This is the only required argument.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Default is NULL, meaning use the original data
+used to build the <code>earth</code> model
+(after taking the original <code>subset</code>, if any).
+</p>
+<p>Else <code>x</code> can be a data frame, a matrix, or a vector with
+length equal to a multiple of the number of columns
+of the original input matrix <code>x</code>.
+(There is some leniency here.  For example, column names aren't
+necessary if <code>x</code> has the same number of predictors originally
+used to build the <code>earth</code> model.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+
+<p>Which rows to use in <code>x</code>.
+Default is NULL, meaning use all of <code>x</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.terms</code></td>
+<td>
+
+<p>Which terms to use.
+Default is NULL, meaning all terms in the earth model
+(i.e. the terms in <code>object$selected.terms</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+
+<p>Default 0. Set to non-zero to see which data <code>model.matrix.earth</code> is using.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Unused, but provided for generic/method consistency.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Env</code></td>
+<td>
+
+<p>For internal use.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Callers.name</code></td>
+<td>
+
+<p>For internal use (used by earth in trace messages).
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A basis matrix <code>bx</code> of the same form returned by <code>earth</code>.
+The format of <code>bx</code> is described in <code>earth.object</code>.
+</p>
+<p>If <code>x</code>, <code>subset</code>, and <code>which.terms</code> are all NULL (the
+default), this function returns the model's <code>bx</code>.  In this case,
+it is perhaps easier to simply use <code>object$bx</code>.<br></p>
+<p>The matrix <code>bx</code> can be used
+as the input matrix to <code>lm</code> or <code>glm</code>,
+as shown below in the example.
+In fact, that is what earth does internally after the pruning pass —
+it calls <code>lm.fit</code>,
+and additionally <code>glm</code> if earth's <code>glm</code> argument is used.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>earth</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example 1
+
+data(trees)
+earth.mod &lt;- earth(Volume ~ ., data = trees) # standard earth model
+summary(earth.mod, decomp = "none")  # "none" to print terms in same order as lm.mod below
+bx &lt;- model.matrix(earth.mod)        # earth model's basis mat (equivalent to bx &lt;- earth.mod$bx)
+lm.mod &lt;- lm(trees$Volume ~ bx[,-1]) # -1 to drop intercept
+summary(lm.mod)                      # yields same coeffs as above summary
+                                     # displayed t values are not meaningful
+
+# Example 2
+
+earth.mod &lt;- earth(Volume~., data=trees) # standard earth model
+summary(earth.mod, decomp = "none")  # "none" to print terms in same order as lm.mod below
+bx &lt;- model.matrix(earth.mod)        # earth model's basis mat (equivalent to bx &lt;- earth.mod$bx)
+bx &lt;- bx[, -1]                       # drop intercept column
+bx &lt;- as.data.frame(bx)              # lm requires a data frame
+bx$Volume &lt;- trees$Volume            # add Volume to data
+lm.mod &lt;- lm(Volume~., data=bx)      # standard linear regression on earth's basis mat
+summary(lm.mod)                      # yields same coeffs as above summary
+                                     # displayed t values are not meaningful
+</code></pre>
+
+
+</div>

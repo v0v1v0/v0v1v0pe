@@ -1,0 +1,184 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>irt_stan</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate an item response model with Stan</h2>
+
+<h3>Description</h3>
+
+<p>Estimate an item response model with Stan
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">irt_stan(data_list, model = "", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data_list</code></td>
+<td>
+<p>A Stan data list created with <code>irt_data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The file name for one of the provided .stan files, or
+alternatively, a user-created .stan file that accepts <code>data_list</code> as
+input data.
+The ".stan" file extension may be omitted.
+Defaults to either "rasch_latent_reg.stan" or "pcm_latent_reg.stan".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional options passed to <code>stan</code>. The
+usual choices are <code>iter</code> for the number of iterations and
+<code>chains</code> for the number of chains.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The following table lists the models inlcuded in <span class="pkg">edstan</span> along with the
+associated <em>.stan</em> files. The file names are given as the <code>model</code>
+argument.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+   <strong>Model</strong>             </td>
+<td style="text-align: left;"> <strong>File</strong>                </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   Rasch                      </td>
+<td style="text-align: left;"> <em>rasch_latent_reg.stan</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   Partial credit             </td>
+<td style="text-align: left;"> <em>pcm_latent_reg.stan</em>   </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   Rating Scale               </td>
+<td style="text-align: left;"> <em>rsm_latent_reg.stan</em>   </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   Two-parameter logistic     </td>
+<td style="text-align: left;"> <em>2pl_latent_reg.stan</em>   </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   Generalized partial credit </td>
+<td style="text-align: left;"> <em>gpcm_latent_reg.stan</em>  </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   Generalized rating Scale   </td>
+<td style="text-align: left;"> <em>grsm_latent_reg.stan</em>
+</td>
+</tr>
+</table>
+<p>Three simplified models are also available: <em>rasch_simple.stan</em>,
+<em>pcm_simple.stan</em>, <em>rsm_simple.stan</em>. These are (respectively) the
+Rasch, partial credit, and rating scale models omitting the latent
+regression. There is no reason to use these instead of the models listed
+above, given that the above models allow for rather than require the
+inclusion of covariates for a latent regression. Instead, the purpose of
+the simplified models is to provide a straightforward starting point
+researchers who wish to craft their own Stan models.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>stanfit-class</code> object.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>stan</code>, for which this function is a wrapper,
+for additional options.
+See <code>irt_data</code> and <code>labelled_integer</code> for functions
+that facilitate creating a suitable <code>data_list</code>.
+See <code>print_irt_stan</code> and <code>print.stanfit</code> for ways of
+getting tables summarizing parameter posteriors.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># List the Stan models included in edstan
+folder &lt;- system.file("extdata", package = "edstan")
+dir(folder, "\\.stan$")
+
+# List the contents of one of the .stan files
+rasch_file &lt;- system.file("extdata/rasch_latent_reg.stan",
+                          package = "edstan")
+cat(readLines(rasch_file), sep = "\n")
+
+## Not run: 
+# Fit the Rasch and 2PL models on wide-form data with a latent regression
+
+spelling_list &lt;- irt_data(response_matrix = spelling[, 2:5],
+                          covariates = spelling[, "male", drop = FALSE],
+                          formula = ~ 1 + male)
+
+rasch_fit &lt;- irt_stan(spelling_list, iter = 300, chains = 4)
+print_irt_stan(rasch_fit, spelling_list)
+
+twopl_fit &lt;- irt_stan(spelling_list, model = "2pl_latent_reg.stan",
+                      iter = 300, chains = 4)
+print_irt_stan(twopl_fit, spelling_list)
+
+
+# Fit the rating scale and partial credit models without a latent regression
+
+agg_list_1 &lt;- irt_data(y = aggression$poly,
+                       ii = labelled_integer(aggression$description),
+                       jj = aggression$person)
+
+fit_rsm &lt;- irt_stan(agg_list_1, model = "rsm_latent_reg.stan",
+                    iter = 300, chains = 4)
+print_irt_stan(fit_rsm, agg_list_1)
+
+fit_pcm &lt;- irt_stan(agg_list_1, model = "pcm_latent_reg.stan",
+                    iter = 300, chains = 4)
+print_irt_stan(fit_pcm, agg_list_1)
+
+
+# Fit the generalized rating scale and partial credit models including
+# a latent regression
+
+agg_list_2 &lt;- irt_data(y = aggression$poly,
+                       ii = labelled_integer(aggression$description),
+                       jj = aggression$person,
+                       covariates = aggression[, c("male", "anger")],
+                       formula = ~ 1 + male*anger)
+
+fit_grsm &lt;- irt_stan(agg_list_2, model = "grsm_latent_reg.stan",
+                     iter = 300, chains = 4)
+print_irt_stan(fit_grsm, agg_list_2)
+
+fit_gpcm &lt;- irt_stan(agg_list_2, model = "gpcm_latent_reg.stan",
+                     iter = 300, chains = 4)
+print_irt_stan(fit_grsm, agg_list_2)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

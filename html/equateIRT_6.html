@@ -1,0 +1,145 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>convert</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Item Parameters Conversion
+</h2>
+
+<h3>Description</h3>
+
+<p>Converts item and person parameters using equating coefficients.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">convert(A, B, coef = NULL, person.par = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+
+<p>equating coefficient A.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+
+<p>equating coefficient B.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+
+<p>vector of item parameters return by function <code>modIRT</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>person.par</code></td>
+<td>
+
+<p>vector of person parameters estimates.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Difficulty parameters <code class="reqn">b</code> are converted using transformation <code class="reqn">b \cdot A+B</code>;
+discrimination parameters <code class="reqn">a</code> are converted using transformation <code class="reqn">a/A</code>;
+guessing parameters c are not transformed.
+</p>
+<p>Person parameters <code class="reqn">\theta</code> are converted using transformation <code class="reqn">\theta \cdot A+B</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>vector of item parameters transformed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>person.par</code></td>
+<td>
+<p>vector of person parameters transformed</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Michela Battauz
+</p>
+
+
+<h3>References</h3>
+
+<p>Battauz, M. (2015). equateIRT: An R Package for IRT Test Equating.
+<em>Journal of Statistical Software</em>, <b>68</b>, 1–22.
+</p>
+<p>Kolen, M.J. and Brennan, R.L. (2014). <em>Test equating, scaling, 
+and linking: methods and practices</em>, 3rd ed., New York: Springer
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>itm</code>, <code>modIRT</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># conversion using direct coefficients
+# three-parameter logistic model
+# direct equating coefficients between forms 1 and 2 using the Stocking-Lord method
+data(est3pl)
+test &lt;- paste("test", 1:5, sep = "")
+mod3pl &lt;- modIRT(coef = est3pl$coef, var = est3pl$var, names = test, display = FALSE)
+l12 &lt;- direc(mod1 = mod3pl[1], mod2 = mod3pl[2], method = "Stocking-Lord")
+convert(A = l12$A, B = l12$B, coef = coef(mod3pl$test1))
+# the conversion of item parameters is obtained also using
+itm(l12)
+
+# conversion using bisector coefficients
+# two-parameter logistic model
+# direct equating coefficients using the "Haebara" method
+data(est2pl)
+test &lt;- paste("test", 1:5, sep = "")
+mod2pl &lt;- modIRT(coef = est2pl$coef, var = est2pl$var, names = test, display = FALSE)
+direclist2pl &lt;- alldirec(mods = mod2pl, method = "Haebara")
+# compute chain equating coefficients for path 1,2,3,4
+pth1 &lt;- paste("test", 1:4, sep = "")
+chainec1 &lt;- chainec(direclist = direclist2pl, pths = pth1)
+# compute chain equating coefficients for path 1,5,4
+pth2 &lt;- c(paste("test", c(1,5,4), sep = ""))
+chainec2 &lt;- chainec(direclist = direclist2pl, pths = pth2)
+# create a list of objects of class ceqc
+ecall &lt;- c(chainec1, chainec2)
+# compute bisector and weighted bisector coefficients
+allec &lt;- bisectorec(ecall = ecall, weighted = TRUE, unweighted = TRUE)
+summary(allec)
+eqc14&lt;-eqc(allec, link = "test1.test4", path = "bisector")
+convert(A = eqc14$A, B = eqc14$B, coef = coef(mod2pl$test1), person.par = seq(-3, 3, 0.5))
+</code></pre>
+
+
+</div>

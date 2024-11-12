@@ -1,0 +1,357 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trainByCrossValid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calibrate a distribution/niche model using cross-validation</h2>
+
+<h3>Description</h3>
+
+<p>This function is an extension of any of the <code>trainXYZ</code> functions for calibrating species distribution and ecological niche models. This function uses the <code>trainXYZ</code> function to calibrate and evaluate a suite of models using cross-validation. The models are evaluated against withheld data to determine the optimal settings for a "final" model using all available data. The function returns a set of models and/or a table with statistics on each model. The statistics represent various measures of model accuracy, and are calculated against training and test sites (separately).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trainByCrossValid(
+  data,
+  resp = names(data)[1],
+  preds = names(data)[2:ncol(data)],
+  folds = predicts::folds(data),
+  trainFx = enmSdmX::trainGLM,
+  ...,
+  weightEvalTrain = TRUE,
+  weightEvalTest = TRUE,
+  na.rm = FALSE,
+  outputModels = TRUE,
+  verbose = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame or matrix. Response variable and environmental predictors (and no other fields) for presences and non-presence sites.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp</code></td>
+<td>
+<p>Character or integer. Name or column index of response variable. Default is to use the first column in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preds</code></td>
+<td>
+<p>Character vector or integer vector. Names of columns or column indices of predictors. Default is to use the second and subsequent columns in <code>data</code> as predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>folds</code></td>
+<td>
+<p>Either a numeric vector, or matrix or data frame which specify which rows in <code>data</code> belong to which folds:
+</p>
+
+<ul>
+<li>
+<p> If a vector, there must be one value per row in <code>data</code>. If there are <em>K</em> unique values in the vector, then <em>K</em> unique models will be trained. Each model will use all of the data except for rows that match a particular value in the <code>folds</code> vector. For example, if <code>folds = c(1, 1, 1, 2, 2, 2, 3, 3, 3)</code>, then three models will be trained, one with all rows that match the 2s and 3s, one with all rows matching 1s and 2s, and one will all rows matching 1s and 3s. The models will be evaluated against the training data and against the withheld data. Use <code>NA</code> to exclude rows from all testing/training. The default is to construct 5 folds of roughly equal size.
+</p>
+</li>
+<li>
+<p> If a matrix or data frame, there must be one row per row in <code>data</code>. Each column corresponds to a different model to be trained. For a given column there should be only two unique values, plus possibly <code>NA</code>s. Of the two values, the lesser value will be used to identify the calibration data and the greater value the evaluation data. Rows with <code>NA</code>s will be ignored and not used in training or testing.  For example, a particular column could contain 1s, 2, and <code>NA</code>s. Data rows corresponding to 1s will be used as training data, data rows corresponding to 2s as test data, and rows with <code>NA</code> are dropped. The <code>NA</code> flag is useful for creating spatially-structured cross-validation folds where training and test sites are separated (spatially) by censored (ignored) data.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainFx</code></td>
+<td>
+<p>Function, name of the <code>trainXYZ</code> function to use. Currently the functions/algorithms supported are <code>trainBRT</code>, <code>trainGAM</code>, <code>trainGLM</code>, <code>trainMaxEnt</code>, <code>trainRF</code>, and <code>trainNS</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to pass to the "trainXYZ" function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weightEvalTrain</code></td>
+<td>
+<p>Logical, if <code>TRUE</code> (default) and an argument named <code>w</code> is specified in <code>...</code>, then evaluation statistics that support weighting will use the weights specified by <code>w</code> <em>for the "train" version of evaluation statistics</em>. If <code>FALSE</code>, there will be no weighting of sites. Note that this applies <em>only</em> to the calculation of evaluation statistics, not to model calibration.  If <code>w</code> is supplied, they will be used for model calibration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weightEvalTest</code></td>
+<td>
+<p>Logical, if <code>TRUE</code> (default) and an argument named <code>w</code> is specified in <code>...</code>, then evaluation statistics that support weighting will use the weights specified by <code>w</code> <em>for the "test" version of evaluation statistics</em>. If <code>FALSE</code>, there will be no weighting of sites. Note that this applies <em>only</em> to the calculation of evaluation statistics.  If <code>w</code> is supplied, they will be used for model calibration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>Logical, if <code>TRUE</code> then remove <code>NA</code> predictions before calculating evaluation statistics. If <code>FALSE</code> (default), propagate <code>NA</code>s (meaning if predictions contain <code>NA</code>s, then the evaluation statistic will most likely also be <code>NA</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outputModels</code></td>
+<td>
+<p>If <code>TRUE</code>, then return all models (in addition to tables reporting tuning paramaeters and evaluation metrics). <em>WARNING</em>: Depending on the type of model and amount of data, retuning all models may produce objects that are very large in memory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Numeric. If 0 show no progress updates. If &gt; 0 then show minimal progress updates for this function only. If &gt; 1 show detailed progress for this function. If &gt; 2 show detailed progress plus detailed progress for the <code>trainXYZ</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In some cases models do not converge (e.g., boosted regression trees and generalized additive models sometimes suffer from this issue). In this case the model will be skipped, but a data frame with the k-fold and model number in the fold will be returned in the $meta element in the output. If no models converged, then this data frame will be empty.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list object with several named elements:
+</p>
+
+<ul>
+<li> <p><code>meta</code>: Meta-data on the model call.
+</p>
+</li>
+<li> <p><code>folds</code>: The <code>folds</code> object.
+</p>
+</li>
+<li> <p><code>models</code> (if <code>outputModels</code> is <code>TRUE</code>): A list of model objects, one per  data fold.
+</p>
+</li>
+<li> <p><code>tuning</code>: One data frame per k-fold, each containing evaluation statistics for all candidate models in the fold. In addition to algorithm-specific fields, these consist of:
+</p>
+
+<ul>
+<li> <p><code>'logLoss'</code>: Log loss. Higher (less negative) values imply better fit.
+</p>
+</li>
+<li> <p><code>'cbi'</code>: Continuous Boyce Index (CBI). Calculated with <code>evalContBoyce</code>.
+</p>
+</li>
+<li> <p><code>'auc'</code>: Area under the receiver-operator characteristic curve (AUC). Calculated with <code>evalAUC</code>.
+</p>
+</li>
+<li> <p><code>'tss'</code>: Maximum value of the True Skill Statistic. Calculated with <code>evalTSS</code>.
+</p>
+</li>
+<li> <p><code>'msss'</code>: Sensitivity and specificity calculated at the threshold that maximizes sensitivity (true presence prediction rate) plus specificity (true absence prediction rate).
+</p>
+</li>
+<li> <p><code>'mdss'</code>: Sensitivity (se) and specificity (sp) calculated at the threshold that minimizes the difference between sensitivity and specificity.
+</p>
+</li>
+<li> <p><code>'minTrainPres'</code>: Sensitivity (se) and specificity (sp) at the greatest threshold at which all training presences are classified as "present".
+</p>
+</li>
+<li> <p><code>'trainSe95'</code> and/or <code>'trainSe90'</code>: Sensitivity (se) and specificity (sp) at the threshold that ensures either 95 or 90 percent of all training presences are classified as "present" (training sensitivity = 0.95 or 0.9).
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Fielding, A.H. and J.F. Bell. 1997. A review of methods for the assessment of prediction errors in conservation presence/absence models. <em>Environmental Conservation</em> 24:38-49. <a href="https://doi.org/10.1017/S0376892997000088">doi:10.1017/S0376892997000088</a>
+La Rest, K., Pinaud, D., Monestiez, P., Chadoeuf, J., and Bretagnolle, V.  2014.  Spatial leave-one-out cross-validation for variable selection in the presence of spatial autocorrelation. <em>Global Ecology and Biogeography</em> 23:811-820. <a href="https://doi.org/10.1111/geb.12161">doi:10.1111/geb.12161</a>
+Radosavljevic, A. and Anderson, R.P.  2014.  Making better Maxent models of species distributions: complexity, overfitting and evaluation.  <em>Journal of Biogeography</em> 41:629-643. <a href="https://doi.org/10.1111/jbi.12227">doi:10.1111/jbi.12227</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summaryByCrossValid</code>, <code>trainBRT</code>, <code>trainGAM</code>, <code>trainGLM</code>, <code>trainMaxEnt</code>, <code>trainMaxNet</code>, <code>trainNS</code>, <code>trainRF</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># The example below show a very basic modeling workflow. It has been 
+# designed to work fast, not produce accurate, defensible models.
+# The general idea is to calibrate a series of models and evaluate them
+# against a withheld set of data. One can then use the series of models
+# of the top models to better select a "final" model.
+
+## Not run: 
+# Running the entire set of commands can take a few minutes. This can
+# be sped up by increasing the number of cores used. The examples below use
+# one core, but you can change that argument according to your machine's
+# capabilities.
+
+library(sf)
+library(terra)
+set.seed(123)
+
+### setup data
+##############
+
+# environmental rasters
+rastFile &lt;- system.file('extdata/madClim.tif', package='enmSdmX')
+madClim &lt;- rast(rastFile)
+
+# coordinate reference system
+wgs84 &lt;- getCRS('WGS84')
+
+# lemur occurrence data
+data(lemurs)
+occs &lt;- lemurs[lemurs$species == 'Eulemur fulvus', ]
+occs &lt;- vect(occs, geom=c('longitude', 'latitude'), crs=wgs84)
+
+occs &lt;- elimCellDuplicates(occs, madClim)
+
+occEnv &lt;- extract(madClim, occs, ID = FALSE)
+occEnv &lt;- occEnv[complete.cases(occEnv), ]
+	
+# create background sites (using just 1000 to speed things up!)
+bgEnv &lt;- terra::spatSample(madClim, 3000)
+bgEnv &lt;- bgEnv[complete.cases(bgEnv), ]
+bgEnv &lt;- bgEnv[sample(nrow(bgEnv), 1000), ]
+
+# collate occurrences and background sites
+presBg &lt;- data.frame(
+   presBg = c(
+      rep(1, nrow(occEnv)),
+      rep(0, nrow(bgEnv))
+   )
+)
+
+env &lt;- rbind(occEnv, bgEnv)
+env &lt;- cbind(presBg, env)
+
+predictors &lt;- c('bio1', 'bio12')
+
+# using "vector" form of "folds" argument
+folds &lt;- dismo::kfold(env, 3) # just 3 folds (for speed)
+
+### calibrate models
+####################
+
+cores &lt;- 1 # increase this to go faster, if your computer handles it
+
+## MaxEnt
+mxx &lt;- trainByCrossValid(
+	data = env,
+	resp = 'presBg',
+	preds = c('bio1', 'bio12'),
+	folds = folds,
+	trainFx = trainMaxEnt,
+	regMult = 1:2, # too few values for valid model, but fast!
+	verbose = 1,
+	cores = cores
+)
+
+# summarize MaxEnt feature sets and regularization across folds
+summaryByCrossValid(mxx)
+
+## MaxNet
+mnx &lt;- trainByCrossValid(
+	data = env,
+	resp = 'presBg',
+	preds = c('bio1', 'bio12'),
+	folds = folds,
+	trainFx = trainMaxNet,
+	regMult = 1:2, # too few values for valid model, but fast!
+	verbose = 1,
+	cores = cores
+)
+
+# summarize MaxEnt feature sets and regularization across folds
+summaryByCrossValid(mnx)
+
+## generalized linear models
+glx &lt;- trainByCrossValid(
+	data = env,
+	resp = 'presBg',
+	preds = c('bio1', 'bio12'),
+	folds = folds,
+	trainFx = trainGLM,
+	verbose = 1,
+	cores = cores
+)
+
+# summarize GLM terms in best models
+summaryByCrossValid(glx)
+
+## generalized additive models
+gax &lt;- trainByCrossValid(
+	data = env,
+	resp = 'presBg',
+	preds = c('bio1', 'bio12'),
+	folds = folds,
+	trainFx = trainGAM,
+	verbose = 1,
+	cores = cores
+)
+
+# summarize GAM terms in best models
+summaryByCrossValid(gax)
+
+## natural splines
+nsx &lt;- trainByCrossValid(
+	data = env,
+	resp = 'presBg',
+	preds = c('bio1', 'bio12'),
+	folds = folds,
+	trainFx = trainNS,
+	df = 1:2,
+	verbose = 1,
+	cores = cores
+)
+
+# summarize NS terms in best models
+summaryByCrossValid(nsx)
+
+## boosted regression trees
+brtx &lt;- trainByCrossValid(
+	data = env,
+	resp = 'presBg',
+	preds = c('bio1', 'bio12'),
+	folds = folds,
+	trainFx = trainBRT,
+	learningRate = c(0.001, 0.0001), # too few values for reliable model(?)
+	treeComplexity = c(2, 4), # too few values for reliable model, but fast
+	minTrees = 1000,
+	maxTrees = 1500, # too small for reliable model(?), but fast
+	tryBy = 'treeComplexity',
+	anyway = TRUE, # return models that did not converge
+	verbose = 1,
+	cores = cores
+)
+
+# summarize BRT parameters across best models
+summaryByCrossValid(brtx)
+
+## random forests
+rfx &lt;- trainByCrossValid(
+	data = env,
+	resp = 'presBg',
+	preds = c('bio1', 'bio12'),
+	folds = folds,
+	trainFx = trainRF,
+	verbose = 1,
+	cores = cores
+)
+
+# summarize RF parameters in best models
+summaryByCrossValid(rfx)
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

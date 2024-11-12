@@ -1,0 +1,195 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compute_elastic_shape_mean</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute an elastic full Procrustes mean for a collection of curves</h2>
+
+<h3>Description</h3>
+
+<p>Computes an elastic full Procrustes mean for curves stored in <code>data_curves</code>.
+Constructor function for class <code>elastic_shape_mean</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compute_elastic_shape_mean(
+  data_curves,
+  knots = seq(0, 1, len = 13),
+  type = c("smooth", "polygon"),
+  penalty = 2,
+  var_type = c("smooth", "constant", "zero"),
+  pfit_method = c("smooth", "polygon"),
+  smooth_warp = function(i) 0,
+  eps = 0.05,
+  max_iter = 50,
+  verbose = FALSE,
+  cluster = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data_curves</code></td>
+<td>
+<p>list of <code>data.frame</code>s with observed points in each row. Each
+variable is one coordinate direction. If there is a variable <code>t</code>,
+it is treated as the time parametrization, not as an additional coordinate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knots</code></td>
+<td>
+<p>set of knots for the mean spline curve</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>if "smooth" linear srv-splines are used which results in a differentiable mean curve
+if "polygon" the mean will be piecewise linear.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalty</code></td>
+<td>
+<p>the penalty to use in the covariance smoothing step. use '-1' for no penalty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var_type</code></td>
+<td>
+<p>(experimental) assume "smooth", "constant" or "zero" measurement-error variance along t</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pfit_method</code></td>
+<td>
+<p>(experimental) "smooth" or "polygon"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth_warp</code></td>
+<td>
+<p>(experimental) controls the weighting of original and smoothed observations
+over the iterations, if pfit_method == "smooth".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>the algorithm stops if L2 norm of coefficients changes by less than <code>eps</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_iter</code></td>
+<td>
+<p>maximal number of iterations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>print iterations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster</code></td>
+<td>
+<p>(experimental) use the parallel package for faster computation</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of class <code>elastic_shape_mean</code>, which is a <code>list</code>
+with entries
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>"smooth" if mean was modeled using linear srv-splines, "polygon" if constant srv-splines</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefs</code></td>
+<td>
+<p>spline coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knots</code></td>
+<td>
+<p>spline knots</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variance</code></td>
+<td>
+<p>sample elastic shape variance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_curves</code></td>
+<td>
+<p>list of <code>data.frame</code>s with observed points in each row.
+First variable <code>t</code> gives the initial parametrization, second variable <code>t_optim</code>
+the optimal parametrization when the curve is aligned to the mean. Has the
+attributes 'rotation', 'scaling', 'translation' and 'dist_to_mean'. Use
+<code>get_procrustes_fit</code> to get the elastic full Procrustes fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>see <code>fit_mean</code></p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">curve &lt;- function(t){
+  rbind(t*cos(13*t), t*sin(13*t))
+}
+set.seed(18)
+data_curves &lt;- lapply(1:4, function(i){
+  m &lt;- sample(10:15, 1)
+  delta &lt;- abs(rnorm(m, mean = 1, sd = 0.05))
+  t &lt;- cumsum(delta)/sum(delta)
+  data.frame(t(curve(t)) + 0.07*t*matrix(cumsum(rnorm(2*length(delta))),
+             ncol = 2))
+})
+
+#randomly rotate and scale curves
+rand_scale &lt;- function(curve){ ( 0.5 + runif(1) ) * curve }
+rand_rotate &lt;- function(curve){
+  names &lt;- colnames(curve)
+  theta &lt;- 2*pi*runif(1)
+  mat &lt;- matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)), nrow = 2, ncol = 2)
+  curve.rot &lt;- as.matrix(curve) %*% t(mat)
+  curve.rot &lt;- as.data.frame(curve.rot)
+  colnames(curve.rot) &lt;- names
+  return(curve.rot)
+}
+data_curves &lt;- lapply(data_curves, rand_scale)
+data_curves &lt;- lapply(data_curves, rand_rotate)
+
+#compute smooth procrustes mean with 2 order penalty
+knots &lt;- seq(0,1, length = 11)
+elastic_shape_mean &lt;- compute_elastic_shape_mean(
+    data_curves,
+    knots = knots,
+    type = "smooth",
+    penalty = 2
+    )
+plot(elastic_shape_mean)
+</code></pre>
+
+
+</div>

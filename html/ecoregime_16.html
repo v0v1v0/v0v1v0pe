@@ -1,0 +1,286 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>retra_edr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Representative trajectories in Ecological Dynamic Regimes (RETRA-EDR)</h2>
+
+<h3>Description</h3>
+
+<p><code>retra_edr()</code> applies the algorithm RETRA-EDR (Sánchez-Pinillos et al., 2023)
+to identify representative trajectories summarizing the main dynamical patterns
+of an Ecological Dynamic Regime (EDR).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">retra_edr(
+  d,
+  trajectories,
+  states,
+  minSegs,
+  dSegs = NULL,
+  coordSegs = NULL,
+  traj_Segs = NULL,
+  state1_Segs = NULL,
+  state2_Segs = NULL,
+  Dim = NULL,
+  eps = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Either a symmetric matrix or an object of class <code>dist</code> containing the
+dissimilarities between each pair of states of all trajectories in the EDR.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trajectories</code></td>
+<td>
+<p>Vector indicating the trajectory or site to which each
+state in <code>d</code> belongs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>states</code></td>
+<td>
+<p>Vector of integers indicating the order of the states in <code>d</code> for
+each trajectory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minSegs</code></td>
+<td>
+<p>Integer indicating the minimum number of segments in a region
+of the EDR represented by a segment of the representative trajectory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dSegs</code></td>
+<td>
+<p>Either a symmetric matrix or an object of class <code>dist</code> containing
+the dissimilarities between every pair of trajectory segments (see Details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coordSegs</code></td>
+<td>
+<p>Matrix containing the coordinates of trajectory segments (rows)
+in each axis (columns) of an ordination space (see Details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>traj_Segs</code></td>
+<td>
+<p>Vector indicating the trajectory to which each segment in <code>dSeg</code>
+and/or <code>coordSegs</code> belongs. Only required if <code>dSegs</code> or <code>coordSegs</code> are not <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>state1_Segs</code></td>
+<td>
+<p>Vector indicating the initial state of each segment in <code>dSegs</code>
+and/or <code>coordSegs</code> according to the values given in <code>states</code>. Only required if
+<code>dSegs</code> or <code>coordSegs</code> are not <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>state2_Segs</code></td>
+<td>
+<p>Vector indicating the final state of each segment in <code>dSegs</code>
+and/or <code>coordSegs</code> according to the values given in <code>states</code>. Only required if
+<code>dSegs</code> or <code>coordSegs</code> are not <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dim</code></td>
+<td>
+<p>Optional integer indicating the number of axes considered to
+partition the segment space and generate a k-d tree. By default (<code>Dim = NULL</code>),
+all axes are considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>Numeric value indicating the minimum length in the axes of the segment
+space to be partitioned when the k-d tree is generated. If <code>eps = 0</code> (default),
+partitions are made regardless of the size.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The algorithm RETRA-EDR is based on a partition-and-group approach by which it
+identifies regions densely crossed by ecological trajectories in an EDR, selects
+a representative segment in each dense region, and joins the representative
+segments by a set of artificial <code>Links</code> to generate a network of representative
+trajectories. For that, RETRA-EDR splits the trajectories of the EDR into
+segments and uses an ordination space generated from a matrix containing the
+dissimilarities between trajectory segments. Dense regions are identified by
+applying a k-d tree to the ordination space.
+</p>
+<p>By default, RETRA-EDR calculates segment dissimilarities following the approach
+by De Cáceres et al. (2019) and applies metric multidimensional scaling (mMDS,
+Borg and Groenen, 2005) to generate the ordination space. It is possible to use
+other dissimilarity metrics and/or ordination methods and reduce the computational
+time by indicating the dissimilarity matrix and the coordinates of the segments
+in the ordination space through the arguments <code>dSegs</code> and <code>coordSegs</code>, respectively.
+</p>
+
+<ul>
+<li>
+<p> If <code>!is.null(dSegs)</code> and <code>is.null(coordSegs)</code>, RETRA-EDR is computed by
+applying mMDS to <code>dSegs</code>.
+</p>
+</li>
+<li>
+<p> If <code>!is.null(dSegs)</code> and <code>!is.null(coordSegs)</code>, RETRA-EDR is directly computed
+from the coordinates provided in <code>coordSegs</code> and representative segments are
+identified using <code>dSegs</code>. <code>coordSegs</code> should be calculated by the user from
+<code>dSegs</code>.
+</p>
+</li>
+<li>
+<p> If <code>is.null(dSegs)</code> and <code>!is.null(coordSegs)</code> (not recommended), RETRA-EDR
+is directly computed from the coordinates provided in <code>coordSegs</code>. As <code>dSegs</code>
+is not provided, <code>retra_edr()</code> assumes that the ordination space is metric and
+identifies representative segments using the Euclidean distance.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>The function <code>retra_edr()</code> returns an object of class <code>RETRA</code>, which is a list
+of length equal to the number of representative trajectories identified. For
+each trajectory, the following information is returned:
+</p>
+
+<dl>
+<dt><code>minSegs</code></dt>
+<dd>
+<p>Value of the <code>minSegs</code> parameter.</p>
+</dd>
+<dt><code>Segments</code></dt>
+<dd>
+<p>Vector of strings including the sequence of segments forming the
+representative trajectory. Each segment is identified by a string of the form
+<code>traj[st1-st2]</code>, where <code>traj</code> is the identifier of the original trajectory to
+which the segment belongs and <code>st1</code> and <code>st2</code> are identifiers of the initial
+and final states defining the segment.</p>
+</dd>
+<dt><code>Size</code></dt>
+<dd>
+<p>Numeric value indicating the number of states forming the representative
+trajectory.</p>
+</dd>
+<dt><code>Length</code></dt>
+<dd>
+<p>Numeric value indicating the length of the representative trajectory,
+calculated as the sum of the dissimilarities in <code>d</code> between every pair of
+consecutive states.</p>
+</dd>
+<dt><code>Link_distance</code></dt>
+<dd>
+<p>Data frame of two columns indicating artificial links between
+representative segments (<code>Link</code>) and the dissimilarity between the connected
+states (<code>Distance</code>). When two representative segments are linked by a common
+state or by two consecutive states of the same trajectory, the link distance
+is zero or equal to the length of a real segment, respectively. In both cases,
+the link is not considered in the returned data frame.</p>
+</dd>
+<dt><code>Seg_density</code></dt>
+<dd>
+<p>Data frame of two columns and one row for each representative
+segment. <code>Density</code> contains the number of segments in the EDR that is represented
+by each segment of the representative trajectory. <code>kdTree_depth</code> contains the
+depth of the k-d tree for each leaf represented by the corresponding segment.
+That is, the number of partitions of the ordination space until finding a region
+with <code>minSegs</code> segments or less.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Martina Sánchez-Pinillos
+</p>
+
+
+<h3>References</h3>
+
+<p>Borg, I., &amp; Groenen, P. J. F. (2005). Modern Multidimensional Scaling (2nd ed.).
+Springer.
+</p>
+<p>De Cáceres, M, Coll L, Legendre P, Allen RB, Wiser SK, Fortin MJ,
+Condit R &amp; Hubbell S. (2019). Trajectory analysis in community ecology. Ecological
+Monographs.
+</p>
+<p>Sánchez-Pinillos, M., Kéfi, S., De Cáceres, M., Dakos, V. 2023. Ecological Dynamic
+Regimes: Identification, characterization, and comparison. <em>Ecological Monographs</em>.
+<a href="doi:10.1002/ecm.1589">doi:10.1002/ecm.1589</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary()</code> for summarizing the characteristics of the representative
+trajectories.
+</p>
+<p><code>plot()</code> for plotting representative trajectories in an ordination space
+representing the state space of the EDR.
+</p>
+<p><code>define_retra()</code> for defining representative trajectories from a subset of
+segments or trajectory features.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example 1 -----------------------------------------------------------------
+# Identify representative trajectories from state dissimilarities
+
+# Calculate state dissimilarities (Bray-Curtis) from species abundances
+abundance &lt;- data.frame(EDR_data$EDR1$abundance)
+d &lt;- vegan::vegdist(abundance[, -c(1:3)], method = "bray")
+
+# Identify the trajectory (or site) and states in d
+trajectories &lt;- abundance$traj
+states &lt;- as.integer(abundance$state)
+
+# Compute RETRA-EDR
+RT1 &lt;- retra_edr(d = d, trajectories = trajectories, states = states,
+                 minSegs = 5)
+
+# Example 2 -----------------------------------------------------------------
+# Identify representative trajectories from segment dissimilarities
+
+# Calculate segment dissimilarities using the Hausdorff distance
+dSegs &lt;- ecotraj::segmentDistances(d = d, sites = trajectories,
+                                    surveys = states,
+                                    distance.type = "Hausdorff")
+dSegs &lt;- dSegs$Dseg
+
+# Identify the trajectory (or site) and states in dSegs:
+# Split the labels of dSegs (traj[st1-st2]) into traj, st1, and st2
+seg_components &lt;- strsplit(gsub("\\]", "", gsub("\\[", "-", labels(dSegs))), "-")
+traj_Segs &lt;- sapply(seg_components, "[", 1)
+state1_Segs &lt;- as.integer(sapply(seg_components, "[", 2))
+state2_Segs &lt;- as.integer(sapply(seg_components, "[", 3))
+
+# Compute RETRA-EDR
+RT2 &lt;- retra_edr(d = d, trajectories = trajectories, states = states, minSegs = 5,
+                dSegs = dSegs, traj_Segs = traj_Segs,
+                state1_Segs = state1_Segs, state2_Segs = state2_Segs)
+
+
+</code></pre>
+
+
+</div>

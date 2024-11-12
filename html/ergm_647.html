@@ -1,0 +1,787 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Exponential-Family Random Graph Models</h2>
+
+<h3>Description</h3>
+
+<p><code>ergm()</code> is used to fit exponential-family random graph
+models (ERGMs), in which
+the probability of a given network, <code class="reqn">y</code>, on a set of nodes is
+<code class="reqn">h(y) \exp\{\eta(\theta) \cdot
+g(y)\}/c(\theta)</code>, where
+<code class="reqn">h(y)</code> is the reference measure (usually <code class="reqn">h(y)=1</code>),
+<code class="reqn">g(y)</code> is a vector of network statistics for <code class="reqn">y</code>,
+<code class="reqn">\eta(\theta)</code> is a natural parameter vector of the same
+length (with <code class="reqn">\eta(\theta)=\theta</code> for most terms), and <code class="reqn">c(\theta)</code> is the
+normalizing constant for the distribution.
+<code>ergm()</code> can return a maximum pseudo-likelihood
+estimate, an approximate maximum likelihood estimate based on a Monte
+Carlo scheme, or an approximate contrastive divergence estimate based
+on a similar scheme.
+(For an overview of the package (Hunter et al. 2008; Krivitsky et al. 2023), see <a href="https://CRAN.R-project.org/package=ergm"><span class="pkg">ergm</span></a>.)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm(
+  formula,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  obs.constraints = ~. - observed,
+  offset.coef = NULL,
+  target.stats = NULL,
+  eval.loglik = getOption("ergm.eval.loglik"),
+  estimate = c("MLE", "MPLE", "CD"),
+  control = control.ergm(),
+  verbose = FALSE,
+  ...,
+  basis = ergm.getnetwork(formula),
+  newnetwork = c("one", "all", "none")
+)
+
+is.ergm(object)
+
+## S3 method for class 'ergm'
+is.na(x)
+
+## S3 method for class 'ergm'
+anyNA(x, ...)
+
+## S3 method for class 'ergm'
+nobs(object, ...)
+
+## S3 method for class 'ergm'
+print(x, digits = max(3, getOption("digits") - 3), ...)
+
+## S3 method for class 'ergm'
+vcov(object, sources = c("all", "model", "estimation"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>An <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> <code>formula</code>, of the form
+<code>y ~ &lt;model terms&gt;</code>, where <code>y</code> is a
+<code>network</code> object or a matrix that can be
+coerced to a <code>network</code> object.  For the
+details on the possible <code>&lt;model terms&gt;</code>, see
+<code>ergmTerm</code> and Morris, Handcock and Hunter (2008)
+for binary ERGM terms and Krivitsky (2012) for valued ERGM terms
+(terms for weighted edges).  To create a
+<code>network</code> object in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>, use the
+<code>network()</code> function, then add nodal attributes to it using
+the <code>%v%</code> operator if necessary. Enclosing a model term in
+<code>offset()</code> fixes its value to one specified in
+<code>offset.coef</code>.  (A second argument—a logical or numeric
+index vector—can be used to select <em>which</em> of the parameters
+within the term are offsets.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>Either a character string, a formula, or <code>NULL</code> (the default), to specify the response attributes and whether the ERGM is binary or valued. Interpreted as follows: </p>
+
+<dl>
+<dt><code>NULL</code></dt>
+<dd>
+<p>Model simple presence or absence, via a binary ERGM.</p>
+</dd>
+<dt>character string</dt>
+<dd>
+<p>The name of the edge attribute whose value is to be modeled. Type of ERGM will be determined by whether the attribute is <code>logical</code> (<code>TRUE</code>/<code>FALSE</code>) for binary or <code>numeric</code> for valued.</p>
+</dd>
+<dt>a formula</dt>
+<dd>
+<p>must be of the form <code>NAME~EXPR|TYPE</code> (with <code>|</code> being literal). <code>EXPR</code> is evaluated in the formula's environment with the network's edge attributes accessible as variables. The optional <code>NAME</code> specifies the name of the edge attribute into which the results should be stored, with the default being a concise version of <code>EXPR</code>. Normally, the type of ERGM is determined by whether the result of evaluating <code>EXPR</code> is logical or numeric, but the optional <code>TYPE</code> can be used to override by specifying a scalar of the type involved (e.g., <code>TRUE</code> for binary and <code>1</code> for valued).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>A one-sided formula specifying
+the reference measure (<code class="reqn">h(y)</code>) to be used.
+See help for ERGM reference measures implemented in the
+<strong>ergm</strong> package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraints</code></td>
+<td>
+<p>A formula specifying one or more constraints
+on the support of the distribution of the networks being modeled. Multiple constraints
+may be given, separated by “+” and “-” operators. See
+<code>ergmConstraint</code> for the detailed explanation of
+their semantics and also for an indexed list of the constraints visible to the <span class="pkg">ergm</span> package.
+</p>
+<p>The default is to have no constraints except those provided through
+the <code>ergmlhs</code> API.
+</p>
+<p>Together with the model terms in the formula and the reference measure, the constraints
+define the distribution of networks being modeled.
+</p>
+<p>It is also possible to specify a proposal function directly either
+by passing a string with the function's name (in which case,
+arguments to the proposal should be specified through the
+<code>MCMC.prop.args</code> argument to the relevant control function, or
+by giving it on the LHS of the hints formula to <code>MCMC.prop</code>
+argument to the control function. This will override
+the one chosen automatically.
+</p>
+<p>Note that not all possible combinations of constraints and reference
+measures are supported. However, for relatively simple constraints
+(i.e., those that simply permit or forbid specific dyads or sets of
+dyads from changing), arbitrary combinations should be possible.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obs.constraints</code></td>
+<td>
+<p>A one-sided formula specifying one or more
+constraints or other modification <em>in addition</em> to those
+specified by <code>constraints</code>, following the same syntax as the
+<code>constraints</code> argument.
+</p>
+<p>This allows the domain of the integral in the numerator of the
+partially obseved network face-value likelihoods of Handcock and
+Gile (2010) and Karwa et al. (2017) to be specified explicitly.
+</p>
+<p>The default is to constrain the integral to only integrate over
+the missing dyads (if present), after incorporating constraints
+provided through the <code>ergmlhs</code> API.
+</p>
+<p>It is also possible to specify a proposal function directly by
+passing a string with the function's name of the <code>obs.MCMC.prop</code>
+argument to the relevant control function. In that case,
+arguments to the proposal should be specified through the
+<code>obs.prop.args</code> argument to the relevant control function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset.coef</code></td>
+<td>
+<p>A vector of coefficients for the offset terms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target.stats</code></td>
+<td>
+<p>vector of "observed network statistics,"
+if these statistics are for some reason different than the
+actual statistics of the network on the left-hand side of
+<code>formula</code>.
+Equivalently, this vector is the mean-value parameter values for the
+model.  If this is given, the algorithm finds the natural
+parameter values corresponding to these mean-value parameters.
+If <code>NULL</code>, the mean-value parameters used are the observed
+statistics of the network in the formula.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eval.loglik</code></td>
+<td>
+<p>Logical:  For dyad-dependent models, if TRUE, use bridge
+sampling to evaluate the log-likelihoood associated with the
+fit. Has no effect for dyad-independent models.
+Since bridge sampling takes additional time, setting to FALSE may
+speed performance if likelihood values (and likelihood-based
+values like AIC and BIC) are not needed. Can be set globally via <code>option(ergm.eval.loglik=...)</code>, which is set to <code>TRUE</code> when the package is loaded. (See <code>options?ergm</code>.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>If "MPLE," then the maximum pseudolikelihood estimator
+is returned.  If "MLE" (the default), then an approximate maximum likelihood
+estimator is returned.  For certain models, the MPLE and MLE are equivalent,
+in which case this argument is ignored.  (To force MCMC-based approximate
+likelihood calculation even when the MLE and MPLE are the same, see the
+<code>force.main</code> argument of <code>control.ergm()</code>. If "CD" (<em>EXPERIMENTAL</em>),
+the Monte-Carlo contrastive divergence estimate is returned. )
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters for algorithm tuning,
+typically constructed with <code>control.ergm()</code>. Its documentation
+gives the the list of recognized control parameters and their
+meaning. The more generic utility <code>snctrl()</code> (StatNet ConTRoL)
+also provides argument completion for the available control
+functions and limited argument name checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional
+arguments, to be passed to lower-level functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>basis</code></td>
+<td>
+<p>a value (usually a <code>network</code>) to override the LHS of the formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newnetwork</code></td>
+<td>
+<p>One of <code>"one"</code> (the default), <code>"all"</code>, or
+<code>"none"</code> (or, equivalently, <code>FALSE</code>), specifying whether the
+network(s) from the last iteration of the MCMC sampling should be
+returned as a part of the fit as a elements <code>newnetwork</code> and
+<code>newnetworks</code>. (See their entries in section Value below for
+details.) Partial matching is supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an <code>ergm</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x, digits</code></td>
+<td>
+<p>See <code>print()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sources</code></td>
+<td>
+<p>For the <code>vcov</code> method, specify whether to return
+the covariance matrix from the ERGM model, the estimation
+process, or both combined.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>ergm()</code> returns an object of <code>ergm</code> that is a list
+consisting of the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>The Monte Carlo maximum likelihood estimate
+of <code class="reqn">\theta</code>, the vector of coefficients for the model
+parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample</code></td>
+<td>
+<p>The <code class="reqn">n\times p</code> matrix of network statistics,
+where <code class="reqn">n</code> is the
+sample size and <code class="reqn">p</code> is the number of network statistics specified in the
+model, generated by the last iteration of the MCMC-based likelihood maximization routine. These statistics are centered with respect to the observed statistics or <code>target.stats</code>, unless missing data MLE is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample.obs</code></td>
+<td>
+<p>As <code>sample</code>, but for the constrained sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>The number of Newton-Raphson iterations required
+before convergence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMCtheta</code></td>
+<td>
+<p>The value of <code class="reqn">\theta</code> used to produce the Markov chain
+Monte Carlo sample.  As long as the Markov chain mixes sufficiently
+well, <code>sample</code> is roughly a random sample from the distribution
+of network statistics specified by the model with the parameter equal
+to <code>MCMCtheta</code>.  If <code>estimate="MPLE"</code> then
+<code>MCMCtheta</code> equals the MPLE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglikelihood</code></td>
+<td>
+<p>The approximate change in log-likelihood
+in the last iteration.
+The value is only approximate because it is estimated based
+on the MCMC random sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gradient</code></td>
+<td>
+<p>The value of the gradient vector of the approximated
+loglikelihood function, evaluated at the maximizer.  This vector
+should be very close to zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covar</code></td>
+<td>
+<p>Approximate covariance matrix for the MLE, based on the inverse
+Hessian of the approximated loglikelihood evaluated at the maximizer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>failure</code></td>
+<td>
+<p>Logical:  Did the MCMC estimation fail?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p>Network passed on the left-hand side of <code>formula</code>. If <code>target.stats</code> are passed, it is replaced by the network returned by <code>san()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newnetworks</code></td>
+<td>
+<p>If argument <code>newnetwork</code> is <code>"all"</code>, a list of the final networks at the end of the MCMC
+simulation, one for each thread.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newnetwork</code></td>
+<td>
+<p>If argument <code>newnetwork</code> is <code>"one"</code> or <code>"all"</code>, the first (possibly only) element of <code>newnetworks</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.init</code></td>
+<td>
+<p>The initial value of <code class="reqn">\theta</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est.cov</code></td>
+<td>
+<p>The covariance matrix of the model statistics in the final MCMC sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.hist, steplen.hist, stats.hist, stats.obs.hist</code></td>
+<td>
+
+<p>For the MCMLE method, the history of coefficients, Hummel step lengths, and average model statistics for each iteration..
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>The control list passed to the call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>etamap</code></td>
+<td>
+<p>The set of functions mapping the true parameter theta
+to the canonical parameter eta (irrelevant except in a curved exponential
+family model)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>The original <code>formula</code> passed to <code>ergm()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target.stats</code></td>
+<td>
+<p>The target.stats used during estimation (passed through from the Arguments)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target.esteq</code></td>
+<td>
+<p>Used for curved models to preserve the target mean values of the curved terms. It is identical to target.stats for non-curved models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraints</code></td>
+<td>
+<p>Constraints used during estimation (passed through from the Arguments)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>The reference measure used during estimation (passed through from the Arguments)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>The estimation method used (passed through from the Arguments).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+<p>vector of logical telling which model parameters are to be set
+at a fixed value (i.e., not estimated).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>If <code>control$drop=TRUE</code>, a numeric vector indicating which terms were dropped due to to extreme values of the
+corresponding statistics on the observed network, and how:
+</p>
+
+<dl>
+<dt><code>0</code></dt>
+<dd>
+<p>The term was not dropped.</p>
+</dd>
+<dt><code>-1</code></dt>
+<dd>
+<p>The term was at its minimum and the coefficient was fixed at
+<code>-Inf</code>.</p>
+</dd>
+<dt><code>+1</code></dt>
+<dd>
+<p>The term was at its maximum and the coefficient was fixed at
+<code>+Inf</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimable</code></td>
+<td>
+<p>A logical vector indicating which terms could not be
+estimated due to a <code>constraints</code> constraint fixing that term at a
+constant value.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>info</code></td>
+<td>
+<p>A list with miscellaneous information that would typically be accessed by the user via methods; in general, it should not be accessed directly. Current elements include: </p>
+
+<dl>
+<dt><code>terms_dind</code></dt>
+<dd>
+<p>Logical indicator of whether the model terms are all dyad-independent.</p>
+</dd>
+<dt><code>space_dind</code></dt>
+<dd>
+<p>Logical indicator of whether the sample space (constraints) are all dyad-independent.</p>
+</dd>
+<dt><code>n_info_dyads</code></dt>
+<dd>
+<p>Number of “informative” dyads: those that are observed (not missing) <em>and</em> not constrained by sample space constraints; one of the measures of sample size.</p>
+</dd>
+<dt><code>obs</code></dt>
+<dd>
+<p>Logical indicator of whether an observational (missing data) process was involved in estimation.</p>
+</dd>
+<dt><code>valued</code></dt>
+<dd>
+<p>Logical indicator of whether the model is valued.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>null.lik</code></td>
+<td>
+<p>Log-likelihood of the null model. Valid only for
+unconstrained models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mle.lik</code></td>
+<td>
+<p>The approximate log-likelihood for the MLE.
+The value is only approximate because it is estimated based
+on the MCMC random sample.</p>
+</td>
+</tr>
+</table>
+<h3>Methods (by generic)</h3>
+
+
+<ul>
+<li> <p><code>is.na(ergm)</code>: Return <code>TRUE</code> if the ERGM was fit to a partially observed network and/or an observational process, such as missing (<code>NA</code>) dyads.
+</p>
+</li>
+<li> <p><code>anyNA(ergm)</code>: Alias to the <code>is.na()</code> method.
+</p>
+</li>
+<li> <p><code>nobs(ergm)</code>: Return the number of informative dyads of a model fit.
+</p>
+</li>
+<li> <p><code>print(ergm)</code>: Print the call, the estimate, and the method used to obtain it.
+</p>
+</li>
+<li> <p><code>vcov(ergm)</code>: extracts the variance-covariance matrix of
+parameter estimates.
+</p>
+</li>
+</ul>
+<h3>Notes on model specification</h3>
+
+<p>Although each of the statistics in a given model is a summary
+statistic for the entire network, it is rarely necessary to
+calculate statistics for an entire network
+in a proposed Metropolis-Hastings step.
+Thus, for example, if the triangle term is included in the model,
+a census of all triangles in the observed network is never
+taken; instead, only the change in the number of triangles
+is recorded for each edge toggle.
+</p>
+<p>In the implementation of <code>ergm()</code>, the model is
+initialized in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>, then all the model information is passed to a C
+program that generates the sample of network statistics using MCMC.
+This sample is then returned to <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>, which then uses one of several
+algorithms, selected by <code style="white-space: pre;">⁠main.method=⁠</code> <code>control.ergm()</code> parameter
+to update the estimate.
+</p>
+<p>The mechanism for proposing new networks for the MCMC sampling
+scheme, which is a Metropolis-Hastings algorithm, depends on
+two things:  The <code>constraints</code>, which define the set of possible
+networks that could be proposed in a particular Markov chain step,
+and the weights placed on these possible steps by the
+proposal distribution.  The former may be controlled using the
+<code>constraints</code> argument described above.  The latter may
+be controlled using the <code>prop.weights</code> argument to the
+<code>control.ergm()</code> function.
+</p>
+<p>The package is designed so that the user could conceivably add additional
+proposal types.
+</p>
+
+
+<h3>References</h3>
+
+<p>Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008).
+“ergm: A Package to Fit, Simulate and Diagnose Exponential-Family Models for Networks.”
+<em>Journal of Statistical Software</em>, <b>24</b>(3), 1–29.
+<a href="https://doi.org/10.18637/jss.v024.i03">doi:10.18637/jss.v024.i03</a>.<br><br> Krivitsky PN, Hunter DR, Morris M, Klumb C (2023).
+“ergm 4: New Features for Analyzing Exponential-Family Random Graph Models.”
+<em>Journal of Statistical Software</em>, <b>105</b>(6), 1–44.
+<a href="https://doi.org/10.18637/jss.v105.i06">doi:10.18637/jss.v105.i06</a>.
+</p>
+<p>Admiraal R, Handcock MS (2007).
+<a href="https://CRAN.R-project.org/package=networksis"><span class="pkg">networksis</span></a>: Simulate bipartite graphs with fixed
+marginals through sequential importance sampling.
+Statnet Project, Seattle, WA.
+Version 1. <a href="https://statnet.org">https://statnet.org</a>.
+</p>
+<p>Bender-deMoll S, Morris M, Moody J (2008).
+Prototype Packages for Managing and Animating Longitudinal
+Network Data: <span class="pkg">dynamicnetwork</span> and <span class="pkg">rSoNIA</span>.
+<em>Journal of Statistical Software</em>, 24(7).
+<a href="https://doi.org/10.18637/jss.v024.i07">doi:10.18637/jss.v024.i07</a>
+</p>
+<p>Butts CT (2007).
+<a href="https://CRAN.R-project.org/package=sna"><span class="pkg">sna</span></a>: Tools for Social Network Analysis.
+R package version 2.3-2. <a href="https://cran.r-project.org/package=sna">https://cran.r-project.org/package=sna</a>.
+</p>
+<p>Butts CT (2008).
+<a href="https://CRAN.R-project.org/package=network"><span class="pkg">network</span></a>: A Package for Managing Relational Data in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.
+<em>Journal of Statistical Software</em>, 24(2).
+<a href="https://doi.org/10.18637/jss.v024.i02">doi:10.18637/jss.v024.i02</a>
+</p>
+<p>Butts C (2015).
+<a href="https://CRAN.R-project.org/package=network"><span class="pkg">network</span></a>: The Statnet Project (https://statnet.org). R package version 1.12.0, <a href="https://cran.r-project.org/package=network">https://cran.r-project.org/package=network</a>.
+</p>
+<p>Goodreau SM, Handcock MS, Hunter DR, Butts CT, Morris M (2008a).
+A <a href="https://CRAN.R-project.org/package=statnet"><span class="pkg">statnet</span></a> Tutorial.
+<em>Journal of Statistical Software</em>, 24(8).
+<a href="https://doi.org/10.18637/jss.v024.i08">doi:10.18637/jss.v024.i08</a>
+</p>
+<p>Goodreau SM, Kitts J, Morris M (2008b).
+Birds of a Feather, or Friend of a Friend? Using Exponential
+Random Graph Models to Investigate Adolescent Social Networks.
+<em>Demography</em>, 45, in press.
+</p>
+<p>Handcock, M. S. (2003)
+<em>Assessing Degeneracy in Statistical Models of Social Networks</em>,
+Working Paper #39,
+Center for Statistics and the Social Sciences,
+University of Washington.
+<a href="https://csss.uw.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks">https://csss.uw.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks</a>
+</p>
+<p>Handcock MS (2003b).
+<a href="https://CRAN.R-project.org/package=degreenet"><span class="pkg">degreenet</span></a>: Models for Skewed Count Distributions Relevant
+to Networks.
+Statnet Project, Seattle, WA.
+Version 1.0, <a href="https://statnet.org">https://statnet.org</a>.
+</p>
+<p>Handcock MS and Gile KJ (2010). Modeling Social Networks from Sampled Data. <em>Annals of Applied Statistics</em>, 4(1), 5-25. <a href="https://doi.org/10.1214/08-AOAS221">doi:10.1214/08-AOAS221</a>
+</p>
+<p>Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
+<a href="https://CRAN.R-project.org/package=ergm"><span class="pkg">ergm</span></a>: A Package to Fit, Simulate and Diagnose
+Exponential-Family Models for Networks.
+Statnet Project, Seattle, WA.
+Version 2, <a href="https://statnet.org">https://statnet.org</a>.
+</p>
+<p>Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003b).
+<a href="https://CRAN.R-project.org/package=statnet"><span class="pkg">statnet</span></a>: Software Tools for the Statistical Modeling of
+Network Data.
+Statnet Project, Seattle, WA.
+Version 2, <a href="https://statnet.org">https://statnet.org</a>.
+</p>
+<p>Hunter, D. R. and Handcock, M. S. (2006)
+<em>Inference in curved exponential family models for networks</em>,
+Journal of Computational and Graphical Statistics.
+</p>
+<p>Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008b).
+<a href="https://CRAN.R-project.org/package=ergm"><span class="pkg">ergm</span></a>: A Package to Fit, Simulate and Diagnose
+Exponential-Family Models for Networks.
+<em>Journal of Statistical Software</em>, 24(3).
+<a href="https://doi.org/10.18637/jss.v024.i03">doi:10.18637/jss.v024.i03</a>
+</p>
+<p>Karwa V, Krivitsky PN, and Slavkovi\'c AB (2017). Sharing Social Network
+Data: Differentially Private Estimation of Exponential-Family Random
+Graph Models. <em>Journal of the Royal Statistical Society, Series
+C</em>, 66(3):481–500. <a href="https://doi.org/10.1111/rssc.12185">doi:10.1111/rssc.12185</a>
+</p>
+<p>Krivitsky PN (2012). Exponential-Family Random Graph Models for Valued
+Networks. <em>Electronic Journal of Statistics</em>, 2012, 6,
+1100-1128. <a href="https://doi.org/10.1214/12-EJS696">doi:10.1214/12-EJS696</a>
+</p>
+<p>Morris M, Handcock MS, Hunter DR (2008).
+Specification of Exponential-Family Random Graph Models:
+Terms and Computational Aspects.
+<em>Journal of Statistical Software</em>, 24(4).
+<a href="https://doi.org/10.18637/jss.v024.i04">doi:10.18637/jss.v024.i04</a>
+</p>
+<p>Snijders, T.A.B. (2002),
+Markov Chain Monte Carlo Estimation of Exponential Random Graph Models.
+Journal of Social Structure.
+Available from
+<a href="https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf">https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>network</code>, <code>%v%</code>, <code>%n%</code>, <code>ergmTerm</code>, <code>ergmMPLE</code>,
+<code>summary.ergm()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#
+# load the Florentine marriage data matrix
+#
+data(flo)
+#
+# attach the sociomatrix for the Florentine marriage data
+# This is not yet a network object.
+#
+flo
+#
+# Create a network object out of the adjacency matrix
+#
+flomarriage &lt;- network(flo,directed=FALSE)
+flomarriage
+#
+# print out the sociomatrix for the Florentine marriage data
+#
+flomarriage[,]
+#
+# create a vector indicating the wealth of each family (in thousands of lira) 
+# and add it as a covariate to the network object
+#
+flomarriage %v% "wealth" &lt;- c(10,36,27,146,55,44,20,8,42,103,48,49,10,48,32,3)
+flomarriage
+#
+# create a plot of the social network
+#
+plot(flomarriage)
+#
+# now make the vertex size proportional to their wealth
+#
+plot(flomarriage, vertex.cex=flomarriage %v% "wealth" / 20, main="Marriage Ties")
+#
+# Use 'data(package = "ergm")' to list the data sets in a
+#
+data(package="ergm")
+#
+# Load a network object of the Florentine data
+#
+data(florentine)
+#
+# Fit a model where the propensity to form ties between
+# families depends on the absolute difference in wealth
+#
+gest &lt;- ergm(flomarriage ~ edges + absdiff("wealth"))
+summary(gest)
+#
+# add terms for the propensity to form 2-stars and triangles
+# of families 
+#
+gest &lt;- ergm(flomarriage ~ kstar(1:2) + absdiff("wealth") + triangle)
+summary(gest)
+
+# import synthetic network that looks like a molecule
+data(molecule)
+# Add a attribute to it to mimic the atomic type
+molecule %v% "atomic type" &lt;- c(1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,3,3,3,3)
+#
+# create a plot of the social network
+# colored by atomic type
+#
+plot(molecule, vertex.col="atomic type",vertex.cex=3)
+
+# measure tendency to match within each atomic type
+gest &lt;- ergm(molecule ~ edges + kstar(2) + triangle + nodematch("atomic type"))
+summary(gest)
+
+# compare it to differential homophily by atomic type
+gest &lt;- ergm(molecule ~ edges + kstar(2) + triangle
+                        + nodematch("atomic type",diff=TRUE))
+summary(gest)
+
+
+# Extract parameter estimates as a numeric vector:
+coef(gest)
+# Sources of variation in parameter estimates:
+vcov(gest, sources="model")
+vcov(gest, sources="estimation")
+vcov(gest, sources="all") # the default
+
+</code></pre>
+
+
+</div>

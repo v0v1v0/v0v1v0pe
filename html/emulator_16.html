@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>makeinputfiles</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Makes input files for condor runs of goldstein</h2>
+
+<h3>Description</h3>
+
+<p>Wrapper to create arbitrary numbers of condor-compatible goldstein
+runnable input files.  Function <code>sample.from.exp.est()</code> samples from the
+appropriate distribution.
+</p>
+<p>This function is not designed for the general user: it is tailored for
+use in the environment of the National Oceanographic Centre, with a
+particular version of the specialist model “goldstein”.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">makeinputfiles(number.of.runs = 100, gaussian = TRUE,
+   directoryname="~/goldstein/genie-cgoldstein/", filename="QWERTYgoin",
+   expert.estimates, area.outside=0.05)
+sample.from.exp.est(number.of.runs, expert.estimates,
+   gaussian=TRUE, area.outside=0.05)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>number.of.runs</code></td>
+<td>
+<p>Number of condor runs to generate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gaussian</code></td>
+<td>
+<p>Boolean variable with default TRUE meaning use a lognormal
+distribution, and FALSE meaning a uniform distribution.  In the case
+of a Gaussian distribution, only the <code>upper</code> and <code>lower</code>
+columns are used: here these values are interpreted as the
+<code class="reqn">2.5\%\rm{ile}</code> and <code class="reqn">97.5\%\rm{ile}</code>
+respectively and a lognormal distribution with the appropriate
+parameters is used.
+</p>
+<p>Note that this approach discards the “best” value, but OTOH it
+seemed to me that my expert chose his “best” value as an arithmetic
+(sic) mean of his high and low values, and thus has limited
+information content.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>directoryname</code></td>
+<td>
+<p>Name of directory to which input files are
+written</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>Basename of input files</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expert.estimates</code></td>
+<td>
+<p>Dataframe holding expert estimates (supplied
+by a climate scientist).   Use <code>data(expert.estimates)</code> to load
+a sample dataset that was supplied by Bob Marsh</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>area.outside</code></td>
+<td>
+<p>Area of tails of the lognormal distribution (on a
+log scale) that fall  outside the expert ranges.  Default value of 0.05
+means interpret <code>a</code> and <code>b</code> as the <code class="reqn">2.5\%\rm{ile}</code>
+and <code class="reqn">97.5\%\rm{ile}</code> respectively.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function creates condor-compatible goldstein
+runnable input files that are placed in directory
+<code>/working/jrd/sat/rksh/goldstein</code>.  The database
+<code>results.table</code> is made using the shell scripts currently in
+<code>/users/sat/rksh/goldstein/emulator</code>.
+</p>
+<p>Note that <code>makeinputfiles(number.of.runs=n)</code> creates files
+numbered from <code class="reqn">0</code> to <code class="reqn">n-1</code>: so be careful of
+off-by-one errors.  It's probably best to avoid reference to the
+“first”, “second” file etc.  Instead, refer to files
+using their suffix number.  Note that the suffix number is not padded
+with zeros due to the requirements of Condor.
+</p>
+<p>The suffix number of a file matches the name of its <code>tmp</code> file
+(so, for example, file with suffix number 15 writes output to files
+<code>tmp/tmp.15</code> and <code>tmp/tmp.avg.15</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns zero on successful completion.  The
+function is used for its side-effect of creating a bunch of Goldstein
+input files.  </p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>See Also</h3>
+
+<p><code>expert.estimates</code>, <code>results.table</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+  data(expert.estimates) system("mkdir /users/sat/rksh/tmp",ignore=TRUE)
+  makeinputfiles(number.of.runs = 100, gaussian = TRUE,
+  directoryname="~/tmp/", expert.estimate=expert.estimates)
+
+## End(Not run)
+data(results.table)
+data(expert.estimates)
+
+
+output.col &lt;- 25
+wanted.row &lt;- 1:27
+wanted.cols &lt;- c(2:9,12:19)
+
+val &lt;- results.table[wanted.row , wanted.cols]
+
+mins  &lt;- expert.estimates$low 
+maxes &lt;- expert.estimates$high
+
+normalize &lt;- function(x){(x-mins)/(maxes-mins)}
+unnormalize &lt;- function(x){mins + (maxes-mins)*x}
+
+jj &lt;- t(apply(val,1,normalize))
+
+jj &lt;- as.data.frame(jj)
+names(jj) &lt;- names(val)
+val &lt;- as.matrix(jj)
+
+scales.optim &lt;- exp(c( -2.63, -3.03, -2.24, 2.61,
+-1.65, -3.13, -3.52, 3.16, -3.32, -2.53, -0.25,  -2.55, -4.98, -1.59,
+-4.40, -0.81))
+
+d  &lt;- results.table[wanted.row ,  output.col]
+A &lt;- corr.matrix(val, scales=scales.optim)
+Ainv &lt;- solve(A)
+
+x &lt;- sample.from.exp.est(1000,exp=expert.estimates)
+x &lt;- t(apply(x,1,normalize))
+ensemble &lt;- interpolant.quick(x , d , val , Ainv, scales=scales.optim) 
+hist(ensemble)
+</code></pre>
+
+
+</div>

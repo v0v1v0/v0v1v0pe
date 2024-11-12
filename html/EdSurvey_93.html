@@ -1,0 +1,194 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>readTIMSS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Connect to TIMSS Data</h2>
+
+<h3>Description</h3>
+
+<p>Opens a connection to a TIMSS data file and
+returns an <code>edsurvey.data.frame</code> with
+information about the file and data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">readTIMSS(
+  path,
+  countries,
+  gradeLvl = c("4", "8", "4b", "8b"),
+  forceReread = FALSE,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>a character vector to the full directory path(s) to the TIMSS
+extracted SPSS (.sav) set of data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>countries</code></td>
+<td>
+<p>a character vector of the country/countries to include using
+the three-digit ISO country code.
+A list of country codes can be found on Wikipedia at
+<a href="https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes">https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes</a>
+or other online sources. Consult the <em>TIMSS User Guide</em>
+documentation to help determine what countries
+are included within a specific testing year of TIMSS and
+for country code definitions.
+To select all countries available, use a wildcard value of <strong><code>*</code></strong>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gradeLvl</code></td>
+<td>
+<p>a character value to indicate the specific grade level you wish to return
+</p>
+
+<ul>
+<li>
+<p><strong>4</strong> = fourth grade (the default if not specified)
+</p>
+</li>
+<li>
+<p><strong>8</strong> = eighth grade
+</p>
+</li>
+<li>
+<p><strong>4B</strong> = fourth grade bridge study (TIMSS 2019 only)
+</p>
+</li>
+<li>
+<p><strong>8B</strong> = eight grade bridge study (TIMSS 2019 only)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forceReread</code></td>
+<td>
+<p>a logical value to force rereading of all processed data.
+The default value of <code>FALSE</code> will speed up the <code>readTIMSS</code> function by using existing read-in data already processed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>a logical value to either print or suppress status message output.
+The default value is <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Reads in the unzipped files downloaded from the TIMSS international
+database(s) using the <a href="https://www.iea.nl/data-tools/repository">IEA Study Data Repository</a>.
+Data files require the SPSS data file (.sav) format using the default
+filenames.
+</p>
+<p>A TIMSS <code>edsurvey.data.frame</code> includes three distinct data levels:
+</p>
+
+<ul>
+<li>
+<p> student
+</p>
+</li>
+<li>
+<p> school
+</p>
+</li>
+<li>
+<p> teacher
+</p>
+</li>
+</ul>
+<p>When the <code>getData</code> function is called using a TIMSS <code>edsurvey.data.frame</code>,
+the requested data variables are inspected, and it handles any necessary data merges automatically.
+The <code>school</code> data always will be returned merged to the <code>student</code>
+data, even if only <code>school</code> variables are requested.
+If <code>teacher</code> variables are requested by the <code>getData</code> call, it
+will cause <code>teacher</code> data to be merged.
+Many <code>students</code> can be linked to many <code>teachers</code>, which varies
+widely between countries.
+</p>
+<p>Please note that calling the <code>dim</code> function for a TIMSS
+<code>edsurvey.data.frame</code> will result in the row count as if the
+<code>teacher</code> dataset was merged.
+This row count will be considered the <code>full data N</code> of the
+<code>edsurvey.data.frame</code>, even if no <code>teacher</code> data were included in an analysis.
+The column count returned by <code>dim</code> will be the count of unique column
+variables across all three data levels.
+</p>
+<p>Beginning with TIMSS 2015, a <code>numeracy</code> dataset was designed to assess
+mathematics at the end of the primary school cycle
+for countries where most children are still developing fundamental mathematics skills.
+The <code>numeracy</code> dataset is handled automatically for the user and is
+included within the fourth-grade dataset <code>gradeLvl=4</code>.
+Most <code>numeracy</code> countries have a <code>4th grade</code> dataset in addition
+to their <code>numeracy</code> dataset, but some do not.
+For countries that have both a <code>numeracy</code> and a <code>4th grade</code> dataset,
+the two datasets are combined into one <code>edsurvey.data.frame</code> for that country.
+Data variables missing from either dataset are kept, with <code>NA</code> values
+inserted for the dataset records where that variable did not exist.
+Data variables common to both datasets are kept as a single data variable,
+with records retaining their original values from the source dataset.
+Consult the <em>TIMSS User Guide</em> for further information.
+</p>
+<p>For the TIMSS 2019 study, a bridge study was conducted to help compute adjustment factors
+between the electronic test format and the paper/pencil format.  The bridge study is
+considered separate from the normal TIMSS 2019 study. The <code>gradeLvl</code> parameter now
+includes a <code>"4B"</code> option for the Grade 4 bridge study, and the <code>"8B"</code> option
+for the Grade 8 bridge study files.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an <code>edsurvey.data.frame</code> for a single specified country or an <code>edsurvey.data.frame.list</code> if multiple countries specified
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Tom Fink
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>readNAEP</code>, <code>getData</code>, and <code>downloadTIMSS</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# single country specified
+fin &lt;- readTIMSS(path="~/TIMSS/2015", countries = c("fin"), gradeLvl = 4)
+gg &lt;- getData(data=fin, varnames=c("asbg01", "totwgt", "srea"))
+head(gg)
+edsurveyTable(formula=srea ~ asbg01, fin)
+
+# multiple countries returned as edsurvey.data.frame.list, specify all countries with '*' argument
+timss2011 &lt;- readTIMSS(path="~/TIMSS/2011", countries="*", gradeLvl = 8, verbose = TRUE)
+# print out edsurvey.data.frame.list covariates
+timss2011$covs
+
+## End(Not run)
+</code></pre>
+
+
+</div>

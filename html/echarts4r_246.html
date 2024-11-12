@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>e_focus_adjacency_p</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Node Adjacency</h2>
+
+<h3>Description</h3>
+
+<p>Focus or unfocus on node adjacency.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">e_focus_adjacency_p(proxy, index, ...)
+
+e_unfocus_adjacency_p(proxy, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>proxy</code></td>
+<td>
+<p>An echarts4r proxy as returned by <code>echarts4rProxy</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>One or more node index to focus on.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any other options, see
+<a href="https://echarts.apache.org/en/api.html#action.graph">official documentation</a> and details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Must pass <code>seriesId</code>, <code>seriesIndex</code>, or <code>seriesName</code>, generally <code>seriesIndex = 0</code> will work.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">value &lt;- rnorm(10, 10, 2)
+
+nodes &lt;- data.frame(
+  name = sample(LETTERS, 10),
+  value = value,
+  size = value,
+  grp = rep(c("grp1", "grp2"), 5),
+  stringsAsFactors = FALSE
+)
+
+edges &lt;- data.frame(
+  source = sample(nodes$name, 20, replace = TRUE),
+  target = sample(nodes$name, 20, replace = TRUE),
+  stringsAsFactors = FALSE
+)
+## Not run: 
+
+library(shiny)
+
+ui &lt;- fluidPage(
+  fluidRow(
+    column(
+      2,
+      numericInput("index", "Node", value = 3, min = 1, max = 9)
+    ),
+    column(
+      2,
+      br(),
+      actionButton("focus", "Focus")
+    ),
+    column(
+      2,
+      br(),
+      actionButton("unfocus", "Unfocus")
+    )
+  ),
+  fluidRow(
+    column(12, echarts4rOutput("graph"))
+  )
+)
+
+server &lt;- function(input, output, session) {
+  output$graph &lt;- renderEcharts4r({
+    e_charts() |&gt;
+      e_graph() |&gt;
+      e_graph_nodes(nodes, name, value, size, grp) |&gt;
+      e_graph_edges(edges, source, target)
+  })
+
+  observeEvent(input$focus, {
+    echarts4rProxy("graph") |&gt;
+      e_focus_adjacency_p(
+        seriesIndex = 0,
+        index = input$index
+      )
+  })
+
+  observeEvent(input$unfocus, {
+    echarts4rProxy("graph") |&gt;
+      e_unfocus_adjacency_p(seriesIndex = 0)
+  })
+}
+
+if (interactive()) {
+  shinyApp(ui, server)
+}
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

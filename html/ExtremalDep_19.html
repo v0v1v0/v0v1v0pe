@@ -1,0 +1,277 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fExtDep</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extremal dependence estimation</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the parameters of extremal dependence models.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fExtDep(method="PPP", data, model, par.start = NULL, 
+        c = 0, optim.method = "BFGS", trace = 0, sig = 3,
+        Nsim, Nbin = 0, Hpar, MCpar, seed = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character string indicating the estimation method inlcuding <code>"PPP"</code>, <code>"BayesianPPP"</code> and <code>"Composite"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A matrix containing the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A character string with the name of the model. When <code>method="PPP"</code> or <code>"BayesianPPP"</code>, this includes <code>"PB"</code>, <code>"HR"</code>, <code>"ET"</code>, <code>"EST"</code>, <code>TD</code> and <code>AL</code> whereas when <code>method="composite"</code> it is restricted to <code>"HR"</code>, <code>"ET"</code> and <code>"EST"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par.start</code></td>
+<td>
+<p>A vector representing the initial parameters values for the optimization algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c</code></td>
+<td>
+<p>A real value in <code class="reqn">[0,1]</code> required when <code>method="PPP"</code> or <code>"BayesianPPP"</code> and <code>model="ET"</code>, <code>"EST"</code> and <code>"AL"</code>. See <code>dExtDep</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.method</code></td>
+<td>
+<p>A character string indicating the optimization algorithm. Required when <code>method="PPP"</code> or <code>"Composite"</code>. See <code>optim</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>A non-negative integer, tracing the progress of the optimization. Required when <code>method="PPP"</code> or <code>"Composite"</code>. See <code>optim</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig</code></td>
+<td>
+<p>An integer indicating the number of significant digits when reporting outputs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Nsim</code></td>
+<td>
+<p>An integer indicating the number of MCMC simulations. Required when <code>method="BayesianPPP"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Nbin</code></td>
+<td>
+<p>An integer indicating the length of the burn-in period. Required when <code>method="BayesianPPP"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Hpar</code></td>
+<td>
+<p>A list of hyper-parameters. See 'details'. Required when <code>method="BayesianPPP"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCpar</code></td>
+<td>
+<p>A positive real representing the variance of the proposal distirbution. See 'details'. Required when <code>method="BayesianPPP"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>An integer indicating the seed to be set for reproducibility, via the routine <code>set.seed</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When <code>method="PPP"</code> the approximate likelihood is used to estimate the model parameters. It relies on the <code>dExtDep</code> function with argument <code>method="Parametric"</code> and <code>angular=TRUE</code>.
+</p>
+<p>When <code>method="BayesianPPP"</code> a Bayesian estimation procedure of the spatral measure is considered, following Sabourin et al. (2013) and Sabourin &amp; Naveau (2014). The argument <code>Hpar</code> is required to specify the hyper-parameters of the prior distributions, taking the following into consideration: 
+</p>
+
+<ul>
+<li>
+<p> For the <b>Pairwise Beta model</b>, the parameters components are independent, log-normal.
+The vector of parameters is of size <code>choose(dim,2)+1</code> with positive components. The first elements are the
+pairiwse dependence parameters <code>b</code> and the last one is the global dependence parameter <code>alpha</code>.
+The list of hyper-parameters should be of the form
+<code>mean.alpha=, mean.beta=, sd.alpha=, sd.beta=</code>;
+</p>
+</li>
+<li>
+<p> For the <b>Husler-Reiss model</b>, the parameters are independent, log-normally distributed.
+The elements correspond to the <code>lambda</code> parameter. The list of hyper-parameters should be of the form <code>mean.lambda=, sd.lambda=</code>;
+</p>
+</li>
+<li>
+<p> For the <b>Dirichlet model</b>, the parameters are independent, log-normally distributed.
+The elements correspond to the <code>alpha</code> parameter. The list of hyper-parameters should be of the form <code>mean.alpha=, sd.alpha=</code>;
+</p>
+</li>
+<li>
+<p> For the <b>Extremal-t model</b>, the parameters are independent, logit-squared for <code>rho</code> and log-normal for <code>mu</code>. The first elements correspond	to the correlation parameters <code>rho</code> and the last parameter is the global dependence parameter <code>mu</code>. The list of hyper-parameters should be of the form <code>mean.rho=, mean.mu=, sd.rho=, sd.mu=</code>;
+</p>
+</li>
+<li>
+<p> For the <b>Extremal skewt-t model</b>, the parameters are independent, logit-squared for <code>rho</code>, normal for <code>alpha</code> and log-normal for <code>mu</code>. The first elements correspond	to the correlation parameters <code>rho</code>, then the skewness parameters <code>alpha</code> and the last parameter is the global dependence parameter <code>mu</code>. The list of hyper-parameters should be of the form <code>mean.rho=, mean.alpha=, mean.mu=, sd.rho=, sd.alpha=, sd.mu=</code>;
+</p>
+</li>
+<li>
+<p> For the <b>Asymmetric Logistic model</b>, the parameters' components are independent, log-normal for <code>alpha</code> and logit for <code>beta</code>. The list of hyper-parameters should be of the form <code>mean.alpha=, mean.beta=, sd.alpha=, sd.beta=</code>.
+</p>
+</li>
+</ul>
+<p>The proposal distribution for each (transformed) parameter is a normal distribution centred on the (transformed) current parameter value, with variance <code>MCpar</code>. 
+</p>
+<p>When <code>method="Composite"</code>, the pairwise composite likelihood is applied, based on the <code>dExtDep</code> function with argument <code>method="Parametric"</code> and <code>angular=FALSE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>When <code>method == "PPP"</code> or <code>"Composite"</code>, a list is returned including
+</p>
+
+<dl>
+<dt>par:</dt>
+<dd>
+<p>The estimated parameters.</p>
+</dd>
+<dt>LL:</dt>
+<dd>
+<p>The maximised log-likelihood.</p>
+</dd>
+<dt>SE:</dt>
+<dd>
+<p>The standard errors.</p>
+</dd>
+<dt>TIC:</dt>
+<dd>
+<p>The Takeuchi Information Criterion.</p>
+</dd>
+</dl>
+<p>When <code>method == "BayesianPPP"</code>, a list is returned including 
+</p>
+
+<dl>
+<dt>stored.vales:</dt>
+<dd>
+<p>A <code class="reqn">(Nsim-Nbin)*d</code> matrix, where <code class="reqn">d</code> is the dimension of the parameter space</p>
+</dd>
+<dt>llh:</dt>
+<dd>
+<p>A vector of size <code class="reqn">(Nsim-Nbin)</code> containing the log-likelihoods evaluadted at each parameter
+of the posterior sample.</p>
+</dd>
+<dt>lprior:</dt>
+<dd>
+<p>A vector of size <code class="reqn">(Nsim-Nbin)</code> containing the logarithm of the prior densities evaluated
+at each parameter of the posterior sample.</p>
+</dd>
+<dt>arguments:</dt>
+<dd>
+<p>The specifics of the algorithm.</p>
+</dd>
+<dt>elapsed:</dt>
+<dd>
+<p>The time elapsed, as given by <code>proc.time</code> between the start and end of the run.</p>
+</dd>
+<dt>Nsim:</dt>
+<dd>
+<p>The same as the passed argument.</p>
+</dd>
+<dt>Nbin:</dt>
+<dd>
+<p>Idem.</p>
+</dd>
+<dt>n.accept:</dt>
+<dd>
+<p>The total number of accepted proposals.</p>
+</dd>
+<dt>n.accept.kept:</dt>
+<dd>
+<p>The number of accepted proposals after the burn-in period. </p>
+</dd>
+<dt>emp.mean:</dt>
+<dd>
+<p>The estimated posterior parameters mean.</p>
+</dd>
+<dt>emp.sd:</dt>
+<dd>
+<p>The empirical posterior sample standard deviation.</p>
+</dd>
+<dt>BIC:</dt>
+<dd>
+<p>The Bayesian Information Criteria.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Simone Padoan, <a href="mailto:simone.padoan@unibocconi.it">simone.padoan@unibocconi.it</a>,
+<a href="https://faculty.unibocconi.it/simonepadoan/">https://faculty.unibocconi.it/simonepadoan/</a>;
+Boris Beranger, <a href="mailto:borisberanger@gmail.com">borisberanger@gmail.com</a>
+<a href="https://www.borisberanger.com">https://www.borisberanger.com</a>;
+</p>
+
+
+<h3>References</h3>
+
+<p>Beranger, B. and Padoan, S. A. (2015).
+Extreme dependence models, chapater of the book <em>Extreme Value Modeling and Risk Analysis: Methods and Applications</em>,
+<b>Chapman Hall/CRC</b>.
+</p>
+<p>Sabourin, A., Naveau, P. and Fougeres, A-L (2013)
+Bayesian model averaging for multivariate extremes
+<em>Extremes</em>, <b>16</b>, 325-350.
+</p>
+<p>Sabourin, A. and Naveau, P. (2014)
+Bayesian Dirichlet mixture model for multivariate extremes: A re-parametrization
+<em>Computational Statistics &amp; Data Analysis</em>, <b>71</b>, 542-567.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dExtDep</code>, <code>pExtDep</code>, <code>rExtDep</code>, <code>fExtDep.np</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example using the Poisson Point Proce Process appraoch
+data(pollution)
+
+  f.hr &lt;- fExtDep(method="PPP", data=PNS, model="HR", 
+                  par.start = rep(0.5, 3), trace=2)
+
+
+# Example using the pairwise composite (full) likelihood
+
+  set.seed(1)
+  data &lt;- rExtDep(n=300, model="ET", par=c(0.6,3))
+  f.et &lt;- fExtDep(method="Composite", data=data, model="ET", 
+                  par.start = c(0.5, 1), trace=2)
+
+</code></pre>
+
+
+</div>

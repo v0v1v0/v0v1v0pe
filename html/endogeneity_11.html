@@ -1,0 +1,272 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>probit_linearRE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Recursive Probit-LinearRE Model</h2>
+
+<h3>Description</h3>
+
+<p>A panel extension of the probit_linear model. The first stage is a probit model at the individual level. The second stage is a panel linear model at the individual-time level with individual-level random effects. The random effect is correlated with the error term in the first stage.<br><br>
+First stage (Probit):
+</p>
+<p style="text-align: center;"><code class="reqn">m_i=1(\boldsymbol{\alpha}'\mathbf{w_i}+u_i&gt;0)</code>
+</p>
+
+<p>Second stage (Panel linear model with individual-level random effects):
+</p>
+<p style="text-align: center;"><code class="reqn">y_{it} = \boldsymbol{\beta}'\mathbf{x_{it}} + {\gamma}m_i + \lambda v_i +\sigma \epsilon_{it}</code>
+</p>
+
+<p>Endogeneity structure:
+<code class="reqn">u_i</code> and <code class="reqn">v_i</code> are bivariate normally distributed with a correlation of <code class="reqn">\rho</code>. <br><br>
+This model uses Adaptive Gaussian Quadrature to overcome numerical challenges with long panels. w and x can be the same set of variables. Identification can be weak if w are not good predictors of m. This model still works if the first-stage dependent variable is not a regressor in the second stage.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">probit_linearRE(
+  form_probit,
+  form_linear,
+  id,
+  data = NULL,
+  par = NULL,
+  method = "BFGS",
+  H = 20,
+  stopUpdate = F,
+  init = c("zero", "unif", "norm", "default")[4],
+  verbose = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>form_probit</code></td>
+<td>
+<p>Formula for the probit model at the individual level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>form_linear</code></td>
+<td>
+<p>Formula for the linear model at the individual-time level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>group id, character if data  supplied or numerical vector if data not supplied</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Input data, must be a data.table object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>Starting values for estimates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Optimization algorithm. Default is BFGS</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>Number of quadrature points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stopUpdate</code></td>
+<td>
+<p>Adaptive Gaussian Quadrature disabled if TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>Initialization method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A integer indicating how much output to display during the estimation process.
+</p>
+
+<ul>
+<li>
+<p> &lt;0 - No ouput
+</p>
+</li>
+<li>
+<p> 0 - Basic output (model estimates)
+</p>
+</li>
+<li>
+<p> 1 - Moderate output, basic ouput + parameter and likelihood in each iteration
+</p>
+</li>
+<li>
+<p> 2 - Extensive output, moderate output + gradient values on each call
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing the results of the estimated model, some of which are inherited from the return of maxLik
+</p>
+
+<ul>
+<li>
+<p> estimates: Model estimates with 95% confidence intervals
+</p>
+</li>
+<li>
+<p> estimate or par: Point estimates
+</p>
+</li>
+<li>
+<p> variance_type: covariance matrix used to calculate standard errors. Either BHHH or Hessian.
+</p>
+</li>
+<li>
+<p> var: covariance matrix
+</p>
+</li>
+<li>
+<p> se: standard errors
+</p>
+</li>
+<li>
+<p> var_bhhh: BHHH covariance matrix, inverse of the outer product of gradient at the maximum
+</p>
+</li>
+<li>
+<p> se_bhhh: BHHH standard errors
+</p>
+</li>
+<li>
+<p> gradient: Gradient function at maximum
+</p>
+</li>
+<li>
+<p> hessian: Hessian matrix at maximum
+</p>
+</li>
+<li>
+<p> gtHg: <code class="reqn">g'H^-1g</code>, where H^-1 is simply the covariance matrix. A value close to zero (e.g., &lt;1e-3 or 1e-6) indicates good convergence.
+</p>
+</li>
+<li>
+<p> LL or maximum: Likelihood
+</p>
+</li>
+<li>
+<p> AIC: AIC
+</p>
+</li>
+<li>
+<p> BIC: BIC
+</p>
+</li>
+<li>
+<p> n_obs: Number of observations
+</p>
+</li>
+<li>
+<p> n_par: Number of parameters
+</p>
+</li>
+<li>
+<p> time: Time takes to estimate the model
+</p>
+</li>
+<li>
+<p> LR_stat: Likelihood ratio test statistic for <code class="reqn">\rho=0</code>
+</p>
+</li>
+<li>
+<p> LR_p: p-value of likelihood ratio test
+</p>
+</li>
+<li>
+<p> iterations: number of iterations taken to converge
+</p>
+</li>
+<li>
+<p> message: Message regarding convergence status.
+</p>
+</li>
+</ul>
+<p>Note that the list inherits all the components in the output of maxLik. See the documentation of maxLik for more details.
+</p>
+
+
+<h3>References</h3>
+
+<p>Chen, H., Peng, J., Li, H., &amp; Shankar, R. (2022). Impact of Refund Policy on Sales of Paid Information Services: The Moderating Role of Product Characteristics. Available at SSRN: https://ssrn.com/abstract=4114972.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other endogeneity: 
+<code>bilinear()</code>,
+<code>biprobit_latent()</code>,
+<code>biprobit_partial()</code>,
+<code>biprobit()</code>,
+<code>linear_probit()</code>,
+<code>pln_linear()</code>,
+<code>pln_probit()</code>,
+<code>probit_linear_latent()</code>,
+<code>probit_linear_partial()</code>,
+<code>probit_linear()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(MASS)
+library(data.table)
+N = 500
+period = 5
+obs = N*period
+rho = -0.5
+set.seed(100)
+
+e = mvrnorm(N, mu=c(0,0), Sigma=matrix(c(1,rho,rho,1), nrow=2))
+e1 = e[,1]
+e2 = e[,2]
+
+t = rep(1:period, N)
+id = rep(1:N, each=period)
+w = rnorm(N)
+m = as.numeric(1+w+e1&gt;0)
+m_long = rep(m, each=period)
+
+x = rnorm(obs)
+y = 1 + x + m_long + rep(e2, each=period) + rnorm(obs)
+
+dt = data.table(y, x, id, t, m=rep(m, each=period), w=rep(w, each=period))
+
+est = probit_linearRE(m~w, y~x+m, 'id', dt)
+print(est$estimates, digits=3)
+</code></pre>
+
+
+</div>

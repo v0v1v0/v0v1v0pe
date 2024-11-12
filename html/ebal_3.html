@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ebalance</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Entropy balancing
+</h2>
+
+<h3>Description</h3>
+
+<p>This function implements entropy balancing, a data preprocessing procedure that allows users to reweight a dataset. The preprocessing is based on a maximum entropy reweighting scheme 
+that assigns weights to each unit such that the covariate distributions in the reweighted data satisfy a set of moment conditions specified by the researcher. This can be useful to balance covariate distributions in observational studies with a binary treatment where the control group data can be reweighted to match the covariate moments in the treatment group. Entropy balancing can also be used to reweight a survey sample to known characteristics from a target population. The weights that result from entropy balancing
+can be passed to regression or other models to subsequently analyze the reweighted data. 
+</p>
+<p>By default, <code>ebalance</code> reweights the covariate distributions from a control group to match target moments that are computed from a treatment group such that the reweighted data can be used to analyze the average treatment effect on the treated. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ebalance(Treatment, X, base.weight = NULL, 
+norm.constant = NULL, coefs = NULL, 
+max.iterations = 200, 
+constraint.tolerance = 1, print.level = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Treatment</code></td>
+<td>
+
+<p>A vector indicating the observations which are in the data group that should be reweighted (i.e. the control group) and 
+those which are in the data group that should be used to compute the target moments (i.e. the treatment group). 
+This can either be a logical vector or a real vector where 0 denotes control observations and 1 denotes treatment observations. 
+By default the target moments are computed using the data from all treatment observations. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+<p>A matrix containing the variables that the researchers wants to include in the reweighting. To adjust the 
+means of the covariates, the raw covariates can be included. To adjust the variances of the covariates, squared terms 
+of the raw covariates can be included. To adjust co-moments, interaction terms can be included. All columns of 
+this matrix must have positive variance and the matrix must be invertible. No missing data is allowed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base.weight</code></td>
+<td>
+
+<p>An optional vector of base weights for the maximum entropy reweighting (one weight for each control unit). The default is uniform base weights. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norm.constant</code></td>
+<td>
+
+<p>An optional normalizing constant. By default the weights are normalized such that the sum of the weights for the reweighted control group match the number of observations in the treatment grou. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefs</code></td>
+<td>
+
+<p>An optional vector of model coefficients to start the reweighting.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.iterations</code></td>
+<td>
+
+<p>Maximum number of iterations that will be run when attempting to reweight the data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraint.tolerance</code></td>
+<td>
+
+<p>This is the tolerance level used by <code>ebalance</code> to decide if the moments in the reweighted data are equal to the target moments.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print.level</code></td>
+<td>
+
+<p>Controls the level of printing: 0 (normal printing), 2 (detailed), and 3 (very detailed).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the user wants to pass different target moments these should be entered in a new row in the dataset which contains the target means for the covariate distributions. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>An list object of class <code>ebalance</code> with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>target.margins</code></td>
+<td>
+<p>A vector that contains the target moments coded from the covariate distributions of the treatment group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>co.xdata</code></td>
+<td>
+<p>A matrix that contains the covariate data from the control group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+<p>A vector that contains the control group weights assigned by entropy balancing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefs</code></td>
+<td>
+<p>A vector that contains coefficients from the reweighting algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxdiff</code></td>
+<td>
+<p>A scalar that contains the maximum deviation between the moments of the reweighted data and the target moments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraint.tolerance</code></td>
+<td>
+<p>The tolerance level used for the balance constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base.weight</code></td>
+<td>
+<p>The base weight used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print.level</code></td>
+<td>
+<p>The print level used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converged</code></td>
+<td>
+<p>Logical flag if algorithm converged within tolerance.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Jens Hainmueller
+</p>
+
+
+<h3>References</h3>
+
+<p>Hainmueller, J. (2012) 'Entropy Balancing for Causal Effects: A Multivariate Reweighting Method to Produce Balanced Samples in Observational Studies', Political Analysis (Winter 2012) 20 (1): 25–46.
+</p>
+<p>Zaslavsky, A. (1988), 'Representing local reweighting area adjustments by of households', Survey Methodology 14(2), 265–288.
+</p>
+<p>Ireland, C. and Kullback, S. (1968), 'Contingency tables with given marginals', Biometrika 55, 179–188.
+</p>
+<p>Kullback, S. (1959), Information Theory and Statistics, Wiley, NY.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Also see <code>ebalance.trim</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# create toy data: treatment indicator and three covariates X1-3
+treatment   &lt;- c(rep(0,50),rep(1,30))
+X           &lt;- rbind(replicate(3,rnorm(50,0)),replicate(3,rnorm(30,.5)))
+colnames(X) &lt;- paste("x",1:3,sep="")
+
+# entropy balancing
+eb.out &lt;- ebalance(Treatment=treatment,
+                   X=X)
+# means in treatment group data
+apply(X[treatment==1,],2,mean)
+# means in reweighted control group data
+apply(X[treatment==0,],2,weighted.mean,w=eb.out$w)
+# means in raw data control group data
+apply(X[treatment==0,],2,mean)
+</code></pre>
+
+
+</div>

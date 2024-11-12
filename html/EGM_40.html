@@ -1,0 +1,244 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>wfdb_io</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>I/O of WFDB-compatible signal &amp; header files from EP recording systems</h2>
+
+<h3>Description</h3>
+
+<p>This function allows for WFDB files to be read from any WFDB-compatible
+system, and also allows writing out WFDB-compatible files from specific EP
+recording systems, as indicated in the details section. Writing WFDB leads to
+creation of both a <strong>dat</strong> (signal) and <strong>hea</strong> (header) file. These are both
+required for reading in files as well.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">write_wfdb(
+  data,
+  record,
+  record_dir,
+  wfdb_path = getOption("wfdb_path"),
+  header = list(frequency = 250, gain = 200L, label = character()),
+  info_strings = list(),
+  ...
+)
+
+read_wfdb(
+  record,
+  record_dir = ".",
+  annotator = NA_character_,
+  wfdb_path = getOption("wfdb_path"),
+  begin = 0,
+  end = NA_integer_,
+  interval = NA_integer_,
+  units = "digital",
+  channels = character(),
+  ...
+)
+
+read_signal(
+  record,
+  record_dir = ".",
+  wfdb_path = getOption("wfdb_path"),
+  begin = 0L,
+  end = NA_integer_,
+  interval = NA_integer_,
+  units = "digital",
+  channels = character(),
+  ...
+)
+
+read_header(record, record_dir = ".", wfdb_path = getOption("wfdb_path"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Can either be an <code>egm</code> object, or a <code>data.frame</code> (or similar)
+object. The function will appropriately set defaults based on the type.
+</p>
+
+<ul>
+<li> <p><code>egm</code> = Will extract signal and header data directly from object, and thus is simplest to convert to a WFDB format
+</p>
+</li>
+<li> <p><code>signal_table</code> = This is a customized <code>data.table</code> class that has an invariant column containing sample information.
+</p>
+</li>
+<li> <p><code>data.frame</code> or <code>data.table</code> = Must have a column that represents a time point or index, and columns that represent signal values (preferably integers)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>record</code></td>
+<td>
+<p>String that will be used to name the WFDB record. Cannot
+include extensions, and is not a filepath. alphanumeric characters are
+acceptable, as well as hyphens (-) and underscores (_)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>record_dir</code></td>
+<td>
+<p>File path of directory that should be used read and write
+files. Defaults to current directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wfdb_path</code></td>
+<td>
+<p>Path that leads to installed <code>wfdb</code> software package on
+device. Needs to be directly set using <code>set_wfdb_path()</code>. Obtained from the
+system options on loading of the package, <code>getOption('wfdb_path')</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>header</code></td>
+<td>
+<p>A header file is an optional named list of parameters that
+will be used to organize and describe the signal input from the <strong>data</strong>
+argument. If the <strong>type</strong> is given, specific additional elements will be
+searched for, such as the low or high pass filters, colors, or other signal
+attributes. At minimum, the following elements are required (as cannot be
+calculated):
+</p>
+
+<ul>
+<li>
+<p> frequency = sample frequency in Hertz as <code>integer</code>
+</p>
+</li>
+<li>
+<p> label = vector of names for each channel as <code>character</code>
+</p>
+</li>
+<li>
+<p> start_time = date/time object
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>info_strings</code></td>
+<td>
+<p>A <code>list</code> of strings that will be written as an appendix
+to the header file, usually containing information about the channels,
+(e.g. list of colors, extra labels, etc).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to the function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>annotator</code></td>
+<td>
+<p>String that is the name of a WFDB-compatible annotation
+type, serving as the extension for the file that is written containing that
+annotation. Please see <code>read_annotation()</code> and <code>write_annotation()</code> for
+further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>begin, end, interval</code></td>
+<td>
+<p>Timepoint as an <code>integer</code> (representing seconds),
+which is converted to an index position based on sampling frequency. The
+default is to start at the beginning of the record. If <code>end</code> or <code>interval</code>
+are given, the earlier of the two will be returned. The <code>end</code> argument
+gives a time index to read until. The <code>interval</code> argument is the length of
+time past the start point.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>units</code></td>
+<td>
+<p>A <code>character</code> string representing either <em>digital</em> (DEFAULT) or <em>physical</em>
+units that should be used, if available.
+</p>
+
+<ul>
+<li>
+<p> digital = Index in sample number, signal in integers (A/D units)
+</p>
+</li>
+<li>
+<p> physical = Index in elapsed time, signal in decimal voltage (e.g. mV).
+This will <strong>include 1 additional row over the header/column names</strong> that
+describes units
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>channels</code></td>
+<td>
+<p>Either the signal/channel in a <code>character</code> vector as a name or number.
+Allows for duplication of signal or to re-order signal if needed. If
+nothing is given, will default to all channels available.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Depends on if it is a reading or writing function. For writing, will
+output an WFDB-based object reflecting the function. For reading, will
+output an extension of a <code>data.table</code> object reflecting the underlying
+function (e.g. <code>signal_table()</code> will return an object of class).
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>write_wfdb()</code>: Writes out signal and header data into a WFDB-compatible
+format from R.
+</p>
+</li>
+<li> <p><code>read_wfdb()</code>: Reads a multicomponent WFDB-formatted set of files
+directly into an <code>egm</code> object. This serves to pull together
+<code>read_signal()</code>, <code>read_header()</code>, and <code>read_annotation()</code> for simplicity.
+</p>
+</li>
+<li> <p><code>read_signal()</code>: Specifically reads the signal data from the WFDB binary
+format, returning a <code>signal_table</code> object for evaluation in the R
+environment
+</p>
+</li>
+<li> <p><code>read_header()</code>: Specifically reads the header data from the WFDB header
+text format, returning a <code>header_table</code> object for evaluation in the R
+environment
+</p>
+</li>
+</ul>
+<h3>Recording systems</h3>
+
+<p>Type of signal data, as specified by the recording system, that are currently
+supported.
+</p>
+
+<ul>
+<li> <p><em>lspro</em> = LabSystem Pro, e.g. <code>read_lspro()</code>
+</p>
+</li>
+<li> <p><em>muse</em> = GE MUSE, e.g. <code>read_muse()</code>
+</p>
+</li>
+</ul>
+</div>

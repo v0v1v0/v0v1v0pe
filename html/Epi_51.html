@@ -1,0 +1,277 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mod.Lexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit intensity models to follow-up data in Lexis objects  
+</h2>
+
+<h3>Description</h3>
+
+<p>Modeling intensities based on Lexis objects, exploiting the structure of the
+Lexis objects where the events and risk time have predefined
+representations. This allows a simpler syntax than the
+traditional explicit modeling using <code>glm</code>, <code>gam</code>
+and <code>coxph</code>. Requires that <code>lex.Cst</code> and <code>lex.Xst</code>
+are defined as factors.
+</p>
+<p>But it is just a set of wrappers fro
+<code>glm</code>, <code>gam</code> and <code>coxph</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  glm.Lexis( Lx,         # Lexis object	
+        formula,         # ~ model	
+           from = preceding(Lx,to), # 'from' states
+             to = absorbing(Lx)   , # 'to' states
+         paired = FALSE, # only the pairwise
+           link = "log", # link function
+          scale = 1,     # scaling of PY
+        verbose = TRUE,  # report what is done?
+            ... )        # further arguments to glm
+  gam.Lexis( Lx,         # Lexis object	
+        formula,         # ~ model	
+           from = preceding(Lx,to), # 'from' states
+             to = absorbing(Lx)   , # 'to' states	
+         paired = FALSE, # only the pairwise
+           link = "log", # link function
+          scale = 1,     # scaling of PY
+        verbose = TRUE,  # report what is done?
+            ... )        # further arguments to gam
+coxph.Lexis( Lx,         # Lexis object	
+        formula,         # timescale ~ model	
+           from = preceding(Lx,to), # 'from' states
+             to = absorbing(Lx)   , # 'to' states	
+         paired = FALSE, # only the pairwise
+        verbose = TRUE,  # report what is done?
+            ... )        # further arguments to coxph
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Lx</code></td>
+<td>
+<p>A <code>Lexis</code> object representing cohort follow-up.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Model formula describing the model for the
+intensity(-ies). For <code>glm</code> and <code>gam</code>, the formula should be
+one-sided; for <code>coxph</code> the formula should be two-sided and have
+the name of the time-scale used for baseline hazard as the l.h.s.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from</code></td>
+<td>
+<p>Character vector of states <b>from</b> which transitions
+are considered. May also be an integer vector in which case the
+reference will be to the position of levels of
+<code>lex.Cst</code>. Defaults to the collection of transient states
+immediately preceding the absorbing states. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>to</code></td>
+<td>
+<p>Character vector of states <b>to</b> which a transition is
+considered an event. May also be an integer vector in which case the
+reference will be to the position of levels of <code>lex.Xst</code>.
+Defaults to the set of absorbing states.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired</code></td>
+<td>
+<p>Logical. Should the states mentioned in <code>to</code>,
+rep. <code>from</code> be taken as pairs, indicating the only transitions
+modeled. If <code>FALSE</code> all transitions from any of the states in
+<code>from</code> to any states in <code>to</code> are modeled.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>link</code></td>
+<td>
+<p>Character; name of the link function used, allowed values
+are <code>'log'</code> (the default), <code>'identity'</code> and <code>'sqrt'</code>,
+see the family <code>poisreg</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>Scalar. <code>lex.dur</code> is divided by this number before 
+analysis, so that you can get resulting rates on a scale of your wish. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Print information on the states modeled?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed on to <code>glm</code>, <code>glm</code> or
+<code>coxph</code> 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>glm</code> and <code>gam</code> models are fitted using the family
+<code>poisreg</code> which is a bit faster than the traditional
+<code>poisson</code> family. The response variable for this family is a
+two-column vector of events and person-time respectively, so the
+predictions, for example using <code>ci.pred</code> does not require
+<code>lex.dur</code> (and would ignore this) as variable in the
+<code>newdata</code>. <code>ci.pred</code> will return the estimated rates in
+units of the <code>lex.dur</code> in the <code>Lexis</code> object, scaled by
+<code>scale</code>, which has a default value of 1.
+</p>
+<p>The default is to model all transitions into any absorbing state by
+the same model (how wise is that??). If only <code>from</code> is given,
+<code>to</code> is set to all states reachable from <code>from</code>, which may
+be a really goofy model and if so a warning is issued. If only
+<code>to</code> is given, <code>from</code> is set to the collection of states
+from which <code>to</code> can be reached directly — see
+<code>preceding</code> and its cousins. This convention means that if
+you have a <code>Lexis</code> object representing a simple survival
+analysis, with states, say, "alive" and "dead", you can dispense with
+the <code>from</code> and <code>to</code> arguments.
+</p>
+<p>Occasionally you only want to model a subset of the possible
+transitions from states in <code>from</code> to states in <code>to</code>, in
+which case you specify <code>from</code> and <code>to</code> as character vectors
+of the same length and set <code>paired=TRUE</code>. Then only transitions
+<code>from[i]</code> to <code>to[i]</code>, <code>i</code>=1,2,... will be modeled.
+</p>
+<p>There is no working <code>update</code> functions for these objects (yet). 
+</p>
+<p>Strictly speaking, it is a bit counter-intuitive to have the time-scale
+on the l.h.s. of the formula for the <code>coxph</code> since the time scale
+is also a predictor of the occurrence rate. On the other hand, calling
+<code>coxph</code> directly would also entail having the name of the time
+scale in the <code>Surv</code> object on the l.h.s. of the formula. So the
+inconsistency is merely carried over from <code>coxph</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>glm.Lexis</code> returns a <code>glm</code> object, which is
+also of class <code>glm.lex</code>,
+<code>gam.Lexis</code> returns a <code>gam</code> object, which is
+also of class <code>gam.lex</code>, and
+<code>coxph.Lexis</code> returns a <code>coxph</code> object, which is
+also of class <code>coxph.lex</code>. These extra class attributes are meant
+to facilitate the (still pending) implementation of an <code>update</code> function.
+</p>
+<p>The returned objects all have an extra attribute, <code>Lexis</code> which
+is a list with entries
+<code>data</code>, the name of the <code>Lexis</code> object modeled (note that it
+is <em>not</em> the object, only the name of it, which may not be portable);
+<code>trans</code>, a character vector of transitions modeled;
+<code>formula</code>, the model formula; and
+<code>scale</code>, the scaling applied to <code>lex.dur</code> before modeling. 
+</p>
+<p>Only the <code>glm</code> and <code>gam</code> objects have the <code>scale</code> element
+in the list; a scalar indicating the scaling of <code>lex.dur</code> before
+modeling. Note that the formula component of the <code>Lexis</code>
+attribute of a <code>coxph</code> object is a
+two-sided formula with the baseline time scale as the l.h.s.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Lexis</code>,
+<code>cutLexis</code>,
+<code>mcutLexis</code>,
+<code>addCov.Lexis</code>,
+<code>absorbing</code>,
+<code>transient</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library( Epi )
+library( survival )
+data( DMlate )
+
+# Lexis object of total follow-up
+mL &lt;- Lexis( entry = list(age=dodm-dobth,per=dodm),
+              exit = list(per=dox),
+       exit.status = factor(!is.na(dodth),labels=c("Alive","Dead")),
+              data = DMlate )
+
+# Cut follow-up at start of insulin use
+cL &lt;- cutLexis( mL, cut = mL$doins,
+              timescale = "per",
+              new.state = "Ins",
+       precursor.states = "Alive" )
+
+# Split follow-up on age-axis
+system.time( sL &lt;- splitLexis( cL, breaks=0:25*4, time.scale="age") )
+# ( consider splitMulti from the popEpi package )
+summary( sL )
+
+# glm models for rates based on the time-split dataset by insulin and sex
+
+# Proportional hazards model with insulin as time-dependent variable
+# - uses the defaul of modeling all transitions from both transient
+# states ("Alive" and "Ins") to the absorbing state ("Dead"). 
+mt &lt;- glm.Lexis( sL, ~ sex + lex.Cst + Ns(age,knots=c(15,3:8*10)) )
+
+# prediction of mortality rates from "Alive" with and without PH assumption
+nA &lt;- data.frame( age=40:70, sex="M", lex.Cst="Alive" )
+nI &lt;- data.frame( age=40:70, sex="M", lex.Cst="Ins" )
+matshade( nA$age, cbind( ci.pred(mt,nA),
+                         ci.pred(mt,nI) )*1000, plot=TRUE,
+          lwd=3, lty=1, log="y", col=c("black","blue","red"),
+          xlab="Age", ylab="Mortality per 1000 PY" )
+ 
+# gam models may take some time to run so we leave it out
+## Not run: 
+mt.gam &lt;- gam.Lexis( sL, ~ sex + lex.Cst + s(age), to="Dead",
+                     scale=1000 )
+        
+## End(Not run)
+
+# Fit a Cox model for mortality with age as baseline time scale and
+# insulin (lex.Cst) as time-dependent covariate 
+mt.cox &lt;- coxph.Lexis( sL, age ~ sex + lex.Cst, c("Alive","Ins"), "Dead" )
+
+# Pretty much the same results for regression paramters as the glm:
+  ci.exp( mt    , subset="ex" )
+# ci.exp( mt.gam, subset="ex" )
+  ci.exp( mt.cox, subset="ex" )
+</code></pre>
+
+
+</div>

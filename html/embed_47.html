@@ -1,0 +1,235 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>step_pca_sparse</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sparse PCA Signal Extraction</h2>
+
+<h3>Description</h3>
+
+<p><code>step_pca_sparse()</code> creates a <em>specification</em> of a recipe step that will
+convert numeric data into one or more principal components that can have some
+zero coefficients.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">step_pca_sparse(
+  recipe,
+  ...,
+  role = "predictor",
+  trained = FALSE,
+  num_comp = 5,
+  predictor_prop = 1,
+  options = list(),
+  res = NULL,
+  prefix = "PC",
+  keep_original_cols = FALSE,
+  skip = FALSE,
+  id = rand_id("pca_sparse")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>recipe</code></td>
+<td>
+<p>A recipe object. The step will be added to the sequence of
+operations for this recipe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more selector functions to choose which variables will be
+used to compute the components. See <code>selections()</code> for more details. For
+the <code>tidy</code> method, these are not currently used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>role</code></td>
+<td>
+<p>For model terms created by this step, what analysis role should
+they be assigned? By default, the function assumes that the new principal
+component columns created by the original variables will be used as
+predictors in a model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained</code></td>
+<td>
+<p>A logical to indicate if the quantities for preprocessing have
+been estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_comp</code></td>
+<td>
+<p>The number of components to retain as new predictors.
+If <code>num_comp</code> is greater than the number of columns or the number of
+possible components, a smaller value will be used. If <code>num_comp = 0</code>
+is set then no transformation is done and selected variables will
+stay unchanged, regardless of the value of <code>keep_original_cols</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor_prop</code></td>
+<td>
+<p>The maximum number of original predictors that can have
+non-zero coefficients for each PCA component (via regularization).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>options</code></td>
+<td>
+<p>A list of options to the default method for <code>irlba::ssvd()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res</code></td>
+<td>
+<p>The rotation matrix once this preprocessing step has be trained by
+<code>prep()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prefix</code></td>
+<td>
+<p>A character string that will be the prefix to the resulting new
+variables. See notes below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_original_cols</code></td>
+<td>
+<p>A logical to keep the original variables in the
+output. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip</code></td>
+<td>
+<p>A logical. Should the step be skipped when the recipe is baked by
+<code>recipes::bake()</code>? While all operations are baked when <code>recipes::prep()</code> is
+run, some operations may not be able to be conducted on new data (e.g.
+processing the outcome variable(s)). Care should be taken when using <code>skip = TRUE</code> as it may affect the computations for subsequent operations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A character string that is unique to this step to identify it.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>irlba</code> package is required for this step. If it is not installed, the
+user will be prompted to do so when the step is defined. The <code>irlba::ssvd()</code>
+function is used to encourage sparsity; that documentation has details about
+this method.
+</p>
+<p>The argument <code>num_comp</code> controls the number of components that will be retained
+(the original variables that are used to derive the components are removed from
+the data). The new components will have names that begin with <code>prefix</code> and a
+sequence of numbers. The variable names are padded with zeros. For example, if
+<code>num_comp &lt; 10</code>, their names will be <code>PC1</code> - <code>PC9</code>. If <code>num_comp = 101</code>,
+the names would be <code>PC1</code> - <code>PC101</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated version of <code>recipe</code> with the new step added to the
+sequence of existing steps (if any). For the <code>tidy</code> method, a tibble with
+columns <code>terms</code> (the selectors or variables selected), <code>value</code> (the
+loading), and <code>component</code>.
+</p>
+
+
+<h3>Tidying</h3>
+
+<p>When you <code>tidy()</code> this step, a tibble is retruned with
+columns <code>terms</code>, <code>value</code>, <code>component</code>, and <code>id</code>:
+</p>
+
+<dl>
+<dt>terms</dt>
+<dd>
+<p>character, the selectors or variables selected</p>
+</dd>
+<dt>value</dt>
+<dd>
+<p>numeric, variable loading</p>
+</dd>
+<dt>component</dt>
+<dd>
+<p>character, principle component</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>character, id of this step</p>
+</dd>
+</dl>
+<h3>Tuning Parameters</h3>
+
+<p>This step has 2 tuning parameters:
+</p>
+
+<ul>
+<li> <p><code>num_comp</code>: # Components (type: integer, default: 5)
+</p>
+</li>
+<li> <p><code>predictor_prop</code>: Proportion of Predictors (type: double, default: 1)
+</p>
+</li>
+</ul>
+<h3>Case weights</h3>
+
+<p>The underlying operation does not allow for case weights.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>step_pca_sparse_bayes()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(recipes)
+library(ggplot2)
+
+data(ad_data, package = "modeldata")
+
+ad_rec &lt;-
+  recipe(Class ~ ., data = ad_data) %&gt;%
+  step_zv(all_predictors()) %&gt;%
+  step_YeoJohnson(all_numeric_predictors()) %&gt;%
+  step_normalize(all_numeric_predictors()) %&gt;%
+  step_pca_sparse(
+    all_numeric_predictors(),
+    predictor_prop = 0.75,
+    num_comp = 3,
+    id = "sparse pca"
+  ) %&gt;%
+  prep()
+
+tidy(ad_rec, id = "sparse pca") %&gt;%
+  mutate(value = ifelse(value == 0, NA, value)) %&gt;%
+  ggplot(aes(x = component, y = terms, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2() +
+  theme(axis.text.y = element_blank())
+
+</code></pre>
+
+
+</div>

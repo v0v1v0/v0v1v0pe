@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>einsum</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Einstein Summation</h2>
+
+<h3>Description</h3>
+
+<script id="MathJax-script" async src="../../mathjaxr/doc/mathjax/es5/tex-chtml-full.js"></script><p>Einstein summation is a convenient and concise notation for operations
+on n-dimensional arrays.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">einsum(equation_string, ...)
+
+einsum_generator(equation_string, compile_function = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>equation_string</code></td>
+<td>
+<p>a string in Einstein notation where arrays
+are separated by ',' and the result is separated by '-&gt;'. For
+example <code>"ij,jk-&gt;ik"</code> corresponds to a standard matrix multiplication.
+Whitespace inside the <code>equation_string</code> is ignored. Unlike the
+equivalent functions in Python, <code>einsum()</code> only supports the explicit
+mode. This means that the <code>equation_string</code> must contain '-&gt;'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>the arrays that are combined. All arguments are converted
+to arrays with <code>as.array</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compile_function</code></td>
+<td>
+<p>boolean that decides if <code>einsum_generator()</code>
+returns the result of <code>Rcpp::cppFunction()</code> or the program as a
+string. Default: <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The following table show, how the Einstein notation abbreviates complex
+summation for arrays/matrices:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <code>equation_string</code> </td>
+<td style="text-align: right;"> Formula </td>
+<td style="text-align: right;"> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  ------------------------</td>
+<td style="text-align: right;">--------------------------------------</td>
+<td style="text-align: right;">----------------------------------</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  <code>"ij,jk-&gt;ik"</code> </td>
+<td style="text-align: right;"> \( Y_{ik} = \sum_{j}{A_{ij} B_{jk}}  \) </td>
+<td style="text-align: right;"> Matrix multiplication </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  <code>"ij-&gt;ji"</code>` </td>
+<td style="text-align: right;"> \( Y = A^{T}  \) </td>
+<td style="text-align: right;"> Transpose </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  <code>"ii-&gt;i"</code> </td>
+<td style="text-align: right;"> \(y = \textrm{diag}(A)\) </td>
+<td style="text-align: right;"> Diagonal </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  <code>"ii-&gt;ii"</code> </td>
+<td style="text-align: right;"> \(Y = \textrm{diag}(A) I\) </td>
+<td style="text-align: right;"> Diagonal times Identity  </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  <code>"ii-&gt;"</code> </td>
+<td style="text-align: right;"> \(y = \textrm{trace}(A) = \sum_i{A_{ii}} \) </td>
+<td style="text-align: right;"> Trace </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  <code>"ijk,mjj-&gt;i"</code> </td>
+<td style="text-align: right;"> \( y_i = \sum_{j}\sum_{k}\sum_{m}A_{ijk}B_{mjj}  \) </td>
+<td style="text-align: right;"> Complex 3D operation  </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>The function and the conventions are inspired by the <code>einsum()</code> function
+in NumPy (<a href="https://numpy.org/doc/stable/reference/generated/numpy.einsum.html">documentation</a>).
+Unlike NumPy, 'einsum' only supports the explicit mode. The explicit mode is more flexible and
+can avoid confusion. The common summary of the Einstein  summation to
+"sum over duplicated indices" however is not a good mental model. A better rule of thumb is
+"sum over all indices not in the result".
+</p>
+<p><em>Note:</em> <code>einsum()</code> internally uses C++ code to provide results quickly, the repeated
+parsing of the <code>equation_string</code> comes with some overhead. Thus,
+if you need to do the same calculation over and over again it can be worth to use
+<code>einsum_generator()</code> and call the returned the function. <code>einsum_generator()</code>
+generates efficient C++ code that can be one or two orders of magnitude faster than
+<code>einsum()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The <code>einsum()</code> function returns an array with one dimension for each index in the result
+of the <code>equation_string</code>. For example <code>"ij,jk-&gt;ik"</code> produces a 2-dimensional array,
+<code>"abc,cd,de-&gt;abe"</code> produces a 3-dimensional array.
+</p>
+<p>The <code>einsum_generator()</code> function returns a function that takes one array for each
+comma-separated input in the <code>equation_string</code> and returns the same result as <code>einsum()</code>.
+Or if <code>compile_function = FALSE</code>, <code>einsum_generator()</code> function returns a string with the
+C++ code for such a function.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">mat1 &lt;- matrix(rnorm(n = 4 * 8), nrow = 4, ncol = 8)
+mat2 &lt;- matrix(rnorm(n = 8 * 3), nrow = 8, ncol = 3)
+
+# Matrix Multiply
+mat1 %*% mat2
+einsum("ij,jk -&gt; ik", mat1, mat2)
+
+# einsum_generator() works just like einsum() but returns a performant function
+mat_mult &lt;- einsum_generator("ij,jk -&gt; ik")
+mat_mult(mat1, mat2)
+
+# Diag
+mat_sq &lt;- matrix(rnorm(n = 4 * 4), nrow = 4, ncol = 4)
+diag(mat_sq)
+einsum("ii-&gt;i", mat_sq)
+einsum("ii-&gt;ii", mat_sq)
+
+# Trace
+sum(diag(mat_sq))
+einsum("ii-&gt;", mat_sq)
+
+
+# Scalar product
+mat3 &lt;- matrix(rnorm(n = 4 * 8), nrow = 4, ncol = 8)
+mat3 * mat1
+einsum("ij,ij-&gt;ij", mat3, mat1)
+
+# Transpose
+t(mat1)
+einsum("ij-&gt;ji", mat1)
+
+
+# Batched L2 norm
+arr1 &lt;- array(c(mat1, mat3), dim = c(dim(mat1), 2))
+c(sum(mat1^2), sum(mat3^2))
+einsum("ijb,ijb-&gt;b", arr1, arr1)
+
+</code></pre>
+
+
+</div>

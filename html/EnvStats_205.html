@@ -1,0 +1,457 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eqgamma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Estimate Quantiles of a Gamma Distribution
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimate quantiles of a gamma distribution, and 
+optionally construct a confidence interval for a quantile.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  eqgamma(x, p = 0.5, method = "mle", ci = FALSE, 
+    ci.type = "two-sided", conf.level = 0.95, 
+    normal.approx.transform = "kulkarni.powar", digits = 0)
+
+  eqgammaAlt(x, p = 0.5, method = "mle", ci = FALSE, 
+    ci.type = "two-sided", conf.level = 0.95, 
+    normal.approx.transform = "kulkarni.powar", digits = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>a numeric vector of observations, or an object resulting from a call to an 
+estimating function that assumes a gamma distribution 
+(e.g., <code>egamma</code> or <code>egammaAlt</code>).  
+If <code>ci=TRUE</code> then <code>x</code> must be a 
+numeric vector of observations.  If <code>x</code> is a numeric vector, 
+missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+
+<p>numeric vector of probabilities for which quantiles will be estimated.  
+All values of <code>p</code> must be between 0 and 1.  When <code>ci=TRUE</code>, <code>p</code> 
+must be a scalar. The default value is <code>p=0.5</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>character string specifying the method to use to estimate the shape and scale 
+parameters of the distribution.  The possible values are 
+<code>"mle"</code> (maximum likelihood; the default), <code>"bcmle"</code> (bias-corrected mle), 
+<code>"mme"</code> (method of moments), and 
+<code>"mmue"</code> (method of moments based on the unbiased estimator of variance). 
+See the DETAILS section of the help file for <code>egamma</code> for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+
+<p>logical scalar indicating whether to compute a confidence interval for the quantile.  
+The default value is <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.type</code></td>
+<td>
+
+<p>character string indicating what kind of confidence interval for the quantile to compute.  
+The possible values are <code>"two-sided"</code> (the default), <code>"lower"</code>, and 
+<code>"upper"</code>.  This argument is ignored if <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>a scalar between 0 and 1 indicating the confidence level of the confidence interval.  
+The default value is <code>conf.level=0.95</code>.  This argument is ignored if <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normal.approx.transform</code></td>
+<td>
+
+<p>character string indicating which power transformation to use.  
+Possible values are <code>"kulkarni.powar"</code> (the default), <code>"cube.root"</code>, and <br><code>"fourth.root"</code>.  See the DETAILS section for more informaiton.  
+This argument is ignored if <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+
+<p>an integer indicating the number of decimal places to round to when printing out 
+the value of <code>100*p</code>. The default value is <code>digits=0</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>eqgamma</code> returns estimated quantiles as well as 
+estimates of the shape and scale parameters.  
+The function <code>eqgammaAlt</code> returns estimated quantiles as well as 
+estimates of the mean and coefficient of variation.
+</p>
+<p>Quantiles are estimated by 1) estimating the shape and scale parameters by 
+calling <code>egamma</code>, and then 2) calling the function 
+<code>qgamma</code> and using the estimated values for shape 
+and scale.
+</p>
+<p>The confidence interval for a quantile is computed by:
+</p>
+
+<ol>
+<li>
+<p> using a power transformation on the original data to induce approximate 
+normality, 
+</p>
+</li>
+<li>
+<p> using <code>eqnorm</code> to compute the confidence interval, 
+and then 
+</p>
+</li>
+<li>
+<p> back-transforming the interval to create a confidence interval on the original 
+scale.  
+</p>
+</li>
+</ol>
+<p>This is similar to what is done to create tolerance intervals for a gamma distribuiton 
+(Krishnamoorthy et al., 2008), and there is a one-to-one relationship between confidence 
+intervals for a quantile and tolerance intervals (see the DETAILS section of the 
+help file for <code>eqnorm</code>).  The value <code>normal.approx.transform="cube.root"</code> 
+uses the cube root transformation suggested by Wilson and Hilferty (1931) and used by 
+Krishnamoorthy et al. (2008) and Singh et al. (2010b), and the value 
+<code>normal.approx.transform="fourth.root"</code> uses the fourth root transformation suggested 
+by Hawkins and Wixley (1986) and used by Singh et al. (2010b).  
+The default value <code>normal.approx.transform="kulkarni.powar"</code> 
+uses the “Optimum Power Normal Approximation Method” of Kulkarni and Powar (2010).  
+The “optimum” power <code class="reqn">r</code> is determined by:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <code class="reqn">r = -0.0705 - 0.178 \, shape + 0.475 \, \sqrt{shape}</code> </td>
+<td style="text-align: left;"> if <code class="reqn">shape \le 1.5</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  <code class="reqn">r = 0.246</code> </td>
+<td style="text-align: left;"> if <code class="reqn">shape &gt; 1.5</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+</tr>
+</table>
+<p>where <code class="reqn">shape</code> denotes the estimate of the shape parameter.  Although 
+Kulkarni and Powar (2010) use the maximum likelihood estimate of shape to 
+determine the power <code class="reqn">r</code>, for the functions <code>eqgamma</code> and 
+<code>eqgammaAlt</code> the power <code class="reqn">r</code> is based on whatever estimate of 
+shape is used <br>
+(e.g., <code>method="mle"</code>, <code>method="bcmle"</code>, etc.). 
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>x</code> is a numeric vector, <code>eqgamma</code> and <code>eqgammaAlt</code> return a 
+list of class <code>"estimate"</code> containing the estimated quantile(s) and other 
+information. See <code>estimate.object</code> for details.
+</p>
+<p>If <code>x</code> is the result of calling an estimation function, <code>eqgamma</code> and 
+<code>eqgammaAlt</code> return a list whose class is the same as <code>x</code>.  The list 
+contains the same components as <code>x</code>, as well as components called 
+<code>quantiles</code> and <code>quantile.method</code>.  In addition, if <code>ci=TRUE</code>, 
+the returned list contains a component called <code>interval</code> containing the 
+confidence interval information.  If <code>x</code> already has a component called 
+<code>interval</code>, this component is replaced with the confidence interval information.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The gamma distribution takes values on the positive real line. 
+Special cases of the gamma are the exponential distribution and 
+the chi-square distributions. Applications of the gamma include 
+life testing, statistical ecology, queuing theory, inventory control, and precipitation 
+processes. A gamma distribution starts to resemble a normal distribution as the 
+shape parameter a tends to infinity.
+</p>
+<p>Some EPA guidance documents (e.g., Singh et al., 2002; Singh et al., 2010a,b) strongly 
+recommend against using a lognormal model for environmental data and recommend trying a 
+gamma distribuiton instead.
+</p>
+<p>Percentiles are sometimes used in environmental standards and regulations.  For example, 
+Berthouex and Brown (2002, p.71) note that England has water quality limits based on 
+the 90th and 95th percentiles of monitoring data not exceeding specified levels.  They also 
+note that the U.S. EPA has specifications for air quality monitoring, aquatic standards on 
+toxic chemicals, and maximum daily limits for industrial effluents that are all based on 
+percentiles.  Given the importance of these quantities, it is essential to characterize 
+the amount of uncertainty associated with the estimates of these quantities.  
+This is done with confidence intervals.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Berthouex, P.M., and L.C. Brown. (2002). <em>Statistics for Environmental Engineers</em>. 
+Lewis Publishers, Boca Raton.
+</p>
+<p>Conover, W.J. (1980). <em>Practical Nonparametric Statistics</em>. Second Edition. 
+John Wiley and Sons, New York.
+</p>
+<p>Forbes, C., M. Evans, N. Hastings, and B. Peacock. (2011).  Statistical Distributions. 
+Fourth Edition. John Wiley and Sons, Hoboken, NJ.
+</p>
+<p>Gibbons, R.D., D.K. Bhaumik, and S. Aryal. (2009). 
+<em>Statistical Methods for Groundwater Monitoring</em>, Second Edition.  
+John Wiley &amp; Sons, Hoboken.
+</p>
+<p>Hawkins, D. M., and R.A.J. Wixley. (1986). A Note on the Transformation of 
+Chi-Squared Variables to Normality. <em>The American Statistician</em>, <b>40</b>, 
+296–298.
+</p>
+<p>Johnson, N.L., S. Kotz, and N. Balakrishnan. (1994). 
+<em>Continuous Univariate Distributions, Volume 1</em>. Second Edition. 
+John Wiley and Sons, New York, Chapter 17.
+</p>
+<p>Krishnamoorthy K., T. Mathew, and S. Mukherjee. (2008). Normal-Based Methods for a 
+Gamma Distribution: Prediction and Tolerance Intervals and Stress-Strength Reliability. 
+<em>Technometrics</em>, <b>50</b>(1), 69–78.
+</p>
+<p>Krishnamoorthy K., and T. Mathew. (2009). 
+<em>Statistical Tolerance Regions: Theory, Applications, and Computation</em>. 
+John Wiley and Sons, Hoboken.
+</p>
+<p>Kulkarni, H.V., and S.K. Powar. (2010). A New Method for Interval Estimation of the Mean 
+of the Gamma Distribution. <em>Lifetime Data Analysis</em>, <b>16</b>, 431–447.
+</p>
+<p>Singh, A., A.K. Singh, and R.J. Iaci. (2002). 
+<em>Estimation of the Exposure Point Concentration Term Using a Gamma Distribution</em>.  
+EPA/600/R-02/084. October 2002. Technology Support Center for Monitoring and 
+Site Characterization, Office of Research and Development, Office of Solid Waste and 
+Emergency Response, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Singh, A., R. Maichle, and N. Armbya. (2010a). 
+<em>ProUCL Version 4.1.00 User Guide (Draft)</em>. EPA/600/R-07/041, May 2010. 
+Office of Research and Development, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Singh, A., N. Armbya, and A. Singh. (2010b). 
+<em>ProUCL Version 4.1.00 Technical Guide (Draft)</em>. EPA/600/R-07/041, May 2010.  
+Office of Research and Development, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Wilson, E.B., and M.M. Hilferty. (1931). The Distribution of Chi-Squares. 
+<em>Proceedings of the National Academy of Sciences</em>, <b>17</b>, 684–688.
+</p>
+<p>USEPA. (2009).  <em>Statistical Analysis of Groundwater Monitoring Data at RCRA Facilities, Unified Guidance</em>.
+EPA 530/R-09-007, March 2009.  Office of Resource Conservation and Recovery Program Implementation and Information Division.  
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (2010).  <em>Errata Sheet - March 2009 Unified Guidance</em>.
+EPA 530/R-09-007a, August 9, 2010.  Office of Resource Conservation and Recovery, Program Information and Implementation Division.
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>egamma</code>, <code>GammaDist</code>, 
+<code>estimate.object</code>, <code>eqnorm</code>, <code>tolIntGamma</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 20 observations from a gamma distribution with parameters 
+  # shape=3 and scale=2, then estimate the 90th percentile and create 
+  # a one-sided upper 95% confidence interval for that percentile. 
+  # (Note: the call to set.seed simply allows you to reproduce this 
+  # example.)
+
+  set.seed(250) 
+  dat &lt;- rgamma(20, shape = 3, scale = 2) 
+  eqgamma(dat, p = 0.9, ci = TRUE, ci.type = "upper")
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Gamma
+  #
+  #Estimated Parameter(s):          shape = 2.203862
+  #                                 scale = 2.174928
+  #
+  #Estimation Method:               mle
+  #
+  #Estimated Quantile(s):           90'th %ile = 9.113446
+  #
+  #Quantile Estimation Method:      Quantile(s) Based on
+  #                                 mle Estimators
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Confidence Interval for:         90'th %ile
+  #
+  #Confidence Interval Method:      Exact using
+  #                                 Kulkarni &amp; Powar (2010)
+  #                                 transformation to Normality
+  #                                 based on mle of 'shape'
+  #
+  #Confidence Interval Type:        upper
+  #
+  #Confidence Level:                95%
+  #
+  #Confidence Interval:             LCL =  0.00000
+  #                                 UCL = 13.79733
+
+  #----------
+  # Compare these results with the true 90'th percentile:
+
+  qgamma(p = 0.9, shape = 3, scale = 2)
+  #[1] 10.64464
+
+  #----------
+
+  # Using the same data as in the previous example, use egammaAlt
+  # to estimate the mean and cv based on the bias-corrected 
+  # estimate of shape, and use the cube-root transformation to 
+  # normality.
+
+  eqgammaAlt(dat, p = 0.9, method = "bcmle", ci = TRUE, 
+    ci.type = "upper", normal.approx.transform = "cube.root")
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Gamma
+  #
+  #Estimated Parameter(s):          mean = 4.7932408
+  #                                 cv   = 0.7242165
+  #
+  #Estimation Method:               bcmle of 'shape'
+  #
+  #Estimated Quantile(s):           90'th %ile = 9.428
+  #
+  #Quantile Estimation Method:      Quantile(s) Based on
+  #                                 bcmle of 'shape'
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Confidence Interval for:         90'th %ile
+  #
+  #Confidence Interval Method:      Exact using
+  #                                 Wilson &amp; Hilferty (1931) cube-root
+  #                                 transformation to Normality
+  #
+  #Confidence Interval Type:        upper
+  #
+  #Confidence Level:                95%
+  #
+  #Confidence Interval:             LCL =  0.00000
+  #                                 UCL = 12.89643
+
+  #----------
+
+  # Clean up
+  rm(dat)
+  
+  #--------------------------------------------------------------------
+
+  # Example 17-3 of USEPA (2009, p. 17-17) shows how to construct a 
+  # beta-content upper tolerance limit with 95% coverage and 
+  # 95% confidence  using chrysene data and assuming a lognormal 
+  # distribution.  Here we will use the same chrysene data but assume a 
+  # gamma distribution.
+
+  # A beta-content upper tolerance limit with 95% coverage and 
+  # 95% confidence is equivalent to the 95% upper confidence limit for 
+  # the 95th percentile.
+
+  attach(EPA.09.Ex.17.3.chrysene.df)
+  Chrysene &lt;- Chrysene.ppb[Well.type == "Background"]
+  eqgamma(Chrysene, p = 0.95, ci = TRUE, ci.type = "upper")
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Gamma
+  #
+  #Estimated Parameter(s):          shape = 2.806929
+  #                                 scale = 5.286026
+  #
+  #Estimation Method:               mle
+  #
+  #Estimated Quantile(s):           95'th %ile = 31.74348
+  #
+  #Quantile Estimation Method:      Quantile(s) Based on
+  #                                 mle Estimators
+  #
+  #Data:                            Chrysene
+  #
+  #Sample Size:                     8
+  #
+  #Confidence Interval for:         95'th %ile
+  #
+  #Confidence Interval Method:      Exact using
+  #                                 Kulkarni &amp; Powar (2010)
+  #                                 transformation to Normality
+  #                                 based on mle of 'shape'
+  #
+  #Confidence Interval Type:        upper
+  #
+  #Confidence Level:                95%
+  #
+  #Confidence Interval:             LCL =  0.00000
+  #                                 UCL = 69.32425
+
+  #----------
+  # Clean up
+
+  rm(Chrysene)
+  detach("EPA.09.Ex.17.3.chrysene.df")
+</code></pre>
+
+
+</div>

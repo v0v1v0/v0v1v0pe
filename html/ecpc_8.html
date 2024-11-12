@@ -1,0 +1,198 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cv.ecpc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+
+Cross-validation for 'ecpc'
+</h2>
+
+<h3>Description</h3>
+
+
+<p>Cross-validates 'ecpc' and returns model fit, summary statistics and cross-validated performance measures.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cv.ecpc(Y,X,type.measure=c("MSE","AUC"),outerfolds=10,
+        lambdas=NULL,ncores=1,balance=TRUE,silent=FALSE,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+
+<p>Response data; n-dimensional vector (n: number of samples) for linear and logistic outcomes, or <code>Surv</code> object for Cox survival.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+
+<p>Observed data; (nxp)-dimensional matrix (p: number of covariates) with each row the observed high-dimensional feature vector of a sample.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type.measure</code></td>
+<td>
+
+<p>Type of cross-validated performance measure returned.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outerfolds</code></td>
+<td>
+
+<p>Number of cross-validation folds.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdas</code></td>
+<td>
+
+<p>A vector of global ridge penalties for each fold; may be given, else estimated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+
+<p>Number of cores; if larger than 1, the outer cross-validation folds are processed in parallel over 'ncores' clusters.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>balance</code></td>
+<td>
+
+<p>(logistic, Cox) Should folds be balanced in response?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+
+
+<p>Should output messages be suppressed (default FALSE)?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Additional arguments used in <code>ecpc</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+
+
+
+
+<p>A list with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>ecpc.fit</code></td>
+<td>
+<p>List with the ecpc model fit in each fold.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dfPred</code></td>
+<td>
+<p>Data frame with information about out-of-bag predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dfGrps</code></td>
+<td>
+<p>Data frame with information about estimated group and group set weights across folds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dfCVM</code></td>
+<td>
+<p>Data frame with cross-validated performance metric.</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+
+<p>Visualise cross-validated group set weights with <code>visualiseGroupsetweights</code> or group weights with <code>visualiseGroupweights</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#####################
+# Simulate toy data #
+#####################
+p&lt;-300 #number of covariates
+n&lt;-100 #sample size training data set
+n2&lt;-100 #sample size test data set
+
+#simulate all betas i.i.d. from beta_k~N(mean=0,sd=sqrt(0.1)):
+muBeta&lt;-0 #prior mean
+varBeta&lt;-0.1 #prior variance
+indT1&lt;-rep(1,p) #vector with group numbers all 1 (all simulated from same normal distribution)
+
+#simulate test and training data sets:
+Dat&lt;-simDat(n,p,n2,muBeta,varBeta,indT1,sigma=1,model='linear') 
+str(Dat) #Dat contains centered observed data, response data and regression coefficients
+
+##########################
+# Make co-data group sets #
+##########################
+#Group set: G random groups
+G &lt;- 5 #number of groups
+#sample random categorical co-data:
+categoricalRandom &lt;- as.factor(sample(1:G,p,TRUE))
+#make group set, i.e. list with G groups:
+groupsetRandom &lt;- createGroupset(categoricalRandom)
+
+#######################
+# Cross-validate ecpc #
+#######################
+tic&lt;-proc.time()[[3]]
+cv.fit &lt;- cv.ecpc(type.measure="MSE",outerfolds=2,
+                  Y=Dat$Y,X=Dat$Xctd,
+                  groupsets=list(groupsetRandom),
+                  groupsets.grouplvl=list(NULL),
+                  hypershrinkage=c("none"),
+                  model="linear",maxsel=c(5,10,15,20))
+toc &lt;- proc.time()[[3]]-tic
+
+str(cv.fit$ecpc.fit) #list containing the model fits on the folds
+str(cv.fit$dfPred) #data frame containing information on the predictions
+cv.fit$dfCVM #data frame with the cross-validated performance for ecpc
+#with/without posterior selection and ordinary ridge
+
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>aux_getevent</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Load seismic data of a user-defined event</h2>
+
+<h3>Description</h3>
+
+<p>The function loads seismic data from a data directory structure (see 
+<code>aux_organisecubefiles()</code>) based on the event start time, duration,
+component and station ID.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">aux_getevent(
+  start,
+  duration,
+  station,
+  component = "BHZ",
+  format,
+  dir,
+  simplify = TRUE,
+  eseis = TRUE,
+  try = FALSE,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p><code>POSIXct</code> value, start time of the data to import. If
+lazy users only submit a text string instead of a POSIXct obejct, the 
+function will try to convert that text string.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>duration</code></td>
+<td>
+<p><code>Numeric</code> value, duration of the data to import,
+in seconds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>station</code></td>
+<td>
+<p><code>Character</code> value, seismic station ID, which must
+correspond to the ID in the file name of the data directory structure 
+(cf. <code>aux_organisecubefiles</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>component</code></td>
+<td>
+<p><code>Character</code> value, seismic component, which must
+correspond to the component name in the file name of the data directory  
+structure (cf. <code>aux_organisecubefiles</code>). Default is 
+<code>"BHZ"</code> (vertical component of a sac file).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p><code>Character</code> value, seismic data format. One out of 
+<code>"sac"</code> and <code>"mseed"</code>. If omitted, the function will try to 
+identify the right format automatically.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p><code>Character</code> value, path to the seismic data directory.
+See details for further info on data structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplify</code></td>
+<td>
+<p><code>Logical</code> value, option to simplify output
+when possible. This basically means that if only data from one station 
+is loaded, the list object will have one level less. Default is 
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eseis</code></td>
+<td>
+<p><code>Logical</code> value, option to read data to an <code>eseis</code>
+object (recommended, see documentation of 
+<code>aux_initiateeseis</code>), default is <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>try</code></td>
+<td>
+<p><code>Logical</code> value, option to run the function in try-mode, 
+i.e., to let it return <code>NA</code> in case an error occurs during data
+import. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p><code>Logical</code> value, option to show messages during 
+function execution. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The data to be read needs to be adequately structured. The data directory
+must contain SAC files organised by year (e.g.2022) then by Julian Day
+in full three digits (e.g. 001) and then by a dedicated SAC file name, 
+containing the station ID, two-digit year, three-digit Julian Day, start 
+time hour, minute and second, three channel ID and the file extension SAC. 
+All these items need to be separated by stops (e.g. 
+sac/2022/001/LAU01.22.001.08.00.00. BHZ.SAC). This data structure will be 
+most conveniently created by the functions <code>aux_organisecubefiles()</code> 
+or <code>aux_organisecentaurfiles()</code>, or by manually written R code. 
+</p>
+<p>The function assumes complete data sets, i.e., not a single hourly 
+data set must be missing. The time 
+vector is loaded only once, from the first station and its first 
+component. Thus, it is assumed that all loaded seismic signals are
+of the same sampling frequency and length.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>list</code> object containing either a set of <code>eseis</code>
+objects or a data set with the time vector (<code>$time</code>) 
+and a list of seismic stations (<code>$station_ID</code>) with their seismic
+signals as data frame (<code>$signal</code>). If <code>simplify = TRUE</code> (the 
+default option) and only one seismic station is provided, the output  
+object containseither just one eseis object or the vectors for 
+<code>$time</code> and <code>$signal</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## set seismic data directory
+dir_data &lt;- paste0(system.file("extdata", package="eseis"), "/")
+
+## load the z component data from a station
+data &lt;- aux_getevent(start = as.POSIXct(x = "2017-04-09 01:20:00", 
+                                        tz = "UTC"), 
+                      duration = 120,
+                      station = "RUEG1",
+                      component = "BHZ",
+                      dir = dir_data)                       
+## plot signal
+plot_signal(data = data)
+
+## load data from two stations
+data &lt;- aux_getevent(start = as.POSIXct(x = "2017-04-09 01:20:00", 
+                                        tz = "UTC"), 
+                     duration = 120,
+                     station = c("RUEG1", "RUEG2"),
+                     component = "BHZ",
+                     dir = dir_data)
+
+## plot both signals
+par(mfcol = c(2, 1))
+lapply(X = data, FUN = plot_signal)
+                     
+</code></pre>
+
+
+</div>

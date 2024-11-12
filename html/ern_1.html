@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>agg_to_daily</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Infer daily counts from aggregates</h2>
+
+<h3>Description</h3>
+
+<p>Infer daily counts from aggregates
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">agg_to_daily(cl.data, dist.gi, prm.daily, silent = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cl.data</code></td>
+<td>
+<p>Data frame. Must have variables:
+</p>
+
+<ul>
+<li> <p><code>date</code>: calendar date of report
+</p>
+</li>
+<li> <p><code>value</code>: count of reported cases
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.gi</code></td>
+<td>
+<p>List. Parameters for the generation interval distribution in the same format as returned by <code>def_dist()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prm.daily</code></td>
+<td>
+<p>List. Parameters for daily report inference via MCMC. Elements include:
+</p>
+
+<ul>
+<li> <p><code>method</code>: String. Method name to infer the daily incidence reports from aggregated ones.
+Either <code>linear</code> or <code>renewal</code> is currently implemented.
+The <code>linear</code> method simply performs a linear interpolation that matches the aggregated values.
+The <code>renewal</code> method fits a SIR-like model using a renewal equation to infer the daily incidence.
+In this case, the fitting algorithm is a Markov Chain Monte Carlo (MCMC) implemented in JAGS
+and needs the parameters below (e.g., <code>burn,iter,chains,...</code>).
+The <code>renewal</code> method is more adapted for short single wave epidemics as this models
+i) naturally fits a single wave and ii) has longer computing time.
+For longer time series, user may perfer the <code>linear</code> method.
+</p>
+</li>
+<li> <p><code>popsize</code>: Integer. Population size to use in MCMC simulation to infer daily observations from aggregated input data.
+</p>
+</li>
+<li> <p><code>burn</code>: Numeric. Length of burn-in period (number of days).
+</p>
+</li>
+<li> <p><code>iter</code>: Numeric. Number of iterations after burn-in period (number of days).
+</p>
+</li>
+<li> <p><code>chains</code>: Numeric. Number of chains to simulate.
+</p>
+</li>
+<li> <p><code>prior_R0_shape</code>: Shape of the (hyper-)parameter for the prior Gamma distribution for R0.
+</p>
+</li>
+<li> <p><code>prior_R0_rate</code>: Rate of the (hyper-)parameter for the prior Gamma distribution for R0.
+</p>
+</li>
+<li> <p><code>prior_alpha_shape</code>: Shape of the (hyper-)parameter for the prior Gamma distribution for alpha.
+</p>
+</li>
+<li> <p><code>prior_alpha_rate</code>: Rate of the (hyper-)parameter for the prior Gamma distribution for alpha.
+</p>
+</li>
+<li> <p><code>first.agg.period</code>: length of aggregation period for first aggregated observation (number of days); if NULL, assume same aggregation period as observed for second observation (gap between first and second observations)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>Logical. Flag to suppress all output messages, warnings, and progress bars.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing a data frame with individual realizations of
+daily reported cases and the JAGS object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Importing data attached to the `ern` package
+# and selecting the Omicron wave in Ontario, Canada.
+# This is *weekly* incidence.
+data(cl.data)
+data = cl.data[cl.data$pt == 'on' &amp; 
+                  cl.data$date &gt; as.Date('2021-11-30') &amp; 
+                  cl.data$date &lt; as.Date('2021-12-31'),] 
+head(data)
+dist.gi = ern::def_dist(
+ dist     = "gamma",
+ mean     = 6.84,
+ mean_sd  = 0.7486,
+ shape    = 2.39,
+ shape_sd = 0.3573,
+ max      = 15
+)
+
+a = agg_to_daily(
+cl.data = data, 
+dist.gi = dist.gi, 
+  prm.daily = list(
+  method = "renewal",
+  popsize = 14e6,
+  # MCMC parameters.
+  # small values for computation speed for this example.
+  # Increase for better accuracy
+  burn = 100,
+  iter = 100,
+  chains = 2,
+  # - - - - - 
+  prior_R0_shape = 2,
+  prior_R0_rate = 0.6,
+  prior_alpha_shape = 1,
+  prior_alpha_rate = 1
+))
+# This is a Bayesian inference, so we 
+# have a posterior distribution of  
+# daily incidences. Here we just plot
+# one single draw:
+      
+ df = a$df
+ df1 = df[df$id==1,]
+ plot(x = df1$t, y = df1$value, typ = 'o',
+      xlab = 'days', ylab = 'daily incidence',
+      main = 'Posterior daily incidence infered from weekly incidence')
+ 
+ # Extract of the parameters values from the first chain
+ a$jags.object[[1]][1:9,1:9]
+ 
+</code></pre>
+
+
+</div>

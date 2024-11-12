@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>assess_quality</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Assess quality of a dataset</h2>
+
+<h3>Description</h3>
+
+<p>Provides information on the quality of a dataset. Assesses dataset's
+completeness, internal consistency, and entropy.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">assess_quality(data, id_var, consis_tbl)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame, data frame extension (e.g. a tibble), or a lazy
+data frame (e.g. from dbplyr or dtplyr).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id_var</code></td>
+<td>
+<p>An unquoted  expression which corresponds to a variable (column) in
+<code>data</code> which identifies each row (sample).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>consis_tbl</code></td>
+<td>
+<p>data frame or tibble containing information on internal
+consistency rules (see "Consistency Table Requirements" section)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Wraps several quality assessment functions from <code>eHDPrep</code>
+and returns a nested list with the following structure:
+</p>
+
+<dl>
+<dt>completeness</dt>
+<dd>
+<p>- A list of completeness assessments:
+</p>
+
+<ol>
+<li>
+<p> Tibble of variable (column) completeness (via <code>variable_completeness</code>)
+</p>
+</li>
+<li>
+<p> Tibble of row (sample) completeness (via <code>row_completeness</code>)
+</p>
+</li>
+<li>
+<p> Plot of row and variable completeness (via <code>plot_completeness</code>)
+</p>
+</li>
+<li>
+<p> Completeness heatmap (via <code>completeness_heatmap</code>)
+</p>
+</li>
+<li>
+<p> A function which creates a clean canvas before  plotting the completeness heatmap.
+</p>
+</li>
+</ol>
+</dd>
+<dt>internal_inconsistency</dt>
+<dd>
+<p>- Tibble of internal inconsistencies, if any
+are present and if a consistency table is supplied (via
+<code>identify_inconsistency</code>).</p>
+</dd>
+<dt>vars_with_zero_entropy</dt>
+<dd>
+<p>- Names of variables (columns) with zero entropy (via
+<code>zero_entropy_variables</code>)</p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>Nested list of quality measurements
+</p>
+
+
+<h3>Consistency Table Requirements</h3>
+
+<p>Table must have exactly five character columns.
+The columns should be ordered according to the list below which describes the
+values of each column:
+</p>
+
+<ol>
+<li>
+<p> First column name of data values that will be subject to 
+consistency checking. String. Required.
+</p>
+</li>
+<li>
+<p> Second column name of data values that will be subject to 
+consistency checking. String. Required.
+</p>
+</li>
+<li>
+<p> Logical test to compare columns one and two. One of: "&gt;","&gt;=",
+"&lt;","&lt;=","==", "!=". String. Optional if columns 4 and 5 have non-<code>NA</code> values.
+</p>
+</li>
+<li>
+<p> Either a single character string or a colon-separated range of
+numbers which should only appear in column A. Optional if column 3 has a
+non-<code>NA</code> value.
+</p>
+</li>
+<li>
+<p> Either a single character string or a colon-separated range of
+numbers which should only appear in column B given the value/range
+specified in column 4. Optional if column 3 has a non-<code>NA</code> value.
+</p>
+</li>
+</ol>
+<p>Each row should detail one test to make.
+Therefore, either column 3 or columns 4 and 5 must contain non-<code>NA</code>
+values.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other high level functionality: 
+<code>apply_quality_ctrl()</code>,
+<code>review_quality_ctrl()</code>,
+<code>semantic_enrichment()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># general example
+data(example_data)
+res &lt;- assess_quality(example_data, patient_id)
+
+# example of internal consistency checks on more simple dataset
+# describing bean counts
+require(tibble)
+
+# creating `data`:
+beans &lt;- tibble::tibble(red_beans = 1:15,
+blue_beans = 1:15,
+total_beans = 1:15*2,
+red_bean_summary = c(rep("few_beans",9), rep("many_beans",6)))
+
+# creating `consis_tbl`
+bean_rules &lt;- tibble::tribble(~varA, ~varB, ~lgl_test, ~varA_boundaries, ~varB_boundaries,
+"red_beans", "blue_beans", "==", NA, NA,
+"red_beans", "total_beans", "&lt;=", NA,NA,
+"red_beans", "red_bean_summary", NA, "1:9", "few_beans",
+"red_beans", "red_bean_summary", NA, "10:15", "many_beans")
+
+# add some inconsistencies
+beans[1, "red_bean_summary"] &lt;- "many_beans"
+beans[1, "red_beans"] &lt;- 10
+
+res &lt;- assess_quality(beans, consis_tbl = bean_rules)
+
+# variable completeness table
+res$completeness$variable_completeness
+
+# row completeness table
+res$completeness$row_completeness
+
+# show completeness of rows and variables as a bar plot
+res$completeness$completeness_plot
+
+# show dataset completeness in a clustered heatmap
+res$completeness$plot_completeness_heatmap(res$completeness)
+
+# show any internal inconsistencies
+res$internal_inconsistency
+
+# show any variables with zero entropy
+res$vars_with_zero_entropy
+</code></pre>
+
+
+</div>

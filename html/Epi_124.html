@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>foreign.Lexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a data structures suitable for use with packages <code>mstate</code> or <code>etm</code>.
+</h2>
+
+<h3>Description</h3>
+
+<p>The <code>mstate</code> package requires input in the form of a stacked
+dataset with specific variable names. This is provided by
+<code>msdata.Lexis</code>. The resulting dataframe contains the same
+information as the result of a call to <code>stack.Lexis</code>.
+</p>
+<p>The <code>etm</code> package requires input (almost) in the form of a
+<code>Lexis</code> object, but with specific column names etc. This is
+provided by <code>etm.Lexis</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">msdata(obj, ...)
+## S3 method for class 'Lexis'
+msdata(obj,
+                time.scale = timeScales(obj)[1],
+                       ... )
+## S3 method for class 'Lexis'
+etm( data,
+               time.scale = timeScales(data)[1],
+                cens.name = "cens",
+                        s = 0,
+                        t = "last",
+               covariance = TRUE,
+                 delta.na = TRUE,
+                      ... )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>A <code>Lexis</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>Lexis</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time.scale</code></td>
+<td>
+<p>Name or number of timescale in the <code>Lexis</code>
+object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cens.name</code></td>
+<td>
+<p>Name of the code for censoring used by <code>etm</code>. It
+is only necessary to change this if one of the states in the
+<code>Lexis</code> object has name "<code>cens</code>".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>Passed on to <code>etm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>Passed on to <code>etm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariance</code></td>
+<td>
+<p>Passed on to <code>etm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta.na</code></td>
+<td>
+<p>Passed on to <code>etm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>msdata.Lexis</code> returns a dataframe with the <code>Lexis</code> specific
+variables stripped, and with the following added: <code>id</code>,
+<code>Tstart</code>, <code>Tstop</code>, <code>from</code>, <code>to</code>, <code>trans</code>,
+<code>status</code>, which are used in the <code>mstate</code> package.
+</p>
+<p><code>etm.Lexis</code> transforms the <code>Lexis</code> object into a dataframe
+suitable for analysis by the function <code>etm</code> from the <code>etm</code>
+package, and actually calls this function, so returns an object of
+class <code>etm</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="mailto:b@bxc.dk">b@bxc.dk</a>, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>stack.Lexis</code>,
+<code>msprep</code>,
+<code>etm</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(DMlate)
+str(DMlate)
+dml &lt;- Lexis( entry = list(Per=dodm,Age=dodm-dobth,DMdur=0),
+               exit = list(Per=dox),
+        exit.status = factor(!is.na(dodth),labels=c("DM","Dead")),
+               data = DMlate[1:1000,] )
+dmi &lt;- cutLexis( dml, cut=dml$doins, new.state="Ins", pre="DM" )
+summary( dmi )
+
+# Use the interface to the mstate package
+if( require(mstate) )
+{
+ms.dmi &lt;- msdata.Lexis( dmi )
+# Check that all the transitions and person-years got across.
+with( ms.dmi, rbind( table(status,trans),
+                     tapply(Tstop-Tstart,trans,sum) ) )
+}
+
+# Use the etm package directly with a Lexis object
+if( require(etm) )
+{
+dmi &lt;- subset(dmi,lex.id&lt;1000)
+etm.D &lt;- etm.Lexis( dmi, time.scale=3 )
+str( etm.D )
+plot( etm.D, col=rainbow(5), lwd=2, lty=1, xlab="DM duration" )
+}
+</code></pre>
+
+
+</div>

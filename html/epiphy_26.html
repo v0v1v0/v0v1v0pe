@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fit_two_distr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximum likelihood fitting of two distributions and goodness-of-fit
+comparison.</h2>
+
+<h3>Description</h3>
+
+<p>Different distributions may be used depending on the kind of provided data.
+By default, the Poisson and negative binomial distributions are fitted to
+count data, whereas the binomial and beta-binomial distributions are used
+with incidence data. Either Randomness assumption (Poisson or binomial
+distributions) or aggregation assumption (negative binomial or beta-binomial)
+are made, and then, a goodness-of-fit comparison of both distributions is
+made using a log-likelihood ratio test.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fit_two_distr(data, ...)
+
+## Default S3 method:
+fit_two_distr(data, random, aggregated, ...)
+
+## S3 method for class 'count'
+fit_two_distr(
+  data,
+  random = smle_pois,
+  aggregated = smle_nbinom,
+  n_est = c(random = 1, aggregated = 2),
+  ...
+)
+
+## S3 method for class 'incidence'
+fit_two_distr(
+  data,
+  random = smle_binom,
+  aggregated = smle_betabinom,
+  n_est = c(random = 1, aggregated = 2),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An <code>intensity</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to other methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random</code></td>
+<td>
+<p>Distribution to describe random patterns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregated</code></td>
+<td>
+<p>Distribution to describe aggregated patterns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_est</code></td>
+<td>
+<p>Number of estimated parameters for both distributions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Under the hood, <code>distr_fit</code> relies on the <code>smle</code> utility
+which is a wrapped around the <code>optim</code> procedure.
+</p>
+<p>Note that there may appear warnings about chi-squared goodness-of-fit tests
+if any expected count is less than 5 (Cochran's rule of thumb).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>fit_two_distr</code>, which is a list containing at least
+the following components:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+    <code>call</code>  </td>
+<td style="text-align: left;"> The function <code>call</code>. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>name</code>  </td>
+<td style="text-align: left;"> The names of both distributions. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>model</code> </td>
+<td style="text-align: left;"> The outputs of fitting process for both distributions. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>llr</code>   </td>
+<td style="text-align: left;"> The result of the log-likelihood ratio test. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>Other components can be present such as:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+    <code>param</code> </td>
+<td style="text-align: left;"> A numeric matrix of estimated parameters (that can be
+                      printed using <code>printCoefmat</code>). </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>freq</code>  </td>
+<td style="text-align: left;"> A data frame or a matrix with the observed and expected
+                      frequencies for both distributions for the different
+                      categories. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>gof</code>   </td>
+<td style="text-align: left;"> Goodness-of-fit tests for both distributions (which are
+                      typically chi-squared goodness-of-fit tests). </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Madden LV, Hughes G. 1995. Plant disease incidence: Distributions,
+heterogeneity, and temporal analysis. Annual Review of Phytopathology 33(1):
+529–564.
+<a href="https://doi.org/10.1146/annurev.py.33.090195.002525">doi:10.1146/annurev.py.33.090195.002525</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simple workflow for incidence data:
+my_data &lt;- count(arthropods)
+my_data &lt;- split(my_data, by = "t")[[3]]
+my_res  &lt;- fit_two_distr(my_data)
+summary(my_res)
+plot(my_res)
+
+# Simple workflow for incidence data:
+my_data &lt;- incidence(tobacco_viruses)
+my_res  &lt;- fit_two_distr(my_data)
+summary(my_res)
+plot(my_res)
+
+# Note that there are other methods to fit some common distributions.
+# For example for the Poisson distribution, one can use glm:
+my_arthropods &lt;- arthropods[arthropods$t == 3, ]
+my_model &lt;- glm(my_arthropods$i ~ 1, family = poisson)
+lambda &lt;- exp(coef(my_model)[[1]]) # unique(my_model$fitted.values) works also.
+lambda
+# ... or the fitdistr function in MASS package:
+require(MASS)
+fitdistr(my_arthropods$i, "poisson")
+
+# For the binomial distribution, glm still works:
+my_model &lt;- with(tobacco_viruses, glm(i/n ~ 1, family = binomial, weights = n))
+prob &lt;- logit(coef(my_model)[[1]], rev = TRUE)
+prob
+# ... but the binomial distribution is not yet recognized by MASS::fitdistr.
+
+# Examples featured in Madden et al. (2007).
+# p. 242-243
+my_data &lt;- incidence(dogwood_anthracnose)
+my_data &lt;- split(my_data, by = "t")
+my_fit_two_distr &lt;- lapply(my_data, fit_two_distr)
+lapply(my_fit_two_distr, function(x) x$param$aggregated[c("prob", "theta"), ])
+lapply(my_fit_two_distr, plot)
+
+my_agg_index &lt;- lapply(my_data, agg_index)
+lapply(my_agg_index, function(x) x$index)
+lapply(my_agg_index, chisq.test)
+
+</code></pre>
+
+
+</div>

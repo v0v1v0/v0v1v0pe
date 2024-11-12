@@ -1,0 +1,272 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emfx</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Post-estimation treatment effects for an ETWFE regressions.</h2>
+
+<h3>Description</h3>
+
+<p>Post-estimation treatment effects for an ETWFE regressions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emfx(
+  object,
+  type = c("simple", "group", "calendar", "event"),
+  by_xvar = "auto",
+  collapse = "auto",
+  post_only = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An <code>etwfe</code> model object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Character. The desired type of post-estimation aggregation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by_xvar</code></td>
+<td>
+<p>Logical. Should the results account for heterogeneous
+treatment effects? Only relevant if the preceding <code>etwfe</code> call included a
+specified <code>xvar</code> argument, i.e. interacted categorical covariate. The
+default behaviour ("auto") is to automatically estimate heterogeneous
+treatment effects for each level of <code>xvar</code> if these are detected as part
+of the underlying <code>etwfe</code> model object. Users can override by setting to
+either FALSE or TRUE. See the section on Heterogeneous treatment effects
+below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>collapse</code></td>
+<td>
+<p>Logical. Collapse the data by (period by cohort) groups
+before calculating marginal effects? This trades off a loss in estimate
+accuracy (typically around the 1st or 2nd significant decimal point) for a
+substantial improvement in estimation time for large datasets. The default
+behaviour ("auto") is to automatically collapse if the original dataset
+has more than 500,000 rows. Users can override by setting either FALSE or
+TRUE. Note that collapsing by group is only valid if the preceding <code>etwfe</code>
+call was run with "ivar = NULL" (the default). See the section on
+Performance tips below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>post_only</code></td>
+<td>
+<p>Logical. Drop pre-treatment ATTs? Only evaluated if (a)
+<code>type = "event"</code> and (b) the original <code>etwfe</code> model object was estimated
+using the default "notyet" treated control group. If conditions (a) and
+(b) are met then the pre-treatment effects will be zero as a mechanical
+result of ETWFE's estimation setup. The default behaviour (<code>FALSE</code>) is
+thus to drop these nuisance rows from the dataset. The <code>post_only</code> argument
+recognises that you may still want to keep them for presentation purposes
+(e.g., plotting an event-study). Nevertheless, be forewarned that enabling
+that behaviour via <code>TRUE</code> is <em>strictly</em> performative: the "zero" treatment
+effects for any pre-treatment periods is purely an artefact of the
+estimation setup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to
+<code>marginaleffects::slopes</code>. For example, you can pass <code>vcov = FALSE</code> to dramatically speed up estimation times of the main marginal
+effects (but at the cost of not getting any information about standard
+errors; see Performance tips below). Another potentially useful
+application is testing whether heterogeneous treatment effects (i.e. the
+levels of any <code>xvar</code> covariate) are equal by invoking the <code>hypothesis</code>
+argument, e.g. <code>hypothesis = "b1 = b2"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>slopes</code> object from the <code>marginaleffects</code> package.
+</p>
+
+
+<h3>Performance tips</h3>
+
+<p>Under most situations, <code>etwfe</code> should complete very quickly. For its part,
+<code>emfx</code> is quite performant too and should take a few seconds or less for
+datasets under 100k rows. However, <code>emfx</code>'s computation time does tend to
+scale non-linearly with the size of the original data, as well as the
+number of interactions from the underlying <code>etwfe</code> model. Without getting
+too deep into the weeds, the numerical delta method used to recover the
+ATEs of interest has to estimate two prediction models for <em>each</em>
+coefficient in the model and then compute their standard errors. So, it's
+a potentially expensive operation that can push the computation time for
+large datasets (&gt; 1m rows) up to several minutes or longer.
+</p>
+<p>Fortunately, there are two complementary strategies that you can use to
+speed things up. The first is to turn off the most expensive part of the
+whole procedure—standard error calculation—by calling <code>emfx(..., vcov = FALSE)</code>. Doing so should bring the estimation time back down to a few
+seconds or less, even for datasets in excess of a million rows. While the
+loss of standard errors might not be an acceptable trade-off for projects
+where statistical inference is critical, the good news is this first
+strategy can still be combined our second strategy. It turns out that
+collapsing the data by groups prior to estimating the marginal effects can
+yield substantial speed gains of its own. Users can do this by invoking
+the <code>emfx(..., collapse = TRUE)</code> argument. While the effect here is not as
+dramatic as the first strategy, our second strategy does have the virtue
+of retaining information about the standard errors. The trade-off this
+time, however, is that collapsing our data does lead to a loss in accuracy
+for our estimated parameters. On the other hand, testing suggests that
+this loss in accuracy tends to be relatively minor, with results
+equivalent up to the 1st or 2nd significant decimal place (or even
+better).
+</p>
+<p>Summarizing, here's a quick plan of attack for you to try if you are
+worried about the estimation time for large datasets and models:
+</p>
+
+<ol>
+<li>
+<p> Estimate <code>mod = etwfe(...)</code> as per usual.
+</p>
+</li>
+<li>
+<p> Run <code>emfx(mod, vcov = FALSE, ...)</code>.
+</p>
+</li>
+<li>
+<p> Run <code>emfx(mod, vcov = FALSE, collapse = TRUE, ...)</code>.
+</p>
+</li>
+<li>
+<p> Compare the point estimates from steps 1 and 2. If they are are similar
+enough to your satisfaction, get the approximate standard errors by
+running <code>emfx(mod, collapse = TRUE, ...)</code>.
+</p>
+</li>
+</ol>
+<h3>Heterogeneous treatment effects</h3>
+
+<p>Specifying <code style="white-space: pre;">⁠etwfe(..., xvar = &lt;xvar&gt;)⁠</code> will generate interaction effects
+for all levels of <code style="white-space: pre;">⁠&lt;xvar&gt;⁠</code> as part of the main regression model. The
+reason that this is useful (as opposed to a regular, non-interacted
+covariate in the formula RHS) is that it allows us to estimate
+heterogeneous treatment effects as part of the larger ETWFE framework.
+Specifically, we can recover heterogeneous treatment effects for each
+level of <code style="white-space: pre;">⁠&lt;xvar&gt;⁠</code> by passing the resulting <code>etwfe</code> model object on to
+<code>emfx()</code>.
+</p>
+<p>For example, imagine that we have a categorical variable called "age" in
+our dataset, with two distinct levels "adult" and "child". Running
+<code>emfx(etwfe(..., xvar = age))</code> will tell us how the efficacy of treatment
+varies across adults and children. We can then also leverage the in-built
+hypothesis testing infrastructure of <code>marginaleffects</code> to test whether
+the treatment effect is statistically different across these two age
+groups; see Examples below. Note the same principles carry over to
+categorical variables with multiple levels, or even continuous variables
+(although continuous variables are not as well supported yet).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>marginaleffects::slopes()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# We’ll use the mpdta dataset from the did package (which you’ll need to 
+# install separately).
+
+# install.packages("did")
+data("mpdta", package = "did")
+
+#
+# Basic example
+#
+
+# The basic ETWFE workflow involves two steps:
+
+# 1) Estimate the main regression model with etwfe().
+
+mod = etwfe(
+    fml  = lemp ~ lpop, # outcome ~ controls (use 0 or 1 if none)
+    tvar = year,        # time variable
+    gvar = first.treat, # group variable
+    data = mpdta,       # dataset
+    vcov = ~countyreal  # vcov adjustment (here: clustered by county)
+    )
+
+# mod ## A fixest model object with fully saturated interaction effects.
+
+# 2) Recover the treatment effects of interest with emfx().
+
+emfx(mod, type = "event") # dynamic ATE a la an event study
+
+# Etc. Other aggregation type options are "simple" (the default), "group"
+# and "calendar"
+
+
+#
+# Heterogeneous treatment effects
+#
+
+# Example where we estimate heterogeneous treatment effects for counties 
+# within the 8 US Great Lake states (versus all other counties). 
+
+gls = c("IL" = 17, "IN" = 18, "MI" = 26, "MN" = 27,
+        "NY" = 36, "OH" = 39, "PA" = 42, "WI" = 55)
+
+mpdta$gls = substr(mpdta$countyreal, 1, 2) %in% gls
+
+hmod = etwfe(
+   lemp ~ lpop, tvar = year, gvar = first.treat, data = mpdta, 
+   vcov = ~countyreal,
+   xvar = gls           ## &lt;= het. TEs by gls
+   )
+
+# Heterogeneous ATEs (could also specify "event", etc.) 
+
+emfx(hmod)
+
+# To test whether the ATEs across these two groups (non-GLS vs GLS) are 
+# statistically different, simply pass an appropriate "hypothesis" argument.
+
+emfx(hmod, hypothesis = "b1 = b2")
+
+
+#
+# Nonlinear model (distribution / link) families
+#
+
+# Poisson example
+
+mpdta$emp = exp(mpdta$lemp)
+
+etwfe(
+   emp ~ lpop, tvar = year, gvar = first.treat, data = mpdta, 
+   vcov = ~countyreal,
+   family = "poisson"   ## &lt;= family arg for nonlinear options
+   ) |&gt;
+   emfx("event")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

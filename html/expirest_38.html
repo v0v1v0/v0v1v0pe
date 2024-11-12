@@ -1,0 +1,195 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>print.expirest_wisle</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Print a summary of the what-if shelf life estimation (wisle)</h2>
+
+<h3>Description</h3>
+
+<p>This is a method for the function <code>print()</code> for objects of class
+‘<code>expirest_wisle</code>’.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'expirest_wisle'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class ‘<code>expirest_wisle</code>’ returned by
+the <code>expirest_wisle()</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to or from other methods or arguments
+that can be passed down to the <code>formatC()</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>expirest_wisle()</code> estimates the expiry
+for the specified release and specification limit following the ARGPM
+guidance “Stability testing for prescription medicines”. By default,
+batch poolability is checked as recommended by the ICH Q1E guideline at a
+significance level of 0.25. Other levels can be used, although not
+recommended, by changing the default of the <code>alpha_pool</code> parameter.
+Three possible models may be appropriate, i.e.
+</p>
+
+<ul>
+<li>
+<p> a <em>common intercept / common slope</em> model (cics),
+</p>
+</li>
+<li>
+<p> a <em>different intercept / common slope</em> model (dics) or
+</p>
+</li>
+<li>
+<p> a <em>different intercept / different slope</em> model (dids).
+</p>
+</li>
+</ul>
+<p>The worst case intercept is the intercept of the batch whose confidence
+limit is the first crossing the acceptance limit. As in case of the
+<code>cics</code> model type all batches have a common intercept and a common
+confidence interval, all batches can be regarded as equally worst case. In
+case of the <code>dids</code> model type, shelf life estimation is done using the
+models obtained from fitting the data of each batch individually. In
+addition to the shelf life estimated according to the ARGPM also the
+estimate according to ICH Q1E is shown.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The ‘<code>expirest_wisle</code>’ object passed to the
+<code>x</code> parameter is returned invisibly.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>expirest_wisle</code>, <code>expirest_osle</code>,
+<code>formatC</code>, <code>methods</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Fit models of different type
+res1 &lt;-
+  expirest_wisle(data = exp1[exp1$Batch %in% c("b2", "b5", "b7"), ],
+                 response_vbl = "Potency", time_vbl = "Month",
+                 batch_vbl = "Batch", rl = 98, rl_sf = 3, sl = 95,
+                 sl_sf = 3, srch_range = c(0, 500), sf_option = "loose")
+
+res2 &lt;-
+  expirest_wisle(data = exp1[exp1$Batch %in% c("b3", "b4", "b5"), ],
+                 response_vbl = "Potency", time_vbl = "Month",
+                 batch_vbl = "Batch", rl = 98, rl_sf = 3, sl = 95,
+                 sl_sf = 3, srch_range = c(0, 500), sf_option = "loose")
+res3 &lt;-
+  expirest_wisle(data = exp1[exp1$Batch %in% c("b4", "b5", "b8"), ],
+                 response_vbl = "Potency", time_vbl = "Month",
+                 batch_vbl = "Batch", rl = 98, rl_sf = 3, sl = 95,
+                 sl_sf = 3, srch_range = c(0, 500), sf_option = "loose")
+
+# The parameter settings sf_option = "loose" and ivl_side = "lower" (the
+# default setting of ivl_side) cause the specification limit of 95.0
+# (sl_sf = 3, i.e. 3 significant digits) to be reduced by 0.05, i.e. the
+# actual specification limit is 94.95.
+
+## Not run: 
+  res1
+  # Expected output of print(res1)
+  # Summary of shelf life estimation following the ARGPM
+  # guidance "Stability testing for prescription medicines"
+  #
+  # The best model accepted at a significance level of 0.25 has
+  # Common intercepts and Common slopes (acronym: cics).
+  #
+  # Worst case intercept and batch:
+  #   RL Batch Intercept
+  # 1 98    NA  100.5669
+  #
+  # Estimated shelf lives for the cics model:
+  #   SL RL    wisle    osle
+  # 1 95 98 14.07398 26.2241
+  #
+  # Abbreviations:
+  #   ARGPM: Australian Regulatory Guidelines for Prescription Medicines;
+  #   ICH: International Council for Harmonisation;
+  #   osle: Ordinary shelf life estimation (i.e. following the ICH guidance);
+  #   RL: Release Limit;
+  #   SL: Specification Limit;
+  #   wisle: What-if (approach for) shelf life estimation (see ARGPM guidance).
+
+  res2
+  # Expected output of print(res2)
+  # Summary of shelf life estimation following the ARGPM
+  # guidance "Stability testing for prescription medicines"
+  #
+  # The best model accepted at a significance level of 0.25 has
+  # Different intercepts and Common slopes (acronym: dics).
+  #
+  # Worst case intercept and batch:
+  #   RL Batch Intercept
+  # 1 98    b5    100.82
+  #
+  # Estimated shelf lives for the dics model:
+  #   SL RL    wisle     osle
+  # 1 95 98 11.40993 23.60194
+  #
+  # Abbreviations:
+  #   ARGPM: Australian Regulatory Guidelines for Prescription Medicines;
+  #   ICH: International Council for Harmonisation;
+  #   osle: Ordinary shelf life estimation (i.e. following the ICH guidance);
+  #   RL: Release Limit;
+  #   SL: Specification Limit;
+  #   wisle: What-if (approach for) shelf life estimation (see ARGPM guidance).
+
+  res3
+  # Expected output of print(res3)
+  # Summary of shelf life estimation following the ARGPM
+  #   guidance "Stability testing for prescription medicines"
+  #
+  # The best model accepted at a significance level of 0.25 has
+  #  Different intercepts and Different slopes (acronym: dids).
+  #
+  # Worst case intercept and batch:
+  #   RL Batch Intercept
+  # 1 98    b8  101.2594
+  #
+  # Estimated shelf lives for the dids model (for information, the results of
+  #   the model fitted with pooled mean square error (pmse) are also shown:
+  #   SL RL    wisle wisle (pmse)     osle osle (pmse)
+  # 1 95 98 7.619661     7.483223 15.96453    15.72348
+  #
+  # Abbreviations:
+  #   ARGPM: Australian Regulatory Guidelines for Prescription Medicines;
+  #   ICH: International Council for Harmonisation;
+  #   osle: Ordinary shelf life estimation (i.e. following the ICH guidance);
+  #   pmse: Pooled mean square error;
+  #   RL: Release Limit;
+  #   SL: Specification Limit;
+  #   wisle: What-if (approach for) shelf life estimation (see ARGPM guidance).
+
+## End(Not run)
+</code></pre>
+
+
+</div>

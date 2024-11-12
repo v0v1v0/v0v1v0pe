@@ -1,0 +1,217 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ensembleMOSgev0</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Censored generalized extreme value distribution EMOS modeling
+</h2>
+
+<h3>Description</h3>
+
+<p>Fits a Censored generalized extreme value distribution EMOS model to ensemble forecasts for
+specified dates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ensembleMOSgev0(ensembleData, trainingDays, consecutive = FALSE,
+                dates = NULL, control = controlMOSgev0(),
+                warmStart = FALSE, exchangeable = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ensembleData</code></td>
+<td>
+
+<p>An <code>ensembleData</code> object including ensemble forecasts with
+the corresponding verifying observations and their dates.
+Missing values (indicated by <code>NA</code>) are allowed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainingDays</code></td>
+<td>
+
+<p>An integer giving the number of time steps (e.g. days)
+in the training period. There is no default.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>consecutive</code></td>
+<td>
+
+<p>If <code>TRUE</code> then the sequence of dates in the training set are
+treated as consecutive, i.e. date gaps are ignored.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+
+<p>The dates for which EMOS forecasting models are desired.
+By default, this will be all dates in <code>ensembleData</code>
+for which modeling is allowed given the training rule.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+
+<p>A list of control values for the fitting functions specified via the
+function  controlMOSgev0. For details
+and default values, see controlMOSgev0.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warmStart</code></td>
+<td>
+
+<p>If <code>TRUE</code>, then starting values for parameters in optimization
+are set to the estimates of the preceding date's fit.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exchangeable</code></td>
+<td>
+
+<p>A numeric or character vector or factor indicating groups of
+ensemble members that are exchangeable (indistinguishable).
+The modeling will have equal parameters within each group.
+The default determines exchangeability from <code>ensembleData</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Given an ensemble of size <code class="reqn">m</code>: <code class="reqn">X_1, \ldots , X_m</code>, the
+following generalized extreme value distribution EMOS
+model left-censored at 0 is fit by <code>ensembleMOSgev0</code>: 
+</p>
+<p style="text-align: center;"><code class="reqn"> Y ~ GEV_0(\mu,\sigma,q)</code>
+</p>
+
+<p>where <code class="reqn">GEV_0</code> denotes the generalized extreme value distribution
+left-censored at zero,
+with location <code class="reqn">\mu</code>, scale <code class="reqn">\sigma</code> and shape <code class="reqn">q</code>. The model is 
+parametrized such that the mean <code class="reqn">m</code> is a linear function
+<code class="reqn">a + b_1 X_1 + \ldots + b_m X_m + s p_0</code>
+of the ensemble forecats, where <code class="reqn">p_0</code> denotes the ratio of ensemble forecasts
+that are exactly 0, and the shape parameter <code class="reqn">\sigma</code> is a linear
+function of the ensemble variance <code class="reqn">c + d MD(X_1,\ldots,X_m)</code>, where
+<code class="reqn">MD(X_1,\ldots,X_m)</code> is Gini's mean difference. 
+See ensembleMOSgev0 for details.
+</p>
+<p><code>B</code> is a vector of fitted regression coefficients: <code class="reqn">b_1,
+  \ldots, b_m</code>.  Specifically, <code class="reqn">a, b_1,\ldots, b_m, s, c, d, q</code> are
+fitted to optimize
+the mean CRPS over the specified training period using
+<code>optim</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following output components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>training</code></td>
+<td>
+
+<p>A list containing information on the training length and lag and
+the number of instances used for training for each modeling date.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+
+<p>A vector of fitted EMOS intercept parameters for each date.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+
+<p>A matrix of fitted EMOS coefficients for each date.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+
+<p>A vector of fitted EMOS coefficients for <code class="reqn">p_0</code> for each date, 
+see details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c,d</code></td>
+<td>
+
+<p>The fitted coefficients for the shape parameter, see details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+
+<p>Fitted shape parameter, see details.
+</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>M. Scheuerer, Probabilistic quantitative precipitation forecasting using ensemble
+model output statistics. <em>Quarterly Journal of the Royal Meteorological
+Society</em> 140:1086–1096, 2014.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>controlMOSgev0</code>,
+<code>fitMOSgev0</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("ensBMAtest", package = "ensembleBMA")
+
+ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+obs &lt;- paste("PCP24","obs", sep = ".")
+ens &lt;- paste("PCP24", ensMemNames, sep = ".")
+prcpTestData &lt;- ensembleData(forecasts = ensBMAtest[,ens],
+                             dates = ensBMAtest[,"vdate"],
+                             observations = ensBMAtest[,obs],
+                             station = ensBMAtest[,"station"],
+                             forecastHour = 48,
+                             initializationTime = "00")
+                             
+prcpTestFitGEV0 &lt;- ensembleMOSgev0(prcpTestData, trainingDays = 25,
+                                   dates = "2008010100")
+</code></pre>
+
+
+</div>

@@ -1,0 +1,181 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>srtBayes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Analysis of Simple Randomised Education Trials using Bayesian Linear Regression Model with Vague Priors.</h2>
+
+<h3>Description</h3>
+
+<p><code>srtBayes</code> performs analysis of educational trials under the assumption of independent errors among pupils using Bayesian framework with Stan.
+This can also be used with schools as fixed effects.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">srtBayes(
+  formula,
+  intervention,
+  baseln,
+  adaptD,
+  nsim = 2000,
+  condopt,
+  uncopt,
+  data,
+  threshold = 1:10/10,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>The model to be analysed is of the form y~x1+x2+.... Where y is the outcome variable and Xs are the independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervention</code></td>
+<td>
+<p>A string variable specifying the "intervention variable" as appearing in the formula and the data. See example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>baseln</code></td>
+<td>
+<p>A string variable allowing the user to specify the reference category for intervention variable. When not specified, the first level will be used as a reference.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adaptD</code></td>
+<td>
+<p>As this function uses rstanarm, this term provides the target average proposal acceptance probability during Stan’s adaptation period. Default is NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>number of MCMC iterations per chain. Default is 2000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condopt</code></td>
+<td>
+<p>additional arguments of <code>stan_glm</code> to be passed only to the conditional model specification (for example, defining priors only for the conditional model, etc.).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uncopt</code></td>
+<td>
+<p>additional arguments of <code>stan_glm</code> to be passed only to the unconditional model specification (for example, defining priors only for the unconditional model, etc.).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame containing the data to be analysed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>a scalar or vector of pre-specified threshold(s) for estimating Bayesian posterior probability such that the observed effect size is greater than or equal to the threshold(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments of <code>stan_glm</code> to be passed both to the conditional and unconditional model specifications.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>S3 object; a list consisting of
+</p>
+
+<ul>
+<li> <p><code>Beta</code>: Estimates and credible intervals for the variables specified in the model. Use <code>summary.eefAnalytics</code> to get Rhat and effective sample size for each estimate.
+</p>
+</li>
+<li> <p><code>ES</code>: Conditional Hedges' g effect size and its 95% credible intervals.
+</p>
+</li>
+<li> <p><code>sigma2</code>: Residual variance.
+</p>
+</li>
+<li> <p><code>ProbES</code>: A matrix of Bayesian posterior probabilities such that the observed effect size is greater than or equal to a pre-specified threshold(s).
+</p>
+</li>
+<li> <p><code>Model</code>: A stan_glm object used in ES computation, this object can be used for convergence diagnostic.
+</p>
+</li>
+<li> <p><code>Unconditional</code>: A list of unconditional effect sizes, sigma2 and ProbES obtained based on residual variance from the unconditional model (model with only the intercept as a fixed effect).
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(interactive()){
+
+data(mstData)
+
+########################################################
+## Bayesian analysis of simple randomised trials      ##
+########################################################
+
+output &lt;- srtBayes(Posttest~ Intervention+Prettest,
+		intervention="Intervention",nsim=2000,data=mstData)
+
+### Fixed effects
+beta &lt;- output$Beta
+beta
+
+### Effect size
+ES1 &lt;- output$ES
+ES1
+
+## Covariance matrix
+covParm &lt;- output$covParm
+covParm
+
+### plot random effects for schools
+
+plot(output)
+
+### plot posterior probability of an effect size to be bigger than a pre-specified threshold
+
+plot(output,group=1)
+
+###########################################################################################
+## Bayesian analysis of simple randomised trials using informative priors for treatment  ##
+###########################################################################################
+
+### define priors for explanatory variables
+
+my_prior &lt;- normal(location = c(0,6), scale = c(10,1))
+
+### specify the priors for the conditional model only
+
+output2 &lt;- srtBayes(Posttest~ Prettest+Intervention,
+                    intervention="Intervention",
+                    nsim=2000,data=mstData,
+                    condopt=list(prior=my_prior))
+
+### Fixed effects
+beta2 &lt;- output2$Beta
+beta2
+
+### Effect size
+ES2 &lt;- output2$ES
+ES2
+}
+</code></pre>
+
+
+</div>

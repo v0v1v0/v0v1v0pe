@@ -1,0 +1,314 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>decluster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Decluster Data Above a Threshold
+</h2>
+
+<h3>Description</h3>
+
+<p>Decluster data above a given threshold to try to make them independent.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">decluster(x, threshold, ...)
+
+## S3 method for class 'data.frame'
+decluster(x, threshold, ..., which.cols, method = c("runs", "intervals"), 
+    clusterfun = "max")
+
+## Default S3 method:
+decluster(x, threshold, ..., method = c("runs", "intervals"),
+    clusterfun = "max")
+
+## S3 method for class 'intervals'
+decluster(x, threshold, ..., clusterfun = "max", groups = NULL, replace.with, 
+    na.action = na.fail)
+
+## S3 method for class 'runs'
+decluster(x, threshold, ..., data, r = 1, clusterfun = "max", groups = NULL, 
+    replace.with, na.action = na.fail)
+
+## S3 method for class 'declustered'
+plot(x, which.plot = c("scatter", "atdf"), qu = 0.85, xlab = NULL, 
+    ylab = NULL, main = NULL, col = "gray", ...)
+
+## S3 method for class 'declustered'
+print(x, ...)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>An R data set to be declustered.  Can be a data frame or a numeric vector.  If a data frame, then <code>which.cols</code> must be specified.
+</p>
+<p><code>plot</code> and <code>print</code>: an object returned by <code>decluster</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame containing the data.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+
+<p>numeric of length one or the size of the data over which (non-inclusive) data are to be declustered.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qu</code></td>
+<td>
+<p>quantile for <code>u</code> argument in the call to <code>atdf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.cols</code></td>
+<td>
+<p>numeric of length one or two.  The first component tells which column is the one to decluster, and the second component tells which, if any, column is to serve as groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.plot</code></td>
+<td>
+<p>character string naming the type of plot to make.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character string naming the declustering method to employ.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusterfun</code></td>
+<td>
+<p>character string naming a function to be applied to the clusters (the returned value is used).  Typically, for extreme value analysis (EVA), this will be the cluster maximum (default), but other options are ok as long as they return a single number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>numeric of length <code>x</code> giving natural groupings that should be considered as separate clusters.  For example, suppose data cover only summer months across several years.  It would probably not make sense to decluster the data across years (i.e., a new cluster should be defined if they occur in different years).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>integer run length stating how many threshold deficits should be used to define a new cluster.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace.with</code></td>
+<td>
+<p>number, NaN, Inf, -Inf, or NA.  What should the remaining values in the cluster be replaced with?  The default replaces them with <code>threshold</code>, which for most EVA purposes is ideal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>function to be called to handle missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab, ylab, main, col</code></td>
+<td>
+<p>optioal arguments to the <code>plot</code> function.  If not used, then reasonable default values are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>optional arguments to <code>decluster.runs</code> or <code>clusterfun</code>.
+</p>
+<p><code>plot</code>: optional arguments to <code>plot</code>.
+</p>
+<p>Not used by <code>print</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Runs declustering (see Coles, 2001 sec. 5.3.2): Extremes separated by fewer than <code>r</code> non-extremes belong to the same cluster.
+</p>
+<p>Intervals declustering (Ferro and Segers, 2003): Extremes separated by fewer than <code>r</code> non-extremes belong to the same cluster, where <code>r</code> is the nc-th largest interexceedance time and nc, the number of clusters, is estimated from the extremal index, theta, and the times between extremes. Setting theta = 1 causes each extreme to form a separate cluster.
+</p>
+<p>The print statement will report the resulting extremal index estimate based on either the runs or intervals estimate depending on the <code>method</code> argument as well as the number of clusters and run length.  For runs declustering, the run length is the same as the argument given by the user, and for intervals method, it is an estimated run length for the resulting declustered data.  Note that if the declustered data are independent, the extremal index should be close to one (if not equal to 1).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric vector of class “declustered” is returned with various attributes including:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the function call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name</code></td>
+<td>
+<p>character string giving the name of the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>decluster.function</code></td>
+<td>
+<p>value of <code>clusterfun</code> argument.  This is a function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character string naming the method.  Same as input argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>threshold used for declustering.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>character string naming the data used for the groups when applicable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>run.length</code></td>
+<td>
+<p>the run length used (or estimated if “intervals” method employed).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>function used to handle missing values.  Same as input argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+<p>muneric giving the clusters of threshold exceedances.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Eric Gilleland
+</p>
+
+
+<h3>References</h3>
+
+<p>Coles, S.  (2001) <em>An introduction to statistical modeling of extreme values</em>, London, U.K.: Springer-Verlag, 208 pp.
+</p>
+<p>Ferro, C. A. T. and Segers, J. (2003). Inference for clusters of extreme values. <em>Journal of the Royal Statistical Society B</em>, <b>65</b>, 545–556.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>extremalindex</code>, <code>datagrabber</code>, <code>fevd</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">y &lt;- rnorm(100, mean=40, sd=20)
+y &lt;- apply(cbind(y[1:99], y[2:100]), 1, max)
+bl &lt;- rep(1:3, each=33)
+
+ydc &lt;- decluster(y, quantile(y, probs=c(0.75)), r=1, groups=bl)
+ydc
+
+plot(ydc)
+
+## Not run: 
+look &lt;- decluster(-Tphap$MinT, threshold=-73)
+look
+plot(look)
+
+# The code cannot currently grab data of the type of above.
+# Better:
+y &lt;- -Tphap$MinT
+look &lt;- decluster(y, threshold=-73)
+look
+plot(look)
+
+# Even better.  Use a non-constant threshold.
+u &lt;- -70 - 7 *(Tphap$Year - 48)/42
+look &lt;- decluster(y, threshold=u)
+look
+plot(look)
+
+# Better still: account for the fact that there are huge
+# gaps in data from one year to another.
+bl &lt;- Tphap$Year - 47
+look &lt;- decluster(y, threshold=u, groups=bl)
+look
+plot(look)
+
+
+# Now try the above with intervals declustering and compare 
+look2 &lt;- decluster(y, threshold=u, method="intervals", groups=bl)
+look2
+dev.new()
+plot(look2)
+# Looks about the same,
+# but note that the run length is estimated to be 5.
+# Same resulting number of clusters, however.
+# May result in different estimate of the extremal
+# index.
+
+
+#
+fit &lt;- fevd(look, threshold=u, type="GP", time.units="62/year")
+fit
+plot(fit)
+
+# cf.
+fit2 &lt;- fevd(-MinT~1, Tphap, threshold=u, type="GP", time.units="62/year")
+fit2
+dev.new()
+plot(fit2)
+
+#
+fit &lt;- fevd(look, threshold=u, type="PP", time.units="62/year")
+fit
+plot(fit)
+
+# cf.
+fit2 &lt;- fevd(-MinT~1, Tphap, threshold=u, type="PP", time.units="62/year")
+fit2
+dev.new()
+plot(fit2)
+
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

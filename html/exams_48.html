@@ -1,0 +1,421 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams2testvision</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Exams in TestVision Format</h2>
+
+<h3>Description</h3>
+
+<p>Automatic generation of exams in TestVision format (still under development) for the online testing system TestVision Online.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  exams2testvision(file, n = 1L, nsamp = NULL, dir = ".",
+    name = NULL, quiet = TRUE, edir = NULL,
+    tdir = NULL, sdir = NULL, verbose = FALSE,
+    resolution = 100, width = 4, height = 4, svg = FALSE,
+    encoding = "UTF-8", envir = NULL, engine = NULL,
+    num = NULL, mchoice = NULL,
+    schoice = mchoice, string = NULL, cloze = NULL,
+    template = "testvision",
+    stitle = "Exercise", ititle = "Question",
+    adescription = "Please solve the following exercises.",
+    sdescription = "Please answer the following question.",
+    maxattempts = 1, solutionswitch = TRUE, zip = TRUE, points = NULL,
+    eval = list(partial = TRUE, rule = "false2", negative = FALSE), converter = "pandoc",
+    base64 = FALSE, mode = "hex", ...)
+
+  make_itembody_testvision(shuffle = FALSE, defaultval = NULL,
+    minvalue = NULL, maxvalue = NULL,
+    enumerate = FALSE, digits = NULL,
+    tolerance = is.null(digits), maxchars = 12,
+    eval = list(partial = TRUE, rule = "false2", negative = FALSE), solutionswitch = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamp</code></td>
+<td>
+<p>integer. The number(s) of exercise files sampled from each
+list element of <code>file</code>. Sampling without replacement is used
+if possible. (Only if some element of <code>nsamp</code> is larger than
+the length of the corresponding element in <code>file</code>, sampling
+with replacement is used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The default is the current working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting exercises and ZIP file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>logical. Should output be suppressed when calling
+<code>xweave</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edir</code></td>
+<td>
+<p>character specifying the path of the directory (along with its
+sub-directories) in which the files in <code>file</code> are stored
+(see also <code>xexams</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdir</code></td>
+<td>
+<p>character specifying a temporary directory, by default
+this is chosen via <code>tempfile</code>. Note that this
+is cleaned up (i.e., existing files are deleted) and only certain
+temporary files are preserved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdir</code></td>
+<td>
+<p>character specifying a directory for storing supplements, by
+default this is chosen via <code>tempfile</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical. Should information on progress of exam generation
+be reported?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution, width, height</code></td>
+<td>
+<p>numeric. Options for rendering PNG
+graphics passed to <code>xweave</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>svg</code></td>
+<td>
+<p>logical. Should graphics be rendered in SVG or PNG (default)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>character, ignored. The encoding is always assumed to be UTF-8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>argument passed to <code>xweave</code> (which passes
+it to <code>knit</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>engine</code></td>
+<td>
+<p>argument passed to <code>xweave</code> indicating whether
+<code>"Sweave"</code> (default) or <code>"knitr"</code> should be used for rendering Rnw exercises.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num</code></td>
+<td>
+<p>function or named list applied to numerical (i.e., type <code>num</code>)
+questions. If <code>num</code> is a function, <code>num</code> will be used
+for generating the item body of the question, see function <code>make_itembody_testvision()</code>.
+If <code>num</code> is a named list, these arguments will be passed to function
+<code>make_itembody_testvision()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mchoice, schoice, string, cloze</code></td>
+<td>
+<p>function or named list applied to multiple choice,
+single choice, string, and cloze questions (i.e., type <code>mchoice</code>, <code>schoice</code>,
+<code>string</code>, and <code>cloze</code>), respectively. See argument <code>num</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>character. The IMS QTI 1.2 or 2.1 template that should be used. Currently,
+the package provides <code>"testvision.xml"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stitle</code></td>
+<td>
+<p>character. A title that should be used for the sections. May be a vector of
+length 1 to use the same title for each section, or a vector containing different section
+titles.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ititle</code></td>
+<td>
+<p>character. A title that should be used for the assessment items. May be a vector
+of length 1 to use the same title for each item, or a vector containing different item
+titles. Note that the maximum of different item titles is the number of sections/questions
+that are used for the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adescription</code></td>
+<td>
+<p>character. Description (of length 1) for the overall assessment (i.e., exam).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdescription</code></td>
+<td>
+<p>character. Vector of descriptions for each section, omitted if empty
+(or <code>NULL</code> or <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxattempts</code></td>
+<td>
+<p>integer. The maximum attempts for one question, may also be set to
+<code>Inf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solutionswitch</code></td>
+<td>
+<p>logical. Should the question/item solutionswitch be enabled?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zip</code></td>
+<td>
+<p>logical. Should the resulting XML file (plus supplements) be zipped?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>integer. How many points should be assigned to each exercise? Note that this
+argument overules any exercise points that are provided within an <code>"\expoints{}"</code> tag
+in the <code>.Rnw</code> file. The vector of points supplied is expanded to the number of exercises in
+the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eval</code></td>
+<td>
+<p>named list, specifies the settings for the evaluation policy, see function
+<code>exams_eval</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base64</code></td>
+<td>
+<p>logical. Should supplementary files be embedded using Base 64 coding?
+Argument <code>base64</code> may also be a character vector of file suffixes that should be encoded, e.g.
+<code>base64 = c("png", "rda")</code> will only encode PNG images and binary <code>.rda</code> files.
+If set to <code>NULL</code> only image files will be encoded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converter</code></td>
+<td>
+<p>character. Argument passed on to <code>make_exercise_transform_html</code>.
+The default for <code>converter</code> is set to <code>"pandoc"</code> unless <code>"ttm"</code> is required. The default works best in TestVision.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>character. See function <code>tth</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shuffle,
+defaultval,
+minvalue,
+maxvalue</code></td>
+<td>
+<p>arguments used for IMS QTI 2.1 item construction, for details see the XML
+specification (see IMS Global Learning Consortium, Inc. 2012), especially Section 4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>enumerate</code></td>
+<td>
+<p>logical. Insert potential solutions in enumerated list?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>integer. How many digits should be used for <code>num</code> exercises?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance</code></td>
+<td>
+<p>logical. Should tolerance intervals be used for checking if the supplied
+<code>num</code> answer/number is correct? The default is to use tolerance intervals if <code>digits = NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxchars</code></td>
+<td>
+<p>numeric. Lower bound for the number of characters in fill-in-blank
+fields. The actual number of characters is selected as the maximum number of
+characters of this value and the actual solution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed on to <code>make_exercise_transform_html</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>TestVision employs an XML format that essentially uses the Question &amp; Test
+Interoperability (QTI) standard, version 2.1, see IMS Global Learning
+Consortium, Inc. (2012). However, as this deviates substantially from the plain QTI 2.1
+standard in several places, the <code>exams2qti21</code> cannot be used
+directly. Instead, <code>exams2testvision</code> is a new interface that allows for meeting TestVision's
+requirements for XML-imports.
+</p>
+<p><code>exams2testvision</code> produces a <code>.zip</code> file that may be uploaded into
+TestVision. This includes the final XML file of the exam/assessment as well as
+possible supplement folders that include images, data sets etc. used for the
+exam.
+</p>
+<p><code>exams2testvision</code> proceeds by (1) calling <code>xweave</code> on
+each exercise, (2) reading the resulting LaTeX code, (3) transforming the
+LaTeX code to HTML, and (4) embedding the HTML code in a XML file using
+TestVision's QTI standards for assessments and question items. For steps (1)
+and (2) the standard drivers in <code>xexams</code> are used. In step (3), a
+suitable transformation function is set up on the fly using
+<code>make_exercise_transform_html</code>, see also the details section in
+<code>exams2html</code>. For step (4), the function will cycle through all
+questions and exams to generate the final XML file in the TestVision QTI
+standard. The questions appear as separate files in the system.
+</p>
+<p>The function uses the XML template for TestVision's QTI standards for
+assessments and items to generate the exam (per default, this is the XML file
+<code>testvision.xml</code> provided in the <code>xml</code> folder of this package). The
+assessment template must provide one or more sections for including the items.
+<code>exams2testvision</code> will then use the single item template to generate all
+items, as well as the assessment and section specifications set within the
+template.
+</p>
+<p>The default template will generate exams/assessments that sample one replicate
+of a question/item for each section. The usual procedure in exam/assessment
+generation would be to simply copy &amp; paste the XML template of the package
+and adapt it to the needs of the user. Note that all specifiers that have a
+leading <code>##</code> in the XML template will be replaced by suitable code in
+<code>exams2testvision</code> and should always be provided in the template. I.e.,
+the user may add additional tags to the XML template or modify certain
+specifications, like the number of replicates/items that should be sampled for
+each section etc.
+</p>
+<p>Per default, the individual question/item bodies are generated by function
+<code>make_itembody_testvision</code>, i.e., <code>make_itembody_testvision</code> checks
+the type of the question and will produce suitable XML code. Note that for
+each question type, either the arguments of <code>make_itembody_testvision</code>
+may be set within <code>num</code>, <code>mchoice</code>, <code>schoice</code> and <code>string</code>
+in <code>exams2testvision</code>, by providing a named list of specifications that
+should be used, or for each questiontype, a function that produces the item
+body XML code may be provided to <code>num</code>, <code>mchoice</code>, <code>schoice</code>
+and <code>string</code>. E.g., <code>mchoice = list(shuffle = TRUE)</code> will force only
+multiple choice questions to have a shuffled answerlist.
+</p>
+<p>Please note the following for <code>cloze</code> questions: Although any combination
+of the four item types can be successfully uploaded into TestVision, <code>cloze</code> 
+questions containing <code>mhoice</code> do not work properly (it is therefore 
+advised to not use <code>mchoice</code> within <code>cloze</code>). 
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>exams2testvision</code> returns a list of exams as generated by <code>xexams</code>.
+</p>
+<p><code>make_itembody_testvision</code> returns a function that generates the XML code
+for the itembody tag in TestVision's version of the IMS QTI 2.1 format.
+</p>
+
+
+<h3>References</h3>
+
+<p>TestVision (2020). <em>English introduction tutorial on TestVision</em>.
+<a href="https://testvision.nl/en/experience-testvision/tutorials-2/">https://testvision.nl/en/experience-testvision/tutorials-2/</a>
+</p>
+<p>IMS Global Learning Consortium, Inc. (2012).
+<em>IMS Question &amp; Test Interoperability (QTI) XSD Binding Version 2.1 Final</em>.
+<a href="https://www.imsglobal.org/question/qtiv2p1/imsqti_bindv2p1.html">https://www.imsglobal.org/question/qtiv2p1/imsqti_bindv2p1.html</a>
+</p>
+<p>Zeileis A, Umlauf N, Leisch F (2014).
+Flexible Generation of E-Learning Exams in R: Moodle Quizzes, OLAT Assessments, and Beyond.
+<em>Journal of Statistical Software</em>, <b>58</b>(1), 1–36.
+<a href="https://doi.org/10.18637/jss.v058.i01">doi:10.18637/jss.v058.i01</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>exams2qti12</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+library("exams")
+options(device.ask.default = FALSE)
+
+## define an exams (= list of exercises)
+myexam &lt;- list(
+  "tstat",
+  "tstat2",
+  "relfreq",
+  "essayreg",
+  "dist2",
+  "boxhist2"
+)
+
+## output directory
+dir.create(mydir &lt;- tempfile())
+
+## generate .zip with set of TestVision exercises
+exams2testvision(myexam, n = 3, dir = mydir)
+dir(mydir)
+</code></pre>
+
+
+</div>

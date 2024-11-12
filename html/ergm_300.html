@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm_symmetrize</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Return a symmetrized version of a binary network</h2>
+
+<h3>Description</h3>
+
+<p>Return a symmetrized version of a binary network
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm_symmetrize(x, rule = c("weak", "strong", "upper", "lower"), ...)
+
+## Default S3 method:
+ergm_symmetrize(x, rule = c("weak", "strong", "upper", "lower"), ...)
+
+## S3 method for class 'network'
+ergm_symmetrize(x, rule = c("weak", "strong", "upper", "lower"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object representing a network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+<p>a string specifying how the network is to be
+symmetrized; see <code>sna::symmetrize()</code> for details; for the
+<code>network</code> method, it can also be a function or a list; see
+Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments to <code>sna::symmetrize()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>network</code> method requires more flexibility, in order
+to specify how the edge attributes are handled. Therefore, <code>rule</code>
+can be one of the following types: </p>
+
+<dl>
+<dt>a character vector</dt>
+<dd>
+<p>The string is interpreted as in
+<code>sna::symmetrize()</code>. For edge attributes, <code>"weak"</code> takes the
+maximum value and <code>"strong"</code> takes the minimum
+value" for ordered attributes, and drops the unordered.</p>
+</dd>
+<dt>a function</dt>
+<dd>
+<p> The function is evaluated on a <code>data.frame</code>
+constructed by joining (via <code>merge()</code>) the edge <code>tibble</code> with all
+attributes and <code>NA</code> indicators with itself reversing tail and head
+columns, and appending original columns with <code>".th"</code> and the
+reversed columns with <code>".ht"</code>. It is then evaluated for each
+attribute in turn, given two arguments: the data frame and the name
+of the attribute.</p>
+</dd>
+<dt>a list</dt>
+<dd>
+<p>The list must have exactly one unnamed element, and
+the remaining elements must be named with the names of edge
+attributes. The elements of the list are interpreted as above,
+allowing each edge attribute to be handled differently. Unnamed
+arguments are dropped. </p>
+</dd>
+</dl>
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>ergm_symmetrize(default)</code>: The default method, passing the input on to <code>sna::symmetrize()</code>.
+</p>
+</li>
+<li> <p><code>ergm_symmetrize(network)</code>: A method for <code>network</code> objects, which preserves network and vertex attributes, and handles edge attributes.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>This was originally exported as a generic to overwrite
+<code>sna::symmetrize()</code>. By developer's request, it has been renamed;
+eventually, <a href="https://CRAN.R-project.org/package=sna"><span class="pkg">sna</span></a> or <code>network</code> packages will export the generic
+instead.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(sampson)
+samplike[1,2] &lt;- NA
+samplike[4.1] &lt;- NA
+sm &lt;- as.matrix(samplike)
+
+tst &lt;- function(x,y){
+  mapply(identical, x, y)
+}
+
+stopifnot(all(tst(as.logical(as.matrix(ergm_symmetrize(samplike, "weak"))), sm | t(sm))),
+          all(tst(as.logical(as.matrix(ergm_symmetrize(samplike, "strong"))), sm &amp; t(sm))),
+          all(tst(c(as.matrix(ergm_symmetrize(samplike, "upper"))),
+                  sm[cbind(c(pmin(row(sm),col(sm))),c(pmax(row(sm),col(sm))))])),
+          all(tst(c(as.matrix(ergm_symmetrize(samplike, "lower"))),
+                  sm[cbind(c(pmax(row(sm),col(sm))),c(pmin(row(sm),col(sm))))])))
+</code></pre>
+
+
+</div>

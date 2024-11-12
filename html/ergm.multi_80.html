@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>network_view</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Construct a "view" of a network.</h2>
+
+<h3>Description</h3>
+
+<p>Returns a network with edges optionally filtered according to a
+specified criterion and with edge attributes optionally computed
+from other edge attributes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">network_view(x, ..., .clear = FALSE, .sep = ".")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a <code>network</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>a list of attribute or filtering specifications. See
+Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.clear</code></td>
+<td>
+<p>whether the edge attributes not set by this call
+should be deleted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.sep</code></td>
+<td>
+<p>when specifying via a character vector, use this as the
+separator for concatenating edge values.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Attribute specification arguments have the form
+<code style="white-space: pre;">⁠&lt;newattrname&gt; = &lt;expr&gt;⁠</code>, where <code style="white-space: pre;">⁠&lt;newattrname&gt;⁠</code> specifies the
+name of the new edge attribute (or attribute to be overwritten)
+and <code style="white-space: pre;">⁠&lt;expr&gt;⁠</code> can be one of the following:
+</p>
+
+<dl>
+<dt>a function</dt>
+<dd>
+<p>The function will be passed two arguments, the
+edgelist <code>tibble</code> and the network, and must return a vector of
+edge attribute values to be set on the edges in the order
+specified.</p>
+</dd>
+<dt>a formula</dt>
+<dd>
+<p>The expression on the RHS of the formula will be
+evaluated with names in it referencing the edge attributes. The
+input network may be referenced as <code>.nw</code>. The expression's result
+is expected to be a vector of edge attribute values to be set on
+the edges in the order specified.</p>
+</dd>
+<dt>a character vector</dt>
+<dd>
+<p>If of length one, the edge attribute with
+that name will simply be copied; if greater than one, the attribute
+values will be concatenated wtih the <code>.sep</code> argument as the
+separator.</p>
+</dd>
+<dt>an object enclosed in <code>I()</code>
+</dt>
+<dd>
+<p>The object will be used directly
+to set the edge attribute.</p>
+</dd>
+</dl>
+<p>Filtering arguments are specified the same way as attribute
+arguments, but they must be unnamed arguments (i.e., must be passed
+without the <code>=</code>) and must return a logical or numeric vector
+suitable for indexing the edge list. Multiple filtering arguments
+may be specified, and the edge will be kept if it satisfies
+<em>all</em>. If the conjunction of the edge's original states and the
+filtering results is ambiguous (i.e., <code>NA</code>), it will be set as
+missing.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>network</code> object with modified edges and edge attributes.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(florentine)
+flo &lt;- flomarriage
+flo[,,add.edges=TRUE] &lt;- as.matrix(flomarriage) | as.matrix(flobusiness)
+flo[,, names.eval="m"] &lt;- as.matrix(flomarriage)==1
+flobusiness[3,5] &lt;- NA
+flo[,, names.eval="b"] &lt;- as.matrix(flobusiness)==1
+flo
+(flob &lt;- network_view(flo, "b"))
+(flobusiness) # for comparison
+
+
+(flob &lt;- network_view(flo, ~b&amp;m))
+(flobusiness &amp; flomarriage) # for comparison
+
+
+as.matrix(flob &lt;- network_view(flo, bm=~b+m), attrname="bm")
+(as.matrix(flobusiness) + as.matrix(flomarriage)) # for comparison
+
+
+as.matrix(flob &lt;- network_view(flo, ~b, bm=~b+m), attrname="bm")
+as.matrix(flobusiness)*(1+as.matrix(flomarriage)) # for comparison
+
+
+
+</code></pre>
+
+
+</div>

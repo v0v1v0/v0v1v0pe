@@ -1,0 +1,278 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>xexams</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extensible Generation of Exams</h2>
+
+<h3>Description</h3>
+
+<p>Extensible automatic generation of exams including
+multiple choice questions and arithmetic problems.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  xexams(file, n = 1L, nsamp = NULL,
+    driver = list(sweave = NULL, read = NULL, transform = NULL, write = NULL),
+    dir = ".", edir = NULL, tdir = NULL, sdir = NULL, verbose = FALSE,
+    points = NULL, seed = NULL, rds = FALSE, ...)
+
+  exams_metainfo(x, class = "exams_metainfo", tags = TRUE, factors = FALSE,
+    ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files,
+for details see below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be taken from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamp</code></td>
+<td>
+<p>integer. The number(s) of exercise files sampled from each
+list element of <code>file</code>. Sampling without replacement is used
+if possible. (Only if some element of <code>nsamp</code> is larger than
+the length of the corresponding element in <code>file</code>, sampling
+with replacement is used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>driver</code></td>
+<td>
+<p>list with elements <code>sweave</code> (weaver function or list of arguments
+for the default <code>xweave</code>), <code>read</code> (function
+for reading exercise files, defaulting to <code>read_exercise</code>),
+<code>transform</code> (function to transform each exercise, by default
+no transformations are done), <code>write</code> (function to write exams
+to output files, by default nothing is written). For more details,
+see below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The output directory passed on to <code>driver$write</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edir</code></td>
+<td>
+<p>character specifying the path of the directory (along with its
+sub-directories) in which the files in <code>file</code> are stored (see also below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdir</code></td>
+<td>
+<p>character specifying a temporary directory, by default
+this is chosen via <code>tempfile</code>. Note that this
+is cleaned up (i.e., existing files are deleted) and only certain
+temporary files are preserved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdir</code></td>
+<td>
+<p>character specifying a directory for storing supplements, by
+default this is chosen via <code>tempfile</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical. Should information on progress of exam generation
+be reported?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>integer. How many points should be assigned to each exercise? Note that this
+argument overules any exercise points that are provided within the <code>expoints</code> tags
+of the exercise files (if any). The vector of points supplied should either have
+length 1 or the number of exercises in the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>integer matrix or logical. Either <code>NULL</code> (default), logical, or a
+matrix of random seeds for each possible exercise to be set prior to calling
+<code>driver@sweave</code>. If <code>NULL</code> no random seeds are set. If a matrix,
+the number of rows must be <code>n</code> and the number of columns must
+correspond to <code>unlist(file)</code>. If <code>TRUE</code> a suitable matrix of seeds
+is sampled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rds</code></td>
+<td>
+<p>logical or character indicating whether the list returned by
+<code>xexams</code> should also be saved as an RDS data file. If <code>rds = TRUE</code>
+the file name <code>"metainfo.rds"</code> is used. Alternatively, <code>rds</code> can
+also be a character file name to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a list as returned by <code>xexams</code> (or one of the <code>exams2xyz</code> interfaces).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>class</code></td>
+<td>
+<p>character. Should the meta-information be returned as a list of
+lists with class <code>"exams_metainfo"</code> or as a <code>"data.frame"</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tags</code></td>
+<td>
+<p>logical. Should the <code>extags</code> entries be processed into separate
+columns if <code>class = "data.frame"</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factors</code></td>
+<td>
+<p>logical. Should the character columns for <code>class = "data.frame"</code>
+be turned into factors?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>currently not used.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>xexams</code> is meant to provide an extensible framework for generating exams
+based on exercises in R/LaTeX format (via <code>Sweave</code>) or
+R/Markdown format (via <code>knit</code>) and rendering them
+into various output formats such as PDF, HTML, or XML (e.g., for Moodle or IMS QTI).
+<code>xexams</code> is typically not called by the user directly but is used as a common
+infrastructure for functions such as <code>exams2pdf</code>, <code>exams2html</code>,
+<code>exams2moodle</code>, <code>exams2qti12</code>, or
+<code>exams2lops</code>.
+</p>
+<p><code>xexams</code> generates exams from lists (or vectors) of Rnw/Rmd source files by:
+(1) running <code>driver$sweave</code> on each exercise (by default <code>xweave</code> is
+used, calling <code>Sweave</code> or <code>knit</code>),
+(2) running <code>driver$read</code> on the resulting LaTeX/Markdown file which by default
+uses <code>read_exercise</code> to read question/solution texts plus
+metainformation and stores the result in a list,
+(3) running <code>driver$transform</code> on this list for possible transformations
+(e.g., from LaTeX to HTML),
+(4) running <code>driver$write</code> on the list of exercises within each exam.
+</p>
+<p>Each exercise in an exam is essentially a standalone source file
+that <code>xexams</code> knows (almost) nothing about, it just calls <code>driver$sweave</code>
+in each iteration and assumes that <code>driver$read</code> can read the resulting
+LaTeX or Markdown file into a list.
+</p>
+<p>The specification in <code>file</code> should be either of form <code>"foo.Rnw"</code>
+(or equivalently just <code>"foo"</code>) or <code>"foo.Rmd"</code>, where the file should
+either be in the local directory, the <code>edir</code> directory or in
+the <code>exercises</code> directory of the package. If <code>edir</code> is specified,
+the directory along with all its sub-directories is searched for the exercises
+in <code>file</code>. Also, <code>file</code> can either be a simple vector or a list of vectors.
+In the latter case, exercises are chosen randomly within each list element. For example,
+the specification <code>file = list(c("a", "b"), "xyz")</code> will result in an exam with two
+exercises: the first exercise is chosen randomly between <code>"a"</code> and
+<code>"b"</code> while <code>"xyz"</code> is always included as the second exercise.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of exams (of length <code>n</code>),
+each of which is a list of exercises (whose length depends on the length of <code>file</code> and <code>nsamp</code>),
+each of which is a list (whose length/contents depends on <code>driver$read</code>).
+</p>
+<p>When using the default reader, the resulting list can be simplified
+using <code>exams_metainfo</code>, returning the same (classed) structure
+as the older <code>exams</code> interface. It is recommended
+to use this to inspect whether the ‘extype’ and ‘exsolution’
+(and corresponding tolerance, if any) are correctly specified.
+</p>
+
+
+<h3>References</h3>
+
+<p>Zeileis A, Umlauf N, Leisch F (2014).
+Flexible Generation of E-Learning Exams in R: Moodle Quizzes, OLAT Assessments, and Beyond.
+<em>Journal of Statistical Software</em>, <b>58</b>(1), 1–36.
+<a href="https://doi.org/10.18637/jss.v058.i01">doi:10.18637/jss.v058.i01</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>xweave</code>,
+<code>exams2pdf</code>,
+<code>exams2html</code>,
+<code>exams2moodle</code>,
+<code>exams2canvas</code>,
+<code>exams2openolat</code>,
+<code>exams2nops</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## define an exam with five exercises
+myexam &lt;- list(
+  "boxplots.Rmd",
+  c("tstat.Rmd", "ttest.Rmd", "confint.Rmd"),
+  c("regression.Rmd", "anova.Rmd"),
+  "scatterplot.Rmd",
+  "relfreq.Rmd"
+)
+
+## run exams with default drivers (i.e., no transformations or writer)
+x &lt;- xexams(myexam, n = 2)
+## x is a list of 2 exams,
+## each of which contains 5 exercises,
+## each of which contains LaTeX code for question(list) and solution(list),
+## plus metainformation and potential supplements
+
+## The first exercise in each exam is "boxplots.Rmd", a multiple choice question.
+## Its general question text is
+x[[1]][[1]]$question
+## with a list of multiple choice questions given as
+x[[1]][[1]]$questionlist
+## the corresponding graphic is in supplementary file
+x[[1]][[1]]$supplements
+
+## The metainformation is a list read from the ex* items
+x[[1]][[1]]$metainfo
+
+## The metainformation can also be extracted/printed
+exams_metainfo(x)
+## customize printing: only exam 1 in blocks of up to 3 exercises
+print(exams_metainfo(x), which = 1, block = 3)
+
+## The metainformation can also be prepared as a data.frame
+exams_metainfo(x, class = "data.frame")
+</code></pre>
+
+
+</div>

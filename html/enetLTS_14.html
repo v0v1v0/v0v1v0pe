@@ -1,0 +1,152 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>weights.enetLTS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+binary weights from the <code>"enetLTS"</code> object
+</h2>
+
+<h3>Description</h3>
+
+<p>Extract binary weights that indicate outliers from the current model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'enetLTS'
+weights(object,vers=c("reweighted","raw","both"),index=FALSE,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>the model fit from which to extract outlier weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vers</code></td>
+<td>
+<p>a character string specifying for which estimator to extract
+outlier weights. Possible values are <code>"reweighted"</code> (the default) for
+weights indicating outliers from the reweighted fit, <code>"raw"</code> for
+weights indicating outliers from the raw fit, or <code>"both"</code> for the
+outlier weights from both estimators.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>a logical indicating whether the indices of the weight vector should
+be included or not (the default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments from the <code>enetLTS</code> object if needed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A numeric vector containing the requested outlier weights.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The weights are <code class="reqn">1</code> for observations with reasonably small
+residuals and <code class="reqn">0</code> for observations with large residuals.
+Here, residuals represent standardized residuals
+for <code>family="gaussian"</code>, Pearson residuals for
+<code>family="binomial"</code> and group-wise scaled robust distances
+<code>family="multinomial"</code>.
+</p>
+<p>Use weights with or without index is available.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Fatma Sevinc KURNAZ, Irene HOFFMANN, Peter FILZMOSER
+<br> Maintainer: Fatma Sevinc KURNAZ &lt;fatmasevinckurnaz@gmail.com&gt;;&lt;fskurnaz@yildiz.edu.tr&gt;</p>
+
+
+<h3>See Also</h3>
+
+<p><code>enetLTS</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## for gaussian
+
+set.seed(86)
+n &lt;- 100; p &lt;- 25                             # number of observations and variables
+beta &lt;- rep(0,p); beta[1:6] &lt;- 1              # 10% nonzero coefficients
+sigma &lt;- 0.5                                  # controls signal-to-noise ratio
+x &lt;- matrix(rnorm(n*p, sigma),nrow=n)
+e &lt;- rnorm(n,0,1)                             # error terms
+eps &lt;- 0.1                                    # contamination level
+m &lt;- ceiling(eps*n)                           # observations to be contaminated
+eout &lt;- e; eout[1:m] &lt;- eout[1:m] + 10        # vertical outliers
+yout &lt;- c(x %*% beta + sigma * eout)        # response
+xout &lt;- x; xout[1:m,] &lt;- xout[1:m,] + 10      # bad leverage points
+
+
+fit1 &lt;- enetLTS(xout,yout)
+weights(fit1)
+weights(fit1,vers="raw",index=TRUE)
+weights(fit1,vers="both",index=TRUE)
+
+
+## for binomial
+
+eps &lt;-0.05                                     # %10 contamination to only class 0
+m &lt;- ceiling(eps*n)
+y &lt;- sample(0:1,n,replace=TRUE)
+xout &lt;- x
+xout[y==0,][1:m,] &lt;- xout[1:m,] + 10;          # class 0
+yout &lt;- y                                      # wrong classification for vertical outliers
+
+
+fit2 &lt;- enetLTS(xout,yout,family="binomial")
+weights(fit2)
+weights(fit2,vers="raw",index=TRUE)
+weights(fit2,vers="both",index=TRUE)
+
+
+## for multinomial
+
+n &lt;- 120; p &lt;- 15
+NC &lt;- 3
+X &lt;- matrix(rnorm(n * p), n, p)
+betas &lt;- matrix(1:NC, ncol=NC, nrow=p, byrow=TRUE)
+betas[(p-5):p,]=0; betas &lt;- rbind(rep(0,NC),betas)
+lv &lt;- cbind(1,X) %*% betas
+probs &lt;- exp(lv)/apply(exp(lv),1,sum)
+y &lt;- apply(probs,1,function(prob){sample(1:NC, 1, TRUE, prob)})
+xout &lt;- X
+eps &lt;-0.05                          # %10 contamination to only class 0
+m &lt;- ceiling(eps*n)
+xout[1:m,] &lt;- xout[1:m,] + 10       # bad leverage points
+yout &lt;- y
+
+
+fit3    &lt;- enetLTS(xout,yout,family="multinomial")
+weights(fit3)
+weights(fit3,vers="raw",index=TRUE)
+weights(fit3,vers="both",index=TRUE)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eROC_plot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Enhanced ROC and Precision-Recall Plots</h2>
+
+<h3>Description</h3>
+
+<p>This function generates Precision-Recall and ROC curves for binary classification models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eROC_plot(task, trained_model, splits)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>task</code></td>
+<td>
+<p>mlr3 binary classification task object specifying the task details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained_model</code></td>
+<td>
+<p>mlr3 trained learner (model) object obtained after training</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+<p>mlr3 object defining data splits for train and test sets</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>ROC and Precision-Recall curves
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library("explainer")
+seed &lt;- 246
+set.seed(seed)
+# Load necessary packages
+if (!requireNamespace("mlbench", quietly = TRUE)) stop("mlbench not installed.")
+if (!requireNamespace("mlr3learners", quietly = TRUE)) stop("mlr3learners not installed.")
+if (!requireNamespace("ranger", quietly = TRUE)) stop("ranger not installed.")
+# Load BreastCancer dataset
+utils::data("BreastCancer", package = "mlbench")
+target_col &lt;- "Class"
+positive_class &lt;- "malignant"
+mydata &lt;- BreastCancer[, -1]
+mydata &lt;- na.omit(mydata)
+sex &lt;- sample(
+  c("Male", "Female"),
+  size = nrow(mydata),
+  replace = TRUE
+)
+mydata$age &lt;- as.numeric(sample(
+  seq(18, 60),
+  size = nrow(mydata),
+  replace = TRUE
+))
+mydata$sex &lt;- factor(
+  sex,
+  levels = c("Male", "Female"),
+  labels = c(1, 0)
+)
+maintask &lt;- mlr3::TaskClassif$new(
+  id = "my_classification_task",
+  backend = mydata,
+  target = target_col,
+  positive = positive_class
+)
+splits &lt;- mlr3::partition(maintask)
+mylrn &lt;- mlr3::lrn(
+  "classif.ranger",
+  predict_type = "prob"
+)
+mylrn$train(maintask, splits$train)
+myplot &lt;- eROC_plot(
+  task = maintask,
+  trained_model = mylrn,
+  splits = splits
+)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>anovaPB</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parametric bootstrap testing to compare two models by analysis of variance (deviance)</h2>
+
+<h3>Description</h3>
+
+<p>Compute analysis of variance (or deviance) tables for two fitted model objects,
+with the <em>P</em>-value estimated using a parametric bootstrap – by repeatedly
+simulating new responses from the fitted model under the null hypothesis.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">anovaPB(
+  objectNull,
+  object,
+  n.sim = 999,
+  colRef = switch(class(object)[1], lm = 5, lmerMod = 6, 4),
+  rowRef = 2,
+  ncpus = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>objectNull</code></td>
+<td>
+<p>is the fitted model under the null hypothesis. This can be
+<em>any</em> object that responds to <code>simulate</code>, <code>update</code> and <code>anova</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>is the fitted model under the alternative hypothesis. This can be
+<em>any</em> object that responds to <code>update</code>, <code>anova</code> and <code>model.frame</code>.
+It must be larger than <code>objectNull</code> and its model frame should contain
+all the terms required to fit <code>objectNull</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.sim</code></td>
+<td>
+<p>the number of simulated datasets to generate for parametric
+bootstrap testing. Defaults to 999.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colRef</code></td>
+<td>
+<p>the column number where the test statistic of interest can be found
+in the standard <code>anova</code> output when calling <code>anova(objectNull,object)</code>.
+Default choices have been set for common models (<code>colRef=5</code> for <code>lm</code> objects,
+<code>colRef=6</code> for <code>lmer</code> objects and <code>colRef=4</code> otherwise, which is correct 
+for <code>glm</code> and <code>gam</code> objects).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rowRef</code></td>
+<td>
+<p>the row number where the test statistic of interest can be found
+in the standard <code>anova</code> output when calling <code>anova(objectNull,object)</code>.
+Defaults to <code>2</code>, because it is on the second row for most common models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncpus</code></td>
+<td>
+<p>the number of CPUs to use. Default (NULL) uses two less than the total 
+available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments sent through to <code>anova</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>anova</code> function typically relies on classical asymptotic results
+which sometimes don't apply well, e.g. when using penalised likelihood to fit a
+generalised additive model, or when testing whether a random effect should be
+included in a mixed model. In such cases we can get a more accurate test by
+using simulation to estimate the <em>P</em>-value – repeatedly simulating 
+new sets of simulated responses, refitting the null and alternative models, and 
+recomputing the test statistic. This process allows us to estimate the 
+distribution of the test statistic when the null hypothesis is true, hence 
+draw a conclusion about whether the observed test statistic is large relative
+to what would be expected under the null hypothesis. The process is often
+referred to as a <em>parametric bootstrap</em> (Davison &amp; Hinkley 1997), which
+the <em>PB</em> in the function name (<code>anovaPB</code>) is referring to.
+</p>
+<p>This function will take any pair of fitted models, a null (<code>objectNull</code>)
+and an alternative (<code>object</code>), and use simulation to estimate the 
+<em>P</em>-value of the test of whether there is evidence against the model in
+<code>objectNull</code> in favour of the model in <code>object</code>. This function works
+by repeatedly performing an <code>anova</code> to compare <code>objectNull</code>  to
+<code>object</code>, where the responses in the <code>model.frame</code> have been replaced
+with values simulated by applying <code>simulate</code> to <code>objectNull</code>. Hence
+for this function to work, the objects being compared need to respond 
+to the <code>anova</code>, <code>simulate</code> and <code>model.frame</code> functions.
+</p>
+<p>This function needs to be able to find the test statistic in the <code>anova</code>
+output, but it is stored in different places for different types of objects.
+It is assumed that <code>anova(objectNull,object)</code> returns a matrix and that the
+test statistic is stored in the <code>(rowRef,colRef)</code>th element, where both
+<code>rowRef</code> and <code>colRef</code> have been chosen to be correct for common
+model types (<code>glm</code>, <code>gam</code>, <code>lmer</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix which has the appearance and behaviour of an object returned by 
+<code>anova(objectNull,object)</code>, except that the <em>P</em>-value has been computed
+by parametric bootstrap, and the matrix now inherits class <code>anovaPB</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>David Warton &lt;david.warton@unsw.edu.au&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Davison A.C. &amp; Hinkley D. V. (1997) Bootstrap methods and their application, Cambridge University Press.
+Warton DI (2022) Eco-Stats - Data Analysis in Ecology, from <em>t</em>-tests to multivariate abundances. Springer, ISBN 978-3-030-88442-0
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>anova</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># fit a Poisson regression to random data:
+y = rpois(50,lambda=1)
+x = 1:50
+rpois_glm = glm(y~x, family=poisson())
+rpois_int = glm(y~1, family=poisson())
+anovaPB(rpois_int, rpois_glm, n.sim=99, ncpus=1)
+# this approach would run faster on some larger problems (but maybe not this one!):
+## Not run: anovaPB(rpois_int, rpois_glm, n.sim=99, ncpus=4)
+
+</code></pre>
+
+
+</div>

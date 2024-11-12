@@ -1,0 +1,430 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>chenTTest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Chen's Modified One-Sided t-test for Skewed Distributions
+</h2>
+
+<h3>Description</h3>
+
+<p>For a skewed distribution, estimate the mean, standard deviation, and skew; 
+test the null hypothesis that the mean is equal to a user-specified value vs. 
+a one-sided alternative; and create a one-sided confidence interval for the mean.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  chenTTest(x, y = NULL, alternative = "greater", mu = 0, paired = !is.null(y), 
+    conf.level = 0.95, ci.method = "z")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector of observations.  Missing (<code>NA</code>), undefined (<code>NaN</code>), and 
+infinite (<code>Inf</code>, <code>-Inf</code>) values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+
+<p>optional numeric vector of observations that are paired with the observations in 
+<code>x</code>.  The length of <code>y</code> must be the same as the length of <code>x</code>.  
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are allowed but will be removed.  This argument is ignored if 
+<code>paired=FALSE</code>, and must be supplied if <code>paired=TRUE</code>.  The default value 
+is <code>y=NULL</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+
+<p>character string indicating the kind of alternative hypothesis.  The possible values 
+are <code>"greater"</code> (the default) and <code>"less"</code>. The value <code>"greater"</code> 
+should be used for positively-skewed distributions, and the value <code>"less"</code> 
+should be used for negatively-skewed distributions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+
+<p>numeric scalar indicating the hypothesized value of the mean.  The default value is 
+<code>mu=0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired</code></td>
+<td>
+
+<p>character string indicating whether to perform a paired or one-sample t-test.  The 
+possible values are <code>paired=FALSE</code> (the default; indicates a one-sample t-test) 
+and <code>paired=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>numeric scalar between 0 and 1 indicating the confidence level associated with the 
+confidence interval for the population mean.  The default value is <br><code>conf.level=0.95</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.method</code></td>
+<td>
+
+<p>character string indicating which critical value to use to construct the confidence 
+interval for the mean.  The possible values are <code>"z"</code> (the default), 
+<code>"t"</code>, and <code>"Avg. of z and t"</code>.  See the DETAILS section below for more 
+information.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><b>One-Sample Case</b> (<code>paired=FALSE</code>) <br>
+Let <code class="reqn">\underline{x} = (x_1, x_2, \ldots, x_n)</code> be a vector of <code class="reqn">n</code> independent 
+and identically distributed (i.i.d.) observations from some distribution with mean 
+<code class="reqn">\mu</code> and standard deviation <code class="reqn">\sigma</code>.
+<br></p>
+<p><em>Background: The Conventional Student's t-Test</em> <br>
+Assume that the <code class="reqn">n</code> observations come from a normal (Gaussian) distribution, and 
+consider the test of the null hypothesis:
+</p>
+<p style="text-align: center;"><code class="reqn">H_0: \mu = \mu_0 \;\;\;\;\;\; (1)</code>
+</p>
+
+<p>The three possible alternative hypotheses are the upper one-sided alternative 
+(<code>alternative="greater"</code>):
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \mu &gt; \mu_0 \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>the lower one-sided alternative (<code>alternative="less"</code>):
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \mu &lt; \mu_0 \;\;\;\;\;\; (3)</code>
+</p>
+
+<p>and the two-sided alternative:
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \mu \ne \mu_0 \;\;\;\;\;\; (4)</code>
+</p>
+  
+<p>The test of the null hypothesis (1) versus any of the three alternatives (2)-(4) 
+is usually based on the Student t-statistic:
+</p>
+<p style="text-align: center;"><code class="reqn">t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}} \;\;\;\;\;\; (5)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">\bar{x} = \frac{1}{n}\sum_{i=1}^n x_i \;\;\;\;\;\; (6)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">s^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2 \;\;\;\;\;\; (7)</code>
+</p>
+
+<p>(see the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> help file for <code>t.test</code>).  Under the null hypothesis (1), 
+the t-statistic in (5) follows a Student's t-distribution with 
+<code class="reqn">n-1</code> degrees of freedom (Zar, 2010, p.99; Johnson et al., 1995, pp.362-363).  
+The t-statistic is fairly robust to departures from normality in terms of 
+maintaining Type I error and power, provided that the sample size is sufficiently 
+large.
+<br></p>
+<p><em>Chen's Modified t-Test for Skewed Distributions</em> <br>
+In the case when the underlying distribution of the <code class="reqn">n</code> observations is 
+positively skewed and the sample size is small, the sampling distribution of the 
+t-statistic under the null hypothesis (1) does not follow a Student's t-distribution, 
+but is instead negatively skewed.  For the test against the upper alternative in (2) 
+above, this leads to a Type I error smaller than the one assumed and a loss of power 
+(Chen, 1995b, p.767).
+</p>
+<p>Similarly, in the case when the underlying distribution of the <code class="reqn">n</code> observations 
+is negatively skewed and the sample size is small, the sampling distribution of the 
+t-statistic is positively skewed.  For the test against the lower alternative in (3) 
+above, this also leads to a Type I error smaller than the one assumed and a loss of 
+power.
+</p>
+<p>In order to overcome these problems, Chen (1995b) proposed the following modified 
+t-statistic that takes into account the skew of the underlying distribution:
+</p>
+<p style="text-align: center;"><code class="reqn">t_2 = t + a(1 + 2t^2) + 4a^2(t + 2t^3) \;\;\;\;\;\; (8)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">a = \frac{\sqrt{\hat{\beta}_1}}{6n} \;\;\;\;\;\; (9)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\beta}_1 = \frac{\hat{\mu}_3}{\hat{\sigma}^3} \;\;\;\;\;\; (10)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\mu}_3 = \frac{n}{(n-1)(n-2)} \sum_{i=1}^n (x_i - \bar{x})^3 \;\;\;\;\;\; (11)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}^3 = s^3 = [\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2]^{3/2} \;\;\;\;\;\; (12)</code>
+</p>
+
+<p>Note that the quantity <code class="reqn">\sqrt{\hat{\beta}_1}</code> in (9) is an estimate of 
+the skew of the underlying distribution and is based on unbiased estimators of 
+central moments (see the help file for <code>skewness</code>).
+</p>
+<p>For a positively-skewed distribution, Chen's modified t-test rejects the null 
+hypothesis (1) in favor of the upper one-sided alternative (2) if the t-statistic in 
+(8) is too large.  For a negatively-skewed distribution, Chen's modified t-test 
+rejects the null hypothesis (1) in favor of the lower one-sided alternative (3) if 
+the t-statistic in (8) is too small.
+</p>
+<p>Chen's modified t-test is <b>not</b> applicable to testing the two-sided alternative 
+(4).  It should also <b>not</b> be used to test the upper one-sided alternative (2) 
+based on negatively-skewed data, nor should it be used to test the lower one-sided 
+alternative (3) based on positively-skewed data.
+<br></p>
+<p><em>Determination of Critical Values and p-Values</em> <br>
+Chen (1995b) performed a simulation study in which the modified t-statistic in (8) 
+was compared to a critical value based on the normal distribution (z-value), 
+a critical value based on Student's t-distribution (t-value), and the average of the 
+critical z-value and t-value.  Based on the simulation study, Chen (1995b) suggests 
+using either the z-value or average of the z-value and t-value when <code class="reqn">n</code> 
+(the sample size) is small (e.g., <code class="reqn">n \le 10</code>) or <code class="reqn">\alpha</code> (the Type I error) 
+is small (e.g. <code class="reqn">\alpha \le 0.01</code>), and using either the t-value or the average 
+of the z-value and t-value when <code class="reqn">n \ge 20</code> or <code class="reqn">\alpha \ge 0.05</code>.
+</p>
+<p>The function <code>chenTTest</code> returns three different p-values:  one based on the 
+normal distribution, one based on Student's t-distribution, and one based on the 
+average of these two p-values.  This last p-value should roughly correspond to a 
+p-value based on the distribution of the average of a normal and Student's t 
+random variable.
+<br></p>
+<p><em>Computing Confidence Intervals</em> <br>
+The function <code>chenTTest</code> computes a one-sided confidence interval for the true 
+mean <code class="reqn">\mu</code> based on finding all possible values of <code class="reqn">\mu</code> for which the null 
+hypothesis (1) will not be rejected, with the confidence level determined by the 
+argument <code>conf.level</code>.  The argument <code>ci.method</code> determines which p-value 
+is used in the algorithm to determine the bounds on <code class="reqn">\mu</code>.  When 
+<code>ci.method="z"</code>, the p-value is based on the normal distribution, when 
+<code>ci.method="t"</code>, the p-value is based on Student's t-distribution, and when 
+<code>ci.method="Avg. of z and t"</code> the p-value is based on the average of the 
+p-values based on the normal and Student's t-distribution.
+<br></p>
+<p><b>Paired-Sample Case</b> (<code>paired=TRUE</code>) <br>
+When the argument <code>paired=TRUE</code>, the arguments <code>x</code> and <code>y</code> are assumed 
+to have the same length, and the <code class="reqn">n</code> differences
+</p>
+<p style="text-align: center;"><code class="reqn">d_i = x_i - y_i, \;\; i = 1, 2, \ldots, n</code>
+</p>
+
+<p>are assumed to be i.i.d. observations from some distribution with mean <code class="reqn">\mu</code> 
+and standard deviation <code class="reqn">\sigma</code>.  Chen's modified t-test can then be applied 
+to the differences.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list of class <code>"htest"</code> containing the results of the hypothesis test.  See 
+the help file for <code>htest.object</code> for details.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The presentation of Chen's (1995b) method in USEPA (2002d) and Singh et
+al. (2010b, p. 52) is incorrect for two reasons: it is based on an intermediate 
+formula instead of the actual statistic that Chen proposes, and it uses the 
+intermediate formula to compute an <em>upper</em> confidence limit for the mean when 
+the sample data are positively skewed.  As explained above, for the case of 
+positively skewed data, Chen's method is appropriate to test the upper one-sided 
+alternative hypothesis that the population mean is greater than some specified 
+value, and a one-sided upper alternative corresponds to creating a one-sided 
+<em>lower</em> confidence limit, not an upper confidence limit (see, for example, 
+Millard and Neerchal, 2001, p. 371).
+</p>
+<p>A frequent question in environmental statistics is “Is the concentration of 
+chemical X greater than Y units?”  For example, in groundwater assessment 
+(compliance) monitoring at hazardous and solid waste sites, the concentration of 
+a chemical in the groundwater at a downgradient may be compared to a 
+groundwater protection standard (GWPS).  If the concentration is “above” 
+the GWPS, then the site enters corrective action monitoring.  As another example, 
+soil screening at a Superfund site involves comparing the concentration of a 
+chemical in the soil with a pre-determined soil screening level (SSL).  If the 
+concentration is “above” the SSL, then further investigation and possible 
+remedial action is required.  Determining what it means for the chemical 
+concentration to be “above” a GWPS or an SSL is a policy decision:  the 
+average of the distribution of the chemical concentration must be above the GWPS or 
+SSL, or the median must be above the GWPS or SSL, or the 95'th percentile must be 
+above the GWPS or SSL, or something else.  Often, the first interpretation is used.
+</p>
+<p>The regulatory guidance document <em>Soil Screening Guidance:  Technical 
+Background Document</em> (USEPA, 1996c, Part 4) recommends using Chen's t-test as one 
+possible method to compare chemical concentrations in soil samples to a soil 
+screening level (SSL).  The document notes that the distribution of chemical 
+concentrations will almost always be positively-skewed, but not necessarily fit a 
+lognormal distribution well (USEPA, 1996c, pp.107, 117-119).  It also notes that 
+using a confidence interval based on Land's (1971) method is extremely sensitive 
+to the assumption of a lognormal distribution, while Chen's test is robust with 
+respect to maintaining Type I and Type II errors for a variety of positively-skewed 
+distributions (USEPA, 1996c, pp.99, 117-119, 123-125).
+</p>
+<p>Hypothesis tests you can use to perform tests of location include:  
+Student's t-test, 
+Fisher's randomization test, 
+the Wilcoxon signed rank test, 
+Chen's modified t-test, 
+the sign test, and a test based on a 
+bootstrap confidence interval.  
+For a discussion comparing the performance of these tests, see 
+Millard and Neerchal (2001, pp.408–409).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Chen, L. (1995b).  Testing the Mean of Skewed Distributions.  
+<em>Journal of the American Statistical Association</em> <b>90</b>(430), 767–772.
+</p>
+<p>Johnson, N. L., S. Kotz, and N. Balakrishnan. (1995).  <em>Continuous Univariate 
+Distributions, Volume 2</em>.  Second Edition.  John Wiley and Sons, New York, 
+Chapters 28, 31.
+</p>
+<p>Land, C.E. (1971).  Confidence Intervals for Linear Functions of the Normal Mean and 
+Variance.  <em>The Annals of Mathematical Statistics</em> <b>42</b>(4), 1187–1205.
+</p>
+<p>Millard, S.P., and N.K. Neerchal. (2001).  
+<em>Environmental Statistics with S-PLUS</em>.  CRC Press, Boca Raton, FL, pp.402–404.
+</p>
+<p>Singh, A., N. Armbya, and A. Singh. (2010b). 
+<em>ProUCL Version 4.1.00 Technical Guide (Draft)</em>. EPA/600/R-07/041, May 2010.  
+Office of Research and Development, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (1996c).  <em>Soil Screening Guidance: Technical Background Document</em>.  
+EPA/540/R-95/128, PB96963502. Office of Emergency and Remedial Response, U.S. 
+Environmental Protection Agency, Washington, D.C., May, 1996.
+</p>
+<p>USEPA. (2002d).  <em>Estimation of the Exposure Point Concentration Term Using a 
+Gamma Distribution</em>.  
+EPA/600/R-02/084. October 2002. Technology Support Center for Monitoring and 
+Site Characterization, Office of Research and Development, Office of Solid Waste and 
+Emergency Response, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Zar, J.H. (2010).  <em>Biostatistical Analysis</em>.  Fifth Edition.  
+Prentice-Hall, Upper Saddle River, NJ.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>t.test</code>, <code>elnorm</code>, <code>elnormAlt</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # The guidance document "Calculating Upper Confidence Limits for 
+  # Exposure Point Concentrations at Hazardous Waste Sites" 
+  # (USEPA, 2002d, Exhibit 9, p. 16) contains an example of 60 observations 
+  # from an exposure unit.  Here we will use Chen's modified t-test to test 
+  # the null hypothesis that the average concentration is less than 30 mg/L 
+  # versus the alternative that it is greater than 30 mg/L.
+  # In EnvStats these data are stored in the vector EPA.02d.Ex.9.mg.per.L.vec.
+
+  sort(EPA.02d.Ex.9.mg.per.L.vec)
+  # [1]  16  17  17  17  18  18  20  20  20  21  21  21  21  21  21  22
+  #[17]  22  22  23  23  23  23  24  24  24  25  25  25  25  25  25  26
+  #[33]  26  26  26  27  27  28  28  28  28  29  29  30  30  31  32  32
+  #[49]  32  33  33  35  35  97  98 105 107 111 117 119
+
+  dev.new()
+  hist(EPA.02d.Ex.9.mg.per.L.vec, col = "cyan", xlab = "Concentration (mg/L)")
+
+  # The Shapiro-Wilk goodness-of-fit test rejects the null hypothesis of a 
+  # normal, lognormal, and gamma distribution:
+
+  gofTest(EPA.02d.Ex.9.mg.per.L.vec)$p.value
+  #[1] 2.496781e-12
+
+  gofTest(EPA.02d.Ex.9.mg.per.L.vec, dist = "lnorm")$p.value
+  #[1] 3.349035e-09
+
+  gofTest(EPA.02d.Ex.9.mg.per.L.vec, dist = "gamma")$p.value
+  #[1] 1.564341e-10
+
+
+  # Use Chen's modified t-test to test the null hypothesis that
+  # the average concentration is less than 30 mg/L versus the 
+  # alternative that it is greater than 30 mg/L.
+
+  chenTTest(EPA.02d.Ex.9.mg.per.L.vec, mu = 30)
+
+  #Results of Hypothesis Test
+  #--------------------------
+  #
+  #Null Hypothesis:                 mean = 30
+  #
+  #Alternative Hypothesis:          True mean is greater than 30
+  #
+  #Test Name:                       One-sample t-Test
+  #                                 Modified for
+  #                                 Positively-Skewed Distributions
+  #                                 (Chen, 1995)
+  #
+  #Estimated Parameter(s):          mean = 34.566667
+  #                                 sd   = 27.330598
+  #                                 skew =  2.365778
+  #
+  #Data:                            EPA.02d.Ex.9.mg.per.L.vec
+  #
+  #Sample Size:                     60
+  #
+  #Test Statistic:                  t = 1.574075
+  #
+  #Test Statistic Parameter:        df = 59
+  #
+  #P-values:                        z               = 0.05773508
+  #                                 t               = 0.06040889
+  #                                 Avg. of z and t = 0.05907199
+  #
+  #Confidence Interval for:         mean
+  #
+  #Confidence Interval Method:      Based on z
+  #
+  #Confidence Interval Type:        Lower
+  #
+  #Confidence Level:                95%
+  #
+  #Confidence Interval:             LCL = 29.82
+  #                                 UCL =   Inf
+
+  # The estimated mean, standard deviation, and skew are 35, 27, and 2.4, 
+  # respectively.  The p-value is 0.06, and the lower 95% confidence interval 
+  # is [29.8, Inf).  Depending on what you use for your Type I error rate, you 
+  # may or may not want to reject the null hypothesis.
+</code></pre>
+
+
+</div>

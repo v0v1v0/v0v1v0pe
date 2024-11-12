@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>state_to_trajectory</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Position of a state with respect to a trajectory</h2>
+
+<h3>Description</h3>
+
+<p>Define the position of a state with respect to a reference trajectory based on
+its distance from the trajectory and the length and direction of the trajectory.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">state_to_trajectory(
+  d,
+  trajectories,
+  states,
+  target_states,
+  reference,
+  method,
+  coordStates = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Either a symmetric matrix or an object of class <code>dist</code> containing
+the dissimilarities between each pair of states.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trajectories</code></td>
+<td>
+<p>Vector indicating the trajectory or site to which each
+state in <code>d</code> belongs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>states</code></td>
+<td>
+<p>Vector of integers indicating the order of the states in <code>d</code> for
+each trajectory (assign 1 if the state does not belong to any trajectory).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target_states</code></td>
+<td>
+<p>Vector of integers indicating the indices in <code>trajectories</code>
+and <code>states</code> of the ecological states for which their relative position will
+be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>Vector of the same class of <code>trajectories</code> or object of class
+<code>RETRA</code> indicating the reference trajectory to calculate the relative position
+of the <code>target_states</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Method to calculate the distance and relative position of the
+<code>target_states</code> and the <code>reference</code>. One of <code>"nearest_state"</code>, <code>"projection"</code>
+or <code>"mixed"</code> (see Details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coordStates</code></td>
+<td>
+<p>Matrix containing the coordinates of each state (rows) and
+axis (columns) of a metric ordination space (see Details)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>state_to_trajectory()</code> can calculate the distance and relative position of
+one or more <code>target_states</code> relative to a <code>reference</code> trajectory by three
+different methods:
+</p>
+
+<ul>
+<li> <p><code>"nearest_state"</code> returns the dissimilarity of the <code>target_states</code> to the
+nearest state of the <code>reference</code> trajectory (<code>distance</code>) and calculates the
+relative position of the nearest state within the <code>reference</code>.
+</p>
+</li>
+<li> <p><code>"projection"</code> returns the dissimilarity of the <code>target_states</code> to their
+projection onto the <code>reference</code> trajectory and calculates the relative position
+of the projected state within the <code>reference</code>. This method requires <code>d</code> to be
+metric (i.e. to satisfy the triangle inequality). If <code>d</code> is not metric,
+<code>state_to_trajectory()</code> calculates the Euclidean distance within a transformed
+space generated through multidimensional scaling (Borg and Groenen, 2005). To
+use the state coordinates in a different metric space, use the <code>coordStates</code>
+argument. When the <code>target_states</code> cannot be projected onto any of the segments
+forming the <code>reference</code> trajectory, <code>state_to_trajectory()</code> returns <code>NA</code> for
+both <code>distance</code> and <code>relative_position</code>.
+</p>
+</li>
+<li> <p><code>"mixed"</code> calculates the dissimilarity between the <code>target_states</code> and the
+<code>reference</code> trajectory, as well as their relative position by computing its
+projection onto any of the segments of the reference (analogous to
+<code>method = "projection"</code>). For the <code>target_states</code> that cannot be projected,
+<code>state_to_trajectory()</code> uses the nearest state in the <code>reference</code> to compute
+<code>distance</code> and <code>relative_position</code> (analogous to <code>method = "nearest_state"</code>).
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>The function <code>state_to_trajectory()</code> returns a data frame of four columns
+including the <code>distance</code> and <code>relative_position</code> between the <code>target_state</code> and
+the <code>reference</code>.
+</p>
+
+<ul>
+<li>
+<p> Depending on the <code>method</code>, <code>distance</code> is calculated as the dissimilarity
+between the <code>target_states</code> and their respective nearest state in the <code>reference</code>
+or the dissimilarity to their projections onto the <code>reference</code>.
+</p>
+</li>
+<li>
+<p> The <code>relative_position</code> is a value that ranges between 0 (if the nearest
+state or projected point coincides with the first <code>reference</code> state) and 1
+(if the nearest state or projected point coincides with the last <code>reference</code>
+state).
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Martina Sánchez-Pinillos
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># State dissimilarities
+d &lt;- vegan::vegdist(EDR_data$EDR3$abundance[, paste0("sp", 1:12)], method = "bray")
+trajectories &lt;- EDR_data$EDR3$abundance$traj
+states &lt;- EDR_data$EDR3$abundance$state
+
+# Calculate the representative trajectories of an EDR to be used as reference
+RT &lt;- retra_edr(d,
+               trajectories = trajectories,
+               states = states,
+               minSegs = 10)
+
+# Define the target states
+target_states &lt;- as.integer(c(1, 16, 55))
+
+# Calculate the position of the target states with respect to  the representative
+# trajectories of an EDR
+state_to_trajectory(d, trajectories = trajectories,
+                    states = states,
+                    target_states = target_states,
+                    reference = RT,
+                    method = "nearest_state")
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,231 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Newdata</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Create a new data.frame for predict 
+</h2>
+
+<h3>Description</h3>
+
+<p>Generate a new <code>data.frame</code> or 
+<code>matrix</code> from another with column(s) 
+selected by <code>x</code> adopting <code>n</code> values in 
+<code>range(data[,x])</code> and all other columns 
+constant.  
+</p>
+<p>If <code>canbeNumeric</code>(x) is <code>TRUE</code>, 
+the output has <code>x</code> adopting <code>n</code> 
+values in the <code>range</code>(x) and all 
+other numeric variables at their 
+<code>median</code> and other variables at 
+their most common values.  
+</p>
+<p>If <code>canbeNumeric</code>(x) is <code>FALSE</code>, 
+the output has <code>x</code> adopting all possible
+values of <code>x</code> with all other variables at 
+the same constant values as when 
+<code>canbeNumeric</code>(x) is <code>TRUE</code> (and
+<code>n</code> is ignored).  If <code>x</code> has a 
+<code>levels</code> attribute, the possible
+values are defined by that <code>levels</code>
+attribute.  Otherwise, it is defined by 
+<code>unique</code>(x).  
+</p>
+<p>This is designed to create a new 
+<code>data.frame</code> to be used as 
+<code>newdata</code> for <code>predict</code>.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Newdata(data, x, n, na.rm=TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>a <code>data.frame</code> or matrix.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>name of a column of <code>data</code>.  If 
+<code>NA</code> or <code>NULL</code>, select all columns 
+of <code>data</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>an <code>integer</code> vector indicating 
+the number of levels of <code>data[, x]</code> if 
+<code>canbeNumeric(datat[, x])</code>.  If 
+<code>canbeNumeric(datat[, x])</code> is 
+<code>FALSE</code>, take at most <code>n</code> of the 
+most popular levels.    
+</p>
+<p>Default is 2 if <code>length(x)</code> &gt; 1 or if 
+<code>x</code> is either <code>NA</code> or <code>NULL</code>.  
+</p>
+<p>If <code>n</code> = 1, use the median for 
+<code>canbeNumeric</code> and the most popular level
+otherwise.  
+</p>
+<p>If <code>n</code> &lt; 1, drop that variable.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+
+<p><code>logical</code> passed to 
+<code>range</code>(x)
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>1.  Check <code>data, x</code>.  
+</p>
+<p>2.  If <code>canbeNumeric</code>(x) is 
+<code>TRUE</code>, let <code>xNew</code> be <code>n</code> 
+values spanning <code>range</code>(x).  Else, 
+let 
+<code>xNew</code> &lt;- <code>levels</code>(x).  
+</p>
+<p>3.  If <code>is.null</code>(<code>xNew</code>), set 
+it to 
+<code>sort</code>(<code>unique</code>(x)).  
+</p>
+<p>4.  let <code>newDat &lt;- data[rep(1, n), ]</code>, 
+and replace <code>x</code> by <code>xNew</code>.  
+</p>
+<p>5.  <code>otherVars &lt;- colnames(data) != x</code>
+</p>
+<p>6.  <code>for(x2 in otherVars)</code> 
+replace <code>newDat[, x2]</code>:  
+If <code>canbeNumeric</code>(x2) is <code>TRUE</code>, 
+use <code>median</code>(x2).  Otherwise, 
+use its (first) most common value.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>data.frame</code> with <code>n</code>
+rows and columns matching those of 
+<code>data</code>, as described above.  
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict.lm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  A reasonable test with numerics, dates, 
+##     an ordered factor and character variables
+##
+xDate &lt;- as.Date('2001-02-03')+1:4
+tstDF &lt;- data.frame(x1=1:4, xDate=xDate, 
+  xD2=as.POSIXct(xDate), 
+  sex=ordered(c('M', 'F', 'M', 'F')), 
+  huh=letters[c(1:3, 3)], stringsAsFactors=FALSE)
+
+newDat &lt;- Newdata(tstDF, 'xDate', n=5)
+
+# check
+newD &lt;- data.frame(x1=2.5, 
+  xDate=xDate[1]+seq(0, 3, length=5), 
+  xD2=as.POSIXct(xDate[2]+0.5), 
+  sex=ordered(c('M', 'F', 'M', 'F'))[2], 
+  huh=letters[3], stringsAsFactors=FALSE)
+attr(newD, 'out.attrs') &lt;- attr(newDat, 'out.attrs')
+
+all.equal(newDat, newD)
+
+
+##
+## 2.  Test with only one column 
+##
+newDat1 &lt;- Newdata(tstDF[, 2, drop=FALSE], 'xDate', n=5)
+
+# check 
+newDat1. &lt;- newD[, 2, drop=FALSE]
+attr(newDat1., 'out.attrs') &lt;- attr(newDat1, 'out.attrs')
+
+all.equal(newDat1, newDat1.)
+
+
+##
+## 3.  Test with a factor 
+##
+newSex &lt;- Newdata(tstDF, 'sex')
+
+# check 
+newS &lt;- with(tstDF, data.frame(
+  x1=2.5, xDate=xDate[1]+1.5, 
+  xD2=as.POSIXct(xDate[1]+1.5), 
+  sex=ordered(c('M', 'F'))[2:1], 
+  huh=letters[3], stringsAsFactors=FALSE) )
+attr(newS, 'out.attrs') &lt;- attr(newSex, 'out.attrs')
+
+all.equal(newSex, newS)
+
+
+##
+## 4.  Test with an integer column number 
+##
+newDat2 &lt;- Newdata(tstDF, 2, n=5)
+
+# check 
+
+all.equal(newDat2, newD)
+
+
+##
+## 5.  Test with all
+##
+NewAll &lt;- Newdata(tstDF)
+
+# check 
+tstLvls &lt;- as.list(tstDF[c(1, 4), ])
+tstLvls$sex &lt;- tstDF$sex[2:1]
+tstLvls$huh &lt;- letters[c(3, 1)]
+tstLvls$stringsAsFactors &lt;- FALSE
+
+NewA. &lt;- do.call(expand.grid, tstLvls)
+attr(NewA., 'out.attrs') &lt;- attr(NewAll, 'out.attrs')
+
+all.equal(NewAll, NewA.)
+
+</code></pre>
+
+
+</div>

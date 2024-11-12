@@ -1,0 +1,242 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>choose_b</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Block length diagnostic for the semiparametric maxima estimator</h2>
+
+<h3>Description</h3>
+
+<p>Creates data for a plot to aid the choice of the block length <code>b</code> to
+supply to <code>spm</code>.  The general idea is to select the smallest
+value of <code>b</code> above which estimates of the extremal index <code class="reqn">\theta</code>
+appear to be constant with respect to <code>b</code>, taking into account sampling
+variability.  <code>plot.choose_b</code> creates the plot.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">choose_b(
+  data,
+  b,
+  bias_adjust = c("BB3", "BB1", "N", "none"),
+  constrain = TRUE,
+  varN = TRUE,
+  level = 0.95,
+  interval_type = c("norm", "lik"),
+  conf_scale = c("theta", "log"),
+  type = c("vertical", "cholesky", "spectral", "none")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A numeric vector of raw data.  No missing values are allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>A numeric scalar.  The block size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bias_adjust</code></td>
+<td>
+<p>A character scalar.  Is bias-adjustment of the
+raw estimate of <code class="reqn">\theta</code> performed using the bias-reduced
+estimator (<code>bias_adjust = "BB3"</code>), derived in Section 5 of
+Berghaus and Bucher (2018); or a simpler version
+(<code>bias_adjust = "BB1"</code>), in which the raw estimate is multiplied by
+<code class="reqn">(k-1) / k</code>, where <code class="reqn">k</code> is the number of blocks; or the
+bias-adjustment of the empirical distribution function used to calculate
+the estimate, as detailed in Section 2 of Northrop (2015).  When disjoint
+maxima are used <code>bias_adjust = "BB1"</code> and <code>bias_adjust = "N"</code>
+give identical estimates of the Berghaus and Bucher (2018) variant,
+as explained at the end of Section 5 of Berghaus and Bucher (2018).
+If <code>bias_adjust = "none"</code> then no bias-adjustment is performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constrain</code></td>
+<td>
+<p>A logical scalar.  If <code>constrain = TRUE</code> then
+any estimates that are greater than 1 are set to 1,
+that is, they are constrained to lie in (0, 1].  This is carried out
+<em>after</em> any bias-adjustment.  Otherwise,
+estimates that are greater than 1 may be obtained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varN</code></td>
+<td>
+<p>A logical scalar.  If <code>varN = TRUE</code> then the estimation
+of the sampling variance of the Northrop (2015) estimator is tailored
+to that estimator.  Otherwise, the sampling variance derived in
+Berghaus and Bucher (2018) is used.
+See <strong>Details</strong> for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>A numeric scalar in (0, 1). The confidence level required.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval_type</code></td>
+<td>
+<p>A character scalar: <code>"norm"</code> for intervals of
+type (a), <code>"lik"</code> for intervals of type (b).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf_scale</code></td>
+<td>
+<p>A character scalar.  If <code>interval_type = "norm"</code> then
+<code>conf_scale</code> determines the scale on which we use approximate
+large-sample normality of the estimators to estimate confidence intervals
+of type (a).
+</p>
+<p>If <code>conf_scale = "theta"</code>
+then confidence intervals are estimated for <code class="reqn">\theta</code> directly.
+If <code>conf_scale = "log"</code> then confidence intervals are first
+estimated for <code class="reqn">\log\theta</code> and then transformed back
+to the <code class="reqn">\theta</code>-scale.
+</p>
+<p>Any bias-adjustment requested in the original call to <code>spm</code>,
+using it's <code>bias_adjust</code> argument, is automatically applied here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>A character scalar.  The argument <code>type</code> to be passed to
+<code>conf_intervals</code> in the
+<code>chandwich</code> package in order to estimate the
+likelihood-based intervals.
+Using <code>type = "none"</code> is <em>not</em> advised because then the
+intervals are based on naive estimated standard errors.  In particular,
+if (the default) <code>sliding = TRUE</code> was used in the call to
+<code>spm</code> then the unadjusted likelihood-based confidence
+intervals provide <em>vast</em> underestimates of uncertainty.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each block size in <code>b</code> the extremal index <code class="reqn">\theta</code>
+is estimated using <code>spm</code>.  The estimates of <code class="reqn">\theta</code>
+approximate <code>conf</code>% confidence intervals for <code class="reqn">\theta</code> are
+stored for plotting (by <code>plot.choose_b</code>)
+to produce a simple graphical diagnostic to inform the choice of
+block size.  This plot is used to choose a block size above which the
+underlying value of <code class="reqn">\theta</code> may be approximately constant.
+This is akin to a threshold stability plot: see Chapter 4 of Coles (2001),
+for example.
+</p>
+<p>The nature of the calculation of the sampling variances of the estimates
+of <code class="reqn">\theta</code> (see <code>spm</code> for details) means that
+<code>choose_b</code> may be a little slow to run if <code>b</code> contains many
+values, particularly if some of them are small.
+</p>
+<p>For very small block sizes it may not be possible to estimate the
+confidence intervals.  See <strong>Details</strong> in <code>spm</code>.
+For any such block sizes the intervals will be missing from the plot.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>c("choose_b", "exdex")</code> containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>theta_sl,theta_dj </code></td>
+<td>
+<p>numeric <code>b</code> by 3 matrices of estimates of
+<code class="reqn">\theta</code> using sliding and disjoint blocks.  Columns 1-3 relate to the
+estimators <code>N2015</code>, <code>BB2018</code> and <code>BB2018b.</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower_sl,lower_dj </code></td>
+<td>
+<p>Similarly for the lower limits of the confidence
+intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper_sl,upper_dj </code></td>
+<td>
+<p>Similarly for the upper limits of the confidence
+intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b </code></td>
+<td>
+<p>the input <code>b</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call </code></td>
+<td>
+<p>the call to <code>choose_b</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Coles, S. G. (2001) <em>An Introduction to Statistical
+Modeling of Extreme Values</em>, Springer-Verlag, London.
+<a href="https://doi.org/10.1007/978-1-4471-3675-0_3">doi:10.1007/978-1-4471-3675-0_3</a>
+</p>
+<p>Northrop, P. J. (2015) An efficient semiparametric maxima
+estimator of the extremal index. <em>Extremes</em> <strong>18</strong>(4), 585-603.
+<a href="https://doi.org/10.1007/s10687-015-0221-5">doi:10.1007/s10687-015-0221-5</a>
+</p>
+<p>Berghaus, B., Bucher, A. (2018) Weak convergence of a pseudo
+maximum likelihood estimator for the extremal index. <em>Ann. Statist.</em>
+<strong>46</strong>(5), 2307-2335. <a href="https://doi.org/10.1214/17-AOS1621">doi:10.1214/17-AOS1621</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.choose_b</code> to produce the block length diagnostic
+plot.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Newlyn seas surges
+# Plot like the top left of Northrop (2015)
+# Remove the last 14 values because 2880 has lots of factors
+b_vals &lt;- c(2,3,4,5,6,8,9,10,12,15,16,18,20,24,30,32,36,40,45,48,54,60)
+res &lt;- choose_b(newlyn[1:2880], b_vals)
+# Some b are too small for the sampling variance of the sliding blocks
+# estimator to be estimated
+plot(res)
+plot(res, estimator = "BB2018")
+plot(res, maxima = "disjoint")
+
+# S&amp;P 500 index: similar to Berghaus and Bucher (2018), Fig 4 top left
+b_vals &lt;- c(10, seq(from = 25, to = 350, by = 25), 357)
+res500 &lt;- choose_b(sp500, b_vals)
+plot(res500, ylim = c(0, 1))
+plot(res500, estimator = "BB2018", ylim = c(0, 1))
+
+</code></pre>
+
+
+</div>

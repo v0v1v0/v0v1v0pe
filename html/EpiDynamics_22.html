@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SIRTermTimeForcing</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>SIR model with corrected term-time forcing (P 5.2).</h2>
+
+<h3>Description</h3>
+
+<p>Solves a SIR model  with corrected term-time forcing of the transmission rate.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SIRTermTimeForcing(
+  pars = NULL,
+  init = NULL,
+  term.times = terms,
+  cicles = 10,
+  low.term.first = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pars</code></td>
+<td>
+<p><code>list</code> with 4 values: the mean transmission rate, a scalar (or a <code>vector</code> to create bifurcations) with the amplitude of sinusoidal forcing, the removal recovery rate, and the per capita death rate. The names for these values must be: "beta0", "beta1", "gamma", and "mu", respectively. All parameters must be positive and beta1 &lt;= 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p><code>vector</code> with 3 values: the initial proportion of proportion of susceptibles, infectious and recovered. The names of these values must be "S", "I" and "R", respectively. S + I + R &lt;= 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term.times</code></td>
+<td>
+<p><code>vector</code> indicating the term times (see details and example).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cicles</code></td>
+<td>
+<p>value indicating how many times <code>term.times</code> must be simulated (see details and example).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>low.term.first</code></td>
+<td>
+<p>logical. If <code>TRUE</code> (default), the first term-time is considered -1, the second 1, the tirth -1 and so on. When <code>FALSE</code>, the first term-time is 1, the second -1, and so on (see example).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to ode function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This is the R version of program 5.2 from page 171 of "Modeling Infectious Disease in humans and animals" by Keeling &amp; Rohani.
+</p>
+<p>This model is based on the behaviour os measles and other child-hood diseases. Transmission rate is low during term == -1 (e.g. holydas term) and high during term == 1 (e.g. school term). We can define the year as the temporal unit of <code>cicles</code> and each cicle is composed by a <code>term-time</code> sequence (see example).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>list</code>. The first element, <code>*$model</code>, is the model function. The second, third and fourth elements are vectors (<code>*$pars</code>, <code>*$init</code>, <code>*$time</code>, respectively) containing the <code>pars</code>, <code>init</code> and <code>time</code> arguments of the function. The fifth element <code>*$results</code> is a <code>data.frame</code> with up to as many rows as elements in time. First column contains the time. Second, third and fourth columns contain the proportion of susceptibles, infectious and recovered.
+</p>
+
+
+<h3>References</h3>
+
+<p>Keeling, Matt J., and Pejman Rohani. Modeling infectious diseases in humans and animals. Princeton University Press, 2008.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>ode.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Parameters and initial conditions.
+initials &lt;- c(S = 1/17, I = 1e-4, R = 1 - 1/17 - 1e-4)
+parameters &lt;- list(beta0 = 17 / 13, beta1 = 0.25,
+                gamma = 1 / 13, mu = 1 / (50 * 365))
+
+## Term-times and cycles
+# In a year-unit cicle, holidays happen for example
+# between days 1 and 6, 101 and 115, 201 and 251,
+# 301 and 307 and 308 and 365. 
+# Setting low.term.first == TRUE (default) we define the
+# previous term-times as low terms.
+# Simulate 10 years.
+terms &lt;- c(1, 6, 100, 115, 200, 251, 300, 307, 356, 365)
+cicles &lt;- 10
+
+# Solve and plot.
+sir.term.time.forcing &lt;- SIRTermTimeForcing(pars = parameters,
+                                            init = initials,
+                                            term.times = terms,
+                                            cicles = 10)
+PlotMods(sir.term.time.forcing)
+
+# Solve bifurcation dynamics for 20 years.
+# If the number of time-units per cicle (e.g. days) times
+# the number of cicles (e.g. number of days) is less
+# than 3650, bifurcation dynamics are solved for 3650
+# time-steps
+parameters2 &lt;- list(beta0 = 17 / 13,
+                beta1 = seq(0, 0.3, by = 0.001),
+                gamma = 1 / 13, mu = 1 / (50 * 365))
+# Uncomment the following lines (running it takes more than a few seconds):
+# bifur &lt;- SIRTermTimeForcing(pars = parameters2, init = initials,
+#                             term.times = terms, cicles = 10)
+# PlotMods(bifur, bifur = TRUE)
+</code></pre>
+
+
+</div>

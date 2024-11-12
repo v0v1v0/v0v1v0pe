@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimator</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimates each known datapoint using the others as datapoints</h2>
+
+<h3>Description</h3>
+
+<p>Uses Bayesian techniques to estimate a model's prediction at each of
+<code>n</code> datapoints.  To estimate the <code class="reqn">i^{\rm th}</code> point,
+conditioning variables of <code class="reqn">1,\ldots, i-1</code>
+and <code class="reqn">i+1,\ldots, n</code> inclusive are used (ie, all points
+except point <code class="reqn">i</code>).
+</p>
+<p>This routine is useful when finding optimal coefficients for the
+correlation using boot methods.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimator(val, A, d, scales=NULL, pos.def.matrix=NULL,
+func=regressor.basis)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>val</code></td>
+<td>
+<p>Design matrix with rows corresponding to points at which the
+function is known</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>Correlation matrix (note that this is <strong>not</strong> the
+inverse of the correlation matrix)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Vector of observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scales</code></td>
+<td>
+<p>Scales to be used to calculate <code>t(x)</code>.  Note that
+<code>scales</code> has no default value because <code>estimator()</code> is
+most often used in the context of assessing the appropriateness of a
+given value of <code>scales</code>.  If the desired distance matrix
+(called <code class="reqn">B</code> in Oakley) is not diagonal, pass this matrix to
+<code>estimator()</code> via the <code>pos.def.matrix</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos.def.matrix</code></td>
+<td>
+<p>Positive definite matrix <code class="reqn">B</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>func</code></td>
+<td>
+<p>Function used to determine basis vectors, defaulting
+to <code>regressor.basis</code> if not given.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Given a matrix of observation points and a vector of observations,
+<code>estimator()</code> returns a vector of predictions.  Each prediction is
+made in a three step process.  For each index <code class="reqn">i</code>:
+</p>
+
+<ul>
+<li>
+<p> Observation <code>d[i]</code> is discarded, and row <code>i</code> and
+column <code>i</code> deleted from <code>A</code> (giving <code>A[-i,-i]</code>).
+Thus <code>d</code> and <code>A</code> are
+the observation vector and correlation matrix that would have been
+obtained had observation <code>i</code> not  been available.
+</p>
+</li>
+<li>
+<p> The value of <code>d[i]</code> is estimated on the basis of the
+shortened observation vector and the comatrix of <code>A</code>.
+</p>
+</li>
+</ul>
+<p>It is then possible to make a scatterplot of <code>d</code> vs <code>dhat</code>
+where <code>dhat=estimator(val,A,d)</code>.  If the scales used are
+“good”, then the points of this scatterplot will be close to
+<code>abline(0,1)</code>.  The third step is to optimize the goodness of fit
+of this scatterplot.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector of observations of the same length as <code>d</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p>J. Oakley and A. O'Hagan, 2002. <em>Bayesian Inference for the
+Uncertainty Distribution of Computer Model Outputs</em>, Biometrika
+89(4), pp769-784
+</p>
+</li>
+<li>
+<p>R. K. S. Hankin 2005. <em>Introducing BACCO, an R bundle for
+Bayesian analysis of computer code output</em>, Journal of Statistical
+Software, 14(16)
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>optimal.scales</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># example has 11 observations on 6 dimensions.
+# function is just sum( (1:6)*x) where x=c(x_1, ... , x_2)
+
+val &lt;- latin.hypercube(11,6)
+colnames(val) &lt;- letters[1:6]
+d &lt;- apply(val,1,function(x){sum((1:6)*x)})
+
+#pick some scales:
+fish &lt;- rep(1,ncol(val))
+A &lt;- corr.matrix(val,scales=fish)
+
+#add some suitably correlated noise:
+d &lt;- as.vector(rmvnorm(n=1, mean=d, 0.1*A))
+
+# estimate d using the leave-out-one technique in estimator():
+d.est &lt;- estimator(val, A, d, scales=fish)
+
+#and plot the result:
+lims &lt;- range(c(d,d.est))
+par(pty="s")
+plot(d, d.est, xaxs="r", yaxs="r", xlim=lims, ylim=lims)
+abline(0,1)
+  </code></pre>
+
+
+</div>

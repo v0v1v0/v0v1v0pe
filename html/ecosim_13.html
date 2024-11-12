@@ -1,0 +1,146 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>process-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Class <code>"process"</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>This class represents a transformation process of substances/organisms in the modelled system.
+Such a process is characterized by a transformation rate and a list of stoichiometric coefficients for the affected substances and organisms.
+It is recommended to calculate the stoichiometric coefficients with the function <code>calc.stoich.coef</code> of the package <code>stoichcalc</code> from substance and organism compositions.
+The output of this function can directly be used for the process definition.
+</p>
+
+
+<h3>Objects from the Class</h3>
+
+<p>Objects can be created by calls of the form <code>new("process", ...)</code>.
+</p>
+
+
+<h3>Slots</h3>
+
+
+<dl>
+<dt>
+<code>name</code>:</dt>
+<dd>
+<p>Character string specifying the name of the process.</p>
+</dd>
+<dt>
+<code>rate</code>:</dt>
+<dd>
+<p>Expression characterizing the dependence of the transformation rate on substance/organism concentrations and external influence factors</p>
+</dd>
+<dt>
+<code>stoich</code>:</dt>
+<dd>
+<p>List of expressions or numbers defining the stoichiometric coefficient of the substance/organism given by the label of the list component.</p>
+</dd>
+<dt>
+<code>pervol</code>:</dt>
+<dd>
+<p>Logical variable defining the process rate as per volume of the reactor (pervol=TRUE) or per surface area (pervol=FALSE).</p>
+</dd>
+</dl>
+<h3>Methods</h3>
+
+
+<dl>
+<dt>calc.trans.rates</dt>
+<dd>
+<p>Calculates transformation rates; internal use only.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Peter Reichert &lt;peter.reichert@emeriti.eawag.ch&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Omlin, M., Reichert, P. and Forster, R., Biogeochemical model of lake Zurich: Model equations and results, Ecological Modelling 141(1-3), 77-103, 2001. <br><br>
+Reichert, P., Borchardt, D., Henze, M., Rauch, W., Shanahan, P., Somlyody, L. and Vanrolleghem, P., River Water Quality Model no. 1 (RWQM1): II. Biochemical process equations, Water Sci. Tech. 43(5), 11-30, 2001. <br><br>
+Reichert, P. and Schuwirth, N., A generic framework for deriving process stoichiometry in environmental models, Environmental Modelling &amp; Software, 25, 1241-1251, 2010.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>reactor-class</code>,
+<code>link-class</code>,
+<code>system-class</code>,
+<code>calcres</code>,
+<code>plotres</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Definition of parameters:
+# =========================
+
+param    &lt;- list(k.gro.ALG   = 1,        # 1/d
+                 k.gro.ZOO   = 0.8,      # m3/gDM/d
+                 k.death.ALG = 0.4,      # 1/d
+                 k.death.ZOO = 0.08,     # 1/d
+                 K.HPO4      = 0.002,    # gP/m3
+                 Y.ZOO       = 0.2,      # gDM/gDM
+                 alpha.P.ALG = 0.002,    # gP/gDM
+                 A           = 8.5e+006, # m2
+                 h.epi       = 4,        # m
+                 Q.in        = 4,        # m3/s
+                 C.ALG.ini   = 0.05,     # gDM/m3
+                 C.ZOO.ini   = 0.1,      # gDM/m3
+                 C.HPO4.ini  = 0.02,     # gP/m3
+                 C.HPO4.in   = 0.04)     # gP/m3             
+
+# Definition of transformation processes:
+# =======================================
+
+# Growth of algae:
+# ----------------
+
+gro.ALG   &lt;- new(Class  = "process",
+                 name   = "Growth of algae",
+                 rate   = expression(k.gro.ALG
+                                     *C.HPO4/(K.HPO4+C.HPO4)
+                                     *C.ALG),
+                 stoich = list(C.ALG  = expression(1),              # gDM/gDM
+                               C.HPO4 = expression(-alpha.P.ALG)))  # gP/gDM
+
+# Death of algae:
+# ---------------
+
+death.ALG &lt;- new(Class = "process",
+                 name   = "Death of algae",
+                 rate   = expression(k.death.ALG*C.ALG),
+                 stoich = list(C.ALG  = expression(-1)))            # gDM/gDM
+
+# Growth of zooplankton:
+# ----------------------
+
+gro.ZOO   &lt;- new(Class  = "process",
+                 name   = "Growth of zooplankton",
+                 rate   = expression(k.gro.ZOO
+                                     *C.ALG
+                                     *C.ZOO),
+                 stoich = list(C.ZOO  = expression(1),              # gDM/gDM
+                               C.ALG  = expression(-1/Y.ZOO)))      # gP/gDM
+
+# Death of zooplankton:
+# ---------------------
+
+death.ZOO &lt;- new(Class  = "process",
+                 name   = "Death of zooplankton",
+                 rate   = expression(k.death.ZOO*C.ZOO),
+                 stoich = list(C.ZOO  = expression(-1)))            # gDM/gDM
+</code></pre>
+
+
+</div>

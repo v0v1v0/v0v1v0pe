@@ -1,0 +1,246 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EDR_metrics</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Metrics of Ecological Dynamic Regimes</h2>
+
+<h3>Description</h3>
+
+<p>Set of metrics to analyze the distribution and variability of trajectories
+in Ecological Dynamic Regimes (EDR), including dynamic dispersion (dDis), dynamic
+beta diversity (dBD), and dynamic evenness (dEve).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dDis(
+  d,
+  d.type,
+  trajectories,
+  states = NULL,
+  reference,
+  w.type = "none",
+  w.values,
+  ...
+)
+
+dBD(d, d.type, trajectories, states = NULL, ...)
+
+dEve(d, d.type, trajectories, states = NULL, w.type = "none", w.values, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Symmetric matrix or object of class <code>dist</code> containing the
+dissimilarities between each pair of states of all trajectories in the EDR or
+the dissimilarities between each pair of trajectories. To compute dDis, <code>d</code>
+needs to include the dissimilarities between all states/trajectories and the
+states/trajectory of reference.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d.type</code></td>
+<td>
+<p>One of <code>"dStates"</code> (if <code>d</code> contains state dissimilarities) or
+<code>"dTraj"</code> (if <code>d</code> contains trajectory dissimilarities).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trajectories</code></td>
+<td>
+<p>Vector indicating the trajectory or site corresponding to
+each entry in <code>d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>states</code></td>
+<td>
+<p>Only if <code>d.type</code> = <code>"dStates"</code>. Vector of integers indicating the
+order of the states in <code>d</code> for each trajectory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>Vector of the same class as <code>trajectories</code> and length equal
+to one, indicating the reference trajectory to compute dDis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w.type</code></td>
+<td>
+<p>Method used to weight individual trajectories:
+</p>
+
+<ul>
+<li> <p><code>"none"</code>: All trajectories are considered equally relevant (default).
+</p>
+</li>
+<li> <p><code>"length"</code>: Trajectories are weighted by their length, calculated as the
+sum of the dissimilarities between every pair of consecutive states. <code>d</code> must
+contain dissimilarities between trajectory states and <code>d.type</code> = <code>"dStates"</code>.
+</p>
+</li>
+<li> <p><code>"size"</code>: Trajectories are weighted by their size, calculated as the number
+of states forming the trajectory. <code>d</code> must contain dissimilarities between
+trajectory states and <code>d.type</code> = <code>"dStates"</code>.
+</p>
+</li>
+<li> <p><code>"precomputed"</code>: Trajectories weighted according to different criteria.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w.values</code></td>
+<td>
+<p>Only if <code>w.type</code> = <code>"precomputed"</code>. Numeric vector of length
+equal to the number of trajectories containing the weight of each trajectory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Only if <code>d.type</code> = <code>"dStates"</code>. Further arguments to calculate
+trajectory dissimilarities. See <code>ecotraj::trajectoryDistances()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>Dynamic dispersion (<code>dDis()</code>)</strong>
+</p>
+<p><em>dDis</em> is calculated as the average dissimilarity between each trajectory in an
+EDR and a target trajectory taken as reference (Sánchez-Pinillos et al., 2023).
+</p>
+<p><code class="reqn">
+dDis = \frac{\sum_{i=1}^{m}d_{i\alpha}}{m}
+</code>
+</p>
+<p>where <code class="reqn">d_{i\alpha}</code> is the dissimilarity between trajectory <code class="reqn">i</code> and
+the trajectory of reference <code class="reqn">\alpha</code>, and <code class="reqn">m</code> is the number of trajectories.
+</p>
+<p>Alternatively, it is possible to calculate a weighted mean of the dissimilarities
+by assigning a weight to each trajectory.
+</p>
+<p><code class="reqn">
+dDis = \frac{\sum_{i=1}^{m}w_{i}d_{i\alpha}}{\sum_{i=1}^{m}w_{i}}
+</code>
+</p>
+<p>where <code class="reqn">w_{i}</code> is the weight assigned to trajectory <code class="reqn">i</code>.
+</p>
+<p><strong>Dynamic beta diversity (<code>dBD()</code>)</strong>
+</p>
+<p><em>dBD</em> quantifies the overall variation of the trajectories in an EDR and is
+equivalent to the average distance to the centroid of the EDR
+(De Cáceres et al., 2019).
+</p>
+<p><code class="reqn">
+dBD = \frac{\sum_{i=1}^{m-1}\sum_{j=i+1}^{m}d_{ij}^{2}}{m(m-1)}
+</code>
+</p>
+<p><strong>Dynamic evenness (<code>dEve()</code>)</strong>
+</p>
+<p><em>dEve</em> quantifies the regularity with which an EDR is filled by the individual
+trajectories (Sánchez-Pinillos et al., 2023).
+</p>
+<p><code class="reqn">
+dEve = \frac{\sum_{l=1}^{m-1}\min(\frac{d_{ij}}{\sum_{l=1}^{m-1}d_{ij}}, \frac{1}{m-1}) - \frac{1}{m-1}}{1-\frac{1}{1-1}}
+</code>
+</p>
+<p>where <code class="reqn">d_{ij}</code> is the dissimilarity between trajectories <code class="reqn">i</code> and <code class="reqn">j</code>
+linked in a minimum spanning tree by the link <code class="reqn">l</code>.
+</p>
+<p>Optionally, it is possible to weight the trajectories of the EDR. In that case,
+<em>dEve</em> becomes analogous to the functional evenness index proposed by Villéger
+et al. (2008).
+</p>
+<p><code class="reqn">
+dEve_{w} = \frac{\sum_{l=1}^{m-1}\min(\frac{EW_{ij}}{\sum_{l=1}^{m-1}EW_{ij}}, \frac{1}{m-1}) - \frac{1}{m-1}}{1-\frac{1}{1-1}}
+</code>
+</p>
+<p>where <code class="reqn">EW_{ij}</code> is the weighted evenness:
+</p>
+<p><code class="reqn">
+EW_{ij} = \frac{d_{ij}}{w_i + w_j}
+</code>
+</p>
+
+
+<h3>Value</h3>
+
+
+<ul>
+<li> <p><code>dDis()</code> returns the value of dynamic dispersion for a given trajectory
+taken as a reference.
+</p>
+</li>
+<li> <p><code>dBD()</code> returns the value of dynamic beta diversity.
+</p>
+</li>
+<li> <p><code>dEve()</code> returns the value of dynamic evenness.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Martina Sánchez-Pinillos
+</p>
+
+
+<h3>References</h3>
+
+<p>De Cáceres, M, Coll L, Legendre P, Allen RB, Wiser SK, Fortin MJ, Condit R &amp;
+Hubbell S. (2019). Trajectory analysis in community ecology. Ecological
+Monographs.
+</p>
+<p>Sánchez-Pinillos, M., Kéfi, S., De Cáceres, M., Dakos, V. 2023. Ecological Dynamic
+Regimes: Identification, characterization, and comparison. <em>Ecological Monographs</em>.
+<a href="doi:10.1002/ecm.1589">doi:10.1002/ecm.1589</a>
+</p>
+<p>Villéger, S., Mason, N.W.H., Mouillot, D. (2008) New multidimensional functional
+diversity indices for a multifaced framework in functional ecology. Ecology.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Data to compute dDis, dBD, and dEve
+dStates &lt;- EDR_data$EDR1$state_dissim
+dTraj &lt;- EDR_data$EDR1$traj_dissim
+trajectories &lt;- paste0("T", EDR_data$EDR1$abundance$traj)
+states &lt;- EDR_data$EDR1$abundance$state
+
+# Dynamic dispersion taking the first trajectory as reference
+dDis(d = dTraj, d.type = "dTraj", trajectories = unique(trajectories),
+         reference = "T1")
+
+# Dynamic dispersion weighting trajectories by their length
+dDis(d = dStates, d.type = "dStates", trajectories = trajectories, states = states,
+         reference = "T1", w.type = "length")
+
+# Dynamic beta diversity using trajectory dissimilarities
+dBD(d = dTraj, d.type = "dTraj", trajectories = unique(trajectories))
+
+# Dynamic evenness
+dEve(d = dStates, d.type = "dStates", trajectories = trajectories, states = states)
+
+# Dynamic evenness considering that the 10 first trajectories are three times
+# more relevant than the rest
+w.values &lt;- c(rep(3, 10), rep(1, length(unique(trajectories))-10))
+dEve(d = dTraj, d.type = "dTraj", trajectories = unique(trajectories),
+         w.type = "precomputed", w.values = w.values)
+
+</code></pre>
+
+
+</div>

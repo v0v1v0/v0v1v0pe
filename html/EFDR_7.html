@@ -1,0 +1,117 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>regrid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Regrid ir/regular data</h2>
+
+<h3>Description</h3>
+
+<p>Given a data frame with fields <code>x, y</code> and <code>z</code>, <code>regrid</code> returns a data frame with
+fields <code>x, y</code> and <code>z</code>, this time with <code>x, y</code> arranged on a regular grid of size <code>n2</code> by 
+<code>n1</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">regrid(
+  df,
+  n1 = 128,
+  n2 = n1,
+  method = "idw",
+  idp = 0.5,
+  nmax = 7,
+  model = "Exp"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>data frame with fields <code>x</code>, <code>y</code> and <code>z</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n1</code></td>
+<td>
+<p>image length in pixels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n2</code></td>
+<td>
+<p>image height in pixels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>method to be used, see details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idp</code></td>
+<td>
+<p>inverse distance power</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmax</code></td>
+<td>
+<p>when using inverse distance weighting, the number of nearest neighbours to consider when interpolating using idw. 
+When using conditional simulation, the number of nearest observations to used for a kriging simulation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>the model type when using conditional simulation (use <code>gstat::vgm()</code> to list all
+possible models)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>There are three supported methods for regridding. The first, "idw", is 
+the inverse-distance-weighting method. The function overlays a grid over the data. 
+The cells are constructed evenly within the bounding 
+box of the data and filled with interpolated values using the inverse weighting distance metric 
+with power <code>idp</code>. <code>nmax</code> determines the maximum number of neighbours when using the distance weighting.
+With this method, interpolation uses the inverse distance weight function <code>gstat</code> in the <code>gstat</code> package.
+Refer to the package <code>gstat</code> for more details and formulae.
+</p>
+<p>The second method "cond_sim" uses conditional simulation to generate a realisation of 
+the unobserved process at the grid points. This is a model-based approach, and the 
+variogram model may be selected through the parameter <code>model</code>. The exponential
+variogram is used by default. For a complete list of possible models use <code>gstat::vgm()</code>.   
+For a tutorial on how the conditional simulation is carried out see the <code>gstat</code> vignette. 
+</p>
+<p>The third method "median_polishing" applies a median polish to the data. First, a grid is overlayed. If more than one
+data point is present in each grid box, the mean of the data is taken. Where there is no data, the grid box is assigned
+a value of NA. This gridded image is then passed to the function <code>medpolish</code> which carried out Tukey's median
+polish procedure to obtain an interpolant of the form <code class="reqn">z(s) = \mu + a(s1) + b(s2)</code> where <code class="reqn">s1</code> is the x-axis and
+<code class="reqn">s2</code> is the y-axis. Missing points in the gridded image are then replaced with <code class="reqn">z(s)</code> evaluated at these points. This method 
+cannot be used if all rows and columns do not contain at least one data point.
+</p>
+
+
+<h3>Value</h3>
+
+<p>data frame with fields <code>x,y,z</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">df &lt;- data.frame(x = runif(200),y = runif(200),z=rnorm(200))
+df.gridded &lt;- regrid(df, n1=10)
+</code></pre>
+
+
+</div>

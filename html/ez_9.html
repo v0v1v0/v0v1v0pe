@@ -1,0 +1,352 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ezMixed</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute evidence for fixed effects in an mixed effects modelling context</h2>
+
+<h3>Description</h3>
+
+<p>This function provides assessment of fixed effects and their interactions via generalized mixed effects modelling, or generalized additive mixed effects modelling for effects involving numeric predictors to account for potentially non-linear effects of such predictors. See Details section below for implementation notes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ezMixed(
+    data
+    , dv
+    , family = gaussian
+    , random
+    , fixed
+    , covariates = NULL
+    , add_q = FALSE
+    , fix_gam = TRUE
+    , cov_gam = TRUE
+    , gam_smooth = c('s','te')
+    , gam_bs = 'ts'
+    , gam_k = Inf
+	, use_bam = FALSE
+    , alarm = FALSE
+    , term_labels = NULL
+    , highest = Inf
+    , return_models = TRUE
+    , correction = AIC
+    , progress_dir = NULL
+    , resume = FALSE
+    , parallelism = 'none'
+    , gam_args = NULL
+    , mer_args = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Data frame containing the data to be analyzed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dv</code></td>
+<td>
+
+<p>.() object specifying the column in <code>data</code> that contains the dependent variable. Values in this column must be numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+
+<p>Family to use to represent error.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random</code></td>
+<td>
+
+<p>.() object specifying one or more columns in <code>data</code> that contain random effects.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+
+<p>.() object specifying one or more columns in <code>data</code> that contain fixed effects.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+
+<p>.() object specifying one or more columns in <code>data</code> that contain variables to be used as fixed effect covariates.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add_q</code></td>
+<td>
+
+<p>Logical. If TRUE, quantile values of each observation will be computed for each effect and interaction and these quantile values will be added as a fixed effect predictor. This permits investigating the effect of the fixed effect predictors specified in <code>fixed</code> on the shape of the distribution of residuals. Of course, this only really makes sense when there IS a distribution of residuals (i.e. not binomial data).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix_gam</code></td>
+<td>
+
+<p>Logical. If TRUE (default), generalized additive modelling is used to evaluate the possibly-non-linear effects of numeric fixed effect predictors.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov_gam</code></td>
+<td>
+
+<p>Logical. If TRUE (default), generalized additive modelling is used to represent the possibly-non-linear effects of numeric covariates.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gam_smooth</code></td>
+<td>
+
+<p>Vector of one or more elements that are character strings specifying the name of the smoother to use when using gam. If a list of two elements, the first element will be used when evaluating effects and interactions that include a single numeric predictor, while the second element will be used when evaluating effects and interactions that involve multiple numeric predictors.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gam_bs</code></td>
+<td>
+
+<p>Character specifying the name of the smooth term to use when using gam.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gam_k</code></td>
+<td>
+
+<p>Numeric value specifying the maximum value for <code>k</code> to supply to calls to gam. Higher values yield longer computation times but may better capture non-linear phenomena. If set to <code>Inf</code> (default), <code>ezMixed</code> will automatically use the maximum possible value for k given the number of unique combinations of values in the numeric predictors being evaluated. If a finite positive value is supplied, k will be set to that value or less (if the supplied k exceeds the maximum possible k for a given effect).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_bam</code></td>
+<td>
+
+<p>Logical. If TRUE, <code>bam</code> is used rather than <code>gam</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alarm</code></td>
+<td>
+
+<p>Logical. If TRUE, call the <code>alarm</code> function when <code>ezMixed</code> completes.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term_labels</code></td>
+<td>
+
+<p>Vector of one or more elements that are character strings specifying effects to explore (useful when you want only a subset of all possible effects and interactions between the predictors supplied to the <code>fixed</code> argument).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>highest</code></td>
+<td>
+
+<p>Integer specifying the highest order interaction between the fixed effects to test. The default value, <code>Inf</code>, will test to the highest possible order.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_models</code></td>
+<td>
+
+<p>Logical. If TRUE, the returned list object will also include each lmer model (can become memory intensive for complex models and/or large data sets).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correction</code></td>
+<td>
+
+<p>Name of a correction for complexity to apply (ex. AIC, BIC, etc) to each model's likelihood before computing likelihood ratios.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress_dir</code></td>
+<td>
+
+<p>Character string specifying name of a folder to be created to store results as they are computed (to save RAM).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resume</code></td>
+<td>
+
+<p>Logical. If TRUE and a value is passed to the <code>progress_dir</code> argument, the progress directory will be searched for already completed effects and resume from these. Useful if a run was interrupted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallelism</code></td>
+<td>
+
+<p>Character string specifying whether and how to compute models in parallel. If “none”, no parallelism will be employed. If “pair”, the restricted and unrestricted models for each effect will be computed in parallel (therefore using only 2 cores). If “full”, then effects themselves will be computed in parallel (using all available cores). Parallelism assumes that a parallel backend has been specified (as in <code>library(doMC);options(cores=4);registerDoMC()</code>) and is likely only to work when running R from a unix terminal.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gam_args</code></td>
+<td>
+
+<p>Single character string representing arguments to be passed to calls to <code>gam</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mer_args</code></td>
+<td>
+
+<p>Single character string representing arguments to be passed to calls to <code>lmer</code> (or <code>glmer</code> if the value to the <code>family</code> argument is not <code>gaussian</code>).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Computation is achieved via <code>lmer</code>, or <code>gam</code> when the effect under evaluation includes a numeric predictor. Assessment of each effect of interest necessitates building two models: (1) a “unrestricted” model that contains the effect of interest plus any lower order effects and (2) a “restricted” model that contains only the lower order effects (thus “restricting” the effect of interest to zero). These are then compared by means of a likelihood ratio, which needs to be corrected to account for the additional complexity of the unrestricted model relative to the restricted model. The default applied correction is Akaike's Information Criterion (AIC), which in the context of mixed effects models has been demonstrated to be asymptotically equivalent to cross-validation, a gold-standard technique for ensuring that model comparisons optimize prediction of new data.
+</p>
+<p>The complexity-corrected likelihood ratio returned by <code>ezMixed</code> is represented on the log-base-2 scale, which has the following convenient properties:
+</p>
+
+<ul>
+<li>
+<p> (1) Resulting values can be discussed as representing “bits of evidence” for or against the evaluated effect.
+</p>
+</li>
+<li>
+<p> (2) The bits scale permits easy representation of both very large and very small likelihood ratios.
+</p>
+</li>
+<li>
+<p> (3) The bits scale represents equivalent evidence between the restricted and unrestricted models by a value of 0.
+</p>
+</li>
+<li>
+<p> (4) The bits scale represents ratios favoring the restricted model symmetrically to those favoring the unrestricted model. That is, say one effect obtains a likelihood ratio of 8, and another effect obtains a likelihood ratio of 0.125; both ratios indicate the same degree of imbalance of evidence (8:1 and 1:8) and on the bits scale they faithfully represent this symmetry as values 3 and -3, respectively.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>A list with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>summary</code></td>
+<td>
+<p>A data frame summarizing the results, including whether warnings or errors occurred during the assessment of each effect and the bits of evidence associated with each.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formulae</code></td>
+<td>
+<p>A list of lists, each named for an effect and containing two elements named “unrestricted” and “restricted”, which in turn contain the right-hand-side formulae used to fit the unrestricted and restricted models, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>errors</code></td>
+<td>
+<p>A list similar to <code>formulae</code>, but instead storing errors encountered in fitting each model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warnings</code></td>
+<td>
+<p>A list similar to <code>formulae</code>, but instead storing warnings encountered in fitting each model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>(If requested by setting <code>return_models=TRUE</code>) A list similar to <code>formulae</code> but instead storing each fitted model. </p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Michael A. Lawrence <a href="mailto:mike.lwrnc@gmail.com">mike.lwrnc@gmail.com</a><br>
+Visit the <code>ez</code> development site at <a href="http://github.com/mike-lawrence/ez">http://github.com/mike-lawrence/ez</a><br>
+for the bug/issue tracker and the link to the mailing list.
+</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Glover S, Dixon P. (2004) Likelihood ratios: a simple and flexible statistic for empirical psychologists. Psychonomic Bulletin and Review, 11 (5), 791-806.
+</p>
+</li>
+<li>
+<p> Fang, Y. (2011). Asymptotic equivalence between cross-validations and Akaike information criteria in mixed-effects models. Journal of the American Statistical Association, 9, 15-21.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>lmer</code>, <code>glmer</code>, <code>gam</code>, <code>ezMixedProgress</code>, <code>ezPredict</code>, <code>ezPlot2</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Read in the ANT data (see ?ANT).
+data(ANT)
+head(ANT)
+ezPrecis(ANT)
+
+#Run ezMixed on the accurate RT data
+rt = ezMixed(
+    data = ANT[ANT$error==0,]
+    , dv = .(rt)
+    , random = .(subnum)
+    , fixed = .(cue,flank,group)
+)
+print(rt$summary)
+
+## Not run: 
+#Run ezMixed on the error rate data
+er = ezMixed(
+    data = ANT
+    , dv = .(error)
+    , random = .(subnum)
+    , fixed = .(cue,flank,group)
+    , family = 'binomial'
+)
+print(er$summary)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

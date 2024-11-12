@@ -1,0 +1,141 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make_emc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Make an emc object</h2>
+
+<h3>Description</h3>
+
+<p>Creates an emc object by combining the data, prior,
+and model specification into a <code>emc</code> object that is needed in <code>fit()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">make_emc(
+  data,
+  design,
+  model = NULL,
+  type = "standard",
+  n_chains = 3,
+  compress = TRUE,
+  rt_resolution = 0.02,
+  prior_list = NULL,
+  grouped_pars = NULL,
+  par_groups = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame, or a list of data frames. Needs to have the variable <code>subjects</code> as participant identifier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>A list with a pre-specified design, the output of <code>design()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A model list. If none is supplied, the model specified in <code>design()</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>A string indicating whether to run a <code>standard</code> group-level, <code>blocked</code>, <code>diagonal</code>, <code>factor</code>, or <code>single</code> (i.e., non-hierarchical) model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_chains</code></td>
+<td>
+<p>An integer. Specifies the number of mcmc chains to be run (has to be more than 1 to compute <code>rhat</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compress</code></td>
+<td>
+<p>A Boolean, if <code>TRUE</code> (i.e., the default), the data is compressed to speed up likelihood calculations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rt_resolution</code></td>
+<td>
+<p>A double. Used for compression, response times will be binned based on this resolution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_list</code></td>
+<td>
+<p>A named list containing the prior. Default prior created if <code>NULL</code>. For the default priors, see <code style="white-space: pre;">⁠?get_prior_{type}⁠</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grouped_pars</code></td>
+<td>
+<p>An integer vector. Parameters on this location of the vector of parameters are treated as constant across subjects</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par_groups</code></td>
+<td>
+<p>A vector. Only to be specified with type <code>blocked</code>, e.g., <code>c(1,1,1,2,2)</code> means the covariances
+of the first three and of the last two parameters are estimated as two separate blocks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional, optional arguments.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An uninitialized emc object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">dat &lt;- forstmann
+
+# function that takes the lR factor (named diff in the following function) and
+# returns a logical defining the correct response for each stimulus. In this
+# case the match is simply such that the S factor equals the latent response factor.
+matchfun &lt;- function(d)d$S==d$lR
+
+# design an "average and difference" contrast matrix
+ADmat &lt;- matrix(c(-1/2,1/2),ncol=1,dimnames=list(NULL,"diff"))
+
+# specify design
+design_LBABE &lt;- design(data = dat,model=LBA,matchfun=matchfun,
+formula=list(v~lM,sv~lM,B~E+lR,A~1,t0~1),
+contrasts=list(v=list(lM=ADmat)),constants=c(sv=log(1)))
+
+# specify priors
+pmean &lt;- c(v=1,v_lMdiff=1,sv_lMTRUE=log(.5), B=log(.5),B_Eneutral=log(1.5),
+           B_Eaccuracy=log(2),B_lRright=0, A=log(0.25),t0=log(.2))
+psd &lt;- c(v=1,v_lMdiff=0.5,sv_lMTRUE=.5,
+         B=0.3,B_Eneutral=0.3,B_Eaccuracy=0.3,B_lRright=0.3,A=0.4,t0=.5)
+prior_LBABE &lt;- prior(design_LBABE, type = 'standard',pmean=pmean,psd=psd)
+
+# create emc object
+LBABE &lt;- make_emc(dat,design_LBABE,type="standard",  prior=prior_LBABE)
+
+</code></pre>
+
+
+</div>

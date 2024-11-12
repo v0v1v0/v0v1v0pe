@@ -1,0 +1,299 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>errorLocalizer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a backtracker object for error localization</h2>
+
+<h3>Description</h3>
+
+<p>Create a backtracker object for error localization
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">errorLocalizer(E, x, ...)
+
+## S3 method for class 'editset'
+errorLocalizer(E, x, ...)
+
+## S3 method for class 'editmatrix'
+errorLocalizer(
+  E,
+  x,
+  weight = rep(1, length(x)),
+  maxadapt = length(x),
+  maxweight = sum(weight),
+  maxduration = 600,
+  tol = sqrt(.Machine$double.eps),
+  ...
+)
+
+## S3 method for class 'editarray'
+errorLocalizer(
+  E,
+  x,
+  weight = rep(1, length(x)),
+  maxadapt = length(x),
+  maxweight = sum(weight),
+  maxduration = 600,
+  ...
+)
+
+## S3 method for class 'editlist'
+errorLocalizer(
+  E,
+  x,
+  weight = rep(1, length(x)),
+  maxadapt = length(x),
+  maxweight = sum(weight),
+  maxduration = 600,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>an <code>editmatrix</code> or an <code>editarray</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a named numerical <code>vector</code> or <code>list</code> (if E is an editmatrix), a named character <code>vector</code> or <code>list</code> (if E is an editarray), 
+or a named <code>list</code> if E is an <code>editlist</code> or <code>editset</code>.
+This is the record for which errors will be localized.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to be passed to other methods (e.g. reliability weights)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>a <code>lengt(x)</code> positive weight vector. The weights are assumed to be in the same order as the variables in <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxadapt</code></td>
+<td>
+<p>maximum number of variables to adapt</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxweight</code></td>
+<td>
+<p>maximum weight of solution, if weights are not given, this is equal to the 
+maximum number of variables to adapt.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxduration</code></td>
+<td>
+<p>maximum time (in seconds), for <code>$searchNext()</code>, <code>$searchAll()</code> (not for <code>$searchBest</code>, use 
+<code>$searchBest(maxdration=&lt;duration&gt;)</code> in stead)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>tolerance passed to <code>link{isObviouslyInfeasible}</code> (used to check for bound conditions).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of class <code>backtracker</code>. Each execution of <code>$searchNext()</code> yields a solution
+in the form of a <code>list</code> (see details). Executing <code>$searchBest()</code> returns the lowest-weight solution.
+When multiple solotions with the same weight are found, <code>$searchBest()</code> picks one at random.
+</p>
+
+
+<h3>Details</h3>
+
+<p>Generate a <code>backtracker</code> object for error localization in numerical, categorical, or mixed data.
+This function generates the workhorse program, called by <code>localizeErrors</code> with <code>method=localizer</code>.
+</p>
+<p>The returned <code>backtracker</code> can be used to run a branch-and-bound algorithm which finds
+the least (weighted) number of variables in <code>x</code> that need to be adapted so that all restrictions 
+in <code>E</code> can be satisfied. (Generalized principle of Fellegi and Holt (1976)).
+</p>
+<p>The B&amp;B tree is set up so that in in one branche,
+a variable is assumed correct and its value subsituted in <code>E</code>, while in the other
+branche a variable is assumed incorrect and <code>eliminated</code> from <code>E</code>. 
+See De Waal (2003), chapter 8 or De Waal, Pannekoek and Scholtus (2011) for 
+a concise description of the B&amp;B algorithm. 
+</p>
+<p>Every call to <code>&lt;backtracker&gt;$searchNext()</code> returns one solution <code>list</code>, consisting of
+</p>
+
+<ul>
+<li>
+<p>w: The solution weight. 
+</p>
+</li>
+<li>
+<p>adapt: <code>logical</code> indicating whether a variable should be adapted (<code>TRUE</code>) or not</p>
+</li>
+</ul>
+<p>Every subsequent call leads either to <code>NULL</code>, in which case either all solutions have been found,
+or <code>maxduration</code> was exceeded. The property <code>&lt;backtracker&gt;$maxdurationExceeded</code> indicates if this is
+the case. Otherwise, a new solution with a weight <code>w</code> not higher than the weight of the last found solution
+is returned.
+</p>
+<p>Alternatively <code>&lt;backtracker&gt;$searchBest()</code> will return the best solution found within <code>maxduration</code> seconds.
+If multiple equivalent solutions are found, a random one is returned.
+</p>
+<p>The backtracker is prepared such that missing data in the input record <code>x</code> is already
+set to adapt, and missing variables have been eliminated already.
+</p>
+<p>The backtracker will crash when <code>E</code> is an <code>editarray</code> and one or more values are
+not in the datamodel specified by <code>E</code>. The more user-friendly function <code>localizeErrors</code>
+circumvents this. See also <code>checkDatamodel</code>.
+</p>
+
+
+<h3>Numerical stability issues</h3>
+
+<p>For records with a large numerical range (<em>eg</em> 1-1E9), the error locations represent solutions that
+will allow repairing the record to within roundoff errors. We highly recommend that you round near-zero 
+values (for example, everything <code>&lt;= sqrt(.Machine$double.eps)</code>) and scale a record with values larger
+than or equal to 1E9 with a constant factor.
+</p>
+
+
+<h3>Note</h3>
+
+<p>This method is potentially very slow for objects of class <code>editset</code> that contain 
+many conditional restrictions.  Consider using <code>localizeErrors</code> with the option 
+<code>method="mip"</code> in such cases.
+</p>
+
+
+<h3>References</h3>
+
+<p>I.P. Fellegi and D. Holt (1976). A systematic approach to automatic edit and imputation. 
+Journal of the American Statistical Association 71, pp 17-25
+</p>
+<p>T. De Waal (2003) Processing of unsave and erroneous data.  PhD thesis, Erasmus Research institute 
+of management, Erasmus university Rotterdam. 
+http://www.cbs.nl/nl-NL/menu/methoden/onderzoek-methoden/onderzoeksrapporten/proefschriften/2008-proefschrift-de-waal.htm
+</p>
+<p>T. De Waal, Pannekoek, J. and Scholtus, S. (2011) Handbook of Statistical Data Editing. Wiley Handbooks
+on Survey Methodology.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>errorLocalizer_mip</code>, <code>localizeErrors</code>, <code>checkDatamodel</code>, <code>violatedEdits</code>,
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#### examples with numerical edits
+# example with a single editrule
+# p = profit, c = cost, t = turnover
+E &lt;- editmatrix(c("p + c == t"))
+cp &lt;- errorLocalizer(E, x=c(p=755, c=125, t=200))
+# x obviously violates E. With all weights equal, changing any variable will do.
+# first solution:
+cp$searchNext()
+# second solution:
+cp$searchNext()
+# third solution:
+cp$searchNext()
+# there are no more solution since changing more variables would increase the
+# weight, so the result of the next statement is NULL:
+cp$searchNext()
+
+# Increasing the reliability weight of turnover, yields 2 solutions:
+cp &lt;- errorLocalizer(E, x=c(p=755, c=125, t=200), weight=c(1,1,2))
+# first solution:
+cp$searchNext()
+# second solution:
+cp$searchNext()
+# no more solutions available:
+cp$searchNext()
+
+
+# A case with two restrictions. The second restriction demands that
+# c/t &gt;= 0.6 (cost should be more than 60% of turnover)
+E &lt;- editmatrix(c(
+        "p + c == t",
+        "c - 0.6*t &gt;= 0"))
+cp &lt;- errorLocalizer(E,x=c(p=755,c=125,t=200))
+# Now, there's only one solution, but we need two runs to find it (the 1st one
+# has higher weight)
+cp$searchNext()
+cp$searchNext()
+
+# With the searchBest() function, the lowest weifght solution is found at once:
+errorLocalizer(E,x=c(p=755,c=125,t=200))$searchBest()
+
+
+# An example with missing data.
+E &lt;- editmatrix(c(
+    "p + c1 + c2 == t",
+    "c1 - 0.3*t &gt;= 0",
+    "p &gt; 0",
+    "c1 &gt; 0",
+    "c2 &gt; 0",
+    "t &gt; 0"))
+cp &lt;- errorLocalizer(E,x=c(p=755, c1=50, c2=NA,t=200))
+# (Note that e2 is violated.)
+# There are two solutions. Both demand that c2 is adapted:
+cp$searchNext()
+cp$searchNext()
+
+##### Examples with categorical edits
+# 
+# 3 variables, recording age class, position in household, and marital status:
+# We define the datamodel and the rules
+E &lt;- editarray(expression(
+    age %in% c('under aged','adult'),
+    maritalStatus %in% c('unmarried','married','widowed','divorced'),
+    positionInHousehold %in% c('marriage partner', 'child', 'other'),
+    if( age == 'under aged' ) 
+        maritalStatus == 'unmarried',
+    if( maritalStatus %in% c('married','widowed','divorced')) 
+        !positionInHousehold %in% c('marriage partner','child')
+    )
+)
+E
+
+# Let's define a record with an obvious error:
+r &lt;- c(
+  age = 'under aged', 
+  maritalStatus='married', 
+  positionInHousehold='child')
+# The age class and position in household are consistent, while the marital
+# status conflicts.  Therefore, changing only the marital status (in stead of
+# both age class and postition in household) seems reasonable. 
+el &lt;- errorLocalizer(E,r)
+el$searchNext()
+
+
+
+
+
+
+
+
+
+
+</code></pre>
+
+
+</div>

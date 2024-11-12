@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calcm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Determination of optimal coefficients for computing weights of evidence in logistic regression</h2>
+
+<h3>Description</h3>
+
+<p><code>calcAB</code> transforms coefficients alpha and beta computed by <code>calcm</code> into weights of
+evidence, and then into mass and contour (plausibility) functions. These mass functions
+can be used to express uncertainty about the prediction of logistic regression or multilayer
+neural network classifiers (See Denoeux, 2019).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calcm(x, A, B)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Matrix (n,d) of feature values, where d is the number of features, and n is the number
+of observations. Can be a vector if $d=1$.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>Vector of length d (for M=2) or matrix of size (d,M) (for M&gt;2) of coefficients alpha.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>Vector of length d (for M=2) or matrix of size (d,M) (for M&gt;2) of coefficients beta</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>An error may occur if the absolute values of some coefficients are too high. It is then advised
+to recompute these coefficients by training the logistic regression or neural network classifier
+with L2 regularization. With M classes, the output mass functions have 2^M focal sets.
+Using this function with large M may cause memory issues.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with six elements:
+</p>
+
+<dl>
+<dt>F</dt>
+<dd>
+<p>Matrix (2^M,M) of focal sets.</p>
+</dd>
+<dt>mass</dt>
+<dd>
+<p>Matrix (n,2^M) of mass functions (one in each row).</p>
+</dd>
+<dt>pl</dt>
+<dd>
+<p>Matrix (n,M) containing the plausibilities of singletons.</p>
+</dd>
+<dt>bel</dt>
+<dd>
+<p>Matrix (n,M) containing the degrees of belief of singletons.</p>
+</dd>
+<dt>prob</dt>
+<dd>
+<p>Matrix (n,M) containing the normalized plausibilities of singletons.</p>
+</dd>
+<dt>conf</dt>
+<dd>
+<p>Vector of length n containing the degrees of conflict.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Thierry Denoeux.
+</p>
+
+
+<h3>References</h3>
+
+<p>T. Denoeux. Logistic Regression, Neural Networks and Dempster-Shafer Theory: a New Perspective.
+Knowledge-Based Systems, Vol. 176, Pages 54–67, 2019.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>calcAB</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Example with 2 classes and logistic regression
+data(ionosphere)
+x&lt;-ionosphere$x[,-2]
+y&lt;-ionosphere$y-1
+fit&lt;-glm(y ~ x,family='binomial')
+AB&lt;-calcAB(fit$coefficients,colMeans(x))
+Bel&lt;-calcm(x,AB$A,AB$B)
+Bel$focal
+Bel$mass[1:5,]
+Bel$pl[1:5,]
+Bel$conf[1:5]
+## Example with K&gt;2 classes and multilayer neural network
+library(nnet)
+data(glass)
+K&lt;-max(glass$y)
+d&lt;-ncol(glass$x)
+n&lt;-nrow(x)
+x&lt;-scale(glass$x)
+y&lt;-as.factor(glass$y)
+p&lt;-3 # number of hidden units
+fit&lt;-nnet(y~x,size=p)  # training a neural network with 3 hidden units
+W1&lt;-matrix(fit$wts[1:(p*(d+1))],d+1,p) # Input-to-hidden weights
+W2&lt;-matrix(fit$wts[(p*(d+1)+1):(p*(d+1) + K*(p+1))],p+1,K) # hidden-to-output weights
+a1&lt;-cbind(rep(1,n),x)%*%W1  # hidden unit activations
+o1&lt;-1/(1+exp(-a1)) # hidden unit outputs
+AB&lt;-calcAB(W2,colMeans(o1))
+Bel&lt;-calcm(o1,AB$A,AB$B)
+Bel$focal
+Bel$mass[1:5,]
+Bel$pl[1:5,]
+Bel$conf[1:5]
+</code></pre>
+
+
+</div>

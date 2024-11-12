@@ -1,0 +1,1140 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fevd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Fit An Extreme Value Distribution (EVD) to Data
+</h2>
+
+<h3>Description</h3>
+
+<p>Fit a univariate extreme value distribution functions (e.g., GEV, GP, PP, Gumbel, or Exponential) to data; possibly with covariates in the parameters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fevd(x, data, threshold = NULL, threshold.fun = ~1, location.fun = ~1,
+    scale.fun = ~1, shape.fun = ~1, use.phi = FALSE,
+    type = c("GEV", "GP", "PP", "Gumbel", "Exponential"),
+    method = c("MLE", "GMLE", "Bayesian", "Lmoments"), initial = NULL,
+    span, units = NULL, time.units = "days", period.basis = "year",
+    na.action = na.fail, optim.args = NULL, priorFun = NULL,
+    priorParams = NULL, proposalFun = NULL, proposalParams = NULL,
+    iter = 9999, weights = 1, blocks = NULL, verbose = FALSE)
+
+## S3 method for class 'fevd'
+plot(x, type = c("primary", "probprob", "qq", "qq2",
+    "Zplot", "hist", "density", "rl", "trace"),
+    rperiods = c(2, 5, 10, 20, 50, 80, 100, 120, 200, 250, 300, 500, 800),
+    a = 0, hist.args = NULL, density.args = NULL, d = NULL, ...)
+
+## S3 method for class 'fevd.bayesian'
+plot(x, type = c("primary", "probprob", "qq", "qq2",
+    "Zplot", "hist", "density", "rl", "trace"),
+    rperiods = c(2, 5, 10, 20, 50, 80, 100, 120, 200, 250, 300, 500, 800),
+    a = 0, hist.args = NULL, density.args = NULL, burn.in = 499, d = NULL, ...)
+
+## S3 method for class 'fevd.lmoments'
+plot(x, type = c("primary", "probprob", "qq", "qq2",
+    "Zplot", "hist", "density", "rl", "trace"),
+    rperiods = c(2, 5, 10, 20, 50, 80, 100, 120, 200, 250, 300, 500, 800),
+    a = 0, hist.args = NULL, density.args = NULL, d = NULL, ...)
+
+## S3 method for class 'fevd.mle'
+plot(x, type = c("primary", "probprob", "qq", "qq2",
+    "Zplot", "hist", "density", "rl", "trace"),
+    rperiods = c(2, 5, 10, 20, 50, 80, 100, 120, 200, 250, 300, 500, 800),
+    a = 0, hist.args = NULL, density.args = NULL, period = "year",
+    prange = NULL, d = NULL, ...)
+
+## S3 method for class 'fevd'
+print(x, ...)
+
+## S3 method for class 'fevd'
+summary(object, ...)
+
+## S3 method for class 'fevd.bayesian'
+summary(object, FUN = "mean", burn.in = 499, ...)
+
+## S3 method for class 'fevd.lmoments'
+summary(object, ...)
+
+## S3 method for class 'fevd.mle'
+summary(object, ...)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>fevd</code>: <code>x</code> can be a numeric vector, the name of a column of <code>data</code> or a formula giving the data to which the EVD is to be fit.  In the case of the latter two, the <code>data</code> argument must be specified, and must have appropriately named columns.
+</p>
+<p><code>plot</code> and <code>print</code> method functions: any list object returned by <code>fevd</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>A list object of class “fevd” as returned by <code>fevd</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A data frame object with named columns giving the data to be fit, as well as any data necessary for modeling non-stationarity through the threshold and/or any of the parameters.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+
+<p>numeric (single or vector).  If fitting a peak over threshold (POT) model (i.e., <code>type</code> = “PP”, “GP”, “Exponential”) this is the threshold over which (non-inclusive) data (or excesses) are used to estimate the parameters of the distribution function.  If the length is greater than 1, then the length must be equal to either the length of <code>x</code> (or number of rows of <code>data</code>) or to the number of unique arguments in <code>threshold.fun</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold.fun</code></td>
+<td>
+
+<p>formula describing a model for the thresholds using columns from <code>data</code>.  Any valid formula will work.  <code>data</code> must be supplied if this argument is anything other than ~ 1.  Not for use with <code>method</code> “Lmoments”.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>location.fun, scale.fun, shape.fun</code></td>
+<td>
+
+<p>formula describing a model for each parameter using columns from <code>data</code>.  <code>data</code> must be supplied if any of these arguments are anything other than ~ 1.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.phi</code></td>
+<td>
+
+<p>logical; should the log of the scale parameter be used in the numerical optimization (for <code>method</code> “MLE”, “GMLE” and “Bayesian” only)?  For the ML and GML estimation, this may make things more stable for some data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p><code>fevd</code>: character stating which EVD to fit.  Default is to fit the generalized extreme value (GEV) distribution function (df).
+</p>
+<p><code>plot</code> method function: character describing which plot(s) is (are) desired.  Default is “primary”, which makes a 2 by 2 panel of plots including the QQ plot of the data quantiles against the fitted model quantiles (<code>type</code> “qq”), a QQ plot (“qq2”) of quantiles from model-simulated data against the data, a density plot of the data along with the model fitted density (<code>type</code> “density”) and a return level plot (<code>type</code> “rl”). In the case of a stationary (fixed) model, the return level plot will show return levels calculated for return periods given by <code>return.period</code>, along with associated CIs (calculated using default <code>method</code> arguments depending on the estimation method used in the fit.  For non-stationary models, the data are plotted as a line along with associated effective return levels for return periods of 2, 20 and 100 years (unless <code>return.period</code> is specified by the user to other values.  Other possible values for <code>type</code> include “hist”, which is similar to “density”, but shows the histogram for the data and “trace”, which is not used for L-moment fits.  In the case of MLE/GMLE, the trace yields a panel of plots that show the negative log-likelihood and gradient negative log-likelihood (note that the MLE gradient is currently used even for GMLE) for each of the estimated parameter(s); allowing one parameter to vary according to <code>prange</code>, while the others remain fixed at their estimated values.  In the case of Bayesian estimation, the “trace” option creates a panel of plots showing the posterior df and MCMC trace for each parameter.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p><code>fevd</code>: character naming which type of estimation method to use.  Default is to use maximum likelihood estimation (MLE).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial</code></td>
+<td>
+
+<p>A list object with any named parameter component giving the initial value estimates for starting the numerical optimization (MLE/GMLE) or the MCMC iterations (Bayesian).  In the case of MLE/GMLE, it is best to obtain a good intial guess, and in the Bayesian case, it is perhaps better to choose poor initial estimates.  If NULL (default), then L-moments estimates and estimates based on Gumbel moments will be calculated, and whichever yields the lowest negative log-likelihood is used.  In the case of <code>type</code> “PP”, an additional MLE/GMLE estimate is made for the generalized Pareto (GP) df, and parameters are converted to those of the Poisson Process (PP) model.  Again, the initial estimates yielding the lowest negative log-likelihoo value are used for the initial guess.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>span</code></td>
+<td>
+
+<p>single numeric giving the number of years (or other desired temporal unit) in the data set.  Only used for POT models, and only important in the estimation for the PP model, but important for subsequent estimates of return levels for any POT model.  If missing, it will be calculated using information from <code>time.units</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>units</code></td>
+<td>
+
+<p>(optional) character giving the units of the data, which if given may be used subsequently (e.g., on plot axis labels, etc.).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time.units</code></td>
+<td>
+
+<p>character string that must be one of “hours”, “minutes”, “seconds”, “days”, “months”, “years”, “m/hour”, “m/minute”, “m/second”, “m/day”, “m/month”, or “m/year”; where m is a number.  If <code>span</code> is missing, then this argument is used in determining the value of <code>span</code>.  It is also returned with the output and used subsequently for plot labelling, etc.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>period.basis</code></td>
+<td>
+
+<p>character string giving the units for the period.  Used only for plot labelling and naming output vectors from some of the method functions (e.g., for establishing what the period represents for the return period).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rperiods</code></td>
+<td>
+<p>numeric vector giving the return period(s) for which it is desired to calculate the corresponding return levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>period</code></td>
+<td>
+<p>character string naming the units for the return period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burn.in</code></td>
+<td>
+<p>The first <code>burn.in</code> values are thrown out before calculating anything from the MCMC sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>when plotting empirical probabilies and such, the function <code>ppoints</code> is called, which has this argument <code>a</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>numeric determining how to scale the rate parameter for the point process.  If NULL, the function will attempt to scale based on the values of <code>period.basis</code> and <code>time.units</code>, the first of which must be “year” and the second of which must be one of “days”, “months”, “years”, “hours”, “minutes” or “seconds”.  If none of these are the case, then <code>d</code> should be specified, otherwise, it is not necessary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>density.args, hist.args</code></td>
+<td>
+<p>named list object containing arguments to the <code>density</code> and <code>hist</code> functions, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+
+<p>function to be called to handle missing values.  Generally, this should remain at the default (na.fail), and the user should take care to impute missing values in an appropriate manner as it may have serious consequences on the results.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.args</code></td>
+<td>
+
+<p>A list with named components matching exactly any arguments that the user wishes to specify to <code>optim</code>, which is used only for MLE and GMLE methods.  By default, the “BFGS” method is used along with <code>grlevd</code> for the gradient argument.  Generally, the <code>grlevd</code> function is used for the <code>gr</code> option unless the user specifies otherwise, or the optimization method does not take gradient information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priorFun</code></td>
+<td>
+
+<p>character naming a prior df to use for methods GMLE and Bayesian.  The default for GMLE (not including Gumbel or Exponential types) is to use the one suggested by Martins and Stedinger (2000, 2001) on the shape parameter; a beta df on -0.5 to 0.5 with parameters <code>p</code> and <code>q</code>.  Must take <code>x</code> as its first argument for <code>method</code> “GMLE”.  Optional arguments for the default function are <code>p</code> and <code>q</code> (see details section).
+</p>
+<p>The default for Bayesian estimation is to use normal distribution functions.  For Bayesian estimation, this function must take <code>theta</code> as its first argument.
+</p>
+<p>Note: if this argument is not NULL and <code>method</code> is set to “MLE”, it will be changed to “GMLE”.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priorParams</code></td>
+<td>
+
+<p>named list containing any prior df parameters (where the list names are the same as the function argument names).  Default for GMLE (assuming the default function is used) is to use <code>q</code> = 6 and <code>p</code> = 9.  Note that in the Martins and Stedinger (2000, 2001) papers, they use a different EVD parametrization than is used here such that a positive shape parameter gives the upper bounded distribution instead of the heavy-tail one (as emloyed here).  To be consistent with these papers, <code>p</code> and <code>q</code> are reversed inside the code so that they have the same interpretation as in the papers.
+</p>
+<p>Default for Bayesian estimation is to use ML estimates for the means of each parameter (may be changed using <code>m</code>, which must be a vector of same length as the number of parameters to be estimated (i.e., if using the default prior df)) and a standard deviation of 10 for all other parameters (again, if using the default prior df, may be changed using <code>v</code>, which must be a vector of length equal to the number of parameters).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proposalFun</code></td>
+<td>
+
+<p>For Bayesian estimation only, this is a character naming a function used to generate proposal parameters at each iteration of the MCMC.  If NULL (default), a random walk chain is used whereby if theta.i is the current value of the parameter, the proposed new parameter theta.star is given by theta.i + z, where z is drawn at random from a normal df.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proposalParams</code></td>
+<td>
+
+<p>A named list object describing any optional arguments to the <code>proposalFun</code> function.  All functions must take argument <code>p</code>, which must be a vector of the parameters, and <code>ind</code>, which is used to identify which parameter is to be proposed.  The default <code>proposalFun</code> function takes additional arguments <code>mean</code> and <code>sd</code>, which must be vectors of length equal to the number of parameters in the model (default is to use zero for the mean of z for every parameter and 0.1 for its standard deviation).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+
+<p>Used only for Bayesian estimation, this is the number of MCMC iterations to do.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>numeric of length 1 or n giving weights to be applied
+in the likelihood calculations (e.g., if there are data points to
+be weighted more/less heavily than others).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blocks</code></td>
+<td>
+<p>An optional list containing information required to fit point process models in a computationally-efficient manner by using only the exceedances and not the observations below the threshold(s). See details for further information. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p>character string naming a function to use to estimate the parameters from the MCMC sample.  The function is applied to each column of the <code>results</code> component of the returned <code>fevd</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>logical; should progress information be printed to the screen?  If TRUE, for MLE/GMLE, the argument <code>trace</code> will be set to 6 in the call to <code>optim</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prange</code></td>
+<td>
+<p>matrix whose columns are numeric vectors of length two for each parameter in the model giving the parameter range over which trace plots should be made.  Default is to use either +/- 2 * std. err. of the parameter (first choice) or, if the standard error cannot be calculated, then +/- 2 * log2(abs(parameter)).  Typically, these values seem to work very well for these plots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Not used by most functions here.  Optional arguments to <code>plot</code> for the various <code>plot</code> method functions.
+</p>
+<p>In the case of the <code>summary</code> method functions, the logical argument <code>silent</code> may be passed to suppress (if TRUE) printing any information to the screen.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See text books on extreme value analysis (EVA) for more on univariate EVA (e.g., Coles, 2001 and Reiss and Thomas, 2007 give fairly accessible introductions to the topic for most audiences; and Beirlant et al., 2004, de Haan and Ferreira, 2006, as well as Reiss and Thomas, 2007 give more complete theoretical treatments).  The extreme value distributions (EVDs) have theoretical support for analyzing extreme values of a process.  In particular, the generalized extreme value (GEV) df is appropriate for modeling block maxima (for large blocks, such as annual maxima), the generalized Pareto (GP) df models threshold excesses (i.e., x - u | x &gt; u and u a high threshold).
+</p>
+<p>The GEV df is given by
+</p>
+<p>Pr(X &lt;= x) = G(x) = exp[-(1 + shape*(x - location)/scale)^(-1/shape)]
+</p>
+<p>for 1 + shape*(x - location) &gt; 0 and scale &gt; 0.  If the shape parameter is zero, then the df is defined by continuity and simplies to
+</p>
+<p>G(x) = exp(-exp((x - location)/scale)).
+</p>
+<p>The GEV df is often called a family of distribution functions because it encompasses the three types of EVDs: Gumbel (shape = 0, light tail), Frechet (shape &gt; 0, heavy tail) and the reverse Weibull (shape &lt; 0, bounded upper tail at location - scale/shape).  It was first found by R. von Mises (1936) and also independently noted later by meteorologist A. F. Jenkins (1955).  It enjoys theretical support for modeling maxima taken over large blocks of a series of data.
+</p>
+<p>The generalized Pareo df is given by (Pickands, 1975)
+</p>
+<p>Pr(X &lt;= x) = F(x) = 1 - [1 + shape*(x - threshold)/scale]^(-1/shape)
+</p>
+<p>where 1 + shape*(x - threshold)/scale &gt; 0, scale &gt; 0, and x &gt; threshold.  If shape = 0, then the GP df is defined by continuity and becomes
+</p>
+<p>F(x) = 1 - exp(-(x - threshold)/scale).
+</p>
+<p>There is an approximate relationship between the GEV and GP distribution functions where the GP df is approximately the tail df for the GEV df.  In particular, the scale parameter of the GP is a function of the threshold (denote it scale.u), and is equivalent to scale + shape*(threshold - location) where scale, shape and location are parameters from the “equivalent” GEV df.  Similar to the GEV df, the shape parameter determines the tail behavior, where shape = 0 gives rise to the exponential df (light tail), shape &gt; 0 the Pareto df (heavy tail) and shape &lt; 0 the Beta df (bounded upper tail at location - scale.u/shape).  Theoretical justification supports the use of the GP df family for modeling excesses over a high threshold (i.e., y = x - threshold).  It is assumed here that <code>x</code>, <code>q</code> describe x (not y = x - threshold).  Similarly, the random draws are y + threshold.
+</p>
+<p>If interest is in minima or deficits under a low threshold, all of the above applies to the negative of the data (e.g., - max(-X_1,...,-X_n) = min(X_1, ..., X_n)) and <code>fevd</code> can be used so long as the user first negates the data, and subsequently realizes that the return levels (and location parameter) given will be the negative of the desired return levels (and location parameter), etc.
+</p>
+<p>The study of extremes often involves a paucity of data, and for small sample sizes, L-moments may give better estimates than competing methods, but penalized MLE (cf. Coles and Dixon, 1999; Martins and Stedinger, 2000; 2001) may give better estimates than the L-moments for such samples.  Martins and Stedinger (2000; 2001) use the terminology generalized MLE, which is also used here.
+</p>
+<p>Non-stationary models:
+</p>
+<p>The current code does not allow for non-stationary models with L-moments estimation.
+</p>
+<p>For MLE/GMLE (see El Adlouni et al 2007 for using GMLE in fitting models whose parameters vary) and Bayesian estimation, linear models for the parameters may be fit using formulas, in which case the <code>data</code> argument must be supplied.  Specifically, the models allowed for a set of covariates, y, are:
+</p>
+<p>location(y) = mu0 + mu1 * f1(y) + mu2 * f2(y) + ...
+</p>
+<p>scale(y) = sig0 + sig1 * g1(y) + sig2 * g2(y) + ...
+</p>
+<p>log(scale(y)) = phi(y) = phi0 + phi1 * g1(y) + phi2 * g2(y) + ...
+</p>
+<p>shape(y) = xi0 + xi1 * h1(y) + xi2 * h2(y) + ...
+</p>
+<p>For non-stationary fitting it is recommended that the covariates within the generalized linear models are (at least approximately) centered and scaled (see examples below).  It is generally ill-advised to include covariates in the shape parameter, but there are situations where it makes sense.
+</p>
+<p>Non-stationary modeling is accomplished with <code>fevd</code> by using formulas via the arguments: <code>threshold.fun</code>, <code>location.fun</code>, <code>scale.fun</code> and <code>shape.fun</code>.  See examples to see how to do this.
+</p>
+<p>Initial Value Estimates:
+</p>
+<p>In the case of MLE/GMLE, it can be very important to get good initial estimates (e.g., see the examples below).  <code>fevd</code> attempts to find such estimates, but it is also possible for the user to supply their own initial estimates as a list object using the <code>initial</code> argument, whereby the components of the list are named according to which parameter(s) they are associated with.  In particular, if the model is non-stationary, with covariates in the location (e.g., mu(t) = mu0 + mu1 * t), then <code>initial</code> may have a component named “location” that may contain either a single number (in which case, by default, the initial value for mu1 will be zero) or a vector of length two giving initial values for mu0 and mu1.
+</p>
+<p>For Bayesian estimation, it is good practice to try several starting values at different points to make sure the initial values do not affect the outcome.  However, if initial values are not passed in, the MLEs are used (which probably is not a good thing to do, but is more likely to yield good results).
+</p>
+<p>For MLE/GMLE, two (in the case of PP, three) initial estimates are calculated along with their associated likelihood values.  The initial estimates that yield the highest likelihood are used.  These methods are:
+</p>
+<p>1.  L-moment estimates.
+</p>
+<p>2.  Let m = mean(xdat) and s = sqrt(6 * var(xdat)) / pi.  Then, initial values assigend for the lcoation parameter when either <code>initial</code> is NULL or the location component of <code>initial</code> is NULL, are m - 0.57722 * s.  When <code>initial</code> or the scale component of <code>initial</code> is NULL, the initial value for the scale parameter is taken to be s, and when <code>initial</code> or its shape component is NULL, the initial value for the shape parameter is taken to be 1e-8 (because these initial estimates are moment-based estimates for the Gumbel df, so the initial value is taken to be near zero).
+</p>
+<p>3.  In the case of PP, which is often the most difficult model to fit, MLEs are obtained for a GP model, and the resulting parameter estimates are converted to those of the approximately equivalent PP model.
+</p>
+<p>In the case of a non-stationary model, if the default initial estimates are used, then the intercept term for each parameter is given the initial estimate, and all other parameters are set to zero initially.  The exception is in the case of PP model fitting where the MLE from the GP fits are used, in which case, these parameter estimates may be non-zero.
+</p>
+<p>The generalized MLE (GMLE) method:
+</p>
+<p>This method places a penalty (or prior df) on the shape parameter to help ensure a better fit.  The procedure is nearly identical to MLE, except the likelihood, L, is multiplied by the prior df, p(shape); and because the negative log-likelihood is used, the effect is that of subtracting this term.  Currently, there is no supplied function by this package to calculate the gradient for the GMLE case, so in particular, the trace plot is not the trace of the actual negative log-likelihood (or gradient thereof) used in the estimation.
+</p>
+<p>Bayesian Estimation:
+</p>
+<p>It is possible to give your own prior and proposal distribution functions using the appropriate arguments listed above in the arguments section.  At each iteration of the chain, the parameters are updated one at a time in random order.  The default method uses a random walk chain for the proposal and normal distributions for the parameters.
+</p>
+<p>Plotting output:
+</p>
+<p><code>plot</code>: The <code>plot</code> method function will take information from the <code>fevd</code> output and make any of various useful plots.  The default, regardless of estimation method, is to produce a 2 by 2 panel of plots giving some common diagnostic plots.  Possible types (determined by the <code>type</code> argument) include:
+</p>
+<p>1. “primary” (default): yields the 2 by 2 panel of plots given by 3, 4, 6 and 7 below.
+</p>
+<p>2. “probprob”: Model probabilities against empirical probabilities (obtained from the <code>ppoints</code> function).  A good fit should yield a straight one-to-one line of points.  In the case of a non-stationary model, the data are first transformed to either the Gumbel (block maxima models) or exponential (POT models) scale, and plotted against probabilities from these standardized distribution functions.  In the case of a PP model, the parameters are first converted to those of the approximately equivalent GP df, and are plotted against the empirical data threshold excesses probabilities.
+</p>
+<p>3. “qq”: Empirical quantiles against model quantiles.  Again, a good fit will yield a straight one-to-one line of points.  Generally, the qq-plot is preferred to the probability plot in 1 above.  As in 2, for the non-stationary case, data are first transformed and plotted against quantiles from the standardized distributions.  Also as in 2 above, in the case of the PP model, parameters are converted to those of the GP df and quantiles are from threshold excesses of the data.
+</p>
+<p>4. “qq2”: Similar to 3, first data are simulated from the fitted model, and then the qq-plot between them (using the function <code>qqplot</code> from this self-same package) is made between them, which also yields confidence bands.  Note that for a good fitting model, this should again yield a straight one-to-one line of points, but generally, it will not be as “well-behaved” as the plot in 3.  The one-to-one line and a regression line fitting the quantiles is also shown.  In the case of a non-stationary model, simulations are obtained by simulating from an appropriate standardized EVD, re-ordered to follow the same ordering as the data to which the model was fit, and then back transformed using the covariates from <code>data</code> and the parameter estimates to put the simulated sample back on the original scale of the data.  The PP model is handled analogously as in 2 and 3 above.
+</p>
+<p>5. and 6. “Zplot”: These are for PP model fits only and are based on Smith and Shively (1995).  The Z plot is a diagnostic for determining whether or not the random variable, Zk, defined as the (possibly non-homogeneous) Poisson intensity parameter(s) integrated from exceedance time k - 1 to exceedance time k (beginning the series with k = 1) is independent exponentially distributed with mean 1.
+</p>
+<p>For the Z plot, it is necessary to scale the Poisson intensity parameter appropriately.  For example, if the data are given on a daily time scale with an annual period basis, then this parameter should be divided by, for example, 365.25.  From the fitted <code>fevd</code> object, the function will try to account for the correct scaling based on the two components “period.basis” and “time.units”.  The former currently must be “year” and the latter must be one of “days”, “months”, “years”, “hours”, “minutes” or “seconds”.  If none of these are valid for your specific data (e.g., if an annual basis is not desired), then use the <code>d</code> argument to explicitly specify the correct scaling.
+</p>
+<p>7.  “hist”: A histogram of the data is made, and the model density is shown with a blue dashed line.  In the case of non-stationary models, the data are first transformed to an appropriate standardized EVD scale, and the model density line is for the self-same standardized EVD.  Currently, this does not work for non-stationary POT models.
+</p>
+<p>8. “density”: Same as 5, but the kernel density (using function <code>density</code>) for the data is plotted instead of the histogram. In the case of the PP model, block maxima of the data are calculated and the density of these block maxima are compared to the PP in terms of the equivalent GEV df.  If the model is non-stationary GEV, then the transformed data (to a stationary Gumbel df) are used.  If the model is a non-stationary POT model, then currently this option is not available.
+</p>
+<p>9. “rl”: Return level plot.  This is done on the log-scale for the abscissa in order that the type of EVD can be discerned from the shape (i.e., heavy tail distributions are concave, light tailed distributions are straight lines, and bounded upper-tailed distributions are convex, asymptoting at the upper bound).  95 percent CIs are also shown (gray dashed lines).  In the case of non-stationary models, the data are plotted as a line, and the “effective” return levels (by default the 2-period (i.e., the median), 20-period and 100-period are used; period is usually annual) are also shown (see, e.g., Gilleland and Katz, 2011).  In the case of the PP model, the equivalent GEV df (stationary model) is assumed and data points are block maxima, where the blocks are determined from information passed in the call to <code>fevd</code>.  In particular, the <code>span</code> argument (which, if not passed by the user, will have been determined by <code>fevd</code> using <code>time.units</code> along with the number of points per year (which is estimated from <code>time.units</code>) are used to find the blocks over which the maxima are taken.  For the non-stationary case, the equivalent GP df is assumed and parameters are converted.  This helps facilitate a more meaningful plot, e.g., in the presence of a non-constant threshold, but otherwise constant parameters.
+</p>
+<p>10. “trace”: In each of cases (b) and (c) below, a 2 by the number of parameters panel of plots are created.
+</p>
+<p>(a) L-moments: Not available for the L-moments estimation.
+</p>
+<p>(b) For MLE/GMLE, the likelihood traces are shown for each parameter of the model, whereby all but one parameter is held fixed at the MLE/GMLE values, and the negative log-likelihood is graphed for varying values of the parameter of interest.  Note that this differs greatly from the profile likelihood (see, e.g., <code>profliker</code>) where the likelihood is maximized over the remaining parameters.  The gradient negative log-likelihoods are also shown for each parameter.  These plots may be useful in diagnosing any fitting problems that might arise in practice.  For ease of interpretation, the gradients are shown directly below the likleihoods for each parameter.
+</p>
+<p>(c) For Bayesian estimation, the usual trace plots are shown with a gray vertical dashed line showing where the <code>burn.in</code> value lies; and a gray dashed horizontal line through the posterior mean.  However, the posterior densities are also displayed for each parameter directly above the usual trace plots.  It is not currently planned to allow for adding the prior dnsities to the posterior density graphs, as this can be easily implemented by the user, but is more difficult to do generally.
+</p>
+<p>As with <code>ci</code> and <code>distill</code>, only <code>plot</code> need be called by the user.  The appropriate choice of the other functions is automatically determined from the <code>fevd</code> fitted object.
+</p>
+<p>Note that when <code>blocks</code> are provided to <code>fevd</code>, certain plots
+that require the full set of observations (including non-exceedances)
+cannot be produced.
+</p>
+<p>Summaries and Printing:
+</p>
+<p><code>summary</code> and <code>print</code> method functions are available, and give different information depending on the estimation method used.  However, in each case, the parameter estimates are printed to the screen.  <code>summary</code> returns some useful output (similar to distill, but in a list format).  The <code>print</code> method function need not be called as one can simply type the name of the <code>fevd</code> fitted object and return to execute the command (see examples below).  The deviance information criterion (DIC) is calculated for the Bayesian estimation method as DIC = D(mean(theta)) + 2 * pd, where pd = mean(D(theta)) - D(mean(theta)), and D(theta) = -2 * log-likelihood evaluated at the parameter values given by theta.  The means are taken over the posterior MCMC sample.  The default estimation method for the parameter values from the MCMC sample is to take the mean of the sample (after removing the first burn.in samples).  A good alternative is to set the <code>FUN</code> argument to “postmode” in order to obtain the posterior mode of the sample.
+</p>
+<p>Using Blocks to Reduce Computation in PP Fitting:
+</p>
+<p>If <code>blocks</code> is supplied, the user should
+provide only the exceedances and not all of the data values. For
+stationary models, the list should contain a component called
+<code>nBlocks</code> indicating the number of observations within a block, where
+blocks are defined in a manner analogous to that used in GEV
+models. For nonstationary models, the list may contain one or more of
+several components. For nonstationary models with covariates, the list
+should contain a <code>data</code> component analogous to the <code>data</code> argument,
+providing values for the blocks. If the threshold varies, the list
+should contain a <code>threshold</code> component that is analogous to the
+<code>threshold</code> argument. If some of the observations within any block are
+missing (assuming missing at random or missing completely at random),
+the list should contain a <code>proportionMissing</code> component that is a
+vector with one value per block indicating the proportion of
+observations missing for the block. To weight the blocks, the list can
+contain a <code>weights</code> component with one value per block. Warning: to
+properly analyze nonstationary models, any covariates, thresholds, and
+weights must be constant within each block.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>fevd</code>: A list object of class “fevd” is returned with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call </code></td>
+<td>
+<p>the function call.  Used as a default for titles in plots and output printed to the screen (e.g., by <code>summary</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name </code></td>
+<td>
+<p>character vector giving the name of arguments: <code>x</code> and <code>data</code>.  This is used by the <code>datagrabber</code> method function, as well as for some plot labeling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.pointer, cov.pointer, cov.data, x, x.fun</code></td>
+<td>
+<p>Not all of these are included, and which ones are depend on how the data are passed to <code>fevd</code>.  These may be character strings, vectors or data frames depending again on the original function call.  They are used by <code>datagrabber</code> in order to obtain the original data.  If x is a column of data, then x.fun is a formula specifying which column.  Also, if x is a formula, then x.fun is this self-same formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>in.data</code></td>
+<td>
+<p>logical; is the argument <code>x</code> a column of the argument <code>data</code> (TRUE) or not (FALSE)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character string naming which estimation method ws used for the fit.  Same as <code>method</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character string naming which EVD was fit to the data.  Same as <code>type</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>period.basis</code></td>
+<td>
+<p>character string naming the period for return periods.  This is used in plot labeling and naming, e.g., output from <code>ci</code>.  Same as the argument passed in.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>units</code></td>
+<td>
+<p>Not present if not passed in by the user.  character string naming the data units.  Used for plot labeling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par.models</code></td>
+<td>
+<p>A list object giving the values of the threshold and parameter function arguments, as well as a logical stating whether the log of the scale parameter is used or not.  This is present even if it does not make sense (i.e., for L-moments estimation) because it is used by the <code>is.fixedfevd</code> function for determining whether or not a model is stationary or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>const.loc, const.scale, const.shape</code></td>
+<td>
+<p>logicals stating whether the named parameter is constant (TRUE) or not (FALSE).  Currently, not used, but could be useful.  Still present even for L-moments estimation even though it does not really make sense in this context (will always be true).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the length of the data to which the model is fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>span, npy</code></td>
+<td>
+<p>For POT models only, this is the estimated number of periods (usually years) and number of points per period, both estimated using time.units</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>character naming the function used for handling missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>results</code></td>
+<td>
+<p>If L-moments are used, then this is a simple vector of length equal to the number of parameters of the model.  For MLE/GMLE, this is a list object giving the output from <code>optim</code> (in particular, the par component is a vector giving the parameter estimates).  For Bayesian estimation, this is a matrix whose rows give the results for each iteration of the MCMC simulations.  The columns give the parameters, as well as an additional last column that gives the number of parameters that were updated at each iteration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priorFun, priorParams</code></td>
+<td>
+<p>These are only present for GMLE and Bayesian estimation methods.  They give the prior df and optional arguments used in the estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proposalFun, proposalParams</code></td>
+<td>
+<p>These are only present for Bayesian estimation, and they give the proposal function used along with optional arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chain.info</code></td>
+<td>
+<p>If estimation method is “Bayesian”, then this component is a matrix whose first several columns give 0 or 1 for each parameter at each iteration, where 0 indicates that the parameter was not updated and 1 that it was.  The first row is NA for these columns.  the last two columns give the likelihood and prior values for the current parameter values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chain.info</code></td>
+<td>
+<p>matrix whose first n columns give a one or zero depending on whether the parameter was updated or not, resp.  The last two columns give the log-likelihood and prior values associated with the parameters of that sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blocks</code></td>
+<td>
+<p>Present only if <code>blocks</code> is supplied as an
+argument. Will contain the input information and computed
+block-level information for use in post-processing the model object,
+in particular block-wise design matrices.</p>
+</td>
+</tr>
+</table>
+<p><code>print</code>: Does not return anything.  Information is printed to the screen.
+</p>
+<p><code>summary</code>: Depending on the estimation method, either a numeric vector giving the parameter estimates (“Lmoments”) or a list object (all other estimation methods) is returned invisibly, and if <code>silent</code> is FALSE (default), then summary information is printed to the screen.  List components may include:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>par, se.theta</code></td>
+<td>
+<p>numeric vectors giving the parameter and standard error estimates, resp.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.theta</code></td>
+<td>
+<p>matrix giving the parameter covariances.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nllh</code></td>
+<td>
+<p>number giving the value of the negative log-likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AIC, BIC, DIC</code></td>
+<td>
+<p>numbers giving the Akaike Information Criterion (AIC, Akaike, 1974), the Bayesian Information Criterion (BIC, Schwarz, 1978), and/or the Deviance Information Criterion, resp.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Eric Gilleland
+</p>
+
+
+<h3>References</h3>
+
+<p>Akaike, H. (1974).  A new look at the statistical model identification.  <em>IEEE Transactions on Automatic Control</em>, <b>19</b>, 716–723.
+</p>
+<p>Beirlant, J., Goegebeur, Y., Teugels, J. and Segers, J. (2004). <em>Statistics of Extremes: Theory and Applications</em>.  Chichester, West Sussex, England, UK: Wiley, ISBN 9780471976479, 522pp.
+</p>
+<p>Coles, S. G.  (2001). <em>An introduction to statistical modeling of extreme values</em>, London: Springer-Verlag.
+</p>
+<p>Coles, S. G. and Dixon, M. J. (1999).  Likelihood-based inference for extreme value models.  <em>Extremes</em>, <b>2</b> (1), 5–23.
+</p>
+<p>El Adlouni, S., Ouarda, T. B. M. J., Zhang, X., Roy, R, and Bobee, B. (2007).  Generalized maximum likelihood estimators for the nonstationary generalized extreme value model.  <em>Water Resources Research</em>, <b>43</b>, W03410, doi: 10.1029/2005WR004545, 13 pp.
+</p>
+<p>Gilleland, E. and Katz, R. W. (2011). New software to analyze how extremes change over time. <em>Eos</em>, 11 January, <b>92</b>, (2), 13–14.
+</p>
+<p>de Haan, L. and Ferreira, A. (2006). <em>Extreme Value Theory: An Introduction</em>.  New York, NY, USA: Springer, 288pp.
+</p>
+<p>Jenkinson, A. F. (1955). The frequency distribution of the annual maximum (or minimum) of meteorological elements. <em>Quart. J. R.  Met. Soc.</em>, <b>81</b>, 158–171.
+</p>
+<p>Martins, E. S. and Stedinger, J. R. (2000).  Generalized maximum likelihood extreme value quantile estimators for hydrologic data.  <em>Water Resources Research</em>, <b>36</b> (3), 737–744.
+</p>
+<p>Martins, E. S. and Stedinger, J. R. (2001).  Generalized maximum likelihood Pareto-Poisson estimators for partial duration series.  <em>Water Resources Research</em>, <b>37</b> (10), 2551–2557.
+</p>
+<p>Pickands, J. (1975). Statistical inference using extreme order statistics.  <em>Annals of Statistics</em>, <b>3</b>, 119–131.
+</p>
+<p>Reiss, R.-D. and Thomas, M. (2007). <em>Statistical Analysis of Extreme Values: with applications to insurance, finance, hydrology and other fields</em>. Birkhauser, 530pp., 3rd edition.
+</p>
+<p>Schwarz, G. E. (1978).  Estimating the dimension of a model.  <em>Annals of Statistics</em>, <b>6</b>, 461–464.
+</p>
+<p>Smith, R. L. and Shively, T. S. (1995).  A point process approach to modeling trends in tropospheric ozone.  <em>Atmospheric Environment</em>, <b>29</b>, 3489–3499.
+</p>
+<p>von Mises, R. (1936). La distribution de la plus grande de n valeurs, <em>Rev. Math. Union Interbalcanique</em> <b>1</b>, 141–160.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ci.fevd</code> for obtaining parameter and return level confidence intervals.
+</p>
+<p><code>distill.fevd</code> for stripping out a vector of parameter estimates and perhaps other pertinent information from an fevd object.
+</p>
+<p>For functions to find the density, probability df, quantiles and simulate data from, an EV df, see:
+<code>devd</code>, <code>pevd</code>, <code>qevd</code>, <code>revd</code>
+</p>
+<p>For functions to find the probability df and simulate random data from a fitted model from <code>fevd</code>, see:
+<code>pextRemes</code>, <code>rextRemes</code>
+</p>
+<p>For functions to determine if the extreme data are independent or not, see:
+<code>extremalindex</code>, <code>atdf</code>
+</p>
+<p>For functions to help choose a threshold, see: <code>threshrange.plot</code>, <code>mrlplot</code>
+</p>
+<p>To decluster stationary dependent extremes, see: <code>decluster</code>
+</p>
+<p>For more on formulas in R, see: <code>formula</code>
+</p>
+<p>To grab the parameters of a fitted <code>fevd</code> model, see: <code>findpars</code>
+</p>
+<p>To calculate the parameter covariance, see:
+<code>optimHess</code>, <code>parcov.fevd</code>
+</p>
+<p>To see more about the <span class="pkg">extRemes</span> method functions described here, see: <code>ci</code> and <code>distill</code>
+</p>
+<p>To calculate effective return levels and CI's for MLE and Bayesian estimation of non-stationary models, see <code>ci.rl.ns.fevd.bayesian</code>, <code>ci.rl.ns.fevd.mle</code> and <code>return.level</code>
+</p>
+<p>To obtain the original data set from a fitted <code>fevd</code> object, use: <code>datagrabber</code>
+</p>
+<p>To calculate the profile likelihood, see: <code>profliker</code>
+</p>
+<p>To test the statistical significance of nested models with additional parameters, see: <code>lr.test</code>
+</p>
+<p>To find effective return levels for non-stationary models, see: <code>erlevd</code>
+</p>
+<p>To determine if an <code>fevd</code> object is stationary or not, use: <code>is.fixedfevd</code> and <code>check.constant</code>
+</p>
+<p>For more about the plots created for <code>fevd</code> fitted objects, see:
+<code>ppoints</code>, <code>density</code>, <code>hist</code>, <code>qqplot</code>
+</p>
+<p>For general numerical optimization in R, see: <code>optim</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+z &lt;- revd(100, loc=20, scale=0.5, shape=-0.2)
+fit &lt;- fevd(z)
+fit
+plot(fit)
+plot(fit, "trace")
+
+## Not run: 
+## Fitting the GEV to block maxima.
+
+# Port Jervis, New York winter maximum and minimum
+# temperatures (degrees centigrade).
+data(PORTw)
+
+# Gumbel
+fit0 &lt;- fevd(TMX1, PORTw, type="Gumbel", units="deg C")
+fit0
+plot(fit0)
+plot(fit0, "trace")
+return.level(fit0)
+
+# GEV
+fit1 &lt;- fevd(TMX1, PORTw, units="deg C")
+fit1
+plot(fit1)
+plot(fit1, "trace")
+return.level(fit1)
+return.level(fit1, do.ci=TRUE)
+ci(fit1, return.period=c(2,20,100)) # Same as above.
+
+lr.test(fit0, fit1)
+ci(fit1, type="parameter")
+par(mfrow=c(1,1))
+ci(fit1, type="parameter", which.par=3, xrange=c(-0.4,0.01),
+    nint=100, method="proflik", verbose=TRUE)
+
+# 100-year return level
+ci(fit1, method="proflik", xrange=c(22,28), verbose=TRUE)
+
+plot(fit1, "probprob")
+plot(fit1, "qq")
+plot(fit1, "hist")
+plot(fit1, "hist", ylim=c(0,0.25))
+
+# Non-stationary model.
+# Location as a function of AO index.
+
+fit2 &lt;- fevd(TMX1, PORTw, location.fun=~AOindex, units="deg C")
+fit2
+plot(fit2)
+plot(fit2, "trace")
+# warnings are not critical here.
+# Sometimes the nllh or gradients
+# are not defined.
+
+return.level(fit2)
+
+v &lt;- make.qcov(fit2, vals=list(mu1=c(-1, 1)))
+return.level(fit2, return.period=c(2, 20, 100), qcov=v)
+
+# Note that first row is for AOindex = -1 and second
+# row is for AOindex = 1.
+
+lr.test(fit1, fit2)
+# Also compare AIC and BIC
+
+look1 &lt;- summary(fit1, silent=TRUE)
+look1 &lt;- c(look1$AIC, look1$BIC)
+
+look2 &lt;- summary(fit2, silent=TRUE)
+look2 &lt;- c(look2$AIC, look2$BIC)
+
+# Lower AIC/BIC is better.
+names(look1) &lt;- names(look2) &lt;- c("AIC", "BIC")
+look1
+look2
+
+par(mfrow=c(1,1))
+plot(fit2, "rl")
+
+
+## Fitting the GP df to threshold excesses.
+
+# Hurricane damage data.
+
+data(damage)
+
+ny &lt;- tabulate(damage$Year)
+# Looks like only, at most, 5 obs per year.
+
+ny &lt;- mean(ny[ny &gt; 0])
+fit0 &lt;- fevd(Dam, damage, threshold=6, type="Exponential", time.units="2.05/year")
+fit0
+plot(fit0)
+plot(fit0, "trace") # ignore the warning.
+
+fit1 &lt;- fevd(Dam, damage, threshold=6, type="GP", time.units="2.05/year")
+fit1
+plot(fit1) # ignore the warning.
+plot(fit1, "trace")
+
+return.level(fit1)
+
+# lr.test(fit0, fit1)
+
+# Fort Collins, CO precipitation
+
+data(Fort)
+
+## GP df
+
+fit &lt;- fevd(Prec, Fort, threshold=0.395, type="GP", units="inches", verbose=TRUE)
+fit
+plot(fit)
+plot(fit, "trace")
+
+ci(fit, type="parameter")
+par(mfrow=c(1,1))
+ci(fit, type="return.level", method="proflik", xrange=c(4,7.5), verbose=TRUE)
+# Can check using locator(2).
+
+ci(fit, type="parameter", which.par=2, method="proflik", xrange=c(0.1, 0.3),
+    verbose=TRUE) 
+# Can check using locator(2).
+
+
+## PP model.
+
+fit &lt;- fevd(Prec, Fort, threshold=0.395, type="PP", units="inches", verbose=TRUE)
+fit
+plot(fit)
+plot(fit, "trace")
+ci(fit, type="parameter")
+
+# Same thing, but just to try a different optimization method.
+# And, for fun, a different way of entering the data set.
+fit &lt;- fevd(Fort$Prec, threshold=0.395, type="PP",
+    optim.args=list(method="Nelder-Mead"), units="inches", verbose=TRUE)
+fit
+plot(fit)
+plot(fit, "trace")
+ci(fit, type="parameter")
+
+## PP model with blocks argument for computational efficiency # CJP2
+
+system.time(fit &lt;- fevd(Prec, Fort, threshold=0.395, type="PP", units="inches", verbose=TRUE))
+
+FortSub = Fort[Fort$Prec &gt; 0.395, ]
+system.time(fit.blocks &lt;- fevd(Prec, FortSub, threshold=0.395,
+type="PP", units="inches", blocks = list(nBlocks = 100), verbose=TRUE))
+fit.blocks
+plot(fit.blocks)
+plot(fit.blocks, "trace")
+ci(fit.blocks, type="parameter")
+
+#
+# Phoenix data
+#
+# Summer only with 62 days per year.
+
+data(Tphap)
+
+plot(MinT~ Year, data=Tphap)
+
+# GP df
+fit &lt;- fevd(-MinT ~1, Tphap, threshold=-73, type="GP", units="deg F",
+    time.units="62/year", verbose=TRUE)
+
+fit
+plot(fit)
+plot(fit, "trace")
+
+# PP
+fit &lt;- fevd(-MinT ~1, Tphap, threshold=-73, type="PP", units="deg F", time.units="62/year",
+    use.phi=TRUE, optim.args=list(method="BFGS", gr=NULL), verbose=TRUE)
+fit
+plot(fit)
+plot(fit, "trace")
+
+
+# Non-stationary models
+
+fit &lt;- fevd(Prec, Fort, threshold=0.395,
+    scale.fun=~sin(2 * pi * (year - 1900)/365.25) + cos(2 * pi * (year - 1900)/365.25),
+    type="GP", use.phi=TRUE, verbose=TRUE)
+fit
+plot(fit)
+plot(fit, "trace")
+ci(fit, type="parameter")
+
+# Non-constant threshold.
+
+# GP
+fit &lt;- fevd(Prec, Fort, threshold=0.475, threshold.fun=~I(-0.15 * cos(2 * pi * month / 12)),
+    type="GP", verbose=TRUE)
+fit
+plot(fit)
+par(mfrow=c(1,1))
+plot(fit, "rl", xlim=c(0, 365))
+
+# PP
+
+fit &lt;- fevd(Prec, Fort, threshold=0.475, threshold.fun=~I(-0.15 * cos(2 * pi * month / 12)),
+    type="PP", verbose=TRUE)
+fit
+plot(fit)
+
+## Bayesian PP with blocks for computational efficiency
+## Note that 1999 iterations may not be sufficient; used here to
+## minimize time spent fitting.
+# CJP2
+## CJP2: Eric, CRAN won't like this being run as part of the examples
+## as it takes a long time; we'll probably want to wrap this in a \dontrun{}
+
+set.seed(0)
+system.time(fit &lt;- fevd(Prec, Fort, threshold=0.395,
+    scale.fun=~sin(2 * pi * (year - 1900)/365.25) + cos(2 * pi * (year - 1900)/365.25),
+    type="PP", method="Bayesian", iter=1999, use.phi=TRUE, verbose=TRUE))
+fit
+ci(fit, type="parameter")
+
+set.seed(0)
+FortSub &lt;- Fort[Fort$Prec &gt; 0.395, ]
+system.time(fit2 &lt;- fevd(Prec, FortSub, threshold=0.395,
+    scale.fun=~sin(2 * pi * (year - 1900)/365.25) + cos(2 * pi * (year -
+1900)/365.25), type="PP", blocks = list(nBlocks= 100, data =
+data.frame(year = 1900:1999)), use.phi=TRUE, method = "Bayesian",
+iter=1999, verbose=TRUE))
+# an order of magnitude faster
+
+fit2
+ci(fit2, type="parameter")
+
+data(ftcanmax)
+
+fit &lt;- fevd(Prec, ftcanmax, units="inches")
+fit
+
+plot(fit)
+par(mfrow=c(1,1))
+plot(fit, "probprob")
+plot(fit, "hist")
+plot(fit, "hist", ylim=c(0,0.01))
+plot(fit, "density", ylim=c(0,0.01))
+plot(fit, "trace")
+
+distill(fit)
+distill(fit, cov=FALSE)
+
+fit2 &lt;- fevd(Prec, ftcanmax, location.fun=~Year)
+fit2
+
+plot(fit2)
+##
+# plot(fit2, "trace") # Gives warnings because of some NaNs produced
+                      # (nothing to worry about).
+
+lr.test(fit, fit2)
+
+ci(fit)
+ci(fit, type="parameter")
+
+fit0 &lt;- fevd(Prec, ftcanmax, type="Gumbel")
+fit0
+
+plot(fit0)
+lr.test(fit0, fit)
+plot(fit0, "trace")
+
+ci(fit, return.period=c(2, 20, 100))
+ci(fit, type="return.level", method="proflik", return.period=20, verbose=TRUE)
+
+ci(fit, type="parameter", method="proflik", which.par=3, xrange=c(-0.1,0.5), verbose=TRUE)
+
+# L-moments
+fitLM &lt;- fevd(Prec, ftcanmax, method="Lmoments", units="inches")
+fitLM # less info.
+plot(fitLM)
+# above is slightly slower because of the parametric bootstrap
+# for finding CIs in return levels.
+par(mfrow=c(1,1))
+plot(fitLM, "density", ylim=c(0,0.01))
+
+# GP model.
+# CJP2 : fixed so have 744/year (31 days *24 hours/day)
+
+data(Denversp)
+
+fitGP &lt;- fevd(Prec, Denversp, threshold=0.5, type="GP", units="mm",
+    time.units="744/year", verbose=TRUE)
+
+fitGP
+plot(fitGP)
+plot(fitGP, "trace")
+# you can see the difficulty in getting good numerics here.
+# the warnings are not a coding problem, but challenges in 
+# the likelihood for the data.
+
+# PP model.
+fitPP &lt;- fevd(Prec, Denversp, threshold=0.5, type="PP", units="mm",
+    time.units="744/year", verbose=TRUE)
+
+fitPP
+plot(fitPP)
+plot(fitPP, "trace")
+
+fitPP &lt;- fevd(Prec, Denversp, threshold=0.5, type="PP", optim.args=list(method="Nelder-Mead"),
+    time.units="744/year", units="mm", verbose=TRUE)
+fitPP
+plot(fitPP) # Much better.
+plot(fitPP, "trace")
+# Better than above, but can see the difficulty!
+# Can see the importance of good starting values!
+
+# Try out for small samples
+# Using one of the data example from Martins and Stedinger (2000)
+z &lt;- c( -0.3955, -0.3948, -0.3913, -0.3161, -0.1657, 0.3129, 0.3386, 0.5979,
+    1.4713, 1.8779, 1.9742, 2.0540, 2.6206, 4.9880, 10.3371 )
+
+tmpML &lt;- fevd( z ) # Usual MLE.
+
+# Find 0.999 quantile for the MLE fit.
+# "True" 0.999 quantile is around 11.79
+p &lt;- tmpML$results$par
+qevd( 0.999, loc = p[ 1 ], scale = p[ 2 ], shape = p[ 3 ] )
+
+tmpLM &lt;- fevd(z, method="Lmoments")
+p &lt;- tmpLM$results
+qevd( 0.999, loc = p[ 1 ], scale = p[ 2 ], shape = p[ 3 ] )
+
+tmpGML &lt;- fevd(z, method="GMLE")
+p &lt;- tmpGML$results$par
+qevd( 0.999, loc = p[ 1 ], scale = p[ 2 ], shape = p[ 3 ] )
+
+plot(tmpLM)
+dev.new()
+plot(tmpGML)
+
+# Bayesian
+fitB &lt;- fevd(Prec, ftcanmax, method="Bayesian", verbose=TRUE)
+fitB
+plot(fitB)
+plot(fitB, "trace")
+
+# Above looks good for scale and shape, but location does not appear to have found its way.
+fitB &lt;- fevd(Prec, ftcanmax, method="Bayesian", priorParams=list(v=c(1, 10, 10)), verbose=TRUE)
+fitB
+plot(fitB)
+plot(fitB, "trace")
+
+# Better, but what if we start with poor initial values?
+fitB &lt;- fevd(Prec, ftcanmax, method="Bayesian", priorParams=list(v=c(0.1, 10, 0.1)),
+    initial=list(location=0, scale=0.1, shape=-0.5)), verbose=TRUE)
+fitB
+plot(fitB)
+plot(fitB, "trace")
+
+##
+## Non-constant threshold.
+##
+data(Tphap)
+
+# Negative of minimum temperatures.
+plot(-Tphap$MinT)
+
+fitGP2 &lt;- fevd(-MinT ~1, Tphap, threshold=c(-70,-7), threshold.fun=~I((Year - 48)/42), type="GP",
+    time.units="62/year", verbose=TRUE)
+fitGP2
+plot(fitGP2)
+plot(fitGP2, "trace")
+par(mfrow=c(1,1))
+plot(fitGP2, "hist")
+plot(fitGP2, "rl")
+
+ci(fitGP2, type="parameter")
+
+##
+## Non-stationary models.
+##
+
+data(PORTw)
+
+# GEV
+fitPORTstdmax &lt;- fevd(PORTw$TMX1, PORTw, scale.fun=~STDTMAX, use.phi=TRUE)
+plot(fitPORTstdmax)
+plot(fitPORTstdmax, "trace")
+# One can see how finding the optimum value numerically can be tricky!
+
+# Bayesian
+fitPORTstdmaxB &lt;- fevd(PORTw$TMX1, PORTw, scale.fun=~STDTMAX, use.phi=TRUE,
+    method="Bayesian", verbose=TRUE)
+fitPORTstdmaxB
+plot(fitPORTstdmaxB)
+plot(fitPORTstdmaxB, "trace")
+
+# Let us go crazy.
+fitCrazy &lt;- fevd(PORTw$TMX1, PORTw, location.fun=~AOindex + STDTMAX, scale.fun=~STDTMAX,
+    shape.fun=~STDMIN, use.phi=TRUE)
+fitCrazy
+plot(fitCrazy)
+plot(fitCrazy, "trace")
+# With so many parameters, you may need to stretch the device
+# using your mouse in order to see them well.
+
+ci(fitCrazy, type="parameter", which=2) # Hmmm.  NA NA.  Not good.
+ci(fitCrazy, type="parameter", which=2, method="proflik", verbose=TRUE)
+# Above not quite good enough (try to get better bounds).
+
+ci(fitCrazy, type="parameter", which=2, method="proflik", xrange=c(0, 2), verbose=TRUE)
+# Much better.
+
+
+##
+## Center and scale covariate.
+##
+data(Fort)
+
+fitGPcross &lt;- fevd(Prec, Fort, threshold=0.395,
+    scale.fun=~cos(day/365.25) + sin(day/365.25) + I((year - 1900)/99),
+    type="GP", use.phi=TRUE, units="inches")
+
+fitGPcross
+plot(fitGPcross) # looks good!
+
+# Get a closer look at the effective return levels.
+par(mfrow=c(1,1))
+plot(fitGPcross, "rl", xlim=c(10000,12000))
+
+lr.test(fitGPfc, fitGPcross)
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

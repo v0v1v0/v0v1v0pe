@@ -1,0 +1,273 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predictEvent</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict event time for ongoing subjects with or without cured population.</h2>
+
+<h3>Description</h3>
+
+<p>Utilizes pre-fitted time-to-event and time-to-dropout models
+to generate event and dropout times for ongoing subjects
+and new subjects. It also provides a
+prediction interval for the expected time to reach the target
+number of events.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predictEvent(
+  df = NULL,
+  target_d,
+  newSubjects = NULL,
+  event_fit,
+  dropout_fit = NULL,
+  fixedFollowup = FALSE,
+  followupTime = 365,
+  pilevel = 0.9,
+  nyears = 4,
+  nreps = 500,
+  showEnrollment = TRUE,
+  showEvent = TRUE,
+  showDropout = FALSE,
+  showOngoing = FALSE,
+  by_treatment = FALSE,
+  seed.num = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>The subject-level enrollment and event data,
+including <code>randdt</code>, <code>cutoffdt</code>,
+<code>time</code>, <code>event</code>, and <code>dropout</code>. By default, it
+is set to <code>NULL</code> for event prediction at the design stage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target_d</code></td>
+<td>
+<p>The target number of events to reach in the study.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newSubjects</code></td>
+<td>
+<p>The enrollment data for new subjects including
+<code>draw</code> and <code>arrivalTime</code>. By default,
+it is set to <code>NULL</code>, indicating the completion of
+subject enrollment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>event_fit</code></td>
+<td>
+<p>The pre-fitted event model used to generate
+predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dropout_fit</code></td>
+<td>
+<p>The pre-fitted dropout model used to generate
+predictions. By default, it is set to <code>NULL</code>,
+indicating no dropout.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixedFollowup</code></td>
+<td>
+<p>A Boolean variable indicating whether a fixed
+follow-up design is used. By default, it is set to <code>FALSE</code>
+for a variable follow-up design.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>followupTime</code></td>
+<td>
+<p>The follow-up time for a fixed
+follow-up design, in days. By default, it is set to 365.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pilevel</code></td>
+<td>
+<p>The prediction interval level. By default,
+it is set to 0.90.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nyears</code></td>
+<td>
+<p>The number of years after the data cut for prediction.
+By default, it is set to 4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nreps</code></td>
+<td>
+<p>The number of replications for simulation. By default,
+it is set to 500. If <code>newSubjects</code> is not <code>NULL</code>,
+the number of draws in <code>newSubjects</code> should be <code>nreps</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showEnrollment</code></td>
+<td>
+<p>A Boolean variable to control whether or not to
+show the number of enrolled subjects. By default, it is set to
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showEvent</code></td>
+<td>
+<p>A Boolean variable to control whether or not to
+show the number of events. By default, it is set to
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showDropout</code></td>
+<td>
+<p>A Boolean variable to control whether or not to
+show the number of dropouts. By default, it is set to
+<code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showOngoing</code></td>
+<td>
+<p>A Boolean variable to control whether or not to
+show the number of ongoing subjects. By default, it is set to
+<code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by_treatment</code></td>
+<td>
+<p>A Boolean variable to control whether or not to
+predict event by treatment group. By default,
+it is set to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed.num</code></td>
+<td>
+<p>The number of the random seed. The default is NULL.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To ensure successful event prediction at the design stage, it is
+important to provide the <code>newSubjects</code> data set.
+</p>
+<p>To specify the event model used during the design-stage event
+prediction, the <code>event_fit</code> be a list with one element
+per treatment. For each treatment, the element should include <code>w</code>
+to specify the weight of the treatment in a randomization block,
+<code>model</code> to specify the event model
+(exponential, weibull, log-logistic, log-normal,
+or piecewise exponential, weibull with cured population,exponential with cured population,log-normal with cured population,
+log-logistic with cured population,piecewise exponential with cured population,
+exponential with cured population and delayed treatment,weibull with cured population and delayed treatment,
+log-normal with cured population and delayed treatment,log-logistic with cured population and delayed treatment),
+<code>theta</code> and <code>vtheta</code> to indicate
+the parameter values and the covariance matrix.
+For the piecewise exponential or piecewise exponential with cured population or piecewise exponential with cured population
+and delayed treatment event model, the list
+should also include <code>piecewiseSurvivalTime</code> to indicate
+the location of knots. It should be noted that the model averaging
+and spline options are not appropriate for use as prior.
+</p>
+<p>To specify the dropout model used during the design stage
+event prediction, the <code>dropout_fit</code> should be a list
+with one element per treatment. For each treatment, the element
+should include <code>w</code> to specify the weight of the treatment
+in a randomization block, <code>model</code> to specify the dropout model
+(exponential, weibull, log-logistic, log-normal,
+or piecewise exponential), <code>theta</code> and <code>vtheta</code> to indicate
+the parameter values and the covariance matrix.
+For the piecewise exponential dropout model, the list
+should also include <code>piecewiseDropoutTime</code> to indicate
+the location of knots.
+</p>
+<p>Following the commencement of the trial, we obtain the event
+model fit and the dropout model fit based on the observed data,
+denoted as <code>event_fit</code> and <code>dropout_fit</code>, respectively.
+These fitted models are subsequently utilized to generate event
+and dropout times for both ongoing and new subjects in the trial.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of prediction results which includes important
+information such as the median, lower and upper percentiles for
+the estimated day and date to reach the target number of events,
+as well as simulated event data for both ongoing and new subjects.
+The data for the prediction plot is also included
+within this list.
+</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Bagiella, Emilia, and Daniel F. Heitjan. "Predicting analysis times in randomized clinical trials."
+Statistics in medicine 20.14 (2001): 2055-2063.
+</p>
+</li>
+<li>
+<p> Ying, Gui‐shuang, and Daniel F. Heitjan. "Weibull prediction of event times in clinical trials."
+Pharmaceutical Statistics:
+The Journal of Applied Statistics in the Pharmaceutical Industry 7.2 (2008): 107-120.
+</p>
+</li>
+<li>
+<p> Chen, Tai-Tsang. "Predicting analysis times in randomized clinical trials with cancer immunotherapy."
+BMC medical research methodology 16.1 (2016): 1-10.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+fit1 &lt;- list(model = "piecewise uniform",
+             theta = -0.58, 
+             vtheta=0, accrualTime =0)
+fit2&lt;-list()
+fit2[[1]] &lt;- list(model = "weibull with cured population and delayed treatment", 
+                  theta = c(-2.2,0,6.5,0,1), 
+                  vtheta = matrix(0,5,5))
+fit2[[2]] &lt;- list(model = "weibull with cured population and delayed treatment", 
+                 theta = c(-2.2,0,6.5,46,0.65), 
+                 vtheta = matrix(0,5,5))
+                  
+ enroll_pred &lt;- predictEnrollment(df = NULL, target_n=200, enroll_fit = fit1,lags=46,
+                                  pilevel=0.9, nyears=4, nreps=100,by_treatment=TRUE,
+                                  ngroups=2, alloc=c(1,1), treatment_label=c('a','b'))
+
+ event_pred &lt;- predictEvent(df = NULL, target_d=60,
+                            newSubjects = enroll_pred$newSubjects,
+                            event_fit = fit2,dropout_fit = NULL,
+                            pilevel=0.9, 
+                            nyears=4, 
+                            nreps=100,
+                            by_treatment=TRUE)
+
+
+</code></pre>
+
+
+</div>

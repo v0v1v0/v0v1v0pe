@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epoxy_mustache</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Mustache-style string interpolation</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>
+A wrapper around the <a href="http://mustache.github.io/">mustache templating language</a>, provided by the
+<a href="https://cran.r-project.org/package=whisker">whisker</a> package. Under the
+hood, <code>epoxy_mustache()</code> uses <code>whisker::whisker.render()</code> to render the
+template, but adds a few conveniences:
+</p>
+
+<ul>
+<li>
+<p> The template can be passed in <code>...</code> as a single string, several strings or
+as a vector of strings. If multiple strings are passed, they are collapsed
+with <code>.sep</code> (<code>"\n"</code> by default).
+</p>
+</li>
+<li> <p><code>epoxy_mustache()</code> can be vectorized over the items in the <code>.data</code>
+argument. If <code>.data</code> is a data frame, vectorization is turned on by default
+so that you can  iterate over the rows of the data frame. The output will
+be a character vector of the same length as the number of rows in the data
+frame.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">epoxy_mustache(
+  ...,
+  .data = parent.frame(),
+  .sep = "\n",
+  .vectorized = inherits(.data, "data.frame"),
+  .partials = list()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>A string or a vector of strings containing the template(s). Refer
+to the <a href="http://mustache.github.io/">mustache documentation</a> for an overview
+of the syntax. If multiple strings are passed, they are collapsed with
+<code>.sep</code> (<code>"\n"</code> by default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>A data frame or a list. If <code>.data</code> is a data frame,
+<code>epoxy_mustache()</code> will transform the data frame so that the template can
+be applied to each row of the data frame. To avoid this transformation,
+wrap the <code>.data</code> value in <code>I()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.sep</code></td>
+<td>
+<p>The separator to use when collapsing multiple strings passed in
+<code>...</code> into a single template. Defaults to <code>"\n"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.vectorized</code></td>
+<td>
+<p>If <code>TRUE</code> , <code>epoxy_mustache()</code> will vectorize over the
+items in <code>.data</code>. In other words, each item or row of <code>.data</code> will be used
+to render the template once. By default, <code>.vectorized</code> is set to <code>TRUE</code> if
+<code>.data</code> is a data frame and <code>FALSE</code> otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.partials</code></td>
+<td>
+<p>A named list with partial templates. See
+<code>whisker::whisker.render()</code> or the <a href="http://mustache.github.io/mustache.5.html#Partials">mustache documentation</a> for
+details.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A character vector of length 1 if <code>.vectorized</code> is <code>FALSE</code> or a
+character vector of the same length as the number of rows or items in
+<code>.data</code> if <code>.vectorized</code> is <code>TRUE</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other Mustache-style template functions: 
+<code>ui_epoxy_mustache()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># The canonical mustache example
+epoxy_mustache(
+  "Hello {{name}}!",
+  "You have just won {{value}} dollars!",
+  "{{#in_ca}}",
+  "Well, {{taxed_value}} dollars, after taxes.",
+  "{{/in_ca}}",
+  .data = list(
+    name = "Chris",
+    value = 10000,
+    taxed_value = 10000 - (10000 * 0.4),
+    in_ca = TRUE
+  )
+)
+
+# Vectorized over the rows of .data
+epoxy_mustache(
+	"mpg: {{ mpg }}",
+	"hp: {{ hp }}",
+	"wt: {{ wt }}\n",
+	.data = mtcars[1:2, ]
+)
+
+# Non-vectorized
+epoxy_mustache(
+	"mpg: {{ mpg }}",
+	"hp: {{ hp }}",
+	"wt: {{ wt }}",
+	.data = mtcars[1:2, ],
+  .vectorized = FALSE
+)
+
+# With mustache partials
+epoxy_mustache(
+  "Hello {{name}}!",
+	"{{&gt; salutation }}",
+  "You have just won {{value}} dollars!",
+  "{{#in_ca}}",
+  "Well, {{taxed_value}} dollars, after taxes.",
+  "{{/in_ca}}",
+	.partials = list(
+		salutation = c("Hope you are well, {{name}}.")
+	),
+	.sep = " ",
+  .data = list(
+    name = "Chris",
+    value = 10000,
+    taxed_value = 10000 - (10000 * 0.4),
+    in_ca = TRUE
+  )
+)
+
+
+</code></pre>
+
+
+</div>

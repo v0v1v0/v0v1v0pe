@@ -1,0 +1,151 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calculateGLR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Profile likelihood calculation using regression models</h2>
+
+<h3>Description</h3>
+
+<p>This is the function that calculates profileLikelihood for a single SNP. The main function <code>evian</code> calls this function repeatedly to obtain results for multiple SNPs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  calculateGLR(snp, formula_tofit, model, data, bim, lolim, hilim, m, bse,
+                     family, c, plinkCC)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>snp</code></td>
+<td>
+<p>a string specifying the SNP of interests to be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula_tofit</code></td>
+<td>
+<p>a formula object of the genetic model. The model should be formatted as <code>y~nuisance parameters</code>. The parameter of interest should not be included here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>a string specifying the mode of inheritance parameterization: <br><code>additive, dominant, recessive, or overdominance</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame; read from the argument <code>data</code> in the main function <code>evian</code>. It should contain the SNP ID specified in the <code>snp</code> argument as a column name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bim</code></td>
+<td>
+<p>data frame; read from from the argument <code>bim</code> in the main function <code>evian</code>. Provides allele information (base pair, effect/reference alleles) for the SNP of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lolim</code></td>
+<td>
+<p>numeric; the lower limit for the grid or the minimum value of the regression parameter <code class="reqn">\beta</code> used to calculate the likelihood function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hilim</code></td>
+<td>
+<p>numeric; the upper limit for the grid or the maximum value of the regression parameter <code class="reqn">\beta</code> used to calculate the likelihood funciton. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>numeric; the density of the grid at which to compute the standardized likelihood function. A beta grid is defined as the grid of values for the SNP parameter used to evaluate the likelihood function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bse</code></td>
+<td>
+<p>numeric; the number of beta standard errors to utilize in constraining the beta grid limits. Beta grid is evaluated at <code class="reqn">\beta</code> +/- <code>bse</code>*s.e.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>the link function for <code>glm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c</code></td>
+<td>
+<p>numeric; interval of Null Hypothesis to be tested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plinkCC</code></td>
+<td>
+<p>A boolean type that specifies how case/control are coded. case/control were coded 1/0 if it is FALSE, and were coded 2/1 if TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>calculateGLR</code> conducts a likelihood ratio test for testing the SNP of interest. It uses the same numerical approach as the main function calculateEvianMLE to construct the likelihood function and it is then testing whether the effect of the SNP falls in an interval (-c, c) instead of testing whether the effect is 0 as in the calculateEvianMLE.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function outputs a dataframe that contains the summary statistics of the profile likelihood calculation. It contains the following columns:
+</p>
+
+<ul>
+<li> <p><code>GLR</code>: the estimated generalized Likelihood ratio, a value smaller than 1 indicating in favor of the null hypothesis whereas a value greater than 1 indicating in favor of the alternative hypothesis.
+</p>
+</li>
+<li> <p><code>boundary</code>: the boundary where null hypothesis is defined. i.e. the value c in (-c, c)
+</p>
+</li>
+<li> <p><code>AF</code>: allele frequency for the effective allele
+</p>
+</li>
+<li> <p><code>SNP</code>: SNP ID
+</p>
+</li>
+<li> <p><code>bp</code>: base pair position from the <code>bim</code> input
+</p>
+</li>
+<li> <p><code>effect</code>, <code>ref</code>: the effective allele and the other allele from the <code>bim</code> input
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>When <code>lolim</code> or <code>hilim</code> are NOT defined, then the boundaries of the beta grid will be determined by the default <code>bse=5</code>, or a <code>bse</code> defined by the user. Otherwise, the user can define the exact beta grid boundaries using <code>lolim</code> and <code>hilim</code>.
+</p>
+<p>In some cases the beta grid (using <code>bse</code> or <code>lolim</code>,<code>hilim</code>) may need to be increased substantially (<code>bse</code> as large as 15) if covariates are present in the formula. This is automatically dealt by the current function, but contributes to longer computation time to find the appropriate ranges. Estimation may become inaccurate with large number of correlated covariates, which is a known limitation of profile likelihoods.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Dr. Lisa J Strug <a href="mailto:lisa.strug@utoronto.ca">lisa.strug@utoronto.ca</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Bickel, D. R. (2012). “The strength of statistical evidence for composite hypotheses: Inference to the best explanation.” Statistica Sinica, 22, 1147-1198.
+</p>
+<p>Zhang, Z., \&amp; Zhang, B. (2013). “A likelihood paradigm forclinical trials. Journal of Statistical Theory and Practice”, 7, 157-177.
+</p>
+
+
+</div>

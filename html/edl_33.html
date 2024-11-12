@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>updateWeightsNoOutcomeCompetition</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Function implementing the Rescorla-Wagner learning equations without 
+outcome competition (for illustration purposes) for a single learning 
+event.</h2>
+
+<h3>Description</h3>
+
+<p>Function implementing the Rescorla-Wagner learning equations 
+without outcome competition (for illustration purposes) for a single 
+learning event. A set of cues and outcomes are provided, 
+and a weightmatrix that needs to be updated.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">updateWeightsNoOutcomeCompetition(
+  cur.cues,
+  cur.outcomes,
+  wm = NULL,
+  eta = 0.01,
+  lambda = 1,
+  alpha = 0.1,
+  beta1 = 0.1,
+  beta2 = 0.1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cur.cues</code></td>
+<td>
+<p>A vector with cues.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cur.outcomes</code></td>
+<td>
+<p>A vector with outcomes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wm</code></td>
+<td>
+<p>A weightmatrix of class matrix. If not provided a new 
+weightmatrix is returned. Note that the cues and outcomes do not 
+necessarily need to be available as cues and outcomes in the 
+weightmatrix: if not present, they will be added.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eta</code></td>
+<td>
+<p>Learning parameter, typically set to 0.01. 
+If <code>eta</code> is not specified and set to the value NULL, 
+the values of <code>alpha</code>, <code>beta1</code>, and <code>beta2</code> 
+determine the learning rate. However, changing these settings 
+is generally not very useful (see Hoppe et al, submitted).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>Constant constraining the connection strength.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Learning parameter (scaling both positive and negative 
+evidence adjustments), typically set to 0.1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta1</code></td>
+<td>
+<p>Learning parameter for positive evidence, typically set to 
+0.1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta2</code></td>
+<td>
+<p>Learning parameter for negative evidence, typically set to 
+0.1.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A weightmatrix (matrix)
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Dorothee Hoppe, based on <code>RescorlaWagner</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>RescorlaWagner</code>, <code>RWlearning</code>
+</p>
+<p>Other functions for explaining error-driven learning: 
+<code>RWlearningNoCueCompetition()</code>,
+<code>RWlearningNoOutcomeCompetition()</code>,
+<code>updateWeightsNoCueCompetition()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load example data:
+data(dat)
+
+# add obligatory columns Cues, Outcomes, and Frequency:
+dat$Cues &lt;- paste("BG", dat$Shape, dat$Color, sep="_")
+dat$Outcomes &lt;- dat$Category
+dat$Frequency &lt;- dat$Frequency1
+head(dat)
+dim(dat)
+
+# now use createTrainingData to sample from the specified frequencies: 
+train &lt;- createTrainingData(dat)
+
+# this training data can actually be used train network:
+wm &lt;- RWlearningNoOutcomeCompetition(train)
+# retrieve trained network:
+new &lt;- getWM(wm)
+
+train2 &lt;- createTrainingData(dat)
+updateWeightsNoOutcomeCompetition(getValues(train2$Cues[1]), 
+    getValues(train2$Outcomes[1]), wm=new)
+
+# comparison between eta and alpha, beta1, beta2:
+check.cues &lt;- c("BG", "car", "red")
+new[check.cues,]
+tmp1 &lt;- updateWeightsNoOutcomeCompetition(check.cues, 
+    c("vehicle", "animal"), wm=new)
+tmp2 &lt;- updateWeightsNoOutcomeCompetition(check.cues, 
+    c("vehicle", "animal"), wm=new, eta=NULL)
+tmp3 &lt;- updateWeightsNoOutcomeCompetition(check.cues, 
+    c("vehicle", "animal"), wm=new, beta1=0.2)
+tmp4 &lt;- updateWeightsNoOutcomeCompetition(check.cues, 
+    c("vehicle", "animal"), wm=new, eta=NULL, beta1=0.2)
+# these two should be the same:
+tmp1[check.cues,]
+tmp2[check.cues,]
+# now we change beta2, but this does not change anything,
+# because eta is being used:
+tmp3[check.cues,]
+# when we turn eta off, beta2 changes the values:
+tmp4[check.cues,]
+
+</code></pre>
+
+
+</div>

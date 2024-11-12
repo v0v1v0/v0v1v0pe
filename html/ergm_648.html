@@ -1,0 +1,262 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nodal_attributes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Specifying nodal attributes and their levels</h2>
+
+<h3>Description</h3>
+
+<p>This document describes the ways to specify nodal
+attributes or functions of nodal attributes and which levels for
+categorical factors to include. For the helper functions to
+facilitate this, see <code>nodal_attributes-API</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">LARGEST(l, a)
+
+SMALLEST(l, a)
+
+COLLAPSE_SMALLEST(object, n, into)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>object, l, a, n, into</code></td>
+<td>
+<p><code>COLLAPSE_SMALLEST</code>, <code>LARGEST</code>, and
+<code>SMALLEST</code> are technically functions but they are generally not
+called in a standard fashion but rather as a part of an vertex
+attribute specification or a level specification as described
+below. The above usage examples are needed to pass <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s package
+checking without warnings; please disregard them, and refer to the
+sections and examples below instead.</p>
+</td>
+</tr></table>
+<h3>Specifying nodal attributes</h3>
+
+<p>Term nodal attribute arguments, typically called <code>attr</code>, <code>attrs</code>, <code>by</code>, or
+<code>on</code> are interpreted as follows: </p>
+
+<dl>
+<dt>a character string</dt>
+<dd>
+<p>Extract the vertex attribute with
+this name.</p>
+</dd>
+<dt>a character vector of length &gt; 1</dt>
+<dd>
+<p>Extract the vertex
+attributes and paste them together, separated by dots if the term
+expects categorical attributes and (typically) combine into a
+covariate matrix if it expects quantitative attributes.</p>
+</dd>
+<dt>a function</dt>
+<dd>
+<p>The function is called on the LHS network and
+additional arguments to <code>ergm_get_vattr()</code>, expected to return a
+vector or matrix of appropriate dimension. (Shorter vectors and
+matrix columns will be recycled as needed.)</p>
+</dd>
+<dt>a formula</dt>
+<dd>
+<p>The expression on the RHS of the formula is
+evaluated in an environment of the vertex attributes of the
+network, expected to return a vector or matrix of appropriate
+dimension. (Shorter vectors and matrix columns will be recycled as
+needed.) Within this expression, the network itself accessible as
+either <code>.</code> or <code>.nw</code>. For example,
+<code>nodecov(~abs(Grade-mean(Grade))/network.size(.))</code> would return the
+absolute difference of each actor's "Grade" attribute from its
+network-wide mean, divided by the network size.</p>
+</dd>
+<dt>an <code>AsIs</code> object created by <code>I()</code>
+</dt>
+<dd>
+<p>Use as is, checking only
+for correct length and type.</p>
+</dd>
+</dl>
+<p>Any of these arguments may also be wrapped in or piped through
+<code>COLLAPSE_SMALLEST(attr, n, into)</code> or, <code>attr %&gt;% COLLAPSE_SMALLEST(n, into)</code>, a convenience function that will
+transform the attribute by collapsing the smallest <code>n</code> categories
+into one, naming it <code>into</code>. Note that <code>into</code> must be of the same
+type (numeric, character, etc.) as the vertex attribute in
+question. If there are ties for <code>n</code>th smallest category, they will
+be broken in lexicographic order, and a warning will be issued.
+</p>
+<p>The name the nodal attribute receives in the statistic can be
+overridden by setting a an <code>attr()</code>-style attribute <code>"name"</code>.
+</p>
+
+
+<h3>Specifying categorical attribute levels and their ordering</h3>
+
+<p>For categorical attributes, to select which levels are of interest
+and their ordering, use the argument <code>levels</code>.  Selection of nodes (from
+the appropriate vector of nodal indices) is likewise handled as the
+selection of levels, using the argument <code>nodes</code>.  These arguments are interpreted
+as follows: </p>
+
+<dl>
+<dt>an expression wrapped in <code>I()</code>
+</dt>
+<dd>
+<p>Use the given list of levels
+as is.</p>
+</dd>
+<dt>a numeric or logical vector</dt>
+<dd>
+<p>Used for indexing of a list of
+all possible levels (typically, unique values of the attribute) in
+default older (typically lexicographic), i.e.,
+<code>sort(unique(attr))[levels]</code>. In particular, <code>levels=TRUE</code> will
+retain all levels. Negative values exclude. Another special value
+is <code>LARGEST</code>, which will refer to the most frequent category, so,
+say, to set such a category as the baseline, pass
+<code>levels=-LARGEST</code>. In addition, <code>LARGEST(n)</code> will refer to the <code>n</code>
+largest categories. <code>SMALLEST</code> works analogously. If there are ties
+in frequencies, they will be broken in lexicographic order, and a
+warning will be issued. To specify numeric or logical levels
+literally, wrap in <code>I()</code>.</p>
+</dd>
+<dt><code>NULL</code></dt>
+<dd>
+<p>Retain all possible levels; usually equivalent to
+passing <code>TRUE</code>.</p>
+</dd>
+<dt>a character vector</dt>
+<dd>
+<p>Use as is.</p>
+</dd>
+<dt>a function</dt>
+<dd>
+<p>The function is called on the list of unique
+values of the attribute, the values of the attribute themselves,
+and the network itself, depending on its arity. Its return value is
+interpreted as above.</p>
+</dd>
+<dt>a formula</dt>
+<dd>
+<p>The expression on the RHS of the formula is
+evaluated in an environment in which the network itself is
+accessible as <code>.nw</code>, the list of unique values of the attribute as
+<code>.</code> or as <code>.levels</code>, and the attribute vector itself as
+<code>.attr</code>. Its return value is interpreted as above.</p>
+</dd>
+<dt>a matrix</dt>
+<dd>
+<p>For mixing effects (i.e., <code style="white-space: pre;">⁠level2=⁠</code> arguments), a
+matrix can be used to select elements of the mixing matrix, either
+by specifying a logical (<code>TRUE</code> and <code>FALSE</code>) matrix of the same
+dimension as the mixing matrix to select the corresponding cells or
+a two-column numeric matrix indicating giving the coordinates of
+cells to be used.</p>
+</dd>
+</dl>
+<p>Note that <code>levels</code>, <code>nodes</code>, and others often have a default that is sensible for the
+term in question.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(magrittr) # for %&gt;%
+
+data(faux.mesa.high)
+
+# Activity by grade with a baseline grade excluded:
+summary(faux.mesa.high~nodefactor(~Grade))
+# Name overrides:
+summary(faux.mesa.high~nodefactor("Form"~Grade)) # Only for terms that don't use the LHS.
+summary(faux.mesa.high~nodefactor(~structure(Grade,name="Form")))
+# Retain all levels:
+summary(faux.mesa.high~nodefactor(~Grade, levels=TRUE)) # or levels=NULL
+# Use the largest grade as baseline (also Grade 7):
+summary(faux.mesa.high~nodefactor(~Grade, levels=-LARGEST))
+# Activity by grade with no baseline smallest two grades (11 and
+# 12) collapsed into a new category, labelled 0:
+table(faux.mesa.high %v% "Grade")
+summary(faux.mesa.high~nodefactor((~Grade) %&gt;% COLLAPSE_SMALLEST(2, 0),
+                                  levels=TRUE))
+
+# Handling of tied frequencies
+faux.mesa.high %v% "Plans" &lt;-
+    sample(rep(c("College", "Trade School", "Apprenticeship", "Undecided"), c(80,80,20,25)))
+summary(faux.mesa.high ~ nodefactor("Plans", levels = -LARGEST))
+
+# Mixing between lower and upper grades:
+summary(faux.mesa.high~mm(~Grade&gt;=10))
+# Mixing between grades 7 and 8 only:
+summary(faux.mesa.high~mm("Grade", levels=I(c(7,8))))
+# or
+summary(faux.mesa.high~mm("Grade", levels=1:2))
+# or using levels2 (see ? mm) to filter the combinations of levels,
+summary(faux.mesa.high~mm("Grade",
+        levels2=~sapply(.levels,
+                        function(l)
+                          l[[1]]%in%c(7,8) &amp;&amp; l[[2]]%in%c(7,8))))
+
+# Here are some less complex ways to specify levels2. This is the
+# full list of combinations of sexes in an undirected network:
+summary(faux.mesa.high~mm("Sex", levels2=TRUE))
+# Select only the second combination:
+summary(faux.mesa.high~mm("Sex", levels2=2))
+# Equivalently,
+summary(faux.mesa.high~mm("Sex", levels2=-c(1,3)))
+# or
+summary(faux.mesa.high~mm("Sex", levels2=c(FALSE,TRUE,FALSE)))
+# Select all *but* the second one:
+summary(faux.mesa.high~mm("Sex", levels2=-2))
+# Select via a mixing matrix: (Network is undirected and
+# attributes are the same on both sides, so we can use either M or
+# its transpose.)
+(M &lt;- matrix(c(FALSE,TRUE,FALSE,FALSE),2,2))
+summary(faux.mesa.high~mm("Sex", levels2=M)+mm("Sex", levels2=t(M)))
+# Select via an index of a cell:
+idx &lt;- cbind(1,2)
+summary(faux.mesa.high~mm("Sex", levels2=idx))
+# Or, select by specific attribute value combinations, though note
+# the names 'row' and 'col' and the order for undirected networks:
+summary(faux.mesa.high~mm("Sex",
+                          levels2 = I(list(list(row="M",col="M"),
+                                           list(row="M",col="F"),
+                                           list(row="F",col="M")))))
+
+# mm() term allows two-sided attribute formulas with different attributes:
+summary(faux.mesa.high~mm(Grade~Race, levels2=TRUE))
+# It is possible to have collapsing functions in the formula; note
+# the parentheses around "~Race": this is because a formula
+# operator (~) has lower precedence than pipe (|&gt;):
+summary(faux.mesa.high~mm(Grade~(~Race) %&gt;% COLLAPSE_SMALLEST(3,"BWO"), levels2=TRUE))
+
+# Some terms, such as nodecov(), accept matrices of nodal
+# covariates. An certain R quirk means that columns whose
+# expressions are not typical variable names have their names
+# dropped and need to be adjusted. Consider, for example, the
+# linear and quadratic effects of grade:
+Grade &lt;- faux.mesa.high %v% "Grade"
+colnames(cbind(Grade, Grade^2)) # Second column name missing.
+colnames(cbind(Grade, Grade2=Grade^2)) # Can be set manually,
+colnames(cbind(Grade, `Grade^2`=Grade^2)) # even to non-variable-names.
+colnames(cbind(Grade, Grade^2, deparse.level=2)) # Alternatively, deparse.level=2 forces naming.
+rm(Grade)
+
+# Therefore, the nodal attribute names are set as follows:
+summary(faux.mesa.high~nodecov(~cbind(Grade, Grade^2))) # column names dropped with a warning
+summary(faux.mesa.high~nodecov(~cbind(Grade, Grade2=Grade^2))) # column names set manually
+summary(faux.mesa.high~nodecov(~cbind(Grade, Grade^2, deparse.level=2))) # using deparse.level=2
+
+# Activity by grade with a random covariate. Note that setting an attribute "name" gives it a name:
+randomcov &lt;- structure(I(rbinom(network.size(faux.mesa.high),1,0.5)), name="random")
+summary(faux.mesa.high~nodefactor(I(randomcov)))
+</code></pre>
+
+
+</div>

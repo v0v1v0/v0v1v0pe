@@ -1,0 +1,217 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams2grasple</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Exercises in Grasple Format</h2>
+
+<h3>Description</h3>
+
+<p>Automatic generation of exercises in JSON format for the e-learning platform Grasple.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">exams2grasple(file, n = 1L, dir = ".", name = NULL, quiet = TRUE,
+  resolution = 100, width = 4, height = 4, svg = FALSE, encoding = "UTF-8",
+  envir = NULL, engine = NULL,
+  converter = "pandoc-mathjax", zip = TRUE, use_solutionlist = TRUE,
+  license_name = NULL, license_description = NULL, license_value = NULL,
+  license_link = NULL, ...)
+
+make_exams_write_grasple(name = NULL, license_name = NULL,
+  license_description = NULL, license_value = NULL, license_link = NULL,
+  zip = TRUE, use_solutionlist = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The default is the current working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting ZIP file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>logical. Should output be suppressed when calling
+<code>xweave</code> and <code>texi2dvi</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution, width, height</code></td>
+<td>
+<p>numeric, passed to <code>xweave</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>svg</code></td>
+<td>
+<p>logical. Should graphics be rendered in SVG or PNG (default)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>character, ignored. The encoding is always assumed to be UTF-8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>argument passed to <code>xweave</code> (which passes
+it to <code>knit</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>engine</code></td>
+<td>
+<p>argument passed to <code>xweave</code> indicating whether
+<code>"Sweave"</code> (default) or <code>"knitr"</code> should be used for rendering Rnw exercises.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converter</code></td>
+<td>
+<p>character passed on to <code>make_exercise_transform_html</code>,
+indicating the type of converter from LaTeX/Markdown to the specific requirements in
+Grasple. To accomplish this the converter must be set to <code>"pandoc-mathjax"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zip</code></td>
+<td>
+<p>logical. Should the resulting JSON file(s) be zipped?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_solutionlist</code></td>
+<td>
+<p>logical. By default it is assumed that for schoice items
+the solutionlist contains separate feedback for each option. If set to
+<code>FALSE</code> the general feedback is placed in the solutionlist for each option
+separately.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>license_name, license_description, license_value, license_link</code></td>
+<td>
+<p>character,
+arguments for specifying the copyright license for the exercise(s).
+Defaults to "Non-explicit license".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed on to <code>xexams</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>exams2grasple</code> generates exercises in the JSON format for Grasple
+using <code>xexams</code>. It proceeds by (1) calling <code>xweave</code>
+on each exercise, (2) reading the resulting Markdown or LaTeX text, (3) transforming
+the text to Markdown, and (4) embedding the Markdown text into the
+JSON format for Grasple.
+</p>
+<p>For steps (1) and (2) the standard drivers in <code>xexams</code> are used.
+For step (3) a suitable transformation function is set up on the fly
+using <code>make_exercise_transform_html</code>.
+For step (4) a simple writer function is set up on the fly that
+embeds the transformed Markdown code into a hard-coded JSON template
+using <code>toJSON</code> and writes a JSON
+file for each exercise and by default bundles the collection in a ZIP file.
+</p>
+<p>Note that Grasple only officially supports <code>schoice</code> and <code>num</code>
+items, and hence other item types are not supported in the current version of
+<code>exams2grasple</code> either. If the function is used for other types the execution
+of the function is stopped and a warning is issued.
+</p>
+<p>For <code>num</code> exercises the content as specified under the solution environment
+in the Rmd/Rnw files is presented as feedback in Grasple. By contrast, for <code>schoice</code>
+items Grasple requires separate feedback for each option. This can be accomplished in two ways.
+First (the default), by putting unique feedback for each option in the items of the
+solutionlist in the Rmd/Rnw file. Second by putting a general feedback in the solution
+environment and setting <code>use_solutionlist</code> to <code>FALSE</code>, which creates a
+solutionlist with this general feedback for each option.
+</p>
+<p>If the meta-information of an exercise contains an <code>exsection</code> element, its content will be
+transferred to the name element of the JSON-file. This name element is searchable in Grasple. In
+the ShareStats project the <code>exsection</code> element is used for classifying items in terms of its
+taxonomy of topics in statistics education.  
+</p>
+<p>Within the HTML of Grasple exercises, LaTeX elements must be embedded within \\(\\) blocks.
+After conversion using <code>"pandoc-mathjax"</code> the function employs further tweaks to meet
+Grasple's requirements. Also, in case of displaying multiline equations
+Grasple only allows for using the <code>align</code> environment. Environments <code>eqnarray</code>
+and <code>eqnarray*</code> are automatically converted into <code>align</code>. It is uncertain how
+pandoc deals with other multiline environments.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of exercises as generated by <code>xexams</code> is
+returned invisibly.
+</p>
+
+
+<h3>References</h3>
+
+<p>Grasple - Open Education (2022). <em>Format for Open Interactive Math Exercises</em>. <a href="https://github.com/grasple/open-format">https://github.com/grasple/open-format</a></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+library("exams")
+options(device.ask.default = FALSE)
+
+## define a list of exercises
+myexam &lt;- list(
+  "fruit.Rmd",
+  "tstat.Rmd",
+  "regression.Rmd",
+  "swisscapital.Rmd",
+  "tstat2.Rmd",
+  "dist3.Rmd"
+)
+
+## output directory
+dir.create(mydir &lt;- tempfile())
+
+## Not run: 
+## generate .zip with Grasple exercises and use general feedback
+exams2grasple(myexam, dir = mydir, use_solutionlist = FALSE)
+dir(mydir)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

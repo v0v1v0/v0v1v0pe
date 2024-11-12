@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>kgaps_stat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sufficient statistics for the <code class="reqn">K</code>-gaps model</h2>
+
+<h3>Description</h3>
+
+<p>Calculates sufficient statistics for the <code class="reqn">K</code>-gaps model for the extremal
+index <code class="reqn">\theta</code>. Called by <code>kgaps</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">kgaps_stat(data, u, q_u, k = 1, inc_cens = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A numeric vector of raw data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>A numeric scalar.  Extreme value threshold applied to data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_u</code></td>
+<td>
+<p>A numeric scalar.  An estimate of the probability with which
+the threshold <code>u</code> is exceeded.  If <code>q_u</code> is missing then it is
+calculated using <code>mean(data &gt; u, na.rm = TRUE)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>A numeric scalar.  Run parameter <code class="reqn">K</code>, as defined in Suveges and
+Davison (2010).  Threshold inter-exceedances times that are not larger
+than <code>k</code> units are assigned to the same cluster, resulting in a
+<code class="reqn">K</code>-gap equal to zero.  Specifically, the <code class="reqn">K</code>-gap <code class="reqn">S</code>
+corresponding to an inter-exceedance time of <code class="reqn">T</code> is given by
+<code class="reqn">S = \max(T - K, 0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inc_cens</code></td>
+<td>
+<p>A logical scalar indicating whether or not to include
+contributions from right-censored inter-exceedance times relating to the
+first and last observation.  It is known that these times are greater
+than or equal to the time observed. See Attalides (2015) for details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The sample <code class="reqn">K</code>-gaps are
+<code class="reqn">S_0, S_1, ..., S_{N-1}, S_N</code>,
+where <code class="reqn">S_1, ..., S_{N-1}</code> are uncensored and
+<code class="reqn">S_0</code> and <code class="reqn">S_N</code> are right-censored.  Under the assumption that the
+<code class="reqn">K</code>-gaps are independent, the log-likelihood of the <code class="reqn">K</code>-gaps
+model is given by
+</p>
+<p style="text-align: center;"><code class="reqn">l(\theta; S_0, \ldots, S_N) = N_0 \log(1 - \theta) +
+    2 N_1 \log \theta - \theta q (S_0 + \cdots + S_N),</code>
+</p>
+
+<p>where
+</p>
+
+<ul>
+<li> <p><code class="reqn">q</code> is the threshold exceedance probability, estimated by
+the proportion of threshold exceedances,
+</p>
+</li>
+<li> <p><code class="reqn">N_0</code> is the number of uncensored sample <code class="reqn">K</code>-gaps that
+are equal to zero,
+</p>
+</li>
+<li>
+<p> (apart from an adjustment for the contributions of <code class="reqn">S_0</code>
+and <code class="reqn">S_N</code>) <code class="reqn">N_1</code> is the number of positive sample
+<code class="reqn">K</code>-gaps,
+</p>
+</li>
+<li>
+<p> specifically, if <code>inc_cens = TRUE</code> then <code class="reqn">N_1</code> is equal
+to the number of <code class="reqn">S_1, ..., S_{N-1}</code>
+that are positive plus <code class="reqn">(I_0 + I_N) / 2</code>, where <code class="reqn">I_0 = 1</code> if
+<code class="reqn">S_0</code> is greater than zero and <code class="reqn">I_0 = 0</code> otherwise, and
+similarly for <code class="reqn">I_N</code>.
+</p>
+</li>
+</ul>
+<p>The differing treatment of uncensored and right-censored <code class="reqn">K</code>-gaps
+reflects differing contributions to the likelihood.  Right-censored
+<code class="reqn">K</code>-gaps that are equal to zero add no information to the likelihood.
+For full details see Suveges and Davison (2010) and Attalides (2015).
+</p>
+<p>If <code class="reqn">N_1 = 0</code> then we are in the degenerate case where there is one
+cluster (all <code class="reqn">K</code>-gaps are zero) and the likelihood is maximized at
+<code class="reqn">\theta = 0</code>.
+</p>
+<p>If <code class="reqn">N_0 = 0</code> then all exceedances occur singly (all <code class="reqn">K</code>-gaps are
+positive) and the likelihood is maximized at <code class="reqn">\theta = 1</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the sufficient statistics, with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td>
+<code>N0</code> </td>
+<td>
+<p>the number of zero <code class="reqn">K</code>-gaps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>N1</code> </td>
+<td>
+<p>contribution from non-zero <code class="reqn">K</code>-gaps (see
+<strong>Details</strong>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>sum_qs</code> </td>
+<td>
+<p>the sum of the (scaled) <code class="reqn">K</code>-gaps, that is,
+<code class="reqn">q (S_0 + \cdots + S_N)</code>, where <code class="reqn">q</code>
+is estimated by the proportion of threshold exceedances.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>n_kgaps</code> </td>
+<td>
+<p>the number of <code class="reqn">K</code>-gaps that contribute to the
+log-likelihood.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Suveges, M. and Davison, A. C. (2010) Model
+misspecification in peaks over threshold analysis, <em>Annals of
+Applied Statistics</em>, <strong>4</strong>(1), 203-221.
+<a href="https://doi.org/10.1214/09-AOAS292">doi:10.1214/09-AOAS292</a>
+</p>
+<p>Attalides, N. (2015) Threshold-based extreme value modelling,
+PhD thesis, University College London.
+<a href="https://discovery.ucl.ac.uk/1471121/1/Nicolas_Attalides_Thesis.pdf">https://discovery.ucl.ac.uk/1471121/1/Nicolas_Attalides_Thesis.pdf</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>kgaps</code> for maximum likelihood estimation of the
+extremal index <code class="reqn">\theta</code> using the <code class="reqn">K</code>-gaps model.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">u &lt;- quantile(newlyn, probs = 0.90)
+kgaps_stat(newlyn, u)
+</code></pre>
+
+
+</div>

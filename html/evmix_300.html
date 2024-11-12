@@ -1,0 +1,288 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>psden</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>P-Splines probability density function</h2>
+
+<h3>Description</h3>
+
+<p>Density, cumulative distribution function, quantile function and
+random number generation for the P-splines density estimate. B-spline coefficients
+can be result from Poisson regression with log or identity link.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dpsden(x, beta = NULL, nbinwidth = NULL, xrange = NULL, nseg = 10,
+  degree = 3, design.knots = NULL, log = FALSE)
+
+ppsden(q, beta = NULL, nbinwidth = NULL, xrange = NULL, nseg = 10,
+  degree = 3, design.knots = NULL, lower.tail = TRUE)
+
+qpsden(p, beta = NULL, nbinwidth = NULL, xrange = NULL, nseg = 10,
+  degree = 3, design.knots = NULL, lower.tail = TRUE)
+
+rpsden(n = 1, beta = NULL, nbinwidth = NULL, xrange = NULL,
+  nseg = 10, degree = 3, design.knots = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>quantiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>vector of B-spline coefficients (required)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbinwidth</code></td>
+<td>
+<p>scaling to convert count frequency into proper density</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xrange</code></td>
+<td>
+<p>vector of minimum and maximum of B-spline (support of density)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nseg</code></td>
+<td>
+<p>number of segments between knots</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree</code></td>
+<td>
+<p>degree of B-splines (0 is constant, 1 is linear, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design.knots</code></td>
+<td>
+<p>spline knots for splineDesign function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if TRUE then log density</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>quantiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical, if FALSE then upper tail probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>cumulative probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>sample size (positive integer)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>P-spline density estimate using B-splines with given coefficients. B-splines
+knots can be specified using <code>design.knots</code> or regularly spaced knots can be specified
+using <code>xrange</code>, <code>nseg</code> and <code>deg</code>. No default knots are provided.
+</p>
+<p>If regularly spaced knots are specified using <code>xrange</code>, <code>nseg</code> and <code>deg</code>,
+then B-splines which are shifted/spliced versions of each other are defined (i.e. not natural B-splines)
+which is consistent with definition of Eilers and Marx, the masters of P-splines.
+</p>
+<p>The <code>splineDesign</code> function is used to calculate the B-splines, which 
+intakes knot locations as <code>design.knots</code>. As such the <code>design.knots</code> are not the knots in
+their usual sense (e.g. to cover [0, 100] with 10 segments the usual knots would be <code class="reqn">0, 10, \ldots, 100</code>).
+The <code>design.knots</code> must be extended by the <code>degree</code>, so for <code>degree = 2</code> the
+<code>design.knots = seq(-20, 120, 10)</code>.
+</p>
+<p>Further, if the user wants natural B-splines then these can be specified using the
+<code>design.knots</code>, with replicated knots at each bounday according to the degree. To continue the 
+above example, for <code>degree = 2</code> the <code>design.knots = c(rep(0, 2), seq(0, 100, 10), rep(100, 2))</code>. 
+</p>
+<p>If both the <code>design.knots</code> and other knot specification are provided, then the former are
+used by default. Default values for only the <code>degree</code> and <code>nseg</code> are provided, all the other
+P-spline inputs must be provided. Notice that the <code>order</code> and <code>lambda</code> penalty are not needed
+as these are encapsulated in the inference for the B-spline coefficients.
+</p>
+<p>Poisson regression is typically used for estimating the B-spline coefficients, using maximum likelihood
+estimation (via iterative re-weighted least squares). A log-link function is usually used and as such the 
+<code>beta</code> coefficients are on a log-scale, and the density needs to be exponentiated. However, an
+identity link may be (carefully) used and then these coefficients are on the usual scale.
+</p>
+<p>The <code>beta</code> coefficients are estimated using a particular sample (size) and histogram bin-width, using 
+Poisson regression. Thus to
+convert the predicted counts into a proper density it needs to be rescaled by dividing by <code class="reqn">n * binwidth</code>.
+If <code>nbinwidth=NULL</code> is not provided then a crude approximate scaling is used by normalising the density
+to be proper. The renormalisation requires numerical integration, which is
+computationally intensive and so best avoided wherever possible.
+</p>
+<p>Checks of the consistency of the <code>xrange</code>, <code>degree</code> and <code>nseg</code> and <code>design.knots</code> are made,
+with the values implied by the <code>design.knots</code> used by default to replace any incorrect values. These
+replacements are made for notational efficiency for users.
+</p>
+<p>An inversion sampler is used for random number generation which also rather
+inefficient, as it could be carried out more efficiently using a mixture representation.
+</p>
+<p>The quantile function is rather complicated as there is no closed form solution,
+so is obtained by numerical approximation of the inverse cumulative distribution function
+<code class="reqn">P(X \le q) = p</code> to find <code class="reqn">q</code>. The quantile function 
+<code>qpsden</code> evaluates the P-splines cumulative distribution
+function over the <code>xrange</code>. A sequence of values
+of length fifty times the number of knots (with a minimum of 1000) is first
+calculated. Spline based interpolation using <code>splinefun</code>,
+with default <code>monoH.FC</code> method, is then used to approximate the quantile
+function. This is a similar approach to that taken
+by Matt Wand in the <code>qkde</code> in the <code>ks</code> package.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dpsden</code> gives the density, 
+<code>ppsden</code> gives the cumulative distribution function,
+<code>qpsden</code> gives the quantile function and 
+<code>rpsden</code> gives a random sample.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Unlike most of the other extreme value mixture model functions the 
+<code>psden</code> functions have not been vectorised as
+this is not appropriate. The main inputs (<code>x</code>, <code>p</code> or <code>q</code>)
+must be either a scalar or a vector, which also define the output length.
+</p>
+<p>Default values are provided for P-spline inputs of <code>degree</code> and <code>nseg</code> only, 
+but all others must be provided by the user.
+The default sample size for <code>rpsden</code> is 1.
+</p>
+<p>Missing (<code>NA</code>) and Not-a-Number (<code>NaN</code>) values in <code>x</code>,
+<code>p</code> and <code>q</code> are passed through as is and infinite values are set to
+<code>NA</code>. None of these are not permitted for the parameters.
+</p>
+<p>Error checking of the inputs (e.g. invalid probabilities) is carried out and
+will either stop or give warning message as appropriate.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alfadino Akbar and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>.
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/B-spline">http://en.wikipedia.org/wiki/B-spline</a>
+</p>
+<p><a href="http://statweb.lsu.edu/faculty/marx/">http://statweb.lsu.edu/faculty/marx/</a>
+</p>
+<p>Eilers, P.H.C. and Marx, B.D. (1996). Flexible smoothing with B-splines and penalties.
+Statistical Science 11(2), 89-121.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>splineDesign</code>.
+</p>
+<p>Other psden: <code>fpsdengpd</code>, <code>fpsden</code>,
+<code>psdengpd</code>
+</p>
+<p>Other psdengpd: <code>fpsdengpd</code>,
+<code>psdengpd</code>
+</p>
+<p>Other fpsden: <code>fpsden</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(1, 1))
+
+x = rnorm(1000)
+xx = seq(-6, 6, 0.01)
+y = dnorm(xx)
+
+# Plenty of histogram bins (100)
+breaks = seq(-4, 4, length.out=101)
+
+# P-spline fitting with cubic B-splines, 2nd order penalty and 8 internal segments
+# CV search for penalty coefficient. 
+fit = fpsden(x, lambdaseq = 10^seq(-5, 5, 0.25), breaks = breaks,
+             xrange = c(-4, 4), nseg = 10, degree = 3, ord = 2)
+psdensity = exp(fit$bsplines %*% fit$mle)
+
+hist(x, freq = FALSE, breaks = seq(-4, 4, length.out=101), xlim = c(-6, 6))
+lines(xx, y, col = "black") # true density
+
+# P-splines density from dpsden function
+with(fit, lines(xx, dpsden(xx, beta, nbinwidth, design = design.knots), lwd = 2, col = "blue"))
+
+legend("topright", c("True Density","P-spline density"), col=c("black", "blue"), lty = 1)
+
+# plot B-splines
+par(mfrow = c(2, 1))
+with(fit, matplot(mids, as.matrix(bsplines), type = "l", lty = 1))
+
+# Natural B-splines
+knots = with(fit, seq(xrange[1], xrange[2], length.out = nseg + 1))
+natural.knots = with(fit, c(rep(xrange[1], degree), knots, rep(xrange[2], degree)))
+naturalb = splineDesign(natural.knots, fit$mids, ord = fit$degree + 1, outer.ok = TRUE)
+with(fit, matplot(mids, naturalb, type = "l", lty = 1))
+
+# Compare knot specifications
+rbind(fit$design.knots, natural.knots)
+
+# User can use natural B-splines if design.knots are specified manually
+natural.fit = fpsden(x, lambdaseq = 10^seq(-5, 5, 0.25), breaks = breaks,
+             design.knots = natural.knots, nseg = 10, degree = 3, ord = 2)
+psdensity = with(natural.fit, exp(bsplines %*% mle))
+
+par(mfrow = c(1, 1))
+hist(x, freq = FALSE, breaks = seq(-4, 4, length.out=101), xlim = c(-6, 6))
+lines(xx, y, col = "black") # true density
+
+# check density against dpsden function
+with(fit, lines(xx, dpsden(xx, beta, nbinwidth, design = design.knots), lwd = 2, col = "blue"))
+with(natural.fit, lines(xx, dpsden(xx, beta, nbinwidth, design = design.knots),
+                        lwd = 2, col = "red", lty = 2))
+
+legend("topright", c("True Density", "Eilers and Marx B-splines", "Natural B-splines"),
+   col=c("black", "blue", "red"), lty = c(1, 1, 2))
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

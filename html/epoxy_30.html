@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epoxy_transform</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>epoxy Transformers</h2>
+
+<h3>Description</h3>
+
+<p>These transformers provide additional automatic formatting for the template
+strings. They are designed to be used with the <code>.transformer</code> chunk option of
+in <code>epoxy</code> chunks. You can use <code>epoxy_transform()</code> to chain several
+transformers together. <code>epoxy_transform()</code> and individual <span class="pkg">epoxy</span>
+transform functions can be used in <code>epoxy</code>, <code>epoxy_html</code> and <code>epoxy_latex</code>
+chunks and will choose the correct engine for each.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epoxy_transform(..., engine = NULL, syntax = lifecycle::deprecated())
+
+epoxy_transform_get(engine = c("md", "html", "latex"), inline = FALSE)
+
+epoxy_transform_set(..., engine = NULL, syntax = lifecycle::deprecated())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Transformer functions, e.g.
+epoxy_transform_bold or the name of an <span class="pkg">epoxy</span>
+transform function, e.g. <code>"bold"</code>, or a call to a transform function, e.g.
+<code>epoxy_transform_bold()</code>. <code>epoxy_transform()</code> chains the transformer
+functions together, applying the transformers in order from first to last.
+</p>
+<p>For example, <code>epoxy_transform("bold", "collapse")</code> results in replaced
+strings that are emboldened <em>and then</em> collapsed, e.g. <code style="white-space: pre;">⁠**a** and **b**⁠</code>.
+On the other hand, <code>epoxy_transform("collapse", "bold")</code>  will collapse the
+vector <em>and then</em> embolden the entire string.
+</p>
+<p>In <code>epoxy_transform_apply()</code>, the <code>...</code> are passed to the underlying call
+the underlying function call.
+</p>
+<p>In <code>epoxy_transform_collapse()</code>, the <code>...</code> are ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>engine</code></td>
+<td>
+<p>One of <code>"markdown"</code> (or <code>"md"</code>), <code>"html"</code>, or <code>"latex"</code>. The
+default is chosen based on the engine of the chunk where the transform
+function is called, or according to the option <code>epoxy.engine</code>. Caution:
+invalid options are silently ignored, falling back to <code>"markdown"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>syntax</code></td>
+<td>
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated"><img src="../help/figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a> Use <code>engine</code> instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inline</code></td>
+<td>
+<p>In <code>epoxy_transform_get()</code>, whether to return the
+session-specific inline formatting functions for
+<code>epoxy_transform_inline()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A function of <code>text</code> and <code>envir</code> suitable for the <code>.transformer</code> argument of
+<code>glue::glue()</code>.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>epoxy_transform()</code>: Construct a chained transformer using <span class="pkg">epoxy</span>
+transformers for use as a glue transformer. The resulting transformers can
+be passed to the <code>.transformer</code> argument of <code>epoxy()</code> or <code>glue::glue()</code>.
+</p>
+</li>
+<li> <p><code>epoxy_transform_get()</code>: Get the default epoxy <code>.transformer</code> for all
+epoxy engines or for a subset of engines.
+</p>
+</li>
+<li> <p><code>epoxy_transform_set()</code>: Set the default epoxy <code>.transformer</code> for all
+epoxy engines or for a subset of engines.
+</p>
+</li>
+</ul>
+<h3>Output-specific transformations</h3>
+
+<p>The <code>epoxy_transform_</code> functions will attempt to use the correct engine for
+transforming the replacement text for markdown, HTML and LaTeX. This choice
+is driven by the chunk engine where the transformer function is used. The
+<code>epoxy</code> engine corresponds to markdown, <code>epoxy_html</code> to HTML, and
+<code>epoxy_latex</code> to LaTeX.
+</p>
+<p>Automatic engine selection only works when the epoxy transform functions are
+used with epoxy knitr engines and during the knitr rendering process. When
+used outside of this context, you can choose the desired engine by setting
+the <code>engine</code> to one of <code>"markdown"</code>, <code>"html"</code> or <code>"latex"</code>.
+</p>
+
+
+<h3>Session-wide settings</h3>
+
+<p>To change the transformer used by <code>epoxy()</code> and the HTML and LaTeX variants, use <code>epoxy_transform_set()</code>.
+This function takes the same values as <code>epoxy_transform()</code>, but makes them the default transformer for any <code>epoxy()</code> calls that do not specify a transformer.
+By default, the setting is made for all engines, but you can specify a single engine with the <code>engine</code> argument.
+</p>
+<p>Here's a small example that applies the bold and collapse transformers to all epoxy chunks:
+</p>
+<div class="sourceCode r"><pre>epoxy_transform_set("bold", "collapse")
+</pre></div>
+<p>Most often, you'll want to to update the default transformer to customize the formatting functions used by the inline transformer.
+You can use <code>epoxy_transform_set()</code> to change settings of existing formatting functions or to add new one.
+Pass the new function to an argument with the dot-prefixed name.
+</p>
+<p>In the next example I'm setting the <code>.dollar</code> transformation to use "K" and "M" to abbreviate large numbers.
+I'm also adding my own transformation that truncates long strings to fit in 8 characters.
+</p>
+<div class="sourceCode r"><pre>epoxy_transform_set(
+	.dollar = scales::label_dollar(
+		accuracy = 0.01,
+		scale_cut = scales::cut_short_scale()
+	),
+	.trunc8 = function(x) glue::glue_collapse(x, width = 8)
+)
+
+epoxy("{.dollar 12345678}")
+#&gt; $12.34M
+epoxy("{.trunc8 12345678}")
+#&gt; 12345...
+</pre></div>
+<p>Note that the <code>engine</code> argument can be used even with inline tranformations, e.g. to apply a change only for HTML you can use <code>engine = "html"</code>.
+</p>
+<p>To unset the session defaults, you have two options:
+</p>
+
+<ol>
+<li>
+<p> Unset everything by passing <code>NULL</code> to <code>epoxy_transform_set()</code>:
+</p>
+<div class="sourceCode r"><pre>epoxy_transform_set(NULL)
+</pre></div>
+</li>
+<li>
+<p> Unset a single inline transformation by passing <code>rlang::zap()</code> to the named argument:
+</p>
+<div class="sourceCode r"><pre>epoxy_transform_set(.dollar = rlang::zap())
+</pre></div>
+</li>
+</ol>
+<p>Or you can provide new values to overwrite the current settings.
+And as before, you can unset session defaults for a specific <code>engine</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other epoxy's glue transformers: 
+<code>epoxy_transform_html()</code>,
+<code>epoxy_transform_inline()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">epoxy("{.strong {.and letters[1:3]}}")
+epoxy("{.and {.strong letters[1:3]}}")
+
+# If you used the development version of epoxy, the above is equivalent to:
+epoxy("{letters[1:3]&amp;}", .transformer = epoxy_transform("bold", "collapse"))
+epoxy("{letters[1:3]&amp;}", .transformer = epoxy_transform("collapse", "bold"))
+
+# In an epoxy_html chunk...
+epoxy_html("{{.strong {{.or letters[1:3]}} }}")
+
+# Or in an epoxy_latex chunk...
+epoxy_latex("&lt;&lt;.and &lt;&lt;.strong letters[1:3]&gt;&gt; &gt;&gt;")
+
+# ---- Other Transformers ----
+
+# Format numbers with an inline transformation
+amount &lt;- 123.4234234
+epoxy("{.number amount}")
+epoxy(
+  "{.number amount}",
+  .transformer = epoxy_transform_inline(
+    .number = scales::label_number(accuracy = 0.01)
+  )
+)
+
+# Apply _any_ function to all replacements
+epoxy(
+  "{amount} is the same as {amount}",
+  .transformer = epoxy_transform_apply(round, digits = 0)
+)
+
+epoxy(
+  "{amount} is the same as {amount}",
+  .transformer = epoxy_transform(
+    epoxy_transform_apply(~ .x * 100),
+    epoxy_transform_apply(round, digits = 2),
+    epoxy_transform_apply(~ paste0(.x, "%"))
+  )
+)
+</code></pre>
+
+
+</div>

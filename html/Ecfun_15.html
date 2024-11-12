@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>countsByYear</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Allocate totals by year  
+</h2>
+
+<h3>Description</h3>
+
+<p>Allocate <code>total</code> to <code>countByYear</code>
+for a constant count per day between <code>start</code>
+and <code>end</code> for multiple events.    
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">countsByYear(data, start="Start1", end='End1', 
+             total='BatDeath', event='WarName', 
+             endNA=max(data[, c(start,end)]))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>a <code>data.frame</code> with columns 
+<code>start</code>, <code>end</code>, and <code>total</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start, end</code></td>
+<td>
+
+<p>columns of <code>data</code> of class <code>Date</code>
+with <code>start</code> &lt;= <code>end</code> during which 
+<code>total</code> is to be allocated 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total</code></td>
+<td>
+
+<p>A quantity to be allocated by year giving 
+a constant rate per day.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>event</code></td>
+<td>
+
+<p>name of the event whose total is to be allocated.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>endNA</code></td>
+<td>
+
+<p>Date to use if <code>is.na(data[, end])</code>.  
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a numeric <code>matrix</code> whose 
+<code>colSums</code> match <code>total</code> with names 
+for all the years between <code>start</code> and <code>end</code>.  
+The number of columns of the output matrix match the 
+number of rows of <code>data</code>.  The
+<code>colSums</code> match <code>total</code>.   
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  data.frame(WarName, Start1, End1, BatDeath)
+##
+start73 &lt;- as.Date('1973-01-22')
+tstWars &lt;- data.frame(WarName=c('short', '2yr', '10yr'), 
+    Start1=c(start73, start73+365, start73-365), 
+    End1=start73+c(99, 2*365, NA), 
+    BatDeath=c(100, 123, 456)) 
+##
+## 2.  do
+##
+deathsByYr &lt;- countsByYear(tstWars, 
+              endNA=start73+9*365.2)
+
+# check 
+Counts &lt;- matrix(0, 11, 3, 
+    dimnames=list(c(1972:1982), tstWars$WarName) )
+Counts['1973', 1] &lt;- 100
+Counts[as.character(1974:1975), 2] &lt;- with(tstWars, 
+    countByYear(Start1[2], End1[2], BatDeath[2]) )
+Counts[as.character(1972:1982), 3] &lt;- with(tstWars, 
+    countByYear(Start1[3], start73+9*365.2, BatDeath[3]) )
+
+
+all.equal(deathsByYr, Counts)
+
+  
+</code></pre>
+
+
+</div>

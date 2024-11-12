@@ -1,0 +1,232 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calibration_glm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>GLM calibration with presence-absence data</h2>
+
+<h3>Description</h3>
+
+<p>Creates candidate models based on distinct parameter settings, evaluates
+models, and selects the ones that perform the best.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calibration_glm(data, dependent, independent, weights = NULL,
+                response_type = "l", formula_mode = "moderate",
+                minvar = 1, maxvar = NULL, user_formulas = NULL,
+                cv_kfolds = 5, partition_index = NULL, seed = 1,
+                n_threshold = 100, selection_criterion = "TSS",
+                exclude_bimodal = FALSE, tolerance = 0.01,
+                out_dir = NULL, parallel = FALSE,
+                n_cores = NULL, verbose = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame or matrix of data to be used in model calibration.
+Columns represent dependent and independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dependent</code></td>
+<td>
+<p>(character) name of dependent variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>independent</code></td>
+<td>
+<p>(character) vector of name(s) of independent variable(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>(numeric) a vector with the weights for observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response_type</code></td>
+<td>
+<p>(character) a character string that must contain "l",
+"p", "q" or a combination of them. l = lineal, q = quadratic,
+p = interaction between two variables. Default = "l".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula_mode</code></td>
+<td>
+<p>(character) a character string to indicate the strategy to
+create the formulas for candidate models. Options are: "light", "moderate",
+"intensive", or "complex". Default = "moderate". "complex" returns only the
+most complex formula defined in <code>response_type</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minvar</code></td>
+<td>
+<p>(numeric) minimum number of independent variables in formulas.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxvar</code></td>
+<td>
+<p>(numeric) maximum number of independent variables in formulas.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user_formulas</code></td>
+<td>
+<p>(character) vector  with formula(s) to test.
+Default = NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv_kfolds</code></td>
+<td>
+<p>(numeric) number of folds to use for k-fold
+cross-validation exercises. Default = 5. Ignored if <code>partition_index</code>
+is defined.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partition_index</code></td>
+<td>
+<p>list of indices for cross-validation in k-fold. The
+default, NULL, uses the function <code>kfold_partition</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>(numeric) a seed for k-fold partitioning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_threshold</code></td>
+<td>
+<p>(logical) number of threshold values to produce
+evaluation metrics. Default = 100.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selection_criterion</code></td>
+<td>
+<p>(character) criterion used to select best models,
+options are "TSS" and "ESS". Default = "TSS".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude_bimodal</code></td>
+<td>
+<p>(logical) whether to filter out models with one or
+more variables presenting concave responses. Default = FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance</code></td>
+<td>
+<p>(numeric) value to modify the limit value of the metric
+used to filter models during model selection if none of the models meet
+initial considerations. Default = 0.01</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out_dir</code></td>
+<td>
+<p>(character) output directory name to save the main calibration
+results. Default = NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>(logical) whether to run on parallel or sequential.
+Default = FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_cores</code></td>
+<td>
+<p>(numeric) number of cores to use. Default = number of free
+processors - 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>(logical) whether to print messages and show progress bar.
+Default = TRUE</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Model evaluation is done considering the ability to predict presences and
+absences,as well as model fitting and complexity. Model selection consists
+of three steps: 1) a first filter to keep the models with ROC AUC &gt;= 0.5
+(statistically significant models), 2) a second filter to maintain only
+models that meet the <code>selection_criterion</code> ("TSS": TSS &gt;= 0.4; or "ESS":
+maximum Accuracy - <code>tolerance</code>), and 3) from those, pick the ones with
+delta AIC &lt;= 2.
+</p>
+<p><code>formula_mode</code> options determine what strategy to iterate the predictors
+defined in <code>type</code> for creating models:
+</p>
+
+<ul>
+<li> <p><strong>light</strong>.– returns simple iterations of complex formulas.
+</p>
+</li>
+<li> <p><strong>moderate</strong>.– returns a comprehensive number of iterations.
+</p>
+</li>
+<li> <p><strong>intensive</strong>.– returns all possible combination. Very time-consuming for
+6 or more independent variables.
+</p>
+</li>
+<li> <p><strong>complex</strong>.– returns only the most complex formula.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>An object of the class enmpa_calibration containing: selected models,
+a summary of statistics for all models, results obtained in cross-validation
+for all models, original data used, weights, and data-partition indices used.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load species occurrences and environmental data.
+data("enm_data", package = "enmpa")
+head(enm_data)
+
+# Calibration using linear (l), quadratic (q), products(p) responses.
+cal_res &lt;- calibration_glm(data = enm_data, dependent = "Sp",
+                           independent = c("bio_1", "bio_12"),
+                           response_type = "lpq", formula_mode = "moderate",
+                           selection_criterion = "TSS", cv_kfolds = 3,
+                           exclude_bimodal = TRUE, verbose = FALSE)
+print(cal_res)
+summary(cal_res)
+
+head(cal_res$calibration_results)
+head(cal_res$summary)
+head(cal_res$selected)
+head(cal_res$data)
+
+</code></pre>
+
+
+</div>

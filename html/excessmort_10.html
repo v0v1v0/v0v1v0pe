@@ -1,0 +1,306 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>excess_model</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit excess count model</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the increase in the rate for a count time series relative to 
+the rate for a typical year. Two options are available: 1 - model the rate increase as a 
+smooth function and estimate this function or 2 - estimate the total excess in intervals. 
+For 1 an 'event' date can be provided and a discontinuity included in the model.
+You can do either 1 or 2 or both.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">excess_model(
+  counts,
+  start = NULL,
+  end = NULL,
+  knots.per.year = 12,
+  event = NULL,
+  intervals = NULL,
+  discontinuity = TRUE,
+  model = c("quasipoisson", "poisson", "correlated"),
+  exclude = NULL,
+  include.trend = TRUE,
+  trend.knots.per.year = 1/7,
+  harmonics = 2,
+  frequency = NULL,
+  weekday.effect = FALSE,
+  control.dates = NULL,
+  max.control = 5000,
+  order.max = 14,
+  aic = TRUE,
+  maxit = 25,
+  epsilon = 1e-08,
+  alpha = 0.05,
+  min.rate = 1e-04,
+  keep.counts = FALSE,
+  keep.components = TRUE,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>counts</code></td>
+<td>
+<p>A data frame with date, count and population columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>First day of interval to which model will be fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>end</code></td>
+<td>
+<p>Last day of interval to which model will be fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knots.per.year</code></td>
+<td>
+<p>Number of knots per year used for the fitted smooth function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>event</code></td>
+<td>
+<p>If modeling a discontinuity is desired, this is the day in which it happens</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervals</code></td>
+<td>
+<p>Instead of 'start' and 'end' a list of time intervals can be provided and excess is computed in each one</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>discontinuity</code></td>
+<td>
+<p>Logical that determines if discontinuity is allowed at 'event'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Which version of the model to fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude</code></td>
+<td>
+<p>Dates to exclude when computing expected counts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include.trend</code></td>
+<td>
+<p>Logical that determines if a slow trend is included in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend.knots.per.year</code></td>
+<td>
+<p>Number of knots per year used by 'compute_expected' to estimate the trend for the expected counts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>harmonics</code></td>
+<td>
+<p>Number of harmonics used by 'compute_expected' to estimate seasonal trend</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frequency</code></td>
+<td>
+<p>Number of observations per year. If not provided an attempt is made to calculate it</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weekday.effect</code></td>
+<td>
+<p>Logical that determins if a day of the week effects is included in the model. Should be 'FALSE' for weekly or monthly data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control.dates</code></td>
+<td>
+<p>When 'model' is set to 'correlated', these dates are used to estimate the covariance matrix. The larger this is the slower the function runs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.control</code></td>
+<td>
+<p>If the length of 'control.dates' is larger than 'max.control' the function stops.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order.max</code></td>
+<td>
+<p>Larges order for the Autoregressive process used to model the covariance structure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aic</code></td>
+<td>
+<p>A logical that determines if the AIC criterion is used to selected the order of the AR process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>Maxium number of iterations for the IRLS algorithm used when 'model' is 'correlated'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>Difference in deviance requried to declare covergenace of IRLS</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Percentile used to define what is outside the normal range</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.rate</code></td>
+<td>
+<p>The estimated expected rate is not permited to go below this value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.counts</code></td>
+<td>
+<p>A logical that if 'TRUE' forces the function to include the data used to fit the expected count model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.components</code></td>
+<td>
+<p>A logical that if 'TRUE' forces the function to return the estimated trend, seasonal model, and weekday effect, if included in the model. Ignored if expected counts already provided or 'keep.counts' is 'FALSE'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical that determines if messages are displayed</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Three versions of the model are available: 1 - Assume counts are Poisson distributed, 
+2 - assume counts are overdispersed Poisson, or 3 - assume a mixed model with 
+correlated errors. The second is the default and recommended for weekly count data. For daily counts we often find 
+evidence of correlation and recommend the third along with setting 'weekday.effect = TRUE'.
+</p>
+<p>If the 'counts' object includes a 'expected' column produced by 'compute_expected' these are used
+as the expected counts. If not, then these are computed.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If only 'intervals' are provided a data frame with excess estimates described below for 'excess'. 
+if 'start' and 'end' are provided the a list with the following components are included:
+</p>
+
+<dl>
+<dt>date</dt>
+<dd>
+<p>The dates for which the estimate was computed</p>
+</dd>
+<dt>observed</dt>
+<dd>
+<p>The observed counts</p>
+</dd>
+<dt>expected</dt>
+<dd>
+<p>The expected counts</p>
+</dd>
+<dt>fitted</dt>
+<dd>
+<p>The fitted curve for excess counts</p>
+</dd>
+<dt>se</dt>
+<dd>
+<p>The point-wise standard error for the fitted curve</p>
+</dd>
+<dt>population</dt>
+<dd>
+<p>The population size</p>
+</dd>
+<dt>sd</dt>
+<dd>
+<p>The standard deviation for observed counts on a typical year</p>
+</dd>
+<dt>cov</dt>
+<dd>
+<p>The estimated covariance matrix for the observed counts</p>
+</dd>
+<dt>x</dt>
+<dd>
+<p>The design matrix used for the fit</p>
+</dd>
+<dt>betacov</dt>
+<dd>
+<p>The covariance matrix for the estimated coefficients</p>
+</dd>
+<dt>dispersion</dt>
+<dd>
+<p>The estimated overdispersion parameter</p>
+</dd>
+<dt>detected_intervals</dt>
+<dd>
+<p>Time intervals for which the 1 - 'alpha' confidence interval does not include 0</p>
+</dd>
+<dt>ar</dt>
+<dd>
+<p>The estimated coefficients for the autoregressive process</p>
+</dd>
+<dt>excess</dt>
+<dd>
+<p>A data frame with information for the time intervals provided in 'itervals'. This includes start, end, observed death rate (per 1,000 per year), expected death rate, standard deviation for the death rate, observed counts, expected counts, excess counts, standard deviation</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(cdc_state_counts)
+counts &lt;- cdc_state_counts[cdc_state_counts$state == "Massachusetts", ]
+exclude_dates &lt;- c(seq(as.Date("2017-12-16"), as.Date("2018-01-16"), by = "day"),
+seq(as.Date("2020-01-01"), max(cdc_state_counts$date), by = "day"))
+f &lt;- excess_model(counts, 
+exclude = exclude_dates,
+start = min(counts$date),
+end = max(counts$date),
+knots.per.year = 12)
+data(new_jersey_counts)
+exclude_dates &lt;- as.Date("2012-10-29") + 0:180
+control_dates &lt;- seq(min(new_jersey_counts$date), min(exclude_dates) - 1, by = "day")
+f &lt;- excess_model(new_jersey_counts,
+start = as.Date("2012-09-01"), 
+end = as.Date("2013-09-01"), 
+exclude = exclude_dates,
+model = "correlated",
+weekday.effect = TRUE,
+control.dates = control_dates)
+
+</code></pre>
+
+
+</div>

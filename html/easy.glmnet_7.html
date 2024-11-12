@@ -1,0 +1,100 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>glmnet_get.main.model</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get the main glmnet model across imputations and folds</h2>
+
+<h3>Description</h3>
+
+<p>Function to choose the <code>glmnet</code> model most similar to the other models on the list according to the Dice coefficient.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">glmnet_get.main.model(x, childname = NULL, verbose = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a list of objects of class <code>"glmnet_fit"</code> or a list of objects that have a child of class <code>"glmnet_fit"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>childname</code></td>
+<td>
+<p>name of the child of class <code>"glmnet_fit"</code> (if <code>x</code>) is a list of objects that have a child of class <code>"glmnet_fit"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>(optional) logical, whether to print some messages during execution.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If there are several instances of the most similar model, it averages them.</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"glmnet_fit"</code>, representing the model most similar to the other models of the list according to the Dice coefficient.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Joaquim Radua</p>
+
+
+<h3>References</h3>
+
+<p>Sobregrau, P., Bailles, E., Radua, J., Carreno, M., Donaire, A., Setoain, X., Bargallo, N., Rumia, J., Sanchez-Vives, M.V., Pintor, L. (2024)
+Design and validation of a diagnostic suspicion checklist to differentiate epileptic from psychogenic nonepileptic seizures (PNES-DSC).
+<em>Journal of Psychosomatic Research</em>, <b>180</b>, 111656, doi:10.1016/j.jpsychores.2024.111656.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>glmnet_predict</code> for obtaining predictions.
+<code>cv</code> for conducting a cross-validation.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create random x (predictors) and y (binary)
+x = matrix(rnorm(25000), ncol = 50)
+y = 1 * (plogis(apply(x[,1:5], 1, sum) + rnorm(500, 0, 0.1)) &gt; 0.5)
+
+# Predict y via cross-validation
+fit_fun = function (x_training, y_training) {
+  list(
+    lasso = glmnet_fit(x_training, y_training, family = "binomial")
+  )
+}
+predict_fun = function (m, x_test) {
+  glmnet_predict(m$lasso, x_test)
+}
+# Only 2 folds to ensure the example runs quickly
+res = cv(x, y, family = "binomial", fit_fun = fit_fun, predict_fun = predict_fun, nfolds = 2)
+
+# Show the main model
+lasso = glmnet_get.main.model(res$models, "lasso")
+cat(
+  "Model: ~plogis(", round(lasso$a0, 2), "+",
+  paste0(round(lasso$beta, 2), "*", names(lasso$beta), collapse = " + "),
+  ")\n"
+)
+</code></pre>
+
+
+</div>

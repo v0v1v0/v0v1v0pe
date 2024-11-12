@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>controlMOSlognormal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Control parameters for log-normal EMOS models
+</h2>
+
+<h3>Description</h3>
+
+<p>Specifies a list of values controling the log-normal EMOS fit
+of ensemble forecasts.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">controlMOSlognormal(scoringRule = c("crps", "log"),
+                    optimRule = c("BFGS","Nelder-Mead"),
+                    coefRule = c("square", "none", "positive"),
+                    varRule = c("square", "none"),
+                    start = list(a = NULL, B = NULL,
+                                 c = NULL, d = NULL),
+                    maxIter = Inf)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>scoringRule</code></td>
+<td>
+
+<p>The scoring rule to be used in optimum score estimation.  Options
+are "crps" for the continuous ranked probability score and "log" for
+the logarithmic score.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimRule</code></td>
+<td>
+
+<p>Numerical optimization method to be supplied to <code>optim</code>. 
+Options are "BFGS" for the
+Broyden-Fletcher-Goldfarb-Shanno algorithm and "Nelder-Mead" for the
+Nelder-Mead method, see optim for details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefRule</code></td>
+<td>
+
+<p>Method to control non-negativity of regression
+estimates. Options are:
+</p>
+
+<ul>
+<li> <p><code>"square"</code> EMOS coefficients are
+parameterized as squares and thus gauranteed to be non-negative.
+</p>
+</li>
+<li> <p><code>"positive"</code> finds non-negative coefficents
+iteratively by setting negative estimates at the current iteration
+to zero. 
+</p>
+</li>
+<li> <p><code>"none"</code> no restriction on the coefficient
+estimates.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varRule</code></td>
+<td>
+
+<p>Method to control non-negativity of the variance parameters.
+Options <code>"square"</code> and <code>"none"</code> are the same as in
+<code>coefRule</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+
+<p>A list of starting parameters, <code>a</code>, <code>B</code>, <code>c</code> and
+<code>d</code> specifying initial values for the intercept coefficient
+and scale parameters supplied to <code>optim</code>. See details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIter</code></td>
+<td>
+
+<p>An integer specifying the upper limit of the number of iterations
+used to fit the model.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If no value is assigned to an argument, the first entry of 
+the list of possibly choices will be used by default.
+Given an ensemble of size <code class="reqn">m</code>: <code class="reqn">X_1, \ldots , X_m</code>,  the
+following log-normal model is fit by <code>ensembleMOSlognormal</code>: 
+</p>
+<p style="text-align: center;"><code class="reqn">Y ~ LN(\mu, \sigma)</code>
+</p>
+
+<p>where <code class="reqn">LN</code> denotes the log-normal distrbution with <code>meanlog</code> 
+parameter <code class="reqn">\mu</code> and <code>scalelog</code> parameter <code class="reqn">\sigma</code>, see
+Lognormal. The model is parametrized such that the mean value of 
+the log-normal distribution is a linear function <code class="reqn">a + b_1 X_1 + \ldots + b_m X_m</code>
+of the ensemble forecats, and the variance is a linear function
+<code class="reqn">c + d S^2</code>. For transformations between <code class="reqn">\mu, \sigma</code> and mean
+and variance of the log-normal distribution, see Baran and Lerch (2015).
+See ensembleMOSlognormal for details.
+</p>
+<p>Note that in case of <code>scoringRule = "log"</code>, forecast cases in the
+training period with observation values of 0 are ignored in the model 
+estimation as 0 is not included in the support of the log-normal 
+distribution.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list whose components are the input arguments and their assigned
+values.
+</p>
+
+
+<h3>References</h3>
+
+<p>S. Baran and S. Lerch, Log-normal distribution based Ensemble Model
+Output Statistics models for probabilistic wind-speed forecasting. 
+<em>Quarterly Journal of the Royal Meteorological Society</em> 141:2289–2299,
+2015.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleMOSlognormal</code>,
+<code>fitMOSlognormal</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("ensBMAtest", package = "ensembleBMA")
+
+ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+obs &lt;- paste("MAXWSP10","obs", sep = ".")
+ens &lt;- paste("MAXWSP10", ensMemNames, sep = ".")
+windTestData &lt;- ensembleData(forecasts = ensBMAtest[,ens],
+                             dates = ensBMAtest[,"vdate"],
+                             observations = ensBMAtest[,obs],
+                             station = ensBMAtest[,"station"],
+                             forecastHour = 48,
+                             initializationTime = "00")
+
+windTestFitLN &lt;- ensembleMOSlognormal(windTestData, trainingDays = 25,
+                                      dates = "2008010100",
+                                      control = controlMOSlognormal(maxIter = as.integer(100),
+                                                                    scoringRule = "log",
+                                                                    optimRule = "BFGS",
+                                                                    coefRule= "none", 
+                                                                    varRule = "square"))
+</code></pre>
+
+
+</div>

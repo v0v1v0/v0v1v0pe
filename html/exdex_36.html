@@ -1,0 +1,162 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>iwls</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Iterated weighted least squares estimation of the extremal index</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the extremal index <code class="reqn">\theta</code> using the iterated weighted least
+squares method of Suveges (2007).  At the moment no estimates of
+uncertainty are provided.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">iwls(data, u, maxit = 100)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A numeric vector of raw data.  No missing values are allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>A numeric scalar.  Extreme value threshold applied to data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>A numeric scalar.  The maximum number of iterations.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The iterated weighted least squares algorithm on page 46 of
+Suveges (2007) is used to estimate the value of the extremal index.
+This approach uses the time <em>gaps</em> between successive exceedances
+in the data <code>data</code> of the threshold <code>u</code>.  The <code class="reqn">i</code>th
+gap is defined as <code class="reqn">T_i - 1</code>, where <code class="reqn">T_i</code> is the difference in
+the occurrence time of exceedance <code class="reqn">i</code> and exceedance <code class="reqn">i + 1</code>.
+Therefore, threshold exceedances at adjacent time points produce a gap
+of zero.
+</p>
+<p>The model underlying this approach is an exponential-point mas mixture
+for <em>scaled gaps</em>, that is, gaps multiplied by the proportion of
+values in  <code>data</code> that exceed <code>u</code>.  Under this model
+scaled gaps are zero (‘within-cluster’ inter-exceedance times) with
+probability <code class="reqn">1 - \theta</code> and otherwise (‘between-cluster’
+inter-exceedance times) follow an exponential distribution with mean
+<code class="reqn">1 / \theta</code>.
+The estimation method is based on fitting the ‘broken stick’ model of
+Ferro (2003) to an exponential quantile-quantile plot of all of the
+scaled gaps.  Specifically, the broken stick is a horizontal line
+and a line with gradient <code class="reqn">1 / \theta</code> which intersect at
+<code class="reqn">(-\log\theta, 0)</code>.  The algorithm on page 46 of
+Suveges (2007) uses a weighted least squares minimization applied to
+the exponential
+part of this model to seek a compromise between the role of <code class="reqn">\theta</code>
+as the proportion of inter-exceedance times that are between-cluster
+and the reciprocal of the mean of an exponential distribution for these
+inter-exceedance times.  The weights (see Ferro (2003)) are based on the
+variances of order statistics of a standard exponential sample: larger
+order statistics have larger sampling variabilities and therefore
+receive smaller weight than smaller order statistics.
+</p>
+<p>Note that in step (1) of the algorithm on page 46 of Suveges there is a
+typo: <code class="reqn">N_c + 1</code> should be <code class="reqn">N</code>, where <code class="reqn">N</code> is the number of
+threshold exceedances.  Also, the gaps are scaled as detailed above,
+not by their mean.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object (a list) of class <code>"iwls", "exdex"</code> containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td>
+<code>theta</code> </td>
+<td>
+<p>The estimate of <code class="reqn">\theta</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>conv</code> </td>
+<td>
+<p>A convergence indicator: 0 indicates successful
+convergence; 1 indicates that <code>maxit</code> has been reached.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>niter</code> </td>
+<td>
+<p>The number of iterations performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_gaps </code></td>
+<td>
+<p>The number of time gaps between successive
+exceedances.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call </code></td>
+<td>
+<p>The call to <code>iwls</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Suveges, M. (2007) Likelihood estimation of the extremal
+index. <em>Extremes</em>, <strong>10</strong>, 41-55.
+<a href="https://doi.org/10.1007/s10687-007-0034-2">doi:10.1007/s10687-007-0034-2</a>
+</p>
+<p>Ferro, C.A.T. (2003) Statistical methods for clusters of
+extreme values. Ph.D. thesis, Lancaster University.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>iwls_methods</code> for S3 methods for <code>"iwls"</code>
+objects.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### S&amp;P 500 index
+
+u &lt;- quantile(sp500, probs = 0.60)
+theta &lt;- iwls(sp500, u)
+theta
+coef(theta)
+nobs(theta)
+
+### Newlyn sea surges
+
+u &lt;- quantile(newlyn, probs = 0.90)
+theta &lt;- iwls(newlyn, u)
+theta
+</code></pre>
+
+
+</div>

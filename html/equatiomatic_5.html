@@ -1,0 +1,348 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>extract_eq</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>'LaTeX' equation for R models</h2>
+
+<h3>Description</h3>
+
+<p>Extract the variable names from a model to produce a 'LaTeX' equation.
+Supports any model where there is a <code>broom::tidy()</code> method. This is a generic
+function with methods for lmerMod objects obtained with <code>lme4::lmer()</code>,
+glmerMod objects with <code>lme4::glmer()</code>, forecast_ARIMA with
+<code>forecast::Arima()</code> and default, with the later further covering most "base"
+R models implemented in <code>broom::tidy()</code> like lm objects with <code>stats::lm()</code>,
+glm objects with <code>stats::glm()</code> or polr objects with <code>MASS::polr()</code>. The
+default method also supports clm objects obtained with <code>ordinal::clm()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">extract_eq(
+  model,
+  intercept = "alpha",
+  greek = "beta",
+  greek_colors = NULL,
+  subscript_colors = NULL,
+  var_colors = NULL,
+  var_subscript_colors = NULL,
+  raw_tex = FALSE,
+  swap_var_names = NULL,
+  swap_subscript_names = NULL,
+  ital_vars = FALSE,
+  label = NULL,
+  index_factors = FALSE,
+  show_distribution = FALSE,
+  wrap = FALSE,
+  terms_per_line = 4,
+  operator_location = "end",
+  align_env = "aligned",
+  use_coefs = FALSE,
+  coef_digits = 2,
+  fix_signs = TRUE,
+  font_size = NULL,
+  mean_separate = NULL,
+  return_variances = FALSE,
+  se_subscripts = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A fitted model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>How should the intercept be displayed? Default is <code>"alpha"</code>,
+but can also accept <code>"beta"</code>, in which case the it will be displayed
+as beta zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>greek</code></td>
+<td>
+<p>What notation should be used for
+coefficients? Currently only accepts <code>"beta"</code> (with plans for future
+development). Can be used in combination with <code>raw_tex</code> to use any
+notation, e.g., <code>"\hat{\beta}"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>greek_colors</code></td>
+<td>
+<p>The colors of the greek notation in the equation. Must
+be a single color (named or HTML hex code) or a vector of colors (which
+will be recycled if smaller than the number of terms in the model). When
+rendering to PDF, I suggest using HTML hex codes, as not all named colors
+are recognized by LaTeX, but equatiomatic will internally create the
+color definitions for you if HTML codes are supplied. Note that this is
+not yet implemented for mixed effects models (lme4).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subscript_colors</code></td>
+<td>
+<p>The colors of the subscripts for the greek notation.
+The argument structure is equivalent to <code>greek_colors</code> (i.e., see
+above for more detail).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var_colors</code></td>
+<td>
+<p>The color of the variable names. This takes a named vector
+of the form <code>c("variable" = "color")</code>. For example
+<code>c("bill_length_mm" = "#00d4fa", "island" = "#00fa85")</code>. Colors can
+be names (e.g., <code>"red"</code>) or HTML hex codes, as shown in the example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var_subscript_colors</code></td>
+<td>
+<p>The colors of the factor subscripts for
+categorical variables. The interface for this is equivalent to
+<code>var_colors</code>, and all subscripts for a given variable will be
+displayed in the provided color. For example, the code
+<code>c("island" = "green")</code> would result in the subscripts for "Dream"
+and "Torgersen" being green (assuming "Biscoe" was the reference group).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw_tex</code></td>
+<td>
+<p>Logical. Is the greek code being passed to denote coefficients
+raw tex code?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>swap_var_names</code></td>
+<td>
+<p>A vector of the form c("old_var_name" = "new name").
+For example: c("bill_length_mm" = "Bill Length (MM)").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>swap_subscript_names</code></td>
+<td>
+<p>A vector of the form
+c("old_subscript_name" = "new name"). For example:
+c("f" = "Female").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ital_vars</code></td>
+<td>
+<p>Logical, defaults to <code>FALSE</code>. Should the variable names
+not be wrapped in the <code>\operatorname{}</code> command?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>A label for the equation, which can then be used for in-text
+references. See example <a href="https://www.overleaf.com/learn/latex/Cross_referencing_sections,_equations_and_floats#Referencing_equations.2C_figures_and_tables">here</a>.
+Note that this <strong>only works for PDF output</strong>. The in-text references also
+must match the label exactly, and must be formatted as
+<code>\ref{eq: label}</code>, where <code>label</code> is a place holder for the
+specific label. Notice the space after the colon before the label. This
+also must be there, or the cross-reference will fail.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index_factors</code></td>
+<td>
+<p>Logical, defaults to <code>FALSE</code>. Should the factors
+be indexed, rather than using subscripts to display all levels?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_distribution</code></td>
+<td>
+<p>Logical. When fitting a logistic or probit
+regression, should the binomial distribution be displayed? Defaults to
+<code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wrap</code></td>
+<td>
+<p>Logical, defaults to <code>FALSE</code>. Should the terms on the
+right-hand side of the equation be split into multiple lines? This is
+helpful with models with many terms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terms_per_line</code></td>
+<td>
+<p>Integer, defaults to 4. The number of right-hand side
+terms to include per line. Used only when <code>wrap</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>operator_location</code></td>
+<td>
+<p>Character, one of “end” (the default) or
+“start”. When terms are split across multiple lines, they are split
+at mathematical operators like <code>+</code>. If set to “end”, each line will
+end with a trailing operator (<code>+</code> or <code>-</code>). If set to “start”, each
+line will begin with an operator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>align_env</code></td>
+<td>
+<p>TeX environment to wrap around equation. Must be one of
+<code>aligned</code>, <code>aligned*</code>, <code>align</code>, or <code>align*</code>. Defaults
+to <code>aligned</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_coefs</code></td>
+<td>
+<p>Logical, defaults to <code>FALSE</code>. Should the actual model
+estimates be included in the equation instead of math symbols?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef_digits</code></td>
+<td>
+<p>Integer, defaults to 2. The number of decimal places to
+round to when displaying model estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix_signs</code></td>
+<td>
+<p>Logical, defaults to <code>TRUE</code>. If disabled,
+coefficient estimates that are negative are preceded with a "+" (e.g.
+<code>5(x) + -3(z)</code>). If enabled, the "+ -" is replaced with a "-" (e.g.
+<code>5(x) - 3(z)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>font_size</code></td>
+<td>
+<p>The font size of the equation. Defaults to default of
+the output format. Takes any of the standard LaTeX arguments (see
+<a href="https://www.overleaf.com/learn/latex/Font_sizes,_families,_and_styles#Font_styles">here</a>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean_separate</code></td>
+<td>
+<p>Currently only support for <code>lmer</code>
+models. Should the mean structure be inside or separated from the
+normal distribution? Defaults to <code>NULL</code>, in which case it will become
+<code>TRUE</code> if there are more than three fixed-effect parameters. If
+<code>TRUE</code>, the equation will be displayed as, for example,
+outcome ~ N(mu, sigma); mu = alpha + beta_1(wave). If <code>FALSE</code>, this
+same equation would be outcome ~ N(alpha + beta, sigma).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_variances</code></td>
+<td>
+<p>Logical. When <code>use_coefs = TRUE</code> with a mixed
+effects model (e.g., <code>lme4::lmer()</code>), should the variances and
+co-variances be returned? If <code>FALSE</code> (the default) standard deviations
+and correlations are returned instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_subscripts</code></td>
+<td>
+<p>Logical. If <code>se_subscripts = TRUE</code> then the
+equation will include the standard errors below each coefficient.
+This is supported for lm and glm models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments (for future development; not currently used).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The different methods all use the same arguments, but not all arguments are
+suitable to all models. Check here above to determine if a feature is
+implemented for a given model.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A character of class “equation”.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simple model
+mod1 &lt;- lm(mpg ~ cyl + disp, mtcars)
+extract_eq(mod1)
+
+# Include all variables
+mod2 &lt;- lm(mpg ~ ., mtcars)
+extract_eq(mod2)
+
+# Works for categorical variables too, putting levels as subscripts
+mod3 &lt;- lm(body_mass_g ~ bill_length_mm + species, penguins)
+extract_eq(mod3)
+
+set.seed(8675309)
+d &lt;- data.frame(
+  cat1 = rep(letters[1:3], 100),
+  cat2 = rep(LETTERS[1:3], each = 100),
+  cont1 = rnorm(300, 100, 1),
+  cont2 = rnorm(300, 50, 5),
+  out = rnorm(300, 10, 0.5)
+)
+mod4 &lt;- lm(out ~ ., d)
+extract_eq(mod4)
+
+# Don't italicize terms
+extract_eq(mod1, ital_vars = FALSE)
+
+# Wrap equations in an "aligned" environment
+extract_eq(mod2, wrap = TRUE)
+
+# Wider equation wrapping
+extract_eq(mod2, wrap = TRUE, terms_per_line = 4)
+
+# Include model estimates instead of Greek letters
+extract_eq(mod2, wrap = TRUE, terms_per_line = 2, use_coefs = TRUE)
+
+# Don't fix doubled-up "+ -" signs
+extract_eq(mod2, wrap = TRUE, terms_per_line = 4, use_coefs = TRUE, fix_signs = FALSE)
+
+# Use indices for factors instead of subscripts
+extract_eq(mod2, wrap = TRUE, terms_per_line = 4, index_factors = TRUE)
+
+# Use other model types, like glm
+set.seed(8675309)
+d &lt;- data.frame(
+  out = sample(0:1, 100, replace = TRUE),
+  cat1 = rep(letters[1:3], 100),
+  cat2 = rep(LETTERS[1:3], each = 100),
+  cont1 = rnorm(300, 100, 1),
+  cont2 = rnorm(300, 50, 5)
+)
+mod5 &lt;- glm(out ~ ., data = d, family = binomial(link = "logit"))
+extract_eq(mod5, wrap = TRUE)
+</code></pre>
+
+
+</div>

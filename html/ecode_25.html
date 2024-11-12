@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eode_simuAnnealing</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulated Annealing For Optimal Parameters</h2>
+
+<h3>Description</h3>
+
+<p>Find optimal parameters in the ODE system using simulated annealing.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eode_simuAnnealing(
+  x,
+  pdat,
+  paras = "ALL",
+  max_disturb = 0.2,
+  AnnN = 100,
+  step = 0.01,
+  prop.train = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the ODE system under consideration. An object of "<code>eode</code>" class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pdat</code></td>
+<td>
+<p>observed population dynamics. An object of "<code>pdata</code>" class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paras</code></td>
+<td>
+<p>parameters to be optimised. A character vector. If multiple parameters
+are specified, the simulation annealing process will proceed by altering multiple
+parameters at the same time, and accept an alteration if it achieves a lower value of
+the loss function. Default is "ALL", which means to choose all the parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_disturb</code></td>
+<td>
+<p>maximum disturbance in proportion. The biggest disturbance acts on
+parameters at the beginning of the simulated annealing process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AnnN</code></td>
+<td>
+<p>steps of simulated annealing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step</code></td>
+<td>
+<p>interval of time for running simulations. Parameter of the function "<code>eode_proj()</code>".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop.train</code></td>
+<td>
+<p>proportion of training data set. In each step of annealing, a proportion
+of dataset will be randomly decided for model training, and the rest for model validation.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a data frame showing attempted parameters along with the corresponding values of loss function.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+dX_Cdt &lt;- function(X_C, Y_C, X_A, Y_A, nu = 0.15, beta = 0.1, mu = 0.15, g = 0.04) {
+  nu * (X_A + Y_A) - beta * X_C * (Y_C + Y_A) - (mu + g) * X_C
+}
+
+dY_Cdt &lt;- function(X_C, Y_C, Y_A, beta = 0.1, mu = 0.15, g = 0.04, rho = 0.2) {
+  beta * X_C * (Y_C + Y_A) - (mu + g + rho) * Y_C
+}
+
+dX_Adt &lt;- function(X_C, Y_C, X_A, Y_A, beta = 0.1, g = 0.04) {
+  g * X_C - beta * X_A * (Y_C + Y_A)
+}
+
+dY_Adt &lt;- function(X_A, Y_C, Y_A, beta = 0.1, g = 0.04, rho = 0.2) {
+  beta * X_A * (Y_C + Y_A) + g * Y_C - rho * Y_A
+}
+
+x &lt;- eode(
+  dX_Cdt = dX_Cdt, dY_Cdt = dY_Cdt, dX_Adt = dX_Adt, dY_Adt = dY_Adt,
+  constraint = c("X_C&gt;=0", "Y_C&gt;=0", "X_A&gt;=0", "Y_A&gt;=0")
+)
+training_data &lt;- pdata(x,
+  init = data.frame(
+    X_A = c(9, 19, 29, 39),
+    Y_A = c(1, 1, 1, 1),
+    X_C = c(5, 5, 5, 5),
+    Y_C = c(0, 0, 0, 0)
+  ),
+  t = c(3, 3, 3, 3),
+  lambda = data.frame(incidence = c(0.4, 0.8, 0.9, 0.95)),
+  formula = "incidence = (Y_A + Y_C)/(X_A + X_C + Y_A + Y_C)"
+)
+res &lt;- eode_simuAnnealing(x, pdat = training_data, paras = "beta", max_disturb = 0.05, AnnN = 20)
+res
+
+</code></pre>
+
+
+</div>

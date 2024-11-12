@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>wrf_create</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create emission files for the WRF-Chem model</h2>
+
+<h3>Description</h3>
+
+<p>Create WRF-chem emission files using information from the WRF initial condictions (wrfinput) file(s). The wrfinput file of the corresponding domain is read from the current folder or from the wrfinput_dir.
+</p>
+<p>There are two emission styles available: the 12 hour pair of emissions (that will be recycled by the model) using io_style_emissions = 1 and the date_hour format using io_style_emissions = 2 (default), see notes for more detail.
+</p>
+<p>The initial time is the original (wrfinput file) adjusted by the day_offset argument, this argument can be useful for split the emissions into several files or for a restarted simulation. The emissions are recorded at the interval of 60 minutes (or the auxinput5_interval_m argument) for 1 time (or frames_per_auxinput5 argument times).
+</p>
+<p>The variables created on output file is based on emis_opt data or a character vector contains the species, any change in variables need to be followed by a change in the n_aero for the correspondent number of aerosol species in the emission file (the n_aero last variables).
+</p>
+<p>Title argument will be written on global attribute TITLE, from the version 4.0 the model checks if the TITLE version contains "V4.", this can be disabled setting 'force_use_old_data = .true.' on WRF namelist.input.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">wrf_create(
+  wrfinput_dir = getwd(),
+  wrfchemi_dir = wrfinput_dir,
+  domains = 1,
+  frames_per_auxinput5 = 1,
+  auxinput5_interval_m = 60,
+  day_offset = 0,
+  io_style_emissions = 2,
+  kemit = 1,
+  variables = "ecb05_opt2",
+  n_aero = 15,
+  COMPRESS = NA,
+  force_ncdf4 = FALSE,
+  title = "Anthropogenic emissions for WRF V4.0",
+  separator = "default",
+  prefix = "wrfchemi",
+  overwrite = TRUE,
+  return_fn = FALSE,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>wrfinput_dir</code></td>
+<td>
+<p>input folder with the wrfinput file(s)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wrfchemi_dir</code></td>
+<td>
+<p>output folder</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>domains</code></td>
+<td>
+<p>domain / domains to be process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frames_per_auxinput5</code></td>
+<td>
+<p>value from wrf &amp;time_control namelist.input,
+number of times (frames) in a single emission file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>auxinput5_interval_m</code></td>
+<td>
+<p>value from wrf &amp;time_control namelist.input,
+interval in minutes between different times (frames) see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>day_offset</code></td>
+<td>
+<p>number of days (can be a fraction) see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>io_style_emissions</code></td>
+<td>
+<p>from wrf &amp;chem namelist.input, 1 for 12z/00z style and 2 to date_hour style, see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kemit</code></td>
+<td>
+<p>from wrf &amp;chem namelist.input number of vertical levels of the emission file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variables</code></td>
+<td>
+<p>emission species, can be used <code>emis_opt</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_aero</code></td>
+<td>
+<p>number of aerosol species</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>COMPRESS</code></td>
+<td>
+<p>integer between 1 (least comp.) and 9 (most comp.) or NA for
+no compression</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force_ncdf4</code></td>
+<td>
+<p>force NetCDF4 format</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>TITLE attribute for the NetCDF</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>separator</code></td>
+<td>
+<p>filename alternative separator for hour:minutes:seconds with io_style_emission=2</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prefix</code></td>
+<td>
+<p>file name prefix, default is wrfchemi (wrf default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overwrite</code></td>
+<td>
+<p>logical, defoult is true, if FALSE check if the file exist</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_fn</code></td>
+<td>
+<p>logical, return the name of the last file created</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>print file info</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Using io_style_emissions = 1, the wrfchemi_00z will be generated with day_offset = 0 and
+wrfchemi_12z with day_offset = 0.5 (frames_per_auxinput5 and auxinput5_interval_m will have no effect).
+</p>
+<p>Windows users may need to rename the emission files or change in namelist the defoult filename before run wrf.exe with these emission files.
+</p>
+<p>The separator argument can be useful for write in NTSF format discs on linux systems, for 'default' the separator is ':' for linux-like systems and '%3A' for windowns.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Daniel Schuch
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>to_wrf</code> and <code>emis_opt</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Do not run
+
+# emissions for a 1 day forecast for domains 1 and 2
+
+dir.create(file.path(tempdir(), "EMISS"))
+
+# emissions on date_hour style
+wrf_create(wrfinput_dir         = system.file("extdata", package = "eixport"),
+           wrfchemi_dir         = file.path(tempdir(), "EMISS"),
+           domains              = 1:2,
+           frames_per_auxinput5 = 25,
+           auxinput5_interval_m = 60,
+           verbose              = TRUE)
+
+# emissions on 00z / 12z style, create the 00z
+wrf_create(wrfinput_dir         = system.file("extdata", package = "eixport"),
+           wrfchemi_dir         = file.path(tempdir(), "EMISS"),
+           domains              = 1:2,
+           io_style_emissions   = 1,
+           day_offset           = 0,
+           verbose              = TRUE,
+           )
+# emissions on 00z / 12z style, create the 12z
+wrf_create(wrfinput_dir         = system.file("extdata", package = "eixport"),
+           wrfchemi_dir         = file.path(tempdir(), "EMISS"),
+           domains              = 1:2,
+           io_style_emissions   = 1,
+           day_offset           = 0.5,
+           verbose              = TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

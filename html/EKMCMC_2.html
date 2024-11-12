@@ -1,0 +1,194 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>main_est</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Main function for estimating catalytic constant k_cat and Michaelis-Menten (MM) constant K_M</h2>
+
+<h3>Description</h3>
+
+<p>The function estimates either the catalytic constant, the Michaelis-Menten constant, or both simultaneously using progress-curve data,
+initial enzyme concentrations, and initial substrate concentrations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">main_est(
+  method = TRUE,
+  timeseries,
+  enz,
+  subs,
+  K_M = FALSE,
+  catal = FALSE,
+  K_M_init = FALSE,
+  std = FALSE,
+  tun = 2.4,
+  nrepeat = 1000,
+  jump = 10,
+  burn = 1000,
+  catal_m = 1,
+  catal_v = 1e+06,
+  K_M_m = FALSE,
+  K_M_v = FALSE,
+  volume = FALSE,
+  t_unit,
+  c_unit
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>This determines which model, the sQSSA or tQSSA model, is used for the estimation. Specifically, the input for method is TRUE (FALSE); then the tQSSA (sQSSA) model is used. Its default value is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeseries</code></td>
+<td>
+<p>Data frame containing the time points and measured concentrations of products. Every two columns represent the time points when the concentrations of the products were measured and the corresponding measured concentrations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>enz</code></td>
+<td>
+<p>initial enzyme concentrations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subs</code></td>
+<td>
+<p>initial substrate concentrations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K_M</code></td>
+<td>
+<p>true value of the Michaelis-Menten constant. Specify this object if the true value is known. Its default value is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>catal</code></td>
+<td>
+<p>true value of the catalytic constant.  Specify this object if the true value is known. Its default value is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K_M_init</code></td>
+<td>
+<p>initial value of K_M constant for the Metropolis-Hastings algorithm. If the input is FALSE then it is determined by max(subs). Its default value is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std</code></td>
+<td>
+<p>standard deviation of proposal distribution. If the input is FALSE then it is determined by using the hessian of log posterior distribution. Its default value is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tun</code></td>
+<td>
+<p>tuning constant for the Metropolis-Hastings algorithm when std is FALSE (i.e., hessian of the log posterior distribution is used). Its default value is 2.4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrepeat</code></td>
+<td>
+<p>number of effective iteration, i.e., posterior samples. Its default value is 1,000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jump</code></td>
+<td>
+<p>length of distance between sampling, i.e., thinning rate. Its default value is 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burn</code></td>
+<td>
+<p>length of burn-in period. Its default value is 1,000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>catal_m</code></td>
+<td>
+<p>prior mean of gamma prior for the catalytic constant k_cat. Its default value is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>catal_v</code></td>
+<td>
+<p>prior variance of gamma prior for the catalytic constant k_cat Its default value is 1e+06.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K_M_m</code></td>
+<td>
+<p>prior mean of gamma prior for the Michaelis-Menten constant K_M. If the input is FALSE then it is determined by max(subs). Its default value is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K_M_v</code></td>
+<td>
+<p>prior variance of gamma prior for the Michaelis-Menten constant K_M. If the input is FALSE then it is determined by max(subs)^2*1000. Its default value is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>volume</code></td>
+<td>
+<p>the volume of a system. It is used to scale the product concentration. FALSE input provides automatic scaling. Its default value is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t_unit</code></td>
+<td>
+<p>the unit of time points. It can be an arbitrary string.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_unit</code></td>
+<td>
+<p>the unit of concentrations. It can be an arbitrary string.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function main_est generates a set of Markov Chain Monte Carlo (MCMC)
+simulation samples from the posterior distribution of the catalytic constant or (and)
+the Michaelis-Menten constant of enzyme kinetics model. Users should
+input initial enzyme concentrations, substrate concentrations, and progress-curve data.
+Prior information for both parameters can be given.
+The Gibbs sampling and Metropolis Hastings algorithms are used to sample the parameters.
+Parameters for the MCMC such as tuning parameter for proposal distribution, prior parameters,
+and the iteration number can be specified by users. This function use one of
+catalytic_est(), MM_est(), MM_catal_est() to generate the samples depending on parameter(s) to be estimated.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector (or matrix) containing posterior samples of the estimated parameter(s).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+data("timeseries_data_example")
+result &lt;- main_est(method=TRUE, timeseries = timeseries_data_example, 
+enz = c(4.4, 4.4, 440, 440), subs=c(4.4, 4.4, 4.4, 4.4), K_M_init = 1e+1, 
+std=1e+1, tun = 3.5, jump=10, burn=1000, nrepeat=1000,
+catal_m=1, catal_v=100, K_M_m=1, K_M_v=1e+4, volume = FALSE, 
+t_unit = "sec", c_unit = "mM")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

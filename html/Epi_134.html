@@ -1,0 +1,215 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Ns</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Natural splines - (cubic splines linear beyond outermost knots) with
+convenient specification of knots and possibility of centering,
+detrending and clamping.
+</h2>
+
+<h3>Description</h3>
+
+<p>This function is partly for convenient specification of natural splines
+in practical modeling. The convention used is to take the smallest
+and the largest of the supplied knots as boundary knots. It also has
+the option of centering the effects provided at a chosen reference
+point as well as projecting the columns on the orthogonal space to
+that spanned by the intercept and the linear effect of the variable,
+and finally fixing slopes beyond boundary knots (clamping).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Ns( x, ref = NULL, df = NULL,
+                knots = NULL,
+            intercept = FALSE,
+       Boundary.knots = NULL,
+                fixsl = c(FALSE,FALSE),
+              detrend = FALSE )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref</code></td>
+<td>
+<p>Scalar. Reference point on the <code>x</code>-scale, where the
+resulting effect will be 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>degrees of freedom.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knots</code></td>
+<td>
+<p>knots to be used both as boundary and internal knots. If
+<code>Boundary.knots</code> are given, this will be taken as the set of
+internal knots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>Should the intercept be included in the resulting
+basis? Ignored if any of <code>ref</code> or <code>detrend</code> is given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Boundary.knots</code></td>
+<td>
+<p>The boundary knots beyond which the spline is
+linear. Defaults to the minimum and maximum of <code>knots</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixsl</code></td>
+<td>
+<p>Specification of whether slopes beyond outer knots should
+be fixed to 0. <code>FALSE</code> correponds to no restriction; a curve with 0
+slope beyond the upper knot is obtained using
+<code>c(FALSE,TRUE)</code>. Ignored if <code>!(detrend==FALSE)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>detrend</code></td>
+<td>
+<p>If <code>TRUE</code>, the columns of the spline basis will be
+projected to the orthogonal of <code>cbind(1,x)</code>. Optionally
+<code>detrend</code> can be given as a vector of non-negative numbers og
+length <code>length(x)</code>, used
+to define an inner product as <code>diag(detrend)</code> for projection on
+the orthogonal to <code>cbind(1,x)</code>. The default is projection
+w.r.t. the inner product defined by the identity matrix.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A matrix of dimension c(length(x),df) where either <code>df</code> was
+supplied or if <code>knots</code> were supplied, <code>df = length(knots) -
+    1 + intercept</code>. <code>Ns</code> returns a spline basis which is centered at
+<code>ref</code>. <code>Ns</code> with the argument <code>detrend=TRUE</code> returns a
+spline basis which is orthogonal to <code>cbind(1,x)</code> with respect to
+the inner product defined by the positive definite matrix
+<code>diag(detrend)</code> (an assumption which is checked). Note the latter
+is data dependent and therefore making predictions
+with a <code>newdata</code> argument will be senseless.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The need for this function is primarily from analysis of rates in
+epidemiology and demography, where the dataset are time-split records
+of follow-up, and the range of data therefore rarely is of any
+interest (let alone meaningful).
+</p>
+<p>In Poisson modeling of rates based on time-split records one should
+aim at having the same number of <em>events</em> between knots, rather
+than the same number of observations. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen <a href="mailto:b@bxc.dk">b@bxc.dk</a>,
+Lars Jorge D\'iaz, Steno Diabetes Center Copenhagen.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">require(splines)
+require(stats)
+require(graphics)
+
+ns( women$height, df = 3)
+Ns( women$height, knots=c(63,59,71,67) )
+
+# Gives the same results as ns:
+summary( lm(weight ~ ns(height, df = 3), data = women) )
+summary( lm(weight ~ Ns(height, df = 3), data = women) )
+
+# Get the diabetes data and set up as Lexis object
+data(DMlate)
+DMlate &lt;- DMlate[sample(1:nrow(DMlate),500),]
+dml &lt;- Lexis( entry = list(Per=dodm, Age=dodm-dobth, DMdur=0 ),
+               exit = list(Per=dox),
+        exit.status = factor(!is.na(dodth),labels=c("DM","Dead")),
+               data = DMlate )
+
+# Split follow-up in 1-year age intervals
+dms &lt;- splitLexis( dml, time.scale="Age", breaks=0:100 )
+summary( dms )
+
+# Model  age-specific rates using Ns with 6 knots
+# and period-specific RRs around 2000 with 4 knots
+# with the same number of deaths between each pair of knots
+n.kn &lt;- 6
+( a.kn &lt;- with( subset(dms,lex.Xst=="Dead"),
+                quantile( Age+lex.dur, probs=(1:n.kn-0.5)/n.kn ) ) )
+n.kn &lt;- 4
+( p.kn &lt;- with( subset( dms, lex.Xst=="Dead" ),
+                quantile( Per+lex.dur, probs=(1:n.kn-0.5)/n.kn ) ) )
+m1 &lt;- glm( lex.Xst=="Dead" ~ Ns( Age, kn=a.kn ) +
+                             Ns( Per, kn=p.kn, ref=2000 ),
+           offset = log( lex.dur ),
+           family = poisson,
+             data = dms )
+
+# Plot estimated age-mortality curve for the year 2005 and knots chosen:
+nd &lt;- data.frame( Age=seq(40,100,0.1), Per=2005, lex.dur=1000 )
+par( mfrow=c(1,2) )
+matplot( nd$Age, ci.pred( m1, newdata=nd ),
+         type="l", lwd=c(3,1,1), lty=1, col="black", log="y",
+         ylab="Mortality rates per 1000 PY", xlab="Age (years)", las=1, ylim=c(1,1000) )
+rug( a.kn, lwd=2 )
+
+# Clamped Age effect to the right of rightmost knot.
+m1.c &lt;- glm( lex.Xst=="Dead" ~ Ns( Age, kn=a.kn, fixsl=c(FALSE,TRUE) ) +
+                               Ns( Per, kn=p.kn, ref=2000 ),
+             offset = log( lex.dur ),
+             family = poisson,
+               data = dms )
+
+# Plot estimated age-mortality curve for the year 2005 and knots chosen.
+matplot( nd$Age, ci.pred( m1.c, newdata=nd ),
+         type="l", lwd=c(3,1,1), lty=1, col="black", log="y",
+         ylab="Mortality rates per 1000 PY", xlab="Age (years)", las=1, ylim=c(1,1000) )
+rug( a.kn, lwd=2 )
+
+par( mfrow=c(1,1) )
+
+# Including a linear Age effect of 0.05 to the right of rightmost knot.
+m1.l &lt;- glm( lex.Xst=="Dead" ~ Ns( Age, kn=a.kn, fixsl=c(FALSE,TRUE) ) +
+                               Ns( Per, kn=p.kn, ref=2000 ),
+             offset = log( lex.dur ) + pmax( Age, max( a.kn ) ) * 0.05,
+             family = poisson,
+               data = dms )
+
+# Plot estimated age-mortality curve for the year 2005 and knots chosen.
+nd &lt;- data.frame(Age=40:100,Per=2005,lex.dur=1000)
+matplot( nd$Age, ci.pred( m1.l, newdata=nd ),
+         type="l", lwd=c(3,1,1), lty=1, col="black", log="y",
+         ylab="Mortality rates per 1000 PY", xlab="Age (years)", las=1, ylim=c(1,1000) )
+rug( a.kn, lwd=2 )
+</code></pre>
+
+
+</div>

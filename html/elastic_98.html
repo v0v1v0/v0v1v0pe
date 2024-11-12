@@ -1,0 +1,209 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ingest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ingest API operations</h2>
+
+<h3>Description</h3>
+
+<p>Ingest API operations
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pipeline_create(conn, id, body, ...)
+
+pipeline_attachment(conn, index, id, pipeline, body, type = NULL, ...)
+
+pipeline_get(conn, id, filter_path = NULL, ...)
+
+pipeline_delete(conn, id, body, ...)
+
+pipeline_simulate(conn, body, id = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>an Elasticsearch connection object, see <code>connect()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>(character) one or more pipeline id's. with delete, you can use
+a wildcard match</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>body</code></td>
+<td>
+<p>body describing pipeline, see examples and Elasticsearch docs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Curl args passed on to crul::verb-POST, crul::verb-GET,
+crul::verb-PUT, or crul::verb-DELETE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>(character) an index. only used in <code>pipeline_attachment</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pipeline</code></td>
+<td>
+<p>(character) a pipeline name. only used in <code>pipeline_attachment</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>(character) a type. only used in <code>pipeline_attachment</code>. by default
+ths is set to <code>NULL</code> - optional in ES &lt;= v6.3; not allowed in ES &gt;= v6.4</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filter_path</code></td>
+<td>
+<p>(character) fields to return. deafults to all if not given</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>ingest/pipeline functions available in Elasticsearch v5 and
+greater
+</p>
+
+
+<h3>Value</h3>
+
+<p>a named list
+</p>
+
+
+<h3>Attachments</h3>
+
+<p>See https://www.elastic.co/guide/en/elasticsearch/plugins/current/ingest-attachment.html
+You need to install the attachment processor plugin to be able to use
+attachments in pipelines
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/ingest-apis.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/ingest-apis.html</a>,
+<a href="https://www.elastic.co/guide/en/elasticsearch/plugins/current/using-ingest-attachment.html">https://www.elastic.co/guide/en/elasticsearch/plugins/current/using-ingest-attachment.html</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# connection setup
+(x &lt;- connect())
+
+# create
+body1 &lt;- '{
+  "description" : "do a thing",
+  "version" : 123,
+  "processors" : [
+    {
+      "set" : {
+        "field": "foo",
+        "value": "bar"
+      }
+    }
+  ]
+}'
+body2 &lt;- '{
+  "description" : "do another thing",
+  "processors" : [
+    {
+      "set" : {
+        "field": "stuff",
+        "value": "things"
+      }
+    }
+  ]
+}'
+pipeline_create(x, id = 'foo', body = body1)
+pipeline_create(x, id = 'bar', body = body2)
+
+# get
+pipeline_get(x, id = 'foo')
+pipeline_get(x, id = 'bar')
+pipeline_get(x, id = 'foo', filter_path = "*.version")
+pipeline_get(x, id = c('foo', 'bar')) # get &gt;1
+
+# delete
+pipeline_delete(x, id = 'foo')
+
+# simulate
+## with pipeline included
+body &lt;- '{
+  "pipeline" : {
+    "description" : "do another thing",
+    "processors" : [
+      {
+        "set" : {
+          "field": "stuff",
+          "value": "things"
+        }
+      }
+    ]
+  },
+  "docs" : [
+    { "_source": {"foo": "bar"} },
+    { "_source": {"foo": "world"} }
+  ]
+}'
+pipeline_simulate(x, body)
+
+## referencing existing pipeline
+body &lt;- '{
+  "docs" : [
+    { "_source": {"foo": "bar"} },
+    { "_source": {"foo": "world"} }
+  ]
+}'
+pipeline_simulate(x, body, id = "foo")
+
+# attchments - Note: you need the attachment plugin for this, see above
+body1 &lt;- '{
+  "description" : "do a thing",
+  "version" : 123,
+  "processors" : [
+    {
+      "attachment" : {
+        "field" : "data"
+      }
+    }
+  ]
+}'
+pipeline_create(x, "baz", body1)
+body_attach &lt;- '{
+  "data": "e1xydGYxXGFuc2kNCkxvcmVtIGlwc3VtIGRvbG9yIHNpdCBhbWV0DQpccGFyIH0="
+}'
+if (!index_exists(x, "boomarang")) index_create(x, "boomarang")
+docs_create(x, 'boomarang', id = 1, body = list(title = "New title"))
+pipeline_attachment(x, "boomarang", "1", "baz", body_attach)
+pipeline_get(x, id = 'baz')
+
+## End(Not run)
+</code></pre>
+
+
+</div>

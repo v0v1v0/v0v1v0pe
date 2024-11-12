@@ -1,0 +1,377 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>createEPMgrid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create epmGrid object</h2>
+
+<h3>Description</h3>
+
+<p>Creates an epmGrid object from a range of species-specific
+inputs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">createEPMgrid(
+  spDat,
+  resolution = 50000,
+  method = "centroid",
+  cellType = "hexagon",
+  percentThreshold = 0.25,
+  retainSmallRanges = TRUE,
+  extent = "auto",
+  percentWithin = 0,
+  dropEmptyCells = TRUE,
+  checkValidity = FALSE,
+  crs = NULL,
+  nThreads = 1,
+  template = NULL,
+  verbose = FALSE,
+  use.data.table = "auto"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>spDat</code></td>
+<td>
+<p>a number of possible input formats are possible. See details
+below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>vertical and horizontal spacing of grid cells, in units of
+the polygons' or points' projection.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>approach used for gridding. Either <code>centroid</code> or
+<code>percentOverlap</code>. See details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cellType</code></td>
+<td>
+<p>either <code>hexagon</code> or <code>square</code>. See details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>percentThreshold</code></td>
+<td>
+<p>the percent that a species range must cover a grid
+cell to be considered present. Specified as a proportion.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>retainSmallRanges</code></td>
+<td>
+<p>boolean; should small ranged species be dropped or
+preserved. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extent</code></td>
+<td>
+<p>if 'auto', then the maximal extent of the polygons will be
+used. If not 'auto', can be a SpatialPolygon, sf object, or raster, in
+which case the resulting epmGrid will be cropped and masked with respect to
+the polygon; or a spatial coordinates object, from which an extent object
+will be generated; or a numeric vector of length 4 with minLong, maxLong,
+minLat, maxLat. If 'global', a global extent will be specified. 
+See <code>interactiveExtent</code> to draw your own extent.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>percentWithin</code></td>
+<td>
+<p>The percentage of a species range that must be within
+the defined extent in order for that species to be included. This filter
+can be used to exclude species whose range barely enters the area of
+interest. The default value of 0 will disable this filter. If <code>extent
+== 'auto'</code>, then this filter will also have no effect, as the extent is
+defined by the species' ranges.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dropEmptyCells</code></td>
+<td>
+<p>only relevant for hexagonal grids, should empty cells be
+excluded from the resulting grid. Default is TRUE. Reasons to set this to FALSE
+may be if you want to retain a grid of a certain extent, regardless of which
+cells contain species.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>checkValidity</code></td>
+<td>
+<p>if <code>TRUE</code>, then check polygon validity and repair
+if needed, using sf::st_make_valid.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crs</code></td>
+<td>
+<p>if supplying occurrence records in a non-spatial format, then you
+must specify the crs. For unprojected long/lat data, you can simply provide
+<code>crs = 4326</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nThreads</code></td>
+<td>
+<p>if &gt; 1, then employ parallel computing. This won't
+necessarily improve runtime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>a grid (SpatRaster, RasterLayer or sf)
+that will be directly used as the reference grid, bypassing any inference from
+the input data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>if TRUE, list out all species that are dropped/excluded,
+rather than counts.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.data.table</code></td>
+<td>
+<p>if <code>'auto'</code>, this is determined by the size of the
+dataset. Primarily intended for debugging.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Types of accepted inputs for argument <code>spDat</code>: 
+</p>
+
+<ol>
+<li>
+<p> a list of polygon objects (sf or sp), named with taxon names. 
+</p>
+</li>
+<li>
+<p> a list of SpatRaster or RasterLayer grids, named with taxon names. </p>
+</li>
+<li>
+<p> a
+multi-layer RasterStack or multi-layer SpatRaster. 
+</p>
+</li>
+<li>
+<p> a set of occurrence records, multiple accepted formats, see below. 
+</p>
+</li>
+<li>
+<p> a site-by-taxon presence/absence matrix. 
+</p>
+</li>
+</ol>
+<p>If input data consist of <strong>occurrence records</strong> rather than polygons,
+then a couple of formats are possible: 
+</p>
+ 
+<ol>
+<li>
+<p> You can provide a list of species-specific spatial point objects. 
+</p>
+</li>
+<li>
+<p> You can provide a single spatial object, where points have a taxon attribute. 
+</p>
+</li>
+<li>
+<p> You can provide a list of non-spatial species-specific dataframes. 
+</p>
+</li>
+<li>
+<p> You can provide a single non-spatial dataframe. 
+</p>
+</li>
+</ol>
+<p>For options (1) and (3), the taxon names must be provided as the list names.
+For options (2) and (4), the columns must be 'taxon', 'x' and 'y' (or 'long',
+'lat'). For options (3) and (4), as these are non-spatial, you must provide a
+crs object to the <code>crs</code> argument, so that the function knows what
+projection to use.
+</p>
+<p>It is also possible to supply a <strong>matrix with sites as rows and taxa as
+columns</strong>. The contents of this matrix must be either 0 or 1. If this is the
+case, then a raster grid must be supplied under the template argument. This
+will be the grid system used for converting this presence/absence matrix to
+an epmGrid object. It is expected that the index order of the grid is the
+same as the row order of the matrix.
+</p>
+<p>If input is a set of <strong>species-specific grids</strong>, then it is expected
+that all grids belong to the same overall grid system, i.e. that the cells
+align and that all grids have the same resolution. Grids do not need to have
+the same extent.
+</p>
+<p>Any SpatialPolygon or SpatialPoints objects are converted to objects of class
+<code>sf</code>.
+</p>
+<p>If <code>cellType = 'hexagon'</code>, then the grid is made of polygons via the sf
+package. If <code>cellType = 'square'</code>, then the grid is a raster generated
+via the terra package. Hexagonal cells have several advantages, including
+being able to be of different sizes (if the grid is in unprojected long/lat),
+and may be able to more naturally follow coastlines and non-linear features.
+However, the raster-based square cells will be much less memory intensive for
+high resolution datasets. Choice of grid type matters more for spatial
+resolution (total number of cells), than for number of species.
+</p>
+<p>In the polygon-to-grid conversion process, two approaches are implemented.
+For <code>method = 'centroid'</code>, a range polygon registers in a cell if the
+polygon overlaps with the cell centroid. For <code>method =
+'percentOverlap'</code>, a range polygon registers in a cell if it covers that cell
+by at least <code>percentThreshold</code> fraction of the cell.
+</p>
+<p>If <code>retainSmallRanges = FALSE</code>, then species whose ranges are so small
+that no cell registers as present will be dropped. If <code>retainSmallRanges
+= TRUE</code>, then the cell that contains the majority of the the small polygon
+will be considered as present, even if it's a small percent of the cell.
+</p>
+<p>If <code>retainSmallRanges = TRUE</code>, and an extent is provided, then species
+may still be dropped if they fall outside of that extent.
+</p>
+<p>You may see the message <code>Failed to compute min/max, no valid pixels found in 
+sampling. (GDAL error 1)</code> . This just means that a species did not register in any 
+grid cells. If you specified <code>retainSmallRanges = TRUE</code>, then those species will
+be included in a subsequent step. Therefore, this message can be ignored.
+</p>
+<p>For very large datasets, this function will make a determination as to
+whether or not there is sufficient memory. If there is not, an alternative
+approach that uses the data.table package will be employed. Please install
+this R package to take advantage of this feature.
+</p>
+<p>This function is also enhanced by the installation of the exactextractr R package.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of class <code>epmGrid</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Pascal Title
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(sf)
+# example dataset: a list of 24 chipmunk distributions as polygons
+head(tamiasPolyList)
+
+# hexagonal grid
+
+tamiasEPM &lt;- createEPMgrid(tamiasPolyList, resolution = 50000,
+	cellType = 'hexagon', method = 'centroid')
+tamiasEPM
+
+# square grid
+tamiasEPM2 &lt;- createEPMgrid(tamiasPolyList, resolution = 50000,
+	cellType = 'square', method = 'centroid')
+tamiasEPM2
+
+# use of a grid from one analysis for another analysis
+
+tamiasEPM &lt;- createEPMgrid(tamiasPolyList, resolution = 50000,
+	cellType = 'hexagon', method = 'centroid')
+
+tamiasEPM &lt;- createEPMgrid(tamiasPolyList, resolution = 50000,
+	cellType = 'hexagon', method = 'centroid', template = tamiasEPM[[1]])
+	
+#######
+
+# demonstration of site-by-species matrix as input.
+tamiasEPM2 &lt;- createEPMgrid(tamiasPolyList, resolution = 50000,
+	cellType = 'square', method = 'centroid')
+
+## first we will use the function generateOccurrenceMatrix() to get
+## a presence/absence matrix
+pamat &lt;- generateOccurrenceMatrix(tamiasEPM2, sites = 'all')
+
+# here, our grid template will be tamiasEPM2[[1]]
+tamiasEPM2[[1]]
+xx &lt;- createEPMgrid(pamat, template = tamiasEPM2[[1]])
+
+
+#######
+# demonstration with grids as inputs
+## We will first generate grids from the range polygons
+## (you normally would not do this -- you would have grids from some other source)
+
+# define the extent that contains all range polygons
+fullExtent &lt;- terra::ext(terra::vect(tamiasPolyList[[1]]))
+for (i in 2:length(tamiasPolyList)) {
+	fullExtent &lt;- terra::union(fullExtent, terra::ext(terra::vect(tamiasPolyList[[i]])))
+}
+
+# create raster template
+fullGrid &lt;- terra::rast(fullExtent, res = 50000, crs = terra::crs(terra::vect(tamiasPolyList[[1]])))
+
+# now we can convert polygons to a common grid system
+spGrids &lt;- list()
+for (i in 1:length(tamiasPolyList)) {
+	spGrids[[i]] &lt;- terra::trim(terra::rasterize(terra::vect(tamiasPolyList[[i]]), fullGrid))
+}
+names(spGrids) &lt;- names(tamiasPolyList)
+
+createEPMgrid(spGrids)
+
+
+#######
+# With point occurrences
+## demonstrating all possible input formats
+
+# list of sf spatial objects
+spOccList &lt;- lapply(tamiasPolyList, function(x) st_sample(x, size = 10, type= 'random'))
+tamiasEPM &lt;- createEPMgrid(spOccList, resolution = 100000, cellType = 'hexagon')
+
+# list of coordinate tables
+spOccList2 &lt;- lapply(spOccList, function(x) st_coordinates(x))
+tamiasEPM &lt;- createEPMgrid(spOccList2, resolution = 100000, cellType = 'square', 
+	crs = st_crs(tamiasPolyList[[1]]))
+
+# single table of coordinates
+spOccList3 &lt;- spOccList2
+for (i in 1:length(spOccList3)) {
+	spOccList3[[i]] &lt;- cbind.data.frame(taxon = names(spOccList3)[i], spOccList3[[i]])
+	colnames(spOccList3[[i]]) &lt;- c('taxon', 'X', 'Y')
+}
+spOccList3 &lt;- do.call(rbind, spOccList3)
+rownames(spOccList3) &lt;- NULL
+spOccList3[, "taxon"] &lt;- as.character(spOccList3[, "taxon"])
+tamiasEPM &lt;- createEPMgrid(spOccList3, resolution = 100000, cellType = 'square', 
+	crs = st_crs(tamiasPolyList[[1]]))
+
+# a single labeled spatial object
+spOccList4 &lt;- st_as_sf(spOccList3[, c("taxon", "X", "Y")], coords = c("X","Y"),
+crs = st_crs(spOccList[[1]]))
+tamiasEPM &lt;- createEPMgrid(spOccList4, resolution = 100000, cellType = 'square')
+
+
+
+</code></pre>
+
+
+</div>

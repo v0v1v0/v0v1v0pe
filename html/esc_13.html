@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>effect_sizes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate effect size data frame from other data</h2>
+
+<h3>Description</h3>
+
+<p>This method computes any effect size from raw values from a data
+frame. Convenient method to compute multiple effect sizes at once,
+when the required information to calculate effects sizes are
+stored in a table (i.e. data frame).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">effect_sizes(
+  data,
+  ...,
+  fun,
+  es.type = c("d", "g", "or", "logit", "r", "f", "eta", "cox.or", "cox.log")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame with columns that contain the values that are passed
+to one of the <span class="pkg">esc</span>-functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Named arguments. The name (left-hand side) is the name of one of
+<span class="pkg">esc</span> functions' argument, the argument (right-hand side) is the
+name of the column in <code>data</code> that holds the data values.
+See 'Examples'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>Name of one of the <span class="pkg">esc</span>-functions, as string, where arguments
+in <code>...</code> are passed to. May either be the full function name
+(like <code>"esc_t"</code> or <code>"esc_2x2"</code>) or the funcion name
+<em>without</em> the suffix <code>"esc_"</code> (like <code>"t"</code> or <code>"2x2"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>es.type</code></td>
+<td>
+<p>Type of effect size that should be returned.
+</p>
+
+<dl>
+<dt><code>"d"</code></dt>
+<dd>
+<p>returns standardized mean difference effect size <code>d</code></p>
+</dd>
+<dt><code>"f"</code></dt>
+<dd>
+<p>returns effect size Cohen's <code>f</code></p>
+</dd>
+<dt><code>"g"</code></dt>
+<dd>
+<p>returns adjusted standardized mean difference effect size Hedges' <code>g</code></p>
+</dd>
+<dt><code>"or"</code></dt>
+<dd>
+<p>returns effect size as odds ratio</p>
+</dd>
+<dt><code>"cox.or"</code></dt>
+<dd>
+<p>returns effect size as Cox-odds ratio (see <code>convert_d2or</code> for details)</p>
+</dd>
+<dt><code>"logit"</code></dt>
+<dd>
+<p>returns effect size as log odds</p>
+</dd>
+<dt><code>"cox.log"</code></dt>
+<dd>
+<p>returns effect size as Cox-log odds (see <code>convert_d2logit</code> for details)</p>
+</dd>
+<dt><code>"r"</code></dt>
+<dd>
+<p>returns correlation effect size <code>r</code></p>
+</dd>
+<dt><code>"eta"</code></dt>
+<dd>
+<p>returns effect size eta squared</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function rowwise iterates <code>data</code> and calls the function named
+in <code>fun</code> for the values taken from each row of <code>data</code>.
+The column names in <code>data</code> that contain the necessary values to compute
+the effect sizes should be passed as unquoted value for the arguments.
+The argument names should match those arguments for the esc-function
+that should be called from within <code>effect_sizes()</code>.
+<br><br>
+Example: <br>
+If you want to compute effect sizes from chi-squared values, you
+would call <code>esc_chisq()</code>. This function name is used for the
+<code>fun</code>-argument: <code>fun = "esc_chisq"</code>. <code>esc_chisq()</code>
+requires one of <code>chisq</code> or <code>p</code> as arguments, and <code>totaln</code>.
+Now <code>data</code> must have columns with values for either <code>chisq</code>
+or <code>p</code>, and <code>effect_sizes()</code> automatically selects the
+first non-missing value from <code>data</code> (see 'Examples').
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame with the effect sizes computed for all data from <code>data</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">tmp &lt;- data.frame(
+  tvalue = c(3.3, 2.9, 2.3),
+  n = c(250, 200, 210),
+  studyname = c("Study 1", "Study 2", "Study 3")
+)
+effect_sizes(tmp, t = tvalue, totaln = n, study = studyname, fun = "esc_t")
+
+# missing effect size results are dropped,
+# shorter function name, calls "esc_t()"
+tmp &lt;- data.frame(
+  tvalue = c(3.3, 2.9, NA, 2.3),
+  n = c(250, 200, 210, 210),
+  studyname = c("Study 1", "Study 2", NA, "Study 4")
+)
+effect_sizes(tmp, t = tvalue, totaln = n, study = studyname, fun = "t")
+
+
+tmp &lt;- data.frame(
+  coefficient = c(0.4, 0.2, 0.6),
+  se = c(.15, .1, .2),
+  treat = c(50, 60, 50),
+  cntrl = c(45, 70, 40),
+  author = c("Smith 2000", "Smith 2010 2", "Smith 2012")
+)
+effect_sizes(tmp, beta = coefficient, sdy = se, grp1n = treat, grp2n = cntrl,
+    study = author, fun = "esc_beta", es.type = "or")
+
+# the "esc_chisq" function requires *either* the chisq-argument *or*
+# the pval-argument. If at least one of these values is present,
+# effect size can be calculated. You can specify both arguments,
+# and the first non-missing required value from "data" is taken.
+tmp &lt;- data.frame(
+  chisqquared = c(NA, NA, 3.3, NA, 2.9),
+  pval = c(.003, .05, NA, .12, NA),
+  n = c(250, 200, 210, 150, 180),
+  studyname = c("Study 1", "Study 2", "Study 3", "Study 4", "Study 5")
+)
+effect_sizes(tmp, chisq = chisqquared, p = pval, totaln = n,
+             study = studyname, fun = "esc_chisq")
+
+# if all required information are missing, data will be removed
+tmp &lt;- data.frame(
+  chisqquared = c(NA, NA, 3.3, NA, NA),
+  pval = c(.003, .05, NA, .12, NA),
+  n = c(250, 200, 210, 150, 180),
+  studyname = c("Study 1", "Study 2", "Study 3", "Study 4", "Study 5")
+)
+effect_sizes(tmp, chisq = chisqquared, p = pval, totaln = n,
+             study = studyname, fun = "chisq")
+
+
+</code></pre>
+
+
+</div>

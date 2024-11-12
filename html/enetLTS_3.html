@@ -1,0 +1,505 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>enetLTS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Robust and Sparse Methods for High Dimensional Linear and Binary and Multinomial Regression
+</h2>
+
+<h3>Description</h3>
+
+<p>Compute fully robust versions of the elastic net estimator, which allows for sparse model estimates,
+for linear regression and binary and multinomial logistic regression.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">enetLTS(
+    xx,
+    yy,
+    family=c("gaussian","binomial","multinomial"),
+    alphas=seq(0,1,length=41),
+    lambdas=NULL,
+    lambdaw=NULL,
+    intercept=TRUE,
+    scal=TRUE,
+    hsize=0.75,
+    nsamp=c(500,10),
+    nCsteps=20,
+    nfold=5,
+    repl=1,
+    ncores=1,
+    tol=-1e6,
+    seed=NULL,
+    del=0.0125,
+    crit.plot=FALSE,
+    typegrouped=FALSE,
+    type.response=c("link","response","class")
+  )
+  </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xx</code></td>
+<td>
+<p>a numeric matrix containing the predictor variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yy</code></td>
+<td>
+<p>response variable. Quantitative for <code>family="gaussian"</code>. For
+<code>family="binomial"</code> should be a factor with two levels which is coded as <code>0</code> and 1.
+For <code>family="multinomial"</code> should be a factor with the number of categories (NC) which is
+coded as <code>1,2,...,NC</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>a description of the error distribution and link function to be used
+in the model. <code>"gaussian"</code>, <code>"binomial"</code> and <code>family="multinomial"</code> options are available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alphas</code></td>
+<td>
+<p>a user supplied alpha sequence for the elastic net penalty, which is
+the mixing proportion of the ridge and lasso penalties and takes value in [0,1].
+<code class="reqn">\alpha=1</code> is the lasso penalty, and <code class="reqn">\alpha=0</code> the
+ridge penalty. If not provided a sequence, default is 41 equally spaced values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdas</code></td>
+<td>
+<p>a user supplied lambda sequence for the strength of the elastic net penalty.
+If not provided a sequence, default is chosen with steps of size -0.025 lambda0 with
+<code class="reqn">0\le\lambda\le lambda0</code> for linear regression and
+-0.025 lambda00 with <code class="reqn">0\le\lambda\le lambda00</code> for binary logistic regression. lambda0
+is determined based on the Pearson correlation between y and the jth predictor variable x_j
+on winsorized data for linear regression. In lambda00 for logistic regression, the Pearson
+correlation is replaced by a robustified point-biserial correlation. Default is chosen with
+steps of size -0.05 from 0.95 to 0.05 for multinomial logistic regression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdaw</code></td>
+<td>
+<p>a user supplied lambda sequence for reweighting step. If not provided,
+default is computed by using k-fold cross-validation via <code>cv.glmnet</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>a logical indicating whether a constant term should be
+included in the model (the default is <code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scal</code></td>
+<td>
+<p>a logical value indicating whether scale the predictors by their arithmetic means
+and standard deviations. For <code>family="gaussian"</code>, it also indicates if
+mean-center the response variable or not. The default is <code>TRUE</code>. Note that scaling
+is performed on the subsamples rather than the full data set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hsize</code></td>
+<td>
+<p>a user supplied numeric value giving the percentage of the residuals for
+which the elastic net penalized sum of squares for linear regression or for which the
+elastic net penalized sum of deviances for binary and multinomial logistic regression
+should be minimized. The default is 0.75.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamp</code></td>
+<td>
+<p>a numeric vector giving the number of subsamples to be used in
+the beginning of the algorithm, which gives the number of
+initial subsamples to be used. The default is to first perform C-steps on 500
+initial subsamples, and then to keep the <code>s1</code> subsamples with the lowest value
+(or highest value based on which model is used - <code>family="gaussian"</code> or <code>family="binomial"</code>
+or <code>family="multinomial"</code>) of the objective function for additional C-steps until convergence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nCsteps</code></td>
+<td>
+<p>a positive integer giving the number of C-steps to perform on
+determined s1 subsamples. The default is 20.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nfold</code></td>
+<td>
+<p>a user supplied numeric value for fold number of k-fold cross-validation which
+used in varied functions of the algorithm. The default is 5-fold cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repl</code></td>
+<td>
+<p>a user supplied positive number for more stable results, repeat the k-fold CV
+<code>repl</code> times and take the average of the corresponding evaluation measure. The default is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+<p>a positive integer giving the number of processor cores to be
+used for parallel computing (the default is 1 for no parallelization). If
+this is set to <code>NA</code>, all available processor cores are used. For
+prediction error estimation, parallel computing is implemented on the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
+level using package <span class="pkg">parallel</span>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>a small numeric value for convergence. The default is -1e6.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>optional initial seed for the random number generator (see<code>.Random.seed</code>)
+when determine initial subsets at thebeginning of the algorithm. The default is NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>del</code></td>
+<td>
+<p>The default is 0.0125.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit.plot</code></td>
+<td>
+<p>a logical value indicating if produces a plot for k-fold cross-validation based on
+alpha and lambda combinations. The default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>typegrouped</code></td>
+<td>
+<p>This argument is available for only <code>family="multinomial"</code> in the last
+fit based on the best subset. <code>TRUE</code> means "grouped" and <code>FALSE</code> means "ungrouped".
+If "TRUE" then a grouped lasso penalty is used on the multinomial coefficients for a variable.
+The default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type.response</code></td>
+<td>
+<p>type of prediction required. <code>type="link"</code> gives the linear predictors.
+<code>type="response"</code> gives the
+fitted probabilities for <code>family="multinomial"</code> and <code>family="binomial"</code> and
+gives the fitted values for <code>family="gaussian"</code>.
+<code>type="class"</code> is available only for <code>family="binomial"</code> and <code>family="multinomial"</code>,
+and produces the class label corresponding to the maximum probability.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The idea of repeatedly applying the non-robust classical elastic net estimators to data subsets
+only is used for linear and logistic regression. The algorithm starts with 500 elemental subsets
+only for one combination of <code class="reqn">\alpha</code> and <code class="reqn">\lambda</code>, and takes the warm start strategy
+for subsequent combinations. This idea saves the computation time.
+To choose the elastic net penalties, k-fold cross-validation is used and the replication option is
+provided for more stable results.
+Robustness has been achieved by using trimming idea, therefore a reweighting step is introduced
+in order to improve the efficiency. The outliers are identified according to current model.
+For <code>family="gaussian"</code>, standardized residuals are used. For <code>family="binomial"</code>, the Pearson
+residuals which are approximately standard normally distributed is used. Then the weights are defined by
+the binary weight function using <code>del=0.0125</code>, which allows to be flagged as outliers of the
+2.5% of the observations in the normal model. For <code>family="multinomial"</code>,
+group-wise scaled robust distances are used. The the binary weights defined using the constant $c_2=5$.
+Therefore, binary weight function produces a clear distinction between the "good observations" and "outliers".</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>objective</code></td>
+<td>
+<p>a numeric vector giving the respective values of the
+enetLTS objective function, i.e., the elastic net penalized sums of
+the <code class="reqn">h</code> smallest squared residuals from the raw fits for <code>family="gaussian"</code>
+and the elastic net penalized sums of the <code class="reqn">h</code> deviances from the raw fits for
+<code>family="binomial"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw.rmse</code></td>
+<td>
+<p>root mean squared error for raw fit, which is available for only
+<code>family="gaussian"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rmse</code></td>
+<td>
+<p>root mean squared error for reweighted fit, which is available for only
+<code>family  ="gaussian"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw.mae</code></td>
+<td>
+<p>mean absolute error for raw fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mae</code></td>
+<td>
+<p>mean absolute error for reweighted fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>best</code></td>
+<td>
+<p>an integer vector containing the respective best
+subsets of <code class="reqn">h</code> observations found and used for computing the raw
+estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw.wt</code></td>
+<td>
+<p>an integer vector containing binary weights
+that indicate outliers from the respective raw fits, i.e., the weights used
+for the reweighted fits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wt</code></td>
+<td>
+<p>an integer vector containing binary weights that
+indicate outliers from the respective reweighted fits, i.e., the weights are
+<code class="reqn">1</code> for observations with reasonably small reweighted residuals and
+<code class="reqn">0</code> for observations with large reweighted residuals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw.coefficients</code></td>
+<td>
+<p>a numeric vector containing the
+respective coefficient estimates from the raw fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>a numeric vector containing the
+respective coefficient estimates from the reweighted fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw.fitted.values</code></td>
+<td>
+<p>a numeric vector containing the
+respective fitted values of the response from the raw fits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.values</code></td>
+<td>
+<p>a numeric vector containing the
+respective fitted values of the response from the reweighted fits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw.residuals</code></td>
+<td>
+<p>a numeric vector containing the
+respective residuals for <code>family="gaussian"</code> and respective deviances for
+<code>family="binomial"</code> and <code>family="multinomial"</code> from the raw fits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>a numeric vector containing the
+respective residuals for <code>family="gaussian"</code> and respective deviances for
+<code>family="binomial"</code> and <code>family="multinomial"</code> from the reweighted fits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>an optimal elastic net mixing parameter value obtained with
+k-fold cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>an optimal value for the strength of the elastic net penalty
+obtained with k-fold cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdaw</code></td>
+<td>
+<p>an optimal value for the strength of the elastic net penalty
+re-obtained with k-fold cross-validation for reweighted fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.nonzerocoef</code></td>
+<td>
+<p>the number of the nonzero coefficients in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the number of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>the number of variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>the number of observations used to compute the raw estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>classnames</code></td>
+<td>
+<p>class names for logistic model, which is available for only
+<code>family="binomial"</code> and <code>family="multinomial"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>classize</code></td>
+<td>
+<p>class sizes for logisitic model, which is available for only
+<code>family="binomial"</code> and <code>family="multinomial"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inputs</code></td>
+<td>
+<p>all inputs used in the function <code>enetLTS.R</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the matched function call.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Fatma Sevinc KURNAZ, Irene HOFFMANN, Peter FILZMOSER
+</p>
+
+
+<h3>References</h3>
+
+<p>Kurnaz, F.S., Hoffmann, I. and Filzmoser, P. (2017) Robust and sparse estimation methods
+for high dimensional linear and logistic regression. <em>Chemometrics and Intelligent Laboratory Systems.</em>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>print</code>,
+<code>predict</code>,
+<code>coef</code>,
+<code>nonzeroCoef.enetLTS</code>,
+<code>plot</code>,
+<code>plotCoef.enetLTS</code>,
+<code>plotResid.enetLTS</code>,
+<code>plotDiagnostic.enetLTS</code>,
+<code>residuals</code>,
+<code>fitted</code>,
+<code>weights</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## for gaussian
+
+set.seed(86)
+n &lt;- 100; p &lt;- 25                             # number of observations and variables
+beta &lt;- rep(0,p); beta[1:6] &lt;- 1              # 10% nonzero coefficients
+sigma &lt;- 0.5                                  # controls signal-to-noise ratio
+x &lt;- matrix(rnorm(n*p, sigma),nrow=n)
+e &lt;- rnorm(n,0,1)                             # error terms
+eps &lt;- 0.1                                    # contamination level
+m &lt;- ceiling(eps*n)                           # observations to be contaminated
+eout &lt;- e; eout[1:m] &lt;- eout[1:m] + 10        # vertical outliers
+yout &lt;- c(x %*% beta + sigma * eout)        # response
+xout &lt;- x; xout[1:m,] &lt;- xout[1:m,] + 10      # bad leverage points
+
+
+# determine user supplied alpha and lambda sequences
+# alphas=seq(0,1,length=11)
+# l0 &lt;- robustHD::lambda0(xout,yout)          # use lambda0 function from robustHD package
+# lambdas &lt;- seq(l0,0,by=-0.1*l0)
+# fit &lt;- enetLTS(xout,yout,alphas=alphas,lambdas=lambdas)
+
+
+## for binomial
+
+eps &lt;-0.05                                     # %10 contamination to only class 0
+m &lt;- ceiling(eps*n)
+y &lt;- sample(0:1,n,replace=TRUE)
+xout &lt;- x
+xout[y==0,][1:m,] &lt;- xout[1:m,] + 10;          # class 0
+yout &lt;- y                                      # wrong classification for vertical outliers
+
+
+# determine user supplied alpha and lambda sequences
+# alphas=seq(0,1,length=11)
+# l00 &lt;- lambda00(xout,yout,normalize=TRUE,intercept=TRUE)
+# lambdas &lt;-  seq(l00,0,by=-0.01*l00)
+# fit &lt;- enetLTS(xout,yout,family="binomial",alphas=alphas,lambdas=lambdas)
+
+
+## for multinomial
+
+n &lt;- 120; p &lt;- 15
+NC &lt;- 3           # number of groups
+X &lt;- matrix(rnorm(n * p), n, p)
+betas &lt;- matrix(1:NC, ncol=NC, nrow=p, byrow=TRUE)
+betas[(p-5):p,]=0; betas &lt;- rbind(rep(0,NC),betas)
+lv &lt;- cbind(1,X) %*% betas
+probs &lt;- exp(lv)/apply(exp(lv),1,sum)
+y &lt;- apply(probs,1,function(prob){sample(1:NC, 1, TRUE, prob)})
+xout &lt;- X
+eps &lt;-0.05                          # %10 contamination to only class 0
+m &lt;- ceiling(eps*n)
+xout[1:m,] &lt;- xout[1:m,] + 10       # bad leverage points
+yout &lt;- y
+
+
+# determine user supplied alpha and lambda sequences
+alphas=seq(0,1,length=11)
+lambdas &lt;- seq(from=0.95,to=0.05,by=-0.05)
+fit &lt;- enetLTS(xout,yout,family="multinomial",alphas=alphas,lambdas=lambdas)
+
+</code></pre>
+
+
+</div>

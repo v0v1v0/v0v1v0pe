@@ -1,0 +1,210 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>label_eurostat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get Eurostat Codes for data downloaded from new dissemination API</h2>
+
+<h3>Description</h3>
+
+<p>Get definitions for Eurostat codes from Eurostat dictionaries.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">label_eurostat(
+  x,
+  dic = NULL,
+  code = NULL,
+  eu_order = FALSE,
+  lang = "en",
+  countrycode = NULL,
+  countrycode_nomatch = NULL,
+  custom_dic = NULL,
+  fix_duplicated = FALSE
+)
+
+label_eurostat_vars(x = NULL, id, lang = "en")
+
+label_eurostat_tables(x, lang = "en")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A character or a factor vector or a data_frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dic</code></td>
+<td>
+<p>A string (vector) naming eurostat dictionary or dictionaries.
+If <code>NULL</code> (default) dictionary names taken from column names of
+the data_frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>code</code></td>
+<td>
+<p>For data_frames names of the column for which also code columns
+should be retained. The suffix "_code" is added to code column names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eu_order</code></td>
+<td>
+<p>Logical. Should Eurostat ordering used for label levels.
+Affects only factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lang</code></td>
+<td>
+<p>2-letter language code, default is "<code>en</code>" (English), other
+options are "<code>fr</code>" (French) and "<code>de</code>" (German). Used for labeling datasets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>countrycode</code></td>
+<td>
+<p>A <code>NULL</code> or a name of the coding scheme for
+the <code>countrycode::countrycode()</code>
+to label "geo" variable with countrycode-package. It can be used to
+convert to short and long country names in many different languages.
+If <code>NULL</code> (default) eurostat dictionary is used instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>countrycode_nomatch</code></td>
+<td>
+<p>What to do when using the countrycode to label
+a "geo" and countrycode fails to find a match, for example other than
+country codes like EU28. The original code is used with
+a <code>NULL</code> (default), eurostat dictionary label is used with "eurostat",
+and <code>NA</code> is used with NA.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_dic</code></td>
+<td>
+<p>a named vector or named list of named vectors to give an
+own dictionary for (part of) codes. Names of the vector should be codes
+and values labels. List can be used to specify dictionaries and then
+list names should be dictionary codes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix_duplicated</code></td>
+<td>
+<p>A logical. If TRUE, the code is added to the
+duplicated label values. If FALSE (default) error is given if
+labeling produce duplicates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A unique identifier / code for the dataset of interest. If code is not
+known <code>search_eurostat()</code> function can be used to search Eurostat table
+of contents.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A character or a factor vector of codes returns a corresponding
+vector of definitions. <code>label_eurostat()</code> labels also data_frames from
+<code>get_eurostat()</code>. For vectors a dictionary name have to be
+supplied. For data_frames dictionary names are taken from column names.
+"time" and "values" columns are returned as they were, so you can supply
+data_frame from <code>get_eurostat()</code> and get data_frame with
+definitions instead of codes.
+</p>
+<p>Some Eurostat dictionaries includes duplicated labels. By default
+duplicated labels cause an error, but they can be fixed automatically
+with <code>fix_duplicated = TRUE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a vector or a data_frame.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>label_eurostat_vars()</code>: Get definitions for variable (column) names.
+</p>
+</li>
+<li> <p><code>label_eurostat_tables()</code>: Get definitions for table names
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Janne Huovari <a href="mailto:janne.huovari@ptt.fi">janne.huovari@ptt.fi</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>countrycode::countrycode()</code>
+</p>
+<p>Other helpers: 
+<code>cut_to_classes()</code>,
+<code>dic_order()</code>,
+<code>eurotime2date()</code>,
+<code>eurotime2num()</code>,
+<code>harmonize_country_code()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+lp &lt;- get_eurostat("nama_10_lp_ulc")
+lpl &lt;- label_eurostat(lp)
+str(lpl)
+lpl_order &lt;- label_eurostat(lp, eu_order = TRUE)
+lpl_code &lt;- label_eurostat(lp, code = "unit")
+# Note that the dataset id must be provided in label_eurostat_vars
+label_eurostat_vars(id = "nama_10_lp_ulc", x = "geo", lang = "en")
+label_eurostat_tables("nama_10_lp_ulc")
+label_eurostat(c("FI", "DE", "EU28"), dic = "geo")
+label_eurostat(
+  c("FI", "DE", "EU28"),
+  dic = "geo",
+  custom_dic = c(DE = "Germany")
+)
+label_eurostat(
+  c("FI", "DE", "EU28"),
+  dic = "geo", countrycode = "country.name",
+  custom_dic = c(EU28 = "EU")
+)
+label_eurostat(
+  c("FI", "DE", "EU28"),
+  dic = "geo",
+  countrycode = "country.name"
+)
+# In Finnish
+label_eurostat(
+  c("FI", "DE", "EU28"),
+  dic = "geo",
+  countrycode = "cldr.short.fi"
+)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

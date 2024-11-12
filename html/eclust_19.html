@@ -1,0 +1,247 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>u_extract_summary</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculates cluster summaries</h2>
+
+<h3>Description</h3>
+
+<p>This is a modified version of
+<code>moduleEigengenes</code>. It can extract (1st and 2nd
+principal component) of modules in a given single dataset. It can also
+return the average, the variance explained This function is more flexible
+and the nPC argument is used. currently only nPC = 1 and nPC = 2 are
+supported
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">u_extract_summary(x_train, colors, x_test, y_train, y_test, impute = TRUE,
+  nPC, excludeGrey = FALSE, grey = if (is.numeric(colors)) 0 else "grey",
+  subHubs = TRUE, trapErrors = FALSE, returnValidOnly = trapErrors,
+  softPower = 6, scale = TRUE, verbose = 0, indent = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x_train</code></td>
+<td>
+<p>Training data for a single set in the form of a data frame
+where rows are samples and columns are genes (probes, cpgs, covariates).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colors</code></td>
+<td>
+<p>A vector of the same length as the number of probes in expr,
+giving module color for all probes (genes). Color "grey" is reserved for
+unassigned genes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_test</code></td>
+<td>
+<p>Test set in the form of a data frame where rows are samples and
+columns are genes (probes, cpgs, covariates).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_train</code></td>
+<td>
+<p>Training response numeric vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_test</code></td>
+<td>
+<p>Test response numeric vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>impute</code></td>
+<td>
+<p>If TRUE, expression data will be checked for the presence of NA
+entries and if the latter are present, numerical data will be imputed,
+using function impute.knn and probes from the same module as the missing
+datum. The function impute.knn uses a fixed random seed giving repeatable
+results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nPC</code></td>
+<td>
+<p>Number of principal components and variance explained entries to
+be calculated. Note that only 1 or 2 is possible.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>excludeGrey</code></td>
+<td>
+<p>Should the improper module consisting of 'grey' genes be
+excluded from the eigengenes?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grey</code></td>
+<td>
+<p>Value of colors designating the improper module. Note that if
+colors is a factor of numbers, the default value will be incorrect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subHubs</code></td>
+<td>
+<p>Controls whether hub genes should be substituted for missing
+eigengenes. If TRUE, each missing eigengene (i.e., eigengene whose
+calculation failed and the error was trapped) will be replaced by a
+weighted average of the most connected hub genes in the corresponding
+module. If this calculation fails, or if subHubs==FALSE, the value of
+trapErrors will determine whether the offending module will be removed or
+whether the function will issue an error and stop.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trapErrors</code></td>
+<td>
+<p>Controls handling of errors from that may arise when there
+are too many NA entries in expression data. If TRUE, errors from calling
+these functions will be trapped without abnormal exit. If FALSE, errors
+will cause the function to stop. Note, however, that subHubs takes
+precedence in the sense that if subHubs==TRUE and trapErrors==FALSE, an
+error will be issued only if both the principal component and the hubgene
+calculations have failed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnValidOnly</code></td>
+<td>
+<p>logical; controls whether the returned data frame of
+module eigengenes contains columns corresponding only to modules whose
+eigengenes or hub genes could be calculated correctly (TRUE), or whether
+the data frame should have columns for each of the input color labels
+(FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>softPower</code></td>
+<td>
+<p>The power used in soft-thresholding the adjacency matrix.
+Only used when the hubgene approximation is necessary because the principal
+component calculation failed. It must be non-negative. The default value
+should only be changed if there is a clear indication that it leads to
+incorrect results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>logical; can be used to turn off scaling of the expression data
+before calculating the singular value decomposition. The scaling should
+only be turned off if the data has been scaled previously, in which case
+the function can run a bit faster. Note however that the function first
+imputes, then scales the expression data in each module. If the expression
+contain missing data, scaling outside of the function and letting the
+function impute missing data may lead to slightly different results than if
+the data is scaled within the function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Controls verbosity of printed progress messages. 0 means
+silent, up to (about) 5 the verbosity gradually increases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indent</code></td>
+<td>
+<p>A single non-negative integer controlling indentation of
+printed messages. 0 means no indentation, each unit above that adds two
+spaces.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is called internally by the
+<code>u_cluster_similarity</code> function
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<dl>
+<dt>eigengenes</dt>
+<dd>
+<p>Module eigengenes in a dataframe, with each
+column corresponding to one eigengene</p>
+</dd>
+<dt>averageExpr</dt>
+<dd>
+<p>the average
+expression per module in the training set</p>
+</dd>
+<dt>averageExprTest</dt>
+<dd>
+<p>the
+average expression per module in the training set</p>
+</dd>
+<dt>varExplained</dt>
+<dd>
+<p>The
+variance explained by the first PC in each module</p>
+</dd>
+<dt>validColors</dt>
+<dd>
+<p>A copy
+of the input colors with entries corresponding to invalid modules set to
+grey if given, otherwise 0 if colors is numeric and "grey"
+otherwise.</p>
+</dd>
+<dt>PC</dt>
+<dd>
+<p>The 1st or 1st and 2nd PC from each module in the
+training set</p>
+</dd>
+<dt>PCTest</dt>
+<dd>
+<p>The 1st or 1st and 2nd PC from each module in
+the test set</p>
+</dd>
+<dt>prcompObj</dt>
+<dd>
+<p>The <code>prcomp</code> object returned by
+<code>prcomp</code></p>
+</dd>
+<dt>nclusters</dt>
+<dd>
+<p>the number of modules
+(clusters)</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Zhang, B. and Horvath, S. (2005), "A General Framework for
+Weighted Gene Co-Expression Network Analysis", Statistical Applications in
+Genetics and Molecular Biology: Vol. 4: No. 1, Article 17
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+#see u_cluster_similarity for examples
+
+## End(Not run)
+</code></pre>
+
+
+</div>

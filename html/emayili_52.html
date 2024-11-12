@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>render</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Render Markdown into email</h2>
+
+<h3>Description</h3>
+
+<p>Render either Plain Markdown or R Markdown directly into the body of an email.
+</p>
+<p>If <code>input</code> is a file then it will be interpreted as R Markdown it its
+extension is either <code>"Rmd"</code> or <code>"Rmarkdown"</code>. Otherwise it will be
+processed as Plain Markdown.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">render(
+  msg,
+  input,
+  params = NULL,
+  squish = TRUE,
+  css_files = c(),
+  include_css = c("rmd", "bootstrap"),
+  language = FALSE,
+  interpolate = TRUE,
+  .open = "{{",
+  .close = "}}",
+  .envir = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>msg</code></td>
+<td>
+<p>A message object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>input</code></td>
+<td>
+<p>The input Markdown file to be rendered or a character vector of
+Markdown text.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p>A list of named parameters that override custom parameters
+specified in the YAML front-matter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>squish</code></td>
+<td>
+<p>Whether to clean up whitespace in rendered document.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>css_files</code></td>
+<td>
+<p>Extra CSS files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_css</code></td>
+<td>
+<p>Whether to include rendered CSS from various sources
+(<code>"rmd"</code> — native R Markdown CSS; <code>"bootstrap"</code> — Bootstrap CSS).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>language</code></td>
+<td>
+<p>Language of content. If <code>FALSE</code> then will not include
+language field. If <code>TRUE</code> then will attempt to auto-detect language.
+Otherwise will use the specified language.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interpolate</code></td>
+<td>
+<p>Whether or not to interpolate into input using glue.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.open</code></td>
+<td>
+<p>The opening delimiter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.close</code></td>
+<td>
+<p>The closing delimiter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.envir</code></td>
+<td>
+<p>Environment used for <code>glue</code> interpolation. Defaults to <code>parent.frame()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A message object.
+</p>
+
+
+<h3>Plain Markdown</h3>
+
+<p>Plain Markdown is processed with <code>commonmark::markdown_html()</code>.
+</p>
+
+
+<h3>R Markdown</h3>
+
+<p>R Markdown is processed with <code>rmarkdown::render()</code>.
+</p>
+<p>Regardless of what <code>output</code> type is specified in the input file,
+<code>render()</code> will always use the <code>"html_document"</code> output format.
+</p>
+<p>Rending an R Markdown document can result in a lot of CSS. When all of the
+CSS is included in the HTML <code style="white-space: pre;">⁠&lt;head&gt;⁠</code> and sent to GMail it can result in a
+message which is not correctly displayed inline in the Gmail web client.
+To get around this you can specify <code>include_css = FALSE</code>. This will mean
+that some styling will not be present in the resulting message, but that
+the message content will be correctly rendered inline.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>text</code>, <code>html</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Plain Markdown
+
+markdown &lt;- "[This](https://www.google.com) is a link."
+filename &lt;- "message.md"
+
+# Render from Markdown in character vector.
+msg &lt;- envelope() %&gt;% render(markdown)
+
+# Create a file containing Markdown
+cat(markdown, file = filename)
+
+# Render from Markdown in file.
+msg &lt;- envelope() %&gt;% render(filename)
+
+# Cleanup.
+file.remove(filename)
+
+# R Markdown
+
+filename &lt;- "gh-doc.Rmd"
+
+# Create an Rmd document from template.
+rmarkdown::draft(
+  filename,
+  template = "github_document",
+  package = "rmarkdown",
+  edit = FALSE
+)
+
+# Check for suitable version of Pandoc (https://pandoc.org/).
+#
+# Need to have version 2.0 or greater to support required --quiet option.
+#
+pandoc &lt;- rmarkdown::find_pandoc()
+suitable_pandoc &lt;- !is.null(pandoc$dir) &amp;&amp; grepl("^2", pandoc$version)
+
+# Render from Rmd file.
+if (suitable_pandoc) {
+  msg &lt;- envelope() %&gt;%
+    render(filename, include_css = c("rmd", "bootstrap"))
+}
+
+# Cleanup.
+file.remove(filename)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,119 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>effect_measures</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Declare an effect measure</h2>
+
+<h3>Description</h3>
+
+<p>These functions allow the user to declare that an estimate is a
+certain type of effect measure: risk ratio (<code>RR</code>), odds ratio (<code>OR</code>),
+hazard ratio (<code>HR</code>), risk difference (<code>RD</code>), linear regression coefficient
+(<code>OLS</code>), or mean standardized difference (<code>MD</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">RR(est)
+
+OR(est, rare)
+
+HR(est, rare)
+
+RD(est)
+
+OLS(est, sd)
+
+MD(est)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>est</code></td>
+<td>
+<p>The effect estimate (numeric).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rare</code></td>
+<td>
+<p>Logical. Whether the outcome is sufficiently rare for use of risk
+ratio approximates; if not, approximate conversions are used. Used only for
+<code>HR()</code> and <code>OR()</code>; see Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd</code></td>
+<td>
+<p>The standard deviation of the outcome (or residual standard
+deviation). Used only for <code>OLS()</code>; see Details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The conversion functions use these objects to
+convert between effect measures when necessary to calculate E-values. Read
+more about the conversions in Table 2 of VanderWeele TJ, Ding P.
+<em>Sensitivity Analysis in Observational Research: Introducing the E-Value.</em>
+Annals of Internal Medicine. 2017;167(4):268–75.
+</p>
+<p>See also VanderWeele TJ. <em>Optimal approximate conversions of odds ratios
+and hazard ratios to risk ratios.</em> Biometrics. 2019 Jan 6;(September
+2018):1–7.
+</p>
+<p>For <code>OLS()</code>, <code>sd</code> must be specified. A true standardized mean difference
+for linear regression would use <code>sd</code> = SD( Y | X, C ), where Y is the
+outcome, X is the exposure of interest, and C are any adjusted covariates.
+See Examples for how to extract this from <code>lm</code>. A conservative
+approximation would instead use <code>sd</code> = SD( Y ). Regardless, the
+reported E-value for the confidence interval treats <code>sd</code> as known, not
+estimated.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of classes "estimate" and the measure of interest,
+containing the effect estimate and any other attributes to be used in
+future calculations.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Both odds ratios are 3, but will be treated differently in E-value calculations
+# depending on whether rare outcome assumption is reasonable
+OR(3, rare = FALSE)
+OR(3, rare = TRUE)
+evalue(OR(3, rare = FALSE))
+evalue(OR(3, rare = TRUE))
+attributes(OR(3, rare = FALSE))
+
+# If an estimate was constructed via conversion from another effect measure,
+# we can see the history of a conversion using the summary() function
+summary(toRR(OR(3, rare = FALSE)))
+summary(toRR(OLS(3, sd = 1)))
+
+# Estimating sd for an OLS estimate
+# first standardizing conservatively by SD(Y)
+data(lead)
+ols = lm(age ~ income, data = lead)
+est = ols$coefficients[2]
+sd = sd(lead$age)
+summary(evalue(OLS(est, sd)))
+# now use residual SD to avoid conservatism
+# here makes very little difference because income and age are
+# not highly correlated
+sd = summary(ols)$sigma
+summary(evalue(OLS(est, sd)))
+</code></pre>
+
+
+</div>

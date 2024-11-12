@@ -1,0 +1,177 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>evolvabilityBetaMCMC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate posterior distribution of evolvability parameters from a set of
+selection gradients</h2>
+
+<h3>Description</h3>
+
+<p><code>evolvabilityBetaMCMC</code> calculates (unconditional) evolvability (e),
+respondability (r), conditional evolvability (c), autonomy (a) and
+integration (i) from selection gradients given the posterior distribution of
+an additive-genetic variance matrix. These measures and their meanings are
+described in Hansen and Houle (2008).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">evolvabilityBetaMCMC(G_mcmc, Beta, post.dist = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>G_mcmc</code></td>
+<td>
+<p>posterior distribution of a variance matrix in the form of a
+table. Each row in the table must be one iteration of the posterior
+distribution (or bootstrap distribution). Each iteration of the matrix must
+be on the form as given by <code>c(x)</code>, where <code>x</code> is a matrix. A
+posterior distribution of a matrix in the slot <code>VCV</code> of a object of
+class <code>MCMCglmm</code> is by default on this form.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Beta</code></td>
+<td>
+<p>either a vector or a matrix of unit length selection gradients
+stacked column wise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>post.dist</code></td>
+<td>
+<p>logical: should the posterior distribution of the
+evolvability parameters be saved.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of <code>class</code> <code>'evolvabilityBetaMCMC'</code>, which is a
+list with the following components:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>eB</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The posterior median and highest posterior density
+ interval of evolvability for each selection gradient. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>rB</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The posterior median and highest posterior density
+ interval of respondability for each selection gradient. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>cB</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The posterior median and highest posterior density
+ interval of conditional evolvability for each selection gradient. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>aB</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The posterior median and highest posterior density
+ interval of autonomy for each selection gradient.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>iB</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The posterior median and highest posterior density
+ interval of integration for each selection gradient.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>Beta</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The matrix of selection gradients. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>summary</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The means of evolvability parameters across
+ all selection gradients. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>post.dist</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The full posterior distribution.
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Geir H. Bolstad
+</p>
+
+
+<h3>References</h3>
+
+<p>Hansen, T. F. &amp; Houle, D. (2008) Measuring and comparing
+evolvability and constraint in multivariate characters. J. Evol. Biol.
+21:1201-1219.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simulating a posterior distribution
+# (or bootstrap distribution) of a G-matrix:
+G &lt;- matrix(c(1, 1, 0, 1, 4, 1, 0, 1, 2), ncol = 3)
+G_mcmc &lt;- sapply(c(G), function(x) rnorm(10, x, 0.01))
+G_mcmc &lt;- t(apply(G_mcmc, 1, function(x) {
+  G &lt;- matrix(x, ncol = sqrt(length(x)))
+  G[lower.tri(G)] &lt;- t(G)[lower.tri(G)]
+  c(G)
+}))
+
+# Simulating a posterior distribution
+# (or bootstrap distribution) of trait means:
+means &lt;- c(1, 1.4, 2.1)
+means_mcmc &lt;- sapply(means, function(x) rnorm(10, x, 0.01))
+
+# Mean standardizing the G-matrix:
+G_mcmc &lt;- meanStdGMCMC(G_mcmc, means_mcmc)
+
+# Generating selection gradients in five random directions:
+Beta &lt;- randomBeta(5, 3)
+
+# Calculating evolvability parameters:
+x &lt;- evolvabilityBetaMCMC(G_mcmc, Beta, post.dist = TRUE)
+summary(x)
+</code></pre>
+
+
+</div>

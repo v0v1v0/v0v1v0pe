@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_obj_name</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Return the name of an object at a given parent generation from an environment</h2>
+
+<h3>Description</h3>
+
+<p>A practical use of this function is to retrieve the name of the object leading to
+a function's parameter in the function calling chain, at any parent generation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_obj_name(obj, n = 0, eval = FALSE, silent = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>object whose name at a given parent generation is of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>number of parent generations to go back from the calling environment
+to retrieve the name of the object that leads to <code>obj</code>
+in the function calling chain. See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eval</code></td>
+<td>
+<p>whether to evaluate <code>obj</code> in the <code>n</code>-th parent generation before
+getting the object's name in that environment. See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>when <code>FALSE</code>, the names of the environments and objects in those environments are printed
+as those environments are traversed by this function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In particular, it provides a handy way of retrieving the name of a function's parameter
+and use it in e.g. messages to the user describing the arguments received by the function.
+In this context, it is a shortcut to calling <code>as.list(environment())</code>, which returns
+a list of parameter names and parameter values.
+See the Examples section for an illustration.
+</p>
+<p>This function goes back to each parent generation from the calling function's environment
+and at each of those parent generations it retrieves the name of the object that is part of
+the parameter chain leading to the calling function's parameter.
+</p>
+<p>To illustrate: suppose we call a function <code>f &lt;- function(x)</code> by running the piece of code <code>f(z)</code>,
+and that <code>f</code> calls another function <code>g &lt;- function(y)</code> by running the piece of code <code>g(x)</code>.  
+</p>
+<p>That is, we have the parameter chain:  
+<code>z -&gt; x -&gt; y</code>
+</p>
+<p>If, inside function <code>g()</code>, we call <code>get_obj_name()</code> as follows, we obtain respectively:  
+<code>get_obj_name(y, n=1)</code> yields <code>"x"</code>
+<code>get_obj_name(y, n=2)</code> yields <code>"z"</code>
+</p>
+<p>because these calls are telling "give me the name of object <code>y</code> as it was called
+<code>n</code> levels up from the calling environment –i.e. from the environment of <code>g()</code>.
+</p>
+<p>Note that the results of these two calls are different from making the following two
+<code>deparse(substitute())</code> calls:  
+<code>deparse(substitute(y, parent.frame(n=1)))</code>   
+<code>deparse(substitute(y, parent.frame(n=2)))</code>
+because these calls simply <code>substitute</code> or evaluate <code>y</code> at the <code>n</code>-th parent generation.
+If <code>y</code> is not defined at those parent generations, the <code>substitute()</code> calls return
+simply <code>"y"</code>.
+</p>
+<p>On the contrary, the previous two calls to <code>get_obj_name()</code> return the name of the object
+in the parameter chain (<code>z -&gt; x -&gt; y</code>) <em>leading</em> to <code>y</code>, which is a quite different
+piece of information.
+</p>
+<p>When eval=TRUE, the result is the same as the result of <code>deparse()</code>
+except for the following three cases:
+</p>
+
+<ul>
+<li>
+<p> if the object passed to <code>get_obj_name()</code> evaluates to a name, it returns that name,
+without any added quotes. For example, if <code>v = "x"</code> then <code>get_obj_name(v, eval=TRUE)</code> returns <code>"x"</code>
+while <code>deparse(v)</code> returns <code>"\"x\""</code>.
+</p>
+</li>
+<li>
+<p> the result of <code>NULL</code> is <code>NULL</code> instead of <code>"NULL"</code> which is the case with <code>deparse()</code>.
+</p>
+</li>
+<li>
+<p> the result of a non-existent object is <code>NULL</code>, while <code>deparse()</code> returns an error stating
+that the object does not exist.
+</p>
+</li>
+</ul>
+<p>When <code>get_obj_name</code> operates on non-existent objects it works at follows:
+</p>
+
+<ul>
+<li>
+<p> when <code>eval=FALSE</code> it returns the name of the non-existent object
+enclosed in quotes (e.g. <code>get_obj_name(nonexistent)</code> returns <code>"nonexistent"</code>, assuming <code>nonexistent</code>
+does not exist).
+</p>
+</li>
+<li>
+<p> when <code>eval=TRUE</code> it returns NULL.
+</p>
+</li>
+</ul>
+<p>Finally <code>get_obj_name(NULL)</code> returns <code>NULL</code>, while <code>as.character(NULL)</code> returns <code>as.character(0)</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The name of the object in the <code>n</code>-th parent generation environment.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>get_obj_value
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example 1:
+# This example shows the difference between using get_obj_name() and deparse(substitute())
+g &lt;- function(y) { return(list(obj_name=get_obj_name(y, n=2, silent=FALSE), 
+                               substitute=deparse(substitute(y, parent.frame(n=2))) )) }
+f &lt;- function(x) { g(x) }
+z = 3; 
+f(z)           # After showing the names of objects as they
+               # are traversed in the parameter chain (silent=FALSE),
+               # this function returns a list where
+               # the first element (result of get_obj_name()) is "z"
+               # and the second element (result of deparse(substitute())) is "y".
+               # Note that 'z' is the object leading to object 'y'
+               # inside function g() if we follow the parameter names
+               # leading to 'y' in the function calling chain.
+
+# Example 2:
+# When eval=TRUE, get_obj_name() behaves the same way as deparse()
+# (except for the cases noted in the Details section)
+# because the values of all objects linked by the parameter chain
+# are ALL the same.
+g &lt;- function(y) { return(list(obj_name=get_obj_name(y, n=2, eval=TRUE),
+                               deparse=deparse(y))) }
+f &lt;- function(x) { g(x) }
+z = 3 
+f(z)           # Returns a list where both elements are equal to "3"
+               # because the output of get_obj_name() with eval=TRUE
+               # and deparse() are the same.
+
+# Example 3:
+# This example shows how we can use get_obj_name() to get the parameter names
+# of non '...' parameters, which are then used in messages to the user.
+# The advantage of using get_obj_name() as opposed to the hard-coded parameter name
+# is that an error is raised if the parameter does not exist.
+# An example is also shown that uses as.list(environment()), which clearly is more
+# general... get_obj_name() should be used when referring to a couple of specific
+# parameters.
+f &lt;- function(x, y, ...) {
+  cat("Arguments received by the function (using get_obj_name()) (explicit listing):\n")
+  cat(get_obj_name(x), ":", x, "\n")
+  cat(get_obj_name(y), ":", y, "\n")
+  cat("Arguments received by the function (using as.list(environment())) (automatic listing):\n")
+  paramsList = as.list(environment())
+  paramsNames = names(paramsList)
+  sapply(paramsNames, get_obj_name)
+  for (p in paramsNames) {
+    cat(p, ":", paramsList[[p]], "\n")
+  }
+}
+z = 5
+extra_param = "a '...' parameter" 
+  ## Note: this exra parameter is NOT shown neither by get_obj_name()
+  ## nor by as.list(environment())
+f("test", z, extra_param)
+</code></pre>
+
+
+</div>

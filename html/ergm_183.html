@@ -1,0 +1,291 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm.bridge.llr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bridge sampling to evaluate ERGM log-likelihoods and log-likelihood ratios</h2>
+
+<h3>Description</h3>
+
+<p><code>ergm.bridge.llr</code> uses bridge sampling with geometric spacing to
+estimate the difference between the log-likelihoods of two parameter vectors
+for an ERGM via repeated calls to <code>simulate.formula.ergm()</code>.
+</p>
+<p><code>ergm.bridge.0.llk</code> is a convenience wrapper that
+returns the log-likelihood of configuration <code class="reqn">\theta</code>
+<em>relative to the reference measure</em>. That is, the
+configuration with <code class="reqn">\theta=0</code> is defined as having log-likelihood of
+0.
+</p>
+<p><code>ergm.bridge.dindstart.llk</code> is a wrapper that uses a
+dyad-independent ERGM as a starting point for bridge sampling to
+estimate the log-likelihood for a given dyad-dependent model and
+parameter configuration.  Note that it only handles binary ERGMs
+(<code>response=NULL</code>) and with constraints (<code style="white-space: pre;">⁠constraints=⁠</code>) that that
+do not induce dyadic dependence.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm.bridge.llr(
+  object,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  from,
+  to,
+  obs.constraints = ~. - observed,
+  target.stats = NULL,
+  basis = ergm.getnetwork(object),
+  verbose = FALSE,
+  ...,
+  llronly = FALSE,
+  control = control.ergm.bridge()
+)
+
+ergm.bridge.0.llk(
+  object,
+  response = NULL,
+  reference = ~Bernoulli,
+  coef,
+  ...,
+  llkonly = TRUE,
+  control = control.ergm.bridge(),
+  basis = ergm.getnetwork(object)
+)
+
+ergm.bridge.dindstart.llk(
+  object,
+  response = NULL,
+  constraints = ~.,
+  coef,
+  obs.constraints = ~. - observed,
+  target.stats = NULL,
+  dind = NULL,
+  coef.dind = NULL,
+  basis = ergm.getnetwork(object),
+  ...,
+  llkonly = TRUE,
+  control = control.ergm.bridge(),
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>A model formula. See <code>ergm()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>Either a character string, a formula, or <code>NULL</code> (the default), to specify the response attributes and whether the ERGM is binary or valued. Interpreted as follows: </p>
+
+<dl>
+<dt><code>NULL</code></dt>
+<dd>
+<p>Model simple presence or absence, via a binary ERGM.</p>
+</dd>
+<dt>character string</dt>
+<dd>
+<p>The name of the edge attribute whose value is to be modeled. Type of ERGM will be determined by whether the attribute is <code>logical</code> (<code>TRUE</code>/<code>FALSE</code>) for binary or <code>numeric</code> for valued.</p>
+</dd>
+<dt>a formula</dt>
+<dd>
+<p>must be of the form <code>NAME~EXPR|TYPE</code> (with <code>|</code> being literal). <code>EXPR</code> is evaluated in the formula's environment with the network's edge attributes accessible as variables. The optional <code>NAME</code> specifies the name of the edge attribute into which the results should be stored, with the default being a concise version of <code>EXPR</code>. Normally, the type of ERGM is determined by whether the result of evaluating <code>EXPR</code> is logical or numeric, but the optional <code>TYPE</code> can be used to override by specifying a scalar of the type involved (e.g., <code>TRUE</code> for binary and <code>1</code> for valued).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>A one-sided formula specifying the reference
+measure (<code class="reqn">h(y)</code>) to be used.  (Defaults to
+<code>~Bernoulli</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraints, obs.constraints</code></td>
+<td>
+<p>One-sided formulas specifying
+one or more constraints on the support of the distribution of the
+networks being simulated and on the observation process
+respectively. See the documentation for similar arguments for
+<code>ergm()</code> for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from, to</code></td>
+<td>
+<p>The initial and final parameter vectors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target.stats</code></td>
+<td>
+<p>A vector of sufficient statistics to be used
+in place of those of the network in the formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>basis</code></td>
+<td>
+<p>An optional <code>network</code> object to
+start the Markov chain.  If omitted, the default is the
+left-hand-side of the <code>object</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments to <code>ergm.bridge.llr</code> and
+<code>simulate.formula.ergm()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>llronly</code></td>
+<td>
+<p>Logical: If TRUE, only the estiamted log-ratio will
+be returned by <code>ergm.bridge.llr</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters for algorithm tuning,
+typically constructed with <code>control.ergm.bridge()</code>. Its documentation
+gives the the list of recognized control parameters and their
+meaning. The more generic utility <code>snctrl()</code> (StatNet ConTRoL)
+also provides argument completion for the available control
+functions and limited argument name checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>A vector of coefficients for the configuration of
+interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>llkonly</code></td>
+<td>
+<p>Whether only the estiamted log-likelihood should be
+returned by the <code>ergm.bridge.0.llk</code> and
+<code>ergm.bridge.dindstart.llk</code>.  (Defaults to TRUE.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dind</code></td>
+<td>
+<p>A one-sided formula with the dyad-independent model to use as a
+starting point. Defaults to the dyad-independent terms found in the formula
+<code>object</code> with an overal density term (<code>edges</code>) added if not
+redundant.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.dind</code></td>
+<td>
+<p>Parameter configuration for the dyad-independent starting
+point. Defaults to the MLE of <code>dind</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>If <code>llronly=TRUE</code> or <code>llkonly=TRUE</code>, these functions return
+the scalar log-likelihood-ratio or the log-likelihood.
+Otherwise, they return a list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>llr</code></td>
+<td>
+<p>The estimated log-ratio.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>llr.vcov</code></td>
+<td>
+<p>The estimated variance of the log-ratio due to
+MCMC approximation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>llrs</code></td>
+<td>
+<p>A list of lists (1 per attempt) of the estimated
+log-ratios for each of the <code>bridge.nsteps</code> bridges.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>llrs.vcov</code></td>
+<td>
+<p>A list of lists (1 per attempt) of the estimated
+variances of the estimated log-ratios for each of the
+<code>bridge.nsteps</code> bridges.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paths</code></td>
+<td>
+<p>A list of lists (1 per attempt) with two elements:
+<code>theta</code>, a numeric matrix with <code>bridge.nsteps</code> rows, with each
+row being the respective bridge's parameter configuration; and
+<code>weight</code>, a vector of length <code>bridge.nsteps</code> containing its
+weight.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dtheta.Du</code></td>
+<td>
+<p>The gradient vector of the parameter values with
+respect to position of the bridge.</p>
+</td>
+</tr>
+</table>
+<p><code>ergm.bridge.0.llk</code> result list also includes an <code>llk</code>
+element, with the log-likelihood itself (with the reference
+distribution assumed to have likelihood 0).
+</p>
+<p><code>ergm.bridge.dindstart.llk</code> result list also includes
+an <code>llk</code> element, with the log-likelihood itself and an
+<code>llk.dind</code> element, with the log-likelihood of the nearest
+dyad-independent model.
+</p>
+
+
+<h3>References</h3>
+
+<p>Hunter, D. R. and Handcock, M. S. (2006)
+<em>Inference in curved exponential family models for
+networks</em>, Journal of Computational and Graphical Statistics.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>simulate.formula.ergm()</code>
+</p>
+
+
+</div>

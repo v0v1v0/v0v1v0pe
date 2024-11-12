@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecospat.margin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Delineation of the distribution's margin and its uncertainty</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the margin of the distribution in the bi-dimensional environmental space based on bootstrapped kernel density estimation the percentage of the distribution included within the margin.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecospat.margin (z, th.quant, kern.method, bootstrap, bootstrap.rep, bootstrap.ncore)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>object (list) resulting from the function <code>ecospat.grid.clim.dyn</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>th.quant</code></td>
+<td>
+<p>The quantile (between 0 and 1) used to delimit a threshold to exclude low species density values (see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kern.method</code></td>
+<td>
+<p>Method used to draw the kernel density estimation. it can be "adehabitat" (default) or "ks"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap</code></td>
+<td>
+<p>Boolean. If <code>TRUE</code>, a confidence interval based on bootstrap is estimated for the margin of the distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap.rep</code></td>
+<td>
+<p>Number of resamplings if the boostrap is selected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap.ncore</code></td>
+<td>
+<p>Number of cores to use for parallelization if the boostrap estimation is selected.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>th.quant</code> is the quantile of the distribution of species density at occurrence sites. 
+For example, if <code>th.quant</code> is set to 0.05, the margin of the distribution is drawn by including 95 percent of the species occurrences, removing the more marginal populations. If <code>th.quant</code> is set to 0, the margin of the distribution is the minimal envelope including 100 percent of the species occurrences.
+The bootstrap estimation of the margin allows representing the uncertainty around this margin. By default it returns a contour covering a 95 percents confidence interval (CI), but you can easily choose a custom CI.</p>
+
+
+<h3>Value</h3>
+
+<p> a list with $niche.envelope = a SpatRaster of the niche envelope including the distribution, $niche.contour = a SpatiaLine object of the margin, $niche.density = a SpatRaster of the niche density within the niche envelope.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Blaise Petitpierre <a href="mailto:bpetitpierre@gmail.com">bpetitpierre@gmail.com</a></p>
+
+
+<h3>See Also</h3>
+
+<p><code>ecospat.plot.niche.dyn</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(ade4)
+library(terra)
+
+data(ecospat.testData)
+
+sp1 &lt;- ecospat.testData[ecospat.testData$Bromus_erectus == 1, 1:8] # species occurences
+clim &lt;- ecospat.testData[4:8] # environment of the study area
+
+#################################### PCA-ENVIRONMENT ##################################
+library(ade4)
+pca.cal &lt;- ade4::dudi.pca(clim, center = TRUE, scale = TRUE, scannf = FALSE, nf = 2)
+
+####### projection of the species distribution into the environmental space ######
+# predict the scores on the axes
+scores.clim &lt;- pca.cal$li # scores for global climate
+scores.sp1 &lt;- ade4::suprow(pca.cal, sp1[, 4:8])$li # scores for sp1
+
+z1 &lt;- ecospat.grid.clim.dyn(scores.clim, scores.clim, scores.sp1, R = 100, 
+  extend.extent = c(0, 1, 0, 0))
+
+####### estimate the margin ######
+z1.margin &lt;- ecospat.margin(z1, th.quant = 0, bootstrap = FALSE) # including all occurrences
+z1.95margin &lt;- ecospat.margin(z1, th.quant = 0.05, 
+  bootstrap = FALSE) # including 95 percent of the occurrences
+z1.bootstrap.margin &lt;- ecospat.margin(z1,th.quant = 0,
+  bootstrap = TRUE, bootstrap.rep = 100) # bootstrap estimation of the niche limit
+
+####### plot the margin and its uncertainty ######
+plot(z1.margin$niche.density) # plot of the niche density
+points(z1$sp) # with species occurences
+lines(z1.margin$niche.contour) # limit of the margin if you include all the distribution
+lines(z1.95margin$niche.contour, col = 2) # limit of the margin if you exclude the 
+                                                  # 5 percents of the most marginal distribution
+lines(z1.bootstrap.margin$niche.contour, col = 2, lty = "dotted") 
+      # limit of the niche based on the 95 percent CI of the bootstrap
+
+par(mfrow=c(1,2))
+plot(z1.bootstrap.margin$niche.envelope, main = "Margin uncertainty", 
+  legend.args=list(text="CI", cex = 0.8)) # shows uncertainty of niche margin in SpatRaster mode
+points(z1$sp) # with species occurences
+# shows the uncertainty of the niche limit in vector mode
+boot&lt;-terra::as.contour(z1.bootstrap.margin$niche.envelope)
+plot(boot, col = gray(10:1 / 10), main = "Margin uncertainty") 
+# select a customized confidence interval (here for example 80 percent)
+confInt80 &lt;- terra::as.polygons(z1.bootstrap.margin$niche.envelope &gt;= 50, dissolve = TRUE) 
+lines(confInt80, lty = "dotted", col = 2)
+</code></pre>
+
+
+</div>

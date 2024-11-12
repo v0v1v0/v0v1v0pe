@@ -1,0 +1,314 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate_compare</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate clinical trials for several designs using common patients.</h2>
+
+<h3>Description</h3>
+
+<p>This function takes a list of several
+<code>selector_factory</code>s, such as those returned by
+<code>get_dfcrm</code>, <code>get_boin</code> or
+<code>get_three_plus_three</code>, and conducts many notional clinical
+trials. The simulated patients in the trials are common across designs. For
+example, in a comparison of the three designs mentioned above, the first
+simulated CRM trial uses the same notional patients as the first simulated
+BOIN trial, etc. Using common patients within iterate across designs
+reduces MCMC errors of comparisons, so this method is efficient for
+comparing designs. See Sweeting et al. for full details.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulate_compare(
+  designs,
+  num_sims,
+  true_prob_tox,
+  true_prob_eff = NULL,
+  patient_samples = NULL,
+  rho = NULL,
+  return_patient_samples = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>designs</code></td>
+<td>
+<p>list, mapping design names to objects of type
+<code>selector_factory</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_sims</code></td>
+<td>
+<p>integer, number of trial iterations to simulate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>true_prob_tox</code></td>
+<td>
+<p>numeric vector of true but unknown toxicity
+probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>true_prob_eff</code></td>
+<td>
+<p>numeric vector of true but unknown efficacy
+probabilities. NULL if efficacy not analysed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>patient_samples</code></td>
+<td>
+<p>Optional list of length <code>num_sims</code>, where each
+element is an instance of <code>PatientSample</code> or a subclass like
+<code>CorrelatedPatientSample</code>. These objects control the occurrence
+of toxicity and efficacy events in patients. They are specifiable to allow
+fine-grained control to users. See the vignette on Simulation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p>Optional correlation between -1 and 1 for the latent uniform
+variables that determine toxicity and efficacy events. Non-correlated events
+is the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_patient_samples</code></td>
+<td>
+<p>TRUE to get the list of patient sample objects
+returned in the patient_samples attribute of the retured object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra args are passed onwards.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>By default, dose decisions in simulated trials are made after each
+cohort of 3 patients. This can be changed by providing a function by the
+<code>sample_patient_arrivals</code> parameter that simulates the arrival of new
+patients. The new patients will be added to the existing patients and the
+model will be fit to the set of all patients. The function that simulates
+patient arrivals should take as a single parameter a data-frame with one
+row for each existing patient and columns including cohort, patient, dose,
+tox, time (and possibly also eff and weight, if a phase I/II or
+time-to-event method is used). The provision of data on the existing
+patients allows the patient sampling function to be adaptive. The function
+should return a data-frame with a row for each new patient and a column for
+time_delta, the time between the arrival of this patient and the previous,
+as in <code>cohorts_of_n</code>. See Examples.
+</p>
+<p>This method can simulate the culmination of trials that are partly
+completed. We just have to specify the outcomes already observed via the
+<code>previous_outcomes</code> parameter. Each simulated trial will commence from
+those outcomes seen thus far. See Examples.
+</p>
+<p>We can specify the immediate next dose by specifying <code>next_dose</code>. If
+omitted, the next dose is calculated by invoking the model on the outcomes
+seen thus far.
+</p>
+<p>Designs must eventually choose to stop the trial. Some designs, like 3+3,
+have intrinsic stopping rules. However, some selectors like those derived
+from <code>get_dfcrm</code> offer no default stopping method. You may need
+to append stopping behaviour to your selector via something like
+<code>stop_at_n</code> or <code>stop_when_n_at_dose</code>, etc. To
+safeguard against simulating runaway trials that never end, the function
+will halt a simulated trial after 30 invocations of the dose-selection
+decision. To breach this limit, specify <code>i_like_big_trials = TRUE</code> in
+the function call. However, when you forego the safety net, the onus is on
+you to write selectors that will eventually stop the trial! See Examples.
+</p>
+<p>The model is fit to the prevailing data at each dose selection point. By
+default, only the final model fit for each simulated trial is retained.
+This is done to conserve memory. With a high number of simulated trials,
+storing many model fits per trial may cause the executing machine to run
+out of memory. However, you can force this method to retain all model fits
+by specifying <code>return_all_fits = TRUE</code>. See Examples.
+</p>
+
+
+<h3>Value</h3>
+
+<p>object of type <code>simulations_collection</code>
+</p>
+
+
+<h3>References</h3>
+
+<p>Sweeting, M., Slade, D., Jackson, D., &amp; Brock, K. (2024).
+Potential outcome simulation for efficient head-to-head comparison of
+adaptive dose-finding designs. arXiv preprint arXiv:2402.15460
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>simulations</code>
+</p>
+<p><code>selector_factory</code>
+</p>
+<p><code>get_dfcrm</code>
+</p>
+<p><code>get_boin</code>
+</p>
+<p><code>get_three_plus_three</code>
+</p>
+<p><code>cohorts_of_n</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Don't run on build because they exceed CRAN time limit
+
+# In a five-dose scenario, we have assumed probabilities for Prob(tox):
+true_prob_tox &lt;- c(0.05, 0.10, 0.15, 0.18, 0.45)
+# and Prob(eff):
+true_prob_eff &lt;- c(0.40, 0.50, 0.52, 0.53, 0.53)
+
+# Let us compare two BOIN12 variants that differ in their stopping params:
+designs &lt;- list(
+  "BOIN12 v1" = get_boin12(num_doses = 5,
+                           phi_t = 0.35, phi_e = 0.25,
+                           u2 = 40, u3 = 60,
+                           c_t = 0.95, c_e = 0.9) %&gt;%
+    stop_at_n(n = 36),
+  "BOIN12 v2" = get_boin12(num_doses = 5,
+                           phi_t = 0.35, phi_e = 0.25,
+                           u2 = 40, u3 = 60,
+                           c_t = 0.5, c_e = 0.5) %&gt;%
+    stop_at_n(n = 36)
+)
+# For illustration we run only 10 iterates:
+x &lt;- simulate_compare(
+  designs,
+  num_sims = 10,
+  true_prob_tox,
+  true_prob_eff
+)
+# To compare toxicity-only designs like CRM etc, we would omit true_prob_eff.
+
+# We might be interested in the absolute dose recommendation probabilities:
+convergence_plot(x)
+
+library(dplyr)
+library(ggplot2)
+# and, perhaps more importantly, how they compare:
+as_tibble(x) %&gt;%
+  ggplot(aes(x = n, y = delta)) +
+  geom_point(size = 0.4) +
+  geom_linerange(aes(ymin = delta_l, ymax = delta_u)) +
+  geom_hline(yintercept = 0, linetype = "dashed", col = "red") +
+  facet_grid(comparison ~ dose,
+    labeller = labeller(
+      .rows = label_both,
+      .cols = label_both)
+  )
+
+# Simulations for each design are available by name:
+sims &lt;- x$`BOIN12 v1`
+# And the usual functions are available on the sims objects:
+sims %&gt;% num_patients()
+sims %&gt;% num_doses()
+sims %&gt;% dose_indices()
+sims %&gt;% n_at_dose()
+# etc
+# See ? simulate_trials
+
+# As with simulate_trials, which examines one design, we also have options to
+# tweak the simulation process.
+
+# By default, dose decisions are made after each cohort of 3 patients. To
+# override, specify an alternative function via the sample_patient_arrivals
+# parameter. E.g. to use cohorts of 2, we run:
+patient_arrivals_func &lt;- function(current_data) cohorts_of_n(n = 2)
+x &lt;- simulate_compare(
+  designs,
+  num_sims = 10,
+  true_prob_tox,
+  true_prob_eff,
+  sample_patient_arrivals = patient_arrivals_func
+)
+
+# To simulate the culmination of trials that are partly completed, specify
+# the outcomes already observed via the previous_outcomes parameter. Imagine
+# one cohort has already been evaluated, returning outcomes 1NTN. We can
+# simulate the remaining part of that trial with:
+x &lt;- simulate_compare(
+  designs,
+  num_sims = 10,
+  true_prob_tox,
+  true_prob_eff,
+  previous_outcomes = '1NTN'
+)
+
+# Outcomes can be described by the above outcome string method or data-frame:
+previous_outcomes &lt;- data.frame(
+  patient = 1:3,
+  cohort = c(1, 1, 1),
+  tox = c(0, 1, 0),
+  eff = c(1, 1, 0),
+  dose = c(1, 1, 1)
+)
+x &lt;- simulate_compare(
+  designs,
+  num_sims = 10,
+  true_prob_tox,
+  true_prob_eff,
+  previous_outcomes = previous_outcomes
+)
+
+# We can specify the immediate next dose:
+x &lt;- simulate_compare(
+  designs,
+  num_sims = 10,
+  true_prob_tox,
+  true_prob_eff,
+  next_dose = 5
+)
+
+# By default, the method will stop simulated trials after 30 dose selections.
+# To suppress this, specify i_like_big_trials = TRUE. However, please take
+# care to specify selectors that will eventually stop! Our designs above use
+# stop_at_n so they will not proceed ad infinitum.
+x &lt;- simulate_compare(
+  designs,
+  num_sims = 10,
+  true_prob_tox,
+  true_prob_eff,
+  i_like_big_trials = TRUE
+)
+
+# By default, only the final model fit is retained for each simulated trial.
+# To retain all interim model fits, specify return_all_fits = TRUE.
+x &lt;- simulate_compare(
+  designs,
+  num_sims = 10,
+  true_prob_tox,
+  true_prob_eff,
+  return_all_fits = TRUE
+)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

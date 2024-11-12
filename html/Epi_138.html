@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>transform.Lexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Transform a Lexis (or stacked.Lexis) object</h2>
+
+<h3>Description</h3>
+
+<p>Modify a Lexis object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'Lexis'
+factorize(x, ..., verbose = FALSE)
+## S3 method for class 'Lexis'
+Relevel(x, ref, ...)
+## S3 method for class 'Lexis'
+levels(x)
+## S3 method for class 'Lexis'
+transform(`_data`, ...)
+## S3 method for class 'stacked.Lexis'
+transform(`_data`, ...)
+ order.Lexis(x)
+  orderLexis(x)
+   sortLexis(x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>_data</code></td>
+<td>
+<p>an object of class <code>Lexis</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of class <code>Lexis</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref</code></td>
+<td>
+<p>New names (or order) of the factor levels (states) for
+<code>lex.Cst</code> 
+and <code>lex.Xst</code>. Can be a list, in which case some levels are
+collapsed, see the documentation for <code>Relevel</code>. No
+sanity check for the latter type of operation is undertaken.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to
+<code>transform.data.frame</code>, <code>Relevel.factor</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. Should a list of new levels be printed?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The transform method for <code>Lexis</code> objects works exactly as the
+method for data frames, but keeps the <code>Lexis</code> attributes.
+</p>
+<p><code>factorize</code> transforms the variables
+<code>lex.Cst</code> and <code>lex.Xst</code> to factors with identical sets of
+levels.
+</p>
+<p><code>Relevel</code> does the same as <code>Relevel.factor</code>, but for
+both the factors <code>lex.Cst</code> and <code>lex.Xst</code> in <code>x</code>.
+<code>lex.Cst</code> and <code>lex.Xst</code> must be factors with the same
+levels. They can be made so by <code>factorize</code>.
+</p>
+<p>If <code>ref</code> is an integer or character vector, the levels of
+<code>lex.Cst</code> and <code>lex.Xst</code> are permuted to match the order of
+<code>ref</code>. 
+</p>
+<p>If <code>ref</code> is <code>NULL</code>, as when for example the argument is
+not passed to the function, the returned object have levels of
+<code>lex.Cst</code>, <code>lex.Xst</code> (and for <code>stacked.Lexis</code> objects
+<code>lex.Tr</code>) shaved down to the actually occurring values; that is,
+empty levels are discarded.
+</p>
+<p><code>order.Lexis</code> returns the order of the rows in a Lexis object to sort
+it by ()<code>lex.id</code>,<code>ts</code>), where <code>ts</code> is a timescale in
+the Lexis object with no <code>NA</code>s. <code>orderLexis</code> is just a synonym.
+</p>
+<p><code>sortLexis</code> returns the Lexis object sorted by
+(<code>lex.id</code>, <code>ts</code>) where <code>ts</code> is one of the
+<code>timeScales</code> with no <code>NA</code>s.   
+</p>
+
+
+<h3>Value</h3>
+
+<p>A transformed <code>Lexis</code> object.
+</p>
+<p>The function <code>levels</code> returns the names of the states (levels of
+the factors <code>lex.Cst</code> and <code>lex.Xst</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martyn Plummer, Bendix Carstensen</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Lexis</code>,
+<code>merge.Lexis</code>,
+<code>subset.Lexis</code>,
+<code>subset.stacked.Lexis</code>,
+<code>Relevel</code>,
+<code>transient</code>,
+<code>absorbing</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data( nickel )
+nic &lt;- Lexis( data = nickel,
+                id = id,
+             entry = list(age = agein),
+              exit = list(age = ageout,
+                          cal = ageout+dob,
+                          tfh = ageout-age1st),
+# Lung cancer deaths end as 2 and other deaths as 1
+       exit.status = factor((icd &gt; 0) + (icd %in% c(162,163)),
+                            labels = c("Alive","Dead","Lung") ) )
+str( nic )
+levels( nic )
+nit &lt;- transform( nic, cumex = exposure * (agein - age1st) )
+str( nit )
+
+# It is still a Lexis object!
+summary(nic)
+
+# change order of levels
+nix &lt;- Relevel(nic, c("Alive", "Lung", "Dead"))
+summary(nix)
+
+# change names of levels 
+niw &lt;- Relevel(nix, list("Alive" = 1, "Pulm" = "Lung", "Mort" = "Dead"))
+summary(niw)
+boxes(niw, boxpos = TRUE)
+
+# combine levels
+niz &lt;- Relevel(niw, list("Alive", c("Pulm", "Mort")), coll=" \n&amp; ")
+summary(niz)
+par( new = TRUE )
+boxes(niz, boxpos = TRUE)
+
+#stack Lexis object
+siw &lt;- stack(niw)
+str(siw)
+</code></pre>
+
+
+</div>

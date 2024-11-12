@@ -1,0 +1,3960 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rosnerTest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Rosner's Test for Outliers
+</h2>
+
+<h3>Description</h3>
+
+<p>Perform Rosner's generalized extreme Studentized deviate test for up to 
+<code class="reqn">k</code> potential outliers in a dataset, assuming the data without any outliers come 
+from a normal (Gaussian) distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  rosnerTest(x, k = 3, alpha = 0.05, warn = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector of observations.  
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are allowed but will be removed.  There must be at least 10 non-missing, finite 
+observations in <code>x</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>positive integer indicating the number of suspected outliers.  The argument <code>k</code> 
+must be between 1 and <code class="reqn">n-2</code> where <code class="reqn">n</code> denotes the number of non-missing, finite 
+values in the arguemnt <code>x</code>.  The default value is <code>k=3</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>numeric scalar between 0 and 1 indicating the Type I error associated with the 
+test of hypothesis.  The default value is <code>alpha=0.05</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn</code></td>
+<td>
+
+<p>logical scalar indicating whether to issue a warning (<code>warn=TRUE</code>; the default) 
+when the number of non-missing, finite values in <code>x</code> and the value of <code>k</code> are such 
+that the assumed Type I error level might not be maintained.  See the DETAILS section below. 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Let <code class="reqn">x_1, x_2, \ldots, x_n</code> denote the <code class="reqn">n</code> observations.  We assume that 
+<code class="reqn">n-k</code> of these observations come from the same normal (Gaussian) distribution, and 
+that the <code class="reqn">k</code> most “extreme” observations may or may not represent observations 
+from a different distribution.  Let <code class="reqn">x^{*}_1, x^{*}_2, \ldots, x^{*}_{n-i}</code> denote 
+the <code class="reqn">n-i</code> observations left after omiting the <code class="reqn">i</code> most extreme observations, where  
+<code class="reqn">i = 0, 1, \ldots, k-1</code>.  Let <code class="reqn">\bar{x}^{(i)}</code> and <code class="reqn">s^{(i)}</code> denote the 
+mean and standard deviation, respectively, of the <code class="reqn">n-i</code> observations in the data 
+that remain after removing the <code class="reqn">i</code> most extreme observations.  
+Thus, <code class="reqn">\bar{x}^{(0)}</code> and <code class="reqn">s^{(0)}</code> denote the 
+mean and standard deviation for the full sample, and in general
+</p>
+<p style="text-align: center;"><code class="reqn">\bar{x}^{(i)} = \frac{1}{n-i}\sum_{j=1}^{n-i} x^{*}_j \;\;\;\;\;\; (1)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">s^{(i)} = \sqrt{\frac{1}{n-i-1} \sum_{j=1}^{n-i} (x^{*}_j - \bar{x}^{(i)})^2} \;\;\;\;\;\; (2)</code>
+</p>
+ 
+<p>For a specified value of <code class="reqn">i</code>, the most extreme observation <code class="reqn">x^{(i)}</code> is the one 
+that is the greatest distance from the mean for that data set, i.e., 
+</p>
+<p style="text-align: center;"><code class="reqn">x^{(i)} = \max_{j=1,2,\ldots,n-i} |x^{*}_j - \bar{x}^{(i)}| \;\;\;\;\;\; (3)</code>
+</p>
+
+<p>Thus, an extreme observation may be the smallest or the largest one in that data set.
+</p>
+<p>Rosner's test is based on the <code class="reqn">k</code> statistics 
+<code class="reqn">R_1, R_2, \ldots, R_k</code>, which represent the extreme Studentized deviates computed 
+from successively reduced samples of size <code class="reqn">n, n-1, \ldots, n-k+1</code>:
+</p>
+<p style="text-align: center;"><code class="reqn">R_{i+1} = \frac{|x^{(i)} - \bar{x}^{(i)}|}{s^{(i)}} \;\;\;\;\;\; (4)</code>
+</p>
+
+<p>Critical values for <code class="reqn">R_{i+1}</code> are denoted <code class="reqn">\lambda_{i+1}</code> and are computed as:
+</p>
+<p style="text-align: center;"><code class="reqn">\lambda_{i+1} = \frac{t_{p, n-i-2} (n-i-1)}{\sqrt{(n-i-2 + t_{p, n-i-2}) (n-i)}} \;\;\;\;\;\; (5)</code>
+</p>
+
+<p>where <code class="reqn">t_{p, \nu}</code> denotes the <code class="reqn">p</code>'th quantile of 
+Student's t-distribution with 
+<code class="reqn">\nu</code> degrees of freedom, and in this case
+</p>
+<p style="text-align: center;"><code class="reqn">p = 1 - \frac{\alpha/2}{n - i} \;\;\;\;\;\; (6)</code>
+</p>
+
+<p>where <code class="reqn">\alpha</code> denotes the Type I error level.
+</p>
+<p>The algorithm for determining the number of outliers is as follows:
+</p>
+
+<ol>
+<li>
+<p> Compare <code class="reqn">R_k</code> with <code class="reqn">\lambda_k</code>.  If <code class="reqn">R_k &gt; \lambda_k</code> then 
+conclude the <code class="reqn">k</code> most extreme values are outliers.
+</p>
+</li>
+<li>
+<p> If <code class="reqn">R_k \le \lambda_k</code> then compare <code class="reqn">R_{k-1}</code> with <code class="reqn">\lambda_{k-1}</code>.  
+If <code class="reqn">R_{k-1} &gt; \lambda_{k-1}</code> then conclude the <code class="reqn">k-1</code> most extreme values 
+are outliers.
+</p>
+</li>
+<li>
+<p> Continue in this fashion until a certain number of outliers have been identified 
+or Rosner's test finds no outliers at all.
+</p>
+</li>
+</ol>
+<p>Based on a study using N=1,000 simulations, Rosner's (1983) Table 1 shows the estimated  
+true Type I error of declaring at least one outlier when none exists for various 
+sample sizes <code class="reqn">n</code> ranging from 10 to 100, and the declared maximum number of outliers 
+<code class="reqn">k</code> ranging from 1 to 10.  Based on that table, Roser (1983) declared that for an 
+assumed Type I error level of 0.05, as long as <code class="reqn">n \ge 25</code>, the estimated 
+<code class="reqn">\alpha</code> levels are quite close to 0.05, and that similar results were obtained 
+assuming a Type I error level of 0.01.  However, the table below is an expanded version 
+of Rosner's (1983) Table 1 and shows results based on N=10,000 simulations.  
+You can see that for an assumed Type I error of 0.05, the test maintains the Type I error 
+fairly well for sample sizes as small as <code class="reqn">n = 3</code> as long as <code class="reqn">k = 1</code>, and for 
+<code class="reqn">n \ge 15</code>, as long as <code class="reqn">k \le 2</code>.    
+Also, for an assumed Type I error of 0.01, the test maintains the Type I error fairly 
+well for sample sizes as small as <code class="reqn">n = 15</code> as long as <code class="reqn">k \le 7</code>.  
+</p>
+<p>Based on these results, when <code>warn=TRUE</code>, a warning is issued for the following cases
+indicating that the assumed Type I error may not be correct:
+</p>
+
+<ul>
+<li> <p><code>alpha</code> is greater than <code>0.01</code>, the sample size is less than 15, and 
+<code>k</code> is greater than <code>1</code>.
+</p>
+</li>
+<li> <p><code>alpha</code> is greater than <code>0.01</code>, 
+the sample size is at least 15 and less than 25, and 
+<code>k</code> is greater than <code>2</code>.
+</p>
+</li>
+<li> <p><code>alpha</code> is less than or equal to <code>0.01</code>, the sample size is less than 15, and 
+<code>k</code> is greater than <code>1</code>. 
+</p>
+</li>
+<li> <p><code>k</code> is greater than <code>10</code>, or greater than the floor of half of the sample size 
+(i.e., greater than the greatest integer less than or equal to half of the sample size).  
+A warning is given for this case because simulations have not been done for this case. <br></p>
+</li>
+</ul>
+<p><b>Table 1a.</b>  Observed Type I Error Levels based on 10,000 Simulations, <code class="reqn">n =</code> 3 to 5.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;">         </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.05</code> </td>
+<td style="text-align: left;">               </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.01</code> </td>
+<td style="text-align: left;">               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code class="reqn">n</code> </td>
+<td style="text-align: left;"> <code class="reqn">k</code> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     3      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.047              </td>
+<td style="text-align: left;"> 0.043           </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.01            </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     4      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.049              </td>
+<td style="text-align: left;"> 0.045           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.107              </td>
+<td style="text-align: left;"> 0.101           </td>
+<td style="text-align: left;"> 0.113           </td>
+<td style="text-align: left;"> 0.021              </td>
+<td style="text-align: left;"> 0.018           </td>
+<td style="text-align: left;"> 0.024           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     5      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.048              </td>
+<td style="text-align: left;"> 0.044           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.008              </td>
+<td style="text-align: left;"> 0.006           </td>
+<td style="text-align: left;"> 0.009           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.095              </td>
+<td style="text-align: left;"> 0.090           </td>
+<td style="text-align: left;"> 0.101           </td>
+<td style="text-align: left;"> 0.020              </td>
+<td style="text-align: left;"> 0.018           </td>
+<td style="text-align: left;"> 0.023           
+  </td>
+</tr>
+</table>
+<p><b>Table 1b.</b>  Observed Type I Error Levels based on 10,000 Simulations, <code class="reqn">n =</code> 6 to 10.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;">         </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.05</code> </td>
+<td style="text-align: left;">               </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.01</code> </td>
+<td style="text-align: left;">               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code class="reqn">n</code> </td>
+<td style="text-align: left;"> <code class="reqn">k</code> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     6      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.048              </td>
+<td style="text-align: left;"> 0.044           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.085              </td>
+<td style="text-align: left;"> 0.080           </td>
+<td style="text-align: left;"> 0.091           </td>
+<td style="text-align: left;"> 0.017              </td>
+<td style="text-align: left;"> 0.015           </td>
+<td style="text-align: left;"> 0.020           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.141              </td>
+<td style="text-align: left;"> 0.134           </td>
+<td style="text-align: left;"> 0.148           </td>
+<td style="text-align: left;"> 0.028              </td>
+<td style="text-align: left;"> 0.025           </td>
+<td style="text-align: left;"> 0.031           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     7      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.048              </td>
+<td style="text-align: left;"> 0.044           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.080              </td>
+<td style="text-align: left;"> 0.075           </td>
+<td style="text-align: left;"> 0.086           </td>
+<td style="text-align: left;"> 0.017              </td>
+<td style="text-align: left;"> 0.015           </td>
+<td style="text-align: left;"> 0.020           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.112              </td>
+<td style="text-align: left;"> 0.106           </td>
+<td style="text-align: left;"> 0.118           </td>
+<td style="text-align: left;"> 0.022              </td>
+<td style="text-align: left;"> 0.019           </td>
+<td style="text-align: left;"> 0.025           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     8      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.048              </td>
+<td style="text-align: left;"> 0.044           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.080              </td>
+<td style="text-align: left;"> 0.074           </td>
+<td style="text-align: left;"> 0.085           </td>
+<td style="text-align: left;"> 0.017              </td>
+<td style="text-align: left;"> 0.014           </td>
+<td style="text-align: left;"> 0.019           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.102              </td>
+<td style="text-align: left;"> 0.096           </td>
+<td style="text-align: left;"> 0.108           </td>
+<td style="text-align: left;"> 0.020              </td>
+<td style="text-align: left;"> 0.017           </td>
+<td style="text-align: left;"> 0.023           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.143              </td>
+<td style="text-align: left;"> 0.136           </td>
+<td style="text-align: left;"> 0.150           </td>
+<td style="text-align: left;"> 0.028              </td>
+<td style="text-align: left;"> 0.025           </td>
+<td style="text-align: left;"> 0.031           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     9      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.069              </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.074           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.012           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.097              </td>
+<td style="text-align: left;"> 0.091           </td>
+<td style="text-align: left;"> 0.103           </td>
+<td style="text-align: left;"> 0.018              </td>
+<td style="text-align: left;"> 0.015           </td>
+<td style="text-align: left;"> 0.021           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.120              </td>
+<td style="text-align: left;"> 0.114           </td>
+<td style="text-align: left;"> 0.126           </td>
+<td style="text-align: left;"> 0.024              </td>
+<td style="text-align: left;"> 0.021           </td>
+<td style="text-align: left;"> 0.027           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    10      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.068              </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.073           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.085              </td>
+<td style="text-align: left;"> 0.080           </td>
+<td style="text-align: left;"> 0.091           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.017           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.106              </td>
+<td style="text-align: left;"> 0.100           </td>
+<td style="text-align: left;"> 0.112           </td>
+<td style="text-align: left;"> 0.021              </td>
+<td style="text-align: left;"> 0.018           </td>
+<td style="text-align: left;"> 0.024           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.135              </td>
+<td style="text-align: left;"> 0.128           </td>
+<td style="text-align: left;"> 0.142           </td>
+<td style="text-align: left;"> 0.025              </td>
+<td style="text-align: left;"> 0.022           </td>
+<td style="text-align: left;"> 0.028           
+  </td>
+</tr>
+</table>
+<p><b>Table 1c.</b>  Observed Type I Error Levels based on 10,000 Simulations, <code class="reqn">n =</code> 11 to 15.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;">         </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.05</code> </td>
+<td style="text-align: left;">               </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.01</code> </td>
+<td style="text-align: left;">               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code class="reqn">n</code> </td>
+<td style="text-align: left;"> <code class="reqn">k</code> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    11      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.070              </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.075           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.012           </td>
+<td style="text-align: left;"> 0.017           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.082              </td>
+<td style="text-align: left;"> 0.077           </td>
+<td style="text-align: left;"> 0.088           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.101              </td>
+<td style="text-align: left;"> 0.095           </td>
+<td style="text-align: left;"> 0.107           </td>
+<td style="text-align: left;"> 0.019              </td>
+<td style="text-align: left;"> 0.016           </td>
+<td style="text-align: left;"> 0.021           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.116              </td>
+<td style="text-align: left;"> 0.110           </td>
+<td style="text-align: left;"> 0.123           </td>
+<td style="text-align: left;"> 0.022              </td>
+<td style="text-align: left;"> 0.019           </td>
+<td style="text-align: left;"> 0.024           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    12      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.067              </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.072           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.074              </td>
+<td style="text-align: left;"> 0.069           </td>
+<td style="text-align: left;"> 0.080           </td>
+<td style="text-align: left;"> 0.016              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.018           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.088              </td>
+<td style="text-align: left;"> 0.082           </td>
+<td style="text-align: left;"> 0.093           </td>
+<td style="text-align: left;"> 0.016              </td>
+<td style="text-align: left;"> 0.014           </td>
+<td style="text-align: left;"> 0.019           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.099              </td>
+<td style="text-align: left;"> 0.093           </td>
+<td style="text-align: left;"> 0.105           </td>
+<td style="text-align: left;"> 0.016              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.018           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.117              </td>
+<td style="text-align: left;"> 0.111           </td>
+<td style="text-align: left;"> 0.123           </td>
+<td style="text-align: left;"> 0.021              </td>
+<td style="text-align: left;"> 0.018           </td>
+<td style="text-align: left;"> 0.023           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    13      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.048              </td>
+<td style="text-align: left;"> 0.044           </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.064              </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.069           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.012           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.070              </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.075           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.079              </td>
+<td style="text-align: left;"> 0.074           </td>
+<td style="text-align: left;"> 0.084           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.012           </td>
+<td style="text-align: left;"> 0.017           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.088              </td>
+<td style="text-align: left;"> 0.083           </td>
+<td style="text-align: left;"> 0.094           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.018           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.109              </td>
+<td style="text-align: left;"> 0.103           </td>
+<td style="text-align: left;"> 0.115           </td>
+<td style="text-align: left;"> 0.020              </td>
+<td style="text-align: left;"> 0.017           </td>
+<td style="text-align: left;"> 0.022           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    14      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.046              </td>
+<td style="text-align: left;"> 0.042           </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.069              </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.074           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.077              </td>
+<td style="text-align: left;"> 0.072           </td>
+<td style="text-align: left;"> 0.082           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.018           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.084              </td>
+<td style="text-align: left;"> 0.079           </td>
+<td style="text-align: left;"> 0.090           </td>
+<td style="text-align: left;"> 0.016              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.018           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.091              </td>
+<td style="text-align: left;"> 0.085           </td>
+<td style="text-align: left;"> 0.097           </td>
+<td style="text-align: left;"> 0.017              </td>
+<td style="text-align: left;"> 0.014           </td>
+<td style="text-align: left;"> 0.019           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.107              </td>
+<td style="text-align: left;"> 0.101           </td>
+<td style="text-align: left;"> 0.113           </td>
+<td style="text-align: left;"> 0.018              </td>
+<td style="text-align: left;"> 0.016           </td>
+<td style="text-align: left;"> 0.021           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    15      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.065              </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.069           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.073              </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.078           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.074              </td>
+<td style="text-align: left;"> 0.069           </td>
+<td style="text-align: left;"> 0.079           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.086              </td>
+<td style="text-align: left;"> 0.081           </td>
+<td style="text-align: left;"> 0.092           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.017           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.099              </td>
+<td style="text-align: left;"> 0.094           </td>
+<td style="text-align: left;"> 0.105           </td>
+<td style="text-align: left;"> 0.018              </td>
+<td style="text-align: left;"> 0.015           </td>
+<td style="text-align: left;"> 0.020           
+  </td>
+</tr>
+</table>
+<p><b>Table 1d.</b>  Observed Type I Error Levels based on 10,000 Simulations, <code class="reqn">n =</code> 16 to 20.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;">         </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.05</code> </td>
+<td style="text-align: left;">               </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.01</code> </td>
+<td style="text-align: left;">               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code class="reqn">n</code> </td>
+<td style="text-align: left;"> <code class="reqn">k</code> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    16      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.068              </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.073           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.074              </td>
+<td style="text-align: left;"> 0.069           </td>
+<td style="text-align: left;"> 0.079           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.017           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.077              </td>
+<td style="text-align: left;"> 0.072           </td>
+<td style="text-align: left;"> 0.082           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.018           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.075              </td>
+<td style="text-align: left;"> 0.070           </td>
+<td style="text-align: left;"> 0.080           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.087              </td>
+<td style="text-align: left;"> 0.082           </td>
+<td style="text-align: left;"> 0.093           </td>
+<td style="text-align: left;"> 0.017              </td>
+<td style="text-align: left;"> 0.014           </td>
+<td style="text-align: left;"> 0.020           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.096              </td>
+<td style="text-align: left;"> 0.090           </td>
+<td style="text-align: left;"> 0.101           </td>
+<td style="text-align: left;"> 0.016              </td>
+<td style="text-align: left;"> 0.014           </td>
+<td style="text-align: left;"> 0.019           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    17      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.047              </td>
+<td style="text-align: left;"> 0.043           </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.008              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.010           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.059              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.067           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.070              </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.075           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.069              </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.074           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.071              </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.076           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.012           </td>
+<td style="text-align: left;"> 0.017           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.081              </td>
+<td style="text-align: left;"> 0.076           </td>
+<td style="text-align: left;"> 0.087           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.012           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.083              </td>
+<td style="text-align: left;"> 0.078           </td>
+<td style="text-align: left;"> 0.088           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.017           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    18      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.065              </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.070           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.065              </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.070           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.069              </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.074           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.068              </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.073           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.072              </td>
+<td style="text-align: left;"> 0.067           </td>
+<td style="text-align: left;"> 0.077           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.076              </td>
+<td style="text-align: left;"> 0.071           </td>
+<td style="text-align: left;"> 0.081           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.081              </td>
+<td style="text-align: left;"> 0.076           </td>
+<td style="text-align: left;"> 0.086           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    19      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.046           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.008              </td>
+<td style="text-align: left;"> 0.006           </td>
+<td style="text-align: left;"> 0.010           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.059              </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.059              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.061              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.067              </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.072           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.066              </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.071           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.069              </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.074           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.074              </td>
+<td style="text-align: left;"> 0.069           </td>
+<td style="text-align: left;"> 0.079           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.082              </td>
+<td style="text-align: left;"> 0.077           </td>
+<td style="text-align: left;"> 0.087           </td>
+<td style="text-align: left;"> 0.015              </td>
+<td style="text-align: left;"> 0.013           </td>
+<td style="text-align: left;"> 0.018           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    20      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.063              </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.063              </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.063              </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.067           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.065              </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.070           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.070              </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.076           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.076              </td>
+<td style="text-align: left;"> 0.070           </td>
+<td style="text-align: left;"> 0.081           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.081              </td>
+<td style="text-align: left;"> 0.076           </td>
+<td style="text-align: left;"> 0.087           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           
+  </td>
+</tr>
+</table>
+<p><b>Table 1e.</b>  Observed Type I Error Levels based on 10,000 Simulations, <code class="reqn">n =</code> 21 to 25.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;">         </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.05</code> </td>
+<td style="text-align: left;">               </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.01</code> </td>
+<td style="text-align: left;">               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code class="reqn">n</code> </td>
+<td style="text-align: left;"> <code class="reqn">k</code> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    21      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.064              </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.069           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.066              </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.071           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.063              </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.066              </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.071           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.073              </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.078           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.071              </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.076           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    22      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.047              </td>
+<td style="text-align: left;"> 0.042           </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.059              </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.061              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.063              </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.065              </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.070           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.065              </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.070           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.012           </td>
+<td style="text-align: left;"> 0.016           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.065              </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.070           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.067              </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.072           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    23      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.008              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.010           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.061              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.063              </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.066              </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.071           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.068              </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.073           </td>
+<td style="text-align: left;"> 0.014              </td>
+<td style="text-align: left;"> 0.012           </td>
+<td style="text-align: left;"> 0.017           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    24      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.046           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.065              </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.069           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.066              </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.071           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.064              </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    25      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.067           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.061              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           
+  </td>
+</tr>
+</table>
+<p><b>Table 1f.</b>  Observed Type I Error Levels based on 10,000 Simulations, <code class="reqn">n =</code> 26 to 30.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;">         </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.05</code> </td>
+<td style="text-align: left;">               </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.01</code> </td>
+<td style="text-align: left;">               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code class="reqn">n</code> </td>
+<td style="text-align: left;"> <code class="reqn">k</code> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    26      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.013              </td>
+<td style="text-align: left;"> 0.011           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.061              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.059              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.061              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    27      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.050              </td>
+<td style="text-align: left;"> 0.046           </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.063              </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.068           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.060              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.065           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.061              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.008              </td>
+<td style="text-align: left;"> 0.006           </td>
+<td style="text-align: left;"> 0.010           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    28      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.049              </td>
+<td style="text-align: left;"> 0.045           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.067           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    29      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.049              </td>
+<td style="text-align: left;"> 0.045           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    30      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.050              </td>
+<td style="text-align: left;"> 0.046           </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.062              </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.067           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.059              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.064           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           
+  </td>
+</tr>
+</table>
+<p><b>Table 1g.</b>  Observed Type I Error Levels based on 10,000 Simulations, n = 31 to 35.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;">         </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.05</code> </td>
+<td style="text-align: left;">               </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.01</code> </td>
+<td style="text-align: left;">               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code class="reqn">n</code> </td>
+<td style="text-align: left;"> <code class="reqn">k</code> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    31      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    32      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    33      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.046           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    34      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    35      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.051              </td>
+<td style="text-align: left;"> 0.046           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.061              </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.066           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           
+  </td>
+</tr>
+</table>
+<p><b>Table 1h.</b>  Observed Type I Error Levels based on 10,000 Simulations, n = 36 to 40.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;">         </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.05</code> </td>
+<td style="text-align: left;">               </td>
+<td style="text-align: left;"> <b>Assumed</b>     </td>
+<td style="text-align: left;"> <code class="reqn">\alpha=0.01</code> </td>
+<td style="text-align: left;">               </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code class="reqn">n</code> </td>
+<td style="text-align: left;"> <code class="reqn">k</code> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+<td style="text-align: left;"> <code class="reqn">\hat{\alpha}</code> </td>
+<td style="text-align: left;"> <em>95% LCL</em> </td>
+<td style="text-align: left;"> <em>95% UCL</em> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    36      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.047              </td>
+<td style="text-align: left;"> 0.043           </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.015           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    37      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.050              </td>
+<td style="text-align: left;"> 0.046           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.049              </td>
+<td style="text-align: left;"> 0.045           </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    38      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.049              </td>
+<td style="text-align: left;"> 0.045           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.047           </td>
+<td style="text-align: left;"> 0.056           </td>
+<td style="text-align: left;"> 0.008              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.010           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.049              </td>
+<td style="text-align: left;"> 0.045           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.009              </td>
+<td style="text-align: left;"> 0.007           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    39      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.047              </td>
+<td style="text-align: left;"> 0.043           </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.053              </td>
+<td style="text-align: left;"> 0.049           </td>
+<td style="text-align: left;"> 0.058           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.061           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.057              </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.062           </td>
+<td style="text-align: left;"> 0.012              </td>
+<td style="text-align: left;"> 0.010           </td>
+<td style="text-align: left;"> 0.014           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.050              </td>
+<td style="text-align: left;"> 0.046           </td>
+<td style="text-align: left;"> 0.055           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    40      </td>
+<td style="text-align: left;"> 1       </td>
+<td style="text-align: left;"> 0.049              </td>
+<td style="text-align: left;"> 0.045           </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 2       </td>
+<td style="text-align: left;"> 0.052              </td>
+<td style="text-align: left;"> 0.048           </td>
+<td style="text-align: left;"> 0.057           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 3       </td>
+<td style="text-align: left;"> 0.055              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 4       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 5       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 6       </td>
+<td style="text-align: left;"> 0.049              </td>
+<td style="text-align: left;"> 0.045           </td>
+<td style="text-align: left;"> 0.053           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 7       </td>
+<td style="text-align: left;"> 0.056              </td>
+<td style="text-align: left;"> 0.051           </td>
+<td style="text-align: left;"> 0.060           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 8       </td>
+<td style="text-align: left;"> 0.054              </td>
+<td style="text-align: left;"> 0.050           </td>
+<td style="text-align: left;"> 0.059           </td>
+<td style="text-align: left;"> 0.011              </td>
+<td style="text-align: left;"> 0.009           </td>
+<td style="text-align: left;"> 0.013           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 9       </td>
+<td style="text-align: left;"> 0.047              </td>
+<td style="text-align: left;"> 0.043           </td>
+<td style="text-align: left;"> 0.052           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.011           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+            </td>
+<td style="text-align: left;"> 10      </td>
+<td style="text-align: left;"> 0.058              </td>
+<td style="text-align: left;"> 0.054           </td>
+<td style="text-align: left;"> 0.063           </td>
+<td style="text-align: left;"> 0.010              </td>
+<td style="text-align: left;"> 0.008           </td>
+<td style="text-align: left;"> 0.012           
+  </td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list of class <code>"gofOutlier"</code> containing the results of the hypothesis test.  
+See the help file for <code>gofOutlier.object</code> for details.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Rosner's test is a commonly used test for “outliers” when you are willing to 
+assume that the data without outliers follows a normal (Gaussian) distribution.  It is 
+designed to avoid <em>masking</em>, which occurs when an outlier goes undetected because 
+it is close in value to another outlier.  
+</p>
+<p>Rosner's test is a kind of discordancy test (Barnett and Lewis, 1995).  The test 
+statistic of a discordancy test is usually a ratio:  the numerator is the difference 
+between the suspected outlier and some summary statistic of the data set 
+(e.g., mean, next largest observation, etc.), while the denominator is always a measure 
+of spread within the data (e.g., standard deviation, range, etc.).  Both USEPA (2009) 
+and USEPA (2013a,b) discuss two commonly used discordancy tests:  Dixon's test and 
+Rosner's test.  Both of these tests assume that all of the data that are not outliers 
+come from a normal (Gaussian) distribution.  
+</p>
+<p>There are many forms of Dixon's test (Barnett and Lewis, 1995).  The one presented in 
+USEPA (2009) and USEPA (20013a,b) assumes just one outlier (Dixon, 1953).  This test 
+is vulnerable to "masking" in which the presence of several outliers masks the fact 
+that even one outlier is present.  There are also other forms of Dixon's test that 
+allow for more than one outlier based on a sequence of sub-tests, but these tests are 
+also vulnerable to masking.
+</p>
+<p>Rosner's test allows you to test for several possible outliers and avoids the problem of 
+masking.  Rosner's test requires you to set the number of suspected outliers, <code class="reqn">k</code>, 
+in advance.  As in the case of Dixon's test, there are several forms of Rosner's test, 
+so you need to be aware of which one you are using.  The form of Rosner's test presented in 
+USEPA (2009) is based on the extreme Studentized deviate (ESD) (Rosner, 1975), whereas the 
+form of Rosner's test performed by the <span class="pkg">EnvStats</span> function <code>rosnerTest</code> and 
+presented in USEPA (2013a,b) is based on the <b>generalized</b> ESD (Rosner, 1983; Gilbert, 1987).  
+USEPA (2013a, p. 190) cites both Rosner (1975) and Rosner (1983), but presents only the 
+test given in Rosner (1983).  Rosner's test based on the ESD has the appropriate Type I 
+error level if there are no outliers in the dataset, but if there are actually say <code class="reqn">m</code> 
+outliers, where <code class="reqn">m &lt; k</code>, then the ESD version of Rosner's test tends to declare 
+more than <code class="reqn">m</code> outliers with a probability that is greater than the stated Type I 
+error level (referred to as “swamping”).  Rosner's test based on the 
+generalized ESD fixes this problem.  USEPA (2013a, pp. 17, 191) incorrectly states that 
+the generalized ESD version of Rosner's test is vulnerable to masking.  Surprisingly, 
+the well-known book on statistical outliers by Barnett and Lewis (1995) does not 
+discuss Rosner's generalized ESD test.
+</p>
+<p>As noted, using Rosner's test requires specifying the number of suspected outliers, 
+<code class="reqn">k</code>, in advance.  USEPA (2013a, pp.190-191) states:  
+“A graphical display (Q-Q plot) can be used to identify suspected outliers 
+needed to perform the Rosner test”, and USEPA (2009, p. 12-11) notes:  
+“A potential drawback of Rosner's test is that the user must first identify 
+the maximum number of potential outliers (k) prior to running the test.  Therefore, 
+this requirement makes the test ill-advised as an automatic outlier screening tool, 
+and somewhat reliant on the user to identify candidate outliers.”
+</p>
+<p>When observations contain non-detect values (NDs), USEPA (2013a, p. 191) states:  
+“one may replace the NDs by their respective detection limits (DLs), DL/2, or may 
+just ignore them ....”  This is bad advice, as this method of dealing with non-detects 
+will produce Type I error rates that are not correct. <br></p>
+<p><b>OUTLIERS ARE NOT NECESSARILY INCORRECT VALUES</b><br>  
+Whether an observation is an “outlier” depends on the underlying assumed 
+statistical model.  McBean and Rovers (1992) state: <br>   
+“It may be possible to ignore the outlier if a physical rationale is available but, 
+failing that, the value must be included ....  Note that the use of statistics does not 
+interpret the facts, it simply makes the facts easier to see.  Therefore, it is incumbent 
+on the analyst to identify whether or not the high value ... is truly representative of 
+the chemical being monitored or, instead, is an outlier for reasons such as a result of 
+sampling or laboratory error.”
+</p>
+<p>USEPA (2006, p.51) states:  <br>
+“If scientific reasoning does not explain the outlier, it should not be 
+discarded from the data set.”    
+</p>
+<p>Finally, an editorial by the Editor-in-Chief of the journal <em>Science</em> deals with 
+this topic (McNutt, 2014).
+</p>
+<p>You can use the functions <code>qqPlot</code> and <code>gofTest</code> to explore 
+other possible statistical models for the data, or you can use nonparametric statistics 
+if you do not want to assume a particular distribution.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Barnett, V., and T. Lewis. (1995).  <em>Outliers in Statistical Data</em>.  Third Edition.  
+John Wiley &amp; Sons, Chichester, UK, pp. 235–236.
+</p>
+<p>Gilbert, R.O. (1987). <em>Statistical Methods for Environmental Pollution Monitoring</em>.  
+Van Nostrand Reinhold, NY, pp.188–191.
+</p>
+<p>McBean, E.A, and F.A. Rovers. (1992).  Estimation of the Probability of Exceedance of 
+Contaminant Concentrations.  <em>Ground Water Monitoring Review</em> <b>Winter</b>, 
+pp. 115–119.
+</p>
+<p>McNutt, M. (2014).  Raising the Bar.  <em>Science</em> <b>345</b>(6192), p. 9.
+</p>
+<p>Rosner, B. (1975).  On the Detection of Many Outliers.  
+<em>Technometrics</em> <b>17</b>, 221–227.
+</p>
+<p>Rosner, B. (1983).  Percentage Points for a Generalized ESD Many-Outlier Procedure.  
+<em>Technometrics</em> <b>25</b>, 165–172.
+</p>
+<p>USEPA. (2006).  <em>Data Quality Assessment:  A Reviewer's Guide</em>.  EPA QA/G-9R.  
+EPA/240/B-06/002, February 2006.  Office of Environmental Information, U.S. 
+Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (2009).  <em>Statistical Analysis of Groundwater Monitoring Data at RCRA 
+Facilities, Unified Guidance</em>.  EPA 530/R-09-007, March 2009.  Office of Resource 
+Conservation and Recovery Program Implementation and Information Division.  U.S. 
+Environmental Protection Agency, Washington, D.C., pp. 12-10 to 12-14.
+</p>
+<p>USEPA. (2013a).  <em>ProUCL Version 5.0.00 Technical Guide</em>.  EPA/600/R-07/041, 
+September 2013.  Office of Research and Development.  U.S. Environmental Protection 
+Agency, Washington, D.C., pp. 190–195.
+</p>
+<p>USEPA. (2013b).  <em>ProUCL Version 5.0.00 User Guide</em>.  EPA/600/R-07/041, 
+September 2013.  Office of Research and Development.  U.S. Environmental Protection 
+Agency, Washington, D.C., pp. 190–195.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gofTest</code>, <code>gofOutlier.object</code>, <code>print.gofOutlier</code>, 
+Normal, <code>qqPlot</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Combine 30 observations from a normal distribution with mean 3 and 
+  # standard deviation 2, with 3 observations from a normal distribution 
+  # with mean 10 and standard deviation 1, then run Rosner's Test on these 
+  # data, specifying k=4 potential outliers based on looking at the 
+  # normal Q-Q plot. 
+  # (Note: the call to set.seed simply allows you to reproduce 
+  # this example.)
+
+  set.seed(250) 
+
+  dat &lt;- c(rnorm(30, mean = 3, sd = 2), rnorm(3, mean = 10, sd = 1)) 
+
+  dev.new()
+  qqPlot(dat)
+
+  rosnerTest(dat, k = 4)
+
+  #Results of Outlier Test
+  #-------------------------
+  #
+  #Test Method:                     Rosner's Test for Outliers
+  #
+  #Hypothesized Distribution:       Normal
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     33
+  #
+  #Test Statistics:                 R.1 = 2.848514
+  #                                 R.2 = 3.086875
+  #                                 R.3 = 3.033044
+  #                                 R.4 = 2.380235
+  #
+  #Test Statistic Parameter:        k = 4
+  #
+  #Alternative Hypothesis:          Up to 4 observations are not
+  #                                 from the same Distribution.
+  #
+  #Type I Error:                    5%
+  #
+  #Number of Outliers Detected:     3
+  #
+  #  i   Mean.i     SD.i      Value Obs.Num    R.i+1 lambda.i+1 Outlier
+  #1 0 3.549744 2.531011 10.7593656      33 2.848514   2.951949    TRUE
+  #2 1 3.324444 2.209872 10.1460427      31 3.086875   2.938048    TRUE
+  #3 2 3.104392 1.856109  8.7340527      32 3.033044   2.923571    TRUE
+  #4 3 2.916737 1.560335 -0.7972275      25 2.380235   2.908473   FALSE
+
+  #----------
+  # Clean up
+
+  rm(dat)
+  graphics.off()
+
+  #--------------------------------------------------------------------
+
+  # Example 12-4 of USEPA (2009, page 12-12) gives an example of 
+  # using Rosner's test to test for outliers in napthalene measurements (ppb)
+  # taken at 5 background wells over 5 quarters.  The data for this example 
+  # are stored in EPA.09.Ex.12.4.naphthalene.df.
+
+  EPA.09.Ex.12.4.naphthalene.df
+  #   Quarter Well Naphthalene.ppb
+  #1        1 BW.1            3.34
+  #2        2 BW.1            5.39
+  #3        3 BW.1            5.74
+  # ...
+  #23       3 BW.5            5.53
+  #24       4 BW.5            4.42
+  #25       5 BW.5           35.45
+
+  longToWide(EPA.09.Ex.12.4.naphthalene.df, "Naphthalene.ppb", "Quarter", "Well", 
+    paste.row.name = TRUE)
+  #          BW.1 BW.2  BW.3 BW.4  BW.5
+  #Quarter.1 3.34 5.59  1.91 6.12  8.64
+  #Quarter.2 5.39 5.96  1.74 6.05  5.34
+  #Quarter.3 5.74 1.47 23.23 5.18  5.53
+  #Quarter.4 6.88 2.57  1.82 4.43  4.42
+  #Quarter.5 5.85 5.39  2.02 1.00 35.45
+
+
+  # Look at Q-Q plots for both the raw and log-transformed data
+  #------------------------------------------------------------
+
+  dev.new()
+  with(EPA.09.Ex.12.4.naphthalene.df, 
+    qqPlot(Naphthalene.ppb, add.line = TRUE, 
+      main = "Figure 12-6.  Naphthalene Probability Plot"))
+
+  dev.new()
+  with(EPA.09.Ex.12.4.naphthalene.df, 
+    qqPlot(Naphthalene.ppb, dist = "lnorm", add.line = TRUE, 
+      main = "Figure 12-7.  Log Naphthalene Probability Plot"))
+
+
+  # Test for 2 potential outliers on the original scale:
+  #-----------------------------------------------------
+
+  with(EPA.09.Ex.12.4.naphthalene.df, rosnerTest(Naphthalene.ppb, k = 2))
+
+  #Results of Outlier Test
+  #-------------------------
+  #
+  #Test Method:                     Rosner's Test for Outliers
+  #
+  #Hypothesized Distribution:       Normal
+  #
+  #Data:                            Naphthalene.ppb
+  #
+  #Sample Size:                     25
+  #
+  #Test Statistics:                 R.1 = 3.930957
+  #                                 R.2 = 4.160223
+  #
+  #Test Statistic Parameter:        k = 2
+  #
+  #Alternative Hypothesis:          Up to 2 observations are not
+  #                                 from the same Distribution.
+  #
+  #Type I Error:                    5%
+  #
+  #Number of Outliers Detected:     2
+  #
+  #  i  Mean.i     SD.i Value Obs.Num    R.i+1 lambda.i+1 Outlier
+  #1 0 6.44240 7.379271 35.45      25 3.930957   2.821681    TRUE
+  #2 1 5.23375 4.325790 23.23      13 4.160223   2.801551    TRUE
+
+  #----------
+  # Clean up
+
+  graphics.off()
+</code></pre>
+
+
+</div>

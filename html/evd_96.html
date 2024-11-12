@@ -1,0 +1,386 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fbvpot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximum-likelihood Fitting of Bivariate Extreme Value
+Distributions to Threshold Exceedances</h2>
+
+<h3>Description</h3>
+
+<p>Fit models for one of nine parametric bivariate extreme-value
+distributions using threshold exceedances, allowing any of the
+parameters to be held fixed if desired.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fbvpot(x, threshold, model = c("log", "bilog", "alog", "neglog",
+    "negbilog", "aneglog", "ct", "hr", "amix"), likelihood =
+    c("censored", "poisson"), start, ..., sym = FALSE, cshape =
+    cscale, cscale = FALSE, std.err = TRUE, corr = FALSE, method =
+    "BFGS", warn.inf = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A matrix or data frame with two columns. If this
+contains missing values, those values are treated as if
+they fell below the corresponding marginal threshold.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>A vector of two thresholds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The specified model; a character string. Must be
+either <code>"log"</code> (the default), <code>"alog"</code>, <code>"hr"</code>,
+<code>"neglog"</code>, <code>"aneglog"</code>, <code>"bilog"</code>,
+<code>"negbilog"</code>, <code>"ct"</code> or <code>"amix"</code> (or any unique
+partial match), for the logistic, asymmetric logistic,
+Husler-Reiss, negative logistic, asymmetric negative logistic,
+bilogistic, negative bilogistic, Coles-Tawn and asymmetric mixed
+models respectively. The definition of each model is given in
+<code>rbvevd</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>likelihood</code></td>
+<td>
+<p>The likelihood model; either <code>"censored"</code>
+(the default) or <code>"poisson"</code>. The <code>"poisson"</code> method 
+is not recommended. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>A named list giving the initial values for all of the
+parameters in the model. If <code>start</code> is omitted the routine
+attempts to find good starting values using marginal maximum
+likelihood estimators.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters, either for the bivariate extreme
+value model or for the optimization function <code>optim</code>. If
+parameters of the model are included they will be held fixed at
+the values given (see <b>Examples</b>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sym</code></td>
+<td>
+<p>Logical; if <code>TRUE</code>, the dependence structure
+of the models <code>"alog"</code>, <code>"aneglog"</code> or <code>"ct"</code> are
+constrained to be symmetric (see <b>Details</b>). For all other
+models, the argument is ignored (and a warning is given).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cshape</code></td>
+<td>
+<p>Logical; if <code>TRUE</code>, a common shape parameter is
+fitted to each margin.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cscale</code></td>
+<td>
+<p>Logical; if <code>TRUE</code>, a common scale parameter is
+fitted to each margin, and the default value of <code>cshape</code>
+is then <code>TRUE</code>, so that under this default common marginal
+parameters are fitted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>Logical; if <code>TRUE</code> (the default), the standard
+errors are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Logical; if <code>TRUE</code>, the correlation matrix is
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The optimization method (see <code>optim</code> for
+details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn.inf</code></td>
+<td>
+<p>Logical; if <code>TRUE</code> (the default), a warning is
+given if the negative log-likelihood is infinite when evaluated at
+the starting values.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For the <code>"censored"</code> method bivariate peaks over threshold models 
+are fitted by maximizing the censored likelihood as given in e.g. Section
+8.3.1 of Coles(2001). For the <code>"poisson"</code> method models are fitted
+using Equation 5.4 of Coles and Tawn (1991), see also Joe, Smith and
+Weissman (1992). This method is only available for models whose spectral 
+measure does not contain point masses (see hbvevd). It is not
+recommended as in practice it can produce poor estimates.
+</p>
+<p>For either likelihood the margins are modelled using a generalized Pareto 
+distribution for points above the threshold and an empirical model for 
+those below. For the <code>"poisson"</code> method data lying below both thresholds 
+is not used. For the <code>"censored"</code> method the number of points lying
+below both thresholds is used, but the locations of the those points are 
+not.
+</p>
+<p>The dependence parameter names are one or more of <code>dep</code>,
+<code>asy1</code>, <code>asy2</code>, <code>alpha</code> and <code>beta</code>, depending on
+the model selected (see <code>rbvevd</code>). 
+The marginal parameter names are <code>scale1</code> and <code>shape1</code>
+for the first margin, and <code>scale2</code> and <code>shape2</code> for the
+second margin.
+</p>
+<p>If <code>cshape</code> is true, the models are constrained so that
+<code>shape2 = shape1</code>. The parameter <code>shape2</code> is then
+taken to be specified, so that e.g. the common shape
+parameter can only be fixed at zero using <code>shape1 = 0</code>,
+since using <code>shape2 = 0</code> gives an error. Similar
+comments apply for <code>cscale</code>.
+</p>
+<p>If <code>sym</code> is <code>TRUE</code>, the asymmetric logistic and
+asymmetric negative logistic models are constrained so that
+<code>asy2 = asy1</code>, and the Coles-Tawn model is constrained
+so that <code>beta = alpha</code>. The parameter <code>asy2</code> or
+<code>beta</code> is then taken to be specified, so that e.g.
+the parameters <code>asy1</code> and <code>asy2</code> can only
+be fixed at <code>0.8</code> using <code>asy1 = 0.8</code>, since
+using <code>asy2 = 0.8</code> gives an error.
+</p>
+<p>Bilogistic and negative bilogistic models constrained to
+symmetry are logistic and negative logistic models
+respectively. The (symmetric) mixed model (e.g. Tawn, 1998)
+can be obtained as a special case of the asymmetric
+logistic or asymmetric mixed models (see <b>fbvevd</b>).
+</p>
+<p>For numerical reasons the parameters of each model are subject the
+artificial constraints given in <code>fbvevd</code>.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of class <code>c("bvpot","evd")</code>.
+</p>
+<p>The generic accessor functions <code>fitted</code> (or
+<code>fitted.values</code>), <code>std.errors</code>,
+<code>deviance</code>, <code>logLik</code> and
+<code>AIC</code> extract various features of the
+returned object.
+</p>
+<p>The functions <code>profile</code> and <code>profile2d</code> can be
+used to obtain deviance profiles.
+The function <code>anova</code> compares nested models, and the
+function <code>AIC</code> compares non-nested models.
+There is currently no plot method available.
+</p>
+<p>An object of class <code>c("bvpot","evd")</code> is a list containing
+the following components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>A vector containing the maximum likelihood estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>A vector containing the standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>A vector containing the parameters that have been fixed
+at specific values within the optimization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed2</code></td>
+<td>
+<p>A vector containing the parameters that have been set
+to be equal to other model parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>A vector containing all parameters (those optimized,
+those fixed to specific values, and those set to be
+equal to other model parameters).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deviance</code></td>
+<td>
+<p>The deviance at the maximum likelihood estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dep.summary</code></td>
+<td>
+<p>A value summarizing the strength of
+dependence in the fitted model (see <b>fbvevd</b>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>The correlation matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.cov</code></td>
+<td>
+<p>The variance covariance matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence, counts, message</code></td>
+<td>
+<p>Components taken from the
+list returned by <code>optim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The data passed to the argument <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>The argument <code>threshold</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>The number of rows in <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nat</code></td>
+<td>
+<p>The vector of length three containing the number of
+exceedances on the first, second and both margins respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>likelihood</code></td>
+<td>
+<p>The argument <code>likelihood</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sym</code></td>
+<td>
+<p>The argument <code>sym</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cmar</code></td>
+<td>
+<p>The vector <code>c(cscale, cshape)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The argument <code>model</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call of the current function.</p>
+</td>
+</tr>
+</table>
+<h3>Warning</h3>
+
+<p>The standard errors and the correlation matrix in the returned
+object are taken from the observed information, calculated by a
+numerical approximation.
+They must be interpreted with caution when either of the
+marginal shape parameters are less than <code class="reqn">-0.5</code>, because
+the usual asymptotic properties of maximum likelihood estimators
+do not then hold (Smith, 1985).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Chris Ferro and Alec Stephenson</p>
+
+
+<h3>References</h3>
+
+<p>Coles, S. G. (2001)
+<em>An Introduction to Statistical Modelling of Extreme
+Values</em>, London: Springer–Verlag.
+</p>
+<p>Coles, S. G. and Tawn, J. A. (1991)
+Modelling multivariate extreme events.
+<em>J. R. Statist. Soc. B</em>, <b>53</b>, 377–392.
+</p>
+<p>Joe, H., Smith, R. L. and Weissman, I. (1992)
+Bivariate threshold methods for extremes.
+<em>J. R. Statist. Soc. B</em>, <b>54</b>, 171–183.
+</p>
+<p>Smith, R. L. (1985)
+Maximum likelihood estimation in a class of non-regular cases.
+<em>Biometrika</em>, <b>72</b>, 67–90.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>abvevd</code>, <code>anova.evd</code>,
+<code>fbvevd</code>, <code>optim</code>, <code>rbvevd</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">bvdata &lt;- rbvevd(1000, dep = 0.5, model = "log")
+u &lt;- apply(bvdata, 2,  quantile, probs = 0.9)
+M1 &lt;- fbvpot(bvdata, u, model = "log")
+M2 &lt;- fbvpot(bvdata, u, "log", dep = 0.5)
+anova(M1, M2)
+</code></pre>
+
+
+</div>

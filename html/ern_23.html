@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimate_R_ww</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the effective reproduction from wastewater concentration
+data.</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the effective reproduction from wastewater concentration
+data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimate_R_ww(
+  ww.conc,
+  dist.fec,
+  dist.gi,
+  scaling.factor = 1,
+  prm.smooth = list(window = 14, align = "center", method = "loess", span = 0.2),
+  prm.R = list(iter = 10, CI = 0.95, window = 7, config.EpiEstim = NULL),
+  silent = FALSE,
+  RL.max.iter = 9
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ww.conc</code></td>
+<td>
+<p>Data frame. Must have variables:
+</p>
+
+<ul>
+<li> <p><code>date</code>: calendar date of wastewater collection
+</p>
+</li>
+<li> <p><code>value</code>: pathogen concentration
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.fec</code></td>
+<td>
+<p>List. Parameters for the fecal shedding distribution in the same format as returned by <code>def_dist()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.gi</code></td>
+<td>
+<p>List. Parameters for the generation interval distribution in the same format as returned by <code>def_dist()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaling.factor</code></td>
+<td>
+<p>Numeric. Scaling from wastewater concentration to
+prevalence. This value may be assumed or independently calibrated to data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prm.smooth</code></td>
+<td>
+<p>List. list of smoothing parameters. Parameters should be
+specified as followed:
+</p>
+
+<ul>
+<li> <p><code>method</code>: smoothing method, either <code>'rollmean'</code> (rolling mean) or <code>'loess'</code> (LOESS smoothing via <code>stats::loess()</code>)
+</p>
+</li>
+<li> <p><code>window</code>: for <code style="white-space: pre;">⁠method = 'rollmean⁠</code> only; width of smoothing window in days
+</p>
+</li>
+<li> <p><code>align</code>: for <code style="white-space: pre;">⁠method = 'rollmean⁠</code> only; smoothing alignment, either <code>'center'</code>, <code>'left'</code>, <code>'right'</code>
+</p>
+</li>
+<li> <p><code>span</code>: for <code>method = 'loess'</code> only; smoothing span (see the documentation for <code>stats::loess()</code> for details)
+</p>
+</li>
+<li> <p><code>floor</code>: optional call for wastewater concentration smoothing with <code>method = 'loess'</code> only; user defined minimum smoothing concentration
+</p>
+</li>
+</ul>
+<p>Set this entire list to <code>NULL</code> to turn off smoothing</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prm.R</code></td>
+<td>
+<p>List. Settings for the ensemble when calculating Rt.
+Elements include:
+</p>
+
+<ul>
+<li> <p><code>iter</code>: Integer. Number of iterations for the Rt ensemble
+</p>
+</li>
+<li> <p><code>CI</code>: Numeric between 0 and 1. Confidence interval width for Rt
+estimates after sampling uncertain distributions.
+</p>
+</li>
+<li> <p><code>window</code>: Integer. Number of days defining the window of data used by
+<code>EpiEstim</code> to estimate Rt. If <code>NULL</code>, will default to 7.
+</p>
+</li>
+<li> <p><code>config.EpiEstim</code>: (optional) configuration for <code>EpiEstim</code> defined via
+<code>EpiEstim::make_config()</code>. If <code>NULL</code>, will use default config from
+<code>EpiEstim</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>Logical. Flag to suppress all output messages, warnings, and progress bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RL.max.iter</code></td>
+<td>
+<p>Integer. Maximum of iterations for the Richardson-Lucy deconvolution algorithm.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List. Elements include:
+</p>
+
+<ul>
+<li> <p><code>ww.conc</code>: original wastewater signal
+</p>
+</li>
+<li> <p><code>ww.smooth</code>: smoothed wastewater signal
+</p>
+</li>
+<li> <p><code>inc</code>: inferred incidence
+</p>
+</li>
+<li> <p><code>R</code>: the effective reproduction number estimate
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>plot_diagnostic_ww()</code> <code>estimate_R_cl()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+ # Load data of viral concentration in wastewater
+data("ww.data")
+
+# Run the estimation of Rt based on the wastewater data
+x = estimate_R_ww(
+  ww.conc  = ww.data,
+  dist.fec = ern::def_dist(
+    dist = "gamma",
+    mean = 12.90215,
+    mean_sd = 1.136829,
+    shape = 1.759937,
+    shape_sd = 0.2665988,
+    max = 33
+    ),
+  dist.gi  = ern::def_dist(
+    dist     = "gamma",
+    mean     = 6.84,
+    mean_sd  = 0.7486,
+    shape    = 2.39,
+    shape_sd = 0.3573,
+    max      = 15
+    ), 
+  silent   = TRUE
+)
+
+# Rt estimates
+head(x$R)
+
+# inferred daily incidence
+head(x$inc)
+
+
+</code></pre>
+
+
+</div>

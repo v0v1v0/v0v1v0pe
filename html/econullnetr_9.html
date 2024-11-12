@@ -1,0 +1,292 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>generate_null_net</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Null models for ecological networks</h2>
+
+<h3>Description</h3>
+
+<p>Uses the algorithm of Agusti <em>et al</em>. (2003) to specify and run a null
+model for an ecological network based upon interaction data and
+independent estimates of resource abundance (see Vaughan <em>et al</em>.,
+2018 for full details).  Typically, network nodes represent species,
+and the following documentation uses the term species in place of node,
+but this need not be the case.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">generate_null_net(
+  consumers,
+  resources,
+  sims = 100,
+  data.type = "names",
+  maintain.d = NULL,
+  summary.type = "sum",
+  c.samples = NULL,
+  r.samples = NULL,
+  r.weights = NULL,
+  prog.count = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>consumers</code></td>
+<td>
+<p>A matrix or data frame containing the interaction data. The
+first column should contain the name of the consumer species, with the
+remaining column names listing the resources (the names must be identical
+and in the same order as in <code>resources</code>).  Each row represents one
+individual, with the elements in the matrix indicating whether a resource
+was used or how much was used (see Details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resources</code></td>
+<td>
+<p>A matrix or data frame containing the relative abundances of
+the different resources (e.g. density of different prey species or abundance
+of different flower species).  May either have one row, if all data came
+from the same location and/or time, or have the same number of rows as
+there are sampling stratum codes in <code>r.samples</code> and <code>c.samples</code>
+(e.g. the set of time points or plot names), if the data are subdivided
+across sampling times/sites. Resource names (column names) in
+<code>resources</code> and <code>consumers</code> must be identical and in the same
+order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sims</code></td>
+<td>
+<p>Number of iterations of the null model.  The default value is 100,
+but this should generally be increased to estimate meaningful confidence
+limits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.type</code></td>
+<td>
+<p>An optional string specifying the type of interaction data.
+One of three options: <code>"names"</code> (the default), <code>"counts"</code> or
+<code>"quantities"</code>. See Details for a full explanation and examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maintain.d</code></td>
+<td>
+<p>When <code>data.type = "counts"</code> or <code>"quantities"</code>,
+a string indicating whether the degree of each individual consumer (i.e.
+the number of different resource species it interacted with) should be
+maintained when allocating individual resources/quantities. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summary.type</code></td>
+<td>
+<p>An optional string indicating how the interactions should
+be summarised at the species level: one of <code>"sum"</code> (the default),
+indicating that the interactions between a consumer and resource species
+will be summed across all individuals, or <code>"mean"</code>, indicating that
+the mean value per individual of a consumer species will be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c.samples</code></td>
+<td>
+<p>An optional vector that specifies names for subdivisions of the
+interaction data when data on interactions and resource abundance were
+collected across a series of subdivisions (e.g. at different sites or time
+points). If suddivisions were present, they should be specified for both
+<code>c.samples</code> and <code>r.samples</code>.  The sample names must be identical
+in <code>c.samples</code> and <code>r.samples</code> (although <code>c.samples</code> is likely to
+be much longer than <code>r.samples</code> due to &gt;1 individual consumer per
+subdivision)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.samples</code></td>
+<td>
+<p>An optional vector specifying the sample names for the
+resource abundance data (<code>resources</code>), and corresponding to the names
+used in <code>c.samples</code>. Must have the name number of entries as there are
+rows in <code>resources</code>. Not needed when <code>resources</code> contains a single
+row/<code>c.samples</code> is absent.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.weights</code></td>
+<td>
+<p>An optional data frame or matrix specifying weights to be
+applied to rows in <code>resources</code>: all entries must be in the range 0–1.
+The first column should contain the consumer species names, one entry for
+each species, within the remaining columns listing all species present in
+<code>resources</code> (names must be identical and in the same order as in
+<code>resources</code>).  Mainly used to specify forbidden links by specifying
+zero values for forbidden links and ones for the remaining entries.  Only
+one table is supplied, which then applies across all subdivisions of the
+data (if present).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prog.count</code></td>
+<td>
+<p>A logical value specifying whether the progress count
+should be shown. Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A basic call to <code>generate_null_net</code> only needs two arguments:
+<code>consumers</code> and <code>resources</code>, but it is recommended that
+<code>sims</code> is also specified to run a larger number of iteration of the
+null model (e.g. 1000).  It is important to ensure that species names are
+consistent throughout and that the resource species used as column names in
+<code>resources</code>, <code>consumers</code> and (optionally) <code>r.weights</code> are in
+the same order (both <code>consumers</code> and <code>r.weights</code> should be one
+column wider than <code>resources</code>, because they include an extra column
+at the start to list the consumer species).
+</p>
+<p>The same species can appear as both a consumer and a resource e.g. when a
+species is both predator and prey in a food web.  Interactions can be
+excluded from the modelled networks by specifying forbidden links with
+<code>r.weights</code>, based either on existing data/literature or hypothesed
+choices, generating the network that would be created if those choices were
+made.  Placing limits on the feasible range of resources with which a
+consumer interacts should lead to more realistic networks: great white
+sharks not feeding on zooplankton in a marine food web, for example.
+</p>
+<p>The interactions between individual consumers and the resources may be
+recorded in a range of different ways depending upon the empirical data
+that are available, and these differences are handled by using the
+optional <code>data.type</code> argument.  Three types of data can be specified:
+</p>
+
+<ol>
+<li> <p><code>data.type = "names"</code> (the default value). This is the most
+common type of data, recording one or more resource species with which
+an interaction occurred, but without any attempt to quantify the
+strength of the interaction.  For data of this type, <code>resources</code>
+should simply comprise 1s and 0s, indicating whether an interaction was
+present or absent respectively: row sums may equal one or be &gt;1 if
+individual consumers can interact with multiple resources.
+</p>
+</li>
+<li> <p><code>data.type = "counts"</code>.  These data record the number of times
+an individual consumer interacted with different resource species e.g.
+the number of times different flower species were visited by an
+individual pollinator during a 5 minute observation period.  When
+modelling count data there is a choice of whether the total number of
+interactions (an individual's row sum) can be distributed across all
+potential resources, which may result in interactions with a different
+number of resource species (i.e. a change in an individual's degree) or
+whether the degree is held constant for each individual.  This is
+determined by the additional <code>maintain.d</code> argument:
+<code>maintain.d = FALSE</code> (the default) does not constrain an
+individual's degree, whereas <code>maintain = TRUE</code> does.
+</p>
+</li>
+<li> <p><code>data.type = "quantities"</code>. Quantitative data are obtained
+from each individual, such as the proportion of a predator's gut
+contents derived from different prey.  The data in <code>consumers</code> can
+be represented by either proportions (so that the row sum for an
+individual = 1) or in the native units (so the total &lt;&gt; 1). As for count
+data, the degree can be free or fixed at the individual consumer level
+by using the <code>maintain.d</code> argument.
+</p>
+</li>
+</ol>
+<p>For data types 2 and 3, it does not matter what units are used (e.g. each
+row does not need to add up to one).  The row total will be maintained,
+so the results are returned in the same units as the original data.
+</p>
+<p>One problem that may arise in specifying the null model is in situations
+where an interaction is recorded with a particular resource, but that
+resource was not actually detected in the abundance data (i.e. abundance =
+0).  This may occur, for example, when a predator eats a rare species that
+was missed during concomitant sampling of prey abundance: in effect, the
+predator's 'sampling' was more comprehensive.  The implication of this is
+that the resource species will not be sampled in the null model – a
+potential source of bias.  <code>generate_null_net</code> will issue a warning if
+it detects this situation.  Possible corrective actions include removing
+that resource species altogether or replacing its zero abundance with a
+small constant.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of class "nullnet", which is a list containing
+the following components:
+</p>
+
+<dl>
+<dt><code>rand.data</code></dt>
+<dd>
+<p>Data frame containing the results from all of the
+iterations of the null model</p>
+</dd>
+<dt><code>obs.interactions</code></dt>
+<dd>
+<p>Interaction matrix summarising the observed
+interactions (from <code>consumers</code>)</p>
+</dd>
+<dt><code>n.iterations</code></dt>
+<dd>
+<p>The value of <code>sims</code> i.e. the number of
+interations of the null model</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Agusti, N., Shayler, S.P., Harwood, J.D., Vaughan, I.P.,
+Sunderland, K.D. &amp; Symondson, W.O.C. (2003) Collembola as alternative prey
+sustaining spiders in arable ecosystems: prey detection within predators
+using molecular markers. <em>Molecular Ecology</em>, <strong>12</strong>, 3467–3475.
+</p>
+<p>Davey, J.S., Vaughan, I.P., King, R.A., Bell, J.R., Bohan, D.A.,
+Bruford, M.W., Holland, J.M. &amp; Symondson, W.O.C. (2013) Intraguild
+predation in winter wheat: prey choice by a common epigeal carabid
+consuming spiders. <em>Journal of Applied Ecology</em>, <strong>50</strong>,
+271–279.
+</p>
+<p>King, R.A, Vaughan, I.P., Bell, J.R., Bohan, D.A, &amp; Symondson, W.O.C.
+(2010) Prey choice by carabid beetles feeding on an earthworm community
+analysed using species- and lineage-specific PCR primers. <em>Molecular
+Ecology</em>, <strong>19</strong>, 1721–1732.
+</p>
+<p>Pearson, C.E., Symondson, W.O.C., Clare, E.L., Ormerod, S.J.,
+Iparraguirre Bolanos, E. &amp; Vaughan, I.P. (2018) The effects of
+pastoral intensification on the feeding interactions of generalist
+predators in streams. <em>Molecular Ecology</em>, <strong>27</strong>, 590-602.
+</p>
+<p>Vaughan, I.P., Gotelli, N.J., Memmott, J., Pearson, C.E., Woodward, G. &amp;
+Symondson, W.O.C. (2018) econullnetr: an R package using null models to
+analyse the structure of ecological networks and identify resource
+selection. <em>Methods in Ecology and Evolution</em>, <strong>9</strong>, 728–733.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>test_interactions</code>, <code>plot_preferences</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">null.1 &lt;- generate_null_net(Silene[, 2:7], Silene.plants[, 2:6], sims = 10,
+  data.type = "names", summary.type = "sum", c.samples = Silene[, 1],
+  r.samples = Silene.plants[, 1])
+
+</code></pre>
+
+
+</div>

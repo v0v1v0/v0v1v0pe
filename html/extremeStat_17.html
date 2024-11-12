@@ -1,0 +1,104 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>q_weighted</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute weighted averages of quantile estimates</h2>
+
+<h3>Description</h3>
+
+<p>Compute weighted averages of quantile estimates
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">q_weighted(quant, weights = distLweights(quant, ...), onlyc = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>quant</code></td>
+<td>
+<p>Data.frame as in <code>distLquantile</code> output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Data.frame as in <code>distLweights</code> output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>onlyc</code></td>
+<td>
+<p>Logical: only return custom weighted quantile estimates as
+a vector? Useful to add those to existing results. See examples.
+DEFAULT: FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed to <code>distLweights</code> like
+weightc, onlydn=FALSE. order will be ignored, as
+q_weighted only adds/changes the rows weighted*.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>data.frame with rows "weighted*" added.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Berry Boessenkool, <a href="mailto:berry-b@gmx.de">berry-b@gmx.de</a>, Dec 2016
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>distLquantile</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- data.frame(A=1:5, RMSE=runif(5))
+distLweights(x, onlydn=FALSE)
+
+q_weighted(x,  onlydn=FALSE)
+q_weighted(x,  distLweights(x, weightc=c("1"=3, "3"=5), order=FALSE, onlydn=FALSE)  )
+
+## Not run:  # time consuming
+x &lt;- rexp(190)
+d &lt;- distLquantile(x)
+d2 &lt;- q_weighted(d)
+stopifnot(all(d==d2, na.rm=TRUE))
+
+# fast option for adding custom weighted estimates:
+cw &lt;- runif(17)
+names(cw) &lt;- c("exp", "gam", "gev", "glo", "gno", "gpa", "gum", "kap", "lap",
+               "ln3", "nor", "pe3", "ray", "revgum", "rice", "wak", "wei")
+dw &lt;- distLweights(d, weightc=cw)
+qw1 &lt;- q_weighted(d, weightc=cw); qw1
+qw2 &lt;- q_weighted(d, weights=dw); qw2
+stopifnot(all(qw1==qw2, na.rm=TRUE))
+q_weighted(d, weights=dw, onlyc=TRUE)
+q_weighted(d, weights=data.frame(weightc=cw), onlyc=TRUE)
+
+system.time(pbreplicate(5000, q_weighted(d, weightc=cw)))             # 8.5 secs
+system.time(pbreplicate(5000, q_weighted(d, weights=dw, onlyc=TRUE))) # 0.8 secs
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

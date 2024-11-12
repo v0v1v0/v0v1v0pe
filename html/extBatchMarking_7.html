@@ -1,0 +1,255 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>batchMarkUnmarkOptim</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Combined Marked and Unmarked models.</h2>
+
+<h3>Description</h3>
+
+<p>batchMarkUnmarkOptim function optimizes <code>batchMarkUnmarkHmmLL</code> function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">batchMarkUnmarkOptim(
+  par = NULL,
+  data,
+  choiceModel = c("model1", "model2", "model3", "model4"),
+  covariate_phi = NULL,
+  covariate_p = NULL,
+  method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B"),
+  Umax = 1800,
+  nBins = 20,
+  popSize = c("Horvitz_Thompson", "Model-Based"),
+  lowerBound = -Inf,
+  control,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>Initial values for the parameters to be optimized over.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A capture-recapture data matrix or data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>choiceModel</code></td>
+<td>
+<p>This chooses among different models and allow for model selection</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariate_phi</code></td>
+<td>
+<p>This covariate placeholder for the parameter phi_t</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariate_p</code></td>
+<td>
+<p>This covariate placeholder for the parameter p_t</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The method to be used. See optim for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Umax</code></td>
+<td>
+<p>The maximum number of the unmarked individuals in the population for capture on any occasion.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nBins</code></td>
+<td>
+<p>The number of bin size into which the matrix will be divided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>popSize</code></td>
+<td>
+<p>The Horvitz_Thompson method or Model-Based to compute population size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lowerBound</code></td>
+<td>
+<p>Lower bounds on the variables for the "L-BFGS-B" method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list of control parameters. See <code>optim</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments to be passed by user which goes into the optim function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that arguments after ... must be matched exactly.
+</p>
+<p>batchMarkUnmarkOptim depends on optim function to optimize the parameters of the combined model. By default optim performs minimization.
+</p>
+<p>Example on Umax and nBins: Umax = 1800 has a matrix of 1801 x 1801 and nBins = 20, reduces the matrix to 90 x 90. This is done in Cowen et al., 2017 to reduce the computing time when dealing with large matrix.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of the following optimized parameters will be returned.
+</p>
+
+<dl>
+<dt>phi</dt>
+<dd>
+<p>The survival probability and remaining in the population between occasion t and t+1.</p>
+</dd>
+<dt>p</dt>
+<dd>
+<p>The capture probability at occasion time t.</p>
+</dd>
+<dt>ll</dt>
+<dd>
+<p>The optimized log-likelihood value of marked model.</p>
+</dd>
+<dt>SE</dt>
+<dd>
+<p>The standard error for each parameter.</p>
+</dd>
+<dt>AIC</dt>
+<dd>
+<p>The Akaike Information Criteria for model selection.</p>
+</dd>
+<dt>lambda</dt>
+<dd>
+<p>Initial mean abundance at occasion t = 1.</p>
+</dd>
+<dt>gam</dt>
+<dd>
+<p>Recruitment rate of individual into the unmarked population.</p>
+</dd>
+<dt>M</dt>
+<dd>
+<p>Total number of marked individual in the population.</p>
+</dd>
+<dt>U</dt>
+<dd>
+<p>Total number of unmarked individuals in the population available for capture at occasion t = 1,..., T.</p>
+</dd>
+<dt>N</dt>
+<dd>
+<p>Total population size at time t = 1, ..., T.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Laura L. E. Cowen, Panagiotis Besbeas, Byron J. T. Morgan, 2017.: Hidden Markov Models for Extended Batch Data,
+Biometrics, 73, 1321-1331. DOI: 10.1111/biom.12701.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load the package
+library(extBatchMarking)
+
+# Load the WeatherLoach data from Cowen et al., 2017.
+data(WeatherLoach)
+
+# Initial parameter values
+theta &lt;- c(0.1, 0.1, 7, -1.5)
+
+
+mod1 &lt;- batchMarkUnmarkOptim(
+           par         = theta,
+           data        = WeatherLoach,
+           Umax        = 1800,
+           nBins       = 600,
+           covariate_phi = NULL,
+           covariate_p   = NULL,
+           choiceModel = "model4",
+           popSize    = "Horvitz_Thompson",
+           method      = "CG",
+           control     = list(trace = 1))
+
+ # Survival probability
+ mod1$phi
+ # Capture probability
+ mod1$p
+ # Optimized log-likelihood
+ mod1$ll
+ # The Aikaike Information Criteria
+ mod1$AIC
+ # The initial mean abundance
+ mod1$lambda
+ # Recruitment rate into the population
+ mod1$gam
+ # The estimated abundance of unmarked animals
+ mod1$U
+ # The estimated abundance of marked animals
+ mod1$M
+ # The estimated total abundance of marked and unmarked animals
+ mod1$N
+ 
+
+ 
+mod2 &lt;- batchMarkUnmarkOptim(
+           par         = theta,
+           data        = WeatherLoach,
+           Umax        = 1800,
+           nBins       = 600,
+           choiceModel = "model4",
+           covariate_phi = NULL,
+           covariate_p   = NULL,
+           popSize    = "Model-Based",
+           method      = "L-BFGS-B",
+           control     = list(trace = 1))
+
+ # print(mod2)
+ # plot(mod2)
+ # Survival probability
+ mod2$phi
+ # Capture probability
+ mod2$p
+ # Optimized log-likelihood
+ mod2$ll
+ # The Akaike Information Criteria
+ mod2$AIC
+ # The initial mean abundance
+ mod2$lambda
+ # Recruitment rate into the population
+ mod2$gam
+ # The estimated abundance of unmarked animals
+ mod2$U
+ # The estimated abundance of marked animals
+ mod2$M
+ # The estimated total abundance of marked and unmarked animals
+ mod2$N
+ 
+</code></pre>
+
+
+</div>

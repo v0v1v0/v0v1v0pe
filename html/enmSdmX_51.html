@@ -1,0 +1,326 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predictMaxNet</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predictions from a MaxNet model</h2>
+
+<h3>Description</h3>
+
+<p>This function is the same as the <code>predict</code> function in the <span class="pkg">maxnet</span> package, except that:
+</p>
+
+<ul>
+<li>
+<p>	If the input is a data frame, the output is a vector as output (not a single-column matrix);
+</p>
+</li>
+<li>
+<p>	If the input is a <code>SpatRaster</code>, the output is a <code>SpatRaster</code>;
+</p>
+</li>
+<li>
+<p>	The default output is on the cloglog scale;
+</p>
+</li>
+<li>
+<p>   The function can be explicitly called (versus doing, say, <code>maxnet:::predict.maxnet</code>, which does not work even when that would be really useful...).
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">predictMaxNet(model, newdata, clamp = TRUE, type = "cloglog", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Object of class <code>maxnet</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>Object of class <code>data.frame</code> or <code>SpatRaster</code> (<span class="pkg">terra</span> package).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clamp</code></td>
+<td>
+<p>If <code>TRUE</code> (default), predict outside the range of training data by 'clamping' values to the last value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>One of:
+</p>
+
+<ul>
+<li>        <p><code>cloglog</code> (default): Predictions are on a complementary log-log scale.
+</p>
+</li>
+<li>        <p><code>logistic</code>: Predictions are on a logistic scale (and thus technically the same to several decimal places as predictions from MaxEnt &lt;=3.3.3k, except for differences in default features).
+</p>
+</li>
+<li>        <p><code>link</code>: Predictions are on the scale of the predictors.
+</p>
+</li>
+<li>        <p><code>exponential</code>: Predictions are on an exponential ('raw') scale.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments (unused).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Numeric vector or <code>SpatRaster</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict</code> from the <span class="pkg">terra</span> package, and <code>maxnet</code> (see the <code>predict</code> function therein)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# NB: The examples below show a very basic modeling workflow. They have been 
+# designed to work fast, not produce accurate, defensible models. They can
+# take a few minutes to run.
+
+library(mgcv)
+library(sf)
+library(terra)
+set.seed(123)
+
+### setup data
+##############
+
+# environmental rasters
+rastFile &lt;- system.file('extdata/madClim.tif', package='enmSdmX')
+madClim &lt;- rast(rastFile)
+
+# coordinate reference system
+wgs84 &lt;- getCRS('WGS84')
+
+# lemur occurrence data
+data(lemurs)
+occs &lt;- lemurs[lemurs$species == 'Eulemur fulvus', ]
+occs &lt;- vect(occs, geom=c('longitude', 'latitude'), crs=wgs84)
+
+occs &lt;- elimCellDuplicates(occs, madClim)
+
+occEnv &lt;- extract(madClim, occs, ID = FALSE)
+occEnv &lt;- occEnv[complete.cases(occEnv), ]
+	
+# create 10000 background sites (or as many as raster can support)
+bgEnv &lt;- terra::spatSample(madClim, 20000)
+bgEnv &lt;- bgEnv[complete.cases(bgEnv), ]
+bgEnv &lt;- bgEnv[1:min(10000, nrow(bgEnv)), ]
+
+# collate occurrences and background sites
+presBg &lt;- data.frame(
+  presBg = c(
+    rep(1, nrow(occEnv)),
+    rep(0, nrow(bgEnv))
+  )
+)
+
+env &lt;- rbind(occEnv, bgEnv)
+env &lt;- cbind(presBg, env)
+
+predictors &lt;- c('bio1', 'bio12')
+
+### calibrate models
+####################
+
+# Note that all of the trainXYZ functions can made to go faster using the
+# "cores" argument (set to just 1, by default). The examples below will not
+# go too much faster using more cores because they are simplified, but
+# you can try!
+cores &lt;- 1
+
+# MaxEnt
+mx &lt;- trainMaxEnt(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# MaxNet
+mn &lt;- trainMaxNet(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized linear model (GLM)
+gl &lt;- trainGLM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized additive model (GAM)
+ga &lt;- trainGAM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	verbose = TRUE,
+	cores = cores
+)
+
+# natural splines
+ns &lt;- trainNS(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	df = 1:2, # too few values for reliable model(?)
+	verbose = TRUE,
+	cores = cores
+)
+
+# boosted regression trees
+envSub &lt;- env[1:1049, ] # subsetting data to run faster
+brt &lt;- trainBRT(
+	data = envSub,
+	resp = 'presBg',
+	preds = predictors,
+	learningRate = 0.001, # too few values for reliable model(?)
+	treeComplexity = c(2, 3), # too few values for reliable model, but fast
+	minTrees = 1200, # minimum trees for reliable model(?), but fast
+	maxTrees = 1200, # too small for reliable model(?), but fast
+	tryBy = 'treeComplexity',
+	anyway = TRUE, # return models that did not converge
+	verbose = TRUE,
+	cores = cores
+)
+
+# random forests
+rf &lt;- trainRF(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	numTrees = c(100, 500), # using at least 500 recommended, but fast!
+	verbose = TRUE,
+	cores = cores
+)
+
+### make maps of models
+#######################
+
+# NB We do not have to scale rasters before predicting GLMs and NSs because we
+# used the `scale = TRUE` argument in trainGLM() and trainNS().
+
+mxMap &lt;- predictEnmSdm(mx, madClim)
+mnMap &lt;- predictEnmSdm(mn, madClim) 
+glMap &lt;- predictEnmSdm(gl, madClim)
+gaMap &lt;- predictEnmSdm(ga, madClim)
+nsMap &lt;- predictEnmSdm(ns, madClim)
+brtMap &lt;- predictEnmSdm(brt, madClim)
+rfMap &lt;- predictEnmSdm(rf, madClim)
+
+maps &lt;- c(
+	mxMap,
+	mnMap,
+	glMap,
+	gaMap,
+	nsMap,
+	brtMap,
+	rfMap
+)
+
+names(maps) &lt;- c('MaxEnt', 'MaxNet', 'GLM', 'GAM', 'NSs', 'BRTs', 'RFs')
+fun &lt;- function() plot(occs, col='black', pch=3, add=TRUE)
+plot(maps, fun = fun, nc = 4)
+
+### compare model responses to BIO12 (mean annual precipitation)
+################################################################
+
+# make a data frame holding all other variables at mean across occurrences,
+# varying only BIO12
+occEnvMeans &lt;- colMeans(occEnv, na.rm=TRUE)
+occEnvMeans &lt;- rbind(occEnvMeans)
+occEnvMeans &lt;- as.data.frame(occEnvMeans)
+climFrame &lt;- occEnvMeans[rep(1, 100), ]
+rownames(climFrame) &lt;- NULL
+
+minBio12 &lt;- min(env$bio12)
+maxBio12 &lt;- max(env$bio12)
+climFrame$bio12 &lt;- seq(minBio12, maxBio12, length.out=100)
+
+predMx &lt;- predictEnmSdm(mx, climFrame)
+predMn &lt;- predictEnmSdm(mn, climFrame)
+predGl &lt;- predictEnmSdm(gl, climFrame)
+predGa &lt;- predictEnmSdm(ga, climFrame)
+predNat &lt;- predictEnmSdm(ns, climFrame)
+predBrt &lt;- predictEnmSdm(brt, climFrame)
+predRf &lt;- predictEnmSdm(rf, climFrame)
+
+
+plot(climFrame$bio12, predMx,
+xlab='BIO12', ylab='Prediction', type='l', ylim=c(0, 1))
+
+lines(climFrame$bio12, predMn, lty='solid', col='red')
+lines(climFrame$bio12, predGl, lty='dotted', col='blue')
+lines(climFrame$bio12, predGa, lty='dashed', col='green')
+lines(climFrame$bio12, predNat, lty=4, col='purple')
+lines(climFrame$bio12, predBrt, lty=5, col='orange')
+lines(climFrame$bio12, predRf, lty=6, col='cyan')
+
+legend(
+   'topleft',
+   inset = 0.01,
+   legend = c(
+	'MaxEnt',
+	'MaxNet',
+	'GLM',
+	'GAM',
+	'NS',
+	'BRT',
+	'RF'
+   ),
+   lty = c(1, 1:6),
+   col = c(
+	'black',
+	'red',
+	'blue',
+	'green',
+	'purple',
+	'orange',
+	'cyan'
+   ),
+   bg = 'white'
+)
+
+
+</code></pre>
+
+
+</div>

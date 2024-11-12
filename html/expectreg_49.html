@@ -1,0 +1,269 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>quant.bundle</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Restricted expectile regression of additive models
+</h2>
+
+<h3>Description</h3>
+
+<p>A location-scale model to fit generalized additive models with least asymmetrically weighted squares
+to obtain the graphs of different expectiles or quantiles
+for continuous, spatial or random effects.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">quant.bundle(formula, data = NULL, smooth = c("schall", "acv", "fixed"), 
+             lambda = 1, quantiles = NA, simple = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>An R formula object consisting of the response variable, '~'
+and the sum of all effects that should be taken into consideration.
+Each effect has to be given through the function <code>rb</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Optional data frame containing the variables used in the model, if the data is not explicitely given in the
+formula.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth</code></td>
+<td>
+
+<p>There are different smoothing algorithms that should prevent overfitting.
+The 'schall' algorithm iterates the smoothing penalty <code>lambda</code> until it converges,
+the asymmetric cross-validation 'acv' minimizes a score-function using <code>nlm</code>
+or the function uses a fixed penalty.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+<p>The fixed penalty can be adjusted. Also serves as starting value for
+the smoothing algorithms.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantiles</code></td>
+<td>
+
+<p>In default setting, the quantiles (0.01,0.02,0.05,0.1,0.2,0.5,0.8,0.9,0.95,0.98,0.99) are calculated.
+You may specify your own set of expectiles in a vector. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simple</code></td>
+<td>
+
+<p>A binary variable depicting if the restricted expectiles (<code>TRUE</code>) or the bundle is used as basis for the quantile bundle.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In least asymmetrically weighted squares (LAWS) each expectile is fitted by minimizing:
+</p>
+<p><code class="reqn"> S = \sum_{i=1}^{n}{ w_i(p)(y_i - \mu_i(p))^2} </code>
+</p>
+<p>with
+</p>
+<p><code class="reqn"> w_i(p) = p 1_{(y_i &gt; \mu_i(p))} + (1-p) 1_{(y_i &lt; \mu_i(p))} </code>.
+</p>
+<p>The restricted version fits the 0.5 expectile at first and then the residuals.
+Afterwards the other expectiles are fitted as deviation by a factor of the residuals from the mean expectile.
+This algorithm is based on He(1997). The advantage is that expectile crossing cannot occur,
+the disadvantage is a suboptimal fit in certain heteroscedastic settings.
+Also, since the number of fits is significantly decreased, the restricted version is much faster.
+</p>
+<p>The expectile bundle has a resemblence to the restricted regression. At first, a trend curve is fitted
+and then an iteration is performed between fitting the residuals and calculating the deviation factors
+for all the expectiles until the results are stable. Therefore this function shares the (dis)advantages
+of the restricted.
+</p>
+<p>The quantile bundle uses either the restricted expectiles or the bundle to estimate a dense set of expectiles. Next 
+this set is used to estimate a density with the function <code>cdf.bundle</code>. From this density quantiles 
+are determined and inserted to the calculated bundle model. This results in an estimated location-scale model for 
+quantile regression. 
+</p>
+
+
+<h3>Value</h3>
+
+<p> An object of class 'expectreg', which is basically a list consisting of: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>lambda </code></td>
+<td>
+<p>The final smoothing parameters for all expectiles and for all effects in a list.
+For the restricted and the bundle regression there are only the mean and the residual lambda.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercepts </code></td>
+<td>
+<p>The intercept for each expectile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p> A matrix of all the coefficients, for each base element
+a row and for each expectile a column. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+<p> The fitted values for each observation and all expectiles,
+separately in a list for each effect in the model,
+sorted in order of ascending covariate values. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p> Vector of the response variable. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p> List with the values of the covariates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p> The formula object that was given to the function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asymmetries</code></td>
+<td>
+<p> Vector of fitted expectile asymmetries as given by argument <code>expectiles</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effects</code></td>
+<td>
+<p> List of characters giving the types of covariates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>helper</code></td>
+<td>
+<p> List of additional parameters like neighbourhood structure for spatial effects or 'phi' for kriging. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend.coef</code></td>
+<td>
+<p> Coefficients of the trend function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residual.coef</code></td>
+<td>
+<p> Vector of the coefficients the residual curve was fitted with. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asymmetry</code></td>
+<td>
+<p> Vector of the asymmetry factors for all expectiles. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p> Complete design matrix. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted</code></td>
+<td>
+<p> Fitted values <code class="reqn"> \hat{y} </code>. </p>
+</td>
+</tr>
+</table>
+<p><code>plot</code>, <code>predict</code>, <code>resid</code>, <code>fitted</code> and <code>effects</code>
+methods are available for class 'expectreg'.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Fabian Otto- Sobotka <br>
+Carl von Ossietzky University Oldenburg <br><a href="https://uol.de">https://uol.de</a> <br></p>
+<p>Thomas Kneib <br>
+Georg August University Goettingen <br><a href="https://www.uni-goettingen.de">https://www.uni-goettingen.de</a> <br></p>
+<p>Sabine Schnabel <br>
+Wageningen University and Research Centre <br><a href="https://www.wur.nl">https://www.wur.nl</a>
+</p>
+<p>Paul Eilers <br>
+Erasmus Medical Center Rotterdam <br><a href="https://www.erasmusmc.nl">https://www.erasmusmc.nl</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Schnabel S and Eilers P (2009)
+<em> Optimal expectile smoothing </em>
+Computational Statistics and Data Analysis, 53:4168-4177
+</p>
+<p>He X (1997)
+<em> Quantile Curves without Crossing </em>
+The American Statistician, 51(2):186-192
+</p>
+<p>Schnabel S and Eilers P (2011)
+<em> A location scale model for non-crossing expectile curves</em>
+(working paper)
+</p>
+<p>Sobotka F and Kneib T (2010)
+<em> Geoadditive Expectile Regression </em>
+Computational Statistics and Data Analysis,
+doi: 10.1016/j.csda.2010.11.015.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>rb</code>, <code>expectreg.boost</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">qb = quant.bundle(dist ~ rb(speed),data=cars,smooth="f",lambda=5)
+plot(qb)
+
+qbund &lt;- quant.bundle(dist ~ rb(speed),data=cars,smooth="f",lambda=50000,simple=FALSE)
+</code></pre>
+
+
+</div>

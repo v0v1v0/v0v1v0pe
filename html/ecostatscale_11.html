@@ -1,0 +1,90 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>xt2fun</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Unbiased stability paramter estimation</h2>
+
+<h3>Description</h3>
+
+<p>Function for solving for stability paramter values from observed time series.
+Equivalent to Eq.5 in the main text.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">xt2fun(x0, r, d, d_sd, dt, ndist)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x0</code></td>
+<td>
+<p>value of x^2 at time t (x(t) in Eq.5)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>per-capita growth rate (r in Eq.5)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>mean size of disturbance function (mu in Eq.5)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_sd</code></td>
+<td>
+<p>standard deviation of disturbance function (sigma in Eq.5)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>time step (i.e. time between x0 and x1) - can be a vector of the same length as x0, or a number if all time steps are of equal length</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ndist</code></td>
+<td>
+<p>number of disturbances in each time step (equivalent to p(t+tau) in Eq.5) - must be same length as x0</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>predicted value of x^2 at time t+dt
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># simulate dynamics, with r=1, d=0, and d_sd=0.1
+xtout&lt;-symdyn(r=1, f=1, d=0, d_sd=0.1, sf=0.1, tmax=100)
+
+# abundance in current time step
+x0&lt;-xtout$state[1:(nrow(xtout)-1)]
+# abundance at t+1
+x1&lt;-xtout$state[2:nrow(xtout)]
+
+dt&lt;-diff(xtout$time)
+ndist&lt;-xtout$disturbed[-1]
+
+# fit model - note square root transform of response variable,
+# and log transform of parameter values
+
+mod&lt;-nls(sqrt(x1^2)~sqrt(xt2fun(x0, r=exp(lr), d=0, d_sd=exp(ld_sd), dt, ndist)),
+         start=c(lr=log(1), ld_sd=log(0.1)))
+exp(coef(mod)) # model estimates
+</code></pre>
+
+
+</div>

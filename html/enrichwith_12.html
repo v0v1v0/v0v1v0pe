@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>enriched_glm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting generalized linear models enriched with useful components</h2>
+
+<h3>Description</h3>
+
+<p><code>enriched_glm</code> fits generalized linear models using
+<code>glm</code> and then enriches the resulting object with all
+enrichment options.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">enriched_glm(formula, family = gaussian, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>an object of class <code>"formula"</code> (or one that
+can be coerced to that class): a symbolic description of the
+model to be fitted.  The details of model specification are given
+under ‘Details’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>a description of the error distribution and link
+function to be used in the model.  For <code>glm</code> this can be a
+character string naming a family function, a family function or the
+result of a call to a family function.  For <code>glm.fit</code> only the
+third option is supported.  (See <code>family</code> for details of
+family functions.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other arguments passed to <code>glm</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>enriched_glm</code> has the same interface as <code>glm</code>
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>enriched_glm</code> that contains all the
+components of a <code>glm</code> object, along with a set of
+auxiliary functions (score function, information matrix, a simulate
+method, first term in the expansion of the bias of the maximum
+likelihood estimator, and dmodel, pmodel, qmodel), the maximum
+likelihood estimate of the dispersion parameter, the expected or
+observed information at the maximum likelihood estimator, and the
+first term in the expansion of the bias of the maximum likelihood
+estimator.
+</p>
+<p>See <code>enrich.glm</code> for more details and links for the
+auxiliary functions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# A Gamma example, from McCullagh &amp; Nelder (1989, pp. 300-2)
+clotting &lt;- data.frame(
+   u = c(5,10,15,20,30,40,60,80,100, 5,10,15,20,30,40,60,80,100),
+   time = c(118,58,42,35,27,25,21,19,18,69,35,26,21,18,16,13,12,12),
+   lot = factor(c(rep(1, 9), rep(2, 9))))
+
+# Fit a generalized linear model
+cML &lt;- enriched_glm(time ~ lot*log(u), data = clotting, family = Gamma("log"))
+
+# Evaluate the densities at the data points in clotting at the
+# maximum likelihood estimates
+cML_dmodel &lt;- get_dmodel_function(cML) # same as cML$auxiliary_functions$dmodel
+cML_dmodel()
+
+# Evaluate the densities at supplied data points
+new_data &lt;- data.frame(u = c(15:17, 15:17),
+                       time = c(30:32, 15:17),
+                       lot = factor(c(1, 1, 1, 2, 2, 2)))
+cML_dmodel(data = new_data)
+
+# Get pmodel and qmodel function
+cML_pmodel &lt;- get_pmodel_function(cML) # same as cML$auxiliary_functions$pmodel
+cML_qmodel &lt;- get_qmodel_function(cML) # same as cML$auxiliary_functions$qmodel
+
+# The following should return c(30:32, 15:17)
+probs &lt;- cML_pmodel(data = new_data)
+cML_qmodel(probs, data = new_data)
+
+# Evaluate the observed information matrix at the MLE
+cML_info &lt;- get_information_function(cML)
+cML_info(type = "observed")
+
+# Wald tests based on the observed information at the
+# moment based esimator of the dispersion
+dispersion &lt;- summary(cML)$dispersion
+cML_vcov_observed &lt;- solve(cML_info(dispersion = dispersion, type = "observed"))
+lmtest::coeftest(cML, vcov = cML_vcov_observed)
+
+# Wald tests based on the expected information at the
+# moment based esimator of the dispersion
+cML_vcov_expected &lt;- solve(cML_info(dispersion = dispersion, type = "expected"))
+lmtest::coeftest(cML, vcov = cML_vcov_expected)
+# Same statistics as coef(summary(cML))[, "t value"]
+
+
+## End(Not run)
+
+
+</code></pre>
+
+
+</div>

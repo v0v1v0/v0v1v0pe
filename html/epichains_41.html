@@ -1,0 +1,230 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate_chain_stats</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate a vector of transmission chains statistics (sizes/lengths)</h2>
+
+<h3>Description</h3>
+
+<p>It generates a vector of transmission chain sizes or lengths using the
+same model as <code>simulate_chains()</code> but without tracking details of the
+individual chains. This function is useful when only the chain sizes or
+lengths are of interest.
+</p>
+<p>It uses a simple branching process model that simulates independent
+chains, using an offspring distribution for each chain. Each chain
+uses a threshold chain size or length as the
+stopping criterion especially where R0 &gt; 1. The function also optionally
+accepts population related inputs such as the population size (defaults
+to Inf) and percentage of the population initially immune (defaults to 0).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulate_chain_stats(
+  n_chains,
+  statistic = c("size", "length"),
+  offspring_dist,
+  ...,
+  stat_threshold = Inf,
+  pop = Inf,
+  percent_immune = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n_chains</code></td>
+<td>
+<p>Number of chains to simulate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+<p>The chain statistic to track as the
+stopping criteria for each chain being simulated when <code>stat_threshold</code> is not
+<code>Inf</code>; A <code style="white-space: pre;">⁠&lt;string&gt;⁠</code>. It can be one of:
+</p>
+
+<ul>
+<li>
+<p> "size": the total number of cases produced by a chain before it goes
+extinct.
+</p>
+</li>
+<li>
+<p> "length": the total number of generations reached by a chain before
+it goes extinct.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offspring_dist</code></td>
+<td>
+<p>Offspring distribution: a <code style="white-space: pre;">⁠&lt;function&gt;⁠</code> like the ones
+provided by R to generate random numbers from given distributions (e.g.,
+<code>rpois</code> for Poisson). More specifically, the function needs to
+accept at least one argument, <code>n</code>, which is the number of random
+numbers to generate. It can accept further arguments, which will be passed
+on to the random number generating functions. Examples that can be provided
+here are <code>rpois</code> for Poisson distributed offspring, <code>rnbinom</code> for negative
+binomial offspring, or custom functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Parameters of the offspring distribution as required by R.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat_threshold</code></td>
+<td>
+<p>A stopping criterion for individual chain simulations;
+a positive number coercible to integer. When any chain's cumulative statistic
+reaches or surpasses <code>stat_threshold</code>, that chain ends. It also serves as a
+censoring limit so that results above the specified value, are set to <code>Inf</code>.
+Defaults to <code>Inf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pop</code></td>
+<td>
+<p>Population size; An <code style="white-space: pre;">⁠&lt;Integer&gt;⁠</code>. Used alongside <code>percent_immune</code>
+to define the susceptible population. Defaults to <code>Inf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>percent_immune</code></td>
+<td>
+<p>Percent of the population immune to
+infection at the start of the simulation; A <code style="white-space: pre;">⁠&lt;numeric&gt;⁠</code> between 0 and 1.
+Used alongside <code>pop</code> to initialise the susceptible population. Defaults to
+0.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code style="white-space: pre;">⁠&lt;epichains_summary&gt;⁠</code>, which is a numeric
+vector of chain sizes or lengths with extra attributes for storing the
+simulation parameters.
+</p>
+
+
+<h3>
+<code>simulate_chain_stats()</code> vs <code>simulate_chains()</code>
+</h3>
+
+<p><code>simulate_chain_stats()</code> is a time-invariant version of <code>simulate_chains()</code>.
+In particular, it does not track the details of individual transmission
+events but deals with eventual chain statistics, that is, the statistic
+realised by a chain after dying out.
+</p>
+<p>It is useful for generating a vector of chain sizes or lengths for a given
+number of chains, if details of who infected whom and the timing of
+infection are not of interest.
+</p>
+<p>This function is used in <code>{epichains}</code> for calculating likelihoods in
+the <code>likelihood()</code> function and for sampling from the borel
+distribution (See ?epichains::rborel). It is used extensively in the
+vignette on
+<a href="https://epiverse-trace.github.io/epichains/articles/interventions.html">modelling disease control</a>,
+where only data on observed chain sizes and lengths are available.
+</p>
+
+
+<h3>Definition of a transmission chain</h3>
+
+<p>A transmission chain as used here is an independent case and all
+the secondary cases linked to it through transmission. The chain starts with
+a single case, and each case in the chain generates secondary cases
+according to the offspring distribution. The chain ends when no more
+secondary cases are generated.
+</p>
+
+
+<h3>Calculating chain sizes and lengths</h3>
+
+<p>The function simulates the chain size for chain <code class="reqn">i</code> at time
+<code class="reqn">t</code>, <code class="reqn">I_{t, i}</code>, as:
+</p>
+<p style="text-align: center;"><code class="reqn">I_{t, i} = \sum_{i}^{I_{t-1}}X_{t, i},</code>
+</p>
+
+<p>and the chain length/duration for chain <code class="reqn">i</code> at time <code class="reqn">t</code>,
+<code class="reqn">L_{t, i}</code>, as:
+</p>
+<p style="text-align: center;"><code class="reqn">L_{t, i} = {\sf min}(1, X_{t, i}), </code>
+</p>
+
+<p>where <code class="reqn">X_{t, i}</code> is the secondary cases generated by chain <code class="reqn">i</code>
+at time <code class="reqn">t</code>, and <code class="reqn">I_{0, i} = L_{0, i} = 1</code>.
+</p>
+<p>The distribution of secondary cases, <code class="reqn">X_{t, i}</code> is modelled by the
+offspring distribution (<code>offspring_dist</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>James M. Azam, Sebastian Funk
+</p>
+
+
+<h3>References</h3>
+
+<p>Jacob C. (2010). Branching processes: their role in epidemiology.
+International journal of environmental research and public health, 7(3),
+1186–1204. <a href="https://doi.org/10.3390/ijerph7031204">doi:10.3390/ijerph7031204</a>
+</p>
+<p>Blumberg, S., and J. O. Lloyd-Smith. 2013. "Comparing Methods for
+Estimating R0 from the Size Distribution of Subcritical Transmission
+Chains." Epidemics 5 (3): 131–45.
+<a href="https://doi.org/10.1016/j.epidem.2013.05.002">doi:10.1016/j.epidem.2013.05.002</a>.
+</p>
+<p>Farrington, C. P., M. N. Kanaan, and N. J. Gay. 2003.
+"Branching Process Models for Surveillance of Infectious Diseases
+Controlled by Mass Vaccination.” Biostatistics (Oxford, England)
+4 (2): 279–95. <a href="https://doi.org/10.1093/biostatistics/4.2.279">doi:10.1093/biostatistics/4.2.279</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simulate chain sizes with a poisson offspring distribution, assuming an
+# infinite population and no immunity.
+set.seed(32)
+simulate_chain_stats(
+  n_chains = 20,
+  statistic = "size",
+  offspring_dist = rpois,
+  stat_threshold = 10,
+  lambda = 0.9
+)
+# Simulate chain sizes with a negative binomial distribution and assuming
+# a finite population and 10% immunity.
+set.seed(32)
+simulate_chain_stats(
+  pop = 1000,
+  percent_immune = 0.1,
+  n_chains = 20,
+  statistic = "size",
+  offspring_dist = rnbinom,
+  stat_threshold = 10,
+  mu = 0.9,
+  size = 0.36
+)
+</code></pre>
+
+
+</div>

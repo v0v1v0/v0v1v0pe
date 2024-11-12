@@ -1,0 +1,204 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>addCov.Lexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Add covariates (typically clinical measurements) taken at known times
+to a Lexis object. 
+</h2>
+
+<h3>Description</h3>
+
+<p>When follow-up in a multistate model is represented in a
+<code>Lexis</code> object we may want to add information on
+covariates, for example clinical measurements, obtained at different
+times. This function cuts the follow-up time (see
+<code>cutLexis</code>) at the times of measurement and carries the
+measurements forward in time to the next measurement occasion.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'Lexis'
+addCov(Lx,
+                     clin,
+                timescale = 1,
+                    exnam,
+                      tfc = "tfc", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Lx</code></td>
+<td>
+
+<p>A Lexis object with follow-up of a cohort.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clin</code></td>
+<td>
+
+<p>A data frame with covariates to add (typically clinical
+measurements). Must contain a variable <code>lex.id</code> identifying the
+persons represented in <code>Lx</code>, as well as a variable with the
+same name as one of the <code>timeScales</code> in <code>Lx</code>,
+identifying the time at which covariates are measured.
+</p>
+<p>The times must be unique within each person; if not records with
+duplicate times are discarded, and a warning issued. This is done
+using <code>duplicated</code>, so not very well-defined, it is advisable
+that you do this by yourself.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timescale</code></td>
+<td>
+
+<p>Numerical or character. Number or name of a timescale in
+<code>Lx</code>. The <code>clin</code> data frame must have a variable of this
+name indicating the time at which the covariate measurements were
+taken.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exnam</code></td>
+<td>
+
+<p>Character. Name of the variable in <code>clin</code> with the examination
+names (such as <code>wave1</code>, <code>wave2</code> etc.). Values may not be
+repeated within person and cannot be equal to any of
+<code>levels(Lx)</code>. Will be carried over to the resulting 
+<code>Lexis</code> object. If there is no such variable in <code>clin</code> it
+will be constructed; if the argument is omitted, a variable called
+<code>exnam</code> with values <code>ex1</code>, <code>ex2</code> etc. will be
+constructed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tfc</code></td>
+<td>
+      
+<p>Character (<code>t</code>ime <code>f</code>rom last <code>c</code>linical visit). Name
+of the variable in the result which will contain the time since the
+most recent covariate date. It will be included among the timescales
+of the resulting Lexis object.
+</p>
+<p>If the argument is omitted a variable called <code>tfc</code> will be
+constructed. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed on. Ignored
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>Lexis</code> object representing the same follow-up as <code>Lx</code>, 
+with cuts added at the times of examination, and covariate
+measurements added for all records representing follow-up after the
+most recent time of measurement.
+</p>
+<p>Also <code>tfc</code> is added as a time scale, it is however not a proper
+timescale since it is reset at every clinical examination. Therefor
+the value of the <code>timeSince</code> attribute is set to "X" in order
+to distinguish it from other proper time scales that either have an
+empty string or the name of a state.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="mailto:b@bxc.dk">b@bxc.dk</a>, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cutLexis</code>,
+<code>mcutLexis</code>,
+<code>splitLexis</code>,
+<code>Lexis</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># A small bogus cohort
+xcoh &lt;- structure( list( id = c("A", "B", "C"),
+                      birth = c("1952-07-14", "1954-04-01", "1987-06-10"),
+                      entry = c("1965-08-04", "1972-09-08", "1991-12-23"),
+                       exit = c("1997-06-27", "1995-05-23", "1998-07-24"),
+                       fail = c(1, 0, 1) ),
+                     .Names = c("id", "birth", "entry", "exit", "fail"),
+                  row.names = c("1", "2", "3"),
+                      class = "data.frame" )
+
+# Convert the character dates into numerical variables (fractional years)
+xcoh$bt &lt;- cal.yr( xcoh$birth )
+xcoh$en &lt;- cal.yr( xcoh$entry )
+xcoh$ex &lt;- cal.yr( xcoh$exit  )
+
+# Define as Lexis object with timescales calendar time and age
+Lcoh &lt;- Lexis( entry = list( per=en ),
+                exit = list( per=ex, age=ex-bt ),
+         exit.status = factor( fail, 0:1, c("Alive","Dead") ),
+                data = xcoh )
+str( Lcoh )
+Lx &lt;- Lcoh[,1:7]
+
+# Data frame with clinical examination data, date of examination in per
+clin &lt;- data.frame(lex.id = c(1,1,3,2),
+                      per = cal.yr(c("1977-4-7",
+                                     "1971-7-1",
+                                     "1996-2-15",
+                                     "1990-7-3")),
+                       bp = c(120,140,160,157),
+                     chol = c(5,7,8,9),
+                     xnam = c("X2","X1","X1","X2") )
+Lx
+clin
+str(Lx)
+str(clin)
+
+# Different behavours when using exnam explicitly
+addCov.Lexis( Lx, clin[,-5] )
+addCov.Lexis( Lx, clin, exnam="xnam" )
+
+# Works with time split BEFORE
+Lb &lt;- addCov.Lexis(splitLexis(Lx,
+                              time.scale="age",
+                              breaks=seq(0,80,5) ),
+                   clin,
+                   exnam="clX" )
+Lb
+# and also AFTER
+La &lt;- splitLexis(addCov.Lexis( Lx,
+                             clin,
+                            exnam = "xnam" ),
+                 breaks=seq(0,80,5),
+                 time.scale="age" )
+La
+La$tfc == Lb$tfc
+La$age == Lb$age
+str(La)
+str(Lb)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,96 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>set_profiles</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Classify sessions into user profiles</h2>
+
+<h3>Description</h3>
+
+<p>Joins all sub-sets from the list, adding a new column <code>Profile</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">set_profiles(sessions_clustered = list(), clusters_definition = list())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sessions_clustered</code></td>
+<td>
+<p>list of tibbles with sessions clustered
+(<code>sessions</code>object of the output from function <code>cluser_sessions()</code>) from each sub-set</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters_definition</code></td>
+<td>
+<p>list of tibbles with clusters definitions
+(direct output from function <code>define_clusters()</code>) of each sub-set</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>tibble
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+
+# Select working day sessions (`Timecycle == 1`) that
+# disconnect the same day (`Disconnection == 1`)
+sessions_day &lt;- california_ev_sessions %&gt;%
+  divide_by_timecycle(
+    months_cycles = list(1:12), # Not differentiation between months
+    wdays_cycles = list(1:5, 6:7) # Differentiation between workdays/weekends
+  ) %&gt;%
+  divide_by_disconnection(
+    division_hour = 10, start = 3
+  ) %&gt;%
+  filter(
+    Disconnection == 1, Timecycle == 1
+  ) %&gt;%
+  sample_frac(0.05)
+
+# Identify two clusters
+sessions_clusters &lt;- cluster_sessions(
+  sessions_day, k=2, seed = 1234, log = TRUE
+)
+
+# Plot the clusters found
+plot_bivarGMM(
+  sessions = sessions_clusters$sessions,
+  models = sessions_clusters$models,
+  log = TRUE, start = 3
+)
+
+# Define the clusters with user profile interpretations
+clusters_definitions &lt;- define_clusters(
+  models = sessions_clusters$models,
+  interpretations = c(
+    "Connections during working hours",
+    "Connections during all day (high variability)"
+  ),
+  profile_names = c("Workers", "Visitors"),
+  log = TRUE
+)
+
+# Classify each session to the corresponding user profile
+sessions_profiles &lt;- set_profiles(
+  sessions_clustered = list(sessions_clusters$sessions),
+  clusters_definition = list(clusters_definitions)
+)
+
+</code></pre>
+
+
+</div>

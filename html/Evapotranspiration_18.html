@@ -1,0 +1,248 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ET.MortonCRAE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Morton CRAE Formulation
+</h2>
+
+<h3>Description</h3>
+
+<p>Implementing the Morton CRAE formulation for estimating potential evapotranspiration, wet-environment areal evapotranspiration and actual areal evapotranspiration.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'MortonCRAE'
+ET(data, constants, ts="monthly", est="potential ET",
+solar="sunshine hours", Tdew= T, alpha = NULL, message="yes", AdditionalStats="yes",
+save.csv="no", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A list of data which contains the following items (climate variables) required by Morton CRAE formulation:<br><em>Tmax</em>, <em>Tmin</em>, <em>Tdew</em> (degree Celcius) or <em>va</em> or <em>RHmax</em> and <em>RHmin</em>, <em>Rs</em> (Megajoules per sqm) or <em>n</em> (hour) or <em>Cd</em> (okta)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constants</code></td>
+<td>
+
+<p>A list named <code>constants</code> consists of constants required for the calculation of Morton CRAE formulation which must contain the following items:<br><em>Elev</em> - ground elevation above mean sea level in m,<br><em>lat_rad</em> - latitude in radians,<br><em>PA</em> - annual precipitation in mm, required when precipitation data is not available,<br><em>sigma</em> - Stefan-Boltzmann constant = 4.903*10^-9 MJ.K^-4.m^-2.day^-1,<br><em>lat</em> - latitude in degrees,<br><em>epsilonMo</em> - surface emissivity = 0.92 (Morton, 1986),<br><em>fz</em> - A constant in Morton's procedure = 28.0 Wm^-2.mbar^-1 for T &gt;= 0 degree Celcius, and = 28.0*1.15 Wm^-2.mbar^-1 for T &gt;= 0 degree Celcius for CRAE model (Morton, 1983),<br><em>b0</em> - a constants in Morton's procedure, = 1 for CRAE model (Morton, 1983),<br><em>b1</em> - a constant in Morton's procedure, = 14 for CRAE model (Morton, 1983),<br><em>b2</em> - a constant in Morton's procedure, = 1.2 for CRAE model (Morton, 1983),<br><em>gammaps</em> - Produce of Psychrometric constant and atmospheric pressure as sea level, = 0.66 mbar. degree Celcius^-1 for T &gt;= 0 degree Celcius, = 0.66/1.15 mbar. degree Celcius^-1 for T &lt; 0 degree Celcius (Morton, 1983),<br><br><em>alphaMo</em> - a constant in Morton's procedure, = 17.27 when T &gt;= 0 degree Celcius, = 21.88 when T &lt; 0 degree Celcius (Morton, 1983),<br><em>betaMo</em> - a constant in Morton's procedure, = 237.3 degree Celcius  when T &gt;= 0 degree Celcius, = 265.5 degree Celcius, when T &lt; 0 degree Celcius (Morton, 1983),<br><em>sigmaMo</em> - Stefan-Boltzmann constant in Morton's procedure, = 5.67e-08 W.m^-2.K^-4 (Morton, 1983),<br><em>lambdaMo</em> - Latent heat of vaporisation in Morton's procedure, = 28.5W.day.kg^-1 when T &gt;= 0 degree Celcius, = 28.5*1.15W.day.kg^-1 when T &lt; 0 degree Celcius,<br></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ts</code></td>
+<td>
+
+<p>Must be either <code>monthly</code> or <code>annual</code>, which indicates the disired time step that the output ET estimates should be on.
+Default is <code>monthly</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solar</code></td>
+<td>
+
+<p>Must be either <code>data</code>, <code>sunshine hours</code>, <code>cloud</code> or <code>monthly precipitation</code>:<br><code>data</code> indicates that solar radiation data is to be used directly for calculating evapotranspiration; <br><code>sunshine hours</code> indicates that solar radiation is to be calculated using the real data of sunshine hours;<br><code>cloud</code> sunshine hours is to be estimated from cloud data; <br><code>monthly precipitation</code> indicates that solar radiation is to be calculated directly from monthly precipitation.<br>
+Default is <code>sunshine hours</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est</code></td>
+<td>
+
+<p>Must be either <code>potential ET</code>, <code>wet areal ET</code> or <code>actual areal ET</code>:<br><code>potential ET</code> proceeds to estimating potential evapotranspiration;<br><code>wet areal ET</code> proceeds to estimating wet-environmental areal evapotranspiration;<br><code>actual areal ET</code> proceeds to estimating actual areal evapotranspiraion.<br>
+Default is <code>potential ET</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tdew</code></td>
+<td>
+
+<p>Must be <code>T</code> or <code>F</code>, indicating if real data of dew point temperature is used for calculating the radiation in Morton's formulations, if <code>T</code> the data will be used and if <code>F</code> the dew point temperature will be calculated from data of daily vapour pressure.
+Default is <code>T</code> for using actual dew point temperature data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>Only needed if argument <code>solar</code> has value of <code>data</code>. <br>
+Any numeric value between 0 and 1 (dimensionless), albedo of evaporative surface representing the portion of the incident radiation that is reflected back at the surface. <br>
+Default is <code>NULL</code> in line with the default use of sunshine hours to estimate solar radiation (i.e. argument <code>solar</code> is <code>sunshine hours</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>message</code></td>
+<td>
+
+<p>Must be either <code>yes</code> or <code>no</code>, indicating whether message should be printed for calculation summary including the following elements:<br>
+- ET model name and ET quantity estimated (i.e. the value of argument <code>est</code>) <br>
+- Option for calculating solar radiation (i.e. the value of argument <code>solar</code>)<br>
+- If the actual dew point temperature data are used (i.e. the value of argument <code>Tdew</code>)<br>
+- Time step of the output ET estimates (i.e. the value of argument <code>ts</code>)<br>
+- Units of the output ET estimates<br>
+- Time duration of the ET estimation<br>
+- Number of ET estimates obtained in the entire time-series<br>
+- Basic statistics of the estimated ET time-series including <em>mean</em>, <em>max</em> and <em>min</em> values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AdditionalStats</code></td>
+<td>
+
+<p>"yes" or "no" indicating whether monthly averaged and annual averaged ET should be calculated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.csv</code></td>
+<td>
+
+<p>Must be either <code>yes</code> or <code>no</code>, indicating whether a .csv of ET estimates should be saved to working directory.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Dummy for generic function, no need to define.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The type of evapotranspiration calculated can be selected through argument <code>est</code>, please see <code>Arguments</code> for details.
+The alternative calculation options can be selected through argument <code>solar</code> and <code>Tdew</code>, please see <code>Arguments</code> for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function generates a list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>ET.Daily</code></td>
+<td>
+
+<p>Daily aggregated estimations of Morton CRAE potential evapotranspiration, wet-environment areal evapotranspiration or actual areal evapotranspiration.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ET.Monthly</code></td>
+<td>
+
+<p>Monthly aggregated estimations of Morton CRAE potential evapotranspiration, wet-environment areal evapotranspiration or actual areal evapotranspiration.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ET.Annual</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing annually aggregated estimations of Morton CRAE potential evapotranspiration, wet-environment areal evapotranspiration or actual areal evapotranspiration.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ET.MonthlyAve</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing monthly averaged estimations of daily Morton CRAE potential evapotranspiration, wet-environment areal evapotranspiration or actual areal evapotranspiration.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ET.AnnualAve</code></td>
+<td>
+
+<p>A <code>zoo</code> object containing annually averaged estimations of daily Morton CRAE potential evapotranspiration, wet-environment areal evapotranspiration or actual areal evapotranspiration.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ET_formulation</code></td>
+<td>
+
+<p>Name of the formulation used which equals to <code>MortonCRAE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ET_type</code></td>
+<td>
+
+<p>Type of the estimation obtained which is either <code>Potential Evapotranspiration</code>, <code>Wet-environment Areal Evapotranspiration</code> and <code>Actual Areal Evapotranspiration</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>message1</code></td>
+<td>
+
+<p>A message to inform the users about how solar radiation has been calculated by using which data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>message6</code></td>
+<td>
+
+<p>A message to inform the users about if actual dew point temperature has been used in the calculations or alternative calculations has been performed without dew point temperature data.
+</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Danlu Guo
+</p>
+
+
+<h3>References</h3>
+
+<p>McMahon, T., Peel, M., Lowe, L., Srikanthan, R. &amp; McVicar, T. 2012. <em>Estimating actual, potential, reference crop and pan evaporation using standard meteorological data: a pragmatic synthesis</em>. Hydrology and Earth System Sciences Discussions, 9, 11829-11910.
+</p>
+<p>Morton, F.I. 1983, <em>Operational estimates of areal evapotranspiration and their significance to the science and practice of hydrology</em>. Journal of Hydrology, vol. 66, no. 1-4, pp. 1-76.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>processeddata</code>,<code>defaultconstants</code>,<code>constants</code>,<code>ET.MortonCRWE</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Use processed existing data set and constants from
+# kent Town, Adelaide
+data("processeddata")
+data("constants")
+
+# Call ET.MortonCRAE under the generic function ET
+results &lt;- ET.MortonCRAE(processeddata, constants, ts="monthly",
+est="potential ET", solar="sunshine hours", Tdew= TRUE,
+alpha = NULL, message="yes", AdditionalStats="yes", save.csv="no")
+</code></pre>
+
+
+</div>

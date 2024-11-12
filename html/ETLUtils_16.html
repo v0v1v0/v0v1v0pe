@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>write.jdbc.ffdf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Write ffdf data to a database table by using a JDBC connection.</h2>
+
+<h3>Description</h3>
+
+<p>Write <code>ffdf</code> data to a database table by using a JDBC connection.
+This can for example be used to store large ffdf datasets from R in
+Oracle, SQLite, MySQL, PostgreSQL, Hive or other SQL databases. <br>
+Mark that for very large datasets, these SQL databases might have tools to speed up by bulk loading.
+You might also consider that as an alternative to using this procedure.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">write.jdbc.ffdf(
+  x,
+  name,
+  dbConnect.args = list(drv = NULL, dbname = NULL, username = "", password = ""),
+  RECORDBYTES = sum(.rambytes[vmode(x)]),
+  BATCHBYTES = getOption("ffbatchbytes"),
+  by = NULL,
+  VERBOSE = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the <code>ffdf</code> to write to the database</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character string with the name of the table to store the data in. Passed on to <code>dbWriteTable</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dbConnect.args</code></td>
+<td>
+<p>a list of arguments to pass to JDBC's <code>RJDBC::dbConnect</code> (like drv, dbname, username, password). See the examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RECORDBYTES</code></td>
+<td>
+<p>optional integer scalar representing the bytes needed to process a single row of the ffdf</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BATCHBYTES</code></td>
+<td>
+<p>integer: bytes allowed for the size of the data.frame storing the result of reading one chunk. 
+See documentation in <code>read.table.ffdf</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>integer passed on to <code>chunk</code> indicating to write to the database in chunks of this size. Overwrites
+the behaviour of BATCHBYTES and RECORDBYTES.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VERBOSE</code></td>
+<td>
+<p>logical: TRUE to verbose timings for each processed chunk (default FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional parameters passed on to <code>dbWriteTable</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Opens up the JDBC connection using <code>RJDBC::dbConnect</code>, writes data to the SQL table
+using <code>RJDBC::dbWriteTable</code> by extracting the data in batches from the <code>ffdf</code>
+and appending them to the table.
+</p>
+
+
+<h3>Value</h3>
+
+<p>invisible()
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>JDBCConnection-methods</code>, <code>chunk</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+require(ff)
+
+##
+## Example query using data in sqlite
+##
+require(RJDBC)
+dbfile &lt;- system.file("smalldb.sqlite3", package="ETLUtils")
+drv &lt;- JDBC(driverClass = "org.sqlite.JDBC", classPath = "/usr/local/lib/sqlite-jdbc-3.7.2.jar")
+query &lt;- "select * from testdata limit 10000"
+x &lt;- read.jdbc.ffdf(query = query, 
+ dbConnect.args = list(drv = drv, url = sprintf("jdbc:sqlite:%s", dbfile)), 
+ first.rows = 100, next.rows = 1000, VERBOSE=TRUE)
+ 
+write.jdbc.ffdf(x = x, name = "helloworld", row.names = FALSE, overwrite = TRUE,
+  dbConnect.args = list(drv = drv, url = sprintf("jdbc:sqlite:%s", dbfile)), 
+  by = 1000, VERBOSE=TRUE)
+test &lt;- read.jdbc.ffdf(query = "select * from helloworld", 
+  dbConnect.args = list(drv = drv, url = sprintf("jdbc:sqlite:%s", dbfile)))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

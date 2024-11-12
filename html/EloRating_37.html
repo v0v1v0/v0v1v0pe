@@ -1,0 +1,362 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>elo.seq</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>calculate Elo ratings</h2>
+
+<h3>Description</h3>
+
+<p>calculate Elo ratings from a sequence of dominance interactions
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">elo.seq(winner, loser, Date, draw = NULL, presence = NULL, startvalue = 1000,
+               k = 100, normprob = TRUE, init = "average", intensity = NULL,
+               iterate = 0, runcheck = TRUE, progressbar = FALSE)
+fastelo(WINNER, LOSER, ALLIDS, KVALS, STARTVALUES, NORMPROB = TRUE, ROUND = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>winner</code></td>
+<td>
+<p>either a factor or character vector with winner IDs of dyadic dominance interactions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loser</code></td>
+<td>
+<p>either a factor or character vector with loser IDs of dyadic dominance interactions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Date</code></td>
+<td>
+<p>character vector of form "YYYY-MM-DD" with the date of the respective interaction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>draw</code></td>
+<td>
+<p>logical, which interactions ended undecided (i.e. drawn or tied)? By default all <code>FALSE</code>, i.e. no undecided interactions occurred. Note that in this case, <code>winner</code>/<code>loser</code> values can be interchanged</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>presence</code></td>
+<td>
+<p>optional data.frame, to supply data about presence and absence of individuals for part of the time the data collection covered. see details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startvalue</code></td>
+<td>
+<p>the value of Elo ratings of the two individuals that are involved in the first interaction of the overall sequence prior to this interaction. By default set to 1000. See also <code>init</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>factor <em>k</em> that determines the maximum change in ratings. By default <code>k=100</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normprob</code></td>
+<td>
+<p>logical (by default <code>TRUE</code>). Should a normal curve be assumed for calculating the winning/losing probabilities, or a logistic curve. See <code>winprob</code> for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>character, what Elo rating does an individual have prior to its first interaction. Three options are available:
+<code>average</code>: individuals always start with the value specified in <code>startvalue</code>. Given stable composition of the group, this also reflects the average Elo rating on each day in that group, <br><code>bottom</code>: subjects entering at the current lowest Elo value if the lowest value getting lower its getting lower for all subjects which had this lowest values before, it is reflecting that in some species new subjects entering a group at the bottom level "bottom entry"<br><code>bottom_low</code>: same as <code>bottom</code> but additionally the start values getting after the first interaction lower for all non-interacting subjects and, reflecting that we have at start no knowledge about the subjects this option offers for "bottom entry" species the possibility to consider that in a way that those subjects which are not interacting getting lower from start on</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intensity</code></td>
+<td>
+<p>a character vector or factor describing intensity of interaction, to be matched with custom k values if specified</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterate</code></td>
+<td>
+<p>not yet implemented</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runcheck</code></td>
+<td>
+<p>logical, should several checks regarding data integrity be performed, by default <code>TRUE</code>. See <code>seqcheck</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progressbar</code></td>
+<td>
+<p>logical, should progress bars be displayed, by default <code>progressbar=TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>WINNER</code></td>
+<td>
+<p>same as <code>winner</code> for use in <code>fastelo()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LOSER</code></td>
+<td>
+<p>same as <code>loser</code> for use in <code>fastelo()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ALLIDS</code></td>
+<td>
+<p>character vector, contains all the indivuals IDS</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>KVALS</code></td>
+<td>
+<p>numeric vector of the same length <code>WINNER</code>, i.e. one k value for each interaction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>STARTVALUES</code></td>
+<td>
+<p>numeric vector of the same length as <code>ALLIDS</code>, i.e. one start value for each individual</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NORMPROB</code></td>
+<td>
+<p>logical, by default <code>TRUE</code>: same as <code>normprob</code> for use in <code>fastelo()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ROUND</code></td>
+<td>
+<p>logical, by default <code>TRUE</code>: should ratings be rounded to integers. For use in <code>fastelo()</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The presence 'matrix' is actually an object of class <code>data.frame</code> containing information about wether an individual was present on a given day or not. The first column represents the dates, running at least from the date of the earliest interaction until at least the date of the last interaction with one line per day (regardless of whether there were actually interactions observed on each day). Further, each individual is represented as a column in which "1" indicates an individual was present on the row-date and a "0" indicates the individuals absence on this date. <code>NA</code>s are not allowed. See <code>advpres</code> for an example.
+</p>
+<p>The function <code>fastelo()</code> is a stripped-down version of <code>elo.seq()</code>, which performs only the most basic calculations while ignoring anything that is date and presence related. Neither does it perform data checks. In other words, it just calculates ratings based on the sequence. It's most useful in simulations, for example when estimating optimal k parameters. Its main advantage is its speed, which is substantially faster than <code>elo.seq()</code>. Note that currently there is no support for tied interactions. The main difference to note is that both, start values and k values have to be supplied as vectors with one value for each individual and interaction respectively.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>elo</code>, which is list with 10 items that serves as basis to extract relevant information:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mat</code></td>
+<td>
+<p>a date by ID-<code>matrix</code> with raw Elo ratings</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lmat</code></td>
+<td>
+<p>a date by ID-<code>matrix</code> with raw Elo ratings</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cmat</code></td>
+<td>
+<p>a date by ID-<code>matrix</code> with raw Elo ratings</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pmat</code></td>
+<td>
+<p>a date by ID-<code>matrix</code> with with presence data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmat</code></td>
+<td>
+<p>a date by ID-<code>matrix</code> containing the number of interactions a given ID was involved in on a given day</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logtable</code></td>
+<td>
+<p>details on each single interaction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stability</code></td>
+<td>
+<p>a <code>data.frame</code> containing information about stability (see <code>stab_elo</code>) </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truedates</code></td>
+<td>
+<p>vector of class <code>Date</code> covering the ranges of dates in the dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>misc</code></td>
+<td>
+<p>various</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allids</code></td>
+<td>
+<p>a (sorted) character vector with all IDs that occur in the dataset</p>
+</td>
+</tr>
+</table>
+<p><code>fastelo()</code> returns a list with ten items:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>$ratings</code></td>
+<td>
+<p>numeric vector of the final ratings in the same order as <code>ALLIDS</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$winprobs</code></td>
+<td>
+<p>numeric vector with winning probabilities in the same order as the interactions were supplied</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$rtype</code></td>
+<td>
+<p>character of length 1, as a marker that the result comes from <code>fastelo()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$startvalues</code></td>
+<td>
+<p>numeric vector with start values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$kvalues</code></td>
+<td>
+<p>numeric vector with k values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$winner</code></td>
+<td>
+<p>character vector with winners</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$loser</code></td>
+<td>
+<p>character vector with losers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$allids</code></td>
+<td>
+<p>character vector with all IDs that occur in the sequence</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$normprob</code></td>
+<td>
+<p>logical, was normal probability used for winning expectations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$round</code></td>
+<td>
+<p>logical, was rounding to integers used during the calculation of ratings</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Christof Neumann and Lars Kulik
+</p>
+
+
+<h3>References</h3>
+
+<p>Elo AE (1978).
+<em>The rating of chess players, past and present</em>.
+Arco, New York.
+</p>
+<p>Albers PCH, de Vries H (2001).
+“Elo-rating as a tool in the sequential estimation of dominance strengths.”
+<em>Animal Behaviour</em>, <b>61</b>, 489-495.
+<a href="https://doi.org/10.1006/anbe.2000.1571">doi:10.1006/anbe.2000.1571</a>.
+</p>
+<p>Neumann C, Duboscq J, Dubuc C, Ginting A, Irwan AM, Agil M, Widdig A, Engelhardt A (2011).
+“Assessing dominance hierarchies: validation and advantages of progressive evaluation with elo-rating.”
+<em>Animal Behaviour</em>, <b>82</b>, 911-921.
+<a href="https://doi.org/10.1016/j.anbehav.2011.07.016">doi:10.1016/j.anbehav.2011.07.016</a>.
+</p>
+<p>Newton-Fisher NE (2017).
+“Modeling social dominance: Elo-ratings, prior history, and the intensity of aggression.”
+<em>International Journal of Primatology</em>, <b>38</b>, 427-447.
+<a href="https://doi.org/10.1007/s10764-017-9952-2">doi:10.1007/s10764-017-9952-2</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(adv)
+res &lt;- elo.seq(winner = adv$winner, loser = adv$loser, Date = adv$Date)
+summary(res)
+
+# with custom k
+data(adv2)
+table(adv2$intensity)
+
+myks &lt;- list(displace = 20, fight = 200)
+res &lt;- elo.seq(winner = adv2$winner, loser = adv2$loser, Date = adv2$Date,
+               k = myks, intensity = adv2$intensity)
+extract_elo(res)
+summary(res)
+
+# with custom start values
+# if we know prior ranks:
+myranks &lt;- 1:7
+names(myranks) &lt;- letters[1:7]
+mypriors &lt;- createstartvalues(myranks, shape = 0.3)
+res &lt;- elo.seq(winner = adv2$winner, loser = adv2$loser, Date = adv2$Date,
+               k = myks, intensity = adv2$intensity, startvalue = mypriors$res)
+extract_elo(res)
+
+# compare elo.seq and fastelo
+xdata &lt;- randomsequence(10, 500)
+allids &lt;- colnames(xdata$pres)[2:ncol(xdata$pres)]
+winner &lt;- xdata$seqdat$winner
+loser &lt;- xdata$seqdat$loser
+Date &lt;- xdata$seqdat$Date
+k &lt;- rep(100, length(winner))
+svals &lt;- rep(1000, length(allids))
+
+res1 &lt;- fastelo(WINNER = winner, LOSER = loser, ALLIDS = allids, KVALS = k,
+                STARTVALUES = svals, NORMPROB = TRUE)$ratings
+names(res1) &lt;- allids
+res1 &lt;- sort(res1, decreasing = TRUE)
+res2 &lt;- extract_elo(elo.seq(winner = winner, loser = loser, Date = Date,
+                            startvalue = 1000, k = 100, normprob = TRUE,
+                            runcheck = FALSE))
+res1
+res2
+</code></pre>
+
+
+</div>

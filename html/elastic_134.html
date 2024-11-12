@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Search_template</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Search or validate templates</h2>
+
+<h3>Description</h3>
+
+<p>Search or validate templates
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Search_template(conn, body = list(), raw = FALSE, ...)
+
+Search_template_register(conn, template, body = list(), raw = FALSE, ...)
+
+Search_template_get(conn, template, ...)
+
+Search_template_delete(conn, template, ...)
+
+Search_template_render(conn, body = list(), raw = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>an Elasticsearch connection object, see <code>connect()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>body</code></td>
+<td>
+<p>Query, either a list or json.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw</code></td>
+<td>
+<p>(logical) If <code>FALSE</code> (default), data is parsed to list.
+If <code>TRUE</code>, then raw JSON returned</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Curl args passed on to crul::verb-POST</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>(character) a template name</p>
+</td>
+</tr>
+</table>
+<h3>Template search</h3>
+
+<p>With <code>Search_template</code> you can search with a template, using
+mustache templating. Added in Elasticsearch v1.1
+</p>
+
+
+<h3>Template render</h3>
+
+<p>With <code>Search_template_render</code> you validate a template without
+conducting the search. Added in Elasticsearch v2.0
+</p>
+
+
+<h3>Pre-registered templates</h3>
+
+<p>Register a template with <code>Search_template_register</code>. You can get
+the template with <code>Search_template_get</code> and delete the template
+with <code>Search_template_delete</code>
+</p>
+<p>You can also pre-register search templates by storing them in the
+<code>config/scripts</code> directory, in a file using the .mustache
+extension. In order to execute the stored template, reference it
+by it's name under the template key, like
+<code style="white-space: pre;">⁠"file": "templateName", ...⁠</code>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-template.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/search-template.html</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Search()</code>, <code>Search_uri()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# connection setup
+(x &lt;- connect())
+
+if (!index_exists(x, "iris")) {
+  invisible(docs_bulk(x, iris, "iris"))
+}
+
+body1 &lt;- '{
+  "inline" : {
+    "query": { "match" : { "{{my_field}}" : "{{my_value}}" } },
+    "size" : "{{my_size}}"
+  },
+  "params" : {
+    "my_field" : "Species",
+    "my_value" : "setosa",
+    "my_size" : 3
+  }
+}'
+Search_template(x, body = body1)
+
+body2 &lt;- '{
+ "inline": {
+   "query": {
+      "match": {
+          "Species": "{{query_string}}"
+      }
+   }
+ },
+ "params": {
+   "query_string": "versicolor"
+ }
+}'
+Search_template(x, body = body2)
+
+# pass in a list
+mylist &lt;- list(
+  inline = list(query = list(match = list(`{{my_field}}` = "{{my_value}}"))),
+  params = list(my_field = "Species", my_value = "setosa", my_size = 3L)
+)
+Search_template(x, body = mylist)
+
+## Validating templates w/ Search_template_render()
+Search_template_render(x, body = body1)
+Search_template_render(x, body = body2)
+
+## pre-registered templates
+### register a template
+if (x$es_ver() &lt;= 520) {
+  body3 &lt;- '{
+    "template": {
+       "query": {
+           "match": {
+               "Species": "{{query_string}}"
+           }
+       }
+     }
+  }'
+  Search_template_register(x, 'foobar', body = body3)
+} else {
+  body3 &lt;- '{
+   "script": {
+     "lang": "mustache",
+       "source": {
+         "query": {
+           "match": {
+             "Species": "{{query_string}}"
+           }
+         }
+       }
+     }
+  }'
+  Search_template_register(x, 'foobar', body = body3)
+}
+
+### get template
+Search_template_get(x, 'foobar')
+
+### use the template
+body4 &lt;- '{
+ "id": "foobar",
+  	"params": {
+      "query_string": "setosa"
+  }
+}'
+Search_template(x, body = body4)
+
+### delete the template
+Search_template_delete(x, 'foobar')
+
+## End(Not run)
+</code></pre>
+
+
+</div>

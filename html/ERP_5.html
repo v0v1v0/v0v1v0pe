@@ -1,0 +1,297 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>erpfatest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Adaptive Factor-Adjustement for multiple testing of ERP data</h2>
+
+<h3>Description</h3>
+
+<p>Adaptive factor-adjusted FDR- and FWER-controlling multiple testing procedures for ERP data.
+The procedure is described in detail in Sheu, Perthame, Lee, and Causeur (2016).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">erpfatest(dta, design, design0 = NULL, 
+method = c("BH","holm","hochberg","hommel","bonferroni","BY","fdr","none"),nbf = NULL,
+nsamples = 200, significance = c("Satterthwaite", "none"),
+nbfmax = min(c(nsamples, nrow(design))) - ncol(design) - 1, alpha = 0.05, pi0 = 1,
+wantplot = ifelse(is.null(nbf), TRUE, FALSE), s0 = NULL, min.err = 0.01, maxiter = 5, 
+verbose = FALSE, svd.method = c("fast.svd", "irlba"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dta</code></td>
+<td>
+<p>Data frame containing the ERP measurements: each column corresponds to a time frame and each row to a curve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>Design matrix of the nonnull model for the relationship between the ERP and the experimental variables.
+Typically the output of the function model.matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design0</code></td>
+<td>
+<p>Design matrix of the null model. Typically a submodel of the nonnull model, obtained by removing columns from design.
+Default is NULL, corresponding to the model with no covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>FDR- or FWER- controlling multiple testing procedures as available in the function p.adjust. Default is "BH",
+for the Benjamini-Hochberg procedure (see Benjamini and Hochberg, 1995).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbf</code></td>
+<td>
+<p>Number of factors in the residual covariance model.
+Default is NULL: the number of factors is determined by minimization of the variance inflation criterion as
+suggested in Friguet et al. (2009).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamples</code></td>
+<td>
+<p>Number of Monte-Carlo samples for the estimation of the null distribution. Default is nsamples=200, recommended when the Satterthwaite approximation is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>significance</code></td>
+<td>
+<p>If "Satterthwaite", then the Monte-Carlo p-value is calculated with a Satterthwaite approximation of the null distribution. The other possible value is "none", for no calculation of the p-value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbfmax</code></td>
+<td>
+<p>Only required if nbf=NULL. The largest possible number of factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>The FDR or FWER control level. Default is 0.05</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi0</code></td>
+<td>
+<p>An estimate of the proportion of true null hypotheses, which can be plugged into an FDR controlling multiple
+testing procedure to improve its efficiency.
+Default is 1, corresponding to the classical FDR controlling procedures. If NULL, the proportion is estimated
+using the function pval.estimate.eta0 of package fdrtool, with the method proposed by Storey and Tibshirani (2003).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wantplot</code></td>
+<td>
+<p>If TRUE, a diagnostic plot is produced to help choosing the number of factors. Only active if nbf=NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s0</code></td>
+<td>
+<p>Prior knowledge of the time frames for which no signal is expected. For example,
+s0=c(1:50, 226:251) specifies that the first 50 time frames and time frames between 226 and 251 are
+known not to contain ERP signal. s0 can also be specified by giving the lower and upper fraction of the
+entire time interval in which the signal is to be searched for. For example: s0=c(0.2, 0.9) means that
+ERP signals are not expected for
+for the first 20 percent and last 10 percent of the time frames measured. Defaul is NULL and it
+initiates a data-driven determination of s0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.err</code></td>
+<td>
+<p>Control parameter for convergence of the iterative algorithm. Default is 1e-03.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxiter</code></td>
+<td>
+<p>Maximum number of iterations in algorithms. Default is 5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>If TRUE, details are printed along the iterations of the algorithm. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>svd.method</code></td>
+<td>
+<p>the EM algorithm starts from an SVD estimation of the factor model parameters. The default option to implement this 
+SVD is <code>fast.svd</code>. An alternative option is an approximate but faster SVD by function 
+<code>irlba</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The method is described in Sheu et al. (2016). It combines a decorrelation step based on a regression factor model as
+in Leek and Storey (2008), Friguet et al. (2009) or Sun et al. (2012) with an adaptive estimation of the ERP signal.
+The multiple testing corrections of the p-values are described in the help documentation of the function <code>p.adjust</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pval</code></td>
+<td>
+<p>p-values of the Adaptive Factor-Adjusted tests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correctedpval</code></td>
+<td>
+<p>Corrected p-values, for the multiplicity of tests. Depends on the multiple testing method (see
+function p.adjust).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>significant</code></td>
+<td>
+<p>Indices of the time points for which the test is positive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi0</code></td>
+<td>
+<p>Value for pi0: if the input argument pi0 is NULL, the output is the estimated proportion of
+true null hypotheses using the method by Storey and Tibshirani (2003).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+<p>Pointwise factor-adjusted F-statistics if p&gt;1, where p is the difference between the numbers of parameters in the nonnull and null models. Otherwise, if p=1, the function
+returns pointwise factor adjusted t-statistics (signed square-roots of F-statistics).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df1</code></td>
+<td>
+<p>Residual degrees of freedom for the nonnull model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df0</code></td>
+<td>
+<p>Residual degrees of freedom for the null model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbf</code></td>
+<td>
+<p>Number of factors for the residual covariance model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>signal</code></td>
+<td>
+<p>Estimated signal: a pxT matrix, where p is the difference between the numbers of parameters in the nonnull and null models and T the number of frames.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r2</code></td>
+<td>
+<p>R-squared values for each of the T linear models.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>David Causeur, IRMAR, UMR 6625 CNRS, Agrocampus Ouest, Rennes, France.
+</p>
+
+
+<h3>References</h3>
+
+<p>Causeur, D., Chu, M.-C., Hsieh, S., Sheu, C.-F. 2012. A factor-adjusted multiple testing procedure for ERP data analysis. Behavior Research Methods, 44, 635-643.
+</p>
+<p>Friguet, C., Kloareg, M., Causeur, D. 2009. A factor model approach to multiple testing under dependence. Journal of the American Statistical Association, 104, 1406-1415.
+</p>
+<p>Leek, J.T., Storey, J.D. 2008. A general framework for multiple testing dependence. Proceedings of the National Academy of Sciences of the United States of America, 105, 18718-18723.
+</p>
+<p>Sheu, C.-F., Perthame, E., Lee Y.-S. and Causeur, D. 2016. Accounting for time dependence in large-scale multiple testing of event-related potential data. Annals of Applied Statistics. 10(1), 219-245.
+</p>
+<p>Storey, J. D., Tibshirani, R. 2003. Statistical significance for genome-wide experiments. Proceedings of the National Academy of Sciences of the United States of America, 100, 9440-9445.
+</p>
+<p>Sun, Y., Zhang, N.R., Owen, A.B. 2012. Multiple hypothesis testing adjusted for latent variables, with an
+application to the AGEMAP gene expression data. The Annals of Applied Statistics, 6, no. 4, 1664-1688.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>erpavetest</code>, <code>erptest</code>, <code>gbtest</code>, <code>p.adjust</code>, <code>pval.estimate.eta0</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+
+data(impulsivity)
+
+# Paired t-tests for the comparison of the ERP curves in the two conditions, 
+# within experimental group High, at channel CPZ
+
+erpdta.highCPZ = impulsivity[(impulsivity$Group=="High")&amp;(impulsivity$Channel=="CPZ"),5:505] 
+   # ERP curves for subjects in group 'High', at channel CPZ
+covariates.highCPZ = impulsivity[(impulsivity$Group=="High")&amp;(impulsivity$Channel=="CPZ"),1:4]
+covariates.highCPZ = droplevels(covariates.highCPZ)
+   # Experimental covariates for subjects in group 'High', at channel CPZ
+
+design = model.matrix(~C(Subject,sum)+Condition,data=covariates.highCPZ)
+   # Design matrix to compare ERP curves in the two conditions
+design0 = model.matrix(~C(Subject,sum),data=covariates.highCPZ)
+   # Design matrix for the null model (no condition effect)
+
+tests = erpfatest(erpdta.highCPZ,design,design0,nbf=NULL,wantplot=TRUE,significance="none")
+   # with nbf=NULL and significance="none", just to choose a number of factors
+Ftest = erpFtest(erpdta.highCPZ,design,design0,nbf=6)
+   # with nbf=6 (approximate conservative recommendation based on the variance inflation plot)
+   # Signal detection: test for an eventual condition effect.
+Ftest$pval
+
+tests = erpfatest(erpdta.highCPZ,design,design0,nbf=6)
+   # Signal identification: which are the significant intervals?
+
+time_pt = seq(0,1000,2)     # sequence of time points (1 time point every 2ms in [0,1000])
+nbs = 20                    # Number of B-splines for the plot of the effect curve
+effect=which(colnames(design)=="ConditionSuccess")
+erpplot(erpdta.highCPZ,design=design,frames=time_pt,effect=effect,xlab="Time (ms)",
+        ylab=expression(Effect~curve~(mu~V)),bty="l",ylim=c(-3,3),nbs=nbs,
+        cex.axis=1.25,cex.lab=1.25,interval="simultaneous")
+   # with interval="simultaneous", both the pointwise and the simultaneous confidence bands
+   # are plotted
+points(time_pt[tests$significant],rep(0,length(tests$significant)),pch=16,col="blue")
+   # Identifies significant time points by blue dots
+title("Success-Failure effect curve with 95 percent C.I.",cex.main=1.25)
+mtext(paste("12 subjects - Group 'High' - ",nbs," B-splines",sep=""),cex=1.25)
+
+
+## End(Not run)
+ 
+</code></pre>
+
+
+</div>

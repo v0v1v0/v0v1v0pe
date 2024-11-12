@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>CAST.calc.sample</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Construct a sample for auditing using CAST</h2>
+
+<h3>Description</h3>
+
+<p>Collection of functions for planning and evaluating results of a CAST
+election audit.  CAST is a system devised by Dr. Philip B., Stark, UC
+Berkeley Department of Statistics.
+</p>
+<p><code>CAST.calc.sample</code> determines what size SRS sample should be drawn to
+have a reasonable chance of certification if the election does not have
+substantial error.  It returns an <code>audit.plan</code>. <code>CAST.sample</code>
+takes the audit.plan and draws a sample to audit. <code>CAST.audit</code> takes
+audit data (presumably from the audit of the sample drawn in previous step)
+and analyzes it.
+</p>
+<p>Make an audit.plan given reported results for an election.  It gives back what to
+do for a single stage.  If stages is &gt; 1, then it adjusts beta appropriately.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">CAST.calc.sample(
+  Z,
+  beta = 0.9,
+  stages = 1,
+  t = 3,
+  as.taint = FALSE,
+  small.cut = NULL,
+  strata = NULL,
+  drop = NULL,
+  method = c("select", "binomial", "hypergeometric"),
+  calc.e.max = TRUE,
+  bound.function = maximumMarginBound
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>elec.data object (voter matrix)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>the confidence level desired - overall chance of correctly escalating a bad election to full recount</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stages</code></td>
+<td>
+<p>number of auditing stages. Each stage will have the same
+confidence level, determined by a function of beta.  A value of 1 is a
+single-stage audit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>The maximum amount of error, in votes, expected. Threshold error for escalation – if &gt;= 1 then number of votes, otherwise
+fraction of margin.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as.taint</code></td>
+<td>
+<p>Boolean value.  TRUE means interpret $t$ as a taint in
+$[0,1]$ by batch (so the threshold error will be batch-specific).  FALSE
+means interpret $t$ as a proportion of the margin or as number of votes (as
+described above).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>small.cut</code></td>
+<td>
+<p>Cut-off in votes–any precincts with potential error
+smaller than this value will not be audited and be assumed to be worst case
+error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata</code></td>
+<td>
+<p>Name of the stratification column of Z.  Not needed if audit
+plan also being passed in case of CAST.sample. NULL means single strata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>Vector of precincts to drop for whatever reasons (such as they
+are already known).  This is a vector of TRUE/FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Method of calculation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>calc.e.max</code></td>
+<td>
+<p>Should the e.max be taken as given, or recalculated?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bound.function</code></td>
+<td>
+<p>What function should be used to calculate worst-case
+potential error of precincts.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Luke W. Miratrix
+</p>
+
+
+<h3>References</h3>
+
+<p>Philip B. Stark. CAST: Canvass Audits by Sampling and Testing.
+University of California at Berkeley Department of Statistics, 2009. URL:
+http://statistics.berkeley.edu/~stark/Preprints/cast09.pdf.  Also see
+http://www.stat.berkeley.edu/~stark/Vote/index.htm for other relevant
+information.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>elec.data</code> for a description of the object that holds
+precinct-level vote records.  See <code>tri.calc.sample</code> for a PPEB
+auditing method.  See <code>CAST.calc.opt.cut</code> for calculating
+optimal cut-offs to keep needed sample size low. Also see
+<code>sim.race</code>, <code>do.audit</code>, <code>make.sample</code>,
+and <code>make.truth</code> for doing simulation studies of this method.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+        ## Make an example cartoon race (from Stark paper)
+	Z = make.cartoon()
+
+        ## What should we do?
+	samp.info = CAST.calc.sample( Z )
+	samp.info
+
+        ## Draw a sample.
+	samp = CAST.sample( Z, samp.info$ns )
+        samp
+
+        ## Analyze what a CAST audit of santa cruz would entail
+        data(santa.cruz)
+        Z = elec.data( santa.cruz, C.names=c("leopold","danner") )
+        CAST.calc.sample( Z, beta=0.75, stages=1, t=5, small.cut=60)
+</code></pre>
+
+
+</div>

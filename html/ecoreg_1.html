@@ -1,0 +1,463 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eco</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ecological regression using aggregate and/or individual data</h2>
+
+<h3>Description</h3>
+
+<p>Estimation of an underlying individual-level logistic regression
+model, using aggregate data alone, individual-level data alone or a
+combination of aggregate and individual-level data. Any number
+number of covariates can be included in the individual-level
+regression. Covariates can be binary or categorical, expressed as proportions
+over the group, or normally-distributed, expressed as
+within-area means and optional covariances.  A general formula for
+group-level (contextual) effects can also be supplied.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eco(formula, binary, categorical, normal, iformula, data, idata, groups, igroups,
+strata, istrata, pstrata, cross=NULL, norm.var=NULL, random=FALSE,
+pars, fixed=FALSE, model = c("marginal","conditional"),
+outcome=c("binomial","poisson"), gh.points=10, iter.adapt=5, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p> A model formula containing the group-level binomial
+response on the left-hand side, and general group-level covariates on the
+right-hand side.  For example,
+</p>
+<p><code>cbind(n.cases, population) ~ mean.income + deprivation.index</code>
+</p>
+<p>If <code>formula</code> is not specified, then there is assumed to be only
+individual-level data, and <code>iformula</code> should be supplied. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>binary</code></td>
+<td>
+<p> An optional model formula with an empty left-hand
+side. The right-hand side should contain the names of any group-level
+proportions, which are to modelled as individual-level binary
+predictors of the response given in <code>formula</code>.  For example,
+</p>
+<p><code>~ p.smokers + p.nonwhite + p.unemployed</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>categorical</code></td>
+<td>
+<p> An optional list of matrices or data frames.
+Each element corresponds to a categorical covariate.  Each element
+has the same number of rows as the aggregate data, and number of columns
+corresponding to the number of levels of the categorical covariate.
+The cells give the number or proportion of individuals in the area in each
+category.  These will be modelled as individual-level predictors of
+the response given in <code>formula</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normal</code></td>
+<td>
+<p> An optional model formula with an empty left-hand
+side. The right-hand side should list variables containing the
+group-level means of normally-distributed covariates.  These will be
+modelled as individual-level predictors of the response given in
+<code>formula</code>. For example
+</p>
+<p><code>~ pollution + income</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iformula</code></td>
+<td>
+<p> A model for the corresponding individual-level data. The
+individual-level binary response should be on the right-hand side,
+and the individual-level covariates should be on the left-hand side.
+They should represent the same covariates, in the same order, as given in
+<code>formula</code> and <code>binary</code> respectively. However they need not
+have the same names.  For example
+</p>
+<p><code>outcome ~ mean.income + deprivation.index + smoking + nonwhite + unemployed</code>.
+</p>
+<p>If <code>iformula</code> is not specified, then there is assumed to be
+only aggregate data, and <code>formula</code> should be supplied. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p> Data frame containing the group-level variables given in
+<code>formula</code> and <code>binary</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idata</code></td>
+<td>
+<p> Data frame containing the individual-level variables
+given in <code>iformula</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p> A group-level variable containing the group identifiers
+to be matched with the groups given in <code>igroups</code>. Defaults to
+the row numbers of the aggregate data.  Only necessary if the model
+includes random group effects. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>igroups</code></td>
+<td>
+<p> An individual-level variable containing the group
+identifiers of the individual-level data to be matched with the
+groups given in <code>groups</code>. Only necessary if the model
+includes random group effects. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata</code></td>
+<td>
+<p> A matrix with the same number of rows as the aggregate
+data. Rows representing groups, and columns
+representing strata occupancy probabilities, often estimated as 
+observed occupancy proportions.  The relative risks for the strata
+will be included as fixed offsets in the underlying logistic
+regression, using the probabilites supplied in <code>pstrata</code>.  This
+is to save the computational burden of estimating the "nuisance"
+strata-specific risks from the data. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>istrata</code></td>
+<td>
+<p> A variable containing the individual-level variable
+indicating the stratum an individual occupies. This should be a
+factor with the levels corresponding to the columns of the matrix
+<code>strata</code>.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pstrata</code></td>
+<td>
+<p> A vector with one element for each stratum, giving
+the assumed baseline outcome probabilities for the strata.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cross</code></td>
+<td>
+<p> A matrix giving the joint within-area distribution of
+all the covariates supplied in <code>binary</code> and <code>categorical</code>
+and any strata.  This should have the same number of rows as the
+aggregate data, and number of columns equal to the product of the
+numbers of levels of the covariates and strata, for example
+<code class="reqn">2^n</code> if there are <code class="reqn">n</code> binary covariates.  Each
+cell gives the proportion of individuals in the area occupying a 
+category defined by a unique combination of the covariates.   The
+categories are given in the order
+</p>
+<p>column 1: covariate 1 absent, covariate 2 absent, ..., covariate n-1 absent, covariate n absent <br>
+column 2: covariate 1 present, covariate 2 absent, ..., covariate n-1 absent, covariate n absent <br>
+column 3: covariate 1 absent, covariate 2 present, ..., covariate n-1 absent, covariate n absent  <br>
+column 4: covariate 1 present, covariate 2 present, ..., covariate n-1 absent, covariate n absent  <br>
+etc.
+</p>
+<p>(assuming <code class="reqn">n</code> binary covariates, with the obvious generalisation
+for categorical covariates) If <code>strata</code> are used, these are taken as
+covariate n+1.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norm.var</code></td>
+<td>
+<p> A data frame, matrix or list, supplying the within-area covariances of the continuous covariates.    
+</p>
+<p>If <code>norm.var</code> is a data frame or matrix, then the continuous
+covariates are assumed to be independent within areas.  It should
+have rows corresponding to areas, columns corresponding to continuous
+covariates, each cell giving the within-area standard deviation of
+the covariate.
+</p>
+<p>If <code>norm.var</code> is a list, then it should have the same number of
+elements as the number of areas, and each element should be the
+within-area covariance matrix of the continuous covariates.
+</p>
+<p><code>norm.var</code> can also be the name of a variable in <code>data</code>
+which contains the standard deviation of a single continuous
+covariate. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random</code></td>
+<td>
+<p> If <code>TRUE</code> then a normally-distributed random
+group-level intercept, with zero mean, is also included in the model. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars</code></td>
+<td>
+<p> Vector of initial values of the model parameters, given
+in the following order:
+</p>
+<p>logit-scale intercept,<br>
+coefficients for group-level covariates,<br>
+coefficients for individual-level covariates,<br>
+random effects standard deviation.<br></p>
+<p>If not supplied, the initial values are 0 for all covariate effects,
+1 for the random effects standard deviation.  The intercept is
+initialised to the logit mean outcome proportion over groups from
+the aggregate data. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p> If <code>TRUE</code> then <code>eco</code> just calculates the
+likelihood with all parameters are fixed at their
+initial values. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p> If "marginal" then the ecological group-level risk is based on
+integrating over binary individual-level covariates.  This is suitable if the
+aggregate exposures are estimated using a survey of individuals in the area. 
+If  "conditional" then the binary individual-level covariates are
+conditioned on, and the group-level risk is the normal approximation
+model described by Wakefield (2004).  This is suitable if the
+aggregate exposures are estimated using a full population census. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcome</code></td>
+<td>
+<p> Distribution of the aggregate outcome, by default
+"binomial". <code>outcome="poisson"</code> can be specified for rare
+outcomes. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gh.points</code></td>
+<td>
+<p> Number of points for Gauss-Hermite numerical
+integration in the random effects model. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter.adapt</code></td>
+<td>
+<p> Number of adaptive iterations to estimate the mode and scale
+for Gauss-Hermite numerical integration in the random-effects
+model. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> Arguments passed to <code>optim</code>. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Individual data are simply modelled by a logistic regression.
+</p>
+<p>Aggregate outcomes are modelled as binomial, with area-level risk
+obtained by integrating the underlying individual-level logistic
+regression model over the within-area distribution of the covariates.
+</p>
+<p>The model for combined individual and aggregate data shares the same
+coefficients between the individual and aggregate components.
+</p>
+<p>Aggregate data alone can be sufficient for inference of
+individual-level relationships, provided the between-area variability
+of the exposures is large compared to the within-area variability. 
+</p>
+<p>When there are several binary covariates, it is usually advisable to
+account for their within-area distribution, using <code>cross</code>.
+</p>
+<p>See Jackson et al. (2006,2008) for further details. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call to <code>eco</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lik</code></td>
+<td>
+<p>Minus twice the log-likelihood at the estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ors.ctx</code></td>
+<td>
+<p>Matrix of estimated odds ratios and 95% confidence
+intervals for the area-level covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ors.indiv</code></td>
+<td>
+<p>Matrix of estimated odds ratios and 95% confidence
+intervals for the individual-level covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random</code></td>
+<td>
+<p>The estimated random-effects standard deviation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod</code></td>
+<td>
+<p>A list of constants describing the model and data (not useful
+to end users).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corrmat</code></td>
+<td>
+<p>The correlation matrix of the maximum likelihood
+estimates (on the optimized scale, for example log odds ratios for
+covariates).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>C. H. Jackson <a href="mailto:chris.jackson@mrc-bsu.cam.ac.uk">chris.jackson@mrc-bsu.cam.ac.uk</a></p>
+
+
+<h3>References</h3>
+
+<p>C. H. Jackson, N. G. Best, and S. Richardson. (2006) <em>Improving
+ecological inference using individual-level data.</em> Statistics in
+Medicine, 25(12): 2136-2159.
+</p>
+<p>C. H. Jackson, N. G. Best, and S. Richardson. (2008)
+<em>Hierarchical related regression for combining aggregate and
+survey data in studies of socio-economic disease risk factors.</em>
+Journal of the Royal Statistical Society, Series A, 171(1):159-178.
+</p>
+<p>J. Wakefield. (2004) <em>Ecological inference for 2 x 2 tables</em>
+(with discussion). Journal of the Royal Statistical Society, Series A,
+167(3) 385–445.
+</p>
+<p>J. Wakefield and R. Salway. (2001) <em>A statistical framework for
+ecological and aggregate studies</em>.  Journal of The Royal Statistical
+Society, Series A, 164(1):119–137, 2001.
+</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>sim.eco</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Simulate some aggregate data and some combined aggregate and
+## individual data. 
+ng &lt;- 50
+N &lt;- rep(100, ng)
+set.seed(1)
+ctx &lt;- cbind(deprivation = rnorm(ng), mean.income = rnorm(ng))
+phi &lt;- cbind(nonwhite = runif(ng), smoke = runif(ng))
+sim.df &lt;- as.data.frame(cbind(ctx, phi))
+mu &lt;- qlogis(0.05)  ## Disease with approximate 5% prevalence
+
+## Odds ratios for group-level deprivation and mean imcome
+alpha.c &lt;- log(c(1.01, 1.02))
+## Odds ratios for individual-level ethnicity and smoking
+alpha &lt;- log(c(1.5, 2)) 
+
+sim1 &lt;- sim.eco(N, ctx=~deprivation+mean.income, binary=~nonwhite+smoke,
+                data = sim.df,  mu=mu, alpha.c=alpha.c, alpha=alpha)
+sim2 &lt;- sim.eco(N, ctx=~deprivation+mean.income, binary=~nonwhite+smoke,
+                data = sim.df,  mu=mu, alpha.c=alpha.c, alpha=alpha, isam=7)
+
+## Fit the model to recover the simulated odds ratios.
+
+aggdata &lt;- as.data.frame(cbind(y=sim1$y, sim.df))
+agg.eco &lt;- eco(cbind(y, N) ~ deprivation + mean.income,
+               binary = ~ nonwhite + smoke,  data = aggdata)
+agg.eco
+
+## Combining with individual-level data
+## doesn't improve the precision of the estimates.
+
+agg.indiv.eco &lt;- eco(cbind(y, N) ~ deprivation + mean.income,
+               binary = ~ nonwhite + smoke,
+               iformula = y ~ deprivation + mean.income + nonwhite + smoke, 
+               data = aggdata, idata=sim2$idata)
+agg.indiv.eco
+
+## However, suppose we have much lower between-area variance in the
+## mean covariate value.
+
+phi &lt;- cbind(nonwhite = runif(ng, 0, 0.3), smoke = runif(ng, 0.1, 0.4))
+sim.df &lt;- as.data.frame(cbind(ctx, phi))
+sim1 &lt;- sim.eco(N, ctx=~deprivation+mean.income, binary=~nonwhite+smoke,
+                data = sim.df,  mu=mu, alpha.c=alpha.c, alpha=alpha)
+sim2 &lt;- sim.eco(N, ctx=~deprivation+mean.income, binary=~nonwhite+smoke,
+                data = sim.df,  mu=mu, alpha.c=alpha.c, alpha=alpha, isam=10)
+aggdata &lt;- as.data.frame(cbind(y=sim1$y, sim.df))
+
+## The aggregate data now contain little information about the
+## individual-level effects, and we get biased estimates of the true
+## individual model. 
+agg.eco &lt;- eco(cbind(y, N) ~ deprivation + mean.income,
+               binary = ~ nonwhite + smoke,  data = aggdata)
+agg.eco
+
+## We need individual-level data to be able to estimate the
+## individual-level effects accurately. 
+agg.indiv.eco &lt;- eco(cbind(y, N) ~ deprivation + mean.income,
+               binary = ~ nonwhite + smoke,
+               iformula = y ~ deprivation + mean.income + nonwhite + smoke, 
+               data = aggdata, idata=sim2$idata)
+agg.indiv.eco
+
+## But then why not just study the individual data?  Combining with
+## aggregate data improves precision.  
+indiv.eco &lt;- eco(iformula = y ~ deprivation + mean.income + nonwhite + smoke, 
+               idata=sim2$idata)
+indiv.eco
+
+</code></pre>
+
+
+</div>

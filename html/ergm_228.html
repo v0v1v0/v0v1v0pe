@@ -1,0 +1,205 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergmMPLE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>ERGM Predictors and response for logistic regression calculation of MPLE</h2>
+
+<h3>Description</h3>
+
+<p>Return the predictor matrix, response vector, and vector of weights that can
+be used to calculate the MPLE for an ERGM.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergmMPLE(
+  formula,
+  constraints = ~.,
+  obs.constraints = ~-observed,
+  output = c("matrix", "array", "dyadlist", "fit"),
+  expand.bipartite = FALSE,
+  control = control.ergm(),
+  verbose = FALSE,
+  ...,
+  basis = ergm.getnetwork(formula)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula, constraints, obs.constraints</code></td>
+<td>
+<p>An ERGM formula and
+(optionally) a constraint specification formulas. See
+<code>ergm()</code>. This function supports only dyad-independent
+constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>Character, partially matched. See Value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expand.bipartite</code></td>
+<td>
+<p>Logical. Specifies whether the output matrices (or array slices) representing dyads for bipartite networks are represented as rectangular matrices with first mode vertices in rows and second mode in columns, or as square matrices with dimension equalling the total number of vertices, containing with structural <code>NA</code>s or 0s within each mode.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters for algorithm tuning,
+typically constructed with <code>control.ergm()</code>. Its documentation
+gives the the list of recognized control parameters and their
+meaning. The more generic utility <code>snctrl()</code> (StatNet ConTRoL)
+also provides argument completion for the available control
+functions and limited argument name checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments, to be passed to lower-level functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>basis</code></td>
+<td>
+<p>a value (usually a <code>network</code>) to override the LHS of the formula.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The MPLE for an ERGM is calculated by first finding the matrix of change
+statistics.  Each row of this matrix is associated with a particular pair
+(ordered or unordered, depending on whether the network is directed or
+undirected) of nodes, and the row equals the change in the vector of network
+statistics (as defined in <code>formula</code>) when that pair is toggled from a 0
+(no edge) to a 1 (edge), holding all the rest of the network fixed.  The
+MPLE results if we perform a logistic regression in which the predictor
+matrix is the matrix of change statistics and the response vector is the
+observed network (i.e., each entry is either 0 or 1, depending on whether
+the corresponding edge exists or not).
+</p>
+<p>Using <code>output="matrix"</code>, note that the result of the fit may be
+obtained from the <code>glm()</code> function, as shown in the examples
+below.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>output=="matrix"</code> (the default), then only the response, predictor,
+and weights are returned; thus, the MPLE may be found by hand or the vector
+of change statistics may be used in some other way. To save space, the
+algorithm will automatically search for any duplicated rows in the predictor
+matrix (and corresponding response values). <code>ergmMPLE</code> function will
+return a list with three elements, <code>response</code>, <code>predictor</code>, and
+<code>weights</code>, respectively the response vector, the predictor matrix, and
+a vector of weights, which are really counts that tell how many times each
+corresponding response, predictor pair is repeated.
+</p>
+<p>If <code>output=="dyadlist"</code>, as <code>"matrix"</code>, but rather than
+coalescing the duplicated rows, every relation in the network that
+is not fixed and is observed will have its own row in <code>predictor</code>
+and element in <code>response</code> and <code>weights</code>, and <code>predictor</code> matrix
+will have two additional rows at the start, <code>tail</code> and <code>head</code>,
+indicating to which dyad the row and the corresponding elements
+pertain.
+</p>
+<p>If <code>output=="array"</code>, a list with similarly named three elements is
+returned, but <code>response</code> is formatted into a sociomatrix;
+<code>predictor</code> is a 3-dimensional array of with cell
+<code>predictor[t,h,k]</code> containing the change score of term <code>k</code> for
+dyad (<code>t</code>,<code>h</code>); and <code>weights</code> is also formatted into a
+sociomatrix, with an element being 1 if it is to be added into the
+pseudolikelihood and 0 if it is not.
+</p>
+<p>In particular, for a unipartite network, cells corresponding to self-loops,
+i.e., <code>predictor[i,i,k]</code> will be <code>NA</code> and <code>weights[i,i]</code> will
+be 0; and for a unipartite undirected network, lower triangle of each
+<code>predictor[,,k]</code> matrix will be set to <code>NA</code>, with the lower
+triangle of <code>weights</code> being set to 0.
+</p>
+<p>To all of the above output types, <code>attr(., "etamap")</code> is attached
+containing the mapping and offset information.
+</p>
+<p>If <code>output=="fit"</code>, then <code>ergmMPLE</code> simply calls the
+<code>ergm()</code> function with the <code>estimate="MPLE"</code> option set,
+returning an object of class <code>ergm</code> that gives the fitted
+pseudolikelihood model.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ergm()</code>, <code>glm()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(faux.mesa.high)
+formula &lt;- faux.mesa.high ~ edges + nodematch("Sex") + nodefactor("Grade")
+mplesetup &lt;- ergmMPLE(formula)
+
+# Obtain MPLE coefficients "by hand":
+coef(glm(mplesetup$response ~ . - 1, data = data.frame(mplesetup$predictor),
+         weights = mplesetup$weights, family="binomial"))
+
+# Check that the coefficients agree with the output of the ergm function:
+coef(ergmMPLE(formula, output="fit"))
+
+# We can also format the predictor matrix into an array:
+mplearray &lt;- ergmMPLE(formula, output="array")
+
+# The resulting matrices are big, so only print the first 8 actors:
+mplearray$response[1:8,1:8]
+mplearray$predictor[1:8,1:8,]
+mplearray$weights[1:8,1:8]
+
+# Constraints are handled:
+faux.mesa.high%v%"block" &lt;- seq_len(network.size(faux.mesa.high)) %/% 4
+mplearray &lt;- ergmMPLE(faux.mesa.high~edges, constraints=~blockdiag("block"), output="array")
+mplearray$response[1:8,1:8]
+mplearray$predictor[1:8,1:8,]
+mplearray$weights[1:8,1:8]
+
+# Or, a dyad list:
+faux.mesa.high%v%"block" &lt;- seq_len(network.size(faux.mesa.high)) %/% 4
+mplearray &lt;- ergmMPLE(faux.mesa.high~edges, constraints=~blockdiag("block"), output="dyadlist")
+mplearray$response[1:8]
+mplearray$predictor[1:8,]
+mplearray$weights[1:8]
+
+# Curved terms produce predictors on the canonical scale:
+formula2 &lt;- faux.mesa.high ~ gwesp
+mplearray &lt;- ergmMPLE(formula2, output="array")
+# The resulting matrices are big, so only print the first 5 actors:
+mplearray$response[1:5,1:5]
+mplearray$predictor[1:5,1:5,1:3]
+mplearray$weights[1:5,1:5]
+</code></pre>
+
+
+</div>

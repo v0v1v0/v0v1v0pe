@@ -1,0 +1,191 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eem_raman_normalisation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fluorescence Intensity Calibration Using the Raman Scatter Peak of Water</h2>
+
+<h3>Description</h3>
+
+<p>Normalize fluorescence intensities to the standard scale of
+Raman Units (R.U).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eem_raman_normalisation(eem, blank = NA)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>eem</code></td>
+<td>
+<p>An object of class <code>eemlist</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blank</code></td>
+<td>
+<p>An object of class <code>eemlist</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function will first try to use the provided <code>blank</code>. If the
+blank is omitted, the function will then try to extract the blank from the
+<code>eemlist</code> object. This is done by looking for sample names containing
+one of these complete or partial strings (ignoring case):
+</p>
+ <ol>
+<li>
+<p> nano </p>
+</li>
+<li>
+<p> miliq </p>
+</li>
+<li>
+<p> milliq </p>
+</li>
+<li>
+<p> mq </p>
+</li>
+<li>
+<p> blank </p>
+</li>
+</ol>
+<p>Note that if <code>blank</code> is omitted, the function will group the
+<code>eemlist</code> based on file location and will assumes that there is a
+blank sample in each folder. In that context, the blank will be used on
+each sample in the same folder. If more than one blank is found they will
+be averaged (a message will be printed if this appends).
+</p>
+<p>Consider the following example where there are two folders that could
+represent scans performed on two different days 'scans_day_1' and
+'scans_day_2'.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;"> scans_day_1</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> nano.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> sample1.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">
+  sample2.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> sample3.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> scans_day_2 </td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> blank.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+<td style="text-align: left;"> s1.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> s2.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> s3.csv</td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+</tr>
+</table>
+<p>In each folder there are three samples and one blank files. In that
+context, 'eem_remove_blank()' will use the blank 'nano.csv' from
+'sample1.csv', 'sample2.csv' and 'sample3.csv'. The same strategy will be
+used for files in folder 'scans_day_2' but with blank named 'blank.csv'.
+</p>
+<p>Note that the blanks eem are not returned by the function.
+</p>
+<p>The normalization procedure consists in dividing all fluorescence
+intensities by the area (integral) of the Raman peak. The peak is located
+at excitation of 350 nm. (ex = 370) between 371 nm. and 428 nm in emission
+(371 &lt;= em &lt;= 428). Note that the data is interpolated to make sure that
+fluorescence at em 350 exist.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>eemlist</code>.
+</p>
+<p>An object of class <code>eem</code> containing: </p>
+ <ul>
+<li>
+<p> sample The
+file name of the eem. </p>
+</li>
+<li>
+<p> x A matrix with fluorescence values. </p>
+</li>
+<li>
+<p> em
+Emission vector of wavelengths. </p>
+</li>
+<li>
+<p> ex Excitation vector of wavelengths.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Lawaetz, A. J., &amp; Stedmon, C. A. (2009). Fluorescence Intensity Calibration
+Using the Raman Scatter Peak of Water. Applied Spectroscopy, 63(8), 936-940.
+</p>
+<p><a href="https://journals.sagepub.com/doi/10.1366/000370209788964548">https://journals.sagepub.com/doi/10.1366/000370209788964548</a>
+</p>
+<p>Murphy, K. R., Stedmon, C. a., Graeber, D., &amp; Bro, R. (2013). Fluorescence
+spectroscopy and multi-way techniques. PARAFAC. Analytical Methods, 5(23),
+6557.
+</p>
+<p><a href="http://xlink.rsc.org/?DOI=c3ay41160e">http://xlink.rsc.org/?DOI=c3ay41160e</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Open the fluorescence eem
+file &lt;- system.file("extdata/cary/scans_day_1", "sample1.csv", package = "eemR")
+eem &lt;- eem_read(file, import_function = "cary")
+
+plot(eem)
+
+# Open the blank eem
+file &lt;- system.file("extdata/cary/scans_day_1", "nano.csv", package = "eemR")
+blank &lt;- eem_read(file, import_function = "cary")
+
+# Do the normalisation
+eem &lt;- eem_raman_normalisation(eem, blank)
+
+plot(eem)
+</code></pre>
+
+
+</div>

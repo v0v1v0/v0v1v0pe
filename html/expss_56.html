@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compute</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Modify data.frame/modify subset of the data.frame</h2>
+
+<h3>Description</h3>
+
+
+<ul>
+<li>
+<p><code>compute</code> evaluates expression <code>expr</code> in the context of data.frame 
+<code>data</code> and return original data possibly modified.
+</p>
+</li>
+<li>
+<p><code>calculate</code> evaluates expression <code>expr</code> in the context of 
+data.frame <code>data</code> and return value of the evaluated expression. Function <code>use_labels</code> is shortcut for <code>calculate</code> with
+argument <code>use_labels</code> set to <code>TRUE</code>. When <code>use_labels</code> is TRUE
+there is a special shortcut for entire data.frame - <code>..data</code>.
+</p>
+</li>
+<li>
+<p><code>do_if</code> modifies only rows for which <code>cond</code> equals to
+TRUE. Other rows remain unchanged. Newly created variables also will have
+values only in rows for which <code>cond</code> have TRUE. There will be NA's in
+other rows. This function tries to mimic SPSS "DO IF(). ... END IF."
+statement.
+</p>
+</li>
+</ul>
+<p>Full-featured <code>%to%</code> is available in the expressions for addressing
+range of variables.
+There is a special constant <code>.N</code> which equals to number of cases in 
+<code>data</code> for usage in expression inside <code>compute</code>/<code>calculate</code>. 
+Inside <code>do_if</code> <code>.N</code> gives number of rows which will be affected by 
+expressions. For parametrization (variable substitution) see .. or 
+examples. Sometimes it is useful to create new empty variable inside compute.
+You can use <code>.new_var</code> function for this task. This function creates
+variable of length <code>.N</code> filled with NA. See examples.
+<code>modify</code> is an alias for <code>compute</code>, <code>modify_if</code> is
+an alias for <code>do_if</code> and <code>calc</code> is an alias for <code>calculate</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compute(data, ...)
+
+modify(data, ...)
+
+do_if(data, cond, ...)
+
+modify_if(data, cond, ...)
+
+calculate(data, expr, use_labels = FALSE)
+
+use_labels(data, expr)
+
+calc(data, expr, use_labels = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame/list of data.frames. If <code>data</code> is list of
+data.frames then expression <code>expr</code> will be evaluated inside each
+data.frame separately.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>expressions that should be evaluated in the context of data.frame
+<code>data</code>. It can be arbitrary code in curly brackets or assignments. See
+examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cond</code></td>
+<td>
+<p>logical vector or expression. Expression will be evaluated in the context of the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expr</code></td>
+<td>
+<p>expression that should be evaluated in the context of data.frame <code>data</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_labels</code></td>
+<td>
+<p>logical. Experimental feature. If it equals to <code>TRUE</code> 
+then we will try to replace variable names with labels. So many base R
+functions which show variable names will show labels.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>compute</code> and <code>do_if</code> functions return modified 
+data.frame/list of modified data.frames, <code>calculate</code> returns value of
+the evaluated expression/list of values.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+dfs = data.frame(
+    test = 1:5,
+    a = rep(10, 5),
+    b_1 = rep(11, 5),
+    b_2 = rep(12, 5),
+    b_3 = rep(13, 5),
+    b_4 = rep(14, 5),
+    b_5 = rep(15, 5) 
+)
+
+
+# compute sum of b* variables and attach it to 'dfs'
+let(dfs, 
+    b_total = sum_row(b_1 %to% b_5),
+    b_total = set_var_lab(b_total, "Sum of b"),
+    random_numbers = runif(.N) # .N usage
+) %&gt;% print()
+
+# calculate sum of b* variables and return it
+query(dfs, sum_row(b_1 %to% b_5))
+
+
+# set values to existing/new variables
+let(dfs, 
+    columns('new_b{1:5}') := b_1 %to% b_5
+) %&gt;% print()
+
+
+# conditional modification
+let_if(dfs, test %in% 2:4, 
+    a = a + 1,    
+    b_total = sum_row(b_1 %to% b_5),
+    random_numbers = runif(.N) # .N usage
+) %&gt;% print()
+
+
+# variable substitution
+name1 = "a"
+name2 = "new_var"
+
+let(dfs, 
+     (name2) := get(name1)*2    
+) %&gt;% print()
+
+
+# 'use_labels' examples. Utilization of labels in base R.
+data(mtcars)
+mtcars = apply_labels(mtcars,
+                      mpg = "Miles/(US) gallon",
+                      cyl = "Number of cylinders",
+                      disp = "Displacement (cu.in.)",
+                      hp = "Gross horsepower",
+                      drat = "Rear axle ratio",
+                      wt = "Weight (lb/1000)",
+                      qsec = "1/4 mile time",
+                      vs = "Engine",
+                      vs = c("V-engine" = 0,
+                             "Straight engine" = 1),
+                      am = "Transmission",
+                      am = c("Automatic" = 0,
+                             "Manual"=1),
+                      gear = "Number of forward gears",
+                      carb = "Number of carburetors"
+)
+
+use_labels(mtcars, table(am, vs))
+
+## Not run: 
+use_labels(mtcars, plot(mpg, hp))
+
+## End(Not run)
+
+mtcars %&gt;% 
+       use_labels(lm(mpg ~ disp + hp + wt)) %&gt;% 
+       summary()
+
+</code></pre>
+
+
+</div>

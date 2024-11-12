@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>recm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Relational Evidential c-means algorithm</h2>
+
+<h3>Description</h3>
+
+<p><code>recm</code> computes a credal partition from a dissimilarity matrix using the
+Relational Evidential c-means (RECM) algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">recm(
+  D,
+  c,
+  type = "full",
+  pairs = NULL,
+  Omega = TRUE,
+  m0 = NULL,
+  ntrials = 1,
+  alpha = 1,
+  beta = 1.5,
+  delta = quantile(D[upper.tri(D) | lower.tri(D)], 0.95),
+  epsi = 1e-04,
+  maxit = 5000,
+  disp = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>Dissimilarity matrix of size (n,n), where n is the number of objects.
+Dissimilarities must be squared Euclidean distances to ensure convergence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c</code></td>
+<td>
+<p>Number of  clusters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Type of focal sets ("simple": empty set, singletons and Omega;
+"full": all <code class="reqn">2^c</code> subsets of <code class="reqn">\Omega</code>; "pairs": <code class="reqn">\emptyset</code>, singletons,
+<code class="reqn">\Omega</code>, and all or selected pairs).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pairs</code></td>
+<td>
+<p>Set of pairs to be included in the focal sets; if NULL, all pairs are
+included. Used only if type="pairs".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Omega</code></td>
+<td>
+<p>Logical. If TRUE (default), the whole frame is included (for types 'simple' and
+'pairs').</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m0</code></td>
+<td>
+<p>Initial credal partition. Should be a matrix with n rows and a number of
+columns equal to the number f of focal sets specified by 'type' and 'pairs'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntrials</code></td>
+<td>
+<p>Number of runs of the optimization algorithm (set to 1 if m0 is  supplied).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Exponent of the cardinality in the cost function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>Exponent of masses in the cost function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>Distance to the empty set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsi</code></td>
+<td>
+<p>Minimum amount of improvement.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>Maximum number of iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>disp</code></td>
+<td>
+<p>If TRUE (default), intermediate results are displayed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>RECM is a relational version of the Evidential c-Means (ECM) algorithm. Convergence is
+guaranteed only if elements of matrix D are squared Euclidean distances. However, the
+algorithm is quite robust and generally provides sensible results even if the dissimilarities
+are not metric. By default, each mass function in the credal partition has <code class="reqn">2^c</code> focal sets,
+where c is the supplied number of clusters. We can also limit the number of focal sets to
+subsets of clusters with cardinalities 0, 1 and c (recommended if c&gt;=10), or to all or some
+selected pairs of clusters.
+If an initial credal partition m0 is provided, the number of trials is automatically set to 1.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The credal partition (an object of class <code>"credpart"</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thierry Denoeux (from a MATLAB code written by Marie-Helene Masson).
+</p>
+
+
+<h3>References</h3>
+
+<p>M.-H. Masson and T. Denoeux. RECM: Relational Evidential c-means algorithm.
+Pattern Recognition Letters, Vol. 30, pages 1015–1026, 2009.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>makeF</code>, <code>extractMass</code>, <code>ecm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Clustering of the Butterfly dataset
+## Not run: 
+n &lt;- nrow(butterfly)
+D&lt;-as.matrix(dist(butterfly))^2
+clus&lt;-recm(D,c=2,delta=sqrt(50))
+m&lt;-clus$mass
+plot(1:n,m[,1],type="l",ylim=c(0,1),xlab="objects",ylab="masses")
+lines(1:n,m[,2],lty=2)
+lines(1:n,m[,3],lty=3)
+lines(1:n,m[,4],lty=4)
+
+ ## Clustering the protein data
+ data(protein)
+ clus &lt;- recm(D=protein$D,c=4,type='full',alpha=0.2,beta=1.1,delta=sqrt(20))
+
+ z&lt;- cmdscale(protein$D,k=2)
+ plot(clus,X=z,mfrow=c(2,2),ytrue=protein$y,Outliers=FALSE,Approx=1)
+ 
+## End(Not run)
+</code></pre>
+
+
+</div>

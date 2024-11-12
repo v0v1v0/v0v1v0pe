@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eSHAP_plot_reg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Enhanced SHAP Analysis for Regression Models</h2>
+
+<h3>Description</h3>
+
+<p>The SHAP plot for regression models is a visualization tool that uses the Shapley value, an approach from cooperative game theory, to compute feature contributions for single predictions. The Shapley value fairly distributes the difference of the instance’s prediction and the datasets average prediction among the features. This method is available from the iml package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eSHAP_plot_reg(
+  task,
+  trained_model,
+  splits,
+  sample.size = 30,
+  seed = 246,
+  subset = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>task</code></td>
+<td>
+<p>mlr3 regression task object specifying the task details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained_model</code></td>
+<td>
+<p>mlr3 trained learner (model) object obtained after training</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+<p>mlr3 object defining data splits for train and test sets</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample.size</code></td>
+<td>
+<p>numeric, number of samples to calculate SHAP values (default: 30)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>numeric, seed for reproducibility (default: 246)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>numeric, proportion of the test set to use for visualization (default: 1)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list of two objects:
+</p>
+
+<ol>
+<li>
+<p> An enhanced SHAP plot with user interactive elements,
+</p>
+</li>
+<li>
+<p> A matrix of SHAP values
+</p>
+</li>
+</ol>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library("explainer")
+seed &lt;- 246
+set.seed(seed)
+# Load necessary packages
+if (!requireNamespace("mlbench", quietly = TRUE)) stop("mlbench not installed.")
+if (!requireNamespace("mlr3learners", quietly = TRUE)) stop("mlr3learners not installed.")
+if (!requireNamespace("ranger", quietly = TRUE)) stop("ranger not installed.")
+# Load BreastCancer dataset
+utils::data("BreastCancer", package = "mlbench")
+mydata &lt;- BreastCancer[, -1]
+mydata &lt;- na.omit(mydata)
+sex &lt;- sample(c("Male", "Female"), size = nrow(mydata), replace = TRUE)
+mydata$age &lt;- sample(seq(18, 60), size = nrow(mydata), replace = TRUE)
+mydata$sex &lt;- factor(sex, levels = c("Male", "Female"), labels = c(1, 0))
+mydata$Class &lt;- NULL
+mydata$Cl.thickness &lt;- as.numeric(mydata$Cl.thickness)
+target_col &lt;- "Cl.thickness"
+maintask &lt;- mlr3::TaskRegr$new(
+  id = "my_regression_task",
+  backend = mydata,
+  target = target_col
+)
+splits &lt;- mlr3::partition(maintask)
+mylrn &lt;- mlr3::lrn("regr.ranger", predict_type = "response")
+mylrn$train(maintask, splits$train)
+reg_model_outputs &lt;- mylrn$predict(maintask, splits$test)
+SHAP_output &lt;- eSHAP_plot_reg(
+  task = maintask,
+  trained_model = mylrn,
+  splits = splits,
+  sample.size = 2, # also 30 or more
+  seed = seed,
+  subset = 0.02 # up to 1
+)
+myplot &lt;- SHAP_output[[1]]
+
+</code></pre>
+
+
+</div>

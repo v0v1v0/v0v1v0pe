@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>engression</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Engression Function</h2>
+
+<h3>Description</h3>
+
+<p>This function fits an engression model to the data. It allows for
+the tuning of several parameters related to model complexity.
+Variables are per default internally standardized (predictions are on original scale).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">engression(
+  X,
+  Y,
+  noise_dim = 5,
+  hidden_dim = 100,
+  num_layer = 3,
+  dropout = 0.05,
+  batch_norm = TRUE,
+  num_epochs = 1000,
+  lr = 10^(-3),
+  beta = 1,
+  silent = FALSE,
+  standardize = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>A matrix or data frame representing the predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>A matrix or vector representing the target variable(s). If Y is a factor a classification model is fitted (experimental).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>noise_dim</code></td>
+<td>
+<p>The dimension of the noise introduced in the model (default: 5).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hidden_dim</code></td>
+<td>
+<p>The size of the hidden layer in the model (default: 100).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_layer</code></td>
+<td>
+<p>The number of layers in the model (default: 3).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dropout</code></td>
+<td>
+<p>The dropout rate to be used in the model in case no batch normalization is used. Only active if batch normalization is off. (default: 0.01)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>batch_norm</code></td>
+<td>
+<p>A boolean indicating whether to use batch-normalization (default: TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_epochs</code></td>
+<td>
+<p>The number of epochs to be used in training (default: 1000).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lr</code></td>
+<td>
+<p>The learning rate to be used in training (default: 10^-3).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>The beta scaling factor for energy loss (default: 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>A boolean indicating whether to suppress output during model training (default: FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standardize</code></td>
+<td>
+<p>A boolean indicating whether to standardize the input data (default: TRUE).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An engression model object with class "engression".
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+  n = 1000
+  p = 5
+
+  X = matrix(rnorm(n*p),ncol=p)
+  Y = (X[,1]+rnorm(n)*0.1)^2 + (X[,2]+rnorm(n)*0.1) + rnorm(n)*0.1
+  Xtest = matrix(rnorm(n*p),ncol=p)
+  Ytest = (Xtest[,1]+rnorm(n)*0.1)^2 + (Xtest[,2]+rnorm(n)*0.1) + rnorm(n)*0.1
+
+  ## fit engression object
+  engr = engression(X,Y)
+  print(engr)
+
+  ## prediction on test data
+  Yhat = predict(engr,Xtest,type="mean")
+  cat("\n correlation between predicted and realized values:  ", signif(cor(Yhat, Ytest),3))
+  plot(Yhat, Ytest,xlab="prediction", ylab="observation")
+
+  ## quantile prediction
+  Yhatquant = predict(engr,Xtest,type="quantiles")
+  ord = order(Yhat)
+  matplot(Yhat[ord], Yhatquant[ord,], type="l", col=2,lty=1,xlab="prediction", ylab="observation")
+  points(Yhat[ord],Ytest[ord],pch=20,cex=0.5)
+
+  ## sampling from estimated model
+  Ysample = predict(engr,Xtest,type="sample",nsample=1)
+   
+  ## plot of realized values against first variable
+  oldpar &lt;- par()
+  par(mfrow=c(1,2))
+  plot(Xtest[,1], Ytest, xlab="Variable 1", ylab="Observation")
+  ## plot of sampled values against first variable
+  plot(Xtest[,1], Ysample, xlab="Variable 1", ylab="Sample from engression model")   
+  par(oldpar)
+
+
+</code></pre>
+
+
+</div>

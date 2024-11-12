@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot.Lexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Lexis diagrams</h2>
+
+<h3>Description</h3>
+
+<p>The follow-up histories represented by a Lexis object can be plotted
+using one or two dimensions.  The two dimensional plot is a Lexis
+diagram showing follow-up time simultaneously on two time scales.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'Lexis'
+plot(x=Lexis( entry=list(Date=1900,Age=0), exit=list(Age=0) ),
+                     time.scale = NULL, type="l", breaks="lightgray", ...)
+## S3 method for class 'Lexis'
+points(x, time.scale = options()[["Lexis.time.scale"]] , ...)
+## S3 method for class 'Lexis'
+lines(x, time.scale = options()[["Lexis.time.scale"]], ...)
+## S3 method for class 'Lexis'
+PY.ann(x, time.scale = options()[["Lexis.time.scale"]], digits=1, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class <code>Lexis</code>. The default is a bogus <code>Lexis</code>
+object, so that <code>plot.Lexis</code> can be called without the first
+argument and still produce a(n empty) Lexis diagram. Unless arguments
+<code>xlim</code> and <code>ylim</code> are given in this case the diagram is
+looking pretty daft.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time.scale</code></td>
+<td>
+<p>A vector of length 1 or 2 giving the time scales to
+be plotted either by name or numerical order</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Character indication what to draw: "n" nothing (just set up the
+diagram), "l" - liefelines, "p" - endpoints of follow-up, "b" - both
+lifelines and endpoints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>a string giving the colour of grid lines to be drawn
+when plotting a split Lexis object. Grid lines can be suppressed by
+supplying the value <code>NULL</code> to the <code>breaks</code> argument</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>Numerical. How many digits after the demimal points should be
+when plotting the person-years.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further graphical parameters to be passed to the plotting
+methods.
+</p>
+<p>Grids can be drawn (behind the life lines) using the following
+parameters in <code>plot</code>: 
+</p>
+
+<ul>
+<li> <p><code>grid</code> If logical, a background grid is set up
+using the axis ticks. If a list, the first component is used as
+positions for the vertical lines and the last as positions for the
+horizontal. If a nunerical vector, grids on both axes are set up
+using the distance between the numbers.
+</p>
+</li>
+<li> <p><code>col.grid="lightgray"</code> Color of the background grid.
+</p>
+</li>
+<li> <p><code>lty.grid=2</code> Line type for the grid.
+</p>
+</li>
+<li> <p><code>coh.grid=FALSE</code> Should a 45 degree grid be plotted?</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The plot method for <code>Lexis</code> objects traces “life lines” from
+the start to the end of follow-up.  The <code>points</code> method plots
+points at the end of the life lines.
+</p>
+<p>If <code>time.scale</code> is of length 1, the life lines are drawn
+horizontally, with the time scale on the X axis and the id value on the Y
+axis. If <code>time.scale</code> is of length 2, a Lexis diagram is
+produced, with diagonal life lines plotted against both time scales
+simultaneously.
+</p>
+<p>If <code>lex</code> has been split along one of the time axes by a call to
+<code>splitLexis</code>, then vertical or horizontal grid lines are plotted
+(on top of the life lines) at the break points.
+</p>
+<p><code>PY.ann</code> writes the length of each (segment of) life line at the middle
+of the line. Not advisable to use with large cohorts. Another example is
+in the example file for <code>occup</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martyn Plummer</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Lexis</code>, <code>splitLexis</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># A small bogus cohort
+xcoh &lt;- structure( list( id = c("A", "B", "C"),
+                      birth = c("14/07/1952", "01/04/1957", "10/06/1987"),
+                      entry = c("04/08/1965", "08/09/1972", "23/12/1991"),
+                       exit = c("27/06/1997", "23/05/1995", "24/07/1998"),
+                       fail = c(1, 0, 1) ),
+                     .Names = c("id", "birth", "entry", "exit", "fail"),
+                  row.names = c("1", "2", "3"),
+                      class = "data.frame" )
+
+# Convert the character dates into numerical variables (fractional years)
+xcoh$bt &lt;- cal.yr( xcoh$birth, format="%d/%m/%Y" )
+xcoh$en &lt;- cal.yr( xcoh$entry, format="%d/%m/%Y" )
+xcoh$ex &lt;- cal.yr( xcoh$exit , format="%d/%m/%Y" )
+
+# See how it looks
+xcoh
+
+# Define as Lexis object with timescales calendar time and age
+Lcoh &lt;- Lexis( entry = list( per=en ),
+                exit = list( per=ex, age=ex-bt ),
+         exit.status = fail,
+                data = xcoh )
+
+# Default plot of follow-up
+plot( Lcoh )
+# Show follow-up time
+PY.ann( Lcoh )
+
+# Show exit status
+plot( Lcoh, type="b" )
+# Same but failures only
+plot( Lcoh, type="b", pch=c(NA,16)[Lcoh$fail+1] )
+
+# With a grid and deaths as endpoints
+plot( Lcoh, grid=0:10*10, col="black" )
+points( Lcoh, pch=c(NA,16)[Lcoh$lex.Xst+1] )
+# With a lot of bells and whistles:
+plot( Lcoh, grid=0:20*5, col="black", xaxs="i", yaxs="i",
+      xlim=c(1960,2010), ylim=c(0,50), lwd=3, las=1 )
+points( Lcoh, pch=c(NA,16)[Lcoh$lex.Xst+1], col="red", cex=1.5 )
+</code></pre>
+
+
+</div>

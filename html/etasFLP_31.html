@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>profile.etasclass</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>profile method for etasclass objects (ETAS model) (To be checked)</h2>
+
+<h3>Description</h3>
+
+<p> profile method for etasclass objects (ETAS model).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'etasclass'
+profile(fitted,iprofile		=1,
+				 nprofile	=7,
+				 kprofile	=3,
+				 profile.approx	=FALSE,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>fitted</code></td>
+<td>
+<p>An object of the class  <code>etasclass</code></p>
+</td>
+</tr></table>
+<p>.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>iprofile</code></td>
+<td>
+<p>An integer in the range 1-7. Profile likelihood will be computed with respect to the parameter of index <code>iprofile</code>. The order of parametrs is: <code>mu</code>, <code>k0</code>, <code>c</code>, <code>p</code>, <code>a</code>, <code>gamma</code>, <code>d</code>, <code>q</code>.
+In this version 2.0.0 <code>profile</code> only for etas parameters, not for covariates parameters. It will added future versions  				 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nprofile</code></td>
+<td>
+<p>Number of values of <code>params[iprofile]</code> for which profile likelihood must be computed.  Default value= 7.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kprofile</code></td>
+<td>
+<p>Maximum absolute standardized value for <code>params[iprofile]</code>. Profile likelihood will be computed in the standardized range [-<code>kprofile</code>, <code>kprofile</code>].  Default value= 3.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>profile.approx</code></td>
+<td>
+<p>if <code>TRUE</code>, then a conditional-likelihood approach is used as a first value for  each maximization step in profile likelihood computation.  Default value= <code>FALSE</code>.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other arguments.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Profile likelihood for the <code>iprofile</code>-th parameter of the ETAS model for earthquake seismicity, estimated with <code>etasclass</code>; the order of parameters is: <code>mu</code>,<code>k0</code>,<code>c</code>,<code>p</code>,<code>gamma</code>,<code>d</code>,<code>q</code> and <code>betacov</code>.
+</p>
+<p>A <code>plot</code> method is defined for <code>profile.etasclass</code> objects. A number of grid points <code>nprofile</code>  of 7 (the default) usually is enough to have a good interpolation of the profile likelihood. The profile is computed using the final estimation of the background seismicity used to obtain the object <code>etas</code> of class <code>etasclass</code> and regardless to the method used. The computing time (for each of the <code>nprofile</code> values) is generally less than a single execution of <code>etasclass</code> without clustering, because only ML estimation is performed. Parameters not estimated in <code>etas</code> (with <code>params.ind[i]=FALSE</code>) will remain fixed do the value <code>params.fix[i]</code>.
+</p>
+<p>To obtain profiles for different parameters, run <code>profile.etasclass</code> with different values of <code>iprofile</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>params.vec</code></td>
+<td>
+<p>vector of values of the parameter <code>iprofile</code> used to evaluate the profile likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logl.vec</code></td>
+<td>
+<p>vector of likelihoods corresponding to the values of <code>params.vec</code></p>
+</td>
+</tr>
+</table>
+<p><code>plot</code> method is defined to represent  profile likelihood (in  scale -2log(LR)), using a spline interpolation through  grid points, with superimposition of approximate confidence intervals.
+</p>
+
+
+<h3>Note</h3>
+
+<p>A odd number of grid points <code>nprofile</code>  is adviced, so that the central point is the unconstrained ML estimate for the profiled parameter, and the interpolation of the profile likelihood will have a better quality.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Marcello Chiodi, Giada Adelfio</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>eqcat</code>, <code>etasclass</code>, <code>plot.profile.etasclass</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: ##
+data("italycatalog")
+# load a sample catalog of italian seismicity  
+
+   etas.flp&lt;-etasclass(italycatalog,  
+   magn.threshold = 3.0,  magn.threshold.back = 3.5,
+   k0 = 0.005, c = 0.005, p = 1.01, gamma = 0.6, q = 1.52, d = 1.1,
+   params.ind = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
+   formula1 = "time ~  magnitude- 1", declustering = TRUE, 
+   thinning = FALSE, flp = TRUE, ndeclust = 15,
+   onlytime = FALSE, is.backconstant = FALSE,
+   description = "etas flp",sectoday = TRUE,
+   usenlm = TRUE, epsmax = 0.001)
+    # execution of etasclass for events with minimum magnitude of 3.0. 
+    # The events with magnitude at least 3.5 are used to build a first approximation
+    # for the background intensity function
+    # (magn.threshold.back=3.5)
+    
+## compute profile likelihood for the first parameter (mu)
+ system.time( prof.flp &lt;- profile(etas.flp, nprofile = 7, iprofile = 1))
+ plot(prof.flp)
+#### output:
+Asymptotic  confidence  intervals: 
+  Coverage Lower Upper
+1     0.90 0.335 0.376
+2     0.95 0.334 0.378
+3     0.99 0.329 0.385
+
+
+## End(Not run)</code></pre>
+
+
+</div>

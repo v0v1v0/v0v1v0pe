@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cdf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Cummulative distribution function for ensemble forcasting models
+</h2>
+
+<h3>Description</h3>
+
+<p>Computes the cumulative distribution function (CDF)
+of an ensemble forecasting model at observation locations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cdf(fit, ensembleData, values, dates = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+
+<p>A model fit to ensemble forecasting data, obtained using
+<code>fitMOS</code> or <code>ensembleMOS</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ensembleData</code></td>
+<td>
+
+<p>An <code>ensembleData</code> object that includes ensemble forecasts,
+verification observations and possibly dates.
+Missing values (indicated by <code>NA</code>) are allowed.
+This need not be the data used for the model <code>fit</code>,
+although it must include the same ensemble members.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+
+<p>The vector of desired values at which the CDF of the ensemble
+forecasting model is to be evaluated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+
+<p>The dates for which the CDF will be computed.
+These dates must be consistent with <code>fit</code> and <code>ensembleData</code>.
+The default is to use all of the dates in <code>fit</code>.
+The dates are ignored if <code>fit</code> originates from <code>fitMOS</code>,
+which also ignores date information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Included for generic function compatibility.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This method is generic, and can be applied to any ensemble forecasting
+model obtained using <code>fitMOS</code> or <code>ensembleMOS</code>. 
+</p>
+<p>For the EMOS models that allow for point masses at 0, i.e. the censored and 
+shifted gamma, and the censored generalized extreme value distribution EMOS model,
+the function contains an addition logical argument <code>randomizeATzero</code> that specifies
+whether the value of the CDF at zero should be chosen randomly from the interval between
+0 and the value of the CDF at zero. The default choice if <code>FALSE</code>, setting
+<code>randomizeATzero = TRUE</code> is practical for computing randomized PIT values.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix of probabilities corresponding to the CDF at the desired values.
+Useful for determining propability of freezing, precipitation, etc.
+</p>
+
+
+<h3>References</h3>
+
+<p>T. Gneiting, A. E. Raftery, A. H. Westveld and T. Goldman,
+Calibrated probabilistic forecasting using ensemble model output
+statistics and minimum CRPS estimation.
+<em>Monthly Weather Review</em> 133:1098–1118, 2005.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleMOS</code>,
+<code>fitMOS</code>,
+<code>quantileForecast</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("ensBMAtest", package = "ensembleBMA")
+
+ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+obs &lt;- paste("T2", "obs", sep = ".")
+ens &lt;- paste("T2", ensMemNames, sep = ".")
+tempTestData &lt;- ensembleData(forecasts = ensBMAtest[,ens],
+                             dates = ensBMAtest[,"vdate"],
+                             observations = ensBMAtest[,obs],
+                             station = ensBMAtest[,"station"],
+                             forecastHour = 48,
+                             initializationTime = "00")
+
+tempTestFit &lt;- ensembleMOS(tempTestData, trainingDays = 25, 
+                           model = "normal",
+                           dates = "2008010100")
+
+tempTestCDF &lt;- cdf(tempTestFit, tempTestData,
+                   values = seq(from=277, to=282, by = 1))
+
+tempTestCDF
+</code></pre>
+
+
+</div>

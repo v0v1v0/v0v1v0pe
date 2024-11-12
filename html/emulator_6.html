@@ -1,0 +1,264 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>corr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>correlation function for calculating A</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the correlation function between two points in parameter
+space, thus determining the correlation matrix A.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">corr(x1, x2, scales=NULL , pos.def.matrix=NULL,
+coords="cartesian", spherical.distance.function=NULL)
+corr.matrix(xold, yold=NULL, method=1, distance.function=corr, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x1</code></td>
+<td>
+<p>First point</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x2</code></td>
+<td>
+<p>Second point</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scales</code></td>
+<td>
+<p>Vector specifying the diagonal elements of <code class="reqn">B</code> (see below)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos.def.matrix</code></td>
+<td>
+<p>Positive definite matrix to be used by
+<code>corr.matrix()</code> for <code class="reqn">B</code>.  Exactly one of <code>scales</code> and
+<code>pos.definite.matrix</code> should be specified.  Supplying
+<code>scales</code> specifies the diagonal elements of <code class="reqn">B</code> (off diagonal
+elements are set to zero); supply <code>pos.definite.matrix</code> in the
+general case.  A single value is recycled.   Note that neither
+<code>corr()</code> nor <code>corr.matrix()</code> test for positive
+definiteness</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coords</code></td>
+<td>
+<p>In function <code>corr()</code>, a character string, with
+default “cartesian” meaning to interpret the elements of
+<code>x1</code> (and <code>x2</code>) as coordinates in Cartesian space.  The
+only other acceptable value is currently “spherical”, which
+means to interpret the first element of <code>x1</code> as row number, and
+the second element as column number, on a spherical computational
+grid (such as used  by climate model Goldstein; see package
+<code>goldstein</code> for an example of this option in use).
+Spherical geometry is then used to calculate the geotetic (great
+circle) distance between point <code>x1</code> and <code>x2</code>, with
+function <code>gcd()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>An integer with values 1, 2, or 3.  If 1, then use a
+fast matrix calculation that returns
+<code class="reqn">e^{-(x-x')^TB(x-x')}</code>.  If 2 or 3, return
+the appropriate output from <code>corr()</code>, noting that ellipsis
+arguments are passed to <code>corr()</code> (for example, 
+<code>scales</code>).  The difference between 2 and 3 is a marginal
+difference in numerical efficiency; the main difference is
+computational elegance.
+</p>
+<p><strong>Warning 1:</strong> The code for <code>method=2</code> (formerly the
+default), has a bug.  If <code>yold</code> has only one row, then
+<code>corr.matrix(xold,yold,scales,method=2)</code> returns the transpose
+of what one would expect.  Methods 1 and 3 return the correct
+matrix.
+</p>
+<p><strong>Warning 2:</strong> If argument <code>distance.function</code> is not the
+default, and <code>method</code> is the default (ie 1), then <code>method</code>
+will be silently changed to 2 on the grounds that <code>method=1</code> is
+meaningless unless the distance function is <code>corr()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance.function</code></td>
+<td>
+<p>Function to be used to calculate distances in
+<code>corr.matrix()</code>.  Defaults to <code>corr()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xold</code></td>
+<td>
+<p>Matrix, each row of which is an evaluated point</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yold</code></td>
+<td>
+<p>(optional) matrix, each row of which is an evaluated
+point.  If missing, use <code>xold</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spherical.distance.function</code></td>
+<td>
+<p>In <code>corr</code>, a function to
+determine the distance between two points; used if
+<code>coords</code>=“spherical”.  A good one to choose is
+<code>gcd()</code> (that is, Great Circle Distance) of the goldstein library</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>In function <code>corr.matrix()</code>, extra arguments that are
+passed on to the distance function.  In the default case in which
+the distance.function is <code>corr()</code>, one <em>must</em> pass
+<code>scales</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Function <code>corr()</code> calculates the correlation between two points
+<code>x1</code> and <code>x2</code> in the parameter space.  Function
+<code>corr.matrix()</code> calculates the correlation matrix between each
+row of <code>xold</code> and <code>yold</code>.  If <code>yold=NULL</code> then the
+correlation matrix between <code>xold</code> and itself is returned, which
+should be positive definite.
+</p>
+<p>Evaluates Oakley's equation 2.12 for the
+correlation between <code class="reqn">\eta(x)</code> and <code class="reqn">\eta(x')</code>:
+<code class="reqn">e^{-(x-x')^TB(x-x')}</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns the correlation function
+</p>
+
+
+<h3>Note</h3>
+
+<p>It is worth reemphasising that supplying <code>scales</code> makes
+matrix <code class="reqn">B</code> diagonal.
+</p>
+<p>Thus, if <code>scales</code> is supplied, <code>B=diag(scales)</code> and
+</p>
+<p style="text-align: center;"><code class="reqn">c(x,x')=\exp\left[-(x-x')^TB(x-x')\right]=\exp\left[\Sigma_i
+    s_i(x_i-{x'}_i)^2\right]</code>
+</p>
+
+<p>Thus if <code class="reqn">x</code> has units <code class="reqn">[X]</code>, the units of <code>scales</code> are
+<code class="reqn">[X^{-2}]</code>.
+</p>
+<p>So if <code>scales[i]</code> is big, even small displacements in <code>x[i]</code>
+(that is, moving a small distance in parameter space, in the
+<code class="reqn">i</code>-th dimension) will result in small correlations.  If
+<code>scales[i]</code> is small, even large displacements in <code>x[1]</code>
+will have large correlations</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li> 
+<p>J. Oakley 1999. <em>Bayesian uncertainty analysis for complex
+computer codes</em>, PhD thesis, University of Sheffield.
+</p>
+</li>
+<li>
+<p>J. Oakley and A. O'Hagan, 2002. <em>Bayesian Inference for the
+Uncertainty Distribution of Computer Model Outputs</em>, Biometrika
+89(4), pp769-784
+</p>
+</li>
+<li>
+<p>R. K. S. Hankin 2005. <em>Introducing BACCO, an R bundle for
+Bayesian analysis of computer code output</em>, Journal of Statistical
+Software, 14(16)
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+jj &lt;- latin.hypercube(2,10)
+x1 &lt;- jj[1,]
+x2 &lt;- jj[2,]
+
+corr(x1,x2,scales=rep(1,10))             # correlation between 2 points
+corr(x1,x2,pos.def.matrix=0.1+diag(10))  # see effect of offdiagonal elements
+
+x &lt;- latin.hypercube(4,7)                # 4 points in 7-dimensional space
+rownames(x) &lt;- letters[1:4]              # name the points
+
+corr.matrix(x,scales=rep(1,7))
+
+x[1,1] &lt;- 100                            # make the first point far away
+corr.matrix(x,scales=rep(1,7))
+
+# note that all the first row and first column apart from element [1,1]
+# is zero (or very nearly so) because the first point is now very far
+# from the other points and has zero correlation with them.
+
+# To use just a single dimension, remember to use the drop=FALSE argument:
+corr.matrix(x[,1,drop=FALSE],scales=rep(1,1))
+
+
+# For problems in 1D, coerce the independent variable to a matrix:
+m &lt;- c(0.2, 0.4, 0.403, 0.9)
+corr.matrix(cbind(m),scales=1)
+
+
+# now use a non-default value for distance.function.
+# Function f() below taken from Jeremy Oakley's thesis page 12,
+# equation 2.10:
+
+f &lt;- function(x,y,theta){
+  d &lt;- sum(abs(x-y))
+  if(d &gt;= theta){
+    return(0)
+  }else{
+    return(1-d/theta)
+  }
+}
+
+
+corr.matrix(xold=x, distance.function=f, method=2, theta=4)
+
+ # Note the first row and first column is a single 1 and 3 zeros
+ # (because the first point, viz x[1,], is "far" from the other points).
+ # Also note the method=2 argument here; method=1 is the fast slick
+ # matrix method suggested by Doug and Jeremy, but this only works
+ # for distance.function=corr.
+
+
+
+</code></pre>
+
+
+</div>

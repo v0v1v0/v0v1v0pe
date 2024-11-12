@@ -1,0 +1,91 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fractional_factorial_efficiency</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fractional Factorial Design Efficiency</h2>
+
+<h3>Description</h3>
+
+<p>Fractional Factorial Design Efficiency
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fractional_factorial_efficiency(formula, searched_fractional_factorial)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A specification, in formula form, of the desired effects sought to be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>searched_fractional_factorial</code></td>
+<td>
+<p>a fractional factorial generated as the result of a 'search_design'.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list with the following objects:
+1. X - This is the formula expanded version of the fractional factorial which was passed to the function.
+2. information_mat - This is the information matrix described by the associated note. Note: it is rounded to three decimal places to ease reading.
+3. inv_information_mat - This is the inverse of the information matrix. Note: it is rounded to three decimal places to ease reading.
+4. lamda_mat - This is the diagonal elements of the Lamda Matrix described by Kuhfeld (pg. 62). The elements are the eigen values of the inv_information_mat.
+5. inv_diag - This is the diagonal elements of the inv_information_mat. (May be of use to some researchers...)
+6. GWLP - This is the generalised world lengths for the searched design. (Note: this would not change depending on what is in the formula expansion.)
+7. A_eff - This is the A-efficiency of the design given the particular formula expansion.
+8. D_eff - This is the D-efficiency of the design given the particular formula expansion.
+</p>
+
+
+<h3>References</h3>
+
+<p>Kuhfeld, W. F. Marketing Research Methods in SAS Experimental Design, Choice, Conjoint, and Graphical Techniques 2010.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># See step 5 of the Practical Introduction to ExpertChoice vignette.
+
+# Step 1
+attrshort  = list(condition = c("0", "1", "2"),
+technical =c("0", "1", "2"),
+provenance = c("0", "1"))
+
+#Step 2
+# ff stands for "full fatorial"
+ ff  &lt;-  full_factorial(attrshort)
+ af  &lt;-  augment_levels(ff)
+# af stands for "augmented factorial"
+
+# Step 3
+# Choose a design type: Federov or Orthogonal. Here an Orthogonal one is used.
+nlevels &lt;- unlist(purrr::map(ff, function(x){length(levels(x))}))
+fractional_factorial &lt;- DoE.base::oa.design(nlevels = nlevels, columns = "min34")
+
+# Step 4
+# The functional draws out the rows from the original augmented full factorial design.
+colnames(fractional_factorial) &lt;- colnames(ff)
+fractional &lt;- search_design(ff, fractional_factorial)
+
+# Step 5! - The fractional_factorial_efficiency function
+# The formula requires reference to the original attributes of the design.
+# Check for the main effects.
+fractional_factorial_efficiency(~ condition + technical + provenance, fractional)
+# Check for the main effects with some interaction.
+fractional_factorial_efficiency(~ condition + technical * provenance, fractional)
+</code></pre>
+
+
+</div>

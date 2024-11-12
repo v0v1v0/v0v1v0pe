@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_elev_point</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get Point Elevation</h2>
+
+<h3>Description</h3>
+
+<p>This function provides access to point elevations using either the USGS 
+Elevation Point Query Service (US Only) or by extracting point elevations 
+from the AWS Terrain Tiles.  The function accepts a <code>data.frame</code> of x 
+(long) and y (lat) or a <code>sf</code> <code>POINT</code> or <code>MULTIPOINT</code> object as 
+input.  A <code>sf</code> <code>POINT</code> or <code>MULTIPOINT</code> object is returned with 
+elevation and elevation units as an added <code>data.frame</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_elev_point(
+  locations,
+  prj = NULL,
+  src = c("epqs", "aws"),
+  overwrite = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>locations</code></td>
+<td>
+<p>Either a <code>data.frame</code> with x (e.g. longitude) as the 
+first column and y (e.g. latitude) as the second column, a 
+<code>SpatialPoints</code>/<code>SpatialPointsDataFrame</code>, or a 
+<code>sf</code> <code>POINT</code> or <code>MULTIPOINT</code> object.   
+Elevation for these points will be returned in the 
+originally supplied class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prj</code></td>
+<td>
+<p>A valid input to <code>st_crs</code>.   This 
+argument is required for a <code>data.frame</code> of locations and optional
+for <code>sf</code> locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>src</code></td>
+<td>
+<p>A character indicating which API to use, either "epqs" or "aws" 
+accepted. The "epqs" source is relatively slow for larger numbers 
+of points (e.g. &gt; 500).  The "aws" source may be quicker in these 
+cases provided the points are in a similar geographic area.  The 
+"aws" source downloads a DEM using <code>get_elev_raster</code> and then
+extracts the elevation for each point.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overwrite</code></td>
+<td>
+<p>A logical indicating that existing <code>elevation</code> and 
+<code>elev_units</code> columns should be overwritten.  Default is 
+FALSE and <code>get_elev_point</code> will error if these columns 
+already exist.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to get_epqs or get_aws_points.  When 
+using "aws" as the source, pay attention to the 'z' argument.  A 
+defualt of 5 is used, but this uses a raster with a large ~4-5 km 
+pixel.  Additionally, the source data changes as zoom levels 
+increase.  
+Read <a href="https://github.com/tilezen/joerd/blob/master/docs/data-sources.md#what-is-the-ground-resolution">https://github.com/tilezen/joerd/blob/master/docs/data-sources.md#what-is-the-ground-resolution</a> 
+for details.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Function returns an <code>sf</code> object in the projection specified by 
+the <code>prj</code> argument.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(elevatr)
+library(sf)
+library(terra)
+
+mts &lt;- data.frame(x = c(-71.3036, -72.8145), 
+                  y = c(44.2700, 44.5438), 
+                  names = c("Mt. Washington", "Mt. Mansfield"))
+ll_prj &lt;- 4326
+mts_sf &lt;- st_as_sf(x = mts, coords = c("x", "y"), crs = ll_prj)
+#Empty Raster
+mts_raster &lt;- rast(mts_sf, nrow = 5, ncol = 5)
+# Raster with cells for each location
+mts_raster_loc &lt;- terra::rasterize(mts_sf, rast(mts_sf, nrow = 10, ncol = 10))
+
+get_elev_point(locations = mts, prj = ll_prj)
+get_elev_point(locations = mts, units="feet", prj = ll_prj)
+get_elev_point(locations = mts_sf)
+get_elev_point(locations = mts_raster)
+get_elev_point(locations = mts_raster_loc)
+
+
+# Code to split into a loop and grab point at a time.
+# This is usually faster for points that are spread apart 
+ 
+library(dplyr)
+
+elev &lt;- vector("numeric", length = nrow(mts))
+for(i in seq_along(mts)){
+elev[i]&lt;-get_elev_point(locations = mts[i,], prj = ll_prj, src = "aws", 
+                        z = 10)$elevation}
+mts_elev &lt;- cbind(mts, elev)
+mts_elev
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

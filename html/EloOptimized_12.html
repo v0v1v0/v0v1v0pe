@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eloratingopt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create daily ML fitted Elo ranks and multiple derivatives</h2>
+
+<h3>Description</h3>
+
+<p>Conducts <strong>optimized</strong> elo rating analyses as per Foerster, Franz et al
+and outputs raw, normalized, cardinal, and  categorical ranks as a list object in 
+R or in an output file. For non-optimized Elo score calculation, use 
+<code>eloratingfixed</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eloratingopt(agon_data, pres_data, fit_init_elo = FALSE, outputfile = NULL, 
+  returnR = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>agon_data</code></td>
+<td>
+<p>Input data frame with dominance interactions, should only contain Date, 
+Winner, Loser.  Date should be formatted as MONTH/DAY/YEAR, or already as Date class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pres_data</code></td>
+<td>
+<p>Input data frame with columns "id", "start_date" and "end_date".  Date
+columns should be formatted as MONTH/DAY/YEAR, or already as Date class.  If all IDs 
+are present the whole time, you can ignore this and a pres_data table will be 
+automatically generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit_init_elo</code></td>
+<td>
+<p>If FALSE (the default), fits only the K parameter, with a default 
+starting Elo score of 1000 for each individual.  If TRUE, fits K and starting Elo for 
+each individual.  The latter option is <em>much</em> slower.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outputfile</code></td>
+<td>
+<p>Name of csv file to save ranks to.  Default is NULL, in which case 
+the function will only return a table in R.  If you supply an output file name
+the function will save the results as a csv file in your working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnR</code></td>
+<td>
+<p>whether to return an R object from the function call.  Default is TRUE</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function accepts a data frame of date-stamped dominance interactions and 
+(optionally) a data frame of start and end dates for each individual to be ranked, 
+and outputs daily Elo scores with K parameter, and optionally initial elo scores, fitted using 
+a maximum likelihood approach.  The optimization procedure uses the <code>optim()</code> function, 
+with a burn in period of 100 interactions.  We use the "Brent" method when fitting only the K 
+parameter, and the "BFGS" method for fitting both K and initial Elo scores.  See 
+<code>optim</code> for more details.  Future package development will add additional 
+user control of the optimization procedure, allowing for specification of the burn in period, 
+optimization algorithm, and initial values for optimization.  
+</p>
+<p>Note also that the fitting procedure requires each individual to have at least one win and 
+one loss, so any individual that doesn't meet those criteria is automatically removed.  
+Additionally, any instance of an individual winning against itself is cleaned from the data,
+and several other checks of the data are performed before the optimization procedure is run.
+</p>
+<p>A detailed description of the function output is given in the <strong>Value</strong> section of 
+this help file:
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list with five or six elements (depending on input): 
+</p>
+
+<dl>
+<dt><strong>elo</strong></dt>
+<dd>
+<p> Data frame with all IDs and dates they were present, with the following columns:</p>
+</dd>
+</dl>
+<dl>
+<dt>Date</dt>
+<dd>
+<p>: Dates of study period</p>
+</dd>
+<dt>Individual</dt>
+<dd>
+<p>: the names of each ranked individual, for each date they were present</p>
+</dd>
+<dt>Elo</dt>
+<dd>
+<p>: fitted Elo scores for each individual on each day</p>
+</dd>
+<dt>EloOrdinal</dt>
+<dd>
+<p>: Daily ordinal rank based on Elo scores</p>
+</dd>
+<dt>EloScaled</dt>
+<dd>
+<p>: Daily Elo scores rescaled between 0 and 1 according to 
+</p>
+<p style="text-align: center;"><code class="reqn">([individual Elo] - min([daily Elo scores])/(max([daily Elo scores]) - min([daily Elo scores]))</code>
+</p>
+</dd>
+<dt>ExpNumBeaten</dt>
+<dd>
+<p>: expected number of individuals in the group beaten, which is the sum of 
+winning probabilities based on relative Elo scores of an individual and all others, following 
+equation (4) in Foerster, Franz et al. 2016</p>
+</dd>
+<dt>EloCardinal</dt>
+<dd>
+<p>: ExpNumBeaten values rescaled as a percentage of the total number of ranked 
+individuals present in the group on the day of ranking. We encourage the use of this measure.</p>
+</dd>
+<dt>JenksEloCardinal</dt>
+<dd>
+<p>: Categorical rank (high, mid, or low) using the Jenks natural breaks 
+classification method implemented in the R package BAMMtools. 
+See <code>getJenksBreaks</code></p>
+</dd>
+</dl>
+<dl>
+<dt><strong>k</strong></dt>
+<dd>
+<p> The maximum-likelihood fitted k parameter value</p>
+</dd>
+<dt><strong>pred_accuracy</strong></dt>
+<dd>
+<p> Proportion of correctly predicted interactions</p>
+</dd>
+<dt><strong>maxLogL</strong></dt>
+<dd>
+<p> The overall log-likelihood of the observed data given the fitted parameter values 
+based on winning probabilities (as calculated in equation (1) of Foerster, Franz et al 2016) for all 
+interactions</p>
+</dd>
+<dt><strong>AIC</strong></dt>
+<dd>
+<p> Akaike's Information Criterion value as a measure of model fit</p>
+</dd>
+<dt><strong>init_elo</strong></dt>
+<dd>
+<p> (<em>Only returned if you fit initial Elo scores</em>) initial Elo for each individual</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+nbadata = EloOptimized::nba #nba wins and losses from the 1995-96 season
+nbaelo = eloratingopt(agon_data = nbadata, fit_init_elo = FALSE)
+# generates optimized elo scores (optimizing only K) and saves them as "nbaelo" 
+
+</code></pre>
+
+
+</div>

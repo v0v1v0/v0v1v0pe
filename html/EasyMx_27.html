@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emxStateSpaceMixtureModel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a state space mixture model</h2>
+
+<h3>Description</h3>
+
+<p>This function creates a state space mixture model as an MxModel object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emxStateSpaceMixtureModel(model, data, name, run=FALSE, use, ID, time, ...)
+emxModelStateSpaceMixture(model, data, name, run=FALSE, use, ID, time, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>list of MxModel objects, each of which should be a state space model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data used for the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character.  Optional name of the model created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>run</code></td>
+<td>
+<p>logical. Whether to run the model before returning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use</code></td>
+<td>
+<p>character vector.  The names of the variables to use.  Currently ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ID</code></td>
+<td>
+<p>character.  Name of variable that identifies each unique person.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>character.  Name of the variable that gives the time of each obsevation.  Currently ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Force later arguments to be named.  ... is ignored.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The idea of state space mixture modeling is to model multiple, multivariate time series while allowing for qualitative differences between the time series.  Suppose you have a multivariate time series for several people.  You think some people should have the same time series model, but not everyone.  You think there should be a small number of homogeneous sets of people that follow the same time series model, but you do not know which people or the exact parameter values of the candidate time series models.  This function presents one solution to this problem.
+</p>
+<p>State space mixture modeling begins with a set of candidate state space models, and uses these state space models as the mixture classes.  The goal is to simultaneously estimate the free parameters of the state space models, and estimate which multivariate time series (e.g., perseon) belongs to which mixture class.
+</p>
+<p>The component state space models may share some free parameters or none.  Note that free parameters with the same name are constrained to be equal across all models.  Conversely, unnamed free parameters are given unique names and are allowed to differ for each person-mixture combination, which creates a very large number of free parameters.  We strongly encourage you to name all of your free parameters in the <code>model</code> list to avoid melting your computer's CPU.
+</p>
+<p>The <code>model</code> argument currently must be a list.  The elements of the list should be MxModel objects.  Each list element forms a mixture class in the final model.
+</p>
+<p>This function creates a multigroup mixture model where the mixture classes are the elements of the <code>model</code> list argument.  Each unique <code>ID</code> forms a group.
+</p>
+<p>The <code>data</code> argument can be a list of <code>data.frame</code> objects with one element for each <code>ID</code>, or a single <code>data.frame</code> with an <code>ID</code> variable that separates groups.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An MxModel.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>emxStateSpaceMixtureClassify , emxMixtureModel
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">   
+# Example
+require(EasyMx)
+data(myFADataRaw)
+
+ds0 &lt;- myFADataRaw[,1:3]
+
+# Make a VAR Model
+vm &lt;- emxVARModel(data=ds0, use=names(ds0), name='varmodel')
+
+# Re-label parameters to have different AR parameters
+# for class 1 and class 2
+vm1 &lt;- OpenMx::omxSetParameters(vm, labels=vm$Dynamics$labels,
+    newlabels=paste0(vm$Dynamics$labels, '_k1'), name='klass1')
+vm2 &lt;- OpenMx::omxSetParameters(vm, labels=vm$Dynamics$labels,
+    newlabels=paste0(vm$Dynamics$labels, '_k2'), name='klass2')
+
+# Pretend you have a data set of 50 people
+# each measured 10 times on 3 variables
+ds1 &lt;- myFADataRaw[, 1:3]
+ds1$id &lt;- rep(1:50, each=nrow(myFADataRaw)/50)
+
+## Not run: 
+# Make and fit the state space mixture model
+ssmm &lt;- emxStateSpaceMixtureModel(model=list(vm1, vm2),
+    data=ds1, ID='id', run=TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,378 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fpot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Peaks Over Threshold Modelling using the Generalized Pareto
+or Point Process Representation</h2>
+
+<h3>Description</h3>
+
+<p>Maximum-likelihood fitting for peaks over threshold modelling,
+using the Generalized Pareto or Point Process representation,
+allowing any of the parameters to be held fixed if desired.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fpot(x, threshold, model = c("gpd", "pp"), start, npp = length(x),
+    cmax = FALSE, r = 1, ulow = -Inf, rlow = 1, mper = NULL, ...,
+    std.err = TRUE, corr = FALSE, method = "BFGS", warn.inf = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A numeric vector. If this contains missing values,
+those values are treated as if they fell below the
+threshold.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>The threshold.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The model; either <code>"gpd"</code> (the default) or
+<code>"pp"</code>, for the Generalized Pareto or Point Process
+representations respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>A named list giving the initial values for the
+parameters over which the likelihood is to be maximized.
+If <code>start</code> is omitted the routine attempts to find good
+starting values using moment estimators.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npp</code></td>
+<td>
+<p>The data should contain <code>npp</code> observations per
+“period”, where the return level plot produced by
+<code>plot.pot</code> will represent return periods in units of
+“periods”. By default <code>npp = length(x)</code>, so that the
+“period” is the period of time over which the entire
+data set is collected. It may often be useful to change
+this default so that more sensible units are used.
+For example, if yearly periodic units are required, use
+<code>npp = 365.25</code> for daily data and <code>npp = 52.18</code>
+for weekly data. The argument only makes a difference to
+the actual fit if <code>mper</code> is not <code>NULL</code> or if
+<code>model = "pp"</code> (see <b>Details</b>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cmax</code></td>
+<td>
+<p>Logical; if <code>FALSE</code> (the default), the model
+is fitted using all exceedences over the threshold. If
+<code>TRUE</code>, the model is fitted using cluster maxima, using
+clusters of exceedences derived from <code>clusters</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r, ulow, rlow</code></td>
+<td>
+<p>Arguments used for the identification of
+clusters of exceedences (see <code>clusters</code>).
+Ignored if <code>cmax</code> is <code>FALSE</code> (the default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mper</code></td>
+<td>
+<p>Controls the parameterization of the generalized
+Pareto model. Should be either <code>NULL</code> (the default),
+or a positive number (see <b>Details</b>).
+If <code>mper</code> is not <code>NULL</code> and <code>model = "pp"</code>,
+an error is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters, either for the model
+or for the optimization function <code>optim</code>. If parameters
+of the model are included they will be held fixed at the
+values given (see <b>Examples</b>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>Logical; if <code>TRUE</code> (the default), the standard
+errors are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Logical; if <code>TRUE</code>, the correlation matrix is
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The optimization method (see <code>optim</code> for
+details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn.inf</code></td>
+<td>
+<p>Logical; if <code>TRUE</code> (the default), a warning is
+given if the negative log-likelihood is infinite when evaluated at
+the starting values.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The exeedances over the threshold <code>threshold</code> (if <code>cmax</code> is
+<code>FALSE</code>) or the maxima of the clusters of exeedances (if
+<code>cmax</code> is <code>TRUE</code>) are (if <code>model = "gpd"</code>) fitted to a
+generalized Pareto distribution (GPD) with location <code>threshold</code>.
+If <code>model = "pp"</code> the exceedances are fitted to a
+non-homogeneous Poisson process (Coles, 2001).
+</p>
+<p>If <code>mper</code> is <code>NULL</code> (the default), the parameters of
+the model (if <code>model = "gpd"</code>) are <code>scale</code> and
+<code>shape</code>, for the scale and shape parameters of the GPD.
+If <code>model = "pp"</code> the parameters are <code>loc</code>, <code>scale</code>
+and <code>shape</code>. Under <code>model = "pp"</code> the parameters can be
+interpreted as parameters of the Generalized Extreme Value
+distribution, fitted to the maxima of <code>npp</code> random variables.
+In this case, the value of <code>npp</code> should be reasonably large.
+</p>
+<p>For both characterizations, the shape parameters are
+equivalent. The scale parameter under the generalized Pareto
+characterization is equal to <code class="reqn">b + s(u - a)</code>, where <code class="reqn">a</code>,
+<code class="reqn">b</code> and <code class="reqn">s</code> are the location, scale and shape parameters
+under the Point Process characterization, and where <code class="reqn">u</code> is
+the threshold.
+</p>
+<p>If <code class="reqn">\code{mper} = m</code> is a positive value, then
+the generalized Pareto model is reparameterized so that the
+parameters are <code>rlevel</code> and <code>shape</code>, where
+<code>rlevel</code> is the <code class="reqn">m</code> “period” return level, where
+“period” is defined via the argument <code>npp</code>.
+</p>
+<p>The <code class="reqn">m</code> “period” return level is defined as follows.
+Let <code class="reqn">G</code> be the fitted generalized Pareto distribution
+function, with location <code class="reqn">\code{threshold} = u</code>, so that
+<code class="reqn">1 - G(z)</code> is the fitted probability of an exceedance
+over <code class="reqn">z &gt; u</code> given an exceedance over <code class="reqn">u</code>.
+The fitted probability of an exceedance over <code class="reqn">z &gt; u</code> is
+therefore <code class="reqn">p(1 - G(z))</code>, where <code class="reqn">p</code> is the estimated
+probabilty of exceeding <code class="reqn">u</code>, which is given by the empirical
+proportion of exceedances.
+The <code class="reqn">m</code> “period” return level <code class="reqn">z_m</code> satisfies
+<code class="reqn">p(1 - G(z_m)) = 1/(mN)</code>, where <code class="reqn">N</code> is the number
+of points per period (multiplied by the estimate of the
+extremal index, if cluster maxima are fitted).
+In other words, <code class="reqn">z_m</code> is the quantile of the fitted model
+that corresponds to the upper tail probability <code class="reqn">1/(mN)</code>.
+If <code>mper</code> is infinite, then <code class="reqn">z_m</code> is the upper end point,
+given by <code>threshold</code> minus <code class="reqn">\code{scale}/\code{shape}</code>,
+and the shape parameter is then restricted to be negative.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of class <code>c("pot","uvevd","pot")</code>.
+</p>
+<p>The generic accessor functions <code>fitted</code> (or
+<code>fitted.values</code>), <code>std.errors</code>,
+<code>deviance</code>, <code>logLik</code> and
+<code>AIC</code> extract various features of the
+returned object.
+</p>
+<p>The function <code>profile</code> can be
+used to obtain deviance profiles for the model parameters.
+In particular, profiles of the <code class="reqn">m</code> <code>period</code>
+return level <code class="reqn">z_m</code> can be calculated and plotted when
+<code class="reqn">\code{mper} = m</code>.
+The function <code>anova</code> compares nested models.
+The function <code>plot</code> produces diagnostic plots.
+</p>
+<p>An object of class <code>c("pot","uvevd","evd")</code> is a list containing
+the following components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>A vector containing the maximum likelihood estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>A vector containing the standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>A vector containing the parameters of the model that
+have been held fixed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>A vector containing all parameters (optimized and fixed).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deviance</code></td>
+<td>
+<p>The deviance at the maximum likelihood estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>The correlation matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.cov</code></td>
+<td>
+<p>The variance covariance matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence, counts, message</code></td>
+<td>
+<p>Components taken from the
+list returned by <code>optim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold, r, ulow, rlow, npp</code></td>
+<td>
+<p>The arguments of the same
+name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nhigh</code></td>
+<td>
+<p>The number of exceedences (if <code>cmax</code> is
+<code>FALSE</code>) or the number of clusters of exceedences (if
+<code>cmax</code> is <code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nat, pat</code></td>
+<td>
+<p>The number and proportion of exceedences.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extind</code></td>
+<td>
+<p>The estimate of the extremal index (i.e.
+<code>nhigh</code> divided by <code>nat</code>). If <code>cmax</code> is
+<code>FALSE</code>, this is <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The data passed to the argument <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exceedances</code></td>
+<td>
+<p>The exceedences, or the maxima of the clusters
+of exceedences.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mper</code></td>
+<td>
+<p>The argument <code>mper</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>The scale parameter for the fitted generalized Pareto
+distribution. If <code>mper</code> is <code>NULL</code> and <code>model = "gpd"</code>
+(the defaults), this will also be an element of <code>param</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call of the current function.</p>
+</td>
+</tr>
+</table>
+<h3>Warning</h3>
+
+<p>The standard errors and the correlation matrix in the returned
+object are taken from the observed information, calculated by a
+numerical approximation.
+They must be interpreted with caution when the shape parameter
+is less than <code class="reqn">-0.5</code>, because the usual asymptotic
+properties of maximum likelihood estimators do not then
+hold (Smith, 1985).
+</p>
+
+
+<h3>References</h3>
+
+<p>Smith, R. L. (1985)
+Maximum likelihood estimation in a class of non-regular cases.
+<em>Biometrika</em>, <b>72</b>, 67–90.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>anova.evd</code>, <code>optim</code>,
+<code>plot.uvevd</code>, <code>profile.evd</code>,
+<code>profile2d.evd</code>, <code>mrlplot</code>,
+<code>tcplot</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">uvdata &lt;- rgpd(100, loc = 0, scale = 1.1, shape = 0.2)
+M1 &lt;- fpot(uvdata, 1)
+M2 &lt;- fpot(uvdata, 1, shape = 0)
+anova(M1, M2)
+par(mfrow = c(2,2))
+plot(M1)
+## Not run: M1P &lt;- profile(M1)
+## Not run: plot(M1P)
+
+M1 &lt;- fpot(uvdata, 1, mper = 10)
+M2 &lt;- fpot(uvdata, 1, mper = 100)
+## Not run: M1P &lt;- profile(M1, which = "rlevel", conf=0.975, mesh=0.1)
+## Not run: M2P &lt;- profile(M2, which = "rlevel", conf=0.975, mesh=0.1)
+## Not run: plot(M1P)
+## Not run: plot(M2P)
+</code></pre>
+
+
+</div>

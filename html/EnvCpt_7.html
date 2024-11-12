@@ -1,0 +1,165 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>envcpt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Assesses whether an environmental time series contains trend, autocorrelation and/or changes
+</h2>
+
+<h3>Description</h3>
+
+<p>Evaluates up to 12 different models (see details) and returns the model fits as well as a summary of the likelihood for each model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">envcpt(data,models=c("mean","meancpt","meanar1","meanar2","meanar1cpt","meanar2cpt",
+"trend","trendcpt","trendar1","trendar2","trendar1cpt","trendar2cpt"),minseglen=5,...,
+verbose=TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A vector or ts object containing the data to fit the models to.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>A vector containing the subset of models to fit, defaults to all available models.  This can either be named (as in the default) or numbered (1:12), see details or defaults for number-model pairings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minseglen</code></td>
+<td>
+
+<p>Positive integer giving the minimum segment length (no. of observations between changes) for the changepoint models, default is the minimum allowed by theory (for the largest model).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Additional arguments to pass to the changepoint functions, if none are specified defaults with PELT multiple changepoint algorithm are used. See <code>cpt.meanvar</code> for options.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>If TRUE (default), prints to the console an progress bar indicating progression through the fit of the up to 12 models.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is used to automatically fit up to 12 different models all with Normal distribution for errors:
+1. A constant mean and variance (using <code>fitdistr</code>)
+2. A piecewise constant mean and variance (using <code>cpt.meanvar</code>)
+3. A constant mean with AR (1) errors (using <code>arima</code>)
+4. A constant mean with AR (2) errors (using <code>arima</code>)
+5. A piecewise constant mean with AR(1) errors (using <code>cpt.reg</code> in this package - not exported)
+6. A piecewise constant mean with AR(2) errors (using <code>cpt.reg</code> in this package - not exported)
+7. A linear trend over time (using <code>lm</code>)
+8. A piecewise linear trend over time (using <code>cpt.reg</code> in this package - not exported)
+9. A linear trend over time with AR(1) errors (using <code>lm</code>)
+10. A linear trend over time with AR(2) errors (using <code>lm</code>)
+11. A piecewise linear trend over time with AR(1) errors (using <code>cpt.reg</code> in this package - not exported)
+12. A piecewise linear trend over time with AR(2) errors (using <code>cpt.reg</code> in this package - not exported)
+The default values for each function are used, except for the changepoint functions where multiple changes are identified and thus the PELT algorithm is used (see references or changepoint package for details).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>envcpt</code> outputs a list of 13 elements.  The first element is a 2x8 matrix where the first row contains the likelihood for each model fit and the second row contains the number of parameters fit in each model.  The 12 columns are for the 12 different models in the order above (headings given).  If any element is NA then either there was an error fitting this type of model (typically the AR models and this implies nonstationarity) or the model was not specified in the <code>models</code> argument.
+</p>
+<p>Elements 2-13 of the list are the fits for each individual model, these are the direct output from the respective functions so see the individual functions for formats.  The first model fit is in element 2 and the twelth model fit is in element 13, but are named for convenience.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rebecca Killick
+</p>
+
+
+<h3>References</h3>
+
+<p>EnvCpt Algorithm: Beaulieu, C, Killick, R (2018+) Distinguishing trends and shifts from memory in climate data. 
+</p>
+<p>PELT Algorithm: Killick R, Fearnhead P, Eckley IA (2012) Optimal detection of changepoints with a linear computational cost, <em>JASA</em> <b>107(500)</b>, 1590–1598
+</p>
+<p>MBIC: Zhang, N. R. and Siegmund, D. O. (2007) A Modified Bayes Information Criterion with Applications to the Analysis of Comparative Genomic Hybridization Data. <em>Biometrics</em> <b>63</b>, 22-32.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cpt.meanvar</code>,<code>plot-methods</code>,<code>cpt</code>, <code>plot.envcpt</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+x=c(rnorm(100,0,1),rnorm(100,5,1))
+out=envcpt(x) # run all models with default values
+out[[1]] # first row is twice the negative log-likelihood for each model
+         # second row is the number of parameters
+AIC(out) # returns AIC for each model.
+which.min(AIC(out)) # gives meancpt (model 2) as the best model fit.
+out$meancpt # gives the model fit for the meancpt model.
+AICweights(out) # gives the AIC weights for each model
+BIC(out) # returns the BIC for each model.
+which.min(BIC(out)) # gives meancpt (model 2) as the best model fit too.
+plot(out,type='fit') # plots the fits
+plot(out,type="aic") # plots the aic values
+plot(out,type="bic") # plots the bic values
+
+set.seed(10)
+x=c(0.01*(1:100),1.5-0.02*((101:250)-101))+rnorm(250,0,0.2)
+out=envcpt(x,minseglen=10) # run all models with a minimum of 10 observations between changes
+AIC(out) # returns the AIC for each model
+which.min(AIC(out)) # gives trendcpt (model 8) as the best model fit.
+out$trendcpt # gives the model fit for the trendcpt model.
+AICweights(out) # gives the AIC weights for each model
+BIC(out) # returns the BIC for each model.
+which.min(BIC(out)) # gives trendcpt (model 8) as the best model fit too.
+plot(out,type='fit') # plots the fits
+plot(out,type="aic") # plots the aic values
+plot(out,type="bic") # plots the bic values
+
+set.seed(100)
+x=arima.sim(model=list(ar=c(0.7,0.2)),n=500)+0.01*(1:500)
+out=envcpt(x,models=c(3:6,9:12)) # runs a subset of models (those with AR components) 
+AIC(out) # returns the AIC for each model
+which.min(AIC(out)) # gives trendar2 (model 10) as the best model fit.
+out$trendar2 # gives the model fit for the trendar2 model. Notice that the trend is tiny but does 
+# produce a significantly better fit than the meanar2 model.
+AICweights(out) # gives the AIC weights for each model
+BIC(out) # returns the BIC for each model.
+which.min(BIC(out)) # best fit is trendar2 (model 10) again.
+plot(out,type='fit') # plots the fits
+plot(out,type="aic") # plots the aic values
+plot(out,type="bic") # plots the bic values
+
+## End(Not run)
+</code></pre>
+
+
+</div>

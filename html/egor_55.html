@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>as.egor</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>egor - a data class for ego-centered network data.</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>egor()</code> is used to create an egor object from
+ego-centered network data. <code>as.egor()</code> converts a list of <code>igraph</code>/<code>network</code> objects or
+a <code>nested_egor</code> objects to an <code>egor</code> object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">as.egor(x, ...)
+
+## S3 method for class 'nested_egor'
+as.egor(
+  x,
+  ID.vars = list(ego = ".egoID", alter = ".alterID", source = ".Source", target =
+    ".Target"),
+  ...
+)
+
+## S3 method for class 'list'
+as.egor(x, ego_name = NULL, ...)
+
+egor(
+  alters,
+  egos = NULL,
+  aaties = NULL,
+  ID.vars = list(ego = "egoID", alter = "alterID", source = "Source", target = "Target"),
+  ego_design = NULL,
+  alter_design = list(max = Inf)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>list</code> of <code>igraph</code>/<code>network</code> objects representing ego networks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments to be passed to methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ID.vars</code></td>
+<td>
+<p>A named list containing column names of the relevant
+input columns: </p>
+
+<dl>
+<dt><code>ego</code></dt>
+<dd>
+<p>unique identifier associated with each ego, defaulting
+to <code>"egoID"</code>; has no effect if <code>alters.df</code> and <code>aaties.df</code> are
+both lists of data frames.</p>
+</dd>
+<dt><code>alter</code></dt>
+<dd>
+<p>unique-within-ego identifier associated with each
+alter, defaulting to <code>"alterID"</code>; optional <code>aaties.df</code> are not
+provided.</p>
+</dd>
+<dt><code>source</code></dt>
+<dd>
+<p>if <code>aaties.df</code> is provided, the column given the
+alter identifier of the origin of a relation.</p>
+</dd>
+<dt><code>target</code></dt>
+<dd>
+<p>if <code>aaties.df</code> is provided, the column given the
+alter identifier of the destination of a relation.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ego_name</code></td>
+<td>
+<p><code>character</code> or <code>numeric</code> of length one or same length as there are networks. If the <code>igraph</code>/<code>network</code> objects don't include egos as a node, set to <code>NULL</code> (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alters</code></td>
+<td>
+<p>either a <code>data.frame</code> containing the alters
+(whose nominator is identified by the column specified by <code>egoID</code>
+or a list of data frames with the same columns, one for each ego,
+with empty data frames or <code>NULL</code>s corresponding to egos with no
+nominees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>egos</code></td>
+<td>
+<p><code>data.frame</code> containing the egos.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aaties</code></td>
+<td>
+<p><code>data.frame</code> containing the alter-alter
+relations in the style of an edge list, or a list of data frames
+similar to <code>alters.df</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ego_design</code></td>
+<td>
+<p>A <code>list</code> of arguments to
+<code>srvyr::as_survey_design()</code> specifying the sampling design for
+the egos. If formulas, they can refer to columns of
+<code>egos.df</code>. <code>NULL</code> means that no design is set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alter_design</code></td>
+<td>
+<p>A <code>list</code> of arguments specifying nomination
+information. Currently, the following elements are supported:
+</p>
+<dl>
+<dt><code>"max"</code></dt>
+<dd>
+<p>Maximum number of alters that an
+ego can nominate.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If parameters <code>alters.df</code>, <code>egos.df</code>, and <code>aaties.df</code> are
+data frames, they need to share a common ego ID variable, with
+corresponding values. If <code>alters.df</code> and <code>aaties.df</code> are lists of
+data frames, <code>egoID</code> is ignored and they are matched by position
+with the rows of <code>egos.df</code>. Of the three parameters only
+<code>alters.df</code> is necessary to create an <code>egor</code> object, and
+<code>egos.df</code> and <code>aaties.df</code> are optional.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an <code>egor</code> object, which is a <code style="white-space: pre;">⁠named list⁠</code> with three
+<code style="white-space: pre;">⁠tibble data.frames⁠</code>: ego, alter and aatie (alter-alter ties).
+Each data set has an <code>.egoID</code> column, that groups the data belonging to one
+ego. Additionally the alter data has an <code>.alterID</code> column, that links to
+the columns <code>.srcID</code> and <code>.tgtID</code> in the alter-alter tie data.
+</p>
+<p>In addition, <code>egor</code> has two attributes: <code>ego_design</code>, containing an
+object returned by <code>srvyr::as_survey_design()</code> specifying the sampling
+design by which the egos were selected and <code>alter_design</code>, a
+<code>list</code> containing specification of how the alters were
+nominated. See the argument above for currently implemented
+settings.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul><li> <p><code>as.egor(nested_egor)</code>: Can convert (legacy) <code>nested_egor</code> object to <code>egor</code> object.
+</p>
+</li></ul>
+<h3>Note</h3>
+
+<p>Column names <code>.alts</code>, <code>.aaties</code>, and <code>.egoRow</code> are reserved
+for internal use of <code>egor</code> and should not be used to store
+persistent data. Other <code>.</code>-led column names may be reserved in
+the future.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>as_tibble()</code> for extracting ego, alter, and alter–alter tables, as <code>tibble</code>s or as <code>srvyr</code>'s <code>tbl_svy</code> surveys.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("egos32")
+data("alters32")
+data("aaties32") 
+
+egor(alters32, 
+     egos32, 
+     aaties32,
+     ID.vars = list(ego = ".EGOID", 
+                    alter = ".ALTID", 
+                    source = ".SRCID",
+                    target =  ".TGTID"))
+</code></pre>
+
+
+</div>

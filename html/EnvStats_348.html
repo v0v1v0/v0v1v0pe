@@ -1,0 +1,884 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predIntNparSimultaneous</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Nonparametric Simultaneous Prediction Interval for a Continuous Distribution
+</h2>
+
+<h3>Description</h3>
+
+<p>Construct a nonparametric simultaneous prediction interval for the next 
+<code class="reqn">r</code> sampling “occasions” based on one of three 
+possible rules: k-of-m, California, or Modified California.  The simultaneous 
+prediction interval assumes the observations from from a continuous distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  predIntNparSimultaneous(x, n.median = 1, k = 1, m = 2, r = 1, rule = "k.of.m", 
+    lpl.rank = ifelse(pi.type == "upper", 0, 1), 
+    n.plus.one.minus.upl.rank = ifelse(pi.type == "lower", 0, 1), 
+    lb = -Inf, ub = Inf, pi.type = "upper", integrate.args.list = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>a numeric vector of observations.  Missing (<code>NA</code>), undefined (<code>NaN</code>), and 
+infinite (<code>Inf</code>, <code>-Inf</code>) values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.median</code></td>
+<td>
+
+<p>positive odd integer specifying the sample size associated with the future medians.  
+The default value is <code>n.median=1</code> (i.e., individual observations).  Note that 
+all future medians must be based on the same sample size.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>for the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule (<code>rule="k.of.m"</code>), a positive integer 
+specifying the minimum number of observations (or medians) out of <code class="reqn">m</code> 
+observations (or medians) (all obtained on one future sampling “occassion”) 
+the prediction interval should contain.  
+The default value is <code>k=1</code>.  This argument is ignored when the argument 
+<code>rule</code> is not equal to <code>"k.of.m"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+
+<p>positive integer specifying the maximum number of future observations (or 
+medians) on one future sampling “occasion”.  
+The default value is <code>m=2</code>, except when <code>rule="Modified.CA"</code>, in which 
+case this argument is ignored and <code>m</code> is automatically set equal to <code>4</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+
+<p>positive integer specifying the number of future sampling “occasions”.  
+The default value is <code>r=1</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+
+<p>character string specifying which rule to use.  The possible values are 
+<code>"k.of.m"</code> (<code class="reqn">k</code>-of-<code class="reqn">m</code> rule; the default), <code>"CA"</code> (California rule), 
+and <code>"Modified.CA"</code> (modified California rule).  
+See the DETAILS section below for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lpl.rank</code></td>
+<td>
+
+<p>positive integer indicating the rank of the order statistic to use for the lower 
+bound of the prediction interval.  When <code>pi.type="lower"</code>, the default value 
+is <code>lpl.rank=1</code> (implying the minimum value of <code>x</code> is used as the lower 
+bound of the prediction interval).  When <code>pi.type="upper"</code>, the argument 
+<code>lpl.rank</code> is set equal to <code>0</code> and the value of <code>lb</code> is used as the 
+lower bound of the tolerance interval.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.plus.one.minus.upl.rank</code></td>
+<td>
+
+<p>positive integer related to the rank of the order statistic to use for the upper 
+bound of the prediction interval.  A value of <code>n.plus.one.minus.upl.rank=1</code> 
+(the default) means use the first largest value, and in general a value of <br><code>n.plus.one.minus.upl.rank=</code><code class="reqn">i</code> means use the <code class="reqn">i</code>'th largest value. 
+When <br><code>pi.type="lower"</code>, the argument <code>n.plus.one.minus.upl.rank</code> is set 
+equal to <code>0</code> and the value of <code>ub</code> is used as the upper bound of the 
+prediction interval.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lb, ub</code></td>
+<td>
+
+<p>scalars indicating lower and upper bounds on the distribution.  By default, 
+<code>lb=-Inf</code> and <code>ub=Inf</code>.  If you are constructing a prediction interval for 
+a distribution that you know has a lower bound other than <code>-Inf</code> 
+(e.g., <code>0</code>), set <code>lb</code> to this value.  Similarly, if you know the 
+distribution has an upper bound other than <code>Inf</code>, set <code>ub</code> to this value.  
+The argument <code>lb</code> is ignored if <code>pi.type="two-sided"</code> or 
+<code>pi.type="lower"</code>.  The argument <code>ub</code> is ignored if 
+<code>pi.type="two-sided"</code> or <code>pi.type="upper"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.type</code></td>
+<td>
+
+<p>character string indicating what kind of prediction interval to compute.  
+The possible values are <code>"upper"</code> (the default) and <code>"lower"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>integrate.args.list</code></td>
+<td>
+
+<p>a list of arguments to supply to the <code>integrate</code> function.  The 
+default value is <code>integrate.args.list=NULL</code> which means that the 
+default values of <code>integrate</code> are used.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><em>What is a Nonparametric Simultaneous Prediction Interval?</em> <br>
+A nonparametric prediction interval for some population is an interval on the real line 
+constructed so that it will contain at least <code class="reqn">k</code> of <code class="reqn">m</code> future observations from 
+that population with some specified probability <code class="reqn">(1-\alpha)100\%</code>, where 
+<code class="reqn">0 &lt; \alpha &lt; 1</code> and <code class="reqn">k</code> and <code class="reqn">m</code> are some pre-specified positive integers 
+and <code class="reqn">k \le m</code>.  The quantity <code class="reqn">(1-\alpha)100\%</code> is called  
+the confidence coefficient or confidence level associated with the prediction 
+interval.  The function <code>predIntNpar</code> computes a standard 
+nonparametric prediction interval.
+</p>
+<p>The function <code>predIntNparSimultaneous</code> computes a nonparametric simultaneous 
+prediction interval that will contain a certain number of future observations 
+with probability <code class="reqn">(1-\alpha)100\%</code> for each of <code class="reqn">r</code> future sampling 
+“occasions”, 
+where <code class="reqn">r</code> is some pre-specified positive integer.  The quantity <code class="reqn">r</code> may 
+refer to <code class="reqn">r</code> distinct future sampling occasions in time, or it may for example 
+refer to sampling at <code class="reqn">r</code> distinct locations on one future sampling occasion, 
+assuming that the population standard deviation is the same at all of the <code class="reqn">r</code> 
+distinct locations.
+</p>
+<p>The function <code>predIntNparSimultaneous</code> computes a nonparametric simultaneous  
+prediction interval based on one of three possible rules:
+</p>
+
+<ul>
+<li>
+<p> For the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule (<code>rule="k.of.m"</code>), at least <code class="reqn">k</code> of 
+the next <code class="reqn">m</code> future observations will fall in the prediction 
+interval with probability <code class="reqn">(1-\alpha)100\%</code> on each of the <code class="reqn">r</code> future 
+sampling occasions.  If obserations are being taken sequentially, for a particular 
+sampling occasion, up to <code class="reqn">m</code> observations may be taken, but once 
+<code class="reqn">k</code> of the observations fall within the prediction interval, sampling can stop.  
+Note:  For this rule, when <code class="reqn">r=1</code>, the results of <code>predIntNparSimultaneous</code> 
+are equivalent to the results of <code>predIntNpar</code>.
+</p>
+</li>
+<li>
+<p> For the California rule (<code>rule="CA"</code>), with probability 
+<code class="reqn">(1-\alpha)100\%</code>, for each of the <code class="reqn">r</code> future sampling occasions, either 
+the first observation will fall in the prediction interval, or else all of the next 
+<code class="reqn">m-1</code> observations will fall in the prediction interval. That is, if the first 
+observation falls in the prediction interval then sampling can stop.  Otherwise, 
+<code class="reqn">m-1</code> more observations must be taken.
+</p>
+</li>
+<li>
+<p> For the Modified California rule (<code>rule="Modified.CA"</code>), with probability 
+<code class="reqn">(1-\alpha)100\%</code>, for each of the <code class="reqn">r</code> future sampling occasions, either the 
+first observation will fall in the prediction interval, or else at least 2 out of 
+the next 3 observations will fall in the prediction interval.  That is, if the first 
+observation falls in the prediction interval then sampling can stop.  Otherwise, up 
+to 3 more observations must be taken.
+</p>
+</li>
+</ul>
+<p>Nonparametric simultaneous prediction intervals can be extended to using medians 
+in place of single observations (USEPA, 2009, Chapter 19).  That is, you can 
+create a nonparametric simultaneous prediction interval that will contain a 
+specified number of medians (based on which rule you choose) on each of <code class="reqn">r</code> 
+future sampling occassions, where each each median is based on <code class="reqn">b</code> individual 
+observations.  For the function <code>predIntNparSimultaneous</code>, the argument 
+<code>n.median</code> corresponds to <code class="reqn">b</code>.
+<br></p>
+<p><b>The Form of a Nonparametric Prediction Interval</b> <br>
+Let <code class="reqn">\underline{x} = x_1, x_2, \ldots, x_n</code> denote a vector of <code class="reqn">n</code> 
+independent observations from some continuous distribution, and let 
+<code class="reqn">x_{(i)}</code> denote the the <code class="reqn">i</code>'th order statistics in <code class="reqn">\underline{x}</code>.  
+A two-sided nonparametric prediction interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(v)}] \;\;\;\;\;\; (1)</code>
+</p>
+
+<p>where <code class="reqn">u</code> and <code class="reqn">v</code> are positive integers between 1 and <code class="reqn">n</code>, and 
+<code class="reqn">u &lt; v</code>.  That is, <code class="reqn">u</code> denotes the rank of the lower prediction limit, and 
+<code class="reqn">v</code> denotes the rank of the upper prediction limit.  To make it easier to write 
+some equations later on, we can also write the prediction interval (1) in a slightly 
+different way as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(n + 1 - w)}] \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">w = n + 1 - v \;\;\;\;\;\; (3)</code>
+</p>
+
+<p>so that <code class="reqn">w</code> is a positive integer between 1 and <code class="reqn">n-1</code>, and 
+<code class="reqn">u &lt; n+1-w</code>.  In terms of the arguments to the function <code>predIntNparSimultaneous</code>, 
+the argument <code>lpl.rank</code> corresponds to <code class="reqn">u</code>, and the argument 
+<code>n.plus.one.minus.upl.rank</code> corresponds to <code class="reqn">w</code>.
+</p>
+<p>If we allow <code class="reqn">u=0</code> and <code class="reqn">w=0</code> and define lower and upper bounds as:
+</p>
+<p style="text-align: center;"><code class="reqn">x_{(0)} = lb \;\;\;\;\;\; (4)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">x_{(n+1)} = ub \;\;\;\;\;\; (5)</code>
+</p>
+
+<p>then Equation (2) above can also represent a one-sided lower or one-sided upper 
+prediction interval as well.  That is, a one-sided lower nonparametric prediction 
+interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(n + 1)}] =  [x_{(u)}, ub] \;\;\;\;\;\; (6)</code>
+</p>
+
+<p>and a one-sided upper nonparametric prediction interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(0)}, x_{(n + 1 - w)}]  = [lb, x_{(n + 1 - w)}] \;\;\;\;\;\; (7)</code>
+</p>
+
+<p>Usually, <code class="reqn">lb = -\infty</code> or <code class="reqn">lb = 0</code> and <code class="reqn">ub = \infty</code>.
+</p>
+<p><b>Note:</b>  For nonparametric simultaneous prediction intervals, only lower 
+(<code>pi.type="lower"</code>) and upper (<code>pi.type="upper"</code>) prediction 
+intervals are available.
+<br></p>
+<p><b>Constructing Nonparametric Simultaneous Prediction Intervals for Future Observations</b> <br>
+First we will show how to construct a nonparametric simultaneous prediction interval based on 
+future observations (i.e., <code class="reqn">b=1</code>, <code>n.median=1</code>), and then extend the formulas to 
+future medians.
+<br></p>
+<p><em>Simultaneous Prediction Intervals for the k-of-m Rule</em> (<code>rule="k.of.m"</code>) <br>
+For the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule (<code>rule="k.of.m"</code>) with <code class="reqn">w=1</code> 
+(i.e., <code>n.median=1</code>), at least <code class="reqn">k</code> of the next <code class="reqn">m</code> future 
+observations will fall in the prediction interval 
+with probability <code class="reqn">(1-\alpha)100\%</code> on each of the <code class="reqn">r</code> future sampling 
+occasions.  If observations are being taken sequentially, for a particular 
+sampling occasion, up to <code class="reqn">m</code> observations may be taken, but once <code class="reqn">k</code> 
+of the observations fall within the prediction interval, sampling can stop.  
+Note: When <code class="reqn">r=1</code>, this kind of simultaneous prediction 
+interval becomes the same as a standard nonparametric prediction interval 
+(see <code>predIntNpar</code>).
+</p>
+<p>Chou and Owen (1986) developed the theory for nonparametric simultaneous prediction limits 
+for various rules, including the 1-of-<code class="reqn">m</code> rule.  Their theory, however, does not cover 
+the California or Modified California rules, and uses an <code class="reqn">r</code>-fold summation involving a 
+minimum of <code class="reqn">2^r</code> terms.  Davis and McNichols (1994b; 1999) extended the results of 
+Chou and Owen (1986) to include the California and Modified California rule, and developed 
+algorithms that involve summing far fewer terms.
+</p>
+<p>Davis and McNichols (1999) give formulas for the probabilities associated with the 
+one-sided upper simultaneous prediction interval shown in Equation (7).  For the 
+<code class="reqn">k</code>-of-<code class="reqn">m</code> rule, the probability that at least <code class="reqn">k</code> of the next <code class="reqn">m</code> 
+future observations will be contained in the interval given in Equation (7) for each 
+of <code class="reqn">r</code> future sampling occasions is given by:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <code class="reqn">1 - \alpha</code> </td>
+<td style="text-align: left;"> <code class="reqn">=</code> </td>
+<td style="text-align: left;"> <code class="reqn">E[\sum_{i=0}^{m-k} {{k-1+i} \choose {k-1}} Y^k (1-Y)^i]^r</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+                   </td>
+<td style="text-align: left;"> <code class="reqn">=</code> </td>
+<td style="text-align: left;"> <code class="reqn">\int_0^1 [\sum_{i=0}^{m-k} {{k-1+i} \choose {k-1}} y^k (1-y)^i]^r f(y) dy \;\;\;\;\;\; (8)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+</tr>
+</table>
+<p>where <code class="reqn">Y</code> denotes a random variable with a beta distribution 
+with parameters <code class="reqn">v</code> and <code class="reqn">n+1-v</code>, and <code class="reqn">f()</code> denotes the pdf of this 
+distribution.  Note that <code class="reqn">v</code> denotes the rank of the order statistic used as the 
+upper prediction limit (i.e., <code>n.plus.one.minus.upl.rank=</code><code class="reqn">n+1-v</code>), and 
+that <code class="reqn">v</code> is usually equal to <code class="reqn">n</code>.
+</p>
+<p>Also note that the summation term in Equation (8) corresponds to the cumulative 
+distribution function of a Negative Binomial distribution 
+with parameters <code>size=</code><code class="reqn">k</code> and <code>prob=</code><code class="reqn">y</code> evaluated at 
+<code>q=</code><code class="reqn">m-k</code>.
+</p>
+<p>When <code>pi.type="lower"</code>, <code class="reqn">Y</code> denotes a random variable with a 
+beta distribution with parameters <code class="reqn">n+1-u</code> and 
+<code class="reqn">u</code>.  Note that <code class="reqn">u</code> denotes the rank of the order statistic used as the 
+lower prediction limit (i.e., <code>lpl.rank=</code><code class="reqn">u</code>), and 
+that <code class="reqn">u</code> is usually equal to <code class="reqn">1</code>.
+<br></p>
+<p><em>Simultaneous Prediction Intervals for the California Rule</em> (<code>rule="CA"</code>) <br>
+For the California rule (<code>rule="CA"</code>), with probability <code class="reqn">(1-\alpha)100\%</code>, 
+for each of the <code class="reqn">r</code> future sampling occasions, either the first observation will 
+fall in the prediction interval, or else all of the next <code class="reqn">m-1</code> observations will 
+fall in the prediction interval.  That is, if the first observation falls in the 
+prediction interval then sampling can stop.  Otherwise, <code class="reqn">m-1</code> more observations 
+must be taken.
+</p>
+<p>In this case, the probability is given by:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <code class="reqn">1 - \alpha</code> </td>
+<td style="text-align: left;"> <code class="reqn">=</code> </td>
+<td style="text-align: left;"> <code class="reqn">E[\sum_{i=0}^r {r \choose i} Y^{r - i + (m-1)i} (1-Y)^i]</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+                   </td>
+<td style="text-align: left;"> <code class="reqn">=</code> </td>
+<td style="text-align: left;"> <code class="reqn">\int_0^1  [\sum_{i=0}^r {r \choose i} y^{r - i + (m-1)i} (1-y)^i] f(y) dy \;\;\;\;\;\; (9)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+</tr>
+</table>
+<p><em>Simultaneous Prediction Intervals for the Modified California Rule</em> (<code>rule="Modified.CA"</code>) <br>
+For the Modified California rule (<code>rule="Modified.CA"</code>), with probability 
+<code class="reqn">(1-\alpha)100\%</code>, for each of the <code class="reqn">r</code> future sampling occasions, either the 
+first observation will fall in the prediction interval, or else at least 2 out of 
+the next 3 observations will fall in the prediction interval.  That is, if the first 
+observation falls in the prediction interval then sampling can stop.  Otherwise, up 
+to 3 more observations must be taken.
+</p>
+<p>In this case, the probability is given by:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <code class="reqn">1 - \alpha</code> </td>
+<td style="text-align: left;"> <code class="reqn">=</code> </td>
+<td style="text-align: left;"> <code class="reqn">E[Y^r (1 + Q + Q^2 - 2Q^3)^r]</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+                   </td>
+<td style="text-align: left;"> <code class="reqn">=</code> </td>
+<td style="text-align: left;"> <code class="reqn">\int_0^1 [y^r (1 + q + q^2 - 2q^3)^r] f(y) dy \;\;\;\;\;\; (10)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+</tr>
+</table>
+<p>where <code class="reqn">Q = 1 - Y</code> and <code class="reqn">q = 1 - y</code>.
+</p>
+<p>Davis and McNichols (1999) provide algorithms for computing the probabilities based on expanding 
+polynomials and the formula for the expected value of a beta random variable.  In the discussion 
+section of Davis and McNichols (1999), however, Vangel points out that numerical integration is 
+adequate, and this is how these probabilities are computed in the function 
+<code>predIntNparSimultaneous</code>.
+<br></p>
+<p><b>Constructing Nonparametric Simultaneous Prediction Intervals for Future Medians</b> <br>
+USEPA (2009, Chapter 19; Cameron, 2011) extends nonparametric simultaneous 
+prediction intervals to testing future medians for the case of the 1-of-1 and 
+1-of-2 plans for medians of order 3.  In general, each of the rules 
+(<code class="reqn">k</code>-of-<code class="reqn">m</code>, California, and Modified California) can be easily 
+extended to the case of using medians as long as the medians are based on an 
+odd (as opposed to even) sample size.  
+</p>
+<p>For each of the above rules, if we are interested in using medians instead of 
+single observations (i.e., <code class="reqn">b \ge 1</code>; <code>n.median</code><code class="reqn">\ge 1</code>), and we 
+force <code class="reqn">b</code> to be odd, then a median will be less than a prediction limit 
+once <code class="reqn">(b+1)/2</code> observations are less than the prediction limit.  Thus, 
+Equations (8) - (10) are modified by replacing <code class="reqn">y</code> with the term:
+</p>
+<p style="text-align: center;"><code class="reqn">\sum_{i=0}^{b - b'} {{b' - 1 + i} \choose {b' - 1}} y^{b'} (1 - y)^i \;\;\;\;\;\; (11)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">b' = \frac{b+1}{2} \;\;\;\;\;\; (12)</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>a list of class <code>"estimate"</code> containing the simultaneous prediction interval 
+and other information.  See the help file for <code>estimate.object</code> for 
+details.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Prediction and tolerance intervals have long been applied to quality control and 
+life testing problems (Hahn, 1970b,c; Hahn and Nelson, 1973; 
+Krishnamoorthy and Mathew, 2009).  
+In the context of environmental statistics, prediction intervals are useful for 
+analyzing data from groundwater detection monitoring programs at hazardous and 
+solid waste facilities (e.g., Gibbons et al., 2009; Millard and Neerchal, 2001; 
+USEPA, 2009).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Cameron, Kirk. (2011).  Personal communication, February 16, 2011.  
+MacStat Consulting, Ltd., Colorado Springs, Colorado.
+</p>
+<p>Chew, V. (1968).  Simultaneous Prediction Intervals.  <em>Technometrics</em> 
+<b>10</b>(2), 323–331.
+</p>
+<p>Danziger, L., and S. Davis. (1964).  Tables of Distribution-Free Tolerance Limits.  
+<em>Annals of Mathematical Statistics</em> <b>35</b>(5), 1361–1365.
+</p>
+<p>Davis, C.B. (1994).  Environmental Regulatory Statistics.  In Patil, G.P., 
+and C.R. Rao, eds., <em>Handbook of Statistics, Vol. 12: Environmental Statistics</em>.  
+North-Holland, Amsterdam, a division of Elsevier, New York, NY, Chapter 26, 817–865.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1987).  One-sided Intervals for at Least p of m 
+Observations from a Normal Population on Each of r Future Occasions.  
+<em>Technometrics</em> <b>29</b>, 359–370.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1994a).  Ground Water Monitoring Statistics Update:  
+Part I: Progress Since 1988.  <em>Ground Water Monitoring and Remediation</em> 
+<b>14</b>(4), 148–158.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1994b).  Ground Water Monitoring Statistics Update:  
+Part II:  Nonparametric Prediction Limits.  
+<em>Ground Water Monitoring and Remediation</em> <b>14</b>(4), 159–175.
+</p>
+<p>Davis, C.B., and R.J. McNichols. (1999).  Simultaneous Nonparametric Prediction 
+Limits (with Discusson).  <em>Technometrics</em> <b>41</b>(2), 89–112.
+</p>
+<p>Gibbons, R.D. (1987a).  Statistical Prediction Intervals for the Evaluation of 
+Ground-Water Quality.  <em>Ground Water</em> <b>25</b>, 455–465.
+</p>
+<p>Gibbons, R.D. (1991b).  Statistical Tolerance Limits for Ground-Water Monitoring.  
+<em>Ground Water</em> <b>29</b>, 563–570.
+</p>
+<p>Gibbons, R.D., and J. Baker. (1991).  The Properties of Various Statistical 
+Prediction Intervals for Ground-Water Detection Monitoring.  
+<em>Journal of Environmental Science and Health</em> <b>A26</b>(4), 535–553.
+</p>
+<p>Gibbons, R.D., D.K. Bhaumik, and S. Aryal. (2009). 
+<em>Statistical Methods for Groundwater Monitoring</em>, Second Edition.  
+John Wiley &amp; Sons, Hoboken.
+</p>
+<p>Hahn, G.J., and W.Q. Meeker. (1991).  
+<em>Statistical Intervals: A Guide for Practitioners</em>.  John Wiley and Sons, 
+New York, 392pp.
+</p>
+<p>Hahn, G., and W. Nelson. (1973).  A Survey of Prediction Intervals and Their 
+Applications.  <em>Journal of Quality Technology</em> <b>5</b>, 178–188.
+</p>
+<p>Hall, I.J., R.R. Prairie, and C.K. Motlagh. (1975).  Non-Parametric Prediction 
+Intervals.  <em>Journal of Quality Technology</em> <b>7</b>(3), 109–114.
+</p>
+<p>Millard, S.P., and Neerchal, N.K. (2001). <em>Environmental Statistics with S-PLUS</em>. 
+CRC Press, Boca Raton, Florida.
+</p>
+<p>USEPA. (2009).  <em>Statistical Analysis of Groundwater Monitoring Data at RCRA Facilities, Unified Guidance</em>.
+EPA 530/R-09-007, March 2009.  Office of Resource Conservation and Recovery Program Implementation and Information Division.  
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (2010).  <em>Errata Sheet - March 2009 Unified Guidance</em>.
+EPA 530/R-09-007a, August 9, 2010.  Office of Resource Conservation and Recovery, Program Information and Implementation Division.
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predIntNparSimultaneousConfLevel</code>, 
+<code>predIntNparSimultaneousN</code>, <br><code>plotPredIntNparSimultaneousDesign</code>,
+<code>predIntNparSimultaneousTestPower</code>, 
+<code>predIntNpar</code>, <code>tolIntNpar</code>, 
+<code>estimate.object</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 20 observations from a lognormal mixture distribution with 
+  # parameters mean1=1, cv1=0.5, mean2=5, cv2=1, and p.mix=0.1.  Use 
+  # predIntNparSimultaneous to construct an upper one-sided prediction interval 
+  # using the maximum observed value using the 1-of-3 rule.  
+  # (Note: the call to set.seed simply allows you to reproduce this example.)
+
+  set.seed(250) 
+  dat &lt;- rlnormMixAlt(n = 20, mean1 = 1, cv1 = 0.5, 
+    mean2 = 5, cv2 = 1, p.mix = 0.1) 
+
+  predIntNparSimultaneous(dat, k = 1, m = 3, lb = 0) 
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Prediction Interval Method:      exact 
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                99.94353%
+  #
+  #Prediction Limit Rank(s):        20 
+  #
+  #Minimum Number of
+  #Future Observations
+  #Interval Should Contain:         1
+  #
+  #Total Number of
+  #Future Observations:             3
+  #
+  #Prediction Interval:             LPL = 0.000000
+  #                                 UPL = 1.817311
+
+  #----------
+
+  # Compare the confidence levels for the 1-of-3 rule, California Rule, and 
+  # Modified California Rule.
+
+  predIntNparSimultaneous(dat, k = 1, m = 3, lb = 0)$interval$conf.level
+  #[1] 0.9994353
+
+  predIntNparSimultaneous(dat, m = 3, rule = "CA", lb = 0)$interval$conf.level
+  #[1] 0.9919066
+
+  predIntNparSimultaneous(dat, rule = "Modified.CA", lb = 0)$interval$conf.level
+  #[1] 0.9984943
+
+  #=========
+
+  # Repeat the above example, but create the baseline data using just 
+  # n=8 observations and set r to 4 future sampling occasions
+
+  set.seed(598) 
+  dat &lt;- rlnormMixAlt(n = 8, mean1 = 1, cv1 = 0.5, 
+    mean2 = 5, cv2 = 1, p.mix = 0.1) 
+
+  predIntNparSimultaneous(dat, k = 1, m = 3, r = 4, lb = 0) 
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     8
+  #
+  #Prediction Interval Method:      exact 
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                97.7599%
+  #
+  #Prediction Limit Rank(s):        8 
+  #
+  #Minimum Number of
+  #Future Observations
+  #Interval Should Contain
+  #(per Sampling Occasion):         1
+  #
+  #Total Number of
+  #Future Observations
+  #(per Sampling Occasion):         3
+  #
+  #Number of Future
+  #Sampling Occasions:              4
+  #
+  #Prediction Interval:             LPL = 0.000000
+  #                                 UPL = 5.683453
+
+  #----------
+
+  # Compare the confidence levels for the 1-of-3 rule, California Rule, and 
+  # Modified California Rule.
+
+  predIntNparSimultaneous(dat, k = 1, m = 3, r = 4, lb = 0)$interval$conf.level
+  #[1] 0.977599
+
+  predIntNparSimultaneous(dat, m = 3, r = 4, rule = "CA", lb = 0)$interval$conf.level
+  #[1] 0.8737798
+
+  predIntNparSimultaneous(dat, r = 4, rule = "Modified.CA", lb = 0)$interval$conf.level
+  #[1] 0.9510178
+
+  #==========
+
+  # Example 19-5 of USEPA (2009, p. 19-33) shows how to compute nonparametric upper 
+  # simultaneous prediction limits for various rules based on trace mercury data (ppb) 
+  # collected in the past year from a site with four background wells and 10 compliance 
+  # wells (data for two of the compliance wells  are shown in the guidance document).  
+  # The facility must monitor the 10 compliance wells for five constituents 
+  # (including mercury) annually.
+  
+  # Here we will compute the confidence level associated with two different sampling plans: 
+  # 1) the 1-of-2 retesting plan for a median of order 3 using the background maximum and 
+  # 2) the 1-of-4 plan on individual observations using the 3rd highest background value.
+  # The data for this example are stored in EPA.09.Ex.19.5.mercury.df.
+
+  # We will pool data from 4 background wells that were sampled on 
+  # a number of different occasions, giving us a sample size of 
+  # n = 20 to use to construct the prediction limit.
+
+  # There are 10 compliance wells and we will monitor 5 different 
+  # constituents at each well annually.  For this example, USEPA (2009) 
+  # recommends setting r to the product of the number of compliance wells and 
+  # the number of evaluations per year.  
+
+  # To determine the minimum confidence level we require for 
+  # the simultaneous prediction interval, USEPA (2009) recommends 
+  # setting the maximum allowed individual Type I Error level per constituent to:
+ 
+  # 1 - (1 - SWFPR)^(1 / Number of Constituents)
+  
+  # which translates to setting the confidence limit to 
+
+  # (1 - SWFPR)^(1 / Number of Constituents)
+
+  # where SWFPR = site-wide false positive rate.  For this example, we 
+  # will set SWFPR = 0.1.  Thus, the required individual Type I Error level 
+  # and confidence level per constituent are given as follows:
+
+  # n  = 20 based on 4 Background Wells
+  # nw = 10 Compliance Wells
+  # nc =  5 Constituents
+  # ne =  1 Evaluation per year
+
+  n  &lt;- 20
+  nw &lt;- 10
+  nc &lt;-  5
+  ne &lt;-  1
+
+  # Set number of future sampling occasions r to 
+  # Number Compliance Wells x Number Evaluations per Year
+  r  &lt;-  nw * ne
+
+  conf.level &lt;- (1 - 0.1)^(1 / nc)
+  conf.level
+  #[1] 0.9791484
+
+  alpha &lt;- 1 - conf.level
+  alpha
+  #[1] 0.02085164
+
+  #----------
+
+  # Look at the data:
+
+  head(EPA.09.Ex.19.5.mercury.df)
+  #  Event Well  Well.type Mercury.ppb.orig Mercury.ppb Censored
+  #1     1 BG-1 Background             0.21        0.21    FALSE
+  #2     2 BG-1 Background              &lt;.2        0.20     TRUE
+  #3     3 BG-1 Background              &lt;.2        0.20     TRUE
+  #4     4 BG-1 Background              &lt;.2        0.20     TRUE
+  #5     5 BG-1 Background              &lt;.2        0.20     TRUE
+  #6     6 BG-1 Background                           NA    FALSE
+
+  longToWide(EPA.09.Ex.19.5.mercury.df, "Mercury.ppb.orig", 
+    "Event", "Well", paste.row.name = TRUE)
+  #        BG-1 BG-2 BG-3 BG-4 CW-1 CW-2
+  #Event.1 0.21  &lt;.2  &lt;.2  &lt;.2 0.22 0.36
+  #Event.2  &lt;.2  &lt;.2 0.23 0.25  0.2 0.41
+  #Event.3  &lt;.2  &lt;.2  &lt;.2 0.28  &lt;.2 0.28
+  #Event.4  &lt;.2 0.21 0.23  &lt;.2 0.25 0.45
+  #Event.5  &lt;.2  &lt;.2 0.24  &lt;.2 0.24 0.43
+  #Event.6                      &lt;.2 0.54
+
+
+  # Construct the upper simultaneous prediction limit using the 1-of-2  
+  # retesting plan for a median of order 3 based on the background maximum 
+
+  Hg.Back &lt;- with(EPA.09.Ex.19.5.mercury.df, 
+    Mercury.ppb[Well.type == "Background"])
+
+  pred.int.1.of.2.med.3 &lt;- predIntNparSimultaneous(Hg.Back, n.median = 3, 
+    k = 1, m = 2, r = r, lb = 0)
+
+  pred.int.1.of.2.med.3
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            Hg.Back
+  #
+  #Sample Size:                     20
+  #
+  #Number NA/NaN/Inf's:             4
+  #
+  #Prediction Interval Method:      exact 
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                99.40354%
+  #
+  #Prediction Limit Rank(s):        20 
+  #
+  #Minimum Number of
+  #Future Medians
+  #Interval Should Contain
+  #(per Sampling Occasion):         1
+  #
+  #Total Number of
+  #Future Medians
+  #(per Sampling Occasion):         2
+  #
+  #Number of Future
+  #Sampling Occasions:              10
+  #
+  #Sample Size for Medians:         3
+  #
+  #Prediction Interval:             LPL = 0.00
+  #                                 UPL = 0.28
+
+  # Note that the achieved confidence level of 99.4% is greater than the 
+  # required confidence level of 97.9%.
+
+  # Now determine whether either compliance well indicates evidence of 
+  # Mercury contamination.
+
+  # Compliance Well 1
+  #------------------
+  Hg.CW.1 &lt;- with(EPA.09.Ex.19.5.mercury.df, Mercury.ppb.orig[Well == "CW-1"])
+
+  Hg.CW.1
+  #[1] "0.22" "0.2"  "&lt;.2"  "0.25" "0.24" "&lt;.2"
+
+  # The median of the first 3 observations is 0.2, which is less than 
+  # the UPL of 0.28, so there is no evidence of contamination.
+
+  # Compliance Well 2
+  #------------------
+  Hg.CW.2 &lt;- with(EPA.09.Ex.19.5.mercury.df, Mercury.ppb.orig[Well == "CW-2"])
+
+  Hg.CW.2
+  #[1] "0.36" "0.41" "0.28" "0.45" "0.43" "0.54"
+
+  # The median of the first 3 observations is 0.36, so 3 more observations have to 
+  # be looked at.  The median of the second 3 observations is 0.45, which is 
+  # larger than the UPL of 0.28, so there is evidence of contamination.  
+
+  #----------
+
+  # Now create the upper simultaneous prediction limit using the 1-of-4 plan 
+  # on individual observations using the 3rd highest background value.
+
+  pred.int.1.of.4.3rd &lt;- predIntNparSimultaneous(Hg.Back, k = 1, m = 4, 
+    r = r, lb = 0, n.plus.one.minus.upl.rank = 3)
+
+  pred.int.1.of.4.3rd  
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            None
+  #
+  #Data:                            Hg.Back
+  #
+  #Sample Size:                     20
+  #
+  #Number NA/NaN/Inf's:             4
+  #
+  #Prediction Interval Method:      exact 
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                98.64909%
+  #
+  #Prediction Limit Rank(s):        18 
+  #
+  #Minimum Number of
+  #Future Observations
+  #Interval Should Contain
+  #(per Sampling Occasion):         1
+  #
+  #Total Number of
+  #Future Observations
+  #(per Sampling Occasion):         4
+  #
+  #Number of Future
+  #Sampling Occasions:              10
+  #
+  #Prediction Interval:             LPL = 0.00
+  #                                 UPL = 0.24
+
+  # Note that the achieved confidence level of 98.6% is greater than the 
+  # required confidence level of 97.9%.
+
+
+  # Now determine whether either compliance well indicates evidence of 
+  # Mercury contamination.
+
+  # Compliance Well 1
+  #------------------
+  Hg.CW.1 &lt;- with(EPA.09.Ex.19.5.mercury.df, Mercury.ppb.orig[Well == "CW-1"])
+
+  Hg.CW.1
+  #[1] "0.22" "0.2"  "&lt;.2"  "0.25" "0.24" "&lt;.2"
+
+  # The first observation is less than the UPL of 0.24, which is less than 
+  # the UPL of 0.28, so there is no evidence of contamination.
+
+
+  # Compliance Well 2
+  #------------------
+  Hg.CW.2 &lt;- with(EPA.09.Ex.19.5.mercury.df, Mercury.ppb.orig[Well == "CW-2"])
+
+  Hg.CW.2
+  #[1] "0.36" "0.41" "0.28" "0.45" "0.43" "0.54"
+
+  # All of the first 4 observations are greater than the UPL of 0.24, so there 
+  # is evidence of contamination.  
+
+   #==========
+
+  # Cleanup
+  #--------
+  rm(dat, n, nw, nc, ne, r, conf.level, alpha, Hg.Back, pred.int.1.of.2.med.3, 
+    pred.int.1.of.4.3rd, Hg.CW.1, Hg.CW.2)
+</code></pre>
+
+
+</div>

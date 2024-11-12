@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eloratingfixed</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create daily elo ranks and multiple derivatives with user-defined parameter values</h2>
+
+<h3>Description</h3>
+
+<p>Conducts traditional elo rating analyses using specified K value
+and outputs raw, normalized, cardinal, and  categorical ranks as a list object in 
+R or in an output file.  For optimized Elo parameters, use <code>eloratingopt</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eloratingfixed(agon_data, pres_data, k = 100, init_elo = 1000, outputfile = NULL, 
+  returnR = TRUE, p_function = "sigmoid")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>agon_data</code></td>
+<td>
+<p>Input data frame with dominance interactions, should only contain Date, 
+Winner, Loser.  Date should be formatted as MONTH/DAY/YEAR, or already as Date class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pres_data</code></td>
+<td>
+<p>Input data frame with columns "id", "start_date" and "end_date".  Date
+columns should be formatted as MONTH/DAY/YEAR, or already as Date class.  If all IDs 
+are present the whole time, you ignore this and a pres_data table will be automatically
+generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Specified value of the k parameter, default is 100</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_elo</code></td>
+<td>
+<p>The starting Elo value for all individuals, default is 1000</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outputfile</code></td>
+<td>
+<p>Name of csv file to save ranks to.  Default is NULL, in which case 
+the function will only return a table in R.  If you supply an output file name
+the function will save the results as a csv file in your working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnR</code></td>
+<td>
+<p>whether to return an R object from the function call.  Default is TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_function</code></td>
+<td>
+<p>function defining probability of winning.  Default "sigmoid" is 
+equation (1) from Foerster, Franz et al 2016.  Use "pnorm" to use the 
+<code>pnorm</code>-based method implemented in the EloRating package.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function accepts a data frame of date-stamped dominance interactions and 
+(optionally) a data frame of start and end dates for each individual to be ranked, 
+and outputs daily Elo scores with parameters specified by the user.  The default function 
+used to determine probability of winning is equation (1) from Foerster, Franz et al. 2016, 
+but for ease of comparison with the EloRating package, we also added the option to use
+the <code>pnorm</code>-based method implemented in the EloRating package, and future 
+development will add the option to use the original function from Elo 1978 (as implemented in 
+the elo package).  This function does not require large presence matrices, and efficiently 
+calculates a series of additional indices (described below).  
+</p>
+<p>As opposed to the <code>eloratingopt</code> function, this procedure only requires that 
+included individuals have at least one win <em>or</em> one loss. 
+</p>
+<p>A detailed description of the function output is given in the <strong>Value</strong> section of 
+this help file:
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list with six elements: 
+</p>
+
+<dl>
+<dt><strong>elo</strong></dt>
+<dd>
+<p> Data frame with all IDs and dates they were present, with the following columns:</p>
+</dd>
+</dl>
+<dl>
+<dt>Date</dt>
+<dd>
+<p>: Dates of study period</p>
+</dd>
+<dt>Individual</dt>
+<dd>
+<p>: the names of each ranked individual, for each date they were present</p>
+</dd>
+<dt>Elo</dt>
+<dd>
+<p>: fitted Elo scores for each individual on each day</p>
+</dd>
+<dt>EloOrdinal</dt>
+<dd>
+<p>: Daily ordinal rank based on Elo scores</p>
+</dd>
+<dt>EloScaled</dt>
+<dd>
+<p>: Daily Elo scores rescaled between 0 and 1 according to 
+</p>
+<p style="text-align: center;"><code class="reqn">([individual Elo] - min([daily Elo scores])/(max([daily Elo scores]) - min([daily Elo scores]))</code>
+</p>
+</dd>
+<dt>ExpNumBeaten</dt>
+<dd>
+<p>: expected number of individuals in the group beaten, which is the sum of 
+winning probabilities based on relative Elo scores of an individual and all others, following 
+equation (4) in Foerster, Franz et al. 2016</p>
+</dd>
+<dt>EloCardinal</dt>
+<dd>
+<p>: ExpNumBeaten values rescaled as a percentage of the total number of ranked 
+individuals present in the group on the day of ranking. We encourage the use of this measure.</p>
+</dd>
+<dt>JenksEloCardinal</dt>
+<dd>
+<p>: Categorical rank (high, mid, or low) using the Jenks natural breaks 
+classification method implemented in the R package BAMMtools. 
+See <code>getJenksBreaks</code></p>
+</dd>
+</dl>
+<dl>
+<dt><strong>k</strong></dt>
+<dd>
+<p> User-defined value of the k parameter</p>
+</dd>
+<dt><strong>init_elo</strong></dt>
+<dd>
+<p> User-defined initial Elo score when individuals enter the hierarchy</p>
+</dd>
+<dt><strong>pred_accuracy</strong></dt>
+<dd>
+<p> Proportion of correctly predicted interactions</p>
+</dd>
+<dt><strong>logL</strong></dt>
+<dd>
+<p> The overall log-likelihood of the observed data given the user-supplied parameter 
+values based on winning probabilities (as calculated in equation (1) of Foerster, Franz et al 2016) 
+for all interactions</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+nbadata = EloOptimized::nba #nba wins and losses from the 1995-96 season
+nbaelo = eloratingfixed(agon_data = nbadata)
+# generates traditional Elo scores (with init_elo = 1000 &amp; k = 100) and saves 
+#   them as "nbaelo" 
+
+</code></pre>
+
+
+</div>

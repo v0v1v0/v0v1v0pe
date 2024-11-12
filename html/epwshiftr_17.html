@@ -1,0 +1,246 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>summary_database</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Summary CMIP6 model output file status</h2>
+
+<h3>Description</h3>
+
+<p><code>summary_database()</code> scans the directory specified and returns a
+<code>data.table()</code> containing summary information about all the CMIP6
+files available against the output file index loaded using
+<code>load_cmip6_index()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">summary_database(
+  dir,
+  by = c("activity", "experiment", "variant", "frequency", "variable", "source",
+    "resolution"),
+  mult = c("skip", "latest"),
+  append = FALSE,
+  miss = c("keep", "overwrite"),
+  recursive = FALSE,
+  update = FALSE,
+  warning = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>A single string indicating the directory where CMIP6 model output
+NetCDF files are stored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>The grouping column to summary the database status. Should be a
+subset of:
+</p>
+
+<ul>
+<li> <p><code>"experiment"</code>: root experiment identifiers
+</p>
+</li>
+<li> <p><code>"source"</code>: model identifiers
+</p>
+</li>
+<li> <p><code>"variable"</code>: variable identifiers
+</p>
+</li>
+<li> <p><code>"activity"</code>: activity identifiers
+</p>
+</li>
+<li> <p><code>"frequency"</code>: sampling frequency
+</p>
+</li>
+<li> <p><code>"variant"</code>: variant label
+</p>
+</li>
+<li> <p><code>"resolution"</code>: approximate horizontal resolution
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mult</code></td>
+<td>
+<p>Actions when multiple files match a same case in the CMIP6
+index. If <code>"latest"</code>, the file with latest modification time
+will be used. If <code>"skip"</code>, all matched files will be skip and this
+case will be kept as unmatched. Default: <code>"skip"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>append</code></td>
+<td>
+<p>If <code>TRUE</code>, status of CMIP6 files will only be updated if they
+are not found in previous summary. This is useful if CMIP6 files are
+stored in different directories. Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>miss</code></td>
+<td>
+<p>Actions when matched files in the previous summary do not exist
+when running current summary. Only applicable when <code>append</code> is set to
+<code>TRUE</code>. If <code>"keep"</code>, the metadata for the missing output files will
+be kept. If <code>"overwrite"</code>, existing metadata of those output will be
+first removed from the output file index and overwritten based on the
+newly matched files if possible. Default: <code>"keep"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recursive</code></td>
+<td>
+<p>If <code>TRUE</code>, scan recursively into directories. Default:
+<code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>update</code></td>
+<td>
+<p>If <code>TRUE</code>, the output file index will be updated based
+on the matched NetCDF files in specified directory. If <code>FALSE</code>, only
+current loaded index will be updated, but the actual index
+database file saved in <code>get_data_dir()</code> will remain unchanged.
+Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warning</code></td>
+<td>
+<p>If <code>TRUE</code>, warning messages will show when target files are
+missing or multiple files match a same case. Default: <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The database here can be any directory that stores the NetCDF files for CMIP6
+GCMs. It can be also be the same as <code>get_data_dir()</code> where epwshiftr stores
+the output file index, if you want to save the output file index and output
+files in the same place.
+</p>
+<p><code>summary_database()</code> uses the <code>tracking_id</code>, <code>datetime_start</code> and
+<code>datetime_end</code> global attributes of each NetCDF file to match against the
+output file index. So the names of NetCDF files do not necessarily follow the
+CMIP6 file name encoding.
+</p>
+<p><code>summary_database()</code> will append 5 columns in the CMIP6 output file index:
+</p>
+
+<ul><li> <p><code>file_path</code>: the full path of matched NetCDF file for every case.
+</p>
+</li></ul>
+<p><code>summary_database()</code> uses future.apply
+underneath to speed up the data processing if applicable. You can use your
+preferable future backend to speed up data extraction in parallel. By default,
+<code>summary_database()</code> uses <code>future::sequential</code> backend, which runs things in
+sequential.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>data.table::data.table()</code> containing corresponding grouping
+columns plus:</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+   Column </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>datetime_start</code> </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> Start date and time of simulation </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>datetime_end</code> </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> End date and time of simulation </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>file_num</code> </td>
+<td style="text-align: left;"> Integer </td>
+<td style="text-align: left;"> Total number of file per group </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>file_size</code> </td>
+<td style="text-align: left;"> Units (Mbytes) </td>
+<td style="text-align: left;"> Approximate total size of file </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>dl_num</code> </td>
+<td style="text-align: left;"> Integer </td>
+<td style="text-align: left;"> Total number of file downloaded </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>dl_percent</code> </td>
+<td style="text-align: left;"> Units (%) </td>
+<td style="text-align: left;"> Total percentage of file downloaded </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>dl_size</code> </td>
+<td style="text-align: left;"> Units (Mbytes) </td>
+<td style="text-align: left;"> Total size of file downloaded </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>Also 2 extra <code>data.table::data.table()</code> are attached as <strong>attributes</strong>:
+</p>
+
+<ul>
+<li> <p><code>not_found</code>: A <code>data.table::data.table()</code> that contains metadata for those
+CMIP6 outputs that are listed in current CMIP6 output file index but the
+existing file paths are not valid now and cannot be found in current
+database.
+</p>
+</li>
+<li> <p><code>not_matched</code>: A <code>data.table::data.table()</code> that contains metadata for
+those CMIP6 output files that are found in current database but not listed
+in current CMIP6 output file index.
+</p>
+</li>
+</ul>
+<p>For the meaning of grouping columns, see <code>init_cmip6_index()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+summary_database()
+
+summary_database(by = "experiment")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

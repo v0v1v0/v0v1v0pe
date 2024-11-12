@@ -1,0 +1,398 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mvrlm.sdf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Multivariate Regression</h2>
+
+<h3>Description</h3>
+
+<p>Fits a multivariate linear model that uses weights and variance
+estimates appropriate for the <code>edsurvey.data.frame</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mvrlm.sdf(
+  formula,
+  data,
+  weightVar = NULL,
+  relevels = list(),
+  jrrIMax = 1,
+  dropOmittedLevels = TRUE,
+  defaultConditions = TRUE,
+  recode = NULL,
+  returnVarEstInputs = FALSE,
+  estMethod = "OLS",
+  verbose = TRUE,
+  omittedLevels = deprecated()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a <code>Formula</code> for the
+linear model. See <code>Formula</code>;
+left-hand side variables are separated with
+vertical pipes (<code>|</code>). See Examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an <code>edsurvey.data.frame</code> or an <code>edsurvey.data.frame.list</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weightVar</code></td>
+<td>
+<p>character indicating the weight variable to use (see Details).
+The <code>weightVar</code> must be one of the weights for the
+<code>edsurvey.data.frame</code>. If <code>NULL</code>, uses the default
+for the <code>edsurvey.data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relevels</code></td>
+<td>
+<p>a list. Used to change the contrasts from the
+default treatment contrasts to treatment contrasts with a chosen omitted
+group (the reference group).
+To do this, the user puts an element on the list with the same name as
+a variable to change contrasts on
+and then make the value for that list element equal to the value
+that should
+be the omitted group (the reference group).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jrrIMax</code></td>
+<td>
+<p>a numeric value; when using the jackknife variance estimation method, the default estimation option, <code>jrrIMax=1</code>, uses the
+sampling variance from the first plausible value as the component for sampling variance estimation. The <code class="reqn">V_{jrr}</code>
+term (see
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>)
+can be estimated with any number of plausible values, and values larger than the number of
+plausible values on the survey (including <code>Inf</code>) will result in all plausible values being used.
+Higher values of <code>jrrIMax</code> lead to longer computing times and more accurate variance estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dropOmittedLevels</code></td>
+<td>
+<p>a logical value. When set to the default value of <code>TRUE</code>, drops
+those levels of all factor variables that are specified
+in <code>edsurvey.data.frame</code>. Use <code>print</code> on an
+<code>edsurvey.data.frame</code> to see the omitted levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>defaultConditions</code></td>
+<td>
+<p>a logical value. When set to the default value of <code>TRUE</code>, uses
+the default conditions stored in <code>edsurvey.data.frame</code>
+to subset the data. Use <code>print</code> on an
+<code>edsurvey.data.frame</code> to see the default conditions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recode</code></td>
+<td>
+<p>a list of lists to recode variables. Defaults to <code>NULL</code>. Can be set as
+<code>recode</code> <code>=</code> <code>list(var1=</code> <code>list(from=c("a","b","c"),</code> <code>to ="d"))</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnVarEstInputs</code></td>
+<td>
+<p>a logical value. Set to <code>TRUE</code> to return the
+inputs to the jackknife and imputation variance
+estimates, which allow for
+computation of covariances between estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estMethod</code></td>
+<td>
+<p>a character value indicating which estimation method to use.
+Default is <code>OLS</code>; other option is <code>GLS</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; indicates whether a detailed printout should display during execution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omittedLevels</code></td>
+<td>
+<p>this argument is deprecated. Use <code>dropOmittedLevels</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function implements an estimator that correctly handles multiple left-hand
+side variables that are either numeric or plausible values, allows for survey
+sampling weights, and estimates variances using the jackknife replication method.
+The vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>
+describes estimation of the reported statistics.
+</p>
+<p>The <b>coefficients</b> are estimated using the sample weights according to the section
+“Estimation of Weighted Means When Plausible Values Are Not Present”
+or the section
+“Estimation of Weighted Means When Plausible Values Are Present,”
+depending on if there are assessment variables or variables with plausible values in them.
+</p>
+<p>The <b>coefficient of determination (R-squared value)</b> is similarly estimated by finding
+the average R-squared using the sample weights for each set of plausible values.
+</p>
+
+
+<h4>Variance estimation of coefficients</h4>
+
+<p>All variance estimation methods are shown in the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>.
+</p>
+<p>When the predicted value does not have plausible values, the variance of the coefficients
+is estimated according to the section “Estimation of Standard Errors
+of Weighted Means When Plausible Values Are Not Present, Using the Jackknife Method.”
+</p>
+<p>When plausible values are present, the variance of the coefficients is estimated according to the section
+“Estimation of Standard Errors of Weighted Means When
+Plausible Values Are Present, Using the Jackknife Method.”
+</p>
+
+<p>For more information on the specifics of multivariate regression, see the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Multivariate_Regression.pdf">Methods and Overview of Using EdSurvey for Multivariate Regression</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>edsurvey.mvrlm</code> with elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>the formula used to fit the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>the estimates of the coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>the standard error estimates of the coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Vimp</code></td>
+<td>
+<p>the estimated variance caused by uncertainty in the scores (plausible value variables)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Vjrr</code></td>
+<td>
+<p>the estimated variance caused by sampling</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>the number of plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varm</code></td>
+<td>
+<p>the variance estimates under the various plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefm</code></td>
+<td>
+<p>the values of the coefficients under the various plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefmat</code></td>
+<td>
+<p>the coefficient matrix (typically produced by the summary of a model)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.squared</code></td>
+<td>
+<p>the coefficient of determination</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>the name of the weight variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npv</code></td>
+<td>
+<p>the number of plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>njk</code></td>
+<td>
+<p>the number of the jackknife replicates used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varEstInputs</code></td>
+<td>
+<p>When <code>returnVarEstInputs</code> is <code>TRUE</code>,
+this element is returned. These are
+used for calculating covariances with
+<code>varEstToCov</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>residuals for each of the PV models</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.values</code></td>
+<td>
+<p>model fitted values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residCov</code></td>
+<td>
+<p>residual covariance matrix for dependent variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residPV</code></td>
+<td>
+<p>residuals for each dependent variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inputs</code></td>
+<td>
+<p>coefficient estimation input matrices</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n0</code></td>
+<td>
+<p>full data <em>n</em></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nUsed</code></td>
+<td>
+<p><em>n</em> used for model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>imputation variance-covariance matrix, before multiplication by (M+1)/M</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>U</code></td>
+<td>
+<p>sampling variance-covariance matrix</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Alex Lishinski and Paul Bailey
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lm</code>, <code>lm.sdf</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# read in the example data (generated, not real student data)
+sdf &lt;- readNAEP(path=system.file("extdata/data", "M36NT2PM.dat", package = "NAEPprimer"))
+
+# use | symbol to separate dependent variables in the left-hand side of formula
+mvrlm.fit &lt;- mvrlm.sdf(formula=algebra | geometry ~ dsex + m072801, jrrIMax = 5, data = sdf)
+
+# print method returns coefficients, as does coef method
+mvrlm.fit
+coef(mvrlm.fit)
+
+# for more detailed results, use summary:
+summary(mvrlm.fit)
+
+# details of model can also be accessed through components of the returned object; for example:
+
+# coefficients (one column per dependent variable)
+mvrlm.fit$coef
+# coefficient table with standard errors and p-values (1 table per dependent variable)
+mvrlm.fit$coefmat
+# R-squared values (one per dependent variable)
+mvrlm.fit$r.squared
+# residual covariance matrix
+mvrlm.fit$residCov
+
+# dependent variables can have plausible values or not (or a combination)
+
+mvrlm.fit &lt;- mvrlm.sdf(formula=composite | mrps22 ~ dsex + m072801, data = sdf, jrrIMax = 5)
+summary(mvrlm.fit)
+
+mvrlm.fit &lt;- mvrlm.sdf(formula=algebra | geometry | measurement ~ dsex + m072801,
+	                   data = sdf, jrrIMax = 5)
+summary(mvrlm.fit)
+
+mvrlm.fit &lt;- mvrlm.sdf(formula=mrps51 | mrps22 ~ dsex + m072801, data = sdf, jrrIMax = 5)
+summary(mvrlm.fit)
+
+# hypotheses about coefficient restrictions can also be tested using the Wald test
+
+mvr &lt;- mvrlm.sdf(formula=algebra | geometry ~ dsex + m072801, data = sdf)
+
+hypothesis &lt;- c("geometry_dsexFemale = 0", "algebra_dsexFemale = 0")
+
+# test statistics based on the F and chi-squared distribution are available
+linearHypothesis(model=mvr, hypothesis = hypothesis, test = "F")
+linearHypothesis(model=mvr, hypothesis = hypothesis, test = "Chisq")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,261 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eforest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Energy Forests</h2>
+
+<h3>Description</h3>
+
+<p>Fits an Energy Forest, in the form of either a bagging of Energy Trees or a
+Random Energy Forest, depending on the value of the <code>random_covs</code>
+parameter.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eforest(
+  response,
+  covariates,
+  weights = NULL,
+  ntrees = 100,
+  ncores = 1L,
+  minbucket = 1,
+  alpha = 1,
+  R = 500,
+  split_type = "cluster",
+  coeff_split_type = "test",
+  p_adjust_method = "fdr",
+  perf_metric = NULL,
+  random_covs = "auto",
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>Response variable, an object of class either
+<code>"factor"</code> or <code>"numeric"</code> (for classification and regression,
+respectively).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>Set of covariates. Must be provided as a list, where
+each element is a different variable. Currently available types and the
+form they need to have to be correctly recognized are the following:
+</p>
+
+<ul>
+<li>
+<p> Numeric: numeric or integer vectors;
+</p>
+</li>
+<li>
+<p> Nominal: factors;
+</p>
+</li>
+<li>
+<p> Functions: objects of class <code>"fdata"</code>;
+</p>
+</li>
+<li>
+<p> Graphs: (lists of) objects of class <code>"igraph"</code>.
+</p>
+</li>
+</ul>
+<p>Each element (i.e., variable) in the covariates list must have the same
+<code>length()</code>, which corresponds to the sample size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Optional vector of non-negative integer-valued weights to
+be used in the fitting process. If not provided, all observations are
+assumed to have weight equal to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntrees</code></td>
+<td>
+<p>Number of Energy Trees to grow, i.e., the number of
+bootstrap samples to be generated and used for fitting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+<p>Number of cores to use, i.e., at most how many child processes
+will be run simultaneously. Must be exactly 1 on Windows (which uses the
+master process). <code>ncores</code> corresponds to <code>mc.cores</code> in
+<code>mclapply()</code>, which is actually used to grow the single
+Energy Trees in a parallel fashion.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minbucket</code></td>
+<td>
+<p>Positive integer specifying the minimum number of
+observations that each terminal node must contain. Default is 5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Nominal level controlling the probability of type I error in the
+Energy tests of independence used for variable selection. Default is 0.05.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>Number of replicates employed to approximate the sampling
+distribution of the test statistic in every Energy test of independence.
+Default is 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split_type</code></td>
+<td>
+<p>Splitting method used when the selected covariate is
+structured. It has two possible values: <code>"coeff"</code> for feature vector
+extraction, and <code>"cluster"</code> for clustering. See Details for further
+information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coeff_split_type</code></td>
+<td>
+<p>Method to select the split point for the chosen
+component when the selected covariate is structured and <code>split_type =
+  "coeff"</code>. It has two possible values: <code>"test"</code>, in which case Energy
+tests of independence are used, and <code>"traditional"</code>, to employ
+traditional methods (Gini index for classification and RSS for regression).
+See Details for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_adjust_method</code></td>
+<td>
+<p>Multiple-testing adjustment method for P-values,
+which can be set to any of the values provided by
+<code>p.adjust.methods</code>. Default is <code>"fdr"</code> for False
+Discovery Rate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>perf_metric</code></td>
+<td>
+<p>Performance metric that is used to compute the Out-Of-Bag
+score. If <code>NULL</code>, default choices are used: Balanced Accuracy for
+classification and Root Mean Square Percentage Error for regression. See
+Details for further information and possible alternatives.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random_covs</code></td>
+<td>
+<p>Size of the random subset of covariates to choose from at
+each split. If set to <code>NULL</code>, all the covariates are considered each
+time, resulting in a bagging of Energy Trees. When <code>random_covs</code> is an
+integer greater than 1 and less than the total number of covariates, the
+model is a Random Energy Forest. By default, it is equal to <code>"auto"</code>,
+which implies the square root of the number of covariates for
+classification, or one third of the number of covariates for regression (in
+both cases, rounded down to the nearest integer).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical indicating whether to print a one-line notification
+for the conclusion of each tree's fitting process.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>eforest()</code> generates <code>ntrees</code> bootstrap samples and then calls
+<code>etree()</code> on each of them. Then, it computes the Out-Of-Bag (OOB)
+score using the performance metric defined through <code>perf_metric</code>.
+</p>
+<p>For classification, possible values of <code>perf_metric</code> are <code>"BAcc"</code>
+and <code>"WBAcc"</code>. Both are general enough to be used in multiclass
+classification problems, still producing sensible results in the case of
+binary classification. The two options are based on the calculation of a
+ground performance metric, the Balanced Accuracy, which is defined as the
+arithmetic mean between Sensitivity and Specificity. In this framework,
+Balanced Accuracy is computed using a "One vs. All" approach, i.e.,
+considering one class at a time: positive instances are those belonging to
+that class, and negatives are the ones belonging to any other class. Then,
+the "One vs. All" Balanced Accuracies obtained by considering each class must
+be averaged. When <code>perf_metric = "BAcc"</code> (default for classification
+tasks), the average is arithmetic. When <code>perf_metric = "WBAcc"</code>, the
+average is weighted using class sizes, hence giving more importance to the
+"One vs. All" Balanced Accuracy of larger classes.
+</p>
+<p>For regression, the default value of <code>perf_metric</code> is <code>"RMSPE"</code>,
+namely, Root Mean Square Percentage Error. Other available options are
+<code>c("MAE", "MAPE", "MedianAE", "MedianAPE", "MSE", "NRMSE", "RAE",
+"RMSE", "RMLSE")</code>. Each of these name points to the corresponding homonym
+function from the package <code>MLmetrics</code>, whose
+documentation provides more information about their definition.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class <code>"eforest"</code> with three elements: 1) <code>ensemble</code>,
+which is a list gathering all the fitted trees; 2) <code>oob_score</code>,
+an object of class <code>"numeric"</code> representing the OOB score computed using
+the performance metric defined through <code>perf_metric</code>; 3)
+<code>perf_metric</code>, an object of class <code>"character"</code> returning the
+performance metric used for computations.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+## Covariates
+set.seed(123)
+nobs &lt;- 100
+cov_num &lt;- rnorm(nobs)
+cov_nom &lt;- factor(rbinom(nobs, size = 1, prob = 0.5))
+cov_gph &lt;- lapply(1:nobs, function(j) igraph::sample_gnp(100, 0.2))
+cov_fun &lt;- fda.usc::rproc2fdata(nobs, seq(0, 1, len = 100), sigma = 1)
+cov_list &lt;- list(cov_num, cov_nom, cov_gph, cov_fun)
+
+## Response variable(s)
+resp_reg &lt;- cov_num ^ 2
+y &lt;- round((cov_num - min(cov_num)) / (max(cov_num) - min(cov_num)), 0)
+resp_cls &lt;- factor(y)
+
+## Regression ##
+eforest_fit &lt;- eforest(response = resp_reg, covariates = cov_list, ntrees = 12)
+print(eforest_fit$ensemble[[1]])
+plot(eforest_fit$ensemble[[1]])
+mean((resp_reg - predict(eforest_fit)) ^ 2)
+
+## Classification ##
+eforest_fit &lt;- eforest(response = resp_cls, covariates = cov_list, ntrees = 12)
+print(eforest_fit$ensemble[[12]])
+plot(eforest_fit$ensemble[[12]])
+table(resp_cls, predict(eforest_fit))
+
+
+</code></pre>
+
+
+</div>

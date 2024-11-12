@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>design</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Specify a design and model</h2>
+
+<h3>Description</h3>
+
+<p>This function combines information regarding the data, type of model, and
+the model specification.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">design(
+  formula = NULL,
+  factors = NULL,
+  Rlevels = NULL,
+  model,
+  data = NULL,
+  contrasts = NULL,
+  matchfun = NULL,
+  constants = NULL,
+  covariates = NULL,
+  functions = NULL,
+  report_p_vector = TRUE,
+  custom_p_vector = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A list. Contains the design formulae in the
+format <code>list(y ~ x, a ~ z)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factors</code></td>
+<td>
+<p>A named list containing all the factor variables that span
+the design cells and that should be taken into account by the model.
+The name <code>subjects</code> must be used to indicate the participant factor variable,
+also in the data.
+</p>
+<p>Example: <code>list(subjects=levels(dat$subjects), condition=levels(dat$condition))</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Rlevels</code></td>
+<td>
+<p>A character vector. Contains the response factor levels.
+Example: <code>c("right", "left")</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A function, specifies the model type.
+Choose from the drift diffusion model (<code>DDM()</code>, <code>DDMt0natural()</code>),
+the log-normal race model (<code>LNR()</code>), the linear ballistic model (<code>LBA()</code>),
+the racing diffusion model (<code>RDM()</code>, <code>RDMt0natural()</code>), or define your own
+model functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame. <code>data</code> can be used to automatically detect
+<code>factors</code>, <code>Rlevels</code> and <code>covariates</code> in a dataset. The variable <code>R</code> needs
+to be a factor variable indicating the response variable. Any numeric column
+except <code>trials</code> and <code>rt</code> are treated as covariates, and all remaining factor
+variables are internally used in <code>factors</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrasts</code></td>
+<td>
+<p>Optional. A named list specifying a design matrix.
+Example for supplying a customized design matrix:
+<code style="white-space: pre;">⁠list(lM = matrix(c(-1/2,1/2),ncol=1,dimnames=list(NULL,"diff"))))⁠</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>matchfun</code></td>
+<td>
+<p>A function. Only needed for race models. Specifies whether a
+response was correct or not. Example: <code>function(d)d$S==d$lR</code> where lR refers
+to the latent response factor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constants</code></td>
+<td>
+<p>A named vector that sets constants. Any parameter in
+<code>sampled_p_vector</code> can be set constant.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>Names of numeric covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>functions</code></td>
+<td>
+<p>List of functions to create new factors based on those in
+the factors argument. These new factors can then be used in <code>formula</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>report_p_vector</code></td>
+<td>
+<p>Boolean. If TRUE (default), it returns the vector of
+parameters to be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_p_vector</code></td>
+<td>
+<p>A character vector. If specified, a custom likelihood
+function can be supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional, optional arguments</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A design list.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# load example dataset
+dat &lt;- forstmann
+
+# create a function that takes the latent response (lR) factor (d) and returns a logical
+# defining the correct response for each stimulus. Here the match is simply
+# such that the S factor equals the latent response factor
+matchfun &lt;- function(d)d$S==d$lR
+
+# When working with lM and lR, it can be useful to design  an
+# "average and difference" contrast matrix. For binary responses, it has a
+# simple canonical form
+ADmat &lt;- matrix(c(-1/2,1/2),ncol=1,dimnames=list(NULL,"diff"))
+
+# Create a design for a linear ballistic accumulator model (LBA) that allows
+# thresholds to be a function of E and lR. The final result is a 9 parameter model.
+design_LBABE &lt;- design(data = dat,model=LBA,matchfun=matchfun,
+                            formula=list(v~lM,sv~lM,B~E+lR,A~1,t0~1),
+                            contrasts=list(v=list(lM=ADmat)),
+                            constants=c(sv=log(1)))
+</code></pre>
+
+
+</div>

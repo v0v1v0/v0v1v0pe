@@ -1,0 +1,320 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>addDrug.Lexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Expand a Lexis object with information of drug exposure based on
+purchase dates and -amounts
+</h2>
+
+<h3>Description</h3>
+
+  
+<p>A <code>Lexis</code> object will contain information on follow-up for a
+cohort of persons through time, each record containing information of
+one time interval, including the time at the beginning of each
+interval. If information on drug purchase is known for the persons via
+<code>lex.id</code> in a list of data frames, <code>addDrug.Lexis</code> will expand
+the <code>Lexis</code> object by cutting at all drug purchase dates, and
+compute the exposure status for any number of drugs, and add these as
+variables.
+</p>
+<p>In some circumstances the result is a Lexis object with a very large
+number of very small follow-up intervals. The function
+<code>coarse.Lexis</code> combines consecutive follow-up intervals using the
+covariates from the first of the intervals.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'Lexis'
+addDrug(Lx,  # Lexis object
+            pdat,  # list of data frames with drug purchase information
+             amt = "amt", # name of the variable with purchased amount
+             dpt = "dpt", # name of the variable with amount consumed per time
+             apt = NULL,  # old name for dpt
+          method = "ext", # method use to compute exposure 
+            maxt = NULL,  # max duration for a purchase when using "fix"
+           grace = 0,     # grace  period to be added
+            tnam = setdiff(names(pdat[[1]]), c("lex.id", amt))[1],
+                          # name of the time variable from Lx
+          prefix = TRUE,  # should drug names prefix variable names 
+          sepfix = ".",   # what should the separator be when forming prefix/suffix
+         verbose = TRUE,
+           ...)
+coarse.Lexis(Lx, lim, keep = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Lx</code></td>
+<td>
+<p>A <code>Lexis</code> object.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pdat</code></td>
+<td>
+<p>Named list of data frames with drug <code>p</code>urchase <code>dat</code>a.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amt</code></td>
+<td>
+<p>Name of the variable in the data frames in <code>pdat</code> with
+the purchased <code>am</code>oun<code>t</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dpt</code></td>
+<td>
+<p>Name of the variable in the data frames in <code>pdat</code> with
+the consumed <code>d</code>ose <code>p</code>er <code>t</code>ime. Must be given in
+units of units of <code>amt</code> per units of <code>lex.dur</code> in <code>Lx</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>apt</code></td>
+<td>
+<p>Name previously used for <code>dpt</code>. Will disappear in next
+version.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Character. One of <code>"ext"</code> (default), <code>"dos"</code>
+or  <code>"fix"</code>, for a description, see details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxt</code></td>
+<td>
+<p>Numerical. Maximal duration for a purchase when using
+<code>method="fix"</code>, same units as <code>lex.dur</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grace</code></td>
+<td>
+<p>Numeric. Grace period to be added after last time of
+computed drug coverage to define end of exposure, same units as
+<code>lex.dur</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tnam</code></td>
+<td>
+<p>Character. Name of the timescale used in the data frames
+in <code>pdat</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prefix</code></td>
+<td>
+<p>Logical. Should the names of <code>pdat</code> be used as
+prefix for the 4 generated exposure variables for each drug. If false
+the names of <code>pdat</code> will be used as suffix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sepfix</code></td>
+<td>
+<p>Character, used to separate the <code>prefix</code> and the
+name of the generated type of variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. Should the function tell you about the choices
+you made?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lim</code></td>
+<td>
+<p>Numeric vector of length 2. Consecutive follow-up intervals
+are combined if the first has <code>lex.dur</code> &lt; <code>lim[1]</code>, and the
+sum of <code>lex.dur</code> in the two intervals is smaller than
+<code>lim[2]</code>. If a scalar i given, <code>c(lim,3*lim)</code> is used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+<p>Logical of length 1 or <code>nrow(Lx)</code> that points to
+records that cannot be combined with preceding records.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed on. Ignored.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function internally uses <code>addCov.Lexis</code> to attach
+exposure status for several drugs (dispensed medicine) to follow-up in a
+<code>Lexis</code> object. Once that is done, the exposure measures are
+calculated at each time.
+</p>
+<p>There is one input data frame per type of drug, each with variables
+<code>lex.id</code>, <code>amt</code>, a timescale variable and possibly a variable
+<code>dpt</code>.
+</p>
+<p>Three different methods for computing drug exposures from dates and
+amounts of purchases are supported via the argument <code>method</code>.
+</p>
+ 
+<ul>
+<li> <p><code>"ext"</code>: Extrapolation: the first drug purchase is assumed
+consumed over the interval to the second purchase. Exposure
+for subsequent purchases are assumed to last as long as it would have if
+consumed at a speed corresponding to the previous purchase being
+consumed over the time span between the previous and current purchase,
+plus a period of length <code>grace</code>.
+</p>
+</li>
+<li> <p><code>"dos"</code>: Dosage: assumes that each purchase lasts
+<code>amt</code>/<code>dpt</code> plus <code>grace</code>.
+</p>
+</li>
+<li> <p><code>"fix"</code>: Fixed time: assumes that each purchase lasts
+<code>maxt</code>.
+</p>
+</li>
+</ul>
+<p>So for each purchase we have defined an end of coverage (expiry
+date). If next purchase is before this, we assume that the amount
+purchased is consumed over the period between the two purchases,
+otherwise over the period to the end of coverage. So the only difference
+between the methods is the determination of the coverage for each
+purchase.
+</p>
+<p>Based on this, for each date in the resulting <code>Lexis</code> four
+exposure variables are computed, see next section.
+</p>
+
+
+<h3>Value</h3>
+
+  
+<p>A <code>Lexis</code> object with the same risk time, states and events
+as <code>Lx</code>. The follow-up for each person has been cut at the purchase
+times of each of the drugs, as well as at the expiry times for each drug
+coverage. Further, for each drug (i.e. the data frame in the <code>pdat</code>
+list) the name of the <code>pdat</code> component determines the prefix for
+the 4 variables that will be added. Supposing this is <code>AA</code> for a
+given drug, then 4 new variables will be:
+</p>
+
+<ul>
+<li> <p><code>AA.ex</code>: logical; is the person exposed in this interval
+</p>
+</li>
+<li> <p><code>AA.tf</code>: numeric: time since first purchase, same units as
+<code>lex.dur</code> 
+</p>
+</li>
+<li> <p><code>AA.ct</code>: numeric: cumulative time on the drug, same units
+as <code>lex.dur</code> 
+</p>
+</li>
+<li> <p><code>AA.cd</code>: numeric: cumulative dose of the drug, same units
+as <code>amt</code> 
+</p>
+</li>
+</ul>
+<p>So if <code>pdat</code> is a list of length 3 with names <code>c("a","b","c")</code>
+the function will add variables
+<code>a.ex, a.tf, a.ct, a.cd,
+      b.ex, b.tf, b.ct, b.cd,
+      c.ex, c.tf, c.ct, c.cd</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gen.exp</code>,
+<code>addCov.Lexis</code>,
+<code>cutLexis</code>,
+<code>rcutLexis</code>,
+<code>mcutLexis</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Follow-up of 2 persons
+clear()
+fu &lt;- data.frame(doe = c(2006, 2008),
+                 dox = c(2015, 2018),
+                 dob = c(1950, 1951),
+                 xst = factor(c("A","D")))
+Lx &lt;- Lexis(entry = list(per = doe,
+                         age = doe- dob),
+             exit = list(per = dox),
+      exit.status = xst,
+             data = fu)
+Lx &lt;- subset(Lx, select = -c(doe, dob, dox, xst))
+
+# split FU in 1 year intervals
+Sx &lt;- splitLexis(Lx, "per", breaks = seq(1990, 2020, 1.0))
+
+# drug purchases, one data frame for each drug 
+ra &lt;- data.frame(per = c(2007 + runif(12,0,10)),
+                 amt = sample(2:4, 12, r = TRUE),
+              lex.id = sample(1:2, 12, r = TRUE))
+ra &lt;- ra[order(ra$lex.id, ra$per),]
+
+rb &lt;- data.frame(per = c(2009 + runif(10, 0, 10)),
+                 amt = sample(round(2:4/3,1), 10, r = TRUE),
+              lex.id = sample(1:2, 10, r = TRUE))
+rb &lt;- rb[order(rb$lex.id, rb$per),]
+
+# put in a named list
+pdat &lt;- list(A = ra, B = rb)
+pdat
+
+ex1 &lt;- addDrug.Lexis(Sx, pdat, method = "ext") # default
+summary(ex1)
+# collapsing some of the smaller intervals with the next
+summary(coarse.Lexis(ex1, c(0.2,0.5)))
+
+ex2 &lt;- addDrug.Lexis(Sx, pdat, method = "ext", grace = 0.2)
+dos &lt;- addDrug.Lexis(Sx, pdat, method = "dos", dpt = 6)
+fix &lt;- addDrug.Lexis(Sx, pdat, method = "fix", maxt = 1)
+</code></pre>
+
+
+</div>

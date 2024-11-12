@@ -1,0 +1,145 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>optimizek</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>optimize the k parameter</h2>
+
+<h3>Description</h3>
+
+<p>optimize the k parameter
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">optimizek(
+  eloobject,
+  krange = c(2, 400),
+  optimode = "loop",
+  resolution = 100,
+  itype = NULL,
+  daterange = NULL,
+  burnin = 0,
+  doplot = FALSE,
+  progbar = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>eloobject</code></td>
+<td>
+<p>output from <code>elo.seq</code> or from <code>fastelo</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>krange</code></td>
+<td>
+<p>either a vector of length 2, giving the range of k values to be tested, or a named list with vectors of length 2, in which each list item is named according to different interaction types (see the <code>intensity=</code> argument in <code>elo.seq</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimode</code></td>
+<td>
+<p>character, either <code>"loop"</code> or <code>"optimize"</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>numeric, the number of steps between the range of k values to be tested. Currently only a single value can be supplied here and in case <code>krange</code> is a list this value will be applied to all items in this list</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itype</code></td>
+<td>
+<p>character or factor containing the different interaction types, which is only relevant if <code>krange</code> is a list. The content of <code>itype</code> and the names of <code>krange</code> have to match!</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>daterange</code></td>
+<td>
+<p>character or Date of length 2, provides a date range for optimization. Only relevant in case <code>eloobject</code> is the result of <code>elo.seq()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>numeric, the number of interactions to be excluded from the calculation of the (log) likelihood. This parameter is ignored if a date range is supplied. By default <code>burnin = 0</code>, i.e. all interactions are considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doplot</code></td>
+<td>
+<p>logical, should a plot be returned. Works only if <code>optimode = "loop"</code>, and only if there are maximally two different interaction types</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progbar</code></td>
+<td>
+<p>logical, should a progress bar be displayed, not yet implemented</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments for the plot and text functions, e.g. for setting <code>cex</code> or <code>lwd</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>this function attempts to find the objectively best k parameter. This is done by a maximum likelihood approach in which the likelihood is represented by the individual winning probabilities. In a perfect situation, in each interaction the winner would have a winning probability of 1, whereas in the worst case, in each interaction the winner would have a winning probability of 0.
+</p>
+<p>There are two major approaches to find the best k. One does it 'by hand', i.e. by means of a loop trying many different k values (specified by <code>resolution</code>), recalculating the ratings (and associated winning probabilities) and return the likelihood for each k value. The second approach uses the <code>optimize</code> function, but this is not yet implemented.
+</p>
+<p>One thing to note is that you can use interaction-level k values, i.e. if you have interactions of different types (e.g. fights vs. displacements) you can try to find the optimal k for each interaction type. This is achieved in the (<code>"loop"</code> approach by trying different <em>combinations</em> of k values. Because of the combinatorial nature of this approach, the number of individual sequences to be fitted increases sharply with higher resolutions: if you have two different interaction types and use a resolution of 5, the function will need to run 25 (= 5 * 5) iterations. If you use a more reasonable resolution of 100 the number of iterations will be already 10000. Also note that in that case the actual plotting of the results might take a lot of time in such cases. Just try with low values first to see whether it works as expected and the potentially increase the resolution.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list with two items: (1) <code>$best</code>, a data frame with one line, in which the maximal log likelihood is returned alongside the one or several corresponding k values, and (2) <code>$complete</code>, a data frame with all the values tested and their log likelihoods
+</p>
+
+
+<h3>References</h3>
+
+<p>Franz M, McLean E, Tung J, Altmann J, Alberts SC (2015).
+“Self-organizing dominance hierarchies in a wild primate population.”
+<em>Proceedings of the Royal Society B: Biological Sciences</em>, <b>282</b>, 20151512.
+<a href="https://doi.org/10.1098/rspb.2015.1512">doi:10.1098/rspb.2015.1512</a>.
+</p>
+<p>McMahan CA, Morris MD (1984).
+“Application of maximum likelihood paired comparison ranking to estimation of a linear dominance hierarchy in animal societies.”
+<em>Animal Behaviour</em>, <b>32</b>, 374-378.
+<a href="https://doi.org/10.1016/S0003-3472%2884%2980271-7">doi:10.1016/S0003-3472(84)80271-7</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(adv2)
+res &lt;- elo.seq(winner = adv2$winner, loser = adv2$loser, Date = adv2$Date)
+optimizek(eloobject = res, krange = c(50, 400), resolution = 200, doplot = TRUE)$best
+
+# with a burnin value set:
+optimizek(eloobject = res, krange = c(50, 400), resolution = 200, burnin = 15, doplot = TRUE)$best
+
+# using different interaction intensities
+myks &lt;- list(displace = 20, fight = 200)
+res &lt;- elo.seq(winner = adv2$winner, loser = adv2$loser, Date = adv2$Date,
+               k = myks, intensity = adv2$intensity)
+optimizek(eloobject = res, optimode = "loop",
+          krange = list(fight = c(50, 600), displace = c(20, 200)),
+          resolution = 100, itype = adv2$intensity, main = 'bla')$best
+</code></pre>
+
+
+</div>

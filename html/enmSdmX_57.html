@@ -1,0 +1,425 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trainBRT</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calibrate a boosted regression tree (generalized boosting machine) model</h2>
+
+<h3>Description</h3>
+
+<p>This function calibrates a boosted regression tree (or gradient boosting machine) model, and is a wrapper for <code>gbm</code>. The function uses a grid search to assess the best combination of learning rate, tree depth, and bag fraction based on cross-validated deviance. If a particular combination of parameters leads to an unconverged model, the script attempts again using slightly different parameters. Its output is any or all of: a table with deviance of evaluated models; all evaluated models; and/or the single model with the lowest deviance.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trainBRT(
+  data,
+  resp = names(data)[1],
+  preds = names(data)[2:ncol(data)],
+  learningRate = c(1e-04, 0.001, 0.01),
+  treeComplexity = c(5, 3, 1),
+  bagFraction = 0.6,
+  minTrees = 1000,
+  maxTrees = 8000,
+  tries = 5,
+  tryBy = c("learningRate", "treeComplexity", "maxTrees", "stepSize"),
+  w = TRUE,
+  anyway = FALSE,
+  family = "bernoulli",
+  out = "model",
+  cores = 1,
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp</code></td>
+<td>
+<p>Response variable. This is either the name of the column in <code>data</code> or an integer indicating the column in <code>data</code> that has the response variable. The default is to use the first column in <code>data</code> as the response.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preds</code></td>
+<td>
+<p>Character list or integer list. Names of columns or column indices of predictors. The default is to use the second and subsequent columns in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>learningRate</code></td>
+<td>
+<p>Numeric. Learning rate at which model learns from successive trees (Elith et al. 2008 recommend 0.0001 to 0.1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treeComplexity</code></td>
+<td>
+<p>Positive integer. Tree complexity: depth of branches in a single tree (1 to 16).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bagFraction</code></td>
+<td>
+<p>Numeric in the range [0, 1]. Bag fraction: proportion of data used for training in cross-validation (Elith et al. 2008 recommend 0.5 to 0.7).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minTrees</code></td>
+<td>
+<p>Positive integer. Minimum number of trees to be scored as a "usable" model (Elith et al. 2008 recommend at least 1000). Default is 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxTrees</code></td>
+<td>
+<p>Positive integer. Maximum number of trees in model set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tries</code></td>
+<td>
+<p>Integer &gt; 0. Number of times to try to train a model with a particular set of tuning parameters. The function will stop training the first time a model converges (usually on the first attempt). Non-convergence seems to be related to the number of trees tried in each step.  So if non-convergence occurs then the function automatically increases the number of trees in the step size until <code>tries</code> is reached.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tryBy</code></td>
+<td>
+<p>Character list. A list that contains one or more of <code>'learningRate'</code>, <code>'treeComplexity'</code>, <code>numTrees</code>, and/or <code>'stepSize'</code>. If a given combination of <code>learningRate</code>, <code>treeComplexity</code>, <code>numTrees</code>, <code>stepSize</code>, and <code>bagFraction</code> do not allow model convergence then then the function tries again but with alterations to any of the arguments named in <code>tryBy</code>:
+* <code>learningRate</code>: Decrease the learning rate by a factor of 10.
+* <code>treeComplexity</code>: Randomly increase/decrease tree complexity by 1 (minimum of 1).
+* <code>maxTrees</code>: Increase number of trees by 20
+* <code>stepSize</code>: Increase step size (argument <code>n.trees</code> in <code>gbm.step()</code>) by 50
+If <code>tryBy</code> is NULL then the function attempts to train the model with the same parameters up to <code>tries</code> times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+<p>Weights. Any of:
+</p>
+
+<ul>
+<li> <p><code>TRUE</code>: Causes the total weight of presences to equal the total weight of absences (if <code>family='binomial'</code>)
+</p>
+</li>
+<li> <p><code>FALSE</code>: Each datum is assigned a weight of 1.
+</p>
+</li>
+<li>
+<p> A numeric vector of weights, one per row in <code>data</code>.
+</p>
+</li>
+<li>
+<p> The name of the column in <code>data</code> that contains site weights.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anyway</code></td>
+<td>
+<p>Logical. If <code>FALSE</code> (default), it is possible for no models to be returned if none converge and/or none had a number of trees is &gt;= <code>minTrees</code>). If <code>TRUE</code> then all models are returned but with a warning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>Character. Name of error family.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out</code></td>
+<td>
+<p>Character vector. One or more values:
+</p>
+
+<ul>
+<li>    <p><code>'model'</code>: Model with the lowest deviance.
+</p>
+</li>
+<li>    <p><code>'models'</code>: All models evaluated, sorted from lowest to highest deviance.
+</p>
+</li>
+<li>    <p><code>'tuning'</code>: Data frame with tuning parameters, one row per model, sorted by deviance.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>Integer &gt;= 1. Number of cores to use when calculating multiple models. Default is 1.  If you have issues when <code>cores</code> &gt; 1, please see the <code>troubleshooting_parallel_operations</code> guide.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. If <code>TRUE</code> display progress.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments (not used).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The object that is returned depends on the value of the <code>out</code> argument. It can be a model object, a data frame, a list of models, or a list of two or more of these.
+</p>
+
+
+<h3>References</h3>
+
+<p>Elith, J., J.R. Leathwick, &amp; T. Hastie. 2008. A working guide to boosted regression trees. <em>Journal of Animal Ecology</em> 77:802-813. <a href="https://doi.org/10.1111/j.1365-2656.2008.01390.x">doi:10.1111/j.1365-2656.2008.01390.x</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gbm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# NB: The examples below show a very basic modeling workflow. They have been 
+# designed to work fast, not produce accurate, defensible models. They can
+# take a few minutes to run.
+
+library(mgcv)
+library(sf)
+library(terra)
+set.seed(123)
+
+### setup data
+##############
+
+# environmental rasters
+rastFile &lt;- system.file('extdata/madClim.tif', package='enmSdmX')
+madClim &lt;- rast(rastFile)
+
+# coordinate reference system
+wgs84 &lt;- getCRS('WGS84')
+
+# lemur occurrence data
+data(lemurs)
+occs &lt;- lemurs[lemurs$species == 'Eulemur fulvus', ]
+occs &lt;- vect(occs, geom=c('longitude', 'latitude'), crs=wgs84)
+
+occs &lt;- elimCellDuplicates(occs, madClim)
+
+occEnv &lt;- extract(madClim, occs, ID = FALSE)
+occEnv &lt;- occEnv[complete.cases(occEnv), ]
+	
+# create 10000 background sites (or as many as raster can support)
+bgEnv &lt;- terra::spatSample(madClim, 20000)
+bgEnv &lt;- bgEnv[complete.cases(bgEnv), ]
+bgEnv &lt;- bgEnv[1:min(10000, nrow(bgEnv)), ]
+
+# collate occurrences and background sites
+presBg &lt;- data.frame(
+  presBg = c(
+    rep(1, nrow(occEnv)),
+    rep(0, nrow(bgEnv))
+  )
+)
+
+env &lt;- rbind(occEnv, bgEnv)
+env &lt;- cbind(presBg, env)
+
+predictors &lt;- c('bio1', 'bio12')
+
+### calibrate models
+####################
+
+# Note that all of the trainXYZ functions can made to go faster using the
+# "cores" argument (set to just 1, by default). The examples below will not
+# go too much faster using more cores because they are simplified, but
+# you can try!
+cores &lt;- 1
+
+# MaxEnt
+mx &lt;- trainMaxEnt(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# MaxNet
+mn &lt;- trainMaxNet(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized linear model (GLM)
+gl &lt;- trainGLM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized additive model (GAM)
+ga &lt;- trainGAM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	verbose = TRUE,
+	cores = cores
+)
+
+# natural splines
+ns &lt;- trainNS(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	df = 1:2, # too few values for reliable model(?)
+	verbose = TRUE,
+	cores = cores
+)
+
+# boosted regression trees
+envSub &lt;- env[1:1049, ] # subsetting data to run faster
+brt &lt;- trainBRT(
+	data = envSub,
+	resp = 'presBg',
+	preds = predictors,
+	learningRate = 0.001, # too few values for reliable model(?)
+	treeComplexity = c(2, 3), # too few values for reliable model, but fast
+	minTrees = 1200, # minimum trees for reliable model(?), but fast
+	maxTrees = 1200, # too small for reliable model(?), but fast
+	tryBy = 'treeComplexity',
+	anyway = TRUE, # return models that did not converge
+	verbose = TRUE,
+	cores = cores
+)
+
+# random forests
+rf &lt;- trainRF(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	numTrees = c(100, 500), # using at least 500 recommended, but fast!
+	verbose = TRUE,
+	cores = cores
+)
+
+### make maps of models
+#######################
+
+# NB We do not have to scale rasters before predicting GLMs and NSs because we
+# used the `scale = TRUE` argument in trainGLM() and trainNS().
+
+mxMap &lt;- predictEnmSdm(mx, madClim)
+mnMap &lt;- predictEnmSdm(mn, madClim) 
+glMap &lt;- predictEnmSdm(gl, madClim)
+gaMap &lt;- predictEnmSdm(ga, madClim)
+nsMap &lt;- predictEnmSdm(ns, madClim)
+brtMap &lt;- predictEnmSdm(brt, madClim)
+rfMap &lt;- predictEnmSdm(rf, madClim)
+
+maps &lt;- c(
+	mxMap,
+	mnMap,
+	glMap,
+	gaMap,
+	nsMap,
+	brtMap,
+	rfMap
+)
+
+names(maps) &lt;- c('MaxEnt', 'MaxNet', 'GLM', 'GAM', 'NSs', 'BRTs', 'RFs')
+fun &lt;- function() plot(occs, col='black', pch=3, add=TRUE)
+plot(maps, fun = fun, nc = 4)
+
+### compare model responses to BIO12 (mean annual precipitation)
+################################################################
+
+# make a data frame holding all other variables at mean across occurrences,
+# varying only BIO12
+occEnvMeans &lt;- colMeans(occEnv, na.rm=TRUE)
+occEnvMeans &lt;- rbind(occEnvMeans)
+occEnvMeans &lt;- as.data.frame(occEnvMeans)
+climFrame &lt;- occEnvMeans[rep(1, 100), ]
+rownames(climFrame) &lt;- NULL
+
+minBio12 &lt;- min(env$bio12)
+maxBio12 &lt;- max(env$bio12)
+climFrame$bio12 &lt;- seq(minBio12, maxBio12, length.out=100)
+
+predMx &lt;- predictEnmSdm(mx, climFrame)
+predMn &lt;- predictEnmSdm(mn, climFrame)
+predGl &lt;- predictEnmSdm(gl, climFrame)
+predGa &lt;- predictEnmSdm(ga, climFrame)
+predNat &lt;- predictEnmSdm(ns, climFrame)
+predBrt &lt;- predictEnmSdm(brt, climFrame)
+predRf &lt;- predictEnmSdm(rf, climFrame)
+
+
+plot(climFrame$bio12, predMx,
+xlab='BIO12', ylab='Prediction', type='l', ylim=c(0, 1))
+
+lines(climFrame$bio12, predMn, lty='solid', col='red')
+lines(climFrame$bio12, predGl, lty='dotted', col='blue')
+lines(climFrame$bio12, predGa, lty='dashed', col='green')
+lines(climFrame$bio12, predNat, lty=4, col='purple')
+lines(climFrame$bio12, predBrt, lty=5, col='orange')
+lines(climFrame$bio12, predRf, lty=6, col='cyan')
+
+legend(
+   'topleft',
+   inset = 0.01,
+   legend = c(
+	'MaxEnt',
+	'MaxNet',
+	'GLM',
+	'GAM',
+	'NS',
+	'BRT',
+	'RF'
+   ),
+   lty = c(1, 1:6),
+   col = c(
+	'black',
+	'red',
+	'blue',
+	'green',
+	'purple',
+	'orange',
+	'cyan'
+   ),
+   bg = 'white'
+)
+
+
+</code></pre>
+
+
+</div>

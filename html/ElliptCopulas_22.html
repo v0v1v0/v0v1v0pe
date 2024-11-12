@@ -1,0 +1,245 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estim_tilde_AMSE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the part of the AMSE of the elliptical density generator that only depends
+on the parameter "a" assuming <code class="reqn">h</code> has been optimally chosen</h2>
+
+<h3>Description</h3>
+
+<p>A continuous elliptical distribution has a density of the form
+</p>
+<p style="text-align: center;"><code class="reqn">f_X(x) = {|\Sigma|}^{-1/2}
+g\left( (x-\mu)^\top \, \Sigma^{-1} \, (x-\mu) \right),
+</code>
+</p>
+
+<p>where <code class="reqn">x \in \mathbb{R}^d</code>,
+<code class="reqn">\mu \in \mathbb{R}^d</code> is the mean,
+<code class="reqn">\Sigma</code> is a <code class="reqn">d \times d</code> positive-definite matrix
+and a function <code class="reqn">g: \mathbb{R}_+ \rightarrow \mathbb{R}_+</code>, called the
+density generator of <code class="reqn">X</code>.
+The goal is to estimate <code class="reqn">g</code> at some point <code class="reqn">\xi</code>, by
+</p>
+<p style="text-align: center;"><code class="reqn">
+\widehat{g}_{n,h,a}(\xi)
+:= \dfrac{\xi^{\frac{-d+2}{2}} \psi_a'(\xi)}{n h s_d}
+\sum_{i=1}^n
+  K\left( \dfrac{ \psi_a(\xi) - \psi_a(\xi_i) }{h} \right)
++ K\left( \dfrac{ \psi_a(\xi) + \psi_a(\xi_i) }{h} \right),
+</code>
+</p>
+
+<p>where
+<code class="reqn">s_d := \pi^{d/2} / \Gamma(d/2)</code>,
+<code class="reqn">\Gamma</code> is the Gamma function,
+<code class="reqn">h</code> and <code class="reqn">a</code> are tuning parameters (respectively the bandwidth and a
+parameter controlling the bias at <code class="reqn">\xi = 0</code>),
+<code class="reqn">\psi_a(\xi) := -a + (a^{d/2} + \xi^{d/2})^{2/d},</code>
+<code class="reqn">\xi \in \mathbb{R}</code>, <code class="reqn">K</code> is a kernel function and
+<code class="reqn">\xi_i := (X_i - \mu)^\top \, \Sigma^{-1} \, (X_i - \mu),
+</code>
+for a sample <code class="reqn">X_1, \dots, X_n</code>.
+Thanks to Proposition 2.2 in (Ryan and Derumigny, 2024), the asymptotic
+mean square error of <code class="reqn">\widehat{g}_{n,h,a}(\xi)</code> can be decomposed into
+a product of a constant (that depends on the true <code class="reqn">g</code>) and a term that
+depends on <code class="reqn">g</code> and <code class="reqn">a</code>. This function computes this term. It can be
+useful to find out the best value of the parameter <code class="reqn">a</code> to be used.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estim_tilde_AMSE(
+  X,
+  mu = 0,
+  Sigma_m1 = diag(NCOL(X)),
+  grid,
+  h,
+  Kernel = "gaussian",
+  a = 1,
+  mpfr = FALSE,
+  precBits = 100,
+  dopb = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a matrix of size <code class="reqn">n \times d</code>, assumed to be <code class="reqn">n</code> i.i.d. observations
+(rows) of a <code class="reqn">d</code>-dimensional elliptical distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>mean of X. This can be the true value or an estimate. It must be
+a vector of dimension <code class="reqn">d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Sigma_m1</code></td>
+<td>
+<p>inverse of the covariance matrix of X.
+This can be the true value or an estimate. It must be
+a matrix of dimension <code class="reqn">d \times d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>grid of values of <code class="reqn">\xi</code> at which we want to estimate the
+density generator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>bandwidth of the kernel. Can be either a number or a vector of the
+size <code>length(grid)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Kernel</code></td>
+<td>
+<p>name of the kernel. Possible choices are
+<code>"gaussian"</code>, <code>"epanechnikov"</code>, <code>"triangular"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>tuning parameter to improve the performance at 0.
+Can be either a number or a vector of the
+size <code>length(grid)</code>. If this is a vector, the code will need to allocate
+a matrix of size <code>nrow(X) * length(grid)</code> which can be prohibitive in
+some cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mpfr</code></td>
+<td>
+<p>if <code>mpfr = TRUE</code>, multiple precision floating point is used
+via the package Rmpfr.
+This allows for a higher (numerical) accuracy, at the expense of computing time.
+It is recommended to use this option for higher dimensions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precBits</code></td>
+<td>
+<p>number of precBits used for floating point precision
+(only used if <code>mpfr = TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dopb</code></td>
+<td>
+<p>a Boolean value.
+If <code>dopb = TRUE</code>, a progress bar is displayed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a vector of the same size as the grid, with the corresponding value
+for the <code class="reqn">\widetilde{AMSE}</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alexis Derumigny, Victor Ryan
+</p>
+
+
+<h3>References</h3>
+
+<p>Ryan, V., &amp; Derumigny, A. (2024).
+On the choice of the two tuning parameters for nonparametric estimation of an
+elliptical distribution generator
+<a href="https://arxiv.org/abs/2408.17087">arxiv:2408.17087</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Comparison between the estimated and true generator of the Gaussian distribution
+n = 50000
+d = 3
+X = matrix(rnorm(n * d), ncol = d)
+grid = seq(0, 5, by = 0.1)
+a = 1.5
+
+AMSE_est = estim_tilde_AMSE(X = X, grid = grid, a = a, h = 0.09)
+plot(grid, abs(AMSE_est), type = "l")
+
+# Computation of true values
+g = exp(-grid/2)/(2*pi)^{3/2}
+gprime = (-1/2) *exp(-grid/2)/(2*pi)^{3/2}
+A = a^(d/2)
+psia = -a + (A + grid^(d/2))^(2/d)
+psiaprime = grid^(d/2 - 1) * (A + grid^(d/2))^(2/d - 1)
+psiasecond = psiaprime * ( (d-2)/2 ) * grid^{-1} * A *
+  ( grid^(d/2) + A )^(-1)
+
+rhoprimexi = ((d-2) * grid^((d-4)/2) * psiaprime
+  - 2 * grid^((d-2)/2) * psiasecond) / (2 * psiaprime^3) * g +
+  grid^((d-2)/2) / (psiaprime^2) * gprime
+
+AMSE = rhoprimexi / psiaprime
+
+lines(grid, abs(AMSE), col = "red")
+
+
+# Comparison as a function of $a$
+n = 50000
+d = 3
+X = matrix(rnorm(n * d), ncol = d)
+grid = 0.1
+vec_a = c(0.001, 0.002, 0.005,
+0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.8, 1, 1.5, 2)
+
+AMSE_est = rep(NA, length = length(vec_a))
+for (i in 1:length(vec_a)){
+  AMSE_est[i] = estim_tilde_AMSE(X = X, grid = grid, a = vec_a[i], h = 0.09,
+                          dopb = FALSE)
+}
+
+plot(vec_a, abs(AMSE_est), type = "l", log = "x")
+
+# Computation of true values
+a = vec_a
+
+g = exp(-grid/2)/(2*pi)^{3/2}
+gprime = (-1/2) *exp(-grid/2)/(2*pi)^{3/2}
+A = a^(d/2)
+psia = -a + (A + grid^(d/2))^(2/d)
+psiaprime = grid^(d/2 - 1) * (A + grid^(d/2))^(2/d - 1)
+psiasecond = psiaprime * ( (d-2)/2 ) * grid^{-1} * A *
+  ( grid^(d/2) + A )^(-1)
+
+rhoprimexi = ((d-2) * grid^((d-4)/2) * psiaprime
+  - 2 * grid^((d-2)/2) * psiasecond) / (2 * psiaprime^3) * g +
+  grid^((d-2)/2) / (psiaprime^2) * gprime
+
+AMSE = rhoprimexi / psiaprime
+
+yliminf = min(c(abs(AMSE_est), abs(AMSE)))
+ylimsup = max(c(abs(AMSE_est), abs(AMSE)))
+
+plot(vec_a, abs(AMSE_est), type = "l", log = "xy",
+     ylim = c(yliminf, ylimsup))
+lines(vec_a, abs(AMSE), col = "red")
+
+</code></pre>
+
+
+</div>

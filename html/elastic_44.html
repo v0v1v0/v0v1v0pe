@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>docs_get</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get documents</h2>
+
+<h3>Description</h3>
+
+<p>Get documents
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">docs_get(
+  conn,
+  index,
+  id,
+  type = NULL,
+  source = NULL,
+  fields = NULL,
+  source_includes = NULL,
+  source_excludes = NULL,
+  exists = FALSE,
+  raw = FALSE,
+  callopts = list(),
+  verbose = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>an Elasticsearch connection object, see <code>connect()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>(character) The name of the index. Required</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>(numeric/character) The document ID. Can be numeric or character.
+Required</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>(character) The type of the document. optional</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>source</code></td>
+<td>
+<p>(logical) If <code>TRUE</code> (default), return source. note that
+it is actually set to <code>NULL</code> in the function definition, but within
+Elasticsearch, it returns the source by default. alternatively,
+you can pass a vector of field names to return.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fields</code></td>
+<td>
+<p>Fields to return from the response object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>source_includes, source_excludes</code></td>
+<td>
+<p>(character) fields to include in the
+returned document, or to exclude. a character vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exists</code></td>
+<td>
+<p>(logical) Only return a logical as to whether the document
+exists or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw</code></td>
+<td>
+<p>If <code>TRUE</code> (default), data is parsed to list. If <code>FALSE</code>, then raw
+JSON.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>callopts</code></td>
+<td>
+<p>Curl args passed on to crul::HttpClient</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>If TRUE (default) the url call used printed to console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further args passed on to elastic search HTTP API as parameters.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-get.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-get.html</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+(x &lt;- connect())
+
+if (!index_exists(x, "shakespeare")) {
+  shakespeare &lt;- system.file("examples", "shakespeare_data_.json",
+    package = "elastic")
+  shakespeare &lt;- type_remover(shakespeare)
+  invisible(docs_bulk(x, shakespeare))
+}
+
+docs_get(x, index='shakespeare', id=10)
+docs_get(x, index='shakespeare', id=12)
+docs_get(x, index='shakespeare', id=12, source=TRUE)
+
+# Get certain fields
+if (gsub("\\.", "", x$ping()$version$number) &lt; 500) {
+  ### ES &lt; v5
+  docs_get(x, index='shakespeare', id=10, fields='play_name')
+  docs_get(x, index='shakespeare', id=10, fields=c('play_name','speaker'))
+} else {
+  ### ES &gt; v5
+  docs_get(x, index='shakespeare', id=10, source='play_name')
+  docs_get(x, index='shakespeare', id=10, source=c('play_name','speaker'))
+}
+
+# Just test for existence of the document
+docs_get(x, index='plos', id=1, exists=TRUE)
+docs_get(x, index='plos', id=123456, exists=TRUE)
+
+# source includes / excludes
+docs_get(x, index='shakespeare', id=10, source_includes = "play_name")
+docs_get(x, index='shakespeare', id=10, source_excludes = "play_name")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

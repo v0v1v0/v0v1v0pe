@@ -1,0 +1,93 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>var_scale</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Variance scaling function</h2>
+
+<h3>Description</h3>
+
+<p>Extrapolate variance observed at spatial or ecological scale b
+to a different scale, B. Equivalent to Eq.7a in the main text.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">var_scale(mvar_b, murho_b, mucov_b = NULL, b = 1, B)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mvar_b</code></td>
+<td>
+<p>Mean variance of abundance values observed at scale b.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>murho_b</code></td>
+<td>
+<p>Mean Pearson correlation coefficient of abundance values observed at scale b, calculated as mucov_b/mvar_b. If NULL, mucov_b is used instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mucov_b</code></td>
+<td>
+<p>Mean covariance of abundances observed at scale b. Ignored if mrho_b is not NULL. Defaults to NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>Size of observed scale. Defaults to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>Size of desired scale for extrapolation.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Extrapolated variance at scale B.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># extrapolate from scale of 1 to 10 - e.g. from a 1m2 patch to a 10m2 patch
+var_scale(mvar_b = 1, murho_b = 0.5, b = 1, B = 10)
+
+# example with 100 simulated species
+nsp&lt;-100 # number of species
+var_b&lt;-1 # species-level abundance variance
+cov_b&lt;-(-0.01) # between-specie abundance covariance
+# note - if nsp is large, cov_b must be near zero
+# this is because, e.g. many variables cannot all be
+# simultaneously negatively correlated
+
+# make a covariance matrix based on var_b and cov_b
+sigmamat&lt;-diag(nsp)*var_b+(1-diag(nsp))*cov_b
+# simulate 1000 observations of 100 species
+sim_x&lt;-mvtnorm::rmvnorm(n=1e3, mean = rep(0,100), sigma = sigmamat)
+
+# calculate mean variance, covariance, and correlation from sim_x
+cvmat&lt;-cov(sim_x)
+mvar_b&lt;-mean(diag(cvmat))
+mucov_b&lt;-mean(cvmat[row(cvmat)!=col(cvmat)])
+murho_b&lt;-mucov_b/mvar_b
+
+# test function vs. observation
+# note - answers match exactly
+var(rowSums(sim_x))
+var_scale(mvar_b, murho_b = murho_b, b=1, B=100)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,528 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fbckden</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cross-validation MLE Fitting of Boundary Corrected Kernel Density Estimation
+Using a Variety of Approaches</h2>
+
+<h3>Description</h3>
+
+<p>Maximum likelihood estimation for fitting boundary corrected 
+kernel density estimator using a variety of approaches (and many possible kernels),
+by treating it as a mixture model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fbckden(x, linit = NULL, bwinit = NULL, kernel = "gaussian",
+  extracentres = NULL, bcmethod = "simple", proper = TRUE,
+  nn = "jf96", offset = NULL, xmax = NULL, add.jitter = FALSE,
+  factor = 0.1, amount = NULL, std.err = TRUE, method = "BFGS",
+  control = list(maxit = 10000), finitelik = TRUE, ...)
+
+lbckden(x, lambda = NULL, bw = NULL, kernel = "gaussian",
+  extracentres = NULL, bcmethod = "simple", proper = TRUE,
+  nn = "jf96", offset = NULL, xmax = NULL, log = TRUE)
+
+nlbckden(lambda, x, bw = NULL, kernel = "gaussian",
+  extracentres = NULL, bcmethod = "simple", proper = TRUE,
+  nn = "jf96", offset = NULL, xmax = NULL, finitelik = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector of sample data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linit</code></td>
+<td>
+<p>initial value for bandwidth (as kernel half-width) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bwinit</code></td>
+<td>
+<p>initial value for bandwidth (as kernel standard deviations) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p>kernel name (<code>default = "gaussian"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extracentres</code></td>
+<td>
+<p>extra kernel centres used in KDE, 
+but likelihood contribution not evaluated, or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bcmethod</code></td>
+<td>
+<p>boundary correction method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proper</code></td>
+<td>
+<p>logical, whether density is renormalised to integrate to unity (where needed)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nn</code></td>
+<td>
+<p>non-negativity correction method (simple boundary correction only)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+<p>offset added to kernel centres (logtrans only) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xmax</code></td>
+<td>
+<p>upper bound on support (copula and beta kernels only) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.jitter</code></td>
+<td>
+<p>logical, whether jitter is needed for rounded kernel centres</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factor</code></td>
+<td>
+<p>see <code>jitter</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amount</code></td>
+<td>
+<p>see <code>jitter</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>logical, should standard errors be calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>optimisation method (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optimisation control list (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>finitelik</code></td>
+<td>
+<p>logical, should log-likelihood return finite value for invalid parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional inputs passed to <code>optim</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>bandwidth for kernel (as half-width of kernel) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bw</code></td>
+<td>
+<p>bandwidth for kernel (as standard deviations of kernel) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if <code>TRUE</code> then log-likelihood rather than likelihood is output</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The boundary corrected kernel density estimator using a variety of approaches
+(and many possible kernels) is fitted to the entire dataset using
+cross-validation maximum likelihood estimation. The estimated bandwidth,
+variance and standard error are automatically output. 
+</p>
+<p>The log-likelihood and negative log-likelihood are also provided for wider
+usage, e.g. constructing your own extreme value
+mixture models or profile likelihood functions. The parameter
+<code>lambda</code> must be specified in the negative log-likelihood
+<code>nlbckden</code>.
+</p>
+<p>Log-likelihood calculations are carried out in
+<code>lbckden</code>, which takes bandwidths as inputs in
+the same form as distribution functions. The negative log-likelihood is a
+wrapper for <code>lbckden</code>, designed towards making
+it useable for optimisation (e.g. <code>lambda</code> given as first input).
+</p>
+<p>The alternate bandwidth definitions are discussed in the
+<code>kernels</code>, with the <code>lambda</code> used here but 
+<code>bw</code> also output. The <code>bw</code> specification is the same as used in the
+<code>density</code> function.
+</p>
+<p>The possible kernels are also defined in <code>kernels</code> help
+documentation with the <code>"gaussian"</code> as the default choice.
+</p>
+<p>Unlike the standard KDE, there is no general rule-of-thumb bandwidth for all these
+estimators, with only certain methods having a guideline in the literature, so none
+have been implemented. Hence, a bandwidth must always be specified.
+</p>
+<p>The <code>simple</code>, <code>renorm</code>, <code>beta1</code>, <code>beta2</code> <code>gamma1</code> and <code>gamma2</code>
+density estimates require renormalisation, achieved
+by numerical integration, so is very time consuming.
+</p>
+<p>Missing values (<code>NA</code> and <code>NaN</code>) are assumed to be invalid data so are ignored.
+</p>
+<p>Cross-validation likelihood is used for kernel density component, obtained by
+leaving each point out in turn and evaluating the KDE at the point left out:
+</p>
+<p style="text-align: center;"><code class="reqn">L(\lambda)\prod_{i=1}^{n} \hat{f}_{-i}(x_i)</code>
+</p>
+
+<p>where 
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{f}_{-i}(x_i) = \frac{1}{(n-1)\lambda} \sum_{j=1: j\ne i}^{n} K(\frac{x_i - x_j}{\lambda})</code>
+</p>
+
+<p>is the KDE obtained when the <code class="reqn">i</code>th datapoint is dropped out and then 
+evaluated at that dropped datapoint at <code class="reqn">x_i</code>.
+</p>
+<p>Normally for likelihood estimation of the bandwidth the kernel centres and
+the data where the likelihood is evaluated are the same. However, when using
+KDE for extreme value mixture modelling the likelihood only those data in the
+bulk of the distribution should contribute to the likelihood, but all the
+data (including those beyond the threshold) should contribute to the density
+estimate. The <code>extracentres</code> option allows the use to specify extra
+kernel centres used in estimating the density, but not evaluated in the
+likelihood. The default is to just use the existing data, so
+<code>extracentres=NULL</code>.
+</p>
+<p>The default optimisation algorithm is "BFGS", which requires a finite negative 
+log-likelihood function evaluation <code>finitelik=TRUE</code>. For invalid 
+parameters, a zero likelihood is replaced with <code>exp(-1e6)</code>. The "BFGS" 
+optimisation algorithms require finite values for likelihood, so any user 
+input for <code>finitelik</code> will be overridden and set to <code>finitelik=TRUE</code> 
+if either of these optimisation methods is chosen.
+</p>
+<p>It will display a warning for non-zero convergence result comes from 
+<code>optim</code> function call.
+</p>
+<p>If the hessian is of reduced rank then the variance (from inverse hessian)
+and standard error of bandwidth parameter cannot be calculated, then by default 
+<code>std.err=TRUE</code> and the function will stop. If you want the bandwidth estimate
+even if the hessian is of reduced rank (e.g. in a simulation study) then
+set <code>std.err=FALSE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>fbckden</code> gives leave one out cross-validation
+(log-)likelihood and 
+<code>lbckden</code> gives the negative log-likelihood. 
+<code>nlbckden</code> returns a simple list with the following elements
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>call</code>: </td>
+<td style="text-align: left;"> <code>optim</code> call</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>x</code>: </td>
+<td style="text-align: left;"> (jittered) data vector <code>x</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>kerncentres</code>: actual kernel centres used <code>x</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>init</code>: </td>
+<td style="text-align: left;"> <code>linit</code> for lambda</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>optim</code>: </td>
+<td style="text-align: left;"> complete <code>optim</code> output</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>mle</code>: </td>
+<td style="text-align: left;"> vector of MLE of bandwidth</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>cov</code>: </td>
+<td style="text-align: left;"> variance of MLE of bandwidth</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>se</code>: </td>
+<td style="text-align: left;"> standard error of MLE of bandwidth</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>nllh</code>: </td>
+<td style="text-align: left;"> minimum negative cross-validation log-likelihood</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>n</code>: </td>
+<td style="text-align: left;"> total sample size</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>lambda</code>: </td>
+<td style="text-align: left;"> MLE of lambda (kernel half-width)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>bw</code>: </td>
+<td style="text-align: left;"> MLE of bw (kernel standard deviations)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>kernel</code>: </td>
+<td style="text-align: left;"> kernel name</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>bcmethod</code>: </td>
+<td style="text-align: left;"> boundary correction method</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>proper</code>: </td>
+<td style="text-align: left;"> logical, whether renormalisation is requested</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>nn</code>: </td>
+<td style="text-align: left;"> non-negative correction method</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>offset</code>: </td>
+<td style="text-align: left;"> offset for log transformation method</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>xmax</code>: </td>
+<td style="text-align: left;"> maximum value of scale beta or copula
+</td>
+</tr>
+</table>
+<p>The output list has some duplicate entries and repeats some of the inputs to both 
+provide similar items to those from <code>fpot</code> and to make it 
+as useable as possible.
+</p>
+
+
+<h3>Warning</h3>
+
+<p>Two important practical issues arise with MLE for the kernel bandwidth:
+1) Cross-validation likelihood is needed for the KDE bandwidth parameter
+as the usual likelihood degenerates, so that the MLE <code class="reqn">\hat{\lambda} \rightarrow 0</code> as
+<code class="reqn">n \rightarrow \infty</code>, thus giving a negative bias towards a small bandwidth.
+Leave one out cross-validation essentially ensures that some smoothing between the kernel centres
+is required (i.e. a non-zero bandwidth), otherwise the resultant density estimates would always
+be zero if the bandwidth was zero.
+</p>
+<p>This problem occassionally rears its ugly head for data which has been heavily rounded,
+as even when using cross-validation the density can be non-zero even if the bandwidth is zero.
+To overcome this issue an option to add a small jitter should be added to the data
+(<code>x</code> only) has been included in the fitting inputs, using the 
+<code>jitter</code> function, to remove the ties. The default options red in the 
+<code>jitter</code> are specified above, but the user can override these.
+Notice the default scaling <code>factor=0.1</code>, which is a tenth of the default value in the
+<code>jitter</code>
+function itself.
+</p>
+<p>A warning message is given if the data appear to be rounded
+(i.e. more than 5
+data rounding is the likely culprit. Only use the jittering when the MLE of
+the bandwidth is far too small. 
+</p>
+<p>2) For heavy tailed populations the bandwidth is positively biased, giving oversmoothing
+(see example). The bias is due to the distance between the upper (or lower) order statistics not
+necessarily decaying to zero as the sample size tends to infinity. Essentially, as the distance
+between the two largest (or smallest) sample datapoints does not decay to zero, some smoothing between
+them is required (i.e. bandwidth cannot be zero). One solution to this problem is to splice
+the GPD at a suitable threshold to remove the problematic tail from the inference for the bandwidth, 
+using the <code>fbckdengpd</code> function for a heavy upper tail. See MacDonald et al (2013).
+</p>
+
+
+<h3>Acknowledgments</h3>
+
+<p>Based on code
+by Anna MacDonald produced for MATLAB.
+</p>
+
+
+<h3>Note</h3>
+
+<p>An initial bandwidth must be provided, so <code>linit</code> and <code>bwinit</code> 
+cannot both be <code>NULL</code>
+</p>
+<p>The extra kernel centres <code>extracentres</code> can either be a vector of data or <code>NULL</code>.
+</p>
+<p>Invalid parameter ranges will give <code>0</code> for likelihood, <code>log(0)=-Inf</code> for
+log-likelihood and <code>-log(0)=Inf</code> for negative log-likelihood. 
+</p>
+<p>Infinite and missing sample values are dropped.
+</p>
+<p>Error checking of the inputs is carried out and will either stop or give warning message
+as appropriate.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Yang Hu and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>.
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/Kernel_density_estimation">http://en.wikipedia.org/wiki/Kernel_density_estimation</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Cross-validation_(statistics)">http://en.wikipedia.org/wiki/Cross-validation_(statistics)</a>
+</p>
+<p>Scarrott, C.J. and MacDonald, A. (2012). A review of extreme value
+threshold estimation and uncertainty quantification. REVSTAT - Statistical
+Journal 10(1), 33-59. Available from <a href="http://www.ine.pt/revstat/pdf/rs120102.pdf">http://www.ine.pt/revstat/pdf/rs120102.pdf</a>
+</p>
+<p>Bowman, A.W. (1984). An alternative method of cross-validation for the smoothing of
+density estimates. Biometrika 71(2), 353-360.
+</p>
+<p>Duin, R.P.W. (1976). On the choice of smoothing parameters for Parzen estimators of
+probability density functions. IEEE Transactions on Computers C25(11), 1175-1179.
+</p>
+<p>MacDonald, A., Scarrott, C.J., Lee, D., Darlow, B., Reale, M. and Russell, G. (2011).
+A flexible extreme value mixture model. Computational Statistics and Data Analysis
+55(6), 2137-2157.
+</p>
+<p>MacDonald, A., C. J. Scarrott, and D. S. Lee (2011). Boundary correction, consistency
+and robustness of kernel densities using extreme value theory. Submitted.
+Available from: <a href="http://www.math.canterbury.ac.nz/~c.scarrott">http://www.math.canterbury.ac.nz/~c.scarrott</a>.
+</p>
+<p>Wand, M. and Jones, M.C. (1995). Kernel Smoothing. Chapman &amp;&amp; Hall.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>kernels</code>, <code>kfun</code>,
+<code>jitter</code>, <code>density</code> and
+<code>bw.nrd0</code>
+</p>
+<p>Other kden: <code>bckden</code>, <code>fgkgcon</code>,
+<code>fgkg</code>, <code>fkdengpdcon</code>,
+<code>fkdengpd</code>, <code>fkden</code>,
+<code>kdengpdcon</code>, <code>kdengpd</code>,
+<code>kden</code>
+</p>
+<p>Other bckden: <code>bckdengpdcon</code>,
+<code>bckdengpd</code>, <code>bckden</code>,
+<code>fbckdengpdcon</code>, <code>fbckdengpd</code>,
+<code>fkden</code>, <code>kden</code>
+</p>
+<p>Other bckdengpd: <code>bckdengpdcon</code>,
+<code>bckdengpd</code>, <code>bckden</code>,
+<code>fbckdengpdcon</code>, <code>fbckdengpd</code>,
+<code>fkdengpd</code>, <code>gkg</code>,
+<code>kdengpd</code>, <code>kden</code>
+</p>
+<p>Other bckdengpdcon: <code>bckdengpdcon</code>,
+<code>bckdengpd</code>, <code>bckden</code>,
+<code>fbckdengpdcon</code>, <code>fbckdengpd</code>,
+<code>fkdengpdcon</code>, <code>gkgcon</code>,
+<code>kdengpdcon</code>
+</p>
+<p>Other fbckden: <code>bckden</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(1, 1))
+
+nk=500
+x = rgamma(nk, shape = 1, scale = 2)
+xx = seq(-1, 10, 0.01)
+
+# cut and normalize is very quick 
+fit = fbckden(x, linit = 0.2, bcmethod = "cutnorm")
+hist(x, nk/5, freq = FALSE) 
+rug(x)
+lines(xx, dgamma(xx, shape = 1, scale = 2), col = "black")
+# but cut and normalize does not always work well for boundary correction
+lines(xx, dbckden(xx, x, lambda = fit$lambda, bcmethod = "cutnorm"), lwd = 2, col = "red")
+# Handily, the bandwidth usually works well for other approaches as well
+lines(xx, dbckden(xx, x, lambda = fit$lambda, bcmethod = "simple"), lwd = 2, col = "blue")
+lines(density(x), lty = 2, lwd = 2, col = "green")
+legend("topright", c("True Density", "BC KDE using cutnorm",
+  "BC KDE using simple", "KDE Using density"),
+  lty = c(1, 1, 1, 2), lwd = c(1, 2, 2, 2), col = c("black", "red", "blue", "green"))
+
+# By contrast simple boundary correction is very slow
+# a crude trick to speed it up is to ignore the normalisation and non-negative correction,
+# which generally leads to bandwidth being biased high
+fit = fbckden(x, linit = 0.2, bcmethod = "simple", proper = FALSE, nn = "none")
+hist(x, nk/5, freq = FALSE) 
+rug(x)
+lines(xx, dgamma(xx, shape = 1, scale = 2), col = "black")
+lines(xx, dbckden(xx, x, lambda = fit$lambda, bcmethod = "simple"), lwd = 2, col = "blue")
+lines(density(x), lty = 2, lwd = 2, col = "green")
+
+# but ignoring upper tail in likelihood works a lot better
+q75 = qgamma(0.75, shape = 1, scale = 2)
+fitnotail = fbckden(x[x &lt;= q75], linit = 0.1, 
+   bcmethod = "simple", proper = FALSE, nn = "none", extracentres = x[x &gt; q75])
+lines(xx, dbckden(xx, x, lambda = fitnotail$lambda, bcmethod = "simple"), lwd = 2, col = "red")
+legend("topright", c("True Density", "BC KDE using simple", "BC KDE (upper tail ignored)",
+   "KDE Using density"),
+   lty = c(1, 1, 1, 2), lwd = c(1, 2, 2, 2), col = c("black", "blue", "red", "green"))
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

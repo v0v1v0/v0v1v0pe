@@ -1,0 +1,239 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>likelihood</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the log-likelihood/likelihood for observed branching processes</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the log-likelihood/likelihood for observed branching processes
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">likelihood(
+  chains,
+  statistic = c("size", "length"),
+  offspring_dist,
+  nsim_obs,
+  obs_prob = 1,
+  stat_threshold = Inf,
+  log = TRUE,
+  exclude = NULL,
+  individual = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>chains</code></td>
+<td>
+<p>Vector of chain summaries (sizes/lengths). Can be a
+<code style="white-space: pre;">⁠&lt;numeric&gt;⁠</code> vector or an object of class <code style="white-space: pre;">⁠&lt;epichains&gt;⁠</code> or
+<code style="white-space: pre;">⁠&lt;epichains_summary&gt;⁠</code> (obtained from <code>simulate_chains()</code> or
+<code>simulate_chain_stats()</code>). See examples below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+<p>The chain statistic to track as the
+stopping criteria for each chain being simulated when <code>stat_threshold</code> is not
+<code>Inf</code>; A <code style="white-space: pre;">⁠&lt;string&gt;⁠</code>. It can be one of:
+</p>
+
+<ul>
+<li>
+<p> "size": the total number of cases produced by a chain before it goes
+extinct.
+</p>
+</li>
+<li>
+<p> "length": the total number of generations reached by a chain before
+it goes extinct.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offspring_dist</code></td>
+<td>
+<p>Offspring distribution: a <code style="white-space: pre;">⁠&lt;function&gt;⁠</code> like the ones
+provided by R to generate random numbers from given distributions (e.g.,
+<code>rpois</code> for Poisson). More specifically, the function needs to
+accept at least one argument, <code>n</code>, which is the number of random
+numbers to generate. It can accept further arguments, which will be passed
+on to the random number generating functions. Examples that can be provided
+here are <code>rpois</code> for Poisson distributed offspring, <code>rnbinom</code> for negative
+binomial offspring, or custom functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim_obs</code></td>
+<td>
+<p>Number of simulations to be used to approximate the
+log-likelihood/likelihood if <code>obs_prob &lt; 1</code> (imperfect observation). If
+<code>obs_prob == 1</code>, this argument is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obs_prob</code></td>
+<td>
+<p>Observation probability. A number (probability) between 0
+and 1. A value greater than 0 but less 1 implies imperfect observation and
+simulations will be used to approximate the (log)likelihood. This will
+also require specifying <code>nsim_obs</code>. In the simulation, the observation
+process is assumed to be constant.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat_threshold</code></td>
+<td>
+<p>A stopping criterion for individual chain simulations;
+a positive number coercible to integer. When any chain's cumulative statistic
+reaches or surpasses <code>stat_threshold</code>, that chain ends. It also serves as a
+censoring limit so that results above the specified value, are set to <code>Inf</code>.
+Defaults to <code>Inf</code>. NOTE: For objects of class <code style="white-space: pre;">⁠&lt;epichains&gt;⁠</code> or
+<code style="white-space: pre;">⁠&lt;epichains_summary&gt;⁠</code>, the <code>stat_threshold</code> used in the simulation is
+extracted and used here so if this argument is specified, it is ignored and
+a warning is thrown.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>Should the log-likelihoods be transformed to
+likelihoods? Logical. Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude</code></td>
+<td>
+<p>A vector of indices of the sizes/lengths to exclude from the
+log-likelihood calculation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>individual</code></td>
+<td>
+<p>Logical; If TRUE, a vector of individual
+log-likelihood/likelihood contributions will be returned rather than the
+sum/product.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>any parameters to pass to <code>simulate_chain_stats</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>If <code>log = TRUE</code>
+</p>
+
+<ul>
+<li>
+<p> A joint log-likelihood (sum of individual log-likelihoods), if
+<code>individual == FALSE</code> (default) and <code>obs_prob == 1</code> (default), or
+</p>
+</li>
+<li>
+<p> A list of individual log-likelihoods, if <code>individual == TRUE</code> and
+<code>obs_prob == 1</code> (default), or
+</p>
+</li>
+<li>
+<p> A list of individual log-likelihoods (same length as <code>nsim_obs</code>), if
+<code>individual == TRUE</code> and <code>0 &lt;= obs_prob &lt; 1</code>, or
+</p>
+</li>
+<li>
+<p> A vector of joint log-likelihoods (same length as <code>nsim_obs</code>), if
+individual == FALSE and <code>0 &lt;= obs_prob &lt; 1</code> (imperfect observation).
+</p>
+</li>
+</ul>
+<p>If <code>log = FALSE</code>, the same structure of outputs as above are returned,
+except that likelihoods, instead of log-likelihoods, are calculated in all
+cases. Moreover, the joint likelihoods are the product, instead of the sum,
+of the individual likelihoods.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastian Funk, James M. Azam
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># example of observed chain sizes
+set.seed(121)
+# randomly generate 20 chains of size 1 to 10
+chain_sizes &lt;- sample(1:10, 20, replace = TRUE)
+likelihood(
+  chains = chain_sizes,
+  statistic = "size",
+  offspring_dist = rpois,
+  nsim_obs = 100,
+  lambda = 0.5
+)
+# Example using an &lt;epichains&gt; object
+set.seed(32)
+epichains_obj_eg &lt;- simulate_chains(
+  n_chains = 10,
+  pop = 100,
+  percent_immune = 0,
+  statistic = "size",
+  offspring_dist = rnbinom,
+  stat_threshold = 10,
+  generation_time = function(n) rep(3, n),
+  mu = 2,
+  size = 0.2
+)
+
+epichains_obj_eg_lik &lt;- likelihood(
+  chains = epichains_obj_eg,
+  statistic = "size",
+  offspring_dist = rnbinom,
+  mu = 2,
+  size = 0.2,
+  stat_threshold = 10
+)
+epichains_obj_eg_lik
+
+# Example using a &lt;epichains_summary&gt; object
+set.seed(32)
+epichains_summary_eg &lt;- simulate_chain_stats(
+  n_chains = 10,
+  pop = 100,
+  percent_immune = 0,
+  statistic = "size",
+  offspring_dist = rnbinom,
+  stat_threshold = 10,
+  mu = 2,
+  size = 0.2
+)
+epichains_summary_eg_lik &lt;- likelihood(
+  chains = epichains_summary_eg,
+  statistic = "size",
+  offspring_dist = rnbinom,
+  mu = 2,
+  size = 0.2
+)
+epichains_summary_eg_lik
+</code></pre>
+
+
+</div>

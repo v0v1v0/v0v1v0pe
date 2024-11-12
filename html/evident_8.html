@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>periodontal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Smoking and Periodontal Disease
+</h2>
+
+<h3>Description</h3>
+
+<p>Data from NHANES 2011-2012 containing 441 matched pairs of a daily cigarette smoker and a never smoker, recording the extent of periodontal disease.
+See Rosenbaum (2017, 2021).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("periodontal")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 882 observations on the following 12 variables.
+</p>
+
+<dl>
+<dt><code>SEQN</code></dt>
+<dd>
+<p>NHANES 2011-2012 sequence number</p>
+</dd>
+<dt><code>female</code></dt>
+<dd>
+<p>=1 for female, 0 for male</p>
+</dd>
+<dt><code>age</code></dt>
+<dd>
+<p>Age in years</p>
+</dd>
+<dt><code>black</code></dt>
+<dd>
+<p>=1 for black, 0 for other</p>
+</dd>
+<dt><code>educf</code></dt>
+<dd>
+<p>Education, in five categories. An ordered factor with levels <code>&lt;9</code> for less than 9th grade, <code>9 to 11</code> for 9th to 11th grade, <code>HS/GED</code> for high school or GED degree,
+<code>SomeCol</code> for some college, <code>College</code> for college degree.</p>
+</dd>
+<dt><code>income</code></dt>
+<dd>
+<p>Ratio of family income to the poverty level, capped at 5 times
+the poverty level.</p>
+</dd>
+<dt><code>cigsperday</code></dt>
+<dd>
+<p>Cigarettes smoked per day for daily smokers, 0 for never smokers</p>
+</dd>
+<dt><code>either</code></dt>
+<dd>
+<p>Number of periodonal measurements indicative of periodontal disease.</p>
+</dd>
+<dt><code>neither</code></dt>
+<dd>
+<p>Number of periodonal measurements</p>
+</dd>
+<dt><code>pcteither</code></dt>
+<dd>
+<p>Percent indicative of periodontal disease, =100*either/neither.</p>
+</dd>
+<dt><code>z</code></dt>
+<dd>
+<p>Treatment indicator, 1=daily smoker, 0=never smoker</p>
+</dd>
+<dt><code>mset</code></dt>
+<dd>
+<p>Matched set indicator, 1 to 441.</p>
+</dd>
+</dl>
+<h3>Details</h3>
+
+<p>Excluding wisdom teeth, 6 measurements are taken for each tooth that is present, up to 28 teeth.
+Following Tomar and Asma (2000), a measurement indicates periodontal disease if either there is
+a loss of attachment of at least 4mm or a pocket depth of at least 4mm.  The first individual
+has 11 measurements indicative of periodontal disease, out of 106 measurements, so
+pcteither is 100*11/106 = 10.38 percent.
+</p>
+
+
+<h3>Source</h3>
+
+<p>Data are from the National Health and Nutrition Examination Survey 2011-2012 and were
+used as an example in Rosenbaum (2017).
+</p>
+
+
+<h3>References</h3>
+
+<p>Rosenbaum, P. R. (2015) &lt;https://obsstudies.org/two-r-packages-for-sensitivity-analysis-in-observational-studies/&gt; "Two R packages for sensitivity analysis in observational studies". Observational Studies, 1(1), 1-17.
+</p>
+<p>Rosenbaum, P. R. (2017) &lt;doi:10.1214/17-STS621&gt; "The general structure of evidence factors in observational studies".
+Statistical Science 32, 514-530.
+</p>
+<p>Rosenbaum, Paul R. (2021) &lt;doi:10.1201/9781003039648&gt; Replication and Evidence Factors in Observational Studies.  Chapman and Hall/CRC.
+</p>
+<p>Tomar, S. L. and Asma, S. (2000) &lt;doi:10.1902/jop.2000.71.5.743&gt;  "Smoking attributable periodontitis in the US: Findings
+from NHANES III".  J Periodont 71, 743-751.
+</p>
+<p>"US National Health and Nutrition Examination Survey 2011-2012". www.cdc.gov/nchs/nhanes/index.htm
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Figure 1 in Rosenbaum (2017)
+data(periodontal)
+attach(periodontal)
+oldpar&lt;-par()
+m&lt;-matrix(1:2,1,2)
+layout(m,widths=c(1,2))
+boxplot(pcteither[z==1]-pcteither[z==0],ylab="Smoker-Control Difference",
+        main="(i)",xlab="Matched Pairs",ylim=c(-100,100))
+abline(h=0,lty=2)
+DOS2::crosscutplot(cigsperday[z==1],
+    pcteither[z==1]-pcteither[z==0],
+    ylab="Smoker-Control Difference",
+    xlab="Cigarettes per Day",main="(ii)",
+    ylim=c(-100,100))
+abline(h=0,lty=2)
+
+# Sensitivity analysis in Section 2.3 of Rosenbaum (2017)
+y&lt;-pcteither[z==1]-pcteither[z==0]
+x&lt;-cigsperday[z==1]
+DOS2::senWilcox(y,gamma=2.76)
+# The following is the same as sensitivitymw::senmw(y,gamma=2.77,method="p")
+sensitivitymult::senm(pcteither,z,mset,gamma=2.77,inner=.5,trim=2)
+# The following is the same as sensitivitymw::senmw(y,gamma=3.5,method="p")
+sensitivitymult::senm(pcteither,z,mset,gamma=3.5,inner=.5,trim=2)
+# Second evidence factor
+DOS2::crosscut(x,y)
+DOS2::crosscut(x,y,gamma=1.6)
+
+# Note, however, that other statistics report greater insensitivity to
+# bias by virtue of having larger design sensitivity:
+sensitivitymult::senm(pcteither,z,mset,gamma=3.5,inner=1,trim=4)
+sensitivitymult::senm(pcteither,z,mset,gamma=4.2,inner=1,trim=4)
+DOS2::senU(y,m1=4,m2=5,m=5,gamma=2.77)
+DOS2::senU(y,m1=6,m2=8,m=8,gamma=2.77)
+DOS2::senU(y,m1=6,m2=8,m=8,gamma=3.5)
+detach(periodontal)
+par(oldpar)
+</code></pre>
+
+
+</div>

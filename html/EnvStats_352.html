@@ -1,0 +1,351 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>oneSamplePermutationTest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Fisher's One-Sample Randomization (Permutation) Test for Location
+</h2>
+
+<h3>Description</h3>
+
+<p>Perform Fisher's one-sample randomization (permutation) test for location.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  oneSamplePermutationTest(x, alternative = "two.sided", mu = 0, exact = FALSE, 
+    n.permutations = 5000, seed = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector of observations.  
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+
+<p>character string indicating the kind of alternative hypothesis.  The possible values 
+are <code>"two.sided"</code> (the default), <code>"less"</code>, and <code>"greater"</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+
+<p>numeric scalar indicating the hypothesized value of the mean.  
+The default value is <code>mu=0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exact</code></td>
+<td>
+
+<p>logical scalar indicating whether to perform the exact permutation test 
+(i.e., enumerate all possible permutations) or simply sample from the permutation 
+distribution.  The default value is <code>exact=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.permutations</code></td>
+<td>
+
+<p>integer indicating how many times to sample from the permutation distribution when 
+<code>exact=FALSE</code>.  The default value is <code>n.permutations=5000</code>.  
+This argument is ignored when <code>exact=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>positive integer to pass to the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> function <code>set.seed</code>.  The 
+default is <code>seed=NULL</code>, in which case the current value of 
+<code>.Random.seed</code> is used.  
+Using the <code>seed</code> argument lets you reproduce the exact same result if all 
+other arguments stay the same.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>arguments that can be supplied to the <code>format</code> function.  This 
+argument is used when creating the <code>names</code> attribute for the <code>statistic</code> 
+component of the returned list (see <code>permutationTest.object</code>).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><em>Randomization Tests</em> <br>
+In 1935, R.A. Fisher introduced the idea of a <b><em>randomization test</em></b> 
+(Manly, 2007, p. 107; Efron and Tibshirani, 1993, Chapter 15), which is based on 
+trying to answer the question:  “Did the observed pattern happen by chance, 
+or does the pattern indicate the null hypothesis is not true?”  A randomization 
+test works by simply enumerating all of the possible outcomes under the null 
+hypothesis, then seeing where the observed outcome fits in.  A randomization test 
+is also called a <b><em>permutation test</em></b>, because it involves permuting the 
+observations during the enumeration procedure (Manly, 2007, p. 3).
+</p>
+<p>In the past, randomization tests have not been used as extensively as they are now 
+because of the “large” computing resources needed to enumerate all of the 
+possible outcomes, especially for large sample sizes.  The advent of more powerful 
+personal computers and software has allowed randomization tests to become much 
+easier to perform.  Depending on the sample size, however, it may still be too 
+time consuming to enumerate all possible outcomes.  In this case, the randomization 
+test can still be performed by sampling from the randomization distribution, and 
+comparing the observed outcome to this sampled permutation distribution.
+<br></p>
+<p><em>Fisher's One-Sample Randomization Test for Location</em> <br>
+Let <code class="reqn">\underline{x} = x_1, x_2, \ldots, x_n</code> be a vector of <code class="reqn">n</code> independent 
+and identically distributed (i.i.d.) observations from some symmetric distribution 
+with mean <code class="reqn">\mu</code>.  Consider the test of the null hypothesis that the mean 
+<code class="reqn">\mu</code> is equal to some specified value <code class="reqn">\mu_0</code>:
+</p>
+<p style="text-align: center;"><code class="reqn">H_0: \mu = \mu_0 \;\;\;\;\;\; (1)</code>
+</p>
+
+<p>The three possible alternative hypotheses are the upper one-sided alternative 
+(<code>alternative="greater"</code>)
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \mu &gt; \mu_0 \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>the lower one-sided alternative (<code>alternative="less"</code>)
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \mu &lt; \mu_0 \;\;\;\;\;\; (3)</code>
+</p>
+
+<p>and the two-sided alternative
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \mu \ne \mu_0 \;\;\;\;\;\; (4)</code>
+</p>
+
+<p>To perform the test of the null hypothesis (1) versus any of the three 
+alternatives (2)-(4), Fisher proposed using the test statistic
+</p>
+<p style="text-align: center;"><code class="reqn">T = \sum_{i=1}^n y_i \;\;\;\;\;\; (5)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">y_i = x_i - \mu_0 \;\;\;\;\;\; (6)</code>
+</p>
+
+<p>(Manly, 2007, p. 112).  The test assumes all of the observations come from the 
+same distribution that is symmetric about the true population mean 
+(hence the mean is the same as the median for this distribution).  
+Under the null hypothesis, the <code class="reqn">y_i</code>'s are equally likely to be positive or 
+negative.  Therefore, the permutation distribution of the test statistic <code class="reqn">T</code> 
+consists of enumerating all possible ways of permuting the signs of the 
+<code class="reqn">y_i</code>'s and computing the resulting sums.  For <code class="reqn">n</code> observations, there are 
+<code class="reqn">2^n</code> possible permutations of the signs, because each observation can either 
+be positive or negative.
+</p>
+<p>For a one-sided upper alternative hypothesis (Equation (2)), the p-value is computed 
+as the proportion of sums in the permutation distribution that are greater than or 
+equal to the observed sum <code class="reqn">T</code>.  For a one-sided lower alternative hypothesis 
+(Equation (3)), the p-value is computed as the proportion of sums in the permutation 
+distribution that are less than or equal to the observed sum <code class="reqn">T</code>.  For a 
+two-sided alternative hypothesis (Equation (4)), the p-value is computed by using 
+the permutation distribution of the absolute value of <code class="reqn">T</code> (i.e., <code class="reqn">|T|</code>) 
+and computing the proportion of values in this permutation distribution that are 
+greater than or equal to the observed value of <code class="reqn">|T|</code>.
+<br></p>
+<p><em>Confidence Intervals Based on Permutation Tests</em> <br>
+Based on the relationship between hypothesis tests and confidence intervals, it is 
+possible to construct a two-sided or one-sided <code class="reqn">(1-\alpha)100\%</code> confidence 
+interval for the mean <code class="reqn">\mu</code> based on the one-sample permutation test by finding 
+the values of <code class="reqn">\mu_0</code> that correspond to obtaining a p-value of <code class="reqn">\alpha</code>  
+(Manly, 2007, pp. 18–20, 113).  A confidence interval based on the bootstrap 
+however, will yield a similar type of confidence interval 
+(Efron and Tibshirani, 1993, p. 214); see the help file for 
+<code>boot</code> in the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> package <span class="pkg">boot</span>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class <code>"permutationTest"</code> containing the results of the hypothesis 
+test.  See the help file for <code>permutationTest.object</code> for details.
+</p>
+
+
+<h3>Note</h3>
+
+<p>A frequent question in environmental statistics is “Is the concentration of 
+chemical X greater than Y units?”.  For example, in groundwater assessment 
+(compliance) monitoring at hazardous and solid waste sites, the concentration of a 
+chemical in the groundwater at a downgradient well must be compared to a 
+groundwater protection standard (GWPS).  If the concentration is “above” the 
+GWPS, then the site enters corrective action monitoring.  As another example, soil 
+screening at a Superfund site involves comparing the concentration of a chemical in 
+the soil with a pre-determined soil screening level (SSL).  If the concentration is 
+“above” the SSL, then further investigation and possible remedial action is 
+required.  Determining what it means for the chemical concentration to be 
+“above” a GWPS or an SSL is a policy decision:  the average of the 
+distribution of the chemical concentration must be above the GWPS or SSL, or the 
+median must be above the GWPS or SSL, or the 95'th percentile must be above the 
+GWPS or SSL, or something else.  Often, the first interpretation is used.
+</p>
+<p>Hypothesis tests you can use to perform tests of location include:  
+Student's t-test, Fisher's randomization test, the 
+Wilcoxon signed rank test, 
+Chen's modified t-test, the 
+sign test, and a test based on a bootstrap confidence interval.  
+For a discussion comparing the performance of these tests, see 
+Millard and Neerchal (2001, pp.408-409).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Efron, B., and R.J. Tibshirani. (1993).  <em>An Introduction to the Bootstrap</em>.  
+Chapman and Hall, New York, pp.224–227.
+</p>
+<p>Manly, B.F.J. (2007).  <em>Randomization, Bootstrap and Monte Carlo Methods in 
+Biology</em>.  Third Edition. Chapman &amp; Hall, New York, pp.112-113.
+</p>
+<p>Millard, S.P., and N.K. Neerchal. (2001).  
+<em>Environmental Statistics with S-PLUS</em>.  CRC Press, Boca Raton, FL, pp.404–406.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>permutationTest.object</code>, Hypothesis Tests, 
+<code>boot</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 10 observations from a logistic distribution with parameters 
+  # location=7 and scale=2, and test the null hypothesis that the true mean 
+  # is equal to 5 against the alternative that the true mean is greater than 5. 
+  # Use the exact permutation distribution. 
+  # (Note: the call to set.seed() allows you to reproduce this example).
+
+  set.seed(23) 
+
+  dat &lt;- rlogis(10, location = 7, scale = 2) 
+
+  test.list &lt;- oneSamplePermutationTest(dat, mu = 5, 
+    alternative = "greater", exact = TRUE) 
+
+  # Print the results of the test 
+  #------------------------------
+  test.list 
+
+  #Results of Hypothesis Test
+  #--------------------------
+  #
+  #Null Hypothesis:                 Mean (Median) = 5
+  #
+  #Alternative Hypothesis:          True Mean (Median) is greater than 5
+  #
+  #Test Name:                       One-Sample Permutation Test
+  #                                 (Exact)
+  #
+  #Estimated Parameter(s):          Mean = 9.977294
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     10
+  #
+  #Test Statistic:                  Sum(x - 5) = 49.77294
+  #
+  #P-value:                         0.001953125
+
+
+  # Plot the results of the test 
+  #-----------------------------
+  dev.new()
+  plot(test.list)
+
+  #==========
+
+  # The guidance document "Supplemental Guidance to RAGS: Calculating the 
+  # Concentration Term" (USEPA, 1992d) contains an example of 15 observations 
+  # of chromium concentrations (mg/kg) which are assumed to come from a 
+  # lognormal distribution.  These data are stored in the vector 
+  # EPA.92d.chromium.vec.  Here, we will use the permutation test to test 
+  # the null hypothesis that the mean (median) of the log-transformed chromium 
+  # concentrations is less than or equal to log(100 mg/kg) vs. the alternative 
+  # that it is greater than log(100 mg/kg).  Note that we *cannot* use the 
+  # permutation test to test a hypothesis about the mean on the original scale 
+  # because the data are not assumed to be symmetric about some mean, they are 
+  # assumed to come from a lognormal distribution.
+  #
+  # We will sample from the permutation distribution.
+  # (Note: setting the argument seed=542 allows you to reproduce this example).
+
+  test.list &lt;- oneSamplePermutationTest(log(EPA.92d.chromium.vec), 
+    mu = log(100), alternative = "greater", seed = 542) 
+
+  test.list
+
+  #Results of Hypothesis Test
+  #--------------------------
+  #
+  #Null Hypothesis:                 Mean (Median) = 4.60517
+  #
+  #Alternative Hypothesis:          True Mean (Median) is greater than 4.60517
+  #
+  #Test Name:                       One-Sample Permutation Test
+  #                                 (Based on Sampling
+  #                                 Permutation Distribution
+  #                                 5000 Times)
+  #
+  #Estimated Parameter(s):          Mean = 4.378636
+  #
+  #Data:                            log(EPA.92d.chromium.vec)
+  #
+  #Sample Size:                     15
+  #
+  #Test Statistic:                  Sum(x - 4.60517) = -3.398017
+  #
+  #P-value:                         0.7598
+
+
+  # Plot the results of the test 
+  #-----------------------------
+  dev.new()
+  plot(test.list)
+
+  #----------
+
+  # Clean up
+  #---------
+  rm(test.list)
+  graphics.off()
+</code></pre>
+
+
+</div>

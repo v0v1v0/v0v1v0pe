@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emplikH.disc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical likelihood ratio for discrete hazard
+with right censored, left truncated data</h2>
+
+<h3>Description</h3>
+
+<p>Use empirical likelihood ratio and Wilks theorem to test 
+the null hypothesis that
+</p>
+<p style="text-align: center;"><code class="reqn"> 
+\sum_i[f(x_i, \theta) \log(1- dH(x_i))] = K  
+</code>
+</p>
+
+<p>where <code class="reqn">H(t)</code> is the (unknown) discrete cumulative
+hazard function; <code class="reqn">f(t,\theta)</code> can be any predictable
+function of <code class="reqn">t</code>. 
+<code class="reqn">\theta</code> is the parameter of the function 
+and <code>K</code> is a given constant. 
+The data can be right censored and left truncated.
+</p>
+<p>When the given constants <code class="reqn">\theta</code> and/or <code>K</code> are too far
+away from the NPMLE, there will be no hazard function satisfy this 
+constraint and the minus 2Log empirical likelihood ratio
+will be infinite. In this case the computation will stop.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emplikH.disc(x, d, y= -Inf, K, fun, tola=.Machine$double.eps^.25, theta)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector, the observed survival times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>a vector, the censoring indicators, 1-uncensor; 0-censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>optional vector, the left truncation times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>a real number used in the constraint, sum to this value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a left continuous (weight) function used to calculate
+the weighted discrete hazard in <code class="reqn">H_0</code>. 
+<code>fun(x, theta)</code> must be able to take a
+vector input <code>x</code>, and a parameter <code>theta</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tola</code></td>
+<td>
+<p>an optional positive real number specifying the tolerance of
+iteration error in solve the non-linear equation needed in constrained 
+maximization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>a given real number used as the parameter of the 
+function <code class="reqn">f</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The log likelihood been maximized is the ‘binomial’ empirical likelihood:
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum D_i \log w_i  + (R_i-D_i) \log [1-w_i] </code>
+</p>
+
+<p>where <code class="reqn">w_i = \Delta H(t_i)</code> is the jump 
+of the cumulative hazard function, <code class="reqn">D_i</code> is the number of failures
+observed at <code class="reqn">t_i</code>, <code class="reqn">R_i</code> is the number of subjects at risk at
+time <code class="reqn">t_i</code>.
+</p>
+<p>For discrete distributions, the jump size of the cumulative hazard at
+the last jump is always 1. We have to exclude this jump from the 
+summation since <code class="reqn"> \log( 1- dH(\cdot))</code> do not make sense.
+</p>
+<p>The constants <code>theta</code> and <code>K</code> must be inside the so called
+feasible region for the computation to continue. This is similar to the
+requirement that in testing the value of the mean, the value must be
+inside the convex hull of the observations.
+It is always true that the NPMLE values are feasible. So when the
+computation stops, try move the <code>theta</code> and <code>K</code> closer
+to the NPMLE.  When the computation stops, the -2LLR should have value
+infinite.
+</p>
+<p>In case you do not need the <code>theta</code> in the definition of the
+function <code class="reqn">f</code>, you still need to formally define your <code>fun</code> function
+with a <code>theta</code> input, just to match the arguments.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>the location of the hazard jumps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wts</code></td>
+<td>
+<p>the jump size of hazard function at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>the final value of the Lagrange multiplier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>The discrete -2Log Likelihood ratio.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pval</code></td>
+<td>
+<p>P-value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>niters</code></td>
+<td>
+<p>number of iterations used</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Fang, H. (2000). Binomial Empirical Likelihood Ratio Method in
+Survival Analysis. Ph.D. Thesis, Univ. of Kentucky, Dept
+of Statistics.
+</p>
+<p>Zhou and Fang (2001). 
+“Empirical likelihood ratio for 2 sample problem 
+for censored data”. 
+<em>Tech Report, Univ. of Kentucky, Dept of Statistics</em>
+</p>
+<p>Zhou, M. and Fang, H. (2006). 
+A comparison of Poisson and binomial empirical likelihood.
+<em>Tech Report, Univ. of Kentucky, Dept of Statistics</em>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">fun4 &lt;- function(x, theta) { as.numeric(x &lt;= theta) }
+x &lt;- c(1, 2, 3, 4, 5, 6, 5, 4, 3, 4, 1, 2.4, 4.5)
+d &lt;- c(1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1)
+# test if -H(4) = -0.7 
+emplikH.disc(x=x,d=d,K=-0.7,fun=fun4,theta=4)
+# we should get "-2LLR" 0.1446316  etc....
+y &lt;- c(-2,-2, -2, 1.5, -1)
+emplikH.disc(x=x,d=d,y=y,K=-0.7,fun=fun4,theta=4)
+</code></pre>
+
+
+</div>

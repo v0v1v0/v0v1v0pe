@@ -1,0 +1,273 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>veriApply</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Apply Verification Metrics to Large Datasets</h2>
+
+<h3>Description</h3>
+
+<p>This wrapper applies verification metrics to arrays of forecast ensembles and
+verifying observations. Various array-based data formats are supported.
+Additionally, continuous forecasts (and observations) are transformed to
+category forecasts using user-defined absolute thresholds or percentiles of
+the long-term climatology (see details).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">veriApply(
+  verifun,
+  fcst,
+  obs,
+  fcst.ref = NULL,
+  tdim = length(dim(fcst)) - 1,
+  ensdim = length(dim(fcst)),
+  prob = NULL,
+  threshold = NULL,
+  strategy = "none",
+  na.rm = FALSE,
+  fracmin = 0.8,
+  nmin = NULL,
+  parallel = FALSE,
+  maxncpus = 16,
+  ncpus = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>verifun</code></td>
+<td>
+<p>Name of function to compute verification metric (score, skill
+score)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fcst</code></td>
+<td>
+<p>array of forecast values (at least 2-dimensional)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obs</code></td>
+<td>
+<p>array or vector of verifying observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fcst.ref</code></td>
+<td>
+<p>array of forecast values for the reference forecast (skill
+scores only)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdim</code></td>
+<td>
+<p>index of dimension with the different forecasts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ensdim</code></td>
+<td>
+<p>index of dimension with the different ensemble members</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>probability threshold for category forecasts (see below)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>absolute threshold for category forecasts (see below)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strategy</code></td>
+<td>
+<p>type of out-of-sample reference forecasts or  namelist with
+arguments as in <code>indRef</code> or list of indices for each
+forecast instance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>logical, should incomplete forecasts be used?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fracmin</code></td>
+<td>
+<p>fraction of forecasts that are not-missing for forecast to
+be evaluated. Used to determine <code>nmin</code> when <code>is.null(nmin)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmin</code></td>
+<td>
+<p>number of forecasts that are not-missing for forecast to
+be evaluated. If both <code>nmin</code> an d <code>fracmin</code> are set, <code>nmin</code>
+takes precedence</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>logical, should parallel execution of verification be used
+(see below)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxncpus</code></td>
+<td>
+<p>upper bound for self-selected number of CPUs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncpus</code></td>
+<td>
+<p>number of CPUs used in parallel computation, self-selected
+number of CPUs is used when <code>is.null(ncpus)</code> (the default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments passed to <code>verifun</code></p>
+</td>
+</tr>
+</table>
+<h3>List of functions to be called</h3>
+
+<p>The selection of verification
+functions supplied with this package and as part of
+<code>SpecsVerification</code> can be enquired using
+<code>ls(pos='package:easyVerification')</code> and
+<code>ls(pos='package:SpecsVerification')</code> respectively. Please note,
+however, that only some of the functions provided as part of
+<code>SpecsVerification</code> can be used with <code>veriApply</code>.
+Functions that can be used include for example the (fair) ranked
+probability score <code>EnsRps</code>,
+<code>FairRps</code>, and its skill score
+<code>EnsRpss</code>,
+<code>FairRpss</code>, or the continuous ranked
+probability score <code>EnsCrps</code>, etc.
+</p>
+
+
+<h3>Conversion to category forecasts</h3>
+
+<p>To automatically convert
+continuous forecasts into category forecasts, absolute (<code>threshold</code>)
+or relative thresholds (<code>prob</code>) have to be supplied. For some scores
+and skill scores (e.g. the ROC area and skill score), a list of categories
+will be supplied with categories ordered. That is, if <code>prob = 1:2/3</code>
+for tercile forecasts, <code>cat1</code> corresponds to the lower tercile,
+<code>cat2</code> to the middle, and <code>cat3</code> to the upper tercile.
+</p>
+<p>Absolute and relative thresholds can be supplied in various formats. If a
+vector of thresholds is supplied with the <code>threshold</code> argument, the
+same threshold is applied to all forecasts (e.g. lead times, spatial
+locations). If a vector of relative thresholds is supplied using
+<code>prob</code>, the category boundaries to be applied are computed separately
+for each space-time location. Relative boundaries specified using
+<code>prob</code> are computed separately for the observations and forecasts, but
+jointly for all available ensemble members.
+</p>
+<p>Location specific thresholds can also be supplied. If the thresholds are
+supplied as a matrix, the number of rows has to correspond to the number of
+forecast space-time locations (i.e. same length as
+<code>length(fcst)/prod(dim(fcst)[c(tdim, ensdim)])</code>). Alternatively, but
+equivalently, the thresholds can also be supplied with the dimensionality
+corresponding to the <code>obs</code> array with the difference that the forecast
+dimension in <code>obs</code> contains the category boundaries (absolute or
+relative) and thus may differ in length.
+</p>
+
+
+<h3>Out-of-sample reference forecasts</h3>
+
+<p><code>strategy</code> specifies the
+set-up of the climatological reference forecast for skill scores if no
+explicit reference forecast is provided. The default is <code>strategy = "none"</code>,
+that is all available observations are used as equiprobable
+members of a reference forecast. Alternatively, <code>strategy = "crossval"</code>
+can be used for leave-one-out crossvalidated reference forecasts,
+or <code>strategy = "forward"</code> for a forward protocol (see <code>indRef</code>).
+</p>
+<p>Alternatively, a list with named parameters corresponding to the input
+arguments of <code>indRef</code> can be supplied for more fine-grained
+control over standard cases. Finally, also a list with observation indices
+to be used for each forecast can be supplied (see <code>generateRef</code>).
+</p>
+
+
+<h3>Parallel processing</h3>
+
+<p>Parallel processing is enabled using the
+<code>parallel</code> package. Parallel verification is using
+<code>ncpus</code> <code>FORK</code> clusters or, if <code>ncpus</code> are not specified,
+one less than the autod-etected number of cores. The maximum number of cores
+used for parallel processing with auto-detection of the number of available
+cores can be set with the <code>maxncpus</code> argument.
+</p>
+<p>Progress bars are available for non-parallel computation of the
+verification metrics. Please note, however, that the progress bar only
+indicates the time of computation needed for the actual verification
+metrics, input and output re-arrangement is not included in the progress
+bar.
+</p>
+
+
+<h3>Note</h3>
+
+<p>If the forecasts and observations are only available as category
+probabilities (or ensemble counts as used in <code>SpecsVerification</code>) as
+opposed to as continuous numeric variables, <code>veriApply</code> cannot be used
+but the atomic verification functions for category forecasts have to be
+applied directly.
+</p>
+<p>Out-of-sample reference forecasts are not fully supported for
+categorical forecasts defined on the distribution of forecast values (e.g.
+using the argument <code>prob</code>). Whereas only the years specified in
+<code>strategy</code> are used for the reference forecasts, the probability
+thresholds for the reference forecasts are defined on the collection of
+years specified in <code>strategy</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>convert2prob</code> for conversion of continuous into
+category forecasts (and observations)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">tm &lt;- toyarray()
+f.me &lt;- veriApply("EnsMe", tm$fcst, tm$obs)
+
+## find more examples and instructions in the vignette
+## Not run: 
+devtools::install_github("MeteoSwiss/easyVerification", build_vignettes = TRUE)
+library("easyVerification")
+vignette("easyVerification")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

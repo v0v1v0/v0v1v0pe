@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hash_names</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Anonymise data using scrypt</h2>
+
+<h3>Description</h3>
+
+<p>This function uses the scrypt algorithm from libsodium to anonymise data,
+based on user-indicated data fields. Data fields are concatenated first,
+then each entry is hashed. The function can either return a full detailed
+output, or short labels ready to use for 'anonymised data'.
+Before concatenation (using "_" as a separator) to form labels,
+inputs are modified using [clean_labels()]
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">hash_names(
+  ...,
+  size = 6,
+  full = TRUE,
+  hashfun = "secure",
+  salt = NULL,
+  clean_labels = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Data fields to be hashed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+<p>The number of characters retained in the hash.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>full</code></td>
+<td>
+<p>A logical indicating if the a full output should be returned as a
+<code>data.frame</code>, including original labels, shortened hash, and full
+hash.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hashfun</code></td>
+<td>
+<p>This defines the hashing function to be used. If you specify
+"secure" (default), it will use [sodium::scrypt()], which will be secure,
+but will be slow for large data sets. For fast hashing with no colisions,
+you can sepecify "fast", and it will use [sodium::sha256()], which is
+several orders of magnitude faster than [sodium::scrypt()]. You can also
+specify a hashing function that takes and returns a [raw][base::raw]
+vector of bytes that can be converted to character with [rawToChar()].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>salt</code></td>
+<td>
+<p>An optional object that can be coerced to a character
+to be used to 'salt' the hashing algorithm (see details).
+Ignored if 'NULL'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clean_labels</code></td>
+<td>
+<p>A logical indicating if labels of variables should be
+standardized; defaults to 'TRUE'</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The argument 'salt' should be used for salting the algorithm, i.e. adding
+an extra input to the input fields (the 'salt') to change the resulting hash
+and prevent identification of individuals via pre-computed hash
+tables.
+</p>
+<p>It is highly recommend to choose a secret, random salt in order make it harder
+for an attacker to decode the hash.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thibaut Jombart <a href="mailto:thibautjombart@gmail.com">thibautjombart@gmail.com</a>,
+Dirk Shchumacher <a href="mailto:mail@dirk-schumacher.net">mail@dirk-schumacher.net</a>,
+Zhian N. Kamvar <a href="mailto:zkamvar@gmail.com">zkamvar@gmail.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>[clean_labels()], used to clean labels prior to hashing<br>
+[sodium::hash()] for available hashing functions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+first_name &lt;- c("Jane", "Joe", "Raoul")
+last_name &lt;- c("Doe", "Smith", "Dupont")
+age &lt;- c(25, 69, 36)
+
+# secure hashing
+hash_names(first_name, last_name, age, hashfun = "secure")
+
+# fast hashing
+hash_names(first_name, last_name, age,
+           size = 8, full = FALSE, hashfun = "fast")
+
+
+## salting the hashing (more secure!)
+
+hash_names(first_name, last_name) # unsalted - less secure
+hash_names(first_name, last_name, salt = 123) # salted with an integer
+hash_names(first_name, last_name, salt = "foobar") # salted with an character
+
+## using a different hash algorithm if you want things to run faster
+
+hash_names(first_name, last_name, hashfun = "fast") # use sha256 algorithm
+</code></pre>
+
+
+</div>

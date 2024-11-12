@@ -1,0 +1,247 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>MCMCcopies.cl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parallel simulation of iid copies of a MCMC algorithm - cluster versions</h2>
+
+<h3>Description</h3>
+
+<p> This function simulates “parallel chains” (iid copies)	of a MCMC algorithm 
+for <code>n</code> (time) iterations, i.e. for each chain <code class="reqn">k</code>, the whole trajectory of the chain is generated. It returns an object of class <code>plMCMC</code> (for parallel MCMC) 
+holding  an array of the trajectories and running information.  
+This functions is similar to <code>MCMCcopies</code> and <code>MCMCcopies.mc</code> except that it uses 
+HPC in a more generic way, implementing several types of HPC for running on a single, multicore computer or on a true cluster using MPI communications.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">MCMCcopies.cl(mcmc_algo, n=100, nmc=10, Ptheta0, target, f_param, q_param,
+              cltype="PAR_SOCK", nbnodes=4) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mcmc_algo</code></td>
+<td>
+<p>a list defining an MCMC algorithm in terms of the 
+functions it uses, such as <code>RWHM</code>, see details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>The number of (time) iterations of each single chain to run.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmc</code></td>
+<td>
+<p>The number of iid copies of each single chain.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ptheta0</code></td>
+<td>
+<p>A <code class="reqn">(nmc x d)</code> matrix, with the ith row giving a 
+d-dimensional initial theta values for the ith chain.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>The target density for which the MCMC algorithm is defined; 
+may be given only up to a multiplicative constant for most MCMC. 
+target must be a function such as the multidimensional gaussian
+<code>target_norm(x,param)</code> with argument and parameters passed 
+like in this example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f_param</code></td>
+<td>
+<p>A list holding all the necessary target parameters, 
+consistent with the target definition.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_param</code></td>
+<td>
+<p>A list holding all the necessary parameters 
+for the proposal density of the MCMC algorithm <code>mcmc_algo</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cltype</code></td>
+<td>
+<p>Character string specifying the type of cluster; 
+currently implemented 
+types are: "PAR_SOCK" for socket cluster with <code>parallel</code> library, the default;
+"SNOW_SOCK" for socket cluster with <code>snow</code> library, and
+"SNOW_RMPI" for <code>snow</code> MPI cluster with <code>Rmpi</code> library.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbnodes</code></td>
+<td>
+<p>The number of nodes or virtual cores requested to run the <code>nmc</code>
+simulations in parallel. For the snow version, defaults to all; 
+for the cluster version, defaults to 4.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>MCMCcopies.cl</code> simulates in parallel
+<code>nmc</code> iid copies of the MCMC algorithm passed in the list <code>mcmc_algo</code>, 
+for <code>n</code> (time) iterations, and returns an object of class <code>plMCMC</code> holding an array of the trajectories and running information.
+</p>
+<p><b>About parallel computing:</b>
+</p>
+<p>The <code>Rmpi</code> option is less efficient than the default option
+using <span class="pkg">parallel</span> if you are running on a single computer. 
+MPI communication are required only for running on a true cluster/grid.
+</p>
+<p>This generic <em>cluster</em> version implementing 
+several types of cluster for running on a single, multicore computer
+or on a true cluster using MPI communications may not 
+work on all platform/OS. For instance the parallel socket cluster version 
+does not work on Windows machines (see the <span class="pkg">parallel</span> package documentation).
+</p>
+<p><b>About passing your MCMC algorithm:</b>
+</p>
+<p>The list <code>mcmc_algo</code> must contain the named elements:
+</p>
+
+<ul>
+<li> <p><code>name</code>, the name of the MCMC, such as "RWHM"
+</p>
+</li>
+<li> <p><code>chain</code>, the function for simulation of n steps of a single chain
+</p>
+</li>
+<li> <p><code>step</code>, the function for simulation of 1 step of that algorithm
+</p>
+</li>
+<li> <p><code>q_pdf</code>, the density of the proposal
+</p>
+</li>
+<li> <p><code>q_proposal</code>, the function that simulates a proposal
+</p>
+</li>
+</ul>
+<p>For examples, see the algorithms currently implemented:
+<code>RWHM</code>, the Random Walk Hasting-Metropolis with gaussian proposal;
+<code>HMIS_norm</code>, an Independence Sampler HM with gaussian proposal;
+<code>AMHaario</code>, the Adaptive-Metropolis (AM) from Haario (2001); 
+<code>IID_norm</code>, a gaussian iid sampler which is merely 
+a "fake" MCMC for testing purposes. 
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>MCMCcopies.cl</code> returns a list of class <code>plMCMC</code> with items:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Ptheta</code></td>
+<td>
+<p>The <code>nmc</code> copies of chains in an array(n,d,nmc) 
+of simulated values, where 1st value (1,d,nmc) is <code>Ptheta0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob.accept</code></td>
+<td>
+<p>The estimated rate of acceptation over all simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algo</code></td>
+<td>
+<p>The MCMC algorithm name i.e. <code>mcmc_algo$name</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>The target density.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f_param</code></td>
+<td>
+<p>The list holding all the target parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_param</code></td>
+<td>
+<p>The list holding all the proposal density parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Houssam Alrachid and Didier Chauveau.</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Chauveau, D. and Vandekerkhove, P. (2013), 
+Smoothness of Metropolis-Hastings algorithm and application to entropy estimation.
+<em>ESAIM: Probability and Statistics</em>,  <b>17</b>, 419–431.
+DOI: <a href="http://dx.doi.org/10.1051/ps/2012004">http://dx.doi.org/10.1051/ps/2012004</a>
+</p>
+</li>
+<li>
+<p> Chauveau D. and Vandekerkhove, P. (2014),
+Simulation Based Nearest Neighbor Entropy Estimation for (Adaptive) MCMC Evaluation,
+In <em>JSM Proceedings, Statistical Computing Section</em>.
+Alexandria, VA: American Statistical Association. 2816–2827.
+</p>
+</li>
+<li>
+<p> Chauveau D. and Vandekerkhove, P. (2014),
+The Nearest Neighbor entropy estimate: an adequate tool for adaptive MCMC evaluation.
+<em>Preprint HAL</em> <a href="http://hal.archives-ouvertes.fr/hal-01068081">http://hal.archives-ouvertes.fr/hal-01068081</a>.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p>A simpler cluster version <code>MCMCcopies.mc</code>,
+a single core version <code>MCMCcopies</code>, 
+and functions doing simulation and entropy and Kullback  estimation simultaneously:
+<code>EntropyParallel</code> and <code>EntropyParallel.cl</code> 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Toy example using the bivariate gaussian target
+
+n = 150; nmc = 20; d=2 # bivariate example
+varq=0.1 # variance of the proposal (chosen too small)
+q_param=list(mean=rep(0,d),v=varq*diag(d))
+## initial distribution, located in (2,2), "far" from target center (0,0)
+Ptheta0 &lt;- DrawInit(nmc, d, initpdf = "rnorm", mean = 2, sd = 1) 
+# simulations (may be compared with the singlecore version using system.time)
+s1 &lt;- MCMCcopies.cl(RWHM, n, nmc, Ptheta0, target_norm,
+		              target_norm_param, q_param, nbnodes = 2)
+summary(s1) # method for "plMCMC" object
+  
+## see MCMCcopies example for plots
+</code></pre>
+
+
+</div>

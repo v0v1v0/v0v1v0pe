@@ -1,0 +1,401 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>CI_smd_ind_contrast</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate standardized mean difference (Cohen's d) for an independent groups
+contrast</h2>
+
+<h3>Description</h3>
+
+<script id="MathJax-script" async src="../../mathjaxr/doc/mathjax/es5/tex-chtml-full.js"></script><p><code>CI_smd_ind_contrast</code> returns the point estimate
+and confidence interval for a standardized mean difference (smd aka Cohen's
+<em>d</em> aka Hedges <em>g</em>). A standardized mean difference is a difference in means standardized
+to a standard deviation:
+\[d = \frac{ \psi }{s}\]
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">CI_smd_ind_contrast(
+  means,
+  sds,
+  ns,
+  contrast,
+  conf_level = 0.95,
+  assume_equal_variance = FALSE,
+  correct_bias = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>means</code></td>
+<td>
+<p>A vector of 2 or more means</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sds</code></td>
+<td>
+<p>A vector of standard deviations, same length as means</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ns</code></td>
+<td>
+<p>A vector of sample sizes, same length as means</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+<p>A vector of group weights, same length as means</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf_level</code></td>
+<td>
+<p>The confidence level for the confidence interval, in
+decimal form.  Defaults to 0.95.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>assume_equal_variance</code></td>
+<td>
+<p>Defaults to FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correct_bias</code></td>
+<td>
+<p>Defaults to TRUE; attempts to correct the slight upward
+bias in d derived from a sample.  As of 8/9/2023 - Bias correction
+has been added for more than 2 groups when equal variance is not
+assumed, based on recent updates to statpsych</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list with these named elements:
+</p>
+
+<ul>
+<li>
+<p> effect_size - the point estimate from the sample
+</p>
+</li>
+<li>
+<p> lower - lower bound of the CI
+</p>
+</li>
+<li>
+<p> upper - upper bound of the CI
+</p>
+</li>
+<li>
+<p> numerator - the numerator for Cohen's d_biased;
+the mean difference in the contrast
+</p>
+</li>
+<li>
+<p> denominator - the denominator for Cohen's d_biased;
+if equal variance is assumed this is sd_pooled, otherwise sd_avg
+</p>
+</li>
+<li>
+<p> df - the degrees of freedom used for correction and CI calculation
+</p>
+</li>
+<li>
+<p> se - the standard error of the estimate; <strong>warning</strong> not totally
+sure about this yet
+</p>
+</li>
+<li>
+<p> moe - margin of error; 1/2 length of the CI
+</p>
+</li>
+<li>
+<p> d_biased - Cohen's d without correction applied
+</p>
+</li>
+<li>
+<p> properties - a list of properties for the result
+</p>
+<p>Properties
+</p>
+</li>
+<li>
+<p> effect_size_name - if equal variance assumed d_s, otherwise d_avg
+</p>
+</li>
+<li>
+<p> effect_size_name_html - html representation of d_name
+</p>
+</li>
+<li>
+<p> denominator_name - if equal variance assumed sd_pooled otherwise sd_avg
+</p>
+</li>
+<li>
+<p> denominator_name_html - html representation of denominator name
+</p>
+</li>
+<li>
+<p> bias_corrected - TRUE/FALSE if bias correction was applied
+</p>
+</li>
+<li>
+<p> message - a message explaining denominator and correction status
+</p>
+</li>
+<li>
+<p> message_html - html representation of message
+</p>
+</li>
+</ul>
+<h3>Details</h3>
+
+
+
+<h4>It's a bit complicated</h4>
+
+<p>A standardized mean difference turns out to be complicated.
+</p>
+<p>First, it has many names:
+</p>
+
+<ul>
+<li>
+<p> standardized mean difference (smd)
+</p>
+</li>
+<li>
+<p> Cohen's <em>d</em>
+</p>
+</li>
+<li>
+<p> When bias in a sample d has been corrected, also called Hedge's <em>g</em>
+</p>
+</li>
+</ul>
+<p>Second, the choice of the standardizer requires thought:
+</p>
+
+<ul>
+<li>
+<p> sd_pooled - used when assuming all groups have exact same variance
+</p>
+</li>
+<li>
+<p> sd_avg - does not require assumption of equal variance
+</p>
+</li>
+<li>
+<p> other possibilities, too, but not dealt with in this function
+</p>
+</li>
+</ul>
+<p>The choice of standardizer is important, so it's noted in the subscript:
+</p>
+
+<ul>
+<li>
+<p> d_s – assumes equal variance, standardized to sd_pooled
+</p>
+</li>
+<li>
+<p> d_avg - does not assume equal variance, standardized to sd_avg
+</p>
+</li>
+</ul>
+<p>A third complication is the issue of bias: d estimated from a sample has a
+slight upward bias at smaller sample sizes.  With total sample size &gt; 30,
+this slight bias becomes fairly negligible (kind of like the small upward
+bias in a sample standard deviation).
+</p>
+<p>This bias can be corrected when equal variance is assumed or when the
+design of the study is simple (2 groups).  For complex designs (&gt;2 groups)
+without the assumption of equal variance, there is now also an
+approximate approach to correcting bias from Bonett.
+</p>
+<p>Corrections for bias produce a long-run reduction in average bias.
+Corrections for bias are approximate.
+</p>
+
+
+
+<h4>How are d and its CI calculated?</h4>
+
+
+
+<h5>When equal variance is assumed</h5>
+
+<p>When equal variance is assumed, the standardized mean difference is
+d_s, defined in Kline, p. 196:
+</p>
+\[ d_s = \frac{ \psi }{ sd_{pooled} } \]
+<p>where psi is defined in Kline, equation 7.8:
+</p>
+\[ \psi =\sum_{i=1}^{a}c_iM_i \]
+<p>and where sd_pooled is defined in Kline, equation 3.11
+\[sd_{pooled} = { \frac{ \sum_{i=1}^{a} (n_i -1) s_i^2 } { \sum_{i=1}^{a} (n_i-1) } }\]
+</p>
+<p>The CI for d_s is derived from lambda-prime transformation from Lecoutre,
+2007 with code adapted from Cousineau &amp; Goulet-Pelletier, 2020. Kelley,
+2007 explains the general approach for linear contrasts.
+</p>
+<p>This approach to generating the CI is 'exact', meaning coverage should be
+as desired <em>if</em> all assumptions are met (ha!).
+</p>
+<p>Correction of upward bias can be applied.
+</p>
+
+
+
+<h5>When equal variance is not assumed</h5>
+
+<p>When equal variance is not
+assumed, the standardized mean difference is d_avg, defined in Bonett,
+equation 6:
+</p>
+\[ d_{avg} = \frac{ \psi }{ sd_{avg} }\]
+<p>Where sd_avg is the square root of the average of the group variances, as
+given in Bonett, explanation of equation 6:
+</p>
+\[sd_{avg} = \sqrt{ \frac{ \sum_{i=1}^{a} s_i^2 }{ a } }\]
+
+
+<h6>If only 2 groups</h6>
+
+
+<ul>
+<li>
+<p> The CI is derived from lambda-prime transformation
+using df and se from Huynh, 1989 – see especially Delacre et al., 2021
+</p>
+</li>
+<li>
+<p> This is also an 'exact' approach, and correction can be applied
+</p>
+</li>
+</ul>
+<h6>If more than 2 groups</h6>
+
+
+<ul>
+<li>
+<p> CI is approximated using the approach from Bonett, 2008
+</p>
+</li>
+<li>
+<p> An approximate correction developed by Bonett is used
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Bonett D. G. (2023). statpsych: Statistical Methods for Psychologists. R package version 1.4.0.
+<a href="https://dgbonett.github.io/statpsych/">https://dgbonett.github.io/statpsych</a>
+</p>
+</li>
+<li>
+<p> Bonett, D. G. (2018).  R code posted to personal website (now removed).
+Formally at https://people.ucsc.edu/~dgbonett/psyc204.html
+</p>
+</li>
+<li>
+<p> Bonett, D. G. (2008). Confidence Intervals for Standardized Linear
+Contrasts of Means. <em>Psychological Methods</em>, 13(2), 99–109.
+<a href="https://doi.org/10.1037/1082-989X.13.2.99">doi:10.1037/1082-989X.13.2.99</a>
+</p>
+</li>
+<li>
+<p> Cousineau &amp; Goulet-Pelletier (2020)
+<a href="https://osf.io/preprints/psyarxiv/s2597">https://osf.io/preprints/psyarxiv/s2597</a>
+</p>
+</li>
+<li>
+<p> Delacre et al., 2021,
+<a href="https://osf.io/preprints/psyarxiv/tu6mp/">https://osf.io/preprints/psyarxiv/tu6mp/</a>
+</p>
+</li>
+<li>
+<p> Huynh, C.-L. (1989). A unified approach to the estimation of effect size
+in meta-analysis. NBER Working Paper Series, 58(58), 99–104.
+</p>
+</li>
+<li>
+<p> Kelley, K. (2007). Confidence intervals for standardized effect sizes:
+Theory, application, and implementation.
+<em>Journal of Statistical Software, 20(8)</em>, 1–24.
+<a href="https://doi.org/10.18637/jss.v020.i08">doi:10.18637/jss.v020.i08</a>
+</p>
+</li>
+<li>
+<p> Lecoutre, B. (2007). Another Look at the Confidence Intervals for the
+Noncentral T Distribution. Journal of Modern Applied Statistical Methods,
+6(1), 107–116. <a href="https://doi.org/10.22237/jmasm/1177992600">doi:10.22237/jmasm/1177992600</a>
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+
+<ul><li> <p><code>estimate_mdiff_ind_contrast</code> for friendly version that also
+returns raw score effect sizes for this design
+</p>
+</li></ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example from Kline, 2013
+#  Data in Table 3.4
+#  Worked out in Chapter 7
+#  See p. 202, non-central approach
+# With equal variance assumed and no correction, should give:
+#   d_s = -0.8528028 [-2.121155, 0.4482578]
+
+res &lt;- esci::CI_smd_ind_contrast(
+  means = c(13, 11, 15),
+  sds = c(2.738613, 2.236068, 2.000000),
+  ns = c(5, 5, 5),
+  contrast = contrast &lt;- c(1, 0, -1),
+  conf_level = 0.95,
+  assume_equal_variance = TRUE,
+  correct_bias = FALSE
+)
+
+
+# Example from [statpsych::ci.lc.stdmean.bs()] should give:
+# Estimate        SE        LL         UL
+# Unweighted standardizer: -1.273964 0.3692800 -2.025039 -0.5774878
+# Weighted standardizer:   -1.273964 0.3514511 -1.990095 -0.6124317
+# Group 1 standardizer:    -1.273810 0.4849842 -2.343781 -0.4426775
+
+
+res &lt;- esci::CI_smd_ind_contrast(
+  means = c(33.5, 37.9, 38.0, 44.1),
+  sds = c(3.84, 3.84, 3.65, 4.98),
+  ns = c(10,10,10,10),
+  contrast = c(.5, .5, -.5, -.5),
+  conf_level = 0.95,
+  assume_equal_variance = FALSE,
+  correct_bias = TRUE
+)
+
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,116 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cluster_sessions</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cluster sessions with <code>mclust</code> package</h2>
+
+<h3>Description</h3>
+
+<p>Cluster sessions with <code>mclust</code> package
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cluster_sessions(
+  sessions,
+  k,
+  seed,
+  mclust_tol = 1e-08,
+  mclust_itmax = 10000,
+  log = FALSE,
+  start = getOption("evprof.start.hour")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sessions</code></td>
+<td>
+<p>tibble, sessions data set in evprof
+<a href="https://mcanigueral.github.io/evprof/articles/sessions-format.html">standard format</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>number of clusters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>random seed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mclust_tol</code></td>
+<td>
+<p>tolerance parameter for clustering</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mclust_itmax</code></td>
+<td>
+<p>maximum number of iterations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, whether to transform <code>ConnectionStartDateTime</code> and
+<code>ConnectionHours</code> variables to natural logarithmic scale (base = <code>exp(1)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>integer, start hour in the x axis of the plot.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>list with two attributes: sessions and models
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+
+# Select working day sessions (`Timecycle == 1`) that
+# disconnect the same day (`Disconnection == 1`)
+sessions_day &lt;- california_ev_sessions %&gt;%
+  divide_by_timecycle(
+    months_cycles = list(1:12), # Not differentiation between months
+    wdays_cycles = list(1:5, 6:7) # Differentiation between workdays/weekends
+  ) %&gt;%
+  divide_by_disconnection(
+    division_hour = 10, start = 3
+  ) %&gt;%
+  filter(
+    Disconnection == 1, Timecycle == 1
+  ) %&gt;%
+  sample_frac(0.05)
+plot_points(sessions_day, start = 3)
+
+# Identify two clusters
+sessions_clusters &lt;- cluster_sessions(
+  sessions_day, k=2, seed = 1234, log = TRUE
+)
+
+# The column `Cluster` has been added
+names(sessions_clusters$sessions)
+plot_points(sessions_clusters$sessions) +
+  ggplot2::aes(color = Cluster)
+
+</code></pre>
+
+
+</div>

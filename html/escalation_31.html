@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_dfcrm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get an object to fit the CRM model using the dfcrm package.</h2>
+
+<h3>Description</h3>
+
+<p>This function returns an object that can be used to fit a CRM model using
+methods provided by the dfcrm package.
+</p>
+<p>Dose selectors are designed to be daisy-chained together to achieve different
+behaviours. This class is a **resumptive** selector, meaning it carries on
+when the previous dose selector, where present, has elected not to continue.
+For example, this allows instances of this class to be preceded by a selector
+that follows a fixed path in an initial escalation plan, such as that
+provided by <code>follow_path</code>. In this example, when the observed
+trial outcomes deviate from that initial plan, the selector following the
+fixed path elects not to continue and responsibility passes to this class.
+See Examples.
+</p>
+<p>The time-to-event variant, TITE-CRM, is used via the
+<code>dfcrm::titecrm</code> function when you specify <code>tite = TRUE</code>. This
+weights the observations to allow dose-selections based on partially observed
+outcomes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_dfcrm(parent_selector_factory = NULL, skeleton, target, tite = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>optional object of type
+<code>selector_factory</code> that is in charge of dose selection before
+this class gets involved. Leave as NULL to just use CRM from the start.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skeleton</code></td>
+<td>
+<p>Dose-toxicity skeleton, a non-decreasing vector of
+probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>We seek a dose with this probability of toxicity.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tite</code></td>
+<td>
+<p>FALSE to use regular CRM; TRUE to use TITE-CRM. See Description.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra args are passed to <code>crm</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code> that can fit the
+CRM model to outcomes.
+</p>
+
+
+<h3>References</h3>
+
+<p>Cheung, K. 2019. dfcrm: Dose-Finding by the Continual Reassessment Method.
+R package version 0.2-2.1. https://CRAN.R-project.org/package=dfcrm
+</p>
+<p>Cheung, K. 2011. Dose Finding by the Continual Reassessment Method.
+Chapman and Hall/CRC. ISBN 9781420091519
+</p>
+<p>O’Quigley J, Pepe M, Fisher L. Continual reassessment method: a practical
+design for phase 1 clinical trials in cancer. Biometrics. 1990;46(1):33-48.
+doi:10.2307/2531628
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">skeleton &lt;- c(0.05, 0.1, 0.25, 0.4, 0.6)
+target &lt;- 0.25
+model1 &lt;- get_dfcrm(skeleton = skeleton, target = target)
+
+# By default, dfcrm fits the empiric model:
+outcomes &lt;- '1NNN 2NTN'
+model1 %&gt;% fit(outcomes) %&gt;% recommended_dose()
+
+# But we can provide extra args to get_dfcrm that are than passed onwards to
+# the call to dfcrm::crm to override the defaults. For example, if we want
+# the one-parameter logistic model:
+model2 &lt;- get_dfcrm(skeleton = skeleton, target = target, model = 'logistic')
+model2 %&gt;% fit(outcomes) %&gt;% recommended_dose()
+# dfcrm does not offer a two-parameter logistic model but other classes do.
+
+# We can use an initial dose-escalation plan, a pre-specified path that
+# should be followed until trial outcomes deviate, at which point the CRM
+# model takes over. For instance, if we want to use two patients at each of
+# the first three doses in the absence of toxicity, irrespective the model's
+# advice, we would run:
+model1 &lt;- follow_path('1NN 2NN 3NN') %&gt;%
+  get_dfcrm(skeleton = skeleton, target = target)
+
+# If outcomes match the desired path, the path is followed further:
+model1 %&gt;% fit('1NN 2N') %&gt;% recommended_dose()
+
+# But when the outcomes diverge:
+model1 %&gt;% fit('1NN 2T') %&gt;% recommended_dose()
+
+# Or the pre-specified path comes to an end:
+model1 %&gt;% fit('1NN 2NN 3NN') %&gt;% recommended_dose()
+# The CRM model takes over.
+
+</code></pre>
+
+
+</div>

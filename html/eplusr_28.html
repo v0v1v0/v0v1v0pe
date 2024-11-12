@@ -1,0 +1,1143 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EplusSql</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Retrieve Simulation Outputs Using EnergyPlus SQLite Output File</h2>
+
+<h3>Description</h3>
+
+<p><code>EplusSql</code> class wraps SQL queries that can retrieve simulation outputs using
+EnergyPlus SQLite output file.
+</p>
+
+
+<h3>Details</h3>
+
+<p>SQLite output is an optional output format for EnergyPlus. It will be created
+if there is an object in class <code>Output:SQLite</code>. If the value of field
+<code>Option</code> in class <code>Output:SQLite</code> is set to <code>"SimpleAndTabular"</code>, then
+database tables related to the tabular reports will be also included.
+</p>
+<p>There are more than 30 tables in the SQLite output file which contains all of
+the data found in EnergyPlus's tabular output files, standard variable and
+meter output files, plus a number of reports that are found in the
+eplusout.eio output file. The full description for SQLite outputs can be
+found in the EnergyPlus <em>"Output Details and Examples"</em> documentation.  Note
+that all column names of tables returned have been tidied, i.e. <code>"KeyValue"</code>
+becomes <code>"key_value"</code>, <code>"IsMeter"</code> becomes <code>"is_meter"</code> and etc.
+</p>
+<p><code>EplusSql</code> class makes it possible to directly retrieve simulation results
+without creating an EplusJob object. EplusJob can only get simulation
+outputs after the job was successfully run before.
+</p>
+<p>However, it should be noted that, unlike EplusJob, there is no checking on
+whether the simulation is terminated or completed unsuccessfully or, the
+parent Idf has been changed since last simulation. This means that you may
+encounter some problems when retrieve data from an unsuccessful simulation.
+It is suggested to carefully go through the <code>.err</code> file using <code>read_err()</code> to
+make sure the output data in the SQLite is correct and reliable.
+</p>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-EplusSql-new"><code>EplusSql$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusSql-path"><code>EplusSql$path()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusSql-path_idf"><code>EplusSql$path_idf()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusSql-list_table"><code>EplusSql$list_table()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusSql-read_table"><code>EplusSql$read_table()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusSql-report_data_dict"><code>EplusSql$report_data_dict()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusSql-report_data"><code>EplusSql$report_data()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusSql-tabular_data"><code>EplusSql$tabular_data()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusSql-print"><code>EplusSql$print()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-EplusSql-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create an <code>EplusSql</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$new(sql)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>sql</code></dt>
+<dd>
+<p>A path to an local EnergyPlus SQLite output file.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>An <code>EplusSql</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+if (is_avail_eplus("8.8")) {
+    idf_name &lt;- "1ZoneUncontrolled.idf"
+    epw_name &lt;-  "USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+
+    idf_path &lt;- path_eplus_example("8.8", idf_name)
+    epw_path &lt;- path_eplus_weather("8.8", epw_name)
+
+    # copy to tempdir and run the model
+    idf &lt;- read_idf(idf_path)
+    idf$run(epw_path, tempdir(), echo = FALSE)
+
+    # create from local file
+    sql &lt;- eplus_sql(file.path(tempdir(), "1ZoneUncontrolled.sql"))
+}
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusSql-path"></a>
+
+
+
+<h4>Method <code>path()</code>
+</h4>
+
+<p>Get the file path of current <code>EpwSql</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$path()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$path()⁠</code> returns the path of EnergyPlus SQLite file.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single string.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get path
+sql$path()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusSql-path_idf"></a>
+
+
+
+<h4>Method <code>path_idf()</code>
+</h4>
+
+<p>Get the path of corresponding IDF file
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$path_idf()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$path_idf()⁠</code> returns the IDF file path with same name as the SQLite
+file in the same folder. <code>NULL</code> is returned if no corresponding IDF
+is found.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>NULL or a single string.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get path
+sql$path_idf()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusSql-list_table"></a>
+
+
+
+<h4>Method <code>list_table()</code>
+</h4>
+
+<p>List all table names in current EnergyPlus SQL output
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$list_table()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$list_table()⁠</code> returns all available table and view names in the
+EnergyPlus SQLite file.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+sql$list_table()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusSql-read_table"></a>
+
+
+
+<h4>Method <code>read_table()</code>
+</h4>
+
+<p>Read a single table from current EnergyPlus SQL output
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$read_table(name)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>name</code></dt>
+<dd>
+<p>A single string specifying the name of table to read.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$read_table()⁠</code> takes a valid table <code>name</code> of those from
+<a href="../../eplusr/html/EplusSql.html#method-list_table"><code>$list_table()</code></a>
+and returns that table data in a <code>data.table::data.table()</code> format.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# read a specific table
+sql$read_table("Zones")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusSql-report_data_dict"></a>
+
+
+
+<h4>Method <code>report_data_dict()</code>
+</h4>
+
+<p>Read report data dictionary from current EnergyPlus SQL output
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$report_data_dict()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$report_data_dict()⁠</code> returns a <code>data.table::data.table()</code> which
+contains all information about report data.
+</p>
+<p>For details on the meaning of each columns, please see "2.20.2.1
+ReportDataDictionary Table" in EnergyPlus "Output Details and
+Examples" documentation.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> of 10 columns:
+</p>
+
+<ul>
+<li> <p><code>report_data_dictionary_index</code>: The integer used to link the
+dictionary data to the variable data. Mainly useful when joining
+different tables
+</p>
+</li>
+<li> <p><code>is_meter</code>: Whether report data is a meter data. Possible values:
+<code>0</code> and <code>1</code>
+</p>
+</li>
+<li> <p><code>timestep_type</code>: Type of data timestep. Possible values: <code>Zone</code> and
+<code style="white-space: pre;">⁠HVAC System⁠</code>
+</p>
+</li>
+<li> <p><code>key_value</code>: Key name of the data
+</p>
+</li>
+<li> <p><code>name</code>: Actual report data name
+</p>
+</li>
+<li> <p><code>reporting_frequency</code>:
+</p>
+</li>
+<li> <p><code>schedule_name</code>: Name of the the schedule that controls reporting
+frequency.
+</p>
+</li>
+<li> <p><code>units</code>: The data units
+</p>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+sql$report_data_dict()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusSql-report_data"></a>
+
+
+
+<h4>Method <code>report_data()</code>
+</h4>
+
+<p>Read report data
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$report_data(
+  key_value = NULL,
+  name = NULL,
+  year = NULL,
+  tz = "UTC",
+  case = "auto",
+  all = FALSE,
+  wide = FALSE,
+  period = NULL,
+  month = NULL,
+  day = NULL,
+  hour = NULL,
+  minute = NULL,
+  interval = NULL,
+  simulation_days = NULL,
+  day_type = NULL,
+  environment_name = NULL
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>key_value</code></dt>
+<dd>
+<p>A character vector to identify key values of the
+data. If <code>NULL</code>, all keys of that variable will be returned.
+<code>key_value</code> can also be data.frame that contains <code>key_value</code>
+and <code>name</code> columns. In this case, <code>name</code> argument in
+<code style="white-space: pre;">⁠$report_data()⁠</code> is ignored. All available <code>key_value</code> for
+current simulation output can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-report_data_dict"><code>$report_data_dict()</code></a>.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>name</code></dt>
+<dd>
+<p>A character vector to identify names of the data. If
+<code>NULL</code>, all names of that variable will be returned. If
+<code>key_value</code> is a data.frame, <code>name</code> is ignored. All available
+<code>name</code> for current simulation output can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-report_data_dict"><code>$report_data_dict()</code></a>.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>year</code></dt>
+<dd>
+<p>Year of the date time in column <code>datetime</code>. If <code>NULL</code>, it
+will calculate a year value that meets the start day of week
+restriction for each environment. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>tz</code></dt>
+<dd>
+<p>Time zone of date time in column <code>datetime</code>. Default:
+<code>"UTC"</code>.</p>
+</dd>
+<dt><code>case</code></dt>
+<dd>
+<p>A single string used to add a character column <code>case</code> in
+the returned results to indicate the case of this simulation.
+If <code>NULL</code>, no column is added. If <code>"auto"</code>, the name of the
+IDF file without extension is used. Default: <code>"auto"</code>.</p>
+</dd>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>TRUE</code>, extra columns are also included in the returned
+<code>data.table::data.table()</code>.</p>
+</dd>
+<dt><code>wide</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the output is formatted in the same way as
+standard EnergyPlus csv output file.</p>
+</dd>
+<dt><code>period</code></dt>
+<dd>
+<p>A Date or POSIXt vector used to specify which time
+period to return. The year value does not matter and only
+month, day, hour and minute value will be used when
+subsetting. If <code>NULL</code>, all time period of data is returned.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>month, day, hour, minute</code></dt>
+<dd>
+<p>Each is an integer vector for month,
+day, hour, minute subsetting of <code>datetime</code> column when
+querying on the SQL database. If <code>NULL</code>, no subsetting is
+performed on those components. All possible <code>month</code>, <code>day</code>,
+<code>hour</code> and <code>minute</code> can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-read_table"><code>$read_table("Time")</code></a>.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>interval</code></dt>
+<dd>
+<p>An integer vector used to specify which interval
+length of report to extract. If <code>NULL</code>, all interval will be
+used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>simulation_days</code></dt>
+<dd>
+<p>An integer vector to specify which simulation
+day data to extract. Note that this number resets after warmup
+and at the beginning of an environment period. All possible
+<code>simulation_days</code> can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-read_table"><code>$read_table("Time")</code></a>.
+If <code>NULL</code>, all simulation days will be used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>day_type</code></dt>
+<dd>
+<p>A character vector to specify which day type of data
+to extract. All possible day types are: <code>Sunday</code>, <code>Monday</code>,
+<code>Tuesday</code>, <code>Wednesday</code>, <code>Thursday</code>, <code>Friday</code>, <code>Saturday</code>,
+<code>Holiday</code>, <code>SummerDesignDay</code>, <code>WinterDesignDay</code>, <code>CustomDay1</code>,
+and <code>CustomDay2</code>. All possible values for current simulation
+output can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-read_table"><code>$read_table("Time")</code></a>.
+A few grouped options are also provided:
+</p>
+
+<ul>
+<li> <p><code>"Weekday"</code>: All working days, i.e. from Monday to Friday
+</p>
+</li>
+<li> <p><code>"Weekend"</code>: Saturday and Sunday
+</p>
+</li>
+<li> <p><code>"DesignDay"</code>: Equivalent to <code>"SummerDesignDay"</code> plus <code>"WinterDesignDay"</code>
+</p>
+</li>
+<li> <p><code>"CustomDay"</code>: CustomDay1 and CustomDay2
+</p>
+</li>
+<li> <p><code>"SpecialDay"</code>: Equivalent to <code>"DesignDay"</code> plus <code>"CustomDay"</code>
+</p>
+</li>
+<li> <p><code>"NormalDay"</code>: Equivalent to <code>"Weekday"</code> and <code>"Weekend"</code> plus <code>"Holiday"</code>
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>environment_name</code></dt>
+<dd>
+<p>A character vector to specify which
+environment data to extract. If <code>NULL</code>, all environment data
+are returned. Default: <code>NULL</code>. All possible
+<code>environment_name</code> for current simulation output can be
+obtained using:
+</p>
+<div class="sourceCode"><pre>$read_table("EnvironmentPeriods")
+</pre></div>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$report_data()⁠</code> extracts the report data in a
+<code>data.table::data.table()</code> using key values, variable names and other
+specifications.
+</p>
+<p><code style="white-space: pre;">⁠$report_data()⁠</code> can also directly take all or subset output from
+<code style="white-space: pre;">⁠$report_data_dict()⁠</code> as input, and extract all data specified.
+</p>
+<p>The returned column numbers varies depending on <code>all</code> argument.
+</p>
+
+<ul>
+<li> <p><code>all</code> is <code>FALSE</code>, the returned <code>data.table::data.table()</code> has 6 columns:
+</p>
+
+<ul>
+<li> <p><code>case</code>: Simulation case specified using <code>case</code> argument
+</p>
+</li>
+<li> <p><code>datetime</code>: The date time of simulation result
+</p>
+</li>
+<li> <p><code>key_value</code>: Key name of the data
+</p>
+</li>
+<li> <p><code>name</code>: Actual report data name
+</p>
+</li>
+<li> <p><code>units</code>: The data units
+</p>
+</li>
+<li> <p><code>value</code>: The data value
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>all</code> is <code>TRUE</code>, besides columns described above, extra columns are also
+included:
+</p>
+
+<ul>
+<li> <p><code>month</code>: The month of reported date time
+</p>
+</li>
+<li> <p><code>day</code>: The day of month of reported date time
+</p>
+</li>
+<li> <p><code>hour</code>: The hour of reported date time
+</p>
+</li>
+<li> <p><code>minute</code>: The minute of reported date time
+</p>
+</li>
+<li> <p><code>dst</code>: Daylight saving time indicator. Possible values: <code>0</code> and <code>1</code>
+</p>
+</li>
+<li> <p><code>interval</code>: Length of reporting interval
+</p>
+</li>
+<li> <p><code>simulation_days</code>: Day of simulation
+</p>
+</li>
+<li> <p><code>day_type</code>: The type of day, e.g. <code>Monday</code>, <code>Tuesday</code> and etc.
+</p>
+</li>
+<li> <p><code>environment_period_index</code>: The indices of environment.
+</p>
+</li>
+<li> <p><code>environment_name</code>: A text string identifying the environment.
+</p>
+</li>
+<li> <p><code>is_meter</code>: Whether report data is a meter data. Possible values: <code>0</code> and
+<code>1</code>
+</p>
+</li>
+<li> <p><code>type</code>: Nature of data type with respect to state. Possible values: <code>Sum</code>
+and <code>Avg</code>
+</p>
+</li>
+<li> <p><code>index_group</code>: The report group, e.g. <code>Zone</code>, <code>System</code>
+</p>
+</li>
+<li> <p><code>timestep_type</code>: Type of data timestep. Possible values: <code>Zone</code> and <code style="white-space: pre;">⁠HVAC System⁠</code>
+</p>
+</li>
+<li> <p><code>reporting_frequency</code>: The reporting frequency of the variable, e.g.
+<code style="white-space: pre;">⁠HVAC System Timestep⁠</code>, <code style="white-space: pre;">⁠Zone Timestep⁠</code>.
+</p>
+</li>
+<li> <p><code>schedule_name</code>: Name of the the schedule that controls reporting
+frequency.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>With the <code>datetime</code> column, it is quite straightforward to apply time-series
+analysis on the simulation output. However, another painful thing is that
+every simulation run period has its own <code style="white-space: pre;">⁠Day of Week for Start Day⁠</code>. Randomly
+setting the <code>year</code> may result in a date time series that does not have
+the same start day of week as specified in the RunPeriod objects.
+</p>
+<p>eplusr provides a simple solution for this. By setting <code>year</code> to <code>NULL</code>,
+which is the default behavior, eplusr will calculate a year value (from
+year 2017 backwards) for each run period that compliances with the start
+day of week restriction.
+</p>
+<p>It is worth noting that EnergyPlus uses 24-hour clock system where 24 is only
+used to denote midnight at the end of a calendar day. In EnergyPlus output,
+"00:24:00" with a time interval being 15 mins represents a time period from
+"00:23:45" to "00:24:00", and similarly "00:15:00" represents a time period
+from "00:24:00" to "00:15:00" of the next day. This means that if current day
+is Friday, day of week rule applied in schedule time period "00:23:45" to
+"00:24:00" (presented as "00:24:00" in the output) is also Friday, but not
+Saturday. However, if you try to get the day of week of time "00:24:00" in R,
+you will get Saturday, but not Friday. This introduces inconsistency and may
+cause problems when doing data analysis considering day of week value.
+</p>
+<p>With <code>wide</code> equals <code>TRUE</code>, <code style="white-space: pre;">⁠$report_data()⁠</code> will format the simulation output
+in the same way as standard EnergyPlus csv output file. Sometimes this can be
+useful as there may be existing tools/workflows that depend on this format.
+When both <code>wide</code> and <code>all</code> are <code>TRUE</code>, columns of runperiod environment names
+and date time components are also returned, including:
+<code style="white-space: pre;">⁠environment_period_index", "environment_name⁠</code>, <code>simulation_days</code>,
+<code>datetime</code>, <code>month</code>, <code>day</code>, <code>hour</code>, <code>minute</code>, <code>day_type</code>.
+</p>
+<p>For convenience, input character arguments matching in
+<code style="white-space: pre;">⁠$report_data()⁠</code> are <strong>case-insensitive</strong>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# read all report data
+sql$report_data()
+
+# specify output variables using report data dictionary
+dict &lt;- sql$report_data_dict()
+sql$report_data(dict[units == "C"])
+
+# specify output variables using 'key_value' and 'name'
+sql$report_data("environment", "site outdoor air drybulb temperature")
+
+# explicitly specify year value and time zone
+sql$report_data(dict[1], year = 2020, tz = "Etc/GMT+8")
+
+# explicitly specify case name
+sql$report_data(dict[1], case = "example")
+
+# get all possible columns
+sql$report_data(dict[1], all = TRUE)
+
+# return in a format that is similar as EnergyPlus CSV output
+sql$report_data(dict[1], wide = TRUE)
+
+# return in a format that is similar as EnergyPlus CSV output with
+# extra columns
+sql$report_data(dict[1], wide = TRUE, all = TRUE)
+
+# only get data at the working hour on the first Monday
+sql$report_data(dict[1], hour = 8:18, day_type = "monday", simulation_days = 1:7)
+
+# only get specified run period data
+sql$read_table("EnvironmentPeriods") # possible environment name
+sql$report_data(dict[1], environment_name = "San Francisco Intl Ap CA USA TMY3 WMO#=724940")
+# can also be done using 'environment_period_index' column
+sql$report_data(dict[1], all = TRUE)[environment_period_index == 3L]
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusSql-tabular_data"></a>
+
+
+
+<h4>Method <code>tabular_data()</code>
+</h4>
+
+<p>Read tabular data
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$tabular_data(
+  report_name = NULL,
+  report_for = NULL,
+  table_name = NULL,
+  column_name = NULL,
+  row_name = NULL,
+  case = "auto",
+  wide = FALSE,
+  string_value = !wide
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>report_name, report_for, table_name, column_name, row_name</code></dt>
+<dd>
+<p>Each is
+a character vector for subsetting when querying the SQL
+database.  For the meaning of each argument, please see the
+description above.</p>
+</dd>
+<dt><code>case</code></dt>
+<dd>
+<p>A single string used to add a character column <code>case</code> in
+the returned results to indicate the case of this simulation.
+If <code>NULL</code>, no column is added. If <code>"auto"</code>, the name of the
+IDF file without extension is used. Default: <code>"auto"</code>.</p>
+</dd>
+<dt><code>wide</code></dt>
+<dd>
+<p>If <code>TRUE</code>, each table will be converted into the similar
+format as it is shown in EnergyPlus HTML output file. Default:
+<code>FALSE</code>.</p>
+</dd>
+<dt><code>string_value</code></dt>
+<dd>
+<p>Only applicable when <code>wide</code> is <code>TRUE</code>. If
+<code>string_value</code> is <code>FALSE</code>, instead of keeping all values as
+characters, values in possible numeric columns are converted
+into numbers. Default: the opposite of <code>wide</code>. Possible
+numeric columns indicate column that:
+</p>
+
+<ul>
+<li>
+<p> columns that have associated units
+</p>
+</li>
+<li>
+<p> columns that contents numbers
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$tabular_data()⁠</code> extracts the tabular data in a
+<code>data.table::data.table()</code> using report, table, column and row name
+specifications. The returned <code>data.table::data.table()</code> has
+9 columns:
+</p>
+
+<ul>
+<li> <p><code>case</code>: Simulation case specified using <code>case</code> argument
+</p>
+</li>
+<li> <p><code>index</code>: Tabular data index
+</p>
+</li>
+<li> <p><code>report_name</code>: The name of the report that the record belongs to
+</p>
+</li>
+<li> <p><code>report_for</code>: The <code>For</code> text that is associated with the record
+</p>
+</li>
+<li> <p><code>table_name</code>: The name of the table that the record belongs to
+</p>
+</li>
+<li> <p><code>column_name</code>: The name of the column that the record belongs to
+</p>
+</li>
+<li> <p><code>row_name</code>: The name of the row that the record belongs to
+</p>
+</li>
+<li> <p><code>units</code>: The units of the record
+</p>
+</li>
+<li> <p><code>value</code>: The value of the record <strong>in string format</strong> by default.
+</p>
+</li>
+</ul>
+<p>For convenience, input character arguments matching in
+<code style="white-space: pre;">⁠$tabular_data()⁠</code> are <strong>case-insensitive</strong>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> with 9 columns (when <code>wide</code> is
+<code>FALSE</code>) or a named list of <code>data.table::data.table()</code>s where the
+names are the combination of <code>report_name</code>, <code>report_for</code> and
+<code>table_name</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# read all tabular data
+sql$tabular_data()
+
+# explicitly specify data you want
+str(sql$tabular_data(
+    report_name = "AnnualBuildingUtilityPerformanceSummary",
+    table_name = "Site and Source Energy",
+    column_name = "Total Energy",
+    row_name = "Total Site Energy"
+))
+
+# get tabular data in wide format and coerce numeric values
+str(sql$tabular_data(
+    report_name = "AnnualBuildingUtilityPerformanceSummary",
+    table_name = "Site and Source Energy",
+    column_name = "Total Energy",
+    row_name = "Total Site Energy",
+    wide = TRUE, string_value = FALSE
+))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusSql-print"></a>
+
+
+
+<h4>Method <code>print()</code>
+</h4>
+
+<p>Print <code>EplusSql</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusSql$print()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$print()⁠</code> shows the core information of this <code>EplusSql</code> object,
+including the path of the EnergyPlus SQLite file, last modified
+time of the SQLite file and the path of the IDF file with the
+same name in the same folder.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The <code>EplusSql</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+sql$print()
+}
+
+</pre>
+</div>
+
+
+
+
+<h3>Author(s)</h3>
+
+<p>Hongyuan Jia
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## ------------------------------------------------
+## Method `EplusSql$new`
+## ------------------------------------------------
+
+## Not run: 
+if (is_avail_eplus("8.8")) {
+    idf_name &lt;- "1ZoneUncontrolled.idf"
+    epw_name &lt;-  "USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+
+    idf_path &lt;- path_eplus_example("8.8", idf_name)
+    epw_path &lt;- path_eplus_weather("8.8", epw_name)
+
+    # copy to tempdir and run the model
+    idf &lt;- read_idf(idf_path)
+    idf$run(epw_path, tempdir(), echo = FALSE)
+
+    # create from local file
+    sql &lt;- eplus_sql(file.path(tempdir(), "1ZoneUncontrolled.sql"))
+}
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusSql$path`
+## ------------------------------------------------
+
+## Not run: 
+# get path
+sql$path()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusSql$path_idf`
+## ------------------------------------------------
+
+## Not run: 
+# get path
+sql$path_idf()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusSql$list_table`
+## ------------------------------------------------
+
+## Not run: 
+sql$list_table()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusSql$read_table`
+## ------------------------------------------------
+
+## Not run: 
+# read a specific table
+sql$read_table("Zones")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusSql$report_data_dict`
+## ------------------------------------------------
+
+## Not run: 
+sql$report_data_dict()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusSql$report_data`
+## ------------------------------------------------
+
+## Not run: 
+# read all report data
+sql$report_data()
+
+# specify output variables using report data dictionary
+dict &lt;- sql$report_data_dict()
+sql$report_data(dict[units == "C"])
+
+# specify output variables using 'key_value' and 'name'
+sql$report_data("environment", "site outdoor air drybulb temperature")
+
+# explicitly specify year value and time zone
+sql$report_data(dict[1], year = 2020, tz = "Etc/GMT+8")
+
+# explicitly specify case name
+sql$report_data(dict[1], case = "example")
+
+# get all possible columns
+sql$report_data(dict[1], all = TRUE)
+
+# return in a format that is similar as EnergyPlus CSV output
+sql$report_data(dict[1], wide = TRUE)
+
+# return in a format that is similar as EnergyPlus CSV output with
+# extra columns
+sql$report_data(dict[1], wide = TRUE, all = TRUE)
+
+# only get data at the working hour on the first Monday
+sql$report_data(dict[1], hour = 8:18, day_type = "monday", simulation_days = 1:7)
+
+# only get specified run period data
+sql$read_table("EnvironmentPeriods") # possible environment name
+sql$report_data(dict[1], environment_name = "San Francisco Intl Ap CA USA TMY3 WMO#=724940")
+# can also be done using 'environment_period_index' column
+sql$report_data(dict[1], all = TRUE)[environment_period_index == 3L]
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusSql$tabular_data`
+## ------------------------------------------------
+
+## Not run: 
+# read all tabular data
+sql$tabular_data()
+
+# explicitly specify data you want
+str(sql$tabular_data(
+    report_name = "AnnualBuildingUtilityPerformanceSummary",
+    table_name = "Site and Source Energy",
+    column_name = "Total Energy",
+    row_name = "Total Site Energy"
+))
+
+# get tabular data in wide format and coerce numeric values
+str(sql$tabular_data(
+    report_name = "AnnualBuildingUtilityPerformanceSummary",
+    table_name = "Site and Source Energy",
+    column_name = "Total Energy",
+    row_name = "Total Site Energy",
+    wide = TRUE, string_value = FALSE
+))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusSql$print`
+## ------------------------------------------------
+
+## Not run: 
+sql$print()
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

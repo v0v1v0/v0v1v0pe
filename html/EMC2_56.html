@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_bridge_sampling</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimating Marginal likelihoods using WARP-III bridge sampling</h2>
+
+<h3>Description</h3>
+
+<p>Uses bridge sampling that matches a proposal distribution to the first three moments
+of the posterior distribution to get an accurate estimate of the marginal likelihood.
+The marginal likelihood can be used for computing Bayes factors and posterior model probabilities.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_bridge_sampling(
+  emc,
+  stage = "sample",
+  filter = NULL,
+  repetitions = 1,
+  cores_for_props = 4,
+  cores_per_prop = 1,
+  both_splits = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>emc</code></td>
+<td>
+<p>An emc object with a set of converged samples</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stage</code></td>
+<td>
+<p>A character indicating which stage to use, defaults to <code>sample</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filter</code></td>
+<td>
+<p>An integer or vector. If integer, it will exclude up until
+that integer. If vector it will include everything in that range.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repetitions</code></td>
+<td>
+<p>An integer. How many times to repeat the bridge sampling scheme. Can help get an estimate of stability of the estimate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores_for_props</code></td>
+<td>
+<p>Integer. Warp-III evaluates the posterior over 4 different proposal densities. If you have the CPU, 4 cores will do this in parallel, 2 is also already helpful.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores_per_prop</code></td>
+<td>
+<p>Integer. Per density we can also parallelize across subjects. Eventual cores will be <code>cores_for_props</code> * <code>cores_per_prop</code>. For efficiency users should prioritize cores_for_props being 4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>both_splits</code></td>
+<td>
+<p>Boolean. Bridge sampling uses a proposal density and a target density. We can estimate the stability of our samples and therefore MLL estimate, by running 2 bridge sampling iterations
+The first one uses the first half of the samples as the proposal and the second half as the target, the second run uses the opposite. If this is is set to <code>FALSE</code>, it will only run bridge sampling once and
+it will instead do an odd-even iterations split to get a more reasonable estimate for just one run.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional, optional more in-depth hyperparameters</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If not enough posterior samples were collected using <code>fit()</code>,
+bridge sampling can be unstable. It is recommended to run
+<code>run_bridge_sampling()</code> several times with the <code>repetitions</code> argument
+and to examine how stable the results are.
+</p>
+<p>It can be difficult to converge bridge sampling for exceptionally large models,
+because of a large number of subjects (&gt; 100) and/or cognitive model parameters.
+</p>
+<p>For a practical introduction:
+</p>
+<p>Gronau, Q. F., Heathcote, A., &amp; Matzke, D. (2020). Computing Bayes factors
+for evidence-accumulation models using Warp-III bridge sampling.
+<em>Behavior research methods</em>, 52(2), 918-937. doi.org/10.3758/s13428-019-01290-6
+</p>
+<p>For mathematical background:
+</p>
+<p>Meng, X.-L., &amp; Wong, W. H. (1996). Simulating ratios of normalizing
+constants via a simple identity: A theoretical exploration. <em>Statistica Sinica</em>,
+6, 831-860. http://www3.stat.sinica.edu.tw/statistica/j6n4/j6n43/j6n43.htm
+</p>
+<p>Meng, X.-L., &amp; Schilling, S. (2002). Warp bridge sampling.
+<em>Journal of Computational and Graphical Statistics</em>,
+11(3), 552-586. doi.org/10.1198/106186002457
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector of length repetitions which contains the marginal log likelihood estimates per repetition
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# After `fit` has converged on a specific model
+# We can take those samples and calculate the marginal log-likelihood for them
+MLL &lt;- run_bridge_sampling(list(samples_LNR), cores_per_prop = 2)
+# This will run on 2*4 cores (since 4 is the default for ``cores_for_props``)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

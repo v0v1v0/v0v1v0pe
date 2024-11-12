@@ -1,0 +1,291 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>step_woe</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Weight of evidence transformation</h2>
+
+<h3>Description</h3>
+
+<p><code>step_woe()</code> creates a <em>specification</em> of a recipe step that will transform
+nominal data into its numerical transformation based on weights of evidence
+against a binary outcome.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">step_woe(
+  recipe,
+  ...,
+  role = "predictor",
+  outcome,
+  trained = FALSE,
+  dictionary = NULL,
+  Laplace = 1e-06,
+  prefix = "woe",
+  keep_original_cols = FALSE,
+  skip = FALSE,
+  id = rand_id("woe")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>recipe</code></td>
+<td>
+<p>A recipe object. The step will be added to the sequence of
+operations for this recipe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more selector functions to choose which variables will be
+used to compute the components. See <code>selections()</code> for more details. For
+the <code>tidy</code> method, these are not currently used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>role</code></td>
+<td>
+<p>For model terms created by this step, what analysis role should
+they be assigned?. By default, the function assumes that the new woe
+components columns created by the original variables will be used as
+predictors in a model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcome</code></td>
+<td>
+<p>The bare name of the binary outcome encased in <code>vars()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained</code></td>
+<td>
+<p>A logical to indicate if the quantities for preprocessing have
+been estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dictionary</code></td>
+<td>
+<p>A tbl. A map of levels and woe values. It must have the
+same layout than the output returned from <code>dictionary()</code>. If <code>NULL</code> the
+function will build a dictionary with those variables passed to <code>...</code>.
+See <code>dictionary()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Laplace</code></td>
+<td>
+<p>The Laplace smoothing parameter. A value usually applied to
+avoid -Inf/Inf from predictor category with only one outcome class. Set to
+0 to allow Inf/-Inf. The default is 1e-6. Also known as 'pseudocount'
+parameter of the Laplace smoothing technique.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prefix</code></td>
+<td>
+<p>A character string that will be the prefix to the resulting new
+variables. See notes below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_original_cols</code></td>
+<td>
+<p>A logical to keep the original variables in the
+output. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip</code></td>
+<td>
+<p>A logical. Should the step be skipped when the recipe is baked by
+<code>recipes::bake()</code>? While all operations are baked when <code>recipes::prep()</code> is
+run, some operations may not be able to be conducted on new data (e.g.
+processing the outcome variable(s)). Care should be taken when using <code>skip = TRUE</code> as it may affect the computations for subsequent operations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A character string that is unique to this step to identify it.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>WoE is a transformation of a group of variables that produces a new set of
+features. The formula is
+</p>
+<p style="text-align: center;"><code class="reqn">woe_c = log((P(X = c|Y = 1))/(P(X = c|Y = 0)))</code>
+</p>
+
+<p>where <code class="reqn">c</code> goes from 1 to <code class="reqn">C</code> levels of a given nominal predictor
+variable <code class="reqn">X</code>.
+</p>
+<p>These components are designed to transform nominal variables into numerical
+ones with the property that the order and magnitude reflects the association
+with a binary outcome.  To apply it on numerical predictors, it is advisable
+to discretize the variables prior to running WoE. Here, each variable will be
+binarized to have woe associated later. This can achieved by using
+<code>step_discretize()</code>.
+</p>
+<p>The argument <code>Laplace</code> is an small quantity added to the proportions of 1's
+and 0's with the goal to avoid log(p/0) or log(0/p) results. The numerical
+woe versions will have names that begin with <code>woe_</code> followed by the
+respective original name of the variables. See Good (1985).
+</p>
+<p>One can pass a custom <code>dictionary</code> tibble to <code>step_woe()</code>. It must have
+the same structure of the output from <code>dictionary()</code> (see examples). If
+not provided it will be created automatically. The role of this tibble is to
+store the map between the levels of nominal predictor to its woe values. You
+may want to tweak this object with the goal to fix the orders between the
+levels of one given predictor. One easy way to do this is by tweaking an
+output returned from <code>dictionary()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated version of <code>recipe</code> with the new step added to the
+sequence of existing steps (if any). For the <code>tidy</code> method, a tibble with
+the woe dictionary used to map categories with woe values.
+</p>
+
+
+<h3>Tidying</h3>
+
+<p>When you <code>tidy()</code> this step, a tibble with columns <code>terms</code>
+(the selectors or variables selected), <code>value</code>, <code>n_tot</code>, <code>n_bad</code>, <code>n_good</code>,
+<code>p_bad</code>, <code>p_good</code>, <code>woe</code> and <code>outcome</code> is returned.. See <code>dictionary()</code> for
+more information.
+</p>
+<p>When you <code>tidy()</code> this step, a tibble is retruned with
+columns <code>terms</code> <code>value</code>, <code>n_tot</code>, <code>n_bad</code>, <code>n_good</code>, <code>p_bad</code>, <code>p_good</code>, <code>woe</code>
+and <code>outcome</code> and <code>id</code>:
+</p>
+
+<dl>
+<dt>terms</dt>
+<dd>
+<p>character, the selectors or variables selected</p>
+</dd>
+<dt>value</dt>
+<dd>
+<p>character, level of the outcome</p>
+</dd>
+<dt>n_tot</dt>
+<dd>
+<p>integer, total number</p>
+</dd>
+<dt>n_bad</dt>
+<dd>
+<p>integer, number of bad examples</p>
+</dd>
+<dt>n_good</dt>
+<dd>
+<p>integer, number of good examples</p>
+</dd>
+<dt>p_bad</dt>
+<dd>
+<p>numeric, p of bad examples</p>
+</dd>
+<dt>p_good</dt>
+<dd>
+<p>numeric, p of good examples</p>
+</dd>
+<dt>woe</dt>
+<dd>
+<p>numeric, weight of evidence</p>
+</dd>
+<dt>outcome</dt>
+<dd>
+<p>character, name of outcome variable</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>character, id of this step</p>
+</dd>
+</dl>
+<h3>Tuning Parameters</h3>
+
+<p>This step has 1 tuning parameters:
+</p>
+
+<ul><li> <p><code>Laplace</code>: Laplace Correction (type: double, default: 1e-06)
+</p>
+</li></ul>
+<h3>Case weights</h3>
+
+<p>The underlying operation does not allow for case weights.
+</p>
+
+
+<h3>References</h3>
+
+<p>Kullback, S. (1959). <em>Information Theory and Statistics.</em> Wiley, New York.
+</p>
+<p>Hastie, T., Tibshirani, R. and Friedman, J. (1986). <em>Elements of Statistical
+Learning</em>, Second Edition, Springer, 2009.
+</p>
+<p>Good, I. J. (1985), "Weight of evidence: A brief survey", <em>Bayesian
+Statistics</em>, 2, pp.249-270.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(modeldata)
+data("credit_data")
+
+set.seed(111)
+in_training &lt;- sample(1:nrow(credit_data), 2000)
+
+credit_tr &lt;- credit_data[in_training, ]
+credit_te &lt;- credit_data[-in_training, ]
+
+rec &lt;- recipe(Status ~ ., data = credit_tr) %&gt;%
+  step_woe(Job, Home, outcome = vars(Status))
+
+woe_models &lt;- prep(rec, training = credit_tr)
+
+# the encoding:
+bake(woe_models, new_data = credit_te %&gt;% slice(1:5), starts_with("woe"))
+# the original data
+credit_te %&gt;%
+  slice(1:5) %&gt;%
+  dplyr::select(Job, Home)
+# the details:
+tidy(woe_models, number = 1)
+
+# Example of custom dictionary + tweaking
+# custom dictionary
+woe_dict_custom &lt;- credit_tr %&gt;% dictionary(Job, Home, outcome = "Status")
+woe_dict_custom[4, "woe"] &lt;- 1.23 # tweak
+
+# passing custom dict to step_woe()
+rec_custom &lt;- recipe(Status ~ ., data = credit_tr) %&gt;%
+  step_woe(
+    Job, Home,
+    outcome = vars(Status), dictionary = woe_dict_custom
+  ) %&gt;%
+  prep()
+
+rec_custom_baked &lt;- bake(rec_custom, new_data = credit_te)
+rec_custom_baked %&gt;%
+  dplyr::filter(woe_Job == 1.23) %&gt;%
+  head()
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,369 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>truncdist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Truncated distribution 
+</h2>
+
+<h3>Description</h3>
+
+<p>The cumulative distribution function for 
+a truncated distribution is <code>0</code> for 
+<code>x &lt;= truncmin</code>, <code>1</code> for 
+<code>truncmax &lt; x</code>, and in between is
+as follows:  
+</p>
+<p><code>(pdist(x, ...) - pdist(truncmin, ...)) / 
+     (pdist(truncmax, ...) - pdist(truncmin, ...))</code>
+</p>
+<p>The density, quantile, and random number 
+generation functions are similarly defined 
+from this.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dtruncdist(x, ..., dist='norm', truncmin=-Inf, 
+            truncmax=Inf) 
+ptruncdist(q, ..., dist='norm', truncmin=-Inf, 
+            truncmax=Inf) 
+qtruncdist(p, ..., dist='norm', truncmin=-Inf, 
+            truncmax=Inf) 
+rtruncdist(n, ..., dist='norm', truncmin=-Inf, 
+            truncmax=Inf) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, q</code></td>
+<td>
+ 
+<p>numeric vector of quantiles 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+
+<p>numeric vector of probabilities  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>number of observations. If <code>length(n)</code> 
+&gt; 1, the length is taken to be the number 
+required.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>other arguments to be passed to the 
+corresponding function for the indicated 
+<code>dist</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+
+<p>Standard <code>R</code> name for the family of 
+functions for the desired distribution.  By 
+default, this is <code>norm</code>, so the 
+corresponding function for <code>dtruncdist</code> 
+is <code>dnorm</code>, the corresponding function 
+for <code>ptrunctist</code> is <code>pnorm</code>, etc.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncmin, truncmax</code></td>
+<td>
+
+<p>lower and upper truncation points, 
+respectively.  
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>NOTE:  Truncation is different from 
+"censoring", where it's known that an 
+observation lies between certain limits; it's just 
+not known exactly where it lies between those 
+limits.  
+</p>
+<p>By contrast, with a truncated distribution, events 
+below <code>truncmin</code> and above <code>truncmax</code> 
+may exist but are not observed.  Thus, it's not 
+known how many events occur  outside the given 
+range, <code>truncmin</code> to <code>truncmax</code>, if any.  
+Given data believed to come from a truncated 
+distribution, estimating the parameters provide 
+a means of estimating the number of unobserved 
+events, assuming a particular form for their 
+distribution.  
+</p>
+<p>1.  Setup
+</p>
+<p><code>dots &lt;- list(...)</code>
+</p>
+<p>2.  For <code>dtruncdist</code>, return 0 for all 
+<code>x</code> outside <code>truncmin</code> and 
+<code>truncmax</code>.  For all others, compute as 
+follows:  
+</p>
+<p><code>dots$x &lt;- truncmin
+  ddist &lt;- paste0('d', dist)
+  pdist &lt;- paste0('p', dist)
+  p.min &lt;- do.call(pdist, dots)
+  dots$x &lt;- truncmax
+  p.max &lt;- do.call(pdist, dots)
+  dots$x &lt;- x
+  dx &lt;- do.call(ddist, dots)</code>
+</p>
+<p><code>return(dx / (p.max-p.min))</code>
+</p>
+<p>NOTE:  Adjustments must be made if 'log' 
+appears in <code>names(dots)</code>
+</p>
+<p>3.  The computations for <code>ptruncdist</code> 
+are similar.  
+</p>
+<p>4.  The computations for <code>qtruncdist</code> 
+are complementary.  
+</p>
+<p>5.  For <code>rtruncdist</code>, use 
+<code>qtruncdist(runif(n), ...)</code>.  
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dtruncdist</code> gives the density, 
+<code>ptruncdist</code> gives the distribution 
+function, <code>qtruncdist</code> gives the 
+quantile function, and <code>rtruncdist</code> 
+generates random deviates. 
+</p>
+<p>The length of the result is determined by 
+<code>n</code> for <code>rtruncdist</code> and is the 
+maximum of the lengths of the numerical 
+arguments for the other functions. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Distributions</code>
+<code>Normal</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  dtruncdist
+##
+#  1.1.  Normal 
+dx &lt;- dtruncdist(1:4)
+
+# check 
+
+all.equal(dx, dnorm(1:4))
+
+
+#  1.2.  Truncated normal between 0 and 1
+dx01 &lt;- dtruncdist(seq(-1, 2, .5), truncmin=0, truncmax=1)
+
+# check 
+dx01. &lt;- c(0, 0, 0, dnorm(c(.5, 1))/(pnorm(1)-pnorm(0)), 
+           0, 0)
+
+all.equal(dx01, dx01.)
+
+
+#  1.3.  lognormal meanlog=log(100), sdlog = 2, truncmin=500 
+x10 &lt;- 10^(0:9)
+dx10 &lt;- dtruncdist(x10, log(100), 2, dist='lnorm', 
+                   truncmin=500)
+                  
+# check 
+dx10. &lt;- (dtruncdist(log(x10), log(100), 2,  
+                    truncmin=log(500)) / x10) 
+
+all.equal(dx10, dx10.)
+
+
+#  1.4.  log density of the previous example 
+dx10log &lt;- dtruncdist(x10, log(100), 2, log=TRUE, 
+                  dist='lnorm', truncmin=500)
+
+all.equal(dx10log, log(dx10))
+
+
+#  1.5.  Poisson without 0.  
+
+dPois0.9 &lt;-dtruncdist(0:9, lambda=1, dist='pois', truncmin=0) 
+
+# check 
+dP0.9 &lt;- c(0, dpois(1:9, lambda=1)/ppois(0, lambda=1, lower.tail=FALSE))
+
+all.equal(dPois0.9, dP0.9)
+
+
+##
+## 2.  ptruncdist
+##
+#  2.1.  Normal 
+px &lt;- ptruncdist(1:4)
+
+# check 
+
+all.equal(px, pnorm(1:4))
+
+
+#  2.2.  Truncated normal between 0 and 1 
+px01 &lt;- ptruncdist(seq(-1, 2, .5), truncmin=0, truncmax=1)
+
+# check 
+px01. &lt;- c(0, 0, (pnorm(c(0, .5, 1)) - pnorm(0))
+                     /(pnorm(1)-pnorm(0)), 1, 1)
+
+all.equal(px01, px01.)
+
+
+#  2.3.  lognormal meanlog=log(100), sdlog = 2, truncmin=500 
+x10 &lt;- 10^(0:9)
+px10 &lt;- ptruncdist(x10, log(100), 2, dist='lnorm', 
+                  truncmin=500)
+                  
+# check 
+px10. &lt;- (ptruncdist(log(x10), log(100), 2,  
+                     truncmin=log(500))) 
+
+all.equal(px10, px10.)
+
+
+#  2.4.  log of the previous probabilities 
+px10log &lt;- ptruncdist(x10, log(100), 2, log=TRUE, 
+                  dist='lnorm', truncmin=500)
+
+all.equal(px10log, log(px10))
+
+
+##
+## 3.  qtruncdist
+##
+#  3.1.  Normal 
+qx &lt;- qtruncdist(seq(0, 1, .2))
+
+# check 
+
+all.equal(qx, qnorm(seq(0, 1, .2)))
+
+
+#  3.2.  Normal truncated outside (0, 1)
+qx01 &lt;- qtruncdist(seq(0, 1, .2), 
+            truncmin=0, truncmax=1)
+
+# check 
+pxmin &lt;- pnorm(0)
+pxmax &lt;- pnorm(1)
+unp &lt;- (pxmin + seq(0, 1, .2)*(pxmax-pxmin))
+qx01. &lt;- qnorm(unp)
+
+all.equal(qx01, qx01.)
+
+
+#  3.3.  lognormal meanlog=log(100), 
+#             sdlog=2, truncmin=500
+qlx10 &lt;- qtruncdist(seq(0, 1, .2), log(100), 2, 
+                   dist='lnorm', truncmin=500)
+                  
+# check 
+plxmin &lt;- plnorm(500, log(100), 2)
+unp. &lt;- (plxmin + seq(0, 1, .2)*(1-plxmin))
+
+qlx10. &lt;- qlnorm(unp., log(100), 2)
+
+all.equal(qlx10, qlx10.)
+
+
+#  3.4.  previous example with log probabilities 
+qlx10l &lt;- qtruncdist(log(seq(0, 1, .2)), 
+      log(100), 2, log.p=TRUE, dist='lnorm',
+      truncmin=500)
+
+# check 
+
+all.equal(qlx10, qlx10l)
+
+
+## 
+## 4.  rtruncdist 
+##
+#  4.1.  Normal 
+set.seed(1)
+rx &lt;- rtruncdist(9)
+
+# check 
+set.seed(1)
+
+all.equal(rx[1], rnorm(1))
+
+# Only the first observation matches;  check that.  
+
+#  4.2.  Normal truncated outside (0, 1)
+set.seed(1)
+rx01 &lt;- rtruncdist(9, truncmin=0, truncmax=1)
+
+# check 
+pxmin &lt;- pnorm(0)
+pxmax &lt;- pnorm(1)
+set.seed(1)
+rnp &lt;- (pxmin + runif(9)*(pxmax-pxmin))
+rx01. &lt;- qnorm(rnp)
+
+all.equal(rx01, rx01.)
+
+
+#  4.3.  lognormal meanlog=log(100), sdlog=2, truncmin=500
+set.seed(1)
+rlx10 &lt;- rtruncdist(9, log(100), 2, 
+                   dist='lnorm', truncmin=500)
+                  
+# check 
+plxmin &lt;- plnorm(500, log(100), 2)
+set.seed(1)
+rnp. &lt;- (plxmin + runif(9)*(1-plxmin))
+
+rlx10. &lt;- qlnorm(rnp., log(100), 2)
+
+all.equal(rlx10, rlx10.)
+
+
+</code></pre>
+
+
+</div>

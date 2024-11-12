@@ -1,0 +1,190 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>kgroups</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+K-Groups Clustering
+</h2>
+
+<h3>Description</h3>
+
+<p>Perform k-groups clustering by energy distance.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">kgroups(x, k, iter.max = 10, nstart = 1, cluster = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Data frame or data matrix or distance object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>number of clusters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter.max</code></td>
+<td>
+<p>maximum number of iterations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstart</code></td>
+<td>
+<p>number of restarts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster</code></td>
+<td>
+<p>initial clustering vector</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>K-groups is based on the multisample energy distance for comparing distributions.
+Based on the disco decomposition of total dispersion (a Gini type mean distance) the objective function should either maximize the total between cluster energy distance, or equivalently, minimize the total within cluster energy distance. It is more computationally efficient to minimize within distances, and that makes it possible to use a modified version of the Hartigan-Wong algorithm (1979) to implement K-groups clustering.
+</p>
+<p>The within cluster Gini mean distance is
+</p>
+<p style="text-align: center;"><code class="reqn">G(C_j) = \frac{1}{n_j^2} \sum_{i,m=1}^{n_j} |x_{i,j} - x_{m,j}|</code>
+</p>
+
+<p>and the K-groups within cluster distance is
+</p>
+<p style="text-align: center;"><code class="reqn">W_j = \frac{n_j}{2}G(C_j) = \frac{1}{2 n_j} \sum_{i,m=1}^{n_j} |x_{i,j} - x_{m,j}.</code>
+</p>
+
+<p>If z is the data matrix for cluster <code class="reqn">C_j</code>, then <code class="reqn">W_j</code> could be computed as
+<code>sum(dist(z)) / nrow(z)</code>.
+</p>
+<p>If cluster is not NULL, the clusters are initialized by this vector (can be a factor or integer vector). Otherwise clusters are initialized with random labels in k approximately equal size clusters.
+</p>
+<p>If <code>x</code> is not a distance object (class(x) == "dist") then <code>x</code> is converted to a data matrix for analysis. 
+</p>
+<p>Run up to <code>iter.max</code> complete passes through the data set until a local min is reached. If <code>nstart &gt; 1</code>, on second and later starts, clusters are initialized at random, and the best result is returned. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>kgroups</code> containing the components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster</code></td>
+<td>
+<p>vector of cluster indices</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sizes</code></td>
+<td>
+<p>cluster sizes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within</code></td>
+<td>
+<p>vector of Gini within cluster distances</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>W</code></td>
+<td>
+<p>sum of within cluster distances</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>count</code></td>
+<td>
+<p>number of moves</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>number of iterations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>number of clusters</p>
+</td>
+</tr>
+</table>
+<p><code>cluster</code> is a vector containing the group labels, 1 to k. <code>print.kgroups</code>
+prints some of the components of the kgroups object.
+</p>
+<p>Expect that count is 0 if the algorithm converged to a local min (that is, 0 moves happened on the last iteration). If iterations equals iter.max and count is positive, then the algorithm did not converge to a local min. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Maria Rizzo and Songzi Li
+</p>
+
+
+<h3>References</h3>
+
+<p>Li, Songzi (2015).
+"K-groups: A Generalization of K-means by Energy Distance."
+Ph.D. thesis, Bowling Green State University.
+</p>
+<p>Li, S. and Rizzo, M. L. (2017).
+"K-groups: A Generalization of K-means Clustering".
+ArXiv e-print 1711.04359. https://arxiv.org/abs/1711.04359
+</p>
+<p>Szekely, G. J., and M. L. Rizzo. "Testing for equal distributions in high dimension." InterStat 5, no. 16.10 (2004).
+</p>
+<p>Rizzo, M. L., and G. J. Szekely. "Disco analysis: A nonparametric extension of analysis of variance." The Annals of Applied Statistics (2010): 1034-1055.
+</p>
+<p>Hartigan, J. A. and Wong, M. A. (1979). "Algorithm AS 136: A K-means clustering algorithm." Applied Statistics, 28, 100-108. doi: 10.2307/2346830.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  x &lt;- as.matrix(iris[ ,1:4])
+  set.seed(123)
+  kg &lt;- kgroups(x, k = 3, iter.max = 5, nstart = 2)
+  kg
+  fitted(kg)
+  
+  
+    d &lt;- dist(x)
+    set.seed(123)
+    kg &lt;- kgroups(d, k = 3, iter.max = 5, nstart = 2)
+    kg
+    
+    kg$cluster
+  
+    fitted(kg)
+    fitted(kg, method = "groups")
+    
+</code></pre>
+
+
+</div>

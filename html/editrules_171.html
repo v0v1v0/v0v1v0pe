@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>violatedEdits</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Check data against constraints</h2>
+
+<h3>Description</h3>
+
+<p>Determine which record violates which edits. Returns <code>NA</code> when edits
+cannot be checked because of missing values in the data.
+</p>
+
+<ul>
+<li>
+<p>For rules of the form Ax == b  |Ax - b| &lt;= tol is returned.
+</p>
+</li>
+<li>
+<p>For rules of the form Ax &lt; b, Ax - b &lt; tol is returned.
+</p>
+</li>
+<li>
+<p>For rules of the form Ax &lt;= b Ax- b &lt;= tol is returned.
+</p>
+</li>
+</ul>
+<p>For numerical records, the default tolerance is 0. When working with doubles, 
+the square root of machina accuracy is a resonable alternative (<code>sqrt(.Machine\$double.eps)</code>).
+The editmatrix is <cite>normalized</cite> before checks are performed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">violatedEdits(E, dat, ...)
+
+## S3 method for class 'character'
+violatedEdits(E, dat, name = NULL, ...)
+
+## S3 method for class 'editmatrix'
+violatedEdits(E, dat, tol = 0, ...)
+
+## S3 method for class 'editarray'
+violatedEdits(E, dat, datamodel = TRUE, ...)
+
+## S3 method for class 'editset'
+violatedEdits(E, dat, datamodel = TRUE, ...)
+
+## S3 method for class 'violatedEdits'
+plot(x, topn = min(10, ncol(x)), ...)
+
+## S3 method for class 'violatedEdits'
+summary(object, E = NULL, minfreq = 1, ...)
+
+## S3 method for class 'violatedEdits'
+as.data.frame(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p><code>character</code> vector with constraintsm, <code>editset</code>, <code>editmatrix</code> or <code>editarray</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p><code>data.frame</code> with data that should be checked, if a named vector is supplied it will converted internally to a <code>data.frame</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments that can be used by methods implementing this generic function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>name of edits</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>tolerance to check rules against.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>datamodel</code></td>
+<td>
+<p>Also check against datamodel?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>violatedEdits</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>topn</code></td>
+<td>
+<p>Top <code>n</code> edits to be plotted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p><code>violatedEdits</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minfreq</code></td>
+<td>
+<p>minimum freq for edit to be printed</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>violatedEdits</code>, which is a logical <code>nrow(dat)Xnedits(E)</code> matrix with an extra <code>class</code> attribute
+for overloading purposes.
+</p>
+
+
+<h3>Note</h3>
+
+<p>When summarizing an object of class <code>violatedEdits</code>, every 
+empty value is counted as one edit violation when counting violations per record.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>checkDatamodel</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Using character vector to define contraints
+E &lt;- editmatrix(c( "x+3*y==2*z"
+                  , "x==z"
+                  )
+                )
+                
+dat &lt;- data.frame( x = c(0,2,1)
+                 , y = c(0,0,1)
+                 , z = c(0,1,1)
+                 )
+print(dat)
+
+ve &lt;- violatedEdits(E,dat)
+
+print(ve)
+summary(ve, E)
+plot(ve)
+
+# An example with categorical data:
+
+E &lt;- editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c(TRUE, FALSE),
+    if( gender == 'male' ) !pregnant
+    )
+)
+print(E)
+
+dat &lt;- data.frame(
+    gender=c('male','male','female','cylon'), 
+    pregnant=c(TRUE,FALSE,TRUE,TRUE)
+)
+
+print(dat)
+# Standard, the datamodel is checked as well,
+violatedEdits(E,dat)
+
+# but we may turn this of
+violatedEdits(E,dat,datamodel=FALSE)
+
+
+</code></pre>
+
+
+</div>

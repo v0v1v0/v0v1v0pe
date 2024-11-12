@@ -1,0 +1,859 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>earth</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Multivariate Adaptive Regression Splines</h2>
+
+<h3>Description</h3>
+
+<p>Build a regression model
+using the techniques in Friedman's papers "Multivariate Adaptive Regression Splines"
+and "Fast MARS".
+</p>
+<p>See the package vignette
+“<a href="../doc/earth-notes.pdf">Notes on the earth package</a>”.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'formula'
+earth(formula = stop("no 'formula' argument"), data = NULL,
+   weights = NULL, wp = NULL, subset = NULL,
+   na.action = na.fail,
+   pmethod = c("backward", "none", "exhaustive", "forward", "seqrep", "cv"),
+   keepxy = FALSE, trace = 0, glm = NULL, degree = 1, nprune = NULL,
+   nfold=0, ncross=1, stratify=TRUE,
+   varmod.method = "none", varmod.exponent = 1,
+   varmod.conv = 1, varmod.clamp = .1, varmod.minspan = -3,
+   Scale.y = NULL, ...)
+
+## Default S3 method:
+earth(x = stop("no 'x' argument"), y = stop("no 'y' argument"),
+    weights = NULL, wp = NULL, subset = NULL,
+    na.action = na.fail,
+    pmethod = c("backward", "none", "exhaustive", "forward", "seqrep", "cv"),
+    keepxy = FALSE, trace = 0, glm = NULL, degree = 1, nprune = NULL,
+    nfold=0, ncross=1, stratify=TRUE,
+    varmod.method = "none", varmod.exponent = 1,
+    varmod.conv = 1, varmod.clamp = .1, varmod.minspan = -3,
+    Scale.y = NULL, ...)
+
+## S3 method for class 'fit'
+earth(x = stop("no 'x' argument"), y = stop("no 'y' argument"),
+    weights = NULL, wp = NULL, subset = NULL,
+    na.action = na.fail, offset = NULL,
+    pmethod = c("backward", "none", "exhaustive", "forward", "seqrep", "cv"),
+    keepxy = FALSE, trace = 0, glm = NULL, degree = 1,
+    penalty = if(degree &gt; 1) 3 else 2,
+    nk = min(200, max(20, 2 * ncol(x))) + 1,
+    thresh = 0.001, minspan = 0, endspan = 0,
+    newvar.penalty = 0, fast.k = 20, fast.beta = 1,
+    linpreds = FALSE, allowed = NULL,
+    nprune = NULL, Object = NULL,
+    Scale.y = NULL, Adjust.endspan = 2, Auto.linpreds = TRUE,
+    Force.weights = FALSE, Use.beta.cache = TRUE, Force.xtx.prune = FALSE,
+    Get.leverages = NROW(x) &lt; 1e5, Exhaustive.tol = 1e-10, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<p>To start off, look at the arguments
+<code>formula</code>,
+<code>data</code>,
+<code>x</code>,
+<code>y</code>,
+<code>nk</code>,
+<code>degree</code>, and
+<code>trace</code>.
+<br>
+If the response is binary or a factor, consider using the <code>glm</code>
+argument.<br>
+For cross validation, use the <code>nfold</code> argument.<br>
+For prediction intervals, use the <code>varmod.method</code> argument.<br><br>
+Most users will find that the above arguments are all they need,
+plus in some cases <code>keepxy</code> and <code>nprune</code>.
+Unless you are a knowledgeable user, it's best not subvert the
+standard algorithm by toying with tuning parameters such as <code>thresh</code>,
+<code>penalty</code>, and <code>endspan</code>.
+<br></p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>Model formula.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Data frame for <code>formula</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Matrix or dataframe containing the independent variables.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+
+<p>Vector containing the response variable, or, in the case of multiple responses,
+a matrix or dataframe whose columns are the values for each response.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+
+<p>Index vector specifying which cases to use, i.e., which rows in <code>x</code> to use.
+Default is NULL, meaning all.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+<p>Case weights.
+Default is NULL, meaning no case weights.
+If specified, <code>weights</code> must have length equal to <code>nrow(x)</code>
+before applying <code>subset</code>.
+Zero weights are converted to a very small nonzero value.
+In the current implementation, building models with weights can be slow.
+
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wp</code></td>
+<td>
+
+<p>Response weights.
+Default is NULL, meaning no response weights.
+If specified, <code>wp</code> must have an element for each column of
+<code>y</code> (after <code>factors</code> in
+<code>y</code>, if any, have been expanded).
+Zero weights are converted to a very small nonzero value.
+
+
+
+
+
+
+
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+
+<p>NA action. Default is <code>na.fail</code>, and only <code>na.fail</code> is supported.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+
+<p>Offset term passed from the formula in <code>earth.formula</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keepxy</code></td>
+<td>
+
+<p>Default is <code>FALSE</code>.
+Set to <code>TRUE</code> to retain the following in the returned value: <code>x</code> and <code>y</code> (or <code>data</code>),
+<code>subset</code>, and <code>weights</code>.
+The function <code>update.earth</code> and friends will use these
+if present instead of searching for them
+in the environment at the time <code>update.earth</code> is invoked.<br>
+
+When the <code>nfold</code> argument is used with <code>keepxy=TRUE</code>,
+<code>earth</code> keeps more data and calls <code>predict.earth</code> multiple
+times to generate <code>cv.oof.rsq.tab</code> and <code>cv.infold.rsq.tab</code>
+(see the <code>cv.</code> arguments in <code>earth.object</code>).
+It therefore makes cross-validation significantly slower.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+
+<p>Trace <code>earth</code>'s execution.  Values:<br><code>0</code> (default) no tracing<br><code>.3</code> variance model (the <code>varmod.method</code> arg)<br><code>.5</code> cross validation (the <code>nfold</code> arg)<br><code>1</code> overview<br><code>2</code> forward pass<br><code>3</code> pruning<br><code>4</code> model mats summary, pruning details<br><code>5</code> full model mats, internal details of operation<br></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm</code></td>
+<td>
+
+<p>NULL (default) or a list of arguments to pass on to <code>glm</code>.
+See the documentation of <code>glm</code> for a description of these arguments
+See “<em>Generalized linear models</em>” in the vignette.
+Example:<br><code>earth(survived~., data=etitanic, degree=2, glm=list(family=binomial))</code>
+<br><br><b>The following arguments are for the forward pass.</b>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree</code></td>
+<td>
+
+<p>Maximum degree of interaction (Friedman's <code class="reqn">mi</code>).
+Default is <code>1</code>, meaning build an additive model (i.e., no interaction terms).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalty</code></td>
+<td>
+
+<p>Generalized Cross Validation (GCV) penalty per knot.
+Default is <code>if(degree&gt;1) 3 else 2</code>.
+Simulation studies suggest values in the range of about <code>2</code> to <code>4</code>.
+The FAQ section in the vignette has some information on GCVs.<br>
+Special values (for use by knowledgeable users):
+The value <code>0</code> penalizes only terms, not knots.
+The value <code>-1</code> means no penalty, so GCV = RSS/n.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nk</code></td>
+<td>
+
+<p>Maximum number of model terms before pruning, i.e., the
+maximum number of terms created by the forward pass.
+Includes the intercept.<br>
+The actual number of terms created by the forward pass will often be
+less than <code>nk</code> because of other stopping conditions.
+See “<em>Termination conditions for the forward pass</em>”
+in the vignette.<br>
+The default is semi-automatically calculated from the number of predictors
+but may need adjusting.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thresh</code></td>
+<td>
+
+<p>Forward stepping threshold.
+Default is <code>0.001</code>.
+This is one of the arguments used to decide when forward stepping
+should terminate:
+the forward pass terminates if adding a term changes RSq by less than <code>thresh</code>.
+See “<em>Termination conditions for the forward pass</em>” in the vignette.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minspan</code></td>
+<td>
+
+<p>Minimum number of observations between knots.
+(This increases resistance to runs of correlated noise in the input data.)<br>
+The default <code>minspan=0</code> is treated specially and
+means calculate the <code>minspan</code> internally, as per
+Friedman's MARS paper section 3.8 with <code class="reqn">alpha</code> = 0.05.
+Set <code>trace&gt;=2</code> to see the calculated value.<br>
+Use <code>minspan=1</code> and <code>endspan=1</code> to consider all x values.<br>
+Negative values of <code>minspan</code> specify the maximum number of knots
+per predictor.  These will be equally spaced.
+For example, <code>minspan=-3</code> allows three evenly spaced knots for each predictor.
+As always, knots that fall in the end zones specified by <code>endspan</code> will be ignored.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>endspan</code></td>
+<td>
+
+<p>Minimum number of observations before the first and after the final knot.<br>
+The default <code>endspan=0</code> is treated specially and
+means calculate the <code>endspan</code> internally, as per
+the MARS paper equation 45 with <code class="reqn">alpha</code> = 0.05.
+Set <code>trace&gt;=2</code> to see the calculated value.
+<br>
+Be wary of reducing <code>endspan</code>, especially if you plan to make
+predictions beyond or near the limits of the training data.
+Overfitting near the edges of training data is much more
+likely with a small <code>endspan</code>.
+The model's <code>RSq</code> and <code>GRSq</code> won't indicate when this
+overfitting is occurring.
+(A <code>plotmo</code> plot can help: look for sharp hinges at the
+edges of the data).  See also the <code>Adjust.endspan</code> argument.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newvar.penalty</code></td>
+<td>
+
+<p>Penalty for adding a new variable in the forward pass
+(Friedman's <code class="reqn">gamma</code>, equation 74 in the MARS paper).
+Default is <code>0</code>, meaning no penalty for adding a new variable.
+Useful non-zero values typically range from about <code>0.01</code> to <code>0.2</code>
+and sometimes higher —
+you will need to experiment.<br>
+A word of explanation.  With the default <code>newvar.penalty=0</code>,
+if two variables have nearly the same effect (e.g. they are
+collinear), at any step in the forward pass <code>earth</code> will
+arbitrarily select one or the other (depending on noise in the sample).
+Both variables can appear in the
+final model, complicating model interpretation.  On the other hand
+with a non-zero <code>newvar.penalty</code>, the forward pass will be
+reluctant to add a new variable — it will rather try to use a
+variable already in the model, if that does not affect RSq too much.
+The resulting final model may be easier to interpret, if you are lucky.
+There will often be a small performance hit (a worse GCV).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fast.k</code></td>
+<td>
+
+<p>Maximum number of parent terms considered at each step of the forward pass.
+(This speeds up the forward pass. See the Fast MARS paper section 3.0.)<br>
+Default is <code>20</code>.
+A value of <code>0</code> is treated specially
+(as being equivalent to infinity), meaning no Fast MARS.
+Typical values, apart from <code>0</code>, are <code>20</code>, <code>10</code>, or <code>5</code>.<br>
+In general, with a lower <code>fast.k</code> (say <code>5</code>), <code>earth</code> is faster;
+with a higher <code>fast.k</code>, or with <code>fast.k</code> disabled (set to <code>0</code>),
+<code>earth</code> builds a better model.
+However, because of random variation this general rule often doesn't apply.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fast.beta</code></td>
+<td>
+
+<p>Fast MARS ageing coefficient, as described in the
+Fast MARS paper section 3.1.
+Default is <code>1</code>.
+A value of <code>0</code> sometimes gives better results.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linpreds</code></td>
+<td>
+
+<p>Index vector specifying which predictors should enter linearly, as in <code>lm</code>.
+The default is <code>FALSE</code>, meaning predictors enter
+in the standard MARS fashion, i.e., in hinge functions.
+<br><br>
+The linpreds argument does not specify that a predictor
+<em>must</em> enter the model; only that if it enters, it enters
+linearly.  See “<em>The linpreds argument</em>” in the
+<a href="../doc/earth-notes.pdf">vignette</a>.
+<br>
+See also the <code>Auto.linpreds</code> argument below (which describes how
+<code>earth</code> will <em>automatically</em> treat a predictor as linear
+under certain conditions).
+<br><br>
+Details:
+A predictor's index in <code>linpreds</code> is the column number in the input matrix <code>x</code>
+(after factors have been expanded).
+<br><code>linpreds=TRUE</code> makes all predictors enter linearly (the <code>TRUE</code> gets recycled).
+<br><code>linpreds</code> may be a character vector e.g.
+<code>linpreds=c("wind", "vis")</code>.  Note: <code>grep</code> is used
+for matching. Thus <code>"wind"</code> will match all variables that have
+<code>"wind"</code> in their names. Use <code>"^wind$"</code> to match only the
+variable named <code>"wind"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allowed</code></td>
+<td>
+
+<p>Function specifying which predictors can interact and how.
+Default is NULL, meaning all standard MARS terms are allowed.<br>
+During the forward pass, <code>earth</code> calls the <code>allowed</code> function
+before considering a term for inclusion; the term can go into the
+model only if the <code>allowed</code> function returns <code>TRUE</code>.
+See “<em>The allowed argument</em>” in the vignette.
+<br><br><b>The following arguments are for the pruning pass.</b>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pmethod</code></td>
+<td>
+
+<p>Pruning method.
+One of: <code>backward none exhaustive forward seqrep cv</code>.<br>
+Default is <code>"backward"</code>.<br>
+Specify <code>pmethod="cv"</code> to use cross-validation to select the number of terms.
+This selects the number of terms that gives the maximum
+mean out-of-fold RSq on the fold models.
+Requires the <code>nfold</code> argument.<br>
+Use <code>"none"</code> to retain all the terms created by the forward pass.<br>
+If <code>y</code> has multiple columns, then only <code>"backward"</code> or <code>"none"</code>
+is allowed.<br>
+Pruning can take a while if <code>"exhaustive"</code> is chosen and
+the model is big (more than about 30 terms).
+The current version of the <code>leaps</code> package
+used during pruning does not allow user interrupts
+(i.e., you have to kill your R session to interrupt;
+in Windows use the Task Manager or from the command line use <code>taskkill</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nprune</code></td>
+<td>
+
+<p>Maximum number of terms (including intercept) in the pruned model.
+Default is NULL, meaning all terms created by the forward pass
+(but typically not all terms will remain after pruning).
+Use this to enforce an upper bound on the model size (that is less than <code>nk</code>),
+or to reduce exhaustive search time with <code>pmethod="exhaustive"</code>.
+<br><br><b>The following arguments are for cross validation.</b>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nfold</code></td>
+<td>
+
+<p>Number of cross-validation folds.
+Default is <code>0</code>, no cross validation.
+If greater than <code>1</code>, <code>earth</code> first builds a standard model as usual with all the data.
+It then builds <code>nfold</code> cross-validated models,
+measuring R-Squared on the out-of-fold (left out) data each time.
+The final cross validation R-Squared (<code>CVRSq</code>) is the mean of these
+out-of-fold R-Squareds.<br>
+The above process of building <code>nfold</code> models is repeated
+<code>ncross</code> times (by default, once).
+Use <code>trace=.5</code> to trace cross-validation.<br>
+Further statistics are calculated if <code>keepxy=TRUE</code> or
+if a binomial or poisson model (specified with the <code>glm</code> argument).
+See “<em>Cross validation</em>” in the vignette.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncross</code></td>
+<td>
+
+<p>Only applies if <code>nfold&gt;1</code>.
+Number of cross-validations.  Each cross-validation has <code>nfold</code> folds.
+Default <code>1</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stratify</code></td>
+<td>
+
+<p>Only applies if <code>nfold&gt;1</code>.
+Default is <code>TRUE</code>.
+Stratify the cross-validation samples so that
+an approximately equal number of cases with a non-zero response
+occur in each cross validation subset.
+So if the response <code>y</code> is logical, the <code>TRUE</code>s will be spread
+evenly across folds.
+And if the response is a multilevel factor, there will be an
+approximately equal number of each factor level in each fold
+(because a multilevel factor response gets expanded to columns of zeros and ones,
+see “<em>Factors</em>” in  the vignette).
+We say “approximately equal” because the number of occurrences of a factor
+level may not be exactly divisible by the number of folds.
+<br><br><b>The following arguments are for variance models.</b>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varmod.method</code></td>
+<td>
+
+<p>Construct a variance model.
+For details, see <code>varmod</code> and the vignette
+“<a href="../doc/earth-varmod.pdf">Variance models in earth</a>”.
+Use <code>trace=.3</code> to trace construction of the variance model.
+<br>
+This argument requires <code>nfold</code> and <code>ncross</code>. (We suggest at least <code>ncross=30</code>
+here to properly calculate the variance of the errors — although
+you can use a smaller value, say <code>3</code>, for debugging.)<br>
+The <code>varmod.method</code> argument should be one of<br><b><code>"none"</code></b> Default.  Don't build a variance model.
+<br><b><code>"const"</code></b> Assume homoscedastic errors.
+<br><b><code>"lm"</code></b> Use <code>lm</code> to estimate standard deviation as a
+function of the predicted response.
+<br><b><code>"rlm"</code></b> Use <code>rlm</code>.
+<br><b><code>"earth"</code></b> Use <code>earth</code>.
+<br><b><code>"gam"</code></b> Use <code>gam</code>.
+This will use either <code>gam</code>
+or the <code>mgcv</code> package, whichever is loaded.
+<br><b><code>"power"</code></b> Estimate standard deviation as
+<code>intercept + coef * predicted.response^exponent</code>,
+where
+<code>intercept</code>, <code>coef</code>, and <code>exponent</code> will be estimated by <code>nls</code>.
+This is equivalent to <code>varmod.method="lm"</code> except that <code>exponent</code> is
+automatically estimated instead of being held at the value
+set by the <code>varmod.exponent</code> argument.
+<br><b><code>"power0"</code></b> Same as <code>"power"</code> but no intercept (offset) term.
+<br><b><code>"x.lm"</code></b>,
+<b><code>"x.rlm"</code></b>,
+<b><code>"x.earth"</code></b>,
+<b><code>"x.gam"</code></b>
+Like the similarly named options above,
+but estimate standard deviation by regressing on the predictors <code>x</code>
+(instead of the predicted response).
+A current implementation restriction is that <code>"x.gam"</code>
+allows only models with one predictor (<code>x</code> must have only one column).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varmod.exponent</code></td>
+<td>
+
+<p>Power transform applied to the rhs before regressing the
+absolute residuals with the specified <code>varmod.method</code>.
+Default is <code>1</code>.<br>
+For example, with <code>varmod.method="lm"</code>, if you expect the
+standard deviance to increase linearly with the mean response, use
+<code>varmod.exponent=1</code>.
+If you expect the standard deviance to increase with the square root
+of the mean response, use
+<code>varmod.exponent=.5</code>
+(where negative response values will be treated as <code>0</code>,
+and you will get an error message if more than 20% of them are negative).
+</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>varmod.conv</code></td>
+<td>
+
+<p>Convergence criterion for the Iteratively Reweighted Least Squares used
+when creating the variance model.<br>
+Iterations stop when the mean value of the coefficients of the
+residual model change by less than <code>varmod.conv</code>
+percent.
+Default is <code>1</code> percent.<br>
+Negative values force the specified number of iterations,
+e.g. <code>varmod.conv=-2</code> means iterate twice.<br>
+Positive values are ignored for <code>varmod="const"</code>
+and also currently ignored for <code>varmod="earth"</code>
+(these are iterated just once, the same as using <code>varmod.conv=-1</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varmod.clamp</code></td>
+<td>
+
+<p>The estimated standard deviation of the main model errors
+is forced to be at least a small positive value,
+which we call <code>min.sd</code>.
+This prevents negative or absurdly small estimated standard deviations.
+Clamping takes place in <code>predict.varmod</code>, which is called
+by <code>predict.earth</code> when estimating prediction intervals.
+The value of <code>min.sd</code> is determined when building the variance
+model as <code>min.sd = varmod.clamp * mean(sd(training.residuals))</code>.
+The default <code>varmod.clamp</code> is <code>0.1</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varmod.minspan</code></td>
+<td>
+
+<p>Only applies when <code>varmod.method="earth"</code> or <code>"x.earth"</code>.
+This is the <code>minspan</code> used in the internal call to <code>earth</code>
+when creating the variance model (not the main <code>earth</code> model).<br>
+Default is <code>-3</code>, i.e., three evenly spaced knots per predictor.
+Residuals tend to be very noisy, and allowing only this small
+number of knots helps prevent overfitting.
+<br><br><b>The following arguments are for internal or advanced use.</b>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Object</code></td>
+<td>
+
+<p>Earth object to be updated, for use by <code>update.earth</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Scale.y</code></td>
+<td>
+
+<p><code>Scale</code> the response internally in the forward pass.
+Scaling here means subtract the mean and divide by the standard
+deviation.
+<br>
+For single-response models, the default is <code>Scale.y = TRUE</code>.
+Scaling is invisible to the user, up to numerical differences,
+but does provide better numeric stability.
+<br>
+For multiple-response models, the default is <code>FALSE</code>.
+If <code>Scale.y</code> is set <code>TRUE</code>, each column of the response is
+independently scaled.
+This can prevent one response from “overwhelming” the others,
+and earth typically generates a different set of hinge functions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Adjust.endspan</code></td>
+<td>
+
+<p>In interaction terms, <code>endspan</code> gets multiplied by this value.
+This reduces the possibility of an overfitted interaction term
+supported by just a few cases on the boundary of the predictor space
+(as sometimes seen in our simulation studies).<br>
+The default is <code>2</code>.
+Use <code>Adjust.endspan=1</code> for compatibility with old
+versions of <code>earth</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Auto.linpreds</code></td>
+<td>
+
+<p>Default is <code>TRUE</code>, which works as follows
+(see <a href="../doc/Auto-linpreds-example.pdf">example</a>):<br>
+At any step in the forward pass, if earth discovers that the best knot
+for the best predictor is at the predictor minimum (in the
+training data),
+then earth adds the predictor to the model as a linear “basis
+function” (with no hinge).
+Compare the following basis functions (printed in bold)
+for an example such predictor <code>x</code>:<br><code>Auto.linpreds=TRUE</code> (default): <b><code>x</code></b><br><code>Auto.linpreds=FALSE</code>: <b><code>max(x-99, 0)</code></b> where
+<code>99</code> is the minimum <code>x</code> in the training data.<br>
+Using <code>Auto.linpreds=FALSE</code> always forces a knot, even when the
+knot is at the minimum value of the variable.
+This ensures that the basis functions are always expressed as hinge functions
+(and will always be non-negative).<br>
+Note that <code>Auto.linpreds</code> affects only how the model behaves <em>outside</em>
+the training data.
+Thus <code>predict.earth</code> will
+make the same predictions from the training data, regardless
+of whether the earth model was built with <code>Auto.linpreds</code> set
+<code>TRUE</code> or <code>FALSE</code>
+(up to possible differences in the size of the model caused by
+different GCVs because of the different forms of the terms).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Force.weights</code></td>
+<td>
+
+<p>Default is <code>FALSE</code>.
+For testing the <code>weights</code> argument.
+Force use of the code for handling weights in the <code>earth</code> code,
+even if <code>weights=NULL</code> or all the weights are the same.
+This will not necessarily generate an identical model,
+primarily because the non-weighted code requires some tests for
+numerical stability that can sometimes affect knot selection.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Use.beta.cache</code></td>
+<td>
+
+<p>Default is <code>TRUE</code>.
+Using the “beta cache” takes a little more memory but is faster
+(by 20% and often much more for large models).
+The beta cache uses <code>nk * nk * ncol(x) * sizeof(double)</code> bytes.
+(The beta cache is an innovation in this implementation of MARS
+and does not appear in Friedman's papers. It is not related to
+the <code>fast.beta</code> argument.  Certain regression coefficients
+in the forward pass can be saved and re-used, thus
+saving recalculation time.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Force.xtx.prune</code></td>
+<td>
+
+<p>Default is <code>FALSE</code>.
+This argument pertains to subset evaluation in the pruning pass.
+By default,
+if <code>y</code> has a single column then <code>earth</code> calls the <code>leaps</code> routines;
+if <code>y</code> has multiple columns then <code>earth</code> calls <code>EvalSubsetsUsingXtx</code>.
+The <code>leaps</code> routines are numerically more stable
+but do not support multiple responses
+(<code>leaps</code> is based on the QR decomposition and
+<code>EvalSubsetsUsingXtx</code> is based on the inverse of X'X).
+Setting <code>Force.xtx.prune=TRUE</code> forces use of <code>EvalSubsetsUsingXtx</code>, even
+if <code>y</code> has a single column.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Get.leverages</code></td>
+<td>
+
+<p>Default is <code>TRUE</code> unless the model has more than 100 thousand cases.
+The leverages are the diagonal hat values for the linear regression of
+<code>y</code> on <code>bx</code>.
+(The leverages are needed only for certain model checks, for example
+when <code>plotres</code> is called with <code>versus=4</code>).
+<br>
+Details:
+This argument was introduced to reduce peak memory usage.
+When <code>n &gt;&gt; p</code>, memory use peaks when <code>earth</code> is
+calculating the leverages.
+
+
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Exhaustive.tol</code></td>
+<td>
+
+<p>Default <code>1e-10</code>.
+Applies only when <code>pmethod="exhaustive"</code>.
+If the reciprocal of the condition number of <code>bx</code>
+is less than <code>Exhaustive.tol</code>, <code>earth</code> forces <code>pmethod="backward"</code>.
+See “<em>XHAUST returned error code -999</em>” in the vignette.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Dots are passed on to <code>earth.fit</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An S3 model of class <code>"earth"</code>.
+See <code>earth.object</code> for a complete description.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Stephen Milborrow, derived from <code>mda::mars</code>
+by Trevor Hastie and Robert Tibshirani.
+</p>
+<p>The approach used for GLMs was motivated by work done by
+Jane Elith and John Leathwick
+(a representative paper is given below).
+</p>
+<p>The <code>evimp</code> function uses ideas from Max Kuhn's <code>caret</code> package
+<a href="https://CRAN.R-project.org/package=caret">https://CRAN.R-project.org/package=caret</a>.
+</p>
+<p>Parts of Thomas Lumley's <code>leaps</code> package have been
+incorporated into <code>earth</code>, so <code>earth</code> can directly access
+Alan Miller's Fortran functions without going through hidden functions
+in the <code>leaps</code> package.
+</p>
+
+
+<h3>References</h3>
+
+<p>The Wikipedia article is recommended for an elementary introduction.
+The primary references are the Friedman papers, but
+readers may find the MARS section in Hastie, Tibshirani,
+and Friedman a more accessible introduction.
+Faraway takes a hands-on approach,
+using the <code>ozone</code> data to compare <code>mda::mars</code> with other techniques.
+(If you use Faraway's examples with <code>earth</code> instead of <code>mars</code>, use <code>$bx</code>
+instead of <code>$x</code>, and check out the book's errata.)
+Friedman and Silverman is recommended background reading for the MARS paper.
+Earth's pruning pass uses code from the <code>leaps</code> package
+which is based on techniques in Miller.
+</p>
+<p>Faraway (2005) <em>Extending the Linear Model with R</em>
+<a href="https://www.maths.bath.ac.uk/~jjf23">https://www.maths.bath.ac.uk/~jjf23</a>
+</p>
+<p>Friedman (1991) <em>Multivariate Adaptive Regression Splines (with discussion)</em>
+Annals of Statistics 19/1, 1–141
+
+<a href="http://projecteuclid.org/euclid.aos/1176347963">http://projecteuclid.org/euclid.aos/1176347963</a><br><a href="https://doi.org/10.1214/aos/1176347963">doi:10.1214/aos/1176347963</a>
+</p>
+<p>Friedman (1993) <em>Fast MARS</em>
+Stanford University Department of Statistics, Technical Report 110
+
+
+<code>https://statistics.stanford.edu/research/fast-mars</code>
+</p>
+<p>Friedman and Silverman (1989)
+<em>Flexible Parsimonious Smoothing and Additive Modeling</em>
+Technometrics, Vol. 31, No. 1.
+
+
+</p>
+<p>Hastie, Tibshirani, and Friedman (2009) <em>The Elements of Statistical Learning (2nd ed.)</em>
+<a href="https://hastie.su.domains/pub.htm">https://hastie.su.domains/pub.htm</a>
+</p>
+<p>Leathwick, J.R., Rowe, D., Richardson, J., Elith, J., &amp; Hastie, T. (2005)
+<em>Using multivariate adaptive regression splines to predict the distributions
+of New Zealand's freshwater diadromous fish</em> Freshwater Biology, 50, 2034-2052
+<a href="https://hastie.su.domains/pub.htm">https://hastie.su.domains/pub.htm</a>
+</p>
+<p>Miller, Alan (1990, 2nd ed. 2002) <em>Subset Selection in Regression</em>
+<a href="https://wp.csiro.au/alanmiller/index.html">https://wp.csiro.au/alanmiller/index.html</a>
+</p>
+<p>Wikipedia article on MARS
+<a href="https://en.wikipedia.org/wiki/Multivariate_adaptive_regression_splines">https://en.wikipedia.org/wiki/Multivariate_adaptive_regression_splines</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Start with <code>summary.earth</code>, <code>plot.earth</code>,
+<code>evimp</code>, and <code>plotmo</code>.
+</p>
+<p>Please see the main package vignette
+“<a href="../doc/earth-notes.pdf">Notes on the earth package</a>”.
+The vignette can also be downloaded from
+<a href="http://www.milbo.org/doc/earth-notes.pdf">http://www.milbo.org/doc/earth-notes.pdf</a>.
+</p>
+<p>The vignette
+“<a href="../doc/earth-varmod.pdf">Variance models in earth</a>”
+is also included with the package.
+It describes how to generate prediction intervals for <code>earth</code> models.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">earth.mod &lt;- earth(Volume ~ ., data = trees)
+plotmo(earth.mod)
+summary(earth.mod, digits = 2, style = "pmax")
+</code></pre>
+
+
+</div>

@@ -1,0 +1,128 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EllDistrSim</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulation of elliptically symmetric random vectors</h2>
+
+<h3>Description</h3>
+
+<p>This function uses the decomposition <code class="reqn">X = \mu + R * A * U</code>
+where <code class="reqn">\mu</code> is the mean of <code class="reqn">X</code>, <code class="reqn">R</code> is the random radius,
+<code class="reqn">A</code> is the square-root of the covariance matrix of <code class="reqn">X</code>,
+and <code class="reqn">U</code> is a uniform random variable of the d-dimensional unit sphere.
+Note that <code class="reqn">R</code> is generated using the Metropolis-Hasting algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EllDistrSim(
+  n,
+  d,
+  A = diag(d),
+  mu = 0,
+  density_R2,
+  genR = list(method = "pinv")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>number of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>dimension of <code class="reqn">X</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>square-root of the covariance matrix of <code class="reqn">X</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>mean of <code class="reqn">X</code>. It should be a vector of size <code>d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>density_R2</code></td>
+<td>
+<p>density of the random variable <code class="reqn">R^2</code>,
+i.e. the density of the <code class="reqn">||X||_2^2</code> if <code class="reqn">\mu=0</code>
+and <code class="reqn">A</code> is the identity matrix.
+</p>
+<p>Note that this function <strong>must</strong> return <code class="reqn">0</code> for negative inputs,
+otherwise negative values of <code class="reqn">R^2</code> may be generated.
+The simplest way to do this is to add <code style="white-space: pre;">⁠ * (x &gt; 0)⁠</code> at the end of the
+return value of the provided <code>density_R2</code> function (see example below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>genR</code></td>
+<td>
+<p>additional arguments for the generation of the squared radius.
+It must be a list with a component method: </p>
+
+<ul>
+<li>
+<p> If <code>genR$method == "pinv"</code>, the radius is generated
+using the function <code>Runuran::pinv.new()</code>.
+</p>
+</li>
+<li>
+<p> If <code>genR$method == "MH"</code>,
+the generation is done using the Metropolis-Hasting algorithm,
+with a <code class="reqn">N(0,1)</code> move at each step.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a matrix of dimensions <code>(n,d)</code> of simulated observations.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>EllCopSim</code> for the simulation of elliptical copula samples,
+<code>EllCopEst</code> for the estimation of elliptical distributions,
+<code>EllDistrSimCond</code> for the conditional simulation of
+elliptically distributed random vectors given some observe components.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Sample from a 3-dimensional normal distribution
+X = EllDistrSim(n = 200, d = 3, density_R2 = function(x){stats::dchisq(x=x,df=3)})
+plot(X[,1], X[,2])
+X = EllDistrSim(n = 200, d = 3, density_R2 = function(x){stats::dchisq(x=x,df=3)},
+                genR = list(method = "MH", niter = 500))
+plot(X[,1], X[,2])
+
+# Sample from an Elliptical distribution for which the squared radius
+# follows an exponential distribution
+cov1 = rbind(c(1,0.5), c(0.5,1))
+X = EllDistrSim(n = 1000, d = 2,
+                A = chol(cov1), mu = c(2,6),
+                density_R2 = function(x){return(exp(-x) * (x &gt; 0))} )
+
+</code></pre>
+
+
+</div>

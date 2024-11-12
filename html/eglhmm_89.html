@@ -1,0 +1,340 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>reglhmm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Simulate data from a hidden generalised linear Markov
+model.</h2>
+
+<h3>Description</h3>
+
+<p>Takes a specification of the model and simulates the data from
+that model.  The model may be specified in terms of the individual
+components of that model (the default method).  The components
+include a data frame that provides the predictor variables,
+and various parameters of the model.  For the <code>"eglhmm"</code>
+method the model is specified as a fitted model, an object of
+class <code>"eglhmm"</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">reglhmm(x,...)
+## Default S3 method:
+reglhmm(x, formula, response, cells=NULL, data=NULL, nobs=NULL,
+                         distr=c("Gaussian","Poisson","Binomial","Dbd","Multinom"),
+                         phi, Rho, sigma, size, ispd=NULL, ntop=NULL, zeta=NULL,
+                         missFrac = 0, fep=NULL,
+                         contrast=c("treatment","sum","helmert"),...)
+## S3 method for class 'eglhmm'
+reglhmm(x, missFrac = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>For the default method, the transition probability matrix of
+the hidden Markov chain.  For the <code>"eglhmm"</code> method,
+an object of class <code>"eglhmm"</code> as returned by the function
+<code>eglhmm()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>The formula specifying the generalised linear model from which data
+are to be simulated.  Note that the predictor variables in
+this formula must include a factor <code>state</code>, which specifies
+the state of the hidden Markov chain.  Note also that this formula
+must determine a design matrix having a number of columns equal to
+the length of the vector <code>phi</code> of model coefficients provided
+in <code>object</code> (and to the length of <code>psi</code> in the case of
+the Gaussian distribution).  If this condition is not satisfied,
+an error is thrown.
+</p>
+<p>It is advisable to use a formula specified in the manner
+<code>y~0+state+...</code> where <code>...</code> represents the predictors
+in the model other than <code>state</code>.  Of course <code>phi</code> must
+be supplied in a manner that is consistent with this structure.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>A character vector of length 2, specifying
+the names of the responses.  Ignored unless <code>distr</code> is
+<code>"Multinom"</code>.  If <code>distr</code> is <code>"Multinom"</code> and if
+<code>response</code> is provided appropriately, then the simulated
+data are bivariate multinomial.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cells</code></td>
+<td>
+
+<p>A character vector specifying the names of the factors which
+determine the “cells” of the model.  These factors must be
+columns of the data frame <code>data</code>.  (See below.)  Each cell
+corresponds to a time series of (simulated) observations.
+If <code>cells</code> is not supplied (left equal to <code>NULL</code>)
+then the model is taken to have a single cell, i.e. data from a
+“simple” hidden Markov model is generated.   The parameters
+of that model may be time-varying, and still depend on the
+predictors specified by <code>formula</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A data frame containing the predictor variables referred to by
+<code>formula</code>, i.e. the predictors for the model from which
+data are to be simulated.  If <code>data</code> is not specified,
+the <code>nobs</code> (see below) must be.  If <code>data</code> is not
+specified then <code>formula</code> must have the structure <code>y ~
+  state</code> or preferably <code>y ~ 0 + state</code>.  Of course <code>phi</code>
+must be specified in a consistent manner.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nobs</code></td>
+<td>
+
+<p>Integer scalar.  The number of observations to be generated in
+the setting in which the generalised linear model in question is
+vacuous.  Ignored if <code>data</code> is supplied.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distr</code></td>
+<td>
+
+<p>Character string specifying the distribution of the
+“emissions” from the model, i.e., of the observations.
+This distribution determines “emission probabilities”.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi</code></td>
+<td>
+
+<p>A numeric vector specifying  the coefficients of the linear
+predictor of the generalised linear model.  The length of
+<code>phi</code> must be equal to the number of columns of the
+design matrix determined by <code>formula</code> and <code>data</code>.
+The entries of <code>phi</code> must match up appropriately with
+the columns of the design matrix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Rho</code></td>
+<td>
+<p>A matrix, or a list of two matrices or a three dimensional
+array specifying the emissions probabilities for a multinomial
+distribution.  Ignored unless <code>distr</code> is <code>"Multinomial"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+
+<p>A numeric vector of length equal to the number of states.
+Its <code class="reqn">i</code>th entry is the standard deviation of the (Gaussian)
+distribution corresponding to the <code class="reqn">i</code>th state.  Ignored unless
+<code>distr</code> is <code>"Gaussian"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+
+<p>Integer scalar.  The number of trials (sample size) from which
+the number of “successes” are counted, in the context of
+the binomial distribution.  (I.e. the <code>size</code> parameter of
+<code>rbinom()</code>.)  Ignored unless <code>distr</code> is <code>"Binomial"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ispd</code></td>
+<td>
+
+<p>An optional numeric vector specifying the initial state probability
+distribution of the model. If <code>ispd</code> is not provided then it
+is taken to be the stationary/steady state distribution determined
+by the transition probability matrix <code>x</code>.  If specified,
+<code>ispd</code> must be a <em>probability</em> vector of length equal
+to the number of rows (equivalently the number of columns)
+of <code>x</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntop</code></td>
+<td>
+
+<p>Integer scalar, strictly greater than 1.  The maximum possible
+value of the db distribution.  See <code>db()</code>.
+Used only if <code>distr</code> is <code>"Dbd"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zeta</code></td>
+<td>
+
+<p>Logical scalar.  Should zero origin indexing be used?
+I.e. should the range of values of the db distribution be taken to
+be <code>{0,1,2,...,ntop}</code> rather than <code>{1,2,...,ntop}</code>?
+Used only if <code>distr</code> is <code>"Dbd"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missFrac</code></td>
+<td>
+
+<p>A non-negative scalar, less than 1.  Data will be randomly set
+equal to <code>NA</code> with probability <code>miss.frac</code>.  Note that
+for the <code>"eglhmm"</code> method, if <code>"miss.frac"</code> is not
+supplied then it is extracted from <code>object</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fep</code></td>
+<td>
+<p>A list of length 1 or 2.  The first entry of this
+list is a logical scalar.  If this is <code>TRUE</code>, then the first
+entry of the simulated emissions (or at least one entry of the first
+pair of simulated emissions) is forced to be “present”,
+i.e. non-missing.  The second entry of <code>fep</code>, if present, is
+a numeric scalar, between 0 and 1 (i.e. a probability).  It
+is equal to the probability that both entries of the first
+pair of emissions are present.  It is ignored if the emissions
+are univariate.  If the emissions are bivariate but the second
+entry of <code>fep</code> is not provided, then this second entry defaults
+to the “overall” probability that both entries of a pair of
+emission are present, given that at least on is present.
+This probability is calculated from <code>nafrac</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+
+<p>A character string, one of “treatment”, “helmert” or “sum”,
+specifying what contrast (for unordered factors) to use in
+constructing the design matrix.  (The contrast for ordered factors,
+which is has no relevance in this context, is left at it default
+value of <code>"contr.poly"</code>.)  Note that the meaning of the
+coefficient vector <code>phi</code> depends on the contrast specified,
+so make sure that the contrast is the same as what you had in
+mind when you specified phi!!!  Note that for the <code>"eglhmm"</code>
+method, <code>contrast</code> is extracted from <code>x</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Not used.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame with the same columns as those of <code>data</code>
+and an added column, whose name is determined from <code>formula</code>,
+containing the simulated <em>response</em>
+</p>
+
+
+<h3>Remark</h3>
+
+<p>Although this documentation refers to “generalised linear
+models”, the only such models currently (13/02/2024) available are
+the Gaussian model with the identity link, the Poisson model,
+with the log link, and the Binomial model with the logit link.
+The Multinomial model, which is also available, is not exactly
+a generalised linear model; it might be thought of as an
+“extended” generalised linear model.  Other models may be
+added at a future date.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:rolfturner@posteo.net">rolfturner@posteo.net</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>T. Rolf Turner, Murray A. Cameron, and Peter J. Thomson
+(1998).  Hidden Markov chains in generalized linear models.
+<em>Canadian Journal of Statististics</em> <b>26</b>, pp. 107 –
+125, DOI: https://doi.org/10.2307/3315677.
+</p>
+<p>Rolf Turner (2008).  Direct maximization of the likelihood of a
+hidden Markov model. <em>Computational Statistics
+and Data Analysis</em> <b>52</b>, pp. 4147 – 4160, DOI:
+https://doi.org/10.1016/j.csda.2008.01.029
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fitted.eglhmm()</code>
+<code>bcov()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">    loc4 &lt;- c("LngRf","BondiE","BondiOff","MlbrOff")
+    SCC4 &lt;- SydColCount[SydColCount$locn %in% loc4,] 
+    SCC4$locn &lt;- factor(SCC4$locn) # Get rid of unused levels.
+    rownames(SCC4) &lt;- 1:nrow(SCC4)
+    Tpm   &lt;- matrix(c(0.91,0.09,0.36,0.64),byrow=TRUE,ncol=2)
+    Phi   &lt;- c(0,log(5),-0.34,0.03,-0.32,0.14,-0.05,-0.14)
+    # The "state effects" are 1 and 5.
+    Dat   &lt;- SCC4[,1:3]
+    fmla  &lt;- y~0+state+locn+depth
+    cells &lt;- c("locn","depth")
+# The default method.
+    X     &lt;- reglhmm(Tpm,formula=fmla,cells=cells,data=Dat,distr="P",phi=Phi,
+                    miss.frac=0.75,contrast="sum")
+# The "eglhmm" method.
+    fit &lt;- eglhmm(y~locn+depth,data=SCC4,cells=cells,K=2,
+                 verb=TRUE,distr="P")
+    Y   &lt;- reglhmm(fit)
+# Vacuous generalised linear model.
+    Z   &lt;- reglhmm(Tpm,formula=y~0+state,nobs=300,distr="P",phi=log(c(2,7)))
+    # The "state effects" are 2 and 7.
+</code></pre>
+
+
+</div>

@@ -1,0 +1,194 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>netsim</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Stochastic Network Models</h2>
+
+<h3>Description</h3>
+
+<p>Simulates stochastic network epidemic models for infectious
+disease.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">netsim(x, param, init, control)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>If <code>control$start == 1</code>, either a fitted network model object
+of class <code>netest</code> or a list of such objects. If
+<code>control$start &gt; 1</code>, an object of class <code>netsim</code>. When
+multiple networks are used, the node sets (including network size
+and nodal attributes) are assumed to be the same for all networks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>Model parameters, as an object of class <code>param.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>Initial conditions, as an object of class <code>init.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>Control settings, as an object of class
+<code>control.net</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Stochastic network models explicitly represent phenomena within and across
+edges (pairs of nodes that remain connected) over time. This enables edges to
+have duration, allowing for repeated transmission-related acts within the
+same dyad, specification of edge formation and dissolution rates, control
+over the temporal sequencing of multiple edges, and specification of
+network-level features. A detailed description of these models, along with
+examples, is found in the <a href="http://www.epimodel.org/tut.html">Basic
+Network Models</a> tutorials.
+</p>
+<p>The <code>netsim</code> function performs modeling of both the base model types
+and original models. Base model types include one-group and two-group models
+with disease types for Susceptible-Infected (SI),
+Susceptible-Infected-Recovered (SIR), and
+Susceptible-Infected-Susceptible (SIS).
+</p>
+<p>Original models may be parameterized by writing new process modules that
+either take the place of existing modules (for example, disease recovery), or
+supplement the set of existing processes with a new one contained in a new
+module. This functionality is documented in the
+<a href="http://www.epimodel.org/tut.html">Extension Network Models</a> tutorials.
+The list of modules within <code>netsim</code> available for modification is listed
+in <code>modules.net</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class <code>netsim</code> with the following elements:
+</p>
+
+<ul>
+<li> <p><strong>param:</strong> the epidemic parameters passed into the model through
+<code>param</code>, with additional parameters added as necessary.
+</p>
+</li>
+<li> <p><strong>control:</strong> the control settings passed into the model through
+<code>control</code>, with additional controls added as necessary.
+</p>
+</li>
+<li> <p><strong>epi:</strong> a list of data frames, one for each epidemiological
+output from the model. Outputs for base models always include the
+size of each compartment, as well as flows in, out of, and between
+compartments.
+</p>
+</li>
+<li> <p><strong>stats:</strong> a list containing two sublists, <code>nwstats</code> for any
+network statistics saved in the simulation, and <code>transmat</code> for
+the transmission matrix saved in the simulation. See
+<code>control.net</code> and the
+<a href="http://www.epimodel.org/tut.html">tutorials</a> for further
+details.
+</p>
+</li>
+<li> <p><strong>network:</strong> a list of lists of <code>networkDynamic</code> or
+<code>networkLite</code> objects, with one list of objects for each model
+simulation.
+</p>
+</li>
+</ul>
+<p>If <code>control$raw.output == TRUE</code>: A list of the raw (pre-processed)
+<code>netsim_dat</code> objects, for use in simulation continuation.
+</p>
+
+
+<h3>References</h3>
+
+<p>Jenness SM, Goodreau SM and Morris M. EpiModel: An R Package for Mathematical
+Modeling of Infectious Disease over Networks. Journal of Statistical
+Software. 2018; 84(8): 1-47.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Extract the model results with <code>as.data.frame.netsim</code>.
+Summarize the time-specific model results with
+<code>summary.netsim</code>. Plot the model results with
+<code>plot.netsim</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## Example 1: SI Model without Network Feedback
+# Network model estimation
+nw &lt;- network_initialize(n = 100)
+nw &lt;- set_vertex_attribute(nw, "group", rep(1:2, each = 50))
+formation &lt;- ~edges
+target.stats &lt;- 50
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 20)
+est1 &lt;- netest(nw, formation, target.stats, coef.diss, verbose = FALSE)
+
+# Epidemic model
+param &lt;- param.net(inf.prob = 0.3, inf.prob.g2 = 0.15)
+init &lt;- init.net(i.num = 10, i.num.g2 = 10)
+control &lt;- control.net(type = "SI", nsteps = 100, nsims = 5, verbose.int = 0)
+mod1 &lt;- netsim(est1, param, init, control)
+
+# Print, plot, and summarize the results
+mod1
+plot(mod1)
+summary(mod1, at = 50)
+
+## Example 2: SIR Model with Network Feedback
+# Recalculate dissolution coefficient with departure rate
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 20,
+                               d.rate = 0.0021)
+
+# Reestimate the model with new coefficient
+est2 &lt;- netest(nw, formation, target.stats, coef.diss)
+
+# Reset parameters to include demographic rates
+param &lt;- param.net(inf.prob = 0.3, inf.prob.g2 = 0.15,
+                   rec.rate = 0.02, rec.rate.g2 = 0.02,
+                   a.rate = 0.002, a.rate.g2 = NA,
+                   ds.rate = 0.001, ds.rate.g2 = 0.001,
+                   di.rate = 0.001, di.rate.g2 = 0.001,
+                   dr.rate = 0.001, dr.rate.g2 = 0.001)
+init &lt;- init.net(i.num = 10, i.num.g2 = 10,
+                 r.num = 0, r.num.g2 = 0)
+control &lt;- control.net(type = "SIR", nsteps = 100, nsims = 5,
+                       resimulate.network = TRUE, tergmLite = TRUE)
+
+# Simulate the model with new network fit
+mod2 &lt;- netsim(est2, param, init, control)
+
+# Print, plot, and summarize the results
+mod2
+plot(mod2)
+summary(mod2, at = 40)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

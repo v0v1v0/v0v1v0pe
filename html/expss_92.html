@@ -1,0 +1,447 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cross_fun</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cross-tabulation with custom summary function.</h2>
+
+<h3>Description</h3>
+
+
+<ul>
+<li>
+<p><code>cross_mean</code>, <code>cross_sum</code>, <code>cross_median</code> calculate 
+mean/sum/median by groups. NA's are always omitted.
+</p>
+</li>
+<li>
+<p><code>cross_mean_sd_n</code> calculates mean, standard deviation and N
+simultaneously. Mainly intended for usage with significance_means.
+</p>
+</li>
+<li>
+<p><code>cross_pearson</code>, <code>cross_spearman</code> calculate correlation of 
+first variable in each data.frame in <code>cell_vars</code> with other variables. 
+NA's are removed pairwise.
+</p>
+</li>
+<li>
+<p><code>cross_fun</code>, <code>cross_fun_df</code> return table with custom summary 
+statistics defined by <code>fun</code> argument. NA's treatment depends on your 
+<code>fun</code> behavior. To use weight you should have formal <code>weight</code> 
+argument in <code>fun</code> and some logic for its processing inside. Several 
+functions with weight support are provided - see w_mean. 
+<code>cross_fun</code> applies <code>fun</code> on each variable in <code>cell_vars</code> 
+separately, <code>cross_fun_df</code> gives to <code>fun</code> each data.frame in 
+<code>cell_vars</code> as a whole. So <code>cross_fun(iris[, -5], iris$Species, fun =
+mean)</code> gives the same result as <code>cross_fun_df(iris[, -5], iris$Species, 
+fun = colMeans)</code>. For <code>cross_fun_df</code> names of <code>cell_vars</code> will 
+converted to labels if they are available before the <code>fun</code> will be applied. 
+Generally it is recommended that <code>fun</code> will always return object of the 
+same form. Row names/vector names of <code>fun</code> result will appear in the row
+labels of the table and column names/names of list will appear in the column 
+labels. If your <code>fun</code> returns data.frame/matrix/list with element named
+'row_labels' then this element will be used as row labels. And it will have
+precedence over rownames.
+</p>
+</li>
+<li>
+<p><code>cross_*</code> are evaluate their arguments
+in the context of the first argument <code>data</code>.
+</p>
+</li>
+<li>
+<p><code>cro_*</code> functions use standard evaluation, e. g 'cro(mtcars$am, mtcars$vs)'.
+</p>
+</li>
+<li>
+<p><code>combine_functions</code> is auxiliary function for combining several 
+functions into one function for usage with <code>cro_fun</code>/<code>cro_fun_df</code>.
+Names of arguments will be used as statistic labels. By default, results of
+each function are combined with c. But you can provide your own method
+function with <code>method</code> argument. It will be applied as in the expression
+<code>do.call(method, list_of_functions_results)</code>. Particular useful method
+is <code>list</code>. When it used then statistic labels will appear in the column
+labels. See examples. Also you may be interested in <code>data.frame</code>, 
+<code>rbind</code>, <code>cbind</code> methods.</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">cross_fun(
+  data,
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL,
+  fun,
+  ...,
+  unsafe = FALSE
+)
+
+cross_fun_df(
+  data,
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL,
+  fun,
+  ...,
+  unsafe = FALSE
+)
+
+cross_mean(
+  data,
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cross_mean_sd_n(
+  data,
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL,
+  weighted_valid_n = FALSE,
+  labels = NULL
+)
+
+cross_sum(
+  data,
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cross_median(
+  data,
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cross_pearson(
+  data,
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cross_spearman(
+  data,
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cro_fun(
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL,
+  fun,
+  ...,
+  unsafe = FALSE
+)
+
+cro_fun_df(
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL,
+  fun,
+  ...,
+  unsafe = FALSE
+)
+
+cro_mean(
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cro_mean_sd_n(
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL,
+  weighted_valid_n = FALSE,
+  labels = NULL
+)
+
+cro_sum(
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cro_median(
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cro_pearson(
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+cro_spearman(
+  cell_vars,
+  col_vars = total(),
+  row_vars = total(label = ""),
+  weight = NULL,
+  subgroup = NULL
+)
+
+combine_functions(..., method = c)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame in which context all other arguments will be evaluated
+(for <code>cross_*</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cell_vars</code></td>
+<td>
+<p>vector/data.frame/list. Variables on which summary function
+will be computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col_vars</code></td>
+<td>
+<p>vector/data.frame/list. Variables which breaks table by
+columns. Use mrset/mdset for multiple-response variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row_vars</code></td>
+<td>
+<p>vector/data.frame/list. Variables which breaks table by rows.
+Use mrset/mdset for multiple-response variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>numeric vector. Optional cases weights. Cases with NA's,
+negative and zero weights are removed before calculations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subgroup</code></td>
+<td>
+<p>logical vector. You can specify subgroup on which table will be computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>custom summary function. Generally it is recommended that 
+<code>fun</code> will always return object of the same form. Rownames/vector 
+names of <code>fun</code> result will appear in the row labels of the table and 
+column names/names of list will appear in the column labels. To use weight 
+you should have formal <code>weight</code> argument in <code>fun</code> and some logic 
+for its processing inside. For <code>cro_fun_df</code> <code>fun</code> will receive 
+data.table with all names converted to variable labels
+(if labels exists). So it is not recommended to rely on original variables
+names in your <code>fun</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments for <code>fun</code>  in 
+<code>cross_fun</code>/<code>cross_fun_df</code> or functions for <code>combine_functions</code>.
+Ignored in <code>cross_fun</code>/<code>cross_fun_df</code> if <code>unsafe</code> is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unsafe</code></td>
+<td>
+<p>logical/character If not FALSE than <code>fun</code> will be 
+evaluated as is. It can lead to significant increase in the performance. 
+But there are some limitations. For <code>cross_fun</code> it means that your 
+function <code>fun</code> should return vector. If length of this vector is
+greater than one than you should provide with <code>unsafe</code> argument vector
+of unique labels for each element of this vector. There will be no attempts
+to automatically make labels for the results of <code>fun</code>. For 
+<code>cross_fun_df</code> your function should return vector or list/data.frame
+(optionally with 'row_labels' element - statistic labels). If <code>unsafe</code>
+is TRUE or not logical then further arguments (<code>...</code>) for <code>fun</code>
+will be ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weighted_valid_n</code></td>
+<td>
+<p>logical. Should we show weighted valid N in
+<code>cro_mean_sd_n</code>? By default it is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>character vector of length 3. Labels for mean, standard
+deviation and valid N in <code>cro_mean_sd_n</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>function which will combine results of multiple functions in
+<code>combine_functions</code>. It will be applied as in the expression 
+<code>do.call(method, list_of_functions_results)</code>. By default it is
+<code>c</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>object of class 'etable'. Basically it's a data.frame but class
+is needed for custom methods.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>tables, fre, cross_cases.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(mtcars)
+mtcars = apply_labels(mtcars,
+                      mpg = "Miles/(US) gallon",
+                      cyl = "Number of cylinders",
+                      disp = "Displacement (cu.in.)",
+                      hp = "Gross horsepower",
+                      drat = "Rear axle ratio",
+                      wt = "Weight (1000 lbs)",
+                      qsec = "1/4 mile time",
+                      vs = "Engine",
+                      vs = c("V-engine" = 0,
+                             "Straight engine" = 1),
+                      am = "Transmission",
+                      am = c("Automatic" = 0,
+                             "Manual"=1),
+                      gear = "Number of forward gears",
+                      carb = "Number of carburetors"
+)
+
+
+# Simple example - there is special shortcut for it - 'cross_mean'
+cross_fun(mtcars, 
+          list(mpg, disp, hp, wt, qsec), 
+          col_vars = list(total(), am), 
+          row_vars = vs, 
+          fun = mean)
+
+
+
+# The same example with 'subgroup'
+cross_fun(mtcars, 
+       list(mpg, disp, hp, wt, qsec), 
+       col_vars = list(total(), am), 
+       row_vars = vs, 
+       subgroup = vs == 0, 
+       fun = mean)
+                                
+# 'combine_functions' usage  
+cross_fun(mtcars, 
+          list(mpg, disp, hp, wt, qsec), 
+          col_vars = list(total(), am), 
+          row_vars = vs, 
+          fun = combine_functions(Mean = mean, 
+                                  'Std. dev.' = sd,
+                                  'Valid N' = valid_n)
+)
+
+# 'combine_functions' usage - statistic labels in columns
+cross_fun(mtcars, 
+          list(mpg, disp, hp, wt, qsec), 
+          col_vars = list(total(), am), 
+          row_vars = vs, 
+          fun = combine_functions(Mean = mean, 
+                                  'Std. dev.' = sd,
+                                  'Valid N' = valid_n,
+                                  method = list
+                                  )
+)
+
+# 'summary' function
+cross_fun(mtcars, 
+          list(mpg, disp, hp, wt, qsec), 
+          col_vars = list(total(), am), 
+          row_vars = list(total(), vs), 
+          fun = summary
+) 
+                          
+# comparison 'cross_fun' and 'cross_fun_df'
+cross_fun(mtcars,
+          data.frame(mpg, disp, hp, wt, qsec), 
+          col_vars = am,
+          fun = mean
+)
+
+
+# same result
+cross_fun_df(mtcars,
+             data.frame(mpg, disp, hp, wt, qsec), 
+             col_vars = am, 
+             fun = colMeans
+             )
+
+# usage for 'cross_fun_df' which is not possible for 'cross_fun'
+# linear regression by groups
+cross_fun_df(mtcars,
+             data.frame(mpg, disp, hp, wt, qsec), 
+             col_vars = am,
+             fun = function(x){
+                 frm = reformulate(".", response = as.name(names(x)[1]))
+                 model = lm(frm, data = x)
+                 cbind('Coef.' = coef(model), 
+                       confint(model)
+                 )
+             } 
+)
+</code></pre>
+
+
+</div>

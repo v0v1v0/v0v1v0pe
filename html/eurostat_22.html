@@ -1,0 +1,494 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_eurostat_geospatial</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Download Geospatial Data from GISCO</h2>
+
+<h3>Description</h3>
+
+<p>Downloads either a simple features (sf) or a data_frame
+of NUTS regions. This function is a wrapper of <code>giscoR::gisco_get_nuts()</code>.
+This function requires to have installed the packages <a href="https://CRAN.R-project.org/package=sf"><span class="pkg">sf</span></a> and
+<a href="https://CRAN.R-project.org/package=giscoR"><span class="pkg">giscoR</span></a>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_eurostat_geospatial(
+  output_class = "sf",
+  resolution = "60",
+  nuts_level = "all",
+  year = "2016",
+  cache = TRUE,
+  update_cache = FALSE,
+  cache_dir = NULL,
+  crs = "4326",
+  make_valid = "DEPRECATED",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>output_class</code></td>
+<td>
+<p>Class of object returned,
+either <code>sf</code> <code style="white-space: pre;">⁠simple features⁠</code> or <code>df</code> (<code>data_frame</code>). <code>spdf</code> output has
+been soft-deprecated, the function would switch to <code>sf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>Resolution of the geospatial data. One of
+</p>
+
+<ul>
+<li>
+<p> "60" (1:60million),
+</p>
+</li>
+<li>
+<p> "20" (1:20million)
+</p>
+</li>
+<li>
+<p> "10" (1:10million)
+</p>
+</li>
+<li>
+<p> "03" (1:3million) or
+</p>
+</li>
+<li>
+<p> "01" (1:1million).
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nuts_level</code></td>
+<td>
+<p>Level of NUTS classification of the geospatial data. One of
+"0", "1", "2", "3" or "all" (mimics the original behaviour)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>year</code></td>
+<td>
+<p>NUTS release year. One of
+"2003", "2006", "2010", "2013", "2016" or "2021"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cache</code></td>
+<td>
+<p>a logical whether to do caching. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>update_cache</code></td>
+<td>
+<p>a logical whether to update cache. Can be set also with
+<code>options(eurostat_update = TRUE)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cache_dir</code></td>
+<td>
+<p>a path to a cache directory. See
+<code>set_eurostat_cache_dir()</code>. If <code>NULL</code> and the cache dir has not been set
+globally the file would be stored in the <code>tempdir()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crs</code></td>
+<td>
+<p>projection of the map: 4-digit
+<a href="https://spatialreference.org/ref/epsg/">EPSG code</a>. One of:
+</p>
+
+<ul>
+<li>
+<p> "4326" - WGS84
+</p>
+</li>
+<li>
+<p> "3035" - ETRS89 / ETRS-LAEA
+</p>
+</li>
+<li>
+<p> "3857" - Pseudo-Mercator
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>make_valid</code></td>
+<td>
+<p>Deprecated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Arguments passed on to <code>giscoR::gisco_get_nuts</code>
+</p>
+
+<dl>
+<dt><code>verbose</code></dt>
+<dd>
+<p>Logical, displays information. Useful for debugging,
+default is <code>FALSE</code>.</p>
+</dd>
+<dt><code>spatialtype</code></dt>
+<dd>
+<p>Type of geometry to be returned:
+</p>
+
+<ul>
+<li> <p><strong>"BN"</strong>: Boundaries - <code>LINESTRING</code> object.
+</p>
+</li>
+<li> <p><strong>"LB"</strong>: Labels - <code>POINT</code> object.
+</p>
+</li>
+<li> <p><strong>"RG"</strong>: Regions - <code>MULTIPOLYGON/POLYGON</code> object.
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>country</code></dt>
+<dd>
+<p>Optional. A character vector of country codes. It could be
+either a vector of country names, a vector of ISO3 country codes or a
+vector of Eurostat country codes. Mixed types (as <code>c("Turkey","US","FRA")</code>)
+would not work. See also <code>countrycode::countrycode()</code>.</p>
+</dd>
+<dt><code>nuts_id</code></dt>
+<dd>
+<p>Optional. A character vector of NUTS IDs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The objects downloaded from GISCO should contain all or some of the
+following variable columns:
+</p>
+
+<ul>
+<li> <p><strong>id</strong>: JSON id code, the same as <strong>NUTS_ID</strong>. See <strong>NUTS_ID</strong> below for
+further clarification.
+</p>
+</li>
+<li> <p><strong>LEVL_CODE</strong>: NUTS level code: 0 (national level), 1 (major
+socio-economic regions), 2 (basic regions for the application of regional
+policies) or 3 (small regions).
+</p>
+</li>
+<li> <p><strong>NUTS_ID</strong>: NUTS ID code, consisting of country code and numbers (1 for
+NUTS 1, 2 for NUTS 2 and 3 for NUTS 3)
+</p>
+</li>
+<li> <p><strong>CNTR_CODE</strong>: Country code: two-letter ISO code (ISO 3166 alpha-2), except
+in the case of Greece (EL).
+</p>
+</li>
+<li> <p><strong>NAME_LATN</strong>: NUTS name in local language, transliterated to Latin script
+</p>
+</li>
+<li> <p><strong>NUTS_NAME</strong>: NUTS name in local language, in local script.
+</p>
+</li>
+<li> <p><strong>MOUNT_TYPE</strong>: Mountain typology for NUTS 3 regions.
+</p>
+
+<ul>
+<li>
+<p> 1: "where more than 50 % of the surface is covered by topographic
+mountain areas"
+</p>
+</li>
+<li>
+<p> 2: "in which more than 50 % of the regional population lives in
+topographic mountain areas"
+</p>
+</li>
+<li>
+<p> 3: "where more than 50 % of the surface is covered by topographic
+mountain areas and where more than 50 % of the regional population lives
+in these mountain areas"
+</p>
+</li>
+<li>
+<p> 4: non-mountain region / other region
+</p>
+</li>
+<li>
+<p> 0: no classification provided (e.g. in the case of NUTS 1 and NUTS 2 and
+non-EU countries)
+</p>
+</li>
+</ul>
+</li>
+<li> <p><strong>URBN_TYPE</strong>: Urban-rural typology for NUTS 3 regions.
+</p>
+
+<ul>
+<li>
+<p> 1: predominantly urban region
+</p>
+</li>
+<li>
+<p> 2: intermediate region
+</p>
+</li>
+<li>
+<p> 3: predominantly rural region
+</p>
+</li>
+<li>
+<p> 0: no classification provided (e.g. in the case of NUTS 1 and NUTS 2
+regions)
+</p>
+</li>
+</ul>
+</li>
+<li> <p><strong>COAST_TYPE</strong>: Coastal typology for NUTS 3 regions.
+</p>
+
+<ul>
+<li>
+<p> 1: coastal (on coast)
+</p>
+</li>
+<li>
+<p> 2: coastal (&gt;= 50% of population living within 50km of the coastline)
+</p>
+</li>
+<li>
+<p> 3: non-coastal region
+</p>
+</li>
+<li>
+<p> 0: no classification provided (e.g. in the case of NUTS 1 and NUTS 2
+regions)
+</p>
+</li>
+</ul>
+</li>
+<li> <p><strong>FID</strong>: Same as NUTS_ID.
+</p>
+</li>
+<li> <p><strong>geo</strong>: Same as NUTS_ID, added for for easier joins with dplyr. Consider
+the status of this column "questioning" and use other columns for joins
+when possible.
+</p>
+</li>
+<li> <p><strong>geometry</strong>: geospatial information.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>a sf or data_frame
+</p>
+
+
+<h3>Eurostat: Copyright notice and free re-use of data</h3>
+
+<p>The following copyright notice is provided for end user convenience.
+Please check up-to-date copyright information from the eurostat website:
+<a href="https://ec.europa.eu/eurostat/about-us/policies/copyright">https://ec.europa.eu/eurostat/about-us/policies/copyright</a>
+</p>
+<p>"(c) European Union, 1995 - today
+</p>
+<p>Eurostat has a policy of encouraging free re-use of its data, both for
+non-commercial and commercial purposes. All statistical data, metadata,
+content of web pages or other dissemination tools, official publications
+and other documents published on its website, with the exceptions listed
+below, can be reused without any payment or written licence provided that:
+</p>
+
+<ul>
+<li>
+<p> the source is indicated as Eurostat;
+</p>
+</li>
+<li>
+<p> when re-use involves modifications to the data or text, this must be
+stated clearly to the end user of the information."
+</p>
+</li>
+</ul>
+<p>For exceptions to the abovementioned principles see
+<a href="https://ec.europa.eu/eurostat/about-us/policies/copyright">Eurostat website</a>
+</p>
+
+
+<h3>Data source: GISCO - General Copyright</h3>
+
+<p>"Eurostat's general copyright notice and licence policy is applicable and
+can be consulted here:
+<a href="https://ec.europa.eu/eurostat/about-us/policies/copyright">https://ec.europa.eu/eurostat/about-us/policies/copyright</a>
+</p>
+<p>Please also be aware of the European Commission's general conditions:
+<a href="https://commission.europa.eu/legal-notice_en">https://commission.europa.eu/legal-notice_en</a>
+</p>
+<p>Moreover, there are specific provisions applicable to some of the following
+datasets available for downloading. The download and usage of these data
+is subject to their acceptance:
+</p>
+
+<ul>
+<li>
+<p> Administrative Units / Statistical Units
+</p>
+</li>
+<li>
+<p> Population distribution / Demography
+</p>
+</li>
+<li>
+<p> Transport Networks
+</p>
+</li>
+<li>
+<p> Land Cover
+</p>
+</li>
+<li>
+<p> Elevation (DEM)"
+</p>
+</li>
+</ul>
+<p>Of the abovementioned datasets, Administrative Units / Statistical Units
+is applicable if the user wants to draw maps with borders provided by
+GISCO / EuroGeographics.
+</p>
+
+
+<h3>Data source: GISCO - Administrative Units / Statistical Units</h3>
+
+<p>The following copyright notice is provided for end user convenience.
+Please check up-to-date copyright information from the GISCO website:
+<a href="https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units">GISCO: Geographical information and maps - Administrative units/statistical units</a>
+</p>
+<p>"In addition to the <a href="https://ec.europa.eu/eurostat/web/main/about/policies/copyright">general copyright and licence policy</a> applicable to the whole Eurostat website, the following
+specific provisions apply to the datasets you are downloading. The download
+and usage of these data is subject to the acceptance of the following
+clauses:
+</p>
+
+<ol>
+<li>
+<p> The Commission agrees to grant the non-exclusive and not transferable
+right to use and process the Eurostat/GISCO geographical data downloaded
+from this page (the "data").
+</p>
+</li>
+<li>
+<p> The permission to use the data is granted on condition that:
+</p>
+
+<ol>
+<li>
+<p> the data will not be used for commercial purposes;
+</p>
+</li>
+<li>
+<p> the source will be acknowledged. A copyright notice, as specified
+below, will have to be visible on any printed or electronic publication
+using the data downloaded from this page."
+</p>
+</li>
+</ol>
+</li>
+</ol>
+<h4>Copyright notice</h4>
+
+<p>When data downloaded from this page is used in any printed or electronic
+publication, in addition to any other provisions applicable to the whole
+Eurostat website, data source will have to be acknowledged in the legend of
+the map and in the introductory page of the publication with the following
+copyright notice:
+</p>
+<p>EN: © EuroGeographics for the administrative boundaries
+</p>
+<p>FR: © EuroGeographics pour les limites administratives
+</p>
+<p>DE: © EuroGeographics bezüglich der Verwaltungsgrenzen
+</p>
+<p>For publications in languages other than English, French or German, the
+translation of the copyright notice in the language of the publication shall
+be used.
+</p>
+<p>If you intend to use the data commercially, please contact EuroGeographics
+for information regarding their licence agreements."
+</p>
+
+
+
+<h3>Author(s)</h3>
+
+<p>Markus Kainu <a href="mailto:markuskainu@gmail.com">markuskainu@gmail.com</a>, Diego Hernangomez
+<a href="https://github.com/dieghernan/">https://github.com/dieghernan/</a>
+</p>
+
+
+<h3>Source</h3>
+
+<p>Data source: Eurostat
+</p>
+<p>© EuroGeographics for the administrative boundaries
+</p>
+<p>Data downloaded using <span class="pkg">giscoR</span>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>giscoR::gisco_get_nuts()</code>
+</p>
+<p>Other geospatial: 
+<code>eurostat_geodata_60_2016</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Uses cached dataset
+sf &lt;- get_eurostat_geospatial(
+  output_class = "sf",
+  resolution = "60",
+  nuts_level = "all"
+)
+# Downloads dataset from server
+sf2 &lt;- get_eurostat_geospatial(
+  output_class = "sf",
+  resolution = "20",
+  nuts_level = "all"
+)
+df &lt;- get_eurostat_geospatial(
+  output_class = "df",
+  nuts_level = "0"
+)
+
+
+</code></pre>
+
+
+</div>

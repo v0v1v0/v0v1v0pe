@@ -1,0 +1,140 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>winprob</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>expected winning probability</h2>
+
+<h3>Description</h3>
+
+<p>calculate expected probability of winning given known strengths of two opponents
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">winprob(elo1, elo2, normprob = TRUE, fac = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>elo1</code></td>
+<td>
+<p>Elo rating from individual for which the winning probability should be calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>elo2</code></td>
+<td>
+<p>Elo rating of the opponent</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normprob</code></td>
+<td>
+<p>logical (by default <code>TRUE</code>). Should a normal curve be assumed for calculating the winning/losing probablities, or not (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fac</code></td>
+<td>
+<p>numeric (by default <code>NULL</code>). A scaling factor (see details)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Elo (1978) proposed three ways of calculating winning probabilities (section 8.73), one of which (the ‘linear’ approach) is ignored here because it “lacks the sophistication and flexibility to express the limitation on D [rating difference] and the deflation controls required for integrity of the ratings”. Between the two remaining approaches (normal and logistic), Elo favored initially the normal over the logistic function, though he writes that the logistic function “better reflects large deviations in an extended series”. Because of Elo's initial preference, the default approach taken by the package's functions is the normal one, though it can be changed to the logistic one if desired.
+</p>
+<p>In the meantime, several studies have used an addtional approach to calculate winning probabilities, which is based on an exponential distribution. This can be invoked by setting <code>normprob = FALSE</code> and <code>fac</code> to some number. The value I have seen used is 0.01 (Franz et al. 2015). Sánchez-Tójar et al. (2018) refer to it as <code>sigmoid.param</code> in their <code>aniDom</code> package. Goffe et al. (2018) also use this approach but their scaling factor is 1 (referred to as <code>diff_f</code>) because their ratings are on a completely different scale.
+</p>
+<p>Finally, this function is for demonstration only, i.e. it is not used anywhere in the package (other than in vignettes). As such, the functions in the package (most importantly <code>e.single</code>) only allow the two primary options for the calculation of winning probabilities (for now).
+</p>
+
+
+<h3>Value</h3>
+
+<p>numeric, expected chance of first individual to win an interacation with the second individual
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Christof Neumann
+</p>
+
+
+<h3>References</h3>
+
+<p>Elo AE (1978).
+<em>The rating of chess players, past and present</em>.
+Arco, New York.
+</p>
+<p>Franz M, McLean E, Tung J, Altmann J, Alberts SC (2015).
+“Self-organizing dominance hierarchies in a wild primate population.”
+<em>Proceedings of the Royal Society B: Biological Sciences</em>, <b>282</b>, 20151512.
+<a href="https://doi.org/10.1098/rspb.2015.1512">doi:10.1098/rspb.2015.1512</a>.
+</p>
+<p>Sánchez-Tójar A, Schroeder J, Farine DR (2018).
+“A practical guide for inferring reliable dominance hierarchies and estimating their uncertainty.”
+<em>Journal of Animal Ecology</em>, <b>87</b>, 594-608.
+<a href="https://doi.org/10.1111/1365-2656.12776">doi:10.1111/1365-2656.12776</a>.
+</p>
+<p>Goffe AS, Fischer J, Sennhenn-Reulen H (2018).
+“Bayesian inference and simulation approaches improve the assessment of Elo-ratings in the analysis of social behaviour.”
+<em>Methods in Ecology and Evolution</em>, <b>9</b>, 2131-2144.
+<a href="https://doi.org/10.1111/2041-210X.13072">doi:10.1111/2041-210X.13072</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">winprob(1200,1000)
+winprob(1000,1200)
+winprob(1000,1000)
+winprob(1200,1000, normprob = FALSE)
+winprob(1000,1200, normprob = FALSE)
+winprob(1000,1000, normprob = FALSE)
+winprob(1200,1000, normprob = FALSE, fac = 0.01)
+winprob(1000,1200, normprob = FALSE, fac = 0.01)
+winprob(1000,1000, normprob = FALSE, fac = 0.01)
+
+# compare different algorithms visually
+w &lt;- rep(0, 1001) # winner rating: constant
+l &lt;- w - 0:1000 # loser rating: varying
+
+elonorm &lt;- numeric(length(w))
+eloexpo &lt;- numeric(length(w))
+eloopti &lt;- numeric(length(w))
+eloopti2 &lt;- numeric(length(w))
+
+for(i in 1:length(w)) {
+  elonorm[i] &lt;- winprob(w[i], l[i], normprob = TRUE)
+  eloexpo[i] &lt;- winprob(w[i], l[i], normprob = FALSE)
+  eloopti[i] &lt;- winprob(w[i], l[i], normprob = FALSE, fac = 0.01)
+  eloopti2[i] &lt;- winprob(w[i], l[i], normprob = FALSE, fac = 0.005)
+}
+
+plot(0, 0, type = "n", las = 1, yaxs = "i",
+     xlim = c(0, 1000), ylim = c(0.5, 1),
+     xlab = "rating difference",
+     ylab = "winning probability")
+points(abs(l), elonorm, "l", col = "#4B0055", lwd = 3)
+points(abs(l), eloexpo, "l", col = "#007094", lwd = 3)
+points(abs(l), eloopti, "l", col = "#00BE7D", lwd = 2)
+points(abs(l), eloopti2, "l", col = "#FDE333", lwd = 2)
+
+legend("bottomright",
+       legend = c("normal", "logistic", "exponential (fac = 0.01)", "exponential (fac = 0.005)"),
+       col = c("#4B0055", "#007094", "#00BE7D", "#FDE333"),
+       lwd = 2,
+       cex = 0.9)
+
+</code></pre>
+
+
+</div>

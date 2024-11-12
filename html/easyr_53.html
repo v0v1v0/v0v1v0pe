@@ -1,0 +1,266 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>read.any</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read Any File</h2>
+
+<h3>Description</h3>
+
+<p>Flexible read function to handle many types of files. Currently handles CSV, TSV, DBF, RDS, XLS (incl. when formatted as HTML), and XLSX.
+Also handles common issues like strings being read in as factors (strings are NOT read in as factors by this function, you'd need to convert them later). 
+Author: Bryce Chamberlain. Tech Review: Dominic Dillingham.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">read.any(
+  filename = NA,
+  folder = NA,
+  sheet = 1,
+  file_type = "",
+  first_column_name = NA,
+  header = TRUE,
+  headers_on_row = NA,
+  nrows = -1L,
+  row.names.column = NA,
+  row.names.remove = TRUE,
+  make.names = FALSE,
+  field_name_map = NA,
+  require_columns = NA,
+  all_chars = FALSE,
+  auto_convert_dates = TRUE,
+  allow_times = FALSE,
+  check_numbers = TRUE,
+  nazero = FALSE,
+  check_logical = TRUE,
+  stringsAsFactors = FALSE,
+  na_strings = easyr::nastrings,
+  na_level = "(Missing)",
+  ignore_rows_with_na_at = NA,
+  drop.na.cols = TRUE,
+  drop.na.rows = TRUE,
+  fix.dup.column.names = TRUE,
+  do.trim.sheetname = TRUE,
+  x = NULL,
+  isexcel = FALSE,
+  encoding = "unknown",
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>File path and name for the file to be read in.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>folder</code></td>
+<td>
+<p>Folder path to look for the file in.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sheet</code></td>
+<td>
+<p>The sheet to read in.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file_type</code></td>
+<td>
+<p>Specify the file type (CSV, TSV, DBF). If not provided, R will use the file extension to determine the file type. Useful when the file extension doesn't indicate the file type, like .rpt, etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>first_column_name</code></td>
+<td>
+<p>Define headers location by providing the name of the left-most column. Alternatively, you can choose the row via the [headers_on_row] argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>header</code></td>
+<td>
+<p>Choose if your file contains headers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>headers_on_row</code></td>
+<td>
+<p>Choose a specific row number to use as headers. Use this when you want to tell read.any exactly where the headers are.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrows</code></td>
+<td>
+<p>Number of rows to read. Leave blank/NA to read all rows. This only speeds up file reads (CSV, XLSX, etc.), not compressed data that must be read all at once. This is applied BEFORe headers_on_row or first_column_name removes top rows, so it should be greater than those values if headers aren't in the first row.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row.names.column</code></td>
+<td>
+<p>Specify the column (by character name) to use for row names. This drops the columns and lets rows be referenced directly with this id. Must be unique values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row.names.remove</code></td>
+<td>
+<p>If you move a column to row names, it is removed from the data by default. If you'd like to keep it, set this to FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>make.names</code></td>
+<td>
+<p>Apply make.names function to make column names R-friendly (replaces non-characters with ., starting numbers with x, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>field_name_map</code></td>
+<td>
+<p>Rename fields for consistency. Provide as a named vector where the names are the file's names and the vector values are the output names desired. See examples for how to create this input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>require_columns</code></td>
+<td>
+<p>List of required columns to check for. Calls stop() with helpful message if any aren't found.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all_chars</code></td>
+<td>
+<p>Keep all column types as characters. This makes using bind_rows easer, then you can use atype() later to set types.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>auto_convert_dates</code></td>
+<td>
+<p>Identify date fields and automatically convert them to dates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allow_times</code></td>
+<td>
+<p>imes are not allowed in reading data in to facilitate easy binding. If you need times though, set this to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_numbers</code></td>
+<td>
+<p>Identfy numbers formatted as characters and convert them as such.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nazero</code></td>
+<td>
+<p>Convert NAs in numeric columns to 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_logical</code></td>
+<td>
+<p>Identfy logical columns formatted as characters (Yes/No, etc) or numbers (0,1) and convert them as such.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stringsAsFactors</code></td>
+<td>
+<p>Convert characters to factors to increase processing speed and reduce file size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na_strings</code></td>
+<td>
+<p>Strings to treat like NA. By default we use the easyr NA strings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na_level</code></td>
+<td>
+<p>dplyr doesn't like factors to have NAs so we replace NAs with this value for factors only. Set NULL to skip.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignore_rows_with_na_at</code></td>
+<td>
+<p>Vector or value, numeric or character, identifying column(s) that require a value. read.any will remove these rows after colname swaps and read, before type conversion. Especially helpful for removing things like page numbers at the bottom of an excel report that break type discovery. Suggest using the claim number column here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop.na.cols</code></td>
+<td>
+<p>Drop columns with only NA values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop.na.rows</code></td>
+<td>
+<p>Drop rows with only NA values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix.dup.column.names</code></td>
+<td>
+<p>Adds 'DUPLICATE #' to duplicated column names to avoid issues with multiple columns having the same name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do.trim.sheetname</code></td>
+<td>
+<p>read.any will trim sheet names to get better matches. This will cause an error if the actual sheet name has spaces on the left or right side. Disable this functionality here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>If you want to use read.any functionality on an existing data frame, pass it with this argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>isexcel</code></td>
+<td>
+<p>If you want to use read.any functionality on an existing data frame, you can tell read.any that this data came from excel using isexcel manually. This comes in handy when excel-integer date conversions are necessary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>Encoding passed to fread and read.csv.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Print helpful information via cat.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Data frame with the data that was read.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+folder = system.file('extdata', package = 'easyr')
+read.any('date-time.csv', folder = folder)
+
+# if dates are being converted incorrectly, disable date conversion:
+read.any('date-time.csv', folder = folder, auto_convert_dates = FALSE)
+
+# to handle type conversions manually:
+read.any('date-time.csv', folder = folder, all_chars = TRUE)
+
+</code></pre>
+
+
+</div>

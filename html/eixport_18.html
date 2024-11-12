@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>to_wrf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Combine total/spatial/temporal/split and write emission to file</h2>
+
+<h3>Description</h3>
+
+<p>Function to expand, split and write emissions. The input is expanded into
+time by profile and split between variables with diferent weights.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">to_wrf(
+  POL,
+  file = file.choose(),
+  name = NA,
+  total = NA,
+  norm = FALSE,
+  profile = 1,
+  weights = 1,
+  k = 1,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>POL</code></td>
+<td>
+<p>matrix or array of emissions of spatial weights</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>emission file name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>species to be write</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total</code></td>
+<td>
+<p>total of emited species (modifier)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norm</code></td>
+<td>
+<p>if the spatial weights need to be normalized (modifier)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>profile</code></td>
+<td>
+<p>temporal profile to expand the emissions (modifier)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>weight of each species (modifier)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>constant passed to wrf_put</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>display additional information</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>length(profile) must be the number of times in the emission
+file (value of frames_per_auxinput5 if wrf_create() was used to
+create this file).
+</p>
+<p>total is an additional way to calculate or correct the total emissions
+</p>
+<p>sum(profile) = 1 and sum(weights) = 1 to conserve mass
+</p>
+<p>names and weights must have the same length
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Daniel Schuch
+</p>
+
+
+<h3>See Also</h3>
+
+<p>wrf_create, <code>wrf_get</code>,<code>wrf_profile</code>  and <code>wrf_plot</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+dir.create(file.path(tempdir(), "EMISS"))
+wrf_create(wrfinput_dir = system.file("extdata", package = "eixport"),
+           wrfchemi_dir = file.path(tempdir(), "EMISS"),
+           frames_per_auxinput5 = 24)
+
+# get the name of created file
+files &lt;- list.files(path = file.path(tempdir(), "EMISS"),
+                    pattern = "wrfchemi",
+                    full.names = TRUE)
+
+data(Lights)
+
+perfil &lt;- c(0.010760058, 0.005280596, 0.002883553, 0.002666932,
+            0.005781312, 0.018412838, 0.051900411, 0.077834636,
+            0.067919758, 0.060831614, 0.055852868, 0.052468599,
+            0.050938043, 0.051921718, 0.052756244, 0.052820165,
+            0.058388406, 0.072855890, 0.075267137, 0.063246412,
+            0.042713523, 0.029108975, 0.022091855, 0.015298458)
+
+plot(perfil,
+     ty = "l",
+     col= "purple",
+     xlab = "Hour",
+     main = "Time profile",
+     ylab = "Weight",
+     axes = FALSE,
+     xlim = c(0, 24))
+axis(2)
+axis(1,
+     at = c(0, 6, 12, 18, 24),
+     labels = c("00:00","06:00","12:00","18:00","00:00"))
+
+to_wrf(Lights,
+      files[1],
+      total = 1521983,
+      profile = perfil,
+      name = "E_CO")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

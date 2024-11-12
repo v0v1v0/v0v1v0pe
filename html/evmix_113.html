@@ -1,0 +1,251 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hpd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Hybrid Pareto Extreme Value Mixture Model</h2>
+
+<h3>Description</h3>
+
+<p>Density, cumulative distribution function, quantile function and
+random number generation for the hybrid Pareto extreme value mixture model.
+The parameters are the normal mean <code>nmean</code> and standard deviation <code>nsd</code> and 
+GPD shape <code>xi</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dhpd(x, nmean = 0, nsd = 1, xi = 0, log = FALSE)
+
+phpd(q, nmean = 0, nsd = 1, xi = 0, lower.tail = TRUE)
+
+qhpd(p, nmean = 0, nsd = 1, xi = 0, lower.tail = TRUE)
+
+rhpd(n = 1, nmean = 0, nsd = 1, xi = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>quantiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmean</code></td>
+<td>
+<p>normal mean</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsd</code></td>
+<td>
+<p>normal standard deviation (positive)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>shape parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if TRUE then log density</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>quantiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical, if FALSE then upper tail probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>cumulative probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>sample size (positive integer)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Extreme value mixture model combining normal distribution for the bulk
+below the threshold and GPD for upper tail which is continuous in its zeroth and
+first derivative at the threshold. 
+</p>
+<p>But it has one important difference to all the other mixture models. The
+hybrid Pareto does not include the usual tail fraction <code>phiu</code> scaling, 
+i.e. so the GPD is not treated as a conditional model for the exceedances. 
+The unscaled GPD is simply spliced with the normal truncated at the
+threshold, with no rescaling to account for the proportion above the
+threshold being applied. The parameters have to adjust for the lack of tail 
+fraction scaling.
+</p>
+<p>The cumulative distribution function defined upto the 
+threshold <code class="reqn">x \le u</code>, given by:
+</p>
+<p style="text-align: center;"><code class="reqn">F(x) = H(x) / r </code>
+</p>
+
+<p>and above the threshold <code class="reqn">x &gt; u</code>:
+</p>
+<p style="text-align: center;"><code class="reqn">F(x) = (H(u) +  G(x)) / r </code>
+</p>
+
+<p>where <code class="reqn">H(x)</code> and <code class="reqn">G(X)</code> are the normal and conditional GPD
+cumulative distribution functions. The normalisation constant <code class="reqn">r</code> ensures a proper
+density and is given by<code>r = 1 + pnorm(u, mean = nmean, sd = nsd)</code>, i.e. the 1 comes from
+integration of the unscaled GPD and the second term is from the usual normal component.
+</p>
+<p>The two continuity constraints leads to the threshold <code>u</code> and GPD scale <code>sigmau</code> being replaced
+by a function of the normal mean, standard deviation and GPD shape parameters. 
+Determined from setting <code class="reqn">h(u) = g(u)</code> where <code class="reqn">h(x)</code> and <code class="reqn">g(x)</code> are the normal and unscaled GPD
+density functions (i.e. <code>dnorm(u, nmean, nsd)</code> and
+<code>dgpd(u, u, sigmau, xi)</code>). The continuity constraint on its first derivative at the threshold 
+means that <code class="reqn">h'(u) = g'(u)</code>. Then the Lambert-W function is used for replacing
+the threshold u and GPD scale sigmau in terms of the normal mean, standard deviation
+and GPD shape xi.
+</p>
+<p>See <code>gpd</code> for details of GPD upper tail component and 
+<code>dnorm</code> for details of normal bulk component.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dhpd</code> gives the density, 
+<code>phpd</code> gives the cumulative distribution function,
+<code>qhpd</code> gives the quantile function and 
+<code>rhpd</code> gives a random sample.
+</p>
+
+
+<h3>Note</h3>
+
+<p>All inputs are vectorised except <code>log</code> and <code>lower.tail</code>.
+The main inputs (<code>x</code>, <code>p</code> or <code>q</code>) and parameters must be either
+a scalar or a vector. If vectors are provided they must all be of the same length,
+and the function will be evaluated for each element of vector. In the case of 
+<code>rhpd</code> any input vector must be of length <code>n</code>.
+</p>
+<p>Default values are provided for all inputs, except for the fundamentals 
+<code>x</code>, <code>q</code> and <code>p</code>. The default sample size for 
+<code>rhpd</code> is 1.
+</p>
+<p>Missing (<code>NA</code>) and Not-a-Number (<code>NaN</code>) values in <code>x</code>,
+<code>p</code> and <code>q</code> are passed through as is and infinite values are set to
+<code>NA</code>. None of these are not permitted for the parameters.
+</p>
+<p>Error checking of the inputs (e.g. invalid probabilities) is carried out and
+will either stop or give warning message as appropriate.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Yang Hu and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/Normal_distribution">http://en.wikipedia.org/wiki/Normal_distribution</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Generalized_Pareto_distribution">http://en.wikipedia.org/wiki/Generalized_Pareto_distribution</a>
+</p>
+<p>Scarrott, C.J. and MacDonald, A. (2012). A review of extreme value
+threshold estimation and uncertainty quantification. REVSTAT - Statistical
+Journal 10(1), 33-59. Available from <a href="http://www.ine.pt/revstat/pdf/rs120102.pdf">http://www.ine.pt/revstat/pdf/rs120102.pdf</a>
+</p>
+<p>Carreau, J. and Y. Bengio (2008). A hybrid Pareto model for asymmetric fat-tailed data:
+the univariate case. Extremes 12 (1), 53-76.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gpd</code> and <code>dnorm</code>.
+</p>
+<p>The condmixt package written by one of the
+original authors of the hybrid Pareto model (Carreau and Bengio, 2008) also has 
+similar functions for the hybrid Pareto (hpareto) and
+mixture of hybrid Paretos (hparetomixt), which are
+more flexible as they also permit the model to be truncated at zero.
+</p>
+<p>Other hpd: <code>fhpdcon</code>, <code>fhpd</code>,
+<code>hpdcon</code>
+</p>
+<p>Other hpdcon: <code>fhpdcon</code>, <code>fhpd</code>,
+<code>hpdcon</code>
+</p>
+<p>Other normgpd: <code>fgng</code>, <code>fhpd</code>,
+<code>fitmnormgpd</code>, <code>flognormgpd</code>,
+<code>fnormgpdcon</code>, <code>fnormgpd</code>,
+<code>gngcon</code>, <code>gng</code>,
+<code>hpdcon</code>, <code>itmnormgpd</code>,
+<code>lognormgpdcon</code>, <code>lognormgpd</code>,
+<code>normgpdcon</code>, <code>normgpd</code>
+</p>
+<p>Other normgpdcon: <code>fgngcon</code>,
+<code>fhpdcon</code>, <code>flognormgpdcon</code>,
+<code>fnormgpdcon</code>, <code>fnormgpd</code>,
+<code>gngcon</code>, <code>gng</code>,
+<code>hpdcon</code>, <code>normgpdcon</code>,
+<code>normgpd</code>
+</p>
+<p>Other fhpd: <code>fhpd</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(2, 2))
+
+xx = seq(-5, 20, 0.01)
+f1 = dhpd(xx, nmean = 0, nsd = 1, xi = 0.4)
+plot(xx, f1, type = "l")
+abline(v = 0.4942921)
+
+# three tail behaviours
+plot(xx, phpd(xx), type = "l")
+lines(xx, phpd(xx, xi = 0.3), col = "red")
+lines(xx, phpd(xx, xi = -0.3), col = "blue")
+legend("bottomright", paste("xi =",c(0, 0.3, -0.3)),
+  col=c("black", "red", "blue"), lty = 1)
+ 
+sim = rhpd(10000, nmean = 0, nsd = 1.5, xi = 0.2)
+hist(sim, freq = FALSE, 100, xlim = c(-5, 20), ylim = c(0, 0.2))
+lines(xx, dhpd(xx, nmean = 0, nsd = 1.5, xi = 0.2), col = "blue")
+
+plot(xx, dhpd(xx, nmean = 0, nsd = 1.5, xi = 0), type = "l")
+lines(xx, dhpd(xx, nmean = 0, nsd = 1.5, xi = 0.2), col = "red")
+lines(xx, dhpd(xx, nmean = 0, nsd = 1.5, xi = -0.2), col = "blue")
+legend("topright", c("xi = 0", "xi = 0.2", "xi = -0.2"),
+  col=c("black", "red", "blue"), lty = 1)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

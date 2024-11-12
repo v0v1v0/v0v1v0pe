@@ -1,0 +1,278 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams2openolat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Exams for OpenOlat</h2>
+
+<h3>Description</h3>
+
+<p>Automatic generation of exams in QTI 2.1 (or 1.2) with some
+tweaks optimized for OpenOlat.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  exams2openolat(file, n = 1L, dir = ".", name = "olattest",
+    qti = "2.1", config = TRUE, converter = "pandoc-mathjax", table = TRUE,
+    maxattempts = 1, cutvalue = NULL, ...)
+
+  openolat_config(cancel = FALSE, suspend = FALSE, scoreprogress = FALSE,
+    questionprogress = FALSE, maxscoreitem = TRUE, menu = TRUE,
+    titles = TRUE, notes = FALSE, hidelms = TRUE, hidefeedbacks = FALSE,
+    blockaftersuccess = FALSE, attempts = 1, anonym = FALSE,
+    manualcorrect = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The default is the current working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting exercises and ZIP file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qti</code></td>
+<td>
+<p>character indicating whether QTI <code>"1.2"</code> or <code>"2.1"</code>
+(default) should be generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>config</code></td>
+<td>
+<p>logical or named list with arguments to be passed to
+function <code>openolat_config</code>, for adding an OpenOlat-specifc configuration
+file <code>QTI21PackageConfig.xml</code> to the exam. If set to <code>config = FALSE</code>,
+no configuration file is added (which was the default behavior up to R/exams 2.3.6).
+Setting <code>config = TRUE</code> is equivalent to <code>config = list()</code> or
+<code>config = openolat_config()</code> (which is the current default, starting from R/exams 2.4.0).
+Custom configurations can be specified using the syntax <code>config = list(...)</code>,
+see the details on the possible arguments below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converter</code></td>
+<td>
+<p>character passed on to <code>make_exercise_transform_html</code>,
+indicating the type of converter from LaTeX/Markdown to HTML. Defaults
+to HTML with MathJax (and OpenOlat-specific fixups).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>table</code></td>
+<td>
+<p>logical or character. Should a dedicated table class be
+used in the HTML for OpenOlat? For details see below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxattempts</code></td>
+<td>
+<p>integer. The maximum attempts for one question within an exam.
+Set to <code>Inf</code> or <code>0</code> for unlimited attempts. For a finite number of attempts this
+must be smaller than <code>100000</code>. See also <code>attempts</code> below for allowing more
+than one attempt for the exam as a whole.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutvalue</code></td>
+<td>
+<p>numeric. The number of points at which the exam is passed. If set to
+<code>NULL</code> (default) or equivalently <code>NA</code>, no cutvalue is set and the result
+of the exam is just the number of points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed on to <code>exams2qti21</code> (or
+<code>exams2qti12</code>, respectively). See the corresponding
+manual pages for further important arguments such as
+<code>solutionswitch</code>, <code>casesensitive</code>, <code>cloze_schoice_display</code>
+<code>navigation</code>, <code>shufflesections</code>, <code>eval</code>, <code>selection</code>,
+among many others.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cancel</code></td>
+<td>
+<p>logical. Are participants allowed to cancel an exam after starting it?
+(Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>suspend</code></td>
+<td>
+<p>logical. Are participants allowed to suspend an exam after starting it
+(in order to continue it later)? (Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scoreprogress</code></td>
+<td>
+<p>logical. Should the progress of the score/points achieved so far
+be displayed during the exam? (Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>questionprogress</code></td>
+<td>
+<p>logical. Should the number of questions solved so far be
+displayed during the exam? (Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxscoreitem</code></td>
+<td>
+<p>logical. Should the maximum score of a question/item be displayed?
+(Default: <code>TRUE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>menu</code></td>
+<td>
+<p>logical. Should the menu be displayed during the exam? (Default: <code>TRUE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>titles</code></td>
+<td>
+<p>logical. Should question titles be displayed during the exam?
+(Default: <code>TRUE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>notes</code></td>
+<td>
+<p>logical. Should participants be enabled to take notes in OpenOlat during
+the exam? (Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hidelms</code></td>
+<td>
+<p>logical. Should access to the OpenOlat learning management system be
+hidden during the exam? (Default: <code>TRUE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hidefeedbacks</code></td>
+<td>
+<p>logical. Should feedbacks be hidden? (Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blockaftersuccess</code></td>
+<td>
+<p>logical. Should the exam be blocked after successful completion?
+(Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attempts</code></td>
+<td>
+<p>integer. How many attempts are allowed for the exam as a whole?
+Note that this should not be confused with the <code>maxattempts</code> for a question
+within the exam (see above).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anonym</code></td>
+<td>
+<p>logical. Should anonymous users be allowed to take the exam? (Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>manualcorrect</code></td>
+<td>
+<p>logical. Should the points and pass/fail status from the exam
+be evaluated manually? (Default: <code>FALSE</code>.)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>exams2openolat</code> is a convenience interface to <code>exams2qti12</code>
+and <code>exams2qti21</code> for generating either QTI 1.2 or 2.1
+(default) output with some small tweaks for OpenOlat. Specifically, the MathJax
+and table output from pandoc is post-processed as expected by OpenOlat. See the
+corresponding manual page for many more arguments that are supported by
+<code>exams2openolat</code>.
+</p>
+<p>Dedicated <code>table</code> classes currently include: Full-width tables with borders
+(<code>"b_grid"</code>, <code>"b_border"</code>) or without (<code>"b_full"</code>, <code>"b_borderless"</code>).
+Or regular tables without background color (<code>"b_middle"</code>) or with white grid
+and color background (<code>"b_gray"</code>, <code>"b_red"</code>, <code>"b_green"</code>, <code>"b_blue"</code>,
+<code>"b_yellow"</code>). Setting <code>table = TRUE</code> corresponds to <code>table = "b_gray"</code>.
+</p>
+<p>In addition to controlling the behavior of the exam and its questions via the standard
+QTI 2.1 options (see <code>exams2qti21</code>), it is possible to specify
+certain OpenOlat-specific configurations via an additional XML file to be added to the
+ZIP output. This is why these options are not part of <code>exams2qti21</code> but are provided in the
+separate wrapper function <code>openolat_config</code>. As the resulting XML configuration file
+is not part of the official OpenOlat interface, it may be subject to more changes in the future.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>exams2openolat</code> returns a list of exams as generated by <code>xexams</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>exams2qti12</code>,
+<code>exams2qti21</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+library("exams")
+options(device.ask.default = FALSE)
+
+## define an exams (= list of exercises)
+myexam &lt;- list(
+  "boxplots.Rmd",
+  c("tstat.Rmd", "ttest.Rmd", "confint.Rmd"),
+  c("regression.Rmd", "anova.Rmd"),
+  c("scatterplot.Rmd", "boxhist.Rmd"),
+  "relfreq.Rmd"
+)
+
+## output directory
+dir.create(mydir &lt;- tempfile())
+
+## generate .zip with OpenOlat test in temporary directory
+exams2openolat(myexam, n = 3, dir = mydir)
+dir(mydir)
+</code></pre>
+
+
+</div>

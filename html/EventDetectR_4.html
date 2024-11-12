@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>detectEvents</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>detectEvents in a given data.frame</h2>
+
+<h3>Description</h3>
+
+<p>detectEvents builds a prediction model (edObject) on the first 'windowSize' points of the given data x.
+The next 'nIterationRefit' data-points are classified as 'Event' or not.
+The window is moved iteratively and the next models are fitted.
+The first 'windowSize' points will always be classified as no Event and should only contain 'clean' data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">detectEvents(
+  x,
+  windowSize = 100,
+  nIterationsRefit = 1,
+  verbosityLevel = 0,
+  dataPrepators = "ImputeTSInterpolation",
+  dataPreparationControl = list(),
+  buildModelAlgo = "ForecastETS",
+  buildForecastModelControl = list(),
+  buildNeuralNetModelControl = list(),
+  postProcessors = "bedAlgo",
+  postProcessorControl = list(),
+  ignoreVarianceWarning = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>data.frame, data which shall be classified as event or not</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windowSize</code></td>
+<td>
+<p>amount of data points to consider in each prediction model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nIterationsRefit</code></td>
+<td>
+<p>amount of points into the future which will be predicted without fitting a new model.
+E.g. if nIterationsRefit = 10 then the next five dataPoints are classified without refitting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbosityLevel</code></td>
+<td>
+<p>Print output of function progress. 0 -&gt; No output,
+1 -&gt; every 100th model building iteration, 2 -&gt; every 10th, 3 -&gt; every iteration</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataPrepators</code></td>
+<td>
+<p>string or vector of strings, that defines which preparators to use.
+Lists are not accepted. Usage Example: dataPreparators = "ImputeTSInterpolation" results in the usage of
+imputeTS::na.interpolation as a data preparator. All possible preparators are listed via:
+getSupportedPreparations()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataPreparationControl</code></td>
+<td>
+<p>list, control-list containing all additional parameters that shall be passed
+to the dataPreparators.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>buildModelAlgo</code></td>
+<td>
+<p>string, model name to be used. All possible preparators
+are listed via: getSupportedModels().</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>buildForecastModelControl</code></td>
+<td>
+<p>list, control-list containing all additional parameters that shall be passed to the  forecast modelling algo.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>buildNeuralNetModelControl</code></td>
+<td>
+<p>list, control-list containing all additional parameters that shall be passed to the neuralnet modelling algo.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>postProcessors</code></td>
+<td>
+<p>string or vector of strings, that defines which postProcessors to use.
+Lists are not accepted. Usage Example: postProcessors = "bedAlgo" results in the usage of
+bed as a event postProcessing tool. All possible preparators are listed via:
+getSupportedPostProcessors()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>postProcessorControl</code></td>
+<td>
+<p>list, control-list containing all additional parameters that shall be passed
+to the postProcessirs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignoreVarianceWarning</code></td>
+<td>
+<p>Ignores the continously appearing warning for missing variance in some variable
+columns given a smaller windowSize</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>edsResults edObject, list of results. $classification -&gt; data.frame containing the T/F event classification
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Run event detection with default settings:
+def &lt;- detectEvents(x = stationBData[1:100,-1])
+
+
+## Refit the model at every new datapoint,
+## have someoutput with verbosityLevel = 2 and ignore
+## the variance warning
+ed &lt;- detectEvents(stationBData[1:110,-1],nIterationsRefit = 1,
+                   verbosityLevel = 2,ignoreVarianceWarning = TRUE)
+
+## Switch to another model: Arima
+ed2 &lt;- detectEvents(stationBData[1:110,-1],nIterationsRefit = 1,
+                    verbosityLevel = 0,ignoreVarianceWarning = TRUE,
+                    buildModelAlgo = "ForecastArima")
+
+   ## Switch to multivariate model: NeuralNetwork
+ed3 &lt;- detectEvents(stationBData[1:110,-1],nIterationsRefit = 1, buildModelAlgo = "NeuralNetwork")
+                    
+</code></pre>
+
+
+</div>

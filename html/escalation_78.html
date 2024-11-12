@@ -1,0 +1,97 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>selector_factory</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dose selector factory.</h2>
+
+<h3>Description</h3>
+
+<p>Along with <code>selector</code>, this is the second core class in the
+<code>escalation</code> package. It exists to do one thing: fit outcomes from
+dose-finding trials to the models we use to select doses.
+</p>
+<p>A <code>selector_factory</code> object is obtained by initially calling a
+function like <code>get_dfcrm</code>, <code>get_three_plus_three</code> or
+<code>get_boin</code>. Users may then add desired extra behaviour with
+subsequent calls to functions like <code>stop_when_n_at_dose</code> or
+<code>stop_when_too_toxic</code>.
+<code>selector</code> objects are obtained by calling the <code>fit</code>
+function on a <code>selector_factory</code> object. Refer to examples to see
+how this works.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">selector_factory()
+</code></pre>
+
+
+<h3>See Also</h3>
+
+<p><code>selector</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Start with a simple CRM model
+skeleton &lt;- c(0.05, 0.1, 0.25, 0.4, 0.6)
+target &lt;- 0.25
+model1 &lt;- get_dfcrm(skeleton = skeleton, target = target)
+
+# Add a rule to stop when 9 patients are treated at the recommended dose
+model2 &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_when_n_at_dose(n = 9, dose = 'recommended')
+
+# Add a rule to stop if toxicity rate at lowest dose likely exceeds target
+model3 &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_when_n_at_dose(n = 9, dose = 'recommended') %&gt;%
+  stop_when_too_toxic(dose = 1, tox_threshold = target, confidence = 0.5)
+
+# We now have three CRM models that differ in their stopping behaviour.
+# Let's fit each to some outcomes to see those differences:
+
+outcomes &lt;- '1NNN 2NTT 1NNT'
+fit1 &lt;- model1 %&gt;% fit(outcomes)
+fit2 &lt;- model2 %&gt;% fit(outcomes)
+fit3 &lt;- model3 %&gt;% fit(outcomes)
+
+fit1 %&gt;% recommended_dose()
+fit1 %&gt;% continue()
+
+fit2 %&gt;% recommended_dose()
+fit2 %&gt;% continue()
+
+fit3 %&gt;% recommended_dose()
+fit3 %&gt;% continue()
+# Already model3 wants to stop because of excessive toxicity.
+
+# Let's carry on with models 1 and 2 by adding another cohort:
+
+outcomes &lt;- '1NNN 2NTT 1NNT 1NNN'
+fit1 &lt;- model1 %&gt;% fit(outcomes)
+fit2 &lt;- model2 %&gt;% fit(outcomes)
+
+fit1 %&gt;% recommended_dose()
+fit1 %&gt;% continue()
+
+fit2 %&gt;% recommended_dose()
+fit2 %&gt;% continue()
+
+# Model1 wants to continue - in fact it will never stop.
+# In contrast, model2 has seen 9 at dose 1 so, rather than suggest dose 1
+# again, it suggests the trial should stop.
+
+# For contrast, let us consider a BOIN model on the same outcomes
+boin_fitter &lt;- get_boin(num_doses = length(skeleton), target = target)
+fit4 &lt;- boin_fitter %&gt;% fit(outcomes)
+fit4 %&gt;% recommended_dose()
+fit4 %&gt;% continue()
+</code></pre>
+
+
+</div>

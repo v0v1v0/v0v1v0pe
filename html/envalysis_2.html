@@ -1,0 +1,311 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calibration</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Analytical calibration functions</h2>
+
+<h3>Description</h3>
+
+<p>Defines a '<code>calibration</code>' object for the calculation of concentrations
+from measurement signals including estimations for the limit of detection
+(LOD) and limit of quantification (LOQ) in accordance with DIN 32645 (2008).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calibration(
+  formula,
+  data = NULL,
+  blanks = NULL,
+  weights = NULL,
+  model = "lm",
+  check_assumptions = TRUE,
+  ...
+)
+
+## S3 method for class 'calibration'
+print(x, ...)
+
+## S3 method for class 'calibration'
+summary(object, ...)
+
+## S3 method for class 'calibration'
+plot(x, interval = "conf", level = 0.95, ...)
+
+## S3 method for class 'calibration'
+as.list(x, which = c("coef", "adj.r.squared", "lod", "loq", "blanks"), ...)
+
+lod(x, ...)
+
+## Default S3 method:
+lod(x, ...)
+
+## S3 method for class 'calibration'
+lod(x, blanks = NULL, alpha = 0.01, level = 0.05, ...)
+
+loq(x, ...)
+
+## Default S3 method:
+loq(x, ...)
+
+## S3 method for class 'calibration'
+loq(x, blanks = NULL, alpha = 0.01, k = 3, level = 0.05, maxiter = 10, ...)
+
+## S3 method for class 'calibration'
+predict(object, newdata = NULL, interval = "conf", ...)
+
+inv_predict(x, ...)
+
+## Default S3 method:
+inv_predict(x, ...)
+
+## S3 method for class 'calibration'
+inv_predict(x, y, below_lod = NULL, method = "analytic", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>model formula providing the recorded signal intensities with
+respect to the nominal/specified analyte concentrations in the form of
+<code>signal ~ concentration</code> or <code>signal ~ concentration - 1</code>; model
+formulas are currently restricted to those forms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an optional data frame containing the variables in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blanks</code></td>
+<td>
+<p>a vector of numeric blank values overriding those automatically
+retrieved from calibration data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>an optional character string containing one or more model
+variables, for example, in the form of "<code>1/concentration^0.5</code>" or
+"<code>1/signal</code>" which is internally converted to a numeric vector and
+passed to the fitting process of the selected model; see also
+<code>weight_select()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>model class to be used for fitting; currently,
+<code>lm()</code> and <code>rlm()</code> are supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_assumptions</code></td>
+<td>
+<p>automatically check for normality and
+homoscedasticity of model residuals using <code>shapiro.test()</code>
+and <code>bptest()</code>, respectively; only executed if
+<code>weights == NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to submethods; for
+instance, the respective model environment such as <code>lm()</code>,
+<code>print()</code>, or <code>plot()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x, object</code></td>
+<td>
+<p>an object of class '<code>calibration</code>' with a model formula
+as shown above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval</code></td>
+<td>
+<p>type of interval plotted (can be abbreviated); see
+<code>predict()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>tolerance/confidence level; see <code>predict()</code>
+and <code>confint()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which</code></td>
+<td>
+<p>character vector indicating the parameters to export; defaults 
+to <code>c("coef", "adj.r.squared", "lod", "loq", "blanks")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric; error tolerance for the detection limit (critical
+value).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>numeric; relative uncertainty for the limit of quantification
+(<code>1/beta</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxiter</code></td>
+<td>
+<p>a positive integer specifying the maximum number of iterations
+to calculate the LOQ.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>a data frame in which to look for variables with which to
+predict. If <code>NULL</code>, values are guessed; <code>predict.lm()</code>
+for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>numeric; the value to inverse predict.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>below_lod</code></td>
+<td>
+<p>value to be assigned if inverse prediction is below LOD;
+defaults to <code>"NULL"</code> which keeps predicted values untouched. Other
+options may be <code>NA</code> or <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character indicating the method used for inverse prediction;
+defaults to <code>"analytic"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The LOD is defined as the lowest quantity of a substance that can be
+distinguished from the absence of that substance (blank value) within a given
+confidence level (<code>alpha</code>). The LOQ is defined as the lowest quantity of
+a substance that can be quantified/distinguished from another sample given
+with respect to a defined confidence level (<code>k</code>).
+</p>
+<p>If the <code>data</code> supplied to <code>calibration</code> contain more than one blank
+value, namely measurements with a nominal/specified concentration of or close
+to zero, the LOD and LOQ are calculated from the deviation of the blank
+samples. This method is called "blank method" according to DIN 32645 (2008)
+and supposed to be more accurate than the so-called "calibration method"
+which will be used for the estimation of LOD and LOQ when <code>data</code> does
+not contain zero concentration measurements.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>calibration</code> returns an object of <code>class</code>
+'<code>calibration</code>'.
+</p>
+<p><code>print()</code> calls the function parameters together with the respective LOD
+and LOQ.
+<code>summary()</code> may be used to retrieve the summary of the underlying model.
+<code>plot()</code> plots the respective calibration curve together with the
+measurement values.
+</p>
+<p><code>as.list()</code> returns a named list.
+</p>
+<p><code>lod()</code> and <code>loq()</code> return a named vector with the LOD and LOQ
+together with lower and upper confidence limits.
+</p>
+<p><code>predict()</code> returns a <code>data.frame</code> of predictions.
+</p>
+<p><code>inv_predict()</code> predicts/calculates analyte concentrations from signal
+intensities.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Zacharias Steinmetz
+</p>
+
+
+<h3>References</h3>
+
+<p>Almeida, A.M.D., Castel-Branco, M.M., &amp; Falcao, A.C. (2002). Linear
+regression for calibration lines revisited: weighting schemes for
+bioanalytical methods. <em>Journal of Chromatography B</em>, <b>774</b>(2),
+215-222. <a href="https://doi.org/10.1016/S1570-0232%2802%2900244-1">doi:10.1016/S1570-0232(02)00244-1</a>.
+</p>
+<p>Currie, L.A. (1999). Nomenclature in evaluation of analytical methods
+including detection and quantification capabilities: (IUPAC Recommendations
+1995). <em>Analytica Chimica Acta</em> <b>391</b>, 105-126.
+</p>
+<p>DIN 32645 (2008). <em>Chemical analysis - Decision limit, detection limit
+and determination limit under repeatability conditions - Terms, methods,
+evaluation</em>. Technical standard. Deutsches Institut für Normung, Berlin.
+</p>
+<p>Massart, D.L., Vandeginste, B.G., Buydens, L.M.C., Lewi, P.J., &amp;
+Smeyers-Verbeke, J. (1997). <em>Handbook of chemometrics and qualimetrics:
+Part A</em>. Elsevier Science Inc.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>invest()</code> for alternative inverse prediction methods;
+</p>
+<p>Other calibration: 
+<code>din32645</code>,
+<code>icp</code>,
+<code>matrix_effect()</code>,
+<code>neitzel2003</code>,
+<code>phenolics</code>,
+<code>weight_select()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(din32645)
+din &lt;- calibration(Area ~ Conc, data = din32645)
+
+print(din)
+summary(din)
+plot(din)
+
+as.list(din)
+
+lod(din)
+loq(din)
+
+predict(din)
+
+inv_predict(din, 5000)
+
+</code></pre>
+
+
+</div>

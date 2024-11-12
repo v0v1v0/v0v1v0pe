@@ -1,0 +1,94 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict_tdl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prediction with incomplete-event-classifier</h2>
+
+<h3>Description</h3>
+
+<p>Predicts using the incomplete-event-classifier.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predict_tdl(model, t, X, probs = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The fitted incomplete-event-classifier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>The age of events.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>The event features.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>If <code>TRUE</code>, probabilities are returned.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The predicted values using the model object. If <code>prob = TRUE</code>, then the probabilities are returned.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Generate data
+N &lt;- 1000
+t &lt;- sort(rep(1:10, N))
+set.seed(821)
+for(kk in 1:10){
+  if(kk==1){
+     X &lt;- seq(-11,9,length=N)
+  }else{
+     temp &lt;- seq((-11-kk+1),(9-kk+1),length=N)
+     X &lt;- c(X,temp)
+  }
+}
+real.a.0 &lt;- seq(2,20, by=2)
+real.a.1 &lt;- rep(2,10)
+Zstar &lt;-real.a.0[t] + real.a.1[t]*X + rlogis(N, scale=0.5)
+Z &lt;- 1*(Zstar &gt; 0)
+
+# Plot data for t=1 and t=8
+oldpar &lt;- par(mfrow=c(1,2))
+plot(X[t==1],Z[t==1], main="t=1 data")
+abline(v=-1, lty=2)
+plot(X[t==8],Z[t==8],main="t=8 data")
+abline(v=-8, lty=2)
+par(oldpar)
+
+# Fit model
+train_inds &lt;-  c()
+for(i in 0:9){train_inds &lt;- c(train_inds , i*N + 2*(1:499))}
+model_td &lt;- td_logistic(t[train_inds],X[train_inds],Z[train_inds])
+
+# Prediction
+preds &lt;- predict_tdl(model_td,t[-train_inds],X[-train_inds] )
+sum(preds==Z[-train_inds])/length(preds)
+
+</code></pre>
+
+
+</div>

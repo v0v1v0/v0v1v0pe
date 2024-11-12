@@ -1,0 +1,184 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>scales.likelihood</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Likelihood of roughness parameters</h2>
+
+<h3>Description</h3>
+
+<p>Gives the a postiori likelihood for the roughness parameters as a
+function of the observations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">scales.likelihood(pos.def.matrix = NULL, scales = NULL, xold,
+use.Ainv = TRUE, d, give_log=TRUE, func = regressor.basis)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pos.def.matrix</code></td>
+<td>
+<p>Positive definite matrix used for the distance metric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scales</code></td>
+<td>
+<p>If the positive definite matrix is diagonal, 
+<code>scales</code> specifies the diagonal elements.  Specify exactly one
+of <code>pos.def.matrix</code> or <code>scales</code> (ie not both)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xold</code></td>
+<td>
+<p>Points at which code has been run</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.Ainv</code></td>
+<td>
+<p>Boolean, with default <code>TRUE</code> meaning to calculate
+<code class="reqn">A^{-1}</code> explicitly and use it.  Setting to <code>FALSE</code>
+means to use methods (such as <code>quad.form.inv()</code>) which do not
+require inverting the <code>A</code> matrix.  Although one should avoid
+inverting a matrix if possible, in practice there does not appear
+to be much difference in execution time for the two methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Observations in the form of a vector with entries
+corresponding to the rows of <code>xold</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>give_log</code></td>
+<td>
+<p>Boolean, with default <code>TRUE</code> meaning to return
+the logarithm of the likelihood (ie the support) and <code>FALSE</code>
+meaning to return the likelihood itself</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>func</code></td>
+<td>
+<p>Function used to determine basis vectors, defaulting
+to <code>regressor.basis</code> if not given</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function returns the likelihood function defined in Oakley's PhD
+thesis, equation 2.37.  Maximizing this likelihood to estimate the
+roughness parameters is an alternative to the leave-out-one method on
+the <code>interpolant()</code> helppage; both methods perform similarly.
+</p>
+<p>The value returned is
+</p>
+<p style="text-align: center;"><code class="reqn">
+\left(\hat{\sigma}\right)^{-(n-q)/2}
+\left|A\right|^{-1/2}\cdot\left|H^TA^{-1}H\right|^{-1/2}.
+</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>Returns the likelihood or support.
+</p>
+
+
+<h3>Note</h3>
+
+<p>This function uses a Boolean flag, <code>use.Ainv</code>, to determine
+whether <code>A</code> has to be inverted or not.  Compare the other
+strategy in which separate functions, eg <code>foo()</code> and
+<code>foo.A()</code>, are written.  An example would be <code>betahat.fun()</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p>J. Oakley 1999. <em>Bayesian uncertainty analysis for complex
+computer codes</em>, PhD thesis, University of Sheffield.
+</p>
+</li>
+<li>
+<p>J. Oakley and A. O'Hagan, 2002. <em>Bayesian Inference for the
+Uncertainty Distribution of Computer Model Outputs</em>, Biometrika
+89(4), pp769-784
+</p>
+</li>
+<li>
+<p>R. K. S. Hankin 2005. <em>Introducing BACCO, an R bundle for
+Bayesian analysis of computer code output</em>, Journal of Statistical
+Software, 14(16)
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>optimal.scales</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> data(toy)
+ val &lt;- toy
+
+ #define a real relation
+ real.relation &lt;- function(x){sum( (0:6)*x )}
+
+ #Some scales:
+ fish &lt;- rep(1,6)
+ fish[6] &lt;- 4
+ A &lt;- corr.matrix(val,scales=fish)
+ Ainv &lt;- solve(A)
+
+ # Gaussian process noise:
+ H &lt;- regressor.multi(val)
+ d &lt;- apply(H,1,real.relation)
+ d.noisy &lt;- as.vector(rmvnorm(n=1,mean=d, 0.1*A))
+
+ # Compare likelihoods with true values and another value:
+ scales.likelihood(scales=rep(1,6),xold=toy,d=d.noisy)
+ scales.likelihood(scales=fish    ,xold=toy,d=d.noisy)
+
+
+ # Verify that use.Ainv does not affect the numerical result:
+u.true  &lt;- scales.likelihood(scales=rep(1,6),xold=toy,d=d.noisy,use.Ainv=TRUE)
+u.false &lt;- scales.likelihood(scales=rep(1,6),xold=toy,d=d.noisy,use.Ainv=FALSE)
+print(c(u.true, u.false))  # should be identical up to numerical accuracy
+
+
+ # Now use optim():
+ f &lt;- function(fish){scales.likelihood(scales=exp(fish), xold=toy, d=d.noisy)}
+ e &lt;-
+optim(log(fish),f,method="Nelder-Mead",control=list(trace=0,maxit=10,fnscale=
+-1))
+best.scales &lt;- exp(e$par)
+
+</code></pre>
+
+
+</div>

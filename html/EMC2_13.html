@@ -1,0 +1,146 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DDM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Diffusion Decision Model</h2>
+
+<h3>Description</h3>
+
+<p>Model file to estimate the Diffusion Decision Model (DDM) in EMC2.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DDM()
+</code></pre>
+
+
+<h3>Details</h3>
+
+<p>Model files are almost exclusively used in <code>design()</code>.
+</p>
+<p>Default values are used for all parameters that are not explicitly listed in the <code>formula</code>
+argument of <code>design()</code>.They can also be accessed with <code>DDM()$p_types</code>.</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+   <strong>Parameter</strong> </td>
+<td style="text-align: left;"> <strong>Transform</strong> </td>
+<td style="text-align: left;"> <strong>Natural scale</strong> </td>
+<td style="text-align: left;"> <strong>Default</strong> </td>
+<td style="text-align: left;"> <strong>Mapping</strong> </td>
+<td style="text-align: left;"> <strong>Interpretation</strong> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>v</em> </td>
+<td style="text-align: left;"> - </td>
+<td style="text-align: left;"> [-Inf, Inf] </td>
+<td style="text-align: left;"> 1 </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Mean evidence-accumulation rate (drift rate) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>a</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(1) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Boundary separation </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>t0</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(0) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Non-decision time </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>s</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(1) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Within-trial standard deviation of drift rate </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>Z</em> </td>
+<td style="text-align: left;"> probit </td>
+<td style="text-align: left;"> [0, 1] </td>
+<td style="text-align: left;"> qnorm(0.5) </td>
+<td style="text-align: left;"> <em>z</em> = <em>Z</em> x <em>a</em> </td>
+<td style="text-align: left;"> Relative start point (bias) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>SZ</em> </td>
+<td style="text-align: left;"> probit </td>
+<td style="text-align: left;"> [0, 1] </td>
+<td style="text-align: left;"> qnorm(0) </td>
+<td style="text-align: left;"> <em>sz</em> = 2 x <em>SZ</em> x min(<em>a</em> x <em>Z</em>, <em>a</em> x (1-<em>Z</em>)) </td>
+<td style="text-align: left;"> Relative between-trial variation in start point </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>sv</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(0) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Between-trial standard deviation of drift rate </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>st0</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(0) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Between-trial variation (range) in non-decision time </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p><code>a</code>, <code>t0</code>, <code>sv</code>, <code>st0</code>, <code>s</code> are sampled on the log scale because these parameters are strictly positive,
+<code>Z</code>, <code>SZ</code> and <code>DP</code> are sampled on the probit scale because they should be strictly between 0 and 1.
+</p>
+<p><code>Z</code> is estimated as the ratio of bias to one boundary where 0.5 means no bias.
+<code>DP</code> comprises the difference in non-decision time for each response option.
+</p>
+<p>Conventionally, <code>sv</code> is fixed to 1 to satisfy scaling constraints.
+</p>
+<p>See Ratcliff, R., &amp; McKoon, G. (2008).
+The diffusion decision model: theory and data for two-choice decision tasks.
+<em>Neural computation, 20</em>(4), 873-922. doi:10.1162/neco.2008.12-06-420.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A model list with all the necessary functions for EMC2 to sample
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">design_DDMaE &lt;- design(data = forstmann,model=DDM,
+                           formula =list(v~0+S,a~E, t0~1, s~1, Z~1, sv~1, SZ~1),
+                           constants=c(s=log(1)))
+# For all parameters that are not defined in the formula, default values are assumed
+# (see Table above).
+
+</code></pre>
+
+
+</div>

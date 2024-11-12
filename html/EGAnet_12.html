@@ -1,0 +1,242 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>community.unidimensional</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Approaches to Detect Unidimensional Communities</h2>
+
+<h3>Description</h3>
+
+<p>A function to apply several approaches to detect a unidimensional community in 
+networks. There have many different approaches recently such as expanding
+the correlation matrix to have orthogonal correlations (<code>"expand"</code>),
+applying the Leading Eigenvalue community detection algorithm
+<code>cluster_leading_eigen</code> to the correlation matrix
+(<code>"LE"</code>), and applying the Louvain community detection algorithm
+<code>cluster_louvain</code> to the correlation matrix (<code>"louvain"</code>).
+Not necessarily intended for individual use – it's better to use <code>EGA</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">community.unidimensional(
+  data,
+  n = NULL,
+  corr = c("auto", "cor_auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  uni.method = c("expand", "LE", "louvain"),
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Matrix or data frame.
+Should consist only of variables that are desired to be in analysis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Numeric (length = 1).
+Sample size if <code>data</code> provided is a correlation matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Character (length = 1).
+Method to compute correlations.
+Defaults to <code>"auto"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"auto"</code> — Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use <code>ordinal.categories</code>
+(see <code>polychoric.matrix</code> for more details)
+</p>
+</li>
+<li> <p><code>"cor_auto"</code> — Uses <code>cor_auto</code> to compute correlations. 
+Arguments can be passed along to the function
+</p>
+</li>
+<li> <p><code>"pearson"</code> — Pearson's correlation is computed for all 
+variables regardless of categories
+</p>
+</li>
+<li> <p><code>"spearman"</code> — Spearman's rank-order correlation is computed 
+for all variables regardless of categories
+</p>
+</li>
+</ul>
+<p>For other similarity measures, compute them first and input them
+into <code>data</code> with the sample size (<code>n</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.data</code></td>
+<td>
+<p>Character (length = 1).
+How should missing data be handled?
+Defaults to <code>"pairwise"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"pairwise"</code> — Computes correlation for all available cases between
+two variables
+</p>
+</li>
+<li> <p><code>"listwise"</code> — Computes correlation for all complete cases in the dataset
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Character (length = 1).
+Defaults to <code>"glasso"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"BGGM"</code> — Computes the Bayesian Gaussian Graphical Model.
+Set argument <code>ordinal.categories</code> to determine
+levels allowed for a variable to be considered ordinal.
+See <code>?BGGM::estimate</code> for more details
+</p>
+</li>
+<li> <p><code>"glasso"</code> — Computes the GLASSO with EBIC model selection.
+See <code>EBICglasso.qgraph</code> for more details
+</p>
+</li>
+<li> <p><code>"TMFG"</code> — Computes the TMFG method.
+See <code>TMFG</code> for more details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uni.method</code></td>
+<td>
+<p>Character (length = 1).
+What unidimensionality method should be used? 
+Defaults to <code>"louvain"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"expand"</code> — Expands the correlation matrix with four variables correlated 0.50.
+If number of dimension returns 2 or less in check, then the data 
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This method was used in the Golino et al.'s (2020)
+<em>Psychological Methods</em> simulation
+</p>
+</li>
+<li> <p><code>"LE"</code> — Applies the Leading Eigenvector algorithm
+(<code>cluster_leading_eigen</code>)
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvector solution is used; otherwise, regular EGA
+is used. This method was used in the Christensen et al.'s (2023) 
+<em>Behavior Research Methods</em> simulation
+</p>
+</li>
+<li> <p><code>"louvain"</code> — Applies the Louvain algorithm (<code>cluster_louvain</code>)
+on the empirical correlation matrix. If the number of dimensions is 1, 
+then the Louvain solution is used; otherwise, regular EGA is used. 
+This method was validated Christensen's (2022) <em>PsyArXiv</em> simulation.
+Consensus clustering can be used by specifying either
+<code>"consensus.method"</code> or <code>"consensus.iter"</code>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean.
+Whether messages and (insignificant) warnings should be output.
+Defaults to <code>FALSE</code> (silent calls).
+Set to <code>TRUE</code> to see all messages and warnings for every function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed on to
+<code>auto.correlate</code>, 
+<code>network.estimation</code>,
+<code>community.consensus</code>, and 
+<code>community.detection</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns the memberships of the community detection algorithm.
+The memberships will output <em>regardless</em> of whether the
+network is unidimensional
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Hudson Golino &lt;hfg9s at virginia.edu&gt; and Alexander P. Christensen &lt;alexpaulchristensen@gmail.com&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p><strong>Expand approach</strong> <br>
+Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., &amp; Martinez-Molina, A. (2020).
+Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors:
+A simulation and tutorial.
+<em>Psychological Methods</em>, <em>25</em>, 292-320. 
+</p>
+<p><strong>Leading Eigenvector approach</strong> <br>
+Christensen, A. P., Garrido, L. E., Guerra-Pena, K., &amp; Golino, H. (2023).
+Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
+<em>Behavior Research Methods</em>.
+</p>
+<p><strong>Louvain approach</strong> <br>
+Christensen, A. P. (2023).
+Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.
+<em>PsyArXiv</em>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load data
+wmt &lt;- wmt2[,7:24]
+
+# Louvain with Consensus Clustering (default)
+community.unidimensional(wmt)
+
+# Leading Eigenvector
+community.unidimensional(wmt, uni.method = "LE")
+
+# Expand
+community.unidimensional(wmt, uni.method = "expand")
+
+</code></pre>
+
+
+</div>

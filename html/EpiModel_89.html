@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_network</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract Network Objects from Network Simulations</h2>
+
+<h3>Description</h3>
+
+<p>Extracts the network object from either a network epidemic model
+object generated with <code>netsim</code>, a network diagnostic
+simulation generated with <code>netdx</code>, or a <code>netsim_dat</code>
+object used internally in <code>netsim</code>. For <code>netdx</code> or
+<code>netsim</code> with <code>tergmLite == FALSE</code>, the extracted
+network object is a <code>networkDynamic</code>, which can be
+collapsed down to a static <code>network</code> object with the
+<code>collapse</code> and <code>at</code> arguments. For <code>netsim</code> with
+<code>tergmLite == TRUE</code>, the extracted network object is the
+final <code>networkLite</code>, the <code>collapse</code> argument should be
+<code>FALSE</code>, and the <code>at</code> argument should be missing. For
+<code>netsim_dat</code>, the <code>collapse</code> and <code>at</code> arguments
+are not supported, and the network object is either the current
+<code>networkLite</code> (if <code>tergmLite == TRUE</code>) or the current
+<code>networkDynamic</code> (if <code>tergmLite == FALSE</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_network(x, ...)
+
+## S3 method for class 'netdx'
+get_network(x, sim = 1, collapse = FALSE, at, ...)
+
+## S3 method for class 'netsim'
+get_network(x, sim = 1, network = 1, collapse = FALSE, at, ...)
+
+## S3 method for class 'netsim_dat'
+get_network(x, network = 1L, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An <code>EpiModel</code> object of class <code>netsim</code>,
+<code>netdx</code>, or <code>netsim_dat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sim</code></td>
+<td>
+<p>Simulation number of extracted network, for <code>netdx</code> and
+<code>netsim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>collapse</code></td>
+<td>
+<p>If <code>TRUE</code>, collapse the <code>networkDynamic</code> object to
+a static <code>network</code> object at a specified time step. Applicable to
+<code>netdx</code> objects and <code>netsim</code> objects with
+<code>tergmLite == FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>at</code></td>
+<td>
+<p>If <code>collapse</code> is <code>TRUE</code>, the time step at which the
+extracted network should be collapsed. Applicable to <code>netdx</code>
+objects and <code>netsim</code> objects with <code>tergmLite == FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p>Network number, for <code>netsim</code> or <code>netsim_dat</code> objects
+with multiple overlapping networks (advanced use, and not applicable
+to <code>netdx</code> objects).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function requires that the network object is saved during the network
+simulation while running either <code>netsim</code> or <code>netdx</code>.
+For the former, that is specified by setting the <code>save.network</code>
+parameter in <code>control.net</code> to <code>TRUE</code>. For the latter, that
+is specified with the <code>keep.tnetwork</code> parameter directly in
+<code>netdx</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>For <code>netdx</code> or <code>netsim</code> with <code>tergmLite == FALSE</code>, a
+<code>networkDynamic</code> object (if <code>collapse = FALSE</code>) or a
+static <code>network</code> object (if <code>collapse = TRUE</code>). For
+<code>netsim</code> with <code>tergmLite == TRUE</code> or <code>netsim_dat</code> with
+<code>tergmLite == TRUE</code>, a <code>networkLite</code> object. For
+<code>netsim_dat</code> with <code>tergmLite == FALSE</code>, a
+<code>networkDynamic</code> object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Set up network and TERGM formula
+nw &lt;- network_initialize(n = 100)
+nw &lt;- set_vertex_attribute(nw, "group", rep(1:2, each = 50))
+formation &lt;- ~edges
+target.stats &lt;- 50
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 20)
+
+# Estimate the model
+est &lt;- netest(nw, formation, target.stats, coef.diss)
+
+# Run diagnostics, saving the networkDynamic objects
+dx &lt;- netdx(est, nsteps = 10, nsims = 3, keep.tnetwork = TRUE,
+            verbose = FALSE)
+
+# Extract the network for simulation 2 from dx object
+get_network(dx, sim = 2)
+
+# Extract and collapse the network from simulation 1 at time step 5
+get_network(dx, collapse = TRUE, at = 5)
+
+# Parameterize the epidemic model, and simulate it
+param &lt;- param.net(inf.prob = 0.3, inf.prob.g2 = 0.15)
+init &lt;- init.net(i.num = 10, i.num.g2 = 10)
+control &lt;- control.net(type = "SI", nsteps = 10, nsims = 3, verbose = FALSE)
+mod &lt;- netsim(est, param, init, control)
+
+# Extract the network for simulation 2 from mod object
+get_network(mod, sim = 2)
+
+## Extract and collapse the network from simulation 1 at time step 5
+get_network(mod, collapse = TRUE, at = 5)
+
+</code></pre>
+
+
+</div>

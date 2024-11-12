@@ -1,0 +1,120 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>assign_to_grid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Assign points to a spacetime grid</h2>
+
+<h3>Description</h3>
+
+<p>Given a set of points in space and (optionally) time, define a regular grid
+with given dimensions, and return the grid cell index for each point.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">assign_to_grid(
+  points,
+  coords = NULL,
+  is_lonlat = FALSE,
+  res,
+  jitter_grid = TRUE,
+  grid_definition = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>data frame; points with spatial coordinates <code>x</code> and <code>y</code>, and an
+optional time coordinate <code>t</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coords</code></td>
+<td>
+<p>character; names of the spatial and temporal coordinates in the
+input dataframe. Only provide these names if you want to overwrite the
+default coordinate names: <code>c("x", "y", "t")</code> or <code>c("longitude", "latitude", "t")</code> if <code>is_lonlat = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>is_lonlat</code></td>
+<td>
+<p>logical; if the points are in unprojected, lon-lat
+coordinates. In this case, the input data frame should have columns
+<code>"longitude"</code> and <code>"latitude"</code> and the points will be projected to an equal
+area Eckert IV CRS prior to grid assignment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res</code></td>
+<td>
+<p>numeric; resolution of the grid in the <code>x</code>, <code>y</code>, and <code>t</code>
+dimensions, respectively. If only 2 dimensions are provided, a space only
+grid will be generated. The units of <code>res</code> are the same as the coordinates
+in the input data unless <code>is_lonlat</code> is true in which case the <code>x</code> and <code>y</code>
+resolution should be provided in meters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jitter_grid</code></td>
+<td>
+<p>logical; whether to jitter the location of the origin of
+the grid to introduce some randomness.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid_definition</code></td>
+<td>
+<p>list; object defining the grid via the <code>origin</code> and
+<code>resolution</code> components. To assign multiple sets of points to exactly the
+same grid, <code>assign_to_grid()</code> returns a data frame with a <code>grid_definition</code>
+attribute that can be passed to subsequent calls to <code>assign_to_grid()</code>.
+<code>res</code> and <code>jitter</code> are ignored if <code>grid_definition</code> is provided.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Data frame with the indices of the space-only and spacetime grid
+cells. This data frame will have a <code>grid_definition</code> attribute that can be
+used to reconstruct the grid.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(1)
+
+# generate some example points
+points_xyt &lt;- data.frame(x = runif(100), y = runif(100), t = rnorm(100))
+# assign to grid
+cells &lt;- assign_to_grid(points_xyt, res = c(0.1, 0.1, 0.5))
+
+# assign a second set of points to the same grid
+assign_to_grid(points_xyt, grid_definition = attr(cells, "grid_definition"))
+
+# assign lon-lat points to a 10km space-only grid
+points_ll &lt;- data.frame(longitude = runif(100, min = -180, max = 180),
+                        latitude = runif(100, min = -90, max = 90))
+assign_to_grid(points_ll, res = c(10000, 10000), is_lonlat = TRUE)
+
+# overwrite default coordinate names, 5km by 1 week grid
+points_names &lt;- data.frame(lon = runif(100, min = -180, max = 180),
+                           lat = runif(100, min = -90, max = 90),
+                           day = sample.int(365, size = 100))
+assign_to_grid(points_names,
+               res = c(5000, 5000, 7),
+               coords = c("lon", "lat", "day"),
+               is_lonlat = TRUE)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>obj_find</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Find an object in the workspace including user-defined environments</h2>
+
+<h3>Description</h3>
+
+<p>Look for an object in the whole workspace including all environments defined within it
+(possibly recursively) and return ALL the environment(s) where the object is found.
+User-defined environments are also searched.
+Note that both the "recursive search" and the "user-defined environments search" makes this function
+quite different from functions find and exists of the base package.
+Optionally, the search can be limited to a specified environment, as opposed to carrying it out in the whole workspace.
+Still, all user-defined environments defined inside the specified environment are searched.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">obj_find(
+  obj,
+  envir = NULL,
+  envmap = NULL,
+  globalsearch = TRUE,
+  n = 0,
+  return_address = FALSE,
+  include_functions = FALSE,
+  silent = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>object to be searched given as the object itself or as a character string. If given as an object,
+expressions are accepted (see details on how expressions are handled).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>environment where the search for <code>obj</code> should be carried out.
+It defaults to <code>NULL</code> which means <code>obj</code> is searched in the calling environment
+(i.e. in the environment calling this function), unless <code>globalsearch=TRUE</code> in which case
+it is searched in the whole workspace.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envmap</code></td>
+<td>
+<p>data frame containing a lookup table with name-address pairs of environment names and
+addresses to be used when searching for environment <code>env</code>. It defaults to <code>NULL</code> which means that the
+lookup table is constructed on the fly with the environments defined in the <code>envir</code> environment
+–if not <code>NULL</code>–, or in the whole workspace if <code>envir=NULL</code>.
+See the details section for more information on its structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>globalsearch</code></td>
+<td>
+<p>when <code>envir=NULL</code> it specifies whether the search for <code>obj</code> should be done
+globally, i.e. in the whole workspace, or just within the calling environment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>non-negative integer indicating the number of levels to go up from the calling function environment
+to evaluate <code>obj</code>. It defaults to 0 which implies that <code>obj</code> is evaluated in the environment
+of the calling function (i.e. the function that calls <code>obj_find()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_address</code></td>
+<td>
+<p>whether to return the address of the environments where the object is found in addition
+to their names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_functions</code></td>
+<td>
+<p>whether to include funtion execution environments as environments where the object
+is searched for. Set this flag to <code>TRUE</code> with caution because there may be several functions where the
+same object is defined, for instance functions that are called as part of the object searching process!</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>run in silent mode? If not, the search history is shown,
+listing all the environments that are searched for object <code>obj</code>. It defaults to TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>An object is found in an environment if it is reachable from within that environment. An object is considered
+reachable in an environment if either one of the following occurs:
+</p>
+
+<ul>
+<li>
+<p> it exists in the given environment
+</p>
+</li>
+<li>
+<p> it exists in a user-defined environment defined inside the given environment or in any environment
+recursively defined inside them
+</p>
+</li>
+</ul>
+<p>Note that <code>obj_find</code> differs from base functions <code>find</code> and <code>exists</code> in that <code>obj_find</code>
+searches for the object inside user-defined environments within any given environment in a <em>recursive</em> way.
+</p>
+<p>In particular, compared to:
+</p>
+
+<ul>
+<li>
+<p><code>find</code>: <code>obj_find</code> searches for objects inside user-defined environments while <code>find</code> is not
+able to do so (see examples).
+</p>
+</li>
+<li>
+<p><code>exists</code>: <code>obj_find</code> <em>never</em> searches for objects in the parent environment of <code>envir</code>
+when <code>envir</code> is not <code>NULL</code>, as is the case with the <code>exists</code> function when its <code>inherits</code>
+parameter is set to <code>TRUE</code> (the default).
+If it is wished to search for objects in parent environments, simply set <code>envir=NULL</code>
+and <code>globalsearch=TRUE</code>, in which case the object will be searched in the whole workspace
+and the environments where it is found will be returned.
+</p>
+</li>
+</ul>
+<p>When the object is found, an array containing the names of all the environments where the object is found is
+returned.
+</p>
+<p>When <code>envir</code> is not <code>NULL</code> attached packages are not included in the search for <code>obj</code>,
+unless of course <code>envir</code> is itself a package environment.
+</p>
+<p>When given as an object, <code>obj</code> can be an expression. If the expression is an attribute of a list
+or an array element, the object contained therein is searched for.
+Ex: if <code>alist$var = "x"</code> then object <code>x</code> is searched.
+</p>
+<p>If <code>envmap</code> is passed it should be a data frame providing an address-name pair lookup table
+of environments and should contain at least the following columns:
+</p>
+
+<ul>
+<li>
+<p><code>location</code> for user-defined environments, the name of the environment where the environment
+is located; otherwise <code>NA</code>.
+</p>
+</li>
+<li>
+<p><code>pathname</code> the full <em>environment path</em> to reach the environment separated by <code>$</code>
+(e.g. <code>"env1$env$envx"</code>)
+</p>
+</li>
+<li>
+<p><code>address</code> the 8-digit (32-bit architectures) thru 16-digit (64-bit architectures) memory address
+of the environment given in <code>pathname</code> enclosed in &lt; &gt; (e.g. <code>"&lt;0000000007DCFB38&gt;"</code>
+(64-bit architectures))
+Be ware that Linux Debian distributions may have a 12-digit memory address representation.
+So the best way to know is to check a memory address by calling e.g. 'address("x")'.
+</p>
+</li>
+</ul>
+<p>Passing an <code>envmap</code> lookup table is useful for speedup purposes, in case several calls to this
+function will be performed in the context of an unchanged set of defined environments.
+Such <code>envmap</code> data frame can be created by calling get_env_names.
+Use this parameter with care, as the matrix passed may not correspond to the actual mapping of existing
+environments to their addresses and in that case results may be different from those expected.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The return value depends on the value of parameter <code>return_address</code>: when <code>FALSE</code>
+(the default) it returns an array containing the names of the environments where the object <code>obj</code>
+is found; when <code>TRUE</code> it returns a list with two attributes: <code>"env_full_names"</code> and
+<code>"env_addresses"</code> with respectively the environment names and addresses where the object is found.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Define a variable in the global environment
+x = 4
+# Create new environments, some nested
+env1 = new.env()
+with(env1, envx &lt;- new.env())
+env1$x = 3
+env1$envx$x = 2
+env1$y = 5
+
+# Look for objects (crawling environments recursively)
+obj_find(x)                  # "env1" "env1$envx" "R_GlobalEnv"
+obj_find("x")                # "env1" "env1$envx" "R_GlobalEnv"
+obj_find("x", envir=env1)    # "env1" "envx" (as the search is limited to the env1 environment)
+obj_find("y")                # "env1"
+obj_find(nonexistent)        # NULL (note that NO error is raised even if the object does not exist)
+</code></pre>
+
+
+</div>

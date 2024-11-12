@@ -1,0 +1,199 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EpiInvertForecast</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+<code>EpiInvertForecast</code> computes a 28-day forecast of the restored incidence 
+curve including a 95
+using the weekly seasonality, from the forecasted restored incidence curve we
+also estimate a  28-day forecast of the original incidence curve.</h2>
+
+<h3>Description</h3>
+
+<p><code>EpiInvertForecast</code> computes a 28-day forecast of the restored incidence 
+curve including a 95
+using the weekly seasonality, from the forecasted restored incidence curve we
+also estimate a  28-day forecast of the original incidence curve.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EpiInvertForecast(
+  EpiInvert_result,
+  restored_incidence_database,
+  type = "median",
+  trend_sentiment = 0,
+  NumberForecastAdditionalDays = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>EpiInvert_result</code></td>
+<td>
+<p>output list of the EpiInvert execution including, in particular,
+the restored incidence curve and the seasonality.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>restored_incidence_database</code></td>
+<td>
+<p>a database including 27,418  samples of different
+restored incidence curves computed by EpiInvert using real data. Each 
+restored incidence curve includes the last 56 values of the sequence. That is
+this database can be viewed as a matrix of size 27,418  X 56</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>string with the forecast option. It can be "mean" or "median".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend_sentiment</code></td>
+<td>
+<p>"a priori" knowledge about the future incidence evolution. 
+== 0 means that you are neutral about the future trend 
+&gt; 0  means that you expect that the future trend is higher than the expected one 
+using all database curves. the value represents the percentage of database 
+curves removed before computing the forecast The curves removed are the ones 
+with lowest growth in the last 28 days.  
+&lt; 0  means that you expect that the future trend is higher than the expected one 
+using all database curves. the meaning of the value is similar to the previous 
+case, but removing the curves with the highest growth in the last 28 days.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NumberForecastAdditionalDays</code></td>
+<td>
+<p>The number of forecast days is 28. With this
+parameter you can add extra forecast days using linear extrapolation.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>EpiInvertForecast estimates a forecast of the restored incidence curve 
+using a weighted average of 27,418  restored incidence curves previously 
+estimated by EpiInvert and stored in the database "restored_incidence_database". 
+The weight, in the average computation, of each restored incidence curve 
+of the database depends on the similarity between the current curve in the last
+28 days and the first 28 days of the database curve. Each database curve 
+contains 56 days. The first 28 days are used for comparison with the current 
+curve and the last 28 days are used for forecasting.
+</p>
+
+
+<h3>Value</h3>
+
+
+<p>a list with components:
+</p>
+
+<ul>
+<li>
+<p>dates: a vector of dates corresponding to the forecast days. 
+</p>
+</li>
+<li>
+<p>i_restored_forecast: a numeric vector with the forecast of the 
+restored incidence curve for the next 28 days.
+</p>
+</li>
+<li>
+<p>i_original_forecast: a numeric vector with the forecast of the 
+original incidence curve for the next 28 days.
+</p>
+</li>
+<li>
+<p>i_restored_forecast_CI50: radius of an empiric confidence interval,  
+with percentile 50, for the restored incidence forecast following the 
+number of days passed since the current day. 
+
+</p>
+</li>
+<li>
+<p>i_restored_forecast_CI75: radius of an empiric confidence interval,  
+with percentile 75, for the restored incidence forecast following the 
+number of days passed since the current day. 
+
+</p>
+</li>
+<li>
+<p>i_restored_forecast_CI90: radius of an empiric confidence interval,  
+with percentile 90, for the restored incidence forecast following the 
+number of days passed since the current day. 
+
+</p>
+</li>
+<li>
+<p>i_restored_forecast_CI95: radius of an empiric confidence interval,  
+with percentile 95, for the restored incidence forecast following the 
+number of days passed since the current day. 
+
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Luis Alvarez <a href="mailto:lalvarez@ulpgc.es">lalvarez@ulpgc.es</a>
+</p>
+
+
+<h3>References</h3>
+
+
+<p>[1] Alvarez, L.; Colom, M.; Morel, J.D.; Morel, J.M. Computing the daily 
+reproduction number of COVID-19 by inverting the renewal
+equation using a variational technique. Proc. Natl. Acad. Sci. USA, 2021.
+</p>
+<p>[2] Alvarez, Luis, Jean-David Morel, and Jean-Michel Morel. "Modeling 
+COVID-19 Incidence by the Renewal Equation after Removal of Administrative 
+Bias and Noise" Biology 11, no. 4: 540. 2022. 
+</p>
+<p>[3] Ritchie, H. et al. Coronavirus Pandemic (COVID-19), OurWorldInData.org. 
+Available online: 
+https://ourworldindata.org/coronavirus-source-data 
+(accessed on 5 May 2022).
+</p>
+<p>[4] Alvarez, Luis, Jean-David Morel, and Jean-Michel Morel. EpiInvertForecast
+Available online: 
+https://ctim.ulpgc.es/covid19/EpiInvertForecastPaper.html 
+</p>
+
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load data on COVID-19 daily incidence up to 2022-05-05 for France, 
+## and Germany (taken from the official government data) and for UK and 
+## the USA taken from reference [3]
+data(incidence)
+
+## load of the database of restored incidence curves. 
+data("restored_incidence_database")
+
+## EpiInvert execution for USA with no festive days specification
+## using the incidence 90 days in the past
+res &lt;- EpiInvert(incidence$USA,
+"2022-05-05",
+"1000-01-01",
+select_params(list(max_time_interval = 90))
+)
+
+## EpiInvertForecast execution using the EpiInvert results obtained by USA
+forecast &lt;-  EpiInvertForecast(res,restored_incidence_database)
+
+
+
+</code></pre>
+
+
+</div>

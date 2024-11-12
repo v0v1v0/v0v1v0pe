@@ -1,0 +1,225 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>UVA</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Unique Variable Analysis</h2>
+
+<h3>Description</h3>
+
+<p>Identifies locally dependent (redundant) variables in a 
+multivariate dataset using the <code>EBICglasso.qgraph</code> 
+network estimation method and weighted topological overlap
+(see Christensen, Garrido, &amp; Golino, 2023 for more details)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">UVA(
+  data = NULL,
+  network = NULL,
+  n = NULL,
+  key = NULL,
+  uva.method = c("MBR", "EJP"),
+  cut.off = 0.25,
+  reduce = TRUE,
+  reduce.method = c("latent", "mean", "remove", "sum"),
+  auto = TRUE,
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Matrix or data frame.
+Should consist only of variables to be used in the analysis.
+Can be raw data or a correlation matrix.
+Defaults to <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p>Symmetric matrix or data frame.
+A symmetric network.
+Defaults to <code>NULL</code>
+</p>
+<p>If both <code>data</code> and <code>network</code> are provided,
+then <code>UVA</code> will use the <code>network</code>
+with the <code>data</code> (rather than estimating a 
+network from the <code>data</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Numeric (length = 1).
+Sample size if <code>data</code> provided is a correlation matrix.
+Defaults to <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>key</code></td>
+<td>
+<p>Character vector (length = <code>ncol(data)</code>).
+Item key for labeling variables in the results</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uva.method</code></td>
+<td>
+<p>Character (length = 1).
+Whether the method described in Christensen, Garrido, and
+Golino (2023) publication in <em>Multivariate Behavioral Research</em>
+(<code>"MBR"</code>) or Christensen, Golino, and Silvia (2020) publication
+in <em>European Journal of Personality</em> (<code>"EJP"</code>) should be used.
+Defaults to <code>"MBR"</code>
+</p>
+<p>Based on simulation and accumulating empirical evidence, the methods
+described in Christensen, Golino, and Silvia (2020) such as 
+adaptive alpha are <strong>outdated</strong>. Evidence supports using a 
+single cut-off value (regardless of continuous, polytomous, or
+dichotomous data; Christensen, Garrido, &amp; Golino, 2023)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut.off</code></td>
+<td>
+<p>Numeric (length = 1).
+Cut-off used to determine when pairwise <code>wto</code>
+values are considered locally dependent (or redundant).
+Must be values between <code>0</code> and <code>1</code>.
+Defaults to <code>0.25</code>
+</p>
+<p>This cut-off value is <strong>recommended</strong> and based on extensive simulation
+(Christensen, Garrido, &amp; Golino, 2023). Printing the result will
+provide a gradient of pairwise redundancies in increments of 0.20,
+0.25, and 0.30. Use <code>print</code> or <code>summary</code> on the output
+rather than adjusting this cut-off value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reduce</code></td>
+<td>
+<p>Logical (length = 1).
+Whether redundancies should be reduced in data.
+Defaults to <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reduce.method</code></td>
+<td>
+<p>Character (length = 1).
+Method to reduce redundancies.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"latent"</code> — Computes latent variables using <code>cfa</code> when 
+there are three or more redundant variables. If variables are not 
+all coded in the same direction, then they will be recoded as necessary.
+A warning will be produced for all variables that are flipped
+</p>
+</li>
+<li> <p><code>"mean"</code> — Computes mean of redundant variables. If variables are not all coded in the
+same direction, then they will be recoded as necessary.
+A warning will be produced for all variables that are flipped
+</p>
+</li>
+<li> <p><code>"remove"</code> — Removes all but one variable from a set of redundant variables
+</p>
+</li>
+<li> <p><code>"sum"</code> — Computes sum of redundant variables. If variables are not all coded in the
+same direction, then they will be recoded as necessary.
+A warning will be produced for all variables that are flipped
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>auto</code></td>
+<td>
+<p>Logical (length = 1).
+Whether <code>reduce</code> should occur automatically. For
+<code>reduce.method = "remove"</code>, the automated decision
+process is as follows:
+</p>
+
+<ul>
+<li> <p><code>Two variables</code> — The variable with the lowest maximum <code>wto</code> 
+to all other variables (other than the one it is redundant with)
+is retained and the other is removed
+</p>
+</li>
+<li> <p><code>Three or more variables</code> — The variable with the highest mean <code>wto</code>
+to all other variables that are redundant with one another
+is retained and all others are removed
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to <code>FALSE</code> (silent calls).
+Set to <code>TRUE</code> to see all messages and warnings for every function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments that should be passed on to 
+old versions of <code>UVA</code> or to
+<code>EGA</code> and
+<code>cfa</code></p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p><strong>Most recent simulation and implementation</strong> <br>
+Christensen, A. P., Garrido, L. E., &amp; Golino, H. (2023).
+Unique variable analysis: A network psychometrics method to detect local dependence.
+<em>Multivariate Behavioral Research</em>.
+</p>
+<p><strong>Conceptual foundation and outdated methods</strong> <br>
+Christensen, A. P., Golino, H., &amp; Silvia, P. J. (2020).
+A psychometric network perspective on the validity and validation of personality trait questionnaires.
+<em>European Journal of Personality</em>, <em>34</em>(6), 1095-1108.
+</p>
+<p><strong>Weighted topological overlap</strong> <br>
+Nowick, K., Gernat, T., Almaas, E., &amp; Stubbs, L. (2009).
+Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
+<em>Proceedings of the National Academy of Sciences</em>, <em>106</em>, 22358-22363.
+</p>
+<p><strong>Selection of CFA Estimator</strong> <br>
+Rhemtulla, M., Brosseau-Liard, P. E., &amp; Savalei, V. (2012).
+When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
+<em>Psychological Methods</em>, <em>17</em>(3), 354-373.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Perform UVA
+uva.wmt &lt;- UVA(wmt2[,7:24])
+
+# Show summary
+summary(uva.wmt)
+
+</code></pre>
+
+
+</div>

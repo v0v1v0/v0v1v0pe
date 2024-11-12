@@ -1,0 +1,147 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nc_grid_to_dt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert a netcdf array to long format as data.table</h2>
+
+<h3>Description</h3>
+
+<p>Extracts a variable from netcdf, and returns a
+<code>data.table</code> with cell index, date, values, and
+optionally: coordinates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nc_grid_to_dt(
+  filename,
+  variable,
+  icell_raster_pkg = TRUE,
+  add_xy = FALSE,
+  interpolate_to_standard_calendar = FALSE,
+  date_range,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>Complete path to .nc file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variable</code></td>
+<td>
+<p>Name of the variable to extract from <code>filename</code>
+(character).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>icell_raster_pkg</code></td>
+<td>
+<p>Boolean, if <code>TRUE</code>, cell indices will be ordered
+as if you were extracting the data with the raster package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add_xy</code></td>
+<td>
+<p>Boolean, if <code>TRUE</code>, adds columns with x and y coordinates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interpolate_to_standard_calendar</code></td>
+<td>
+<p>Boolean, if <code>TRUE</code> will use
+<code>map_non_standard_calendar</code> to interpolate values to a standard
+calendar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date_range</code></td>
+<td>
+<p>(optional) two-element vector of class Date (min, max),
+which will be used to extract only parts of the netcdf file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean, if <code>TRUE</code>, prints more information.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Coordinates are usually not put in the result, because it saves space. It is
+recommended to merge them after the final operations. The unique cell index
+is more efficient. However, if you plan to merge to data extracted with the
+raster package (assuming the same grid), then cell indices might differ. Set
+<code>icell_raster_pkg</code> to <code>TRUE</code>, to have the same cell indices. Note
+that raster and ncdf4 have different concepts of coordinates (cell corner vs.
+cell center), so merging based on coordinates can produce arbitrary results
+(besides rounding issues).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>data.table</code> with columns: </p>
+<ul>
+<li>
+<p>icell: Cell index </p>
+</li>
+<li>
+<p> date: Date of class <code>Date</code>, if file has
+a standard calendar. Date as character, if it has a non-standard calendar
+(360, noleap) and if <code>interpolate_to_standard_calendar</code> is set to
+<code>FALSE</code>. If <code>interpolate_to_standard_calendar</code> is <code>TRUE</code>,
+it's always of class <code>Date</code>. </p>
+</li>
+<li>
+<p> variable: Values, column is
+renamed to input <code>variable</code> </p>
+</li>
+<li>
+<p> (optional) x,y: Coordinates of
+netcdf dimensions, will be renamed to dimension names found in array named
+after input <code>variable</code></p>
+</li>
+</ul>
+<h3>Warning</h3>
+
+<p>Netcdf files can be huge, so loading everything in memory
+can rapidly crash your R session. Think first about subsetting or
+aggregating (e.g. using CDO:
+<a href="https://code.mpimet.mpg.de/projects/cdo/">https://code.mpimet.mpg.de/projects/cdo/</a>).
+</p>
+
+
+<h3>See Also</h3>
+
+<p>The raster and terra packages can also open netcdf files and create
+data.frames with <code>raster::as.data.frame</code>
+or <code>terra::as.data.frame</code>. But, it does
+not handle non-standard calendars, and returns a data.frame, which is
+slower than data.table.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># example data from EURO-CORDEX (cropped for size)
+fn1 &lt;- system.file("extdata", "test1.nc", package = "eurocordexr")
+dat &lt;- nc_grid_to_dt(fn1)
+str(dat)
+</code></pre>
+
+
+</div>

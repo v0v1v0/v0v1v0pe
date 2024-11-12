@@ -1,0 +1,281 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulateVector</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Simulate a Vector of Random Numbers From a Specified Theoretical or Empirical Probability Distribution
+</h2>
+
+<h3>Description</h3>
+
+<p>Simulate a vector of random numbers from a specified theoretical probability
+distribution or empirical probability distribution, using either Latin Hypercube
+sampling or simple random sampling.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  simulateVector(n, distribution = "norm", param.list = list(mean = 0, sd = 1),
+    sample.method = "SRS", seed = NULL, sorted = FALSE,
+    left.tail.cutoff = ifelse(is.finite(supp.min), 0, .Machine$double.eps),
+    right.tail.cutoff = ifelse(is.finite(supp.max), 0, .Machine$double.eps))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>a positive integer indicating the number of random numbers to generate.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distribution</code></td>
+<td>
+
+<p>a character string denoting the distribution abbreviation.  The default value is
+<code>distribution="norm"</code>.  See the help file for <code>Distribution.df</code>
+for a list of possible distribution abbreviations.
+</p>
+<p>Alternatively, the character string <code>"emp"</code> may be used to denote sampling
+from an empirical distribution based on a set of observations.  The vector
+containing the observations is specified in the argument <code>param.list</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param.list</code></td>
+<td>
+
+<p>a list with values for the parameters of the distribution.
+The default value is <code>param.list=list(mean=0, sd=1)</code>.
+See the help file for <code>Distribution.df</code> for the names and
+possible values of the parameters associated with each distribution.
+</p>
+<p>Alternatively, if you specify an empirical distribution by setting <br><code>distribution="emp"</code>, then <code>param.list</code> must be a list of the
+form <code>list(obs=</code><em>name</em><code>)</code>, where <em>name</em> denotes the
+name of the vector containing the observations to use for the empirical
+distribution.  In this case, you may also supply arguments to the
+<code>qemp</code> function through <code>param.list</code>.  For example, you
+may set <br><code>param.list=list(obs=</code><em>name</em><code>, discrete=T)</code> to
+specify an empirical distribution based on a discrete random variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample.method</code></td>
+<td>
+
+<p>a character string indicating whether to use simple random sampling <br>
+(<code>sample.method="SRS"</code>, the default) or
+Latin Hypercube sampling <br>
+(<code>sample.method="LHS"</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>integer to supply to the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> function <code>set.seed</code>.
+The default value is <code>seed=NULL</code>, in which case the random seed is
+not set but instead based on the current value of <code>.Random.seed</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sorted</code></td>
+<td>
+
+<p>logical scalar indicating whether to return the random numbers in sorted
+(ascending) order.  The default value is <code>sorted=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>left.tail.cutoff</code></td>
+<td>
+
+<p>a scalar between 0 and 1 indicating what proportion of the left-tail of
+the probability distribution to omit for Latin Hypercube sampling.
+For densities with a finite support minimum (e.g., Lognormal or
+Empirical) the default value is <code>left.tail.cutoff=0</code>;
+for densities with a support minimum of <code class="reqn">-\infty</code>, the default value is
+<code>left.tail.cutoff=.Machine$double.eps</code>.
+This argument is ignored if <code>sample.method="SRS"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>right.tail.cutoff</code></td>
+<td>
+
+<p>a scalar between 0 and 1 indicating what proportion of the right-tail of
+the probability distribution to omit for Latin Hypercube sampling.
+For densities with a finite support maximum (e.g., Beta or
+Empirical) the default value is <code>right.tail.cutoff=0</code>;
+for densities with a support maximum of <code class="reqn">\infty</code>, the default value
+is <code>right.tail.cutoff=.Machine$double.eps</code>.
+This argument is ignored if <code>sample.method="SRS"</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><b>Simple Random Sampling</b> (<code>sample.method="SRS"</code>) <br>
+When <code>sample.method="SRS"</code>, the function <code>simulateVector</code> simply
+calls the function <code>r</code><em>abb</em>, where <em>abb</em> denotes the
+abbreviation of the specified distribution (e.g., <code>rlnorm</code>,
+<code>remp</code>, etc.).
+<br></p>
+<p><b>Latin Hypercube Sampling</b> (<code>sample.method="LHS"</code>) <br>
+When <code>sample.method="LHS"</code>, the function <code>simulateVector</code> generates
+<code>n</code> random numbers using Latin Hypercube sampling.  The distribution is
+divided into <code>n</code> intervals of equal probability <code class="reqn">1/n</code> and simple random
+sampling is performed once within each interval; i.e., Latin Hypercube sampling
+is simply stratified sampling without replacement, where the strata are defined
+by the 0'th, 100(1/n)'th, 100(2/n)'th, ..., and 100'th percentiles of the
+distribution.
+</p>
+<p><b><em>Latin Hypercube sampling</em></b>, sometimes abbreviated <b><em>LHS</em></b>,
+is a method of sampling from a probability distribution that ensures all
+portions of the probability distribution are represented in the sample.
+It was introduced in the published literature by McKay et al. (1979) to overcome
+the following problem in Monte Carlo simulation based on simple random sampling
+(SRS).  Suppose we want to generate random numbers from a specified distribution.
+If we use simple random sampling, there is a low probability of getting very many
+observations in an area of low probability of the distribution.  For example, if
+we generate <code class="reqn">n</code> observations from the distribution, the probability that none
+of these observations falls into the upper 98'th percentile of the distribution
+is <code class="reqn">0.98^n</code>.  So, for example, there is a 13% chance that out of 100
+random numbers, none will fall at or above the 98'th percentile.  If we are
+interested in reproducing the shape of the distribution, we will need a very large
+number of observations to ensure that we can adequately characterize the tails of
+the distribution (Vose, 2008, pp. 59–62).
+</p>
+<p>See Millard (2013) for a visual explanation of Latin Hypercube sampling.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric vector of random numbers from the specified distribution.
+</p>
+
+
+<h3>Note</h3>
+
+<p><b><em>Latin Hypercube sampling</em></b>, sometimes abbreviated <b><em>LHS</em></b>,
+is a method of sampling from a probability distribution that ensures all
+portions of the probability distribution are represented in the sample.
+It was introduced in the published literature by McKay et al. (1979).
+Latin Hypercube sampling is often used in probabilistic risk assessment,
+specifically for sensitivity and uncertainty analysis
+(e.g., Iman and Conover, 1980; Iman and Helton, 1988; Iman and Helton, 1991;
+Vose, 1996).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Iman, R.L., and W.J. Conover. (1980).  Small Sample Sensitivity Analysis
+Techniques for Computer Models, With an Application to Risk Assessment
+(with Comments).  <em>Communications in Statistics–Volume A, Theory and Methods</em>,
+<b>9</b>(17), 1749–1874.
+</p>
+<p>Iman, R.L., and J.C. Helton. (1988).  An Investigation of Uncertainty and
+Sensitivity Analysis Techniques for Computer Models.  <em>Risk Analysis</em>
+<b>8</b>(1), 71–90.
+</p>
+<p>Iman, R.L. and J.C. Helton. (1991).  The Repeatability of Uncertainty and
+Sensitivity Analyses for Complex Probabilistic Risk Assessments.
+<em>Risk Analysis</em> <b>11</b>(4), 591–606.
+</p>
+<p>McKay, M.D., R.J. Beckman., and W.J. Conover. (1979).  A Comparison of Three
+Methods for Selecting Values of Input Variables in the Analysis of Output
+From a Computer Code.  <em>Technometrics</em> <b>21</b>(2), 239–245.
+</p>
+<p>Millard, S.P. (2013).  <em>EnvStats: an R Package for Environmental Statistics</em>.
+Springer, New York.  <a href="https://link.springer.com/book/10.1007/978-1-4614-8456-1">https://link.springer.com/book/10.1007/978-1-4614-8456-1</a>.
+</p>
+<p>Vose, D. (2008).  <em>Risk Analysis:  A Quantitative Guide</em>.  Third Edition.
+John Wiley &amp; Sons, West Sussex, UK, 752 pp.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Probability Distributions and Random Numbers, Empirical,
+<code>simulateMvMatrix</code>, <code>set.seed</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 10 observations from a lognormal distribution with
+  # parameters mean=10 and cv=1 using simple random sampling:
+
+  simulateVector(10, distribution = "lnormAlt",
+    param.list = list(mean = 10, cv = 1), seed = 47,
+    sort = TRUE)
+  # [1]  2.086931  2.863589  3.112866  5.592502  5.732602  7.160707
+  # [7]  7.741327  8.251306 12.782493 37.214748
+
+  #----------
+
+  # Repeat the above example by calling rlnormAlt directly:
+
+  set.seed(47)
+  sort(rlnormAlt(10, mean = 10, cv = 1))
+  # [1]  2.086931  2.863589  3.112866  5.592502  5.732602  7.160707
+  # [7]  7.741327  8.251306 12.782493 37.214748
+
+  #----------
+
+  # Now generate 10 observations from the same lognormal distribution
+  # but use Latin Hypercube sampling.  Note that the largest value
+  # is larger than for simple random sampling:
+
+  simulateVector(10, distribution = "lnormAlt",
+    param.list = list(mean = 10, cv = 1), seed = 47,
+    sample.method = "LHS", sort = TRUE)
+  # [1]  2.406149  2.848428  4.311175  5.510171  6.467852  8.174608
+  # [7]  9.506874 12.298185 17.022151 53.552699
+
+  #==========
+
+  # Generate 50 observations from a Pareto distribution with parameters
+  # location=10 and shape=2, then use this resulting vector of
+  # observations as the basis for generating 3 observations from an
+  # empirical distribution using Latin Hypercube sampling:
+
+  set.seed(321)
+  pareto.rns &lt;- rpareto(50, location = 10, shape = 2)
+
+  simulateVector(3, distribution = "emp",
+    param.list = list(obs = pareto.rns), sample.method = "LHS")
+  #[1] 11.50685 13.50962 17.47335
+
+  #==========
+
+  # Clean up
+  #---------
+  rm(pareto.rns)
+</code></pre>
+
+
+</div>

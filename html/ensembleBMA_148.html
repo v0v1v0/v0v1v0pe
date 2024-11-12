@@ -1,0 +1,122 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ensBMAtest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ensemble BMA Test Data Set</h2>
+
+<h3>Description</h3>
+
+<p>This data set gives 48-hour forecasts for 2-m temperature,
+precipitation accumulated over the last 24 hours, and maximum wind speed
+at SeaTac (KSEA) and Portland (PDX) ariports in 2007/2008  initialized at 
+00 hours UTC using a 12km grid. The forecasts are based on an 8 member 
+version of the University of Washington mesoscale ensemble
+(Grimit and Mass 2002; Eckel and Mass 2005). <br></p>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 66 rows and 34 columns: <br><code>idate</code> the initialization date of each forecast/observation, 
+format YYYYMMDDHH (categorical). <br><code>vdate</code> the validation date of each forecast/observation, 
+format YYYYMMDDHH (categorical). <br><code>latitude</code>  the latitude of each forecast/observation (numeric). <br><code>longitude</code>  the longitude of each forecast/observation (numeric). <br><code>longitude</code>  the elevation (in meters) above sea level (numeric). <br><code>station</code> weather station identifier (categorical). <br><code>network</code> weather network identifier (categorical). 
+<code>*.gfs,*.cmcg,*.eta,*.gasp,*.jma,*.ngps,*.tcwb</code> 
+forecasts from the 8 members of the ensemble (numeric).
+<code>*.obs</code> observed values for the weather parameters.
+The prefix <code>*</code> is one of <code>T2</code> for temperature,
+<code>PCP24</code> for precipitation, <code>MAXWSP10</code> for wind speed.<br></p>
+
+
+<h3>Details</h3>
+
+<p>Temperature is given in Kelvin. <br>
+Precipitation amounts are quantized to hundredths of an inch. <br>
+Maximum wind speed is defined as the maximum of the hourly
+'instantaneous' wind speeds over the previous 18 hours, where an
+hourly 'instantaneous' wind speed is a 2-minute average from the
+period of two minutes before the hour to on the hour. <br>
+The wind speed observations are measured at 10-m above the ground and
+discretized when recorded by rounding to the
+nearest meter per second. <br>
+This is a small dataset provided for the purposes of testing.
+Typically forecasting would be performed on much larger datasets.
+</p>
+
+
+<h3>References</h3>
+
+<p>F. A. Eckel and C. F. Mass,
+Effective mesoscale, short-range ensemble forecasting,
+<em>Weather and Forecasting 20:328–350, 2005</em>.
+</p>
+<p>E. P. Grimit and C. F. Mass, 
+Initial results of a mesoscale short-range ensemble forecasting system over
+the Pacific Northwest, 
+<em>Weather and Forecasting 17:192–205, 2002</em>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: # R check
+
+  data(ensBMAtest)
+
+  ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+#----------------------------------------------------------------------------
+
+  obs &lt;- paste("T2","obs", sep = ".")
+  ens &lt;- paste("T2", ensMemNames, sep = ".")
+
+  tempTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"],
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+  tempTestFit &lt;- ensembleBMAnormal( tempTestData, trainingDays = 30)
+
+  MAE( tempFit, tempTestData)
+  CRPS( tempFit, tempTestData)
+
+#----------------------------------------------------------------------------
+
+  obs &lt;- paste("PCP24","obs", sep = ".")
+  ens &lt;- paste("PCP24", ensMemNames, sep = ".")
+
+  prcpTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"], 
+                                observations = ensBMAtest[,obs], 
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+  prcpTestFit &lt;- ensembleBMAgamma0( prcpTestData, trainingDays = 30)
+
+  MAE( prcpTestFit, prcpTestData)
+  CRPS( prcpTestFit, prcpTestData)
+
+#----------------------------------------------------------------------------
+
+  obs &lt;- paste("MAXWSP10","obs", sep = ".")
+  ens &lt;- paste("MAXWSP10", ensMemNames, sep = ".")
+
+  winsTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"], 
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+   winsTestFit &lt;- ensembleBMAgamma(winsTestData, trainingDays = 30)
+
+   MAE( winsTestFit, winsTestData)
+   CRPS( winsTestFit, winsTestData)
+
+## End(Not run)</code></pre>
+
+
+</div>

@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>KTMatrixEst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fast estimation of Kendall's tau matrix</h2>
+
+<h3>Description</h3>
+
+<p>Estimate Kendall's tau matrix using averaging estimators. Under
+the structural assumption that Kendall's tau matrix is block-structured
+with constant values in each off-diagonal block, this function estimates
+Kendall's tau matrix “fast”, in the sense that each interblock
+coefficient is estimated in time <code class="reqn">N \cdot n \cdot log(n)</code>,
+where <code>N</code> is the amount of pairs that are averaged.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">KTMatrixEst(dataMatrix, blockStructure = NULL, averaging = "no", N = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataMatrix</code></td>
+<td>
+<p>matrix of size <code>(n,d)</code> containing <code>n</code> observations
+of a <code>d</code>-dimensional random vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blockStructure</code></td>
+<td>
+<p>list of vectors.
+Each vector corresponds to one group of variables
+and contains the indexes of the variables that belongs to this group.
+<code>blockStructure</code> must be a partition of <code>1:d</code>,
+where <code>d</code> is the number of columns in <code>dataMatrix</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>averaging</code></td>
+<td>
+<p>type of averaging used for fast estimation.
+Possible choices are </p>
+
+<ul>
+<li> <p><code>no</code>: no averaging;
+</p>
+</li>
+<li> <p><code>all</code>: averaging all Kendall's taus in each block.
+<code>N</code> is then the number of entries in the block, i.e. the
+products of both dimensions.
+</p>
+</li>
+<li> <p><code>diag</code>: averaging along diagonal blocks elements.
+<code>N</code> is then the minimum of the block's dimensions.
+</p>
+</li>
+<li> <p><code>row</code>: averaging Kendall's tau along the smallest block side.
+<code>N</code> is then the minimum of the block's dimensions.
+</p>
+</li>
+<li> <p><code>random</code>: averaging Kendall's taus along a random sample of <code>N</code> entries
+of the given block. These entries are chosen uniformly without replacement.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>number of entries to average (n the random case.
+By default, <code>N</code> is then the minimum of the block's dimensions.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>matrix with dimensions depending on <code>averaging</code>.
+</p>
+
+<ul>
+<li>
+<p> If <code>averaging = no</code>,
+the function returns a matrix of dimension <code>(n,n)</code>
+which estimates the Kendall's tau matrix.
+</p>
+</li>
+<li>
+<p> Else, the function returns a matrix of dimension
+<code>(length(blockStructure) , length(blockStructure))</code>
+giving the estimates of the Kendall's tau for each block with ones on the diagonal.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Rutger van der Spek, Alexis Derumigny
+</p>
+
+
+<h3>References</h3>
+
+<p>van der Spek, R., &amp; Derumigny, A. (2022).
+Fast estimation of Kendall's Tau and conditional Kendall's Tau matrices under structural assumptions.
+<a href="https://arxiv.org/abs/2204.03285">arxiv:2204.03285</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Estimating off-diagonal block Kendall's taus
+matrixCor = matrix(c(1  , 0.5, 0.3 ,0.3, 0.3,
+                     0.5,   1, 0.3, 0.3, 0.3,
+                     0.3, 0.3,   1, 0.5, 0.5,
+                     0.3, 0.3, 0.5,   1, 0.5,
+                     0.3, 0.3, 0.5, 0.5,   1), ncol = 5 , nrow = 5)
+dataMatrix = mvtnorm::rmvnorm(n = 100, mean = rep(0, times = 5), sigma = matrixCor)
+blockStructure = list(1:2, 3:5)
+estKTMatrix = list()
+estKTMatrix$all = KTMatrixEst(dataMatrix = dataMatrix,
+                              blockStructure = blockStructure,
+                              averaging = "all")
+estKTMatrix$row = KTMatrixEst(dataMatrix = dataMatrix,
+                              blockStructure = blockStructure,
+                              averaging = "row")
+estKTMatrix$diag = KTMatrixEst(dataMatrix = dataMatrix,
+                               blockStructure = blockStructure,
+                               averaging = "diag")
+estKTMatrix$random = KTMatrixEst(dataMatrix = dataMatrix,
+                                 blockStructure = blockStructure,
+                                 averaging = "random", N = 2)
+InterBlockCor = lapply(estKTMatrix, FUN = function(x) {sin(x[1,2] * pi / 2)})
+
+# Estimation of the correlation between variables of the first group
+# and of the second group
+print(unlist(InterBlockCor))
+# to be compared with the true value: 0.3.
+
+</code></pre>
+
+
+</div>

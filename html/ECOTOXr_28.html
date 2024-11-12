@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>search_ecotox</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Search and retrieve toxicity records from the database</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a> Create (and execute) an SQL search query based on basic search terms and
+options. This allows you to search the database, without having to understand SQL.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">search_ecotox(
+  search,
+  output_fields = list_ecotox_fields("default"),
+  group_by_results = TRUE,
+  compute = FALSE,
+  as_data_frame = TRUE,
+  ...
+)
+
+search_ecotox_lazy(
+  search,
+  output_fields = list_ecotox_fields("default"),
+  compute = FALSE,
+  ...
+)
+
+search_query_ecotox(search, output_fields = list_ecotox_fields("default"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>search</code></td>
+<td>
+<p>A named <code>list</code> containing the search terms. The names of the elements should refer to
+the field (i.e. table header) in which the terms are searched. Use <code>list_ecotox_fields()</code> to
+obtain a list of available field names.
+</p>
+<p>Each element in that list should contain another list with at least one element named 'terms'. This should
+contain a <code>vector</code> of <code>character</code> strings with search terms. Optionally, a second element
+named 'method' can be provided which should be set to either '<code>contains</code>' (default, when missing) or
+'<code>exact</code>'. In the first case the query will match any record in the indicated field that contains
+the search term. In case of '<code>exact</code>' it will only return exact matches. Note that searches are
+not case sensitive, but are picky with special (accented) characters. While building the local database
+(see build_ecotox_sqlite) such special characters may be treated differently on different
+operating systems. For the sake of reproducibility, the user is advised to stick with non-accented
+alpha-numeric characters.
+</p>
+<p>Search terms for a specific field (table header) will be combined with 'or'. Meaning that any record that
+matches any of the terms are returned. For instance when 'latin_name' 'Daphnia magna' and 'Skeletonema costatum'
+are searched, results for both species are returned. Search terms across fields (table headers) are combined with
+'and', which will narrow the search. For instance if 'chemical_name' 'benzene' is searched in combination
+with 'latin_name' 'Daphnia magna', only tests where Daphnia magna are exposed to benzene are returned.
+</p>
+<p>When this search behaviour described above is not desirable, the user can either adjust the query manually,
+or use this function to perform several separate searches and combine the results afterwards.
+</p>
+<p>Beware that some field names are ambiguous and occur in multiple tables (like <code style="white-space: pre;">⁠cas_number' and ⁠</code>code').
+When searching such fields, the search result may not be as expected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_fields</code></td>
+<td>
+<p>A <code>vector</code> of <code>character</code> strings indicating which field names (table headers)
+should be included in the output. By default <code style="white-space: pre;">⁠[list_ecotox_fields]("default")⁠</code> is used. Use
+<code style="white-space: pre;">⁠[list_ecotox_fields]("all")⁠</code> to list all available fields.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_by_results</code></td>
+<td>
+<p>Ecological test results are generally the most informative element in the ECOTOX
+database. Therefore, this search function returns a table with unique results in each row.
+</p>
+<p>However, some tables in the database (such as 'chemical_carriers' and 'dose_responses') have a one to many
+relationship with test results. This means that multiple chemical carriers can be linked to a single test result,
+similarly, multiple doses can also be linked to a single test result.
+</p>
+<p>By default the search results are grouped by test results. As a result not all doses or chemical carriers may
+be displayed in the output. Set the <code>group_by_results</code> parameter to <code>FALSE</code> in order to force SQLite
+to output all data (e.g., all carriers). But beware that test results may be duplicated in those cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compute</code></td>
+<td>
+<p>The ECOTOXr package tries to construct database queries as lazy as possible. Meaning that R
+moves as much of the heavy lifting as possible to the database. When your search becomes complicated (e.g., when
+including many output fields), you may run into trouble and hit the SQL parser limits. In those cases you can set
+this parameter to <code>TRUE</code>. Database queries are then computed in the process of joining tables. This is generally
+slower. Alternatively, you could try to include less output fields in order to simplify the query.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_data_frame</code></td>
+<td>
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a> <code>logical</code> value indicating whether the result should be
+converted into a <code>data.frame</code> (default is <code>TRUE</code>). When set to <code>FALSE</code> the data will be returned as a <code>tbl_df()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed to <code>dbConnectEcotox()</code> and other functions. You can use this when the database
+is not located at the default path (<code>get_ecotox_path()</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The ECOTOX database is stored locally as an SQLite file, which can be queried with SQL. These functions
+allow you to automatically generate an SQL query and send it to the database, without having to understand
+SQL. The function <code>search_query_ecotox</code> generates and returns the SQL query (which can be edited by
+hand if desired). You can also directly call <code>search_ecotox</code>, this will first generate the query,
+send it to the database and retrieve the result.
+</p>
+<p>Although the generated query is not optimized for speed, it should be able to process most common searches
+within an acceptable time. The time required for retrieving data from a search query depends on the complexity
+of the query, the size of the query and the speed of your machine. Most queries should be completed within
+seconds (or several minutes at most) on modern machines. If your search require optimisation for speed,
+you could try reordering the search fields. You can also edit the query generated with <code>search_query_ecotox</code>
+by hand and retrieve it with <code>DBI::dbGetQuery()</code>.
+</p>
+<p>Note that this package is actively maintained and this function may be revised in future versions.
+In order to create reproducible results the user must: always work with an official release from
+CRAN and document the package and database version that are used to generate specific results (see also
+<code>cite_ecotox()</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>In case of <code>search_query_ecotox</code>, a <code>character</code> string containing an SQL
+query is returned. This query is built based on the provided search terms and options.
+</p>
+<p>In case of <code>search_ecotox</code> a <code>data.frame</code> is returned based on the search query built with
+<code>search_query_ecotox</code>. The <code>data.frame</code> is unmodified as returned by SQLite, meaning that all
+fields are returned as <code>character</code>s (even where the field types are 'date' or 'numeric').
+</p>
+<p>The results are tagged with: a time stamp; the package version used; and the
+file path of the SQLite database used in the search (when applicable). These tags are added as attributes
+to the output table or query.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Pepijn de Vries
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other search-functions: 
+<code>websearch_comptox()</code>,
+<code>websearch_ecotox()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## let's find the ids of all ecotox tests on species
+## where Latin names contain either of 2 specific genus names and
+## where they were exposed to the chemical benzene
+if (check_ecotox_availability()) {
+  search &lt;-
+    list(
+      latin_name    = list(
+        terms          = c("Skeletonema", "Daphnia"),
+        method         = "contains"
+      ),
+      chemical_name = list(
+        terms          = "benzene",
+        method         = "exact"
+      )
+    )
+  ## rows in result each represent a unique test id from the database
+  result &lt;- search_ecotox(search)
+  query  &lt;- search_query_ecotox(search)
+  cat(query)
+} else {
+  print("Sorry, you need to use 'download_ecotox_data()' first in order for this to work.")
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

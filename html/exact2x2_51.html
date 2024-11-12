@@ -1,0 +1,241 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>power2x2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate exact power or sample size for conditional tests for two independent binomials.
+</h2>
+
+<h3>Description</h3>
+
+<p>Power is calculated by <code>power2x2</code> which calls <code>exact2x2</code> function repeatedly. Default (strict=FALSE) does not count rejections in the wrong direction. 
+</p>
+<p>Sample size is calculated by <code>ss2x2</code> which calls <code>power2x2</code> repeatedly finding the lowest sample size that has at least the nominal power, using the <code>uniroot.integer</code> function from the <code>ssanv</code> package. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">power2x2(p0,p1,n0,n1=NULL,sig.level=0.05,
+ alternative=c("two.sided","one.sided"),paired=FALSE,
+ strict=FALSE,tsmethod=NULL,nullOddsRatio=1,
+ errbound=10^-6,approx=FALSE)
+
+ss2x2(p0,p1,power=.80,n1.over.n0=1,sig.level=0.05,
+ alternative=c("two.sided","one.sided"),paired=FALSE,
+ strict=FALSE,tsmethod=NULL,nullOddsRatio=1,
+ errbound=10^-6,print.steps=FALSE, approx=FALSE)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p0</code></td>
+<td>
+<p> true event rate in control group </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p1</code></td>
+<td>
+<p> true event rate in treatment group</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n0</code></td>
+<td>
+<p> number of observations in control group </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n1</code></td>
+<td>
+<p> number of observations in treatment group (if NULL n1=n0)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig.level</code></td>
+<td>
+<p> significance level (Type I error probability) </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>power</code></td>
+<td>
+<p>minimum power for sample size calculation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n1.over.n0</code></td>
+<td>
+<p>ratio of n1 over n0, allows for non-equal sample size allocation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>character, either "two.sided" or "one.sided", one sided tests the proper direction according to p0 and p1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strict</code></td>
+<td>
+<p>use strict interpretation of two-sided test, if TRUE counts rejections in wrong direction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tsmethod</code></td>
+<td>
+<p>two.sided method, ignored if strict=FALSE, or alternative equals 'less' or 'greater'. 
+see <code>exact2x2</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nullOddsRatio</code></td>
+<td>
+<p>null odds ratio value for tests</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired</code></td>
+<td>
+<p>must be FALSE, for TRUE instead use <code>powerPaired2x2</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print.steps</code></td>
+<td>
+<p>logical, print steps for calculation of sample size?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>errbound</code></td>
+<td>
+<p>bound on error of calculation </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>approx</code></td>
+<td>
+<p>give sample size or power using normal approximation only</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Assuming X0 ~ Binomial(n0,p0) and X1 ~ Binomial(n1,p1), 
+calculates the power by repeatedly calling exact2x2 and summing probability of rejection. For speed, the function does not 
+calculate the very unlikely values of X0 and X1 unless errbound=0. Power is exact, but may underestimate by at most errbound.
+</p>
+<p>When strict=FALSE we do not count rejections in the wrong direction. This means that we must know the direction of the rejection, so two.sided tests are calculated as one.sided tests (in the correct direction) with level equal to sig.level/2. This is like using the tsmethod='central'. 
+</p>
+<p>When <code>approx</code>=TRUE for <code>power2x2</code> use a continuity corrected normal approximation (Fleiss, 1981, p. 44). For <code>ss2x2</code> the calculations may be slow, so use 
+<code>print.steps=TRUE</code> to see progress. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>Both <code>power2x2</code> and <code>ss2x2</code> return an object of class 'power.htest'. A list with elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>power</code></td>
+<td>
+<p>power to reject</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n0</code></td>
+<td>
+<p>sample size in control group</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n1</code></td>
+<td>
+<p>sample size in treatment group</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p0</code></td>
+<td>
+<p> true event rate in control group </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p1</code></td>
+<td>
+<p> true event rate in treatment group</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig.level</code></td>
+<td>
+<p> Significance level (Type I error probability) </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>alternative hypothesis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>note</code></td>
+<td>
+<p>note about error bound</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>description</p>
+</td>
+</tr>
+</table>
+<h3>Warning </h3>
+
+<p>There may be convergence issues using strict=FALSE with tsmethod="minlike" or "blaker" since the power is not guaranteed to be increasing in the sample size.  
+</p>
+
+
+<h3>Note</h3>
+
+<p> The calculations in ss2x2 can be slow when p0 is close to p1 and/or the power is large. If p0 and p1 are close with large power, it may be safer to first calculate ss2x2 with approx=TRUE
+to see what the starting value will be close to. If the starting sample sizes are large (&gt;100), it may take a while.
+</p>
+<p>Note when strict=FALSE (default), the two.sided results at the 0.05 level for Fisher's exact test are like the one.sided Fisher's exact test at the 0.025 level.  
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Michael P. Fay </p>
+
+
+<h3>References</h3>
+
+ 
+<p>Fleiss. JL (1981) Statistical Methods for Rates and Proportions (second edition). Wiley. </p>
+
+
+<h3>See Also</h3>
+
+<p>See  <code>ss.nonadh</code> function (refinement="Fisher.exact") from the <code>ssanv</code> package for calculation that accounts for nonadherence in proportion of subjects. That function calls <code>fisher.test</code>. For power for McNemar-like test see <code>powerPaired2x2</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">power2x2(.2,.8,12,15)
+# calculate sample size with 2:1 allocation to groups
+ss2x2(.2,.8,n1.over.n0=2,power=.8,approx=TRUE)
+ss2x2(.2,.8,n1.over.n0=2,power=.8,print.steps=TRUE)
+</code></pre>
+
+
+</div>

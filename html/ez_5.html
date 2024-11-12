@@ -1,0 +1,432 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ezANOVA</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute ANOVA</h2>
+
+<h3>Description</h3>
+
+<p>This function provides easy analysis of data from factorial experiments, including purely within-Ss designs (a.k.a. “repeated measures”), purely between-Ss designs, and mixed within-and-between-Ss designs, yielding ANOVA results, generalized effect sizes and assumption checks.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ezANOVA(
+    data
+    , dv
+    , wid
+    , within = NULL
+    , within_full = NULL
+    , within_covariates = NULL
+    , between = NULL
+    , between_covariates = NULL
+    , observed = NULL
+    , diff = NULL
+    , reverse_diff = FALSE
+    , type = 2
+    , white.adjust = FALSE
+    , detailed = FALSE
+    , return_aov = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Data frame containing the data to be analyzed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dv</code></td>
+<td>
+
+<p>Name of the column in <code>data</code> that contains the dependent variable. Values in this column must be numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wid</code></td>
+<td>
+
+<p>Name of the column in <code>data</code> that contains the variable specifying the case/Ss identifier. This should be a unique value per case/Ss.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within</code></td>
+<td>
+
+<p>Names of columns in <code>data</code> that contain predictor variables that are manipulated (or observed) within-Ss. If a single value, may be specified by name alone; if multiple values, must be specified as a .() list.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within_full</code></td>
+<td>
+
+<p>Same as within, but intended to specify the full within-Ss design in cases where the data have not already been collapsed to means per condition specified by <code>within</code> and when <code>within</code> only specifies a subset of the full design.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within_covariates</code></td>
+<td>
+
+<p>Names of columns in <code>data</code> that contain predictor variables that are manipulated (or observed) within-Ss and are to serve as covariates in the analysis. If a single value, may be specified by name alone; if multiple values, must be specified as a .() list.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>between</code></td>
+<td>
+
+<p>Names of columns in <code>data</code> that contain predictor variables that are manipulated (or observed) between-Ss. If a single value, may be specified by name alone; if multiple values, must be specified as a .() list.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>between_covariates</code></td>
+<td>
+
+<p>Names of columns in <code>data</code> that contain predictor variables that are manipulated (or observed) between-Ss and are to serve as covariates in the analysis. If a single value, may be specified by name alone; if multiple values, must be specified as a .() list.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>observed</code></td>
+<td>
+
+<p>Names of columns in <code>data</code> that are already specified in either <code>within</code> or <code>between</code> that contain predictor variables that are observed variables (i.e. not manipulated). If a single value, may be specified by name alone; if multiple values, must be specified as a .() list. The presence of observed variables affects the computation of the generalized eta-squared measure of effect size reported by <code>ezANOVA</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diff</code></td>
+<td>
+
+<p>Names of any variables to collapse to a difference score. If a single value, may be specified by name alone; if multiple values, must be specified as a .() list. All supplied variables must be factors, ideally with only two levels (especially if setting the <code>reverse_diff</code> argument to TRUE).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reverse_diff</code></td>
+<td>
+
+<p>Logical. If TRUE, triggers reversal of the difference collapse requested by <code>diff</code>. Take care with variables with more than 2 levels.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>Numeric value (either <code>1</code>, <code>2</code> or <code>3</code>) specifying the Sums of Squares “type” to employ when data are unbalanced (eg. when group sizes differ). <code>type = 2</code> is the default because this will yield identical ANOVA results as <code>type = 1</code> when data are balanced but <code>type = 2</code> will additionally yield various assumption tests where appropriate. When data are unbalanced, users are warned that they should give special consideration to the value of <code>type</code>. <code>type=3</code> will emulate the approach taken by popular commercial statistics packages like SAS and SPSS, but users are warned that this approach is not without criticism.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>white.adjust</code></td>
+<td>
+
+<p>Only affects behaviour if the design contains only between-Ss predictor variables. If not FALSE, the value is passed as the white.adjust argument to <code>Anova</code>, which provides heteroscedasticity correction. See <code>Anova</code> for details on possible values.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>detailed</code></td>
+<td>
+
+<p>Logical. If TRUE, returns extra information (sums of squares columns, intercept row, etc.) in the ANOVA table.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_aov</code></td>
+<td>
+
+<p>Logical. If TRUE, computes and returns an aov object corresponding to the requested ANOVA (useful for computing post-hoc contrasts).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>ANCOVA is implemented by first regressing the DV against each covariate (after collapsing the data to the means of that covariate's levels per subject) and subtracting from the raw data the fitted values from this regression (then adding back the mean to maintain scale). These regressions are computed across Ss in the case of between-Ss covariates and computed within each Ss in the case of within-Ss covariates.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing one or more of the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>ANOVA</code></td>
+<td>
+<p>A data frame containing the ANOVA results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Mauchly's Test for Sphericity</code></td>
+<td>
+<p>If any within-Ss variables with &gt;2 levels are present, a data frame containing the results of Mauchly's test for Sphericity. Only reported for effects &gt;2 levels because sphericity necessarily holds for effects with only 2 levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Sphericity Corrections</code></td>
+<td>
+<p>If any within-Ss variables are present, a data frame containing the Greenhouse-Geisser and Huynh-Feldt epsilon values, and corresponding corrected p-values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Levene's Test for Homogeneity</code></td>
+<td>
+<p>If the design is purely between-Ss, a data frame containing the results of Levene's test for Homogeneity of variance. Note that Huynh-Feldt corrected p-values where the Huynh-Feldt epsilon &gt;1 will use 1 as the correction epsilon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aov</code></td>
+<td>
+<p>An aov object corresponding to the requested ANOVA.</p>
+</td>
+</tr>
+</table>
+<p>Some column names in the output data frames are abbreviated to conserve space:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+DFn </td>
+<td style="text-align: left;"> Degrees of Freedom in the numerator (a.k.a. DFeffect).</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+DFd </td>
+<td style="text-align: left;"> Degrees of Freedom in the denominator (a.k.a. DFerror).</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+SSn </td>
+<td style="text-align: left;"> Sum of Squares in the numerator (a.k.a. SSeffect).</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+SSd </td>
+<td style="text-align: left;"> Sum of Squares in the denominator (a.k.a. SSerror).</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+F </td>
+<td style="text-align: left;"> F-value.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+p </td>
+<td style="text-align: left;"> p-value (probability of the data given the null hypothesis).</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+p&lt;.05 </td>
+<td style="text-align: left;"> Highlights p-values less than the traditional alpha level of .05.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ges </td>
+<td style="text-align: left;"> Generalized Eta-Squared measure of effect size (see in references below: Bakeman, 2005).</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+GGe </td>
+<td style="text-align: left;"> Greenhouse-Geisser epsilon.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+p[GGe] </td>
+<td style="text-align: left;"> p-value after correction using Greenhouse-Geisser epsilon.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+p[GGe]&lt;.05 </td>
+<td style="text-align: left;"> Highlights p-values (after correction using Greenhouse-Geisser epsilon) less than the traditional alpha level of .05.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+HFe </td>
+<td style="text-align: left;"> Huynh-Feldt epsilon.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+p[HFe] </td>
+<td style="text-align: left;"> p-value after correction using Huynh-Feldt epsilon.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+p[HFe]&lt;.05 </td>
+<td style="text-align: left;"> Highlights p-values (after correction using Huynh-Feldt epsilon) less than the traditional alpha level of .05.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+W </td>
+<td style="text-align: left;"> Mauchly's W statistic
+</td>
+</tr>
+</table>
+<h3>Warning </h3>
+
+<p>Prior to running (though after obtaining running ANCOVA regressions as described in the <code>details</code> section), <code>dv</code> is collapsed to a mean for each cell defined by the combination of <code>wid</code> and any variables supplied to <code>within</code> and/or <code>between</code> and/or <code>diff</code>. Users are warned that while convenient when used properly, this automatic collapsing can lead to inconsistencies if the pre-collapsed data are unbalanced (with respect to cells in the full design) and only the partial design is supplied to <code>ezANOVA</code>. When this is the case, use <code>within_full</code> to specify the full design to ensure proper automatic collapsing.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael A. Lawrence <a href="mailto:mike.lwrnc@gmail.com">mike.lwrnc@gmail.com</a><br>
+Visit the <code>ez</code> development site at <a href="http://github.com/mike-lawrence/ez">http://github.com/mike-lawrence/ez</a><br>
+for the bug/issue tracker and the link to the mailing list.
+</p>
+
+
+<h3>References</h3>
+
+
+<ul><li>
+<p> Bakeman, R. (2005). Recommended effect size statistics for repeated measures designs. Behavior Research Methods, 37 (3), 379-384.
+</p>
+</li></ul>
+<h3>See Also</h3>
+
+<p><code>ezBoot</code>, <code>ezMixed</code>, <code>ezPerm</code>, <code>ezPlot</code>, <code>ezStats</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#Read in the ANT data (see ?ANT).
+data(ANT)
+head(ANT)
+ezPrecis(ANT)
+
+
+#Run an ANOVA on the mean correct RT data.
+rt_anova = ezANOVA(
+    data = ANT[ANT$error==0,]
+    , dv = rt
+    , wid = subnum
+    , within = .(cue,flank)
+    , between = group
+)
+
+#Show the ANOVA and assumption tests.
+print(rt_anova)
+
+## Not run: 
+#Run an ANOVA on the mean correct RT data, ignoring group.
+rt_anova2 = ezANOVA(
+    data = ANT[ANT$error==0,]
+    , dv = rt
+    , wid = subnum
+    , within = .(cue,flank)
+)
+
+#Show the ANOVA and assumption tests.
+print(rt_anova2)
+
+## End(Not run)
+
+#Run a purely between-Ss ANOVA on the mean_rt data.
+#NOTE use of within_full to ensure that the data are
+# collapsed properly
+rt_anova3 = ezANOVA(
+    data = ANT[ANT$error==0,]
+    , dv = rt
+    , wid = subnum
+    , within_full = .(cue,flank)
+    , between = group
+)
+
+#Show the ANOVA and assumption tests.
+print(rt_anova3)
+
+
+#add a within-Ss effect to be used as a covariate
+ANT$rt2 = ANT$rt + ANT$block*1000 #additive with and independent of the other predictors!
+
+## Not run: 
+#Run an anova that doesn't use the covariate
+rt_anova4a = ezANOVA(
+    data = ANT[ANT$error==0,]
+    , dv = rt2
+    , wid = subnum
+    , within = .(cue,flank)
+    , between = group
+)
+
+#Show the ANOVA and assumption tests.
+# Note loss of power to observe the within effects
+print(rt_anova4a)
+
+## End(Not run)
+
+#Run an anova that does use the covariate
+rt_anova4b = ezANOVA(
+    data = ANT[ANT$error==0,]
+    , dv = rt2
+    , wid = subnum
+    , within = .(cue,flank)
+    , within_covariates = block
+    , between = group
+)
+
+#Show the ANOVA and assumption tests.
+# Note power to observe the within effects has returned
+print(rt_anova4b)
+
+
+#add a between-Ss effect to be used as a covariate
+ANT$bc = as.numeric(as.character(ANT$subnum))%%10 #Note that the effect is balanced across groups
+ANT$rt3 = ANT$rt + ANT$bc*1000 #additive with and independent of the other predictors!
+
+## Not run: 
+#Run an anova that doesn't use the covariate
+rt_anova5a = ezANOVA(
+    data = ANT[ANT$error==0,]
+    , dv = rt2
+    , wid = subnum
+    , within = .(cue,flank)
+    , between = group
+)
+
+#Show the ANOVA and assumption tests.
+# Note loss of power to observe the between effects
+print(rt_anova5a)
+
+## End(Not run)
+
+#Run an anova that does use the covariate
+rt_anova5b = ezANOVA(
+    data = ANT[ANT$error==0,]
+    , dv = rt2
+    , wid = subnum
+    , within = .(cue,flank)
+    , between = group
+    , between_covariates = bc
+)
+
+#Show the ANOVA and assumption tests.
+# Note power to observe the between effects has returned
+print(rt_anova5b)
+
+</code></pre>
+
+
+</div>

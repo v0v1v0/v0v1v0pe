@@ -1,0 +1,361 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lm_lin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Linear regression with the Lin (2013) covariate adjustment</h2>
+
+<h3>Description</h3>
+
+<p>This function is a wrapper for <code>lm_robust</code> that
+is useful for estimating treatment effects with pre-treatment covariate
+data. This implements the method described by Lin (2013).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lm_lin(
+  formula,
+  covariates,
+  data,
+  weights,
+  subset,
+  clusters,
+  se_type = NULL,
+  ci = TRUE,
+  alpha = 0.05,
+  return_vcov = TRUE,
+  try_cholesky = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>an object of class formula, as in <code>lm</code>, such as
+<code>Y ~ Z</code> with only one variable on the right-hand side, the treatment</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>a right-sided formula with pre-treatment covariates on
+the right hand side, such as <code> ~ x1 + x2 + x3</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>data.frame</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>the bare (unquoted) names of the weights variable in the
+supplied data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>An optional bare (unquoted) expression specifying a subset
+of observations to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+<p>An optional bare (unquoted) name of the variable that
+corresponds to the clusters in the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_type</code></td>
+<td>
+<p>The sort of standard error sought. If <code>clusters</code> is
+not specified the options are "HC0", "HC1" (or "stata", the equivalent),
+"HC2" (default), "HC3", or  "classical". If <code>clusters</code> is specified the
+options are "CR0", "CR2" (default), or "stata" are
+permissible.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+<p>logical. Whether to compute and return p-values and confidence
+intervals, TRUE by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>The significance level, 0.05 by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_vcov</code></td>
+<td>
+<p>logical. Whether to return the variance-covariance
+matrix for later usage, TRUE by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>try_cholesky</code></td>
+<td>
+<p>logical. Whether to try using a Cholesky
+decomposition to solve least squares instead of a QR decomposition,
+FALSE by default. Using a Cholesky decomposition may result in speed gains, but should only
+be used if users are sure their model is full-rank (i.e., there is no
+perfect multi-collinearity)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is simply a wrapper for <code>lm_robust</code> and implements
+the Lin estimator (see the reference below). This method
+pre-processes the data by taking the covariates specified in the
+<code>`covariates`</code> argument, centering them by subtracting from each covariate
+its mean, and interacting them with the treatment. If the treatment has
+multiple values, a series of dummies for each value is created and each of
+those is interacted with the demeaned covariates. More details can be found
+in the
+<a href="https://declaredesign.org/r/estimatr/articles/getting-started.html">Getting Started vignette</a>
+and the
+<a href="https://declaredesign.org/r/estimatr/articles/mathematical-notes.html">mathematical notes</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"lm_robust"</code>.
+</p>
+<p>The post-estimation commands functions <code>summary</code> and <code>tidy</code>
+return results in a <code>data.frame</code>. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions <code>coef</code>, <code>vcov</code>,
+<code>confint</code>, and <code>predict</code>. Marginal effects and uncertainty about
+them can be gotten by passing this object to
+<code>margins</code> from the <span class="pkg">margins</span>.
+</p>
+<p>Users who want to print the results in TeX of HTML can use the
+<code>extract</code> function and the <span class="pkg">texreg</span> package.
+</p>
+<p>An object of class <code>"lm_robust"</code> is a list containing at least the
+following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>the estimated coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.error</code></td>
+<td>
+<p>the estimated standard errors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+<p>the t-statistic</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>the estimated degrees of freedom</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>the p-values from a two-sided t-test using <code>coefficients</code>, <code>std.error</code>, and <code>df</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.low</code></td>
+<td>
+<p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.high</code></td>
+<td>
+<p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term</code></td>
+<td>
+<p>a character vector of coefficient names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>the significance level specified by the user</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_type</code></td>
+<td>
+<p>the standard error type specified by the user</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res_var</code></td>
+<td>
+<p>the residual variance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>the number of observations used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>the number of columns in the design matrix (includes linearly dependent columns!)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rank</code></td>
+<td>
+<p>the rank of the fitted model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>the fitted variance covariance matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.squared</code></td>
+<td>
+<p>The <code class="reqn">R^2</code>,
+</p>
+<p style="text-align: center;"><code class="reqn">R^2 = 1 - Sum(e[i]^2) / Sum((y[i] - y^*)^2),</code>
+</p>
+<p> where <code class="reqn">y^*</code>
+is the mean of <code class="reqn">y[i]</code> if there is an intercept and zero otherwise,
+and <code class="reqn">e[i]</code> is the ith residual.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adj.r.squared</code></td>
+<td>
+<p>The <code class="reqn">R^2</code> but penalized for having more parameters, <code>rank</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weighted</code></td>
+<td>
+<p>whether or not weights were applied</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the original function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.values</code></td>
+<td>
+<p>the matrix of predicted means</p>
+</td>
+</tr>
+</table>
+<p>We also return <code>terms</code> and <code>contrasts</code>, used by <code>predict</code>,
+and <code>scaled_center</code> (the means of each of the covariates used for centering them).
+</p>
+
+
+<h3>References</h3>
+
+<p>Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. <a href="https://doi.org/10.1214/07-AOAS143">doi:10.1214/07-AOAS143</a>.
+</p>
+<p>Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. <a href="https://doi.org/10.1214/12-AOAS583">doi:10.1214/12-AOAS583</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lm_robust</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(fabricatr)
+library(randomizr)
+dat &lt;- fabricate(
+  N = 40,
+  x = rnorm(N, mean = 2.3),
+  x2 = rpois(N, lambda = 2),
+  x3 = runif(N),
+  y0 = rnorm(N) + x,
+  y1 = rnorm(N) + x + 0.35
+)
+
+dat$z &lt;- complete_ra(N = nrow(dat))
+dat$y &lt;- ifelse(dat$z == 1, dat$y1, dat$y0)
+
+# Same specification as lm_robust() with one additional argument
+lmlin_out &lt;- lm_lin(y ~ z, covariates = ~ x, data = dat)
+tidy(lmlin_out)
+
+# Works with multiple pre-treatment covariates
+lm_lin(y ~ z, covariates = ~ x + x2, data = dat)
+
+# Also centers data AFTER evaluating any functions in formula
+lmlin_out2 &lt;- lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+lmlin_out2$scaled_center["log(x3)"]
+mean(log(dat$x3))
+
+# Works easily with clusters
+dat$clusterID &lt;- rep(1:20, each = 2)
+dat$z_clust &lt;- cluster_ra(clusters = dat$clusterID)
+
+lm_lin(y ~ z_clust, covariates = ~ x, data = dat, clusters = clusterID)
+
+# Works with multi-valued treatments
+dat$z_multi &lt;- sample(1:3, size = nrow(dat), replace = TRUE)
+lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
+
+# Stratified estimator with blocks
+dat$blockID &lt;- rep(1:5, each = 8)
+dat$z_block &lt;- block_ra(blocks = dat$blockID)
+
+lm_lin(y ~ z_block, ~ factor(blockID), data = dat)
+
+## Not run: 
+  # Can also use 'margins' package if you have it installed to get
+  # marginal effects
+  library(margins)
+  lmlout &lt;- lm_lin(y ~ z_block, ~ x, data = dat)
+  summary(margins(lmlout))
+
+  # Can output results using 'texreg'
+  library(texreg)
+  texregobj &lt;- extract(lmlout)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

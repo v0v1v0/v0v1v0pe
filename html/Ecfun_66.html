@@ -1,0 +1,256 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rasterImageAdj</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+rasterImage adjusting to zero distortion
+</h2>
+
+<h3>Description</h3>
+
+<p>Call <code>rasterImage</code> to plot <code>image</code> 
+from <code>(xleft, ybottom)</code> to either 
+<code>xright</code> or <code>ytop</code>, shrinking one 
+toward the center to avoid distortion.  
+</p>
+<p><code>angle</code> specifies a rotation around the midpoint 
+(<code>(xleft+xright)/2</code>, <code>(ybottom+ytop)/2</code>).  
+This is different from <code>rasterImage</code>, 
+which rotates around <code>(xleft, ybottom)</code>.  
+</p>
+<p>NOTE:  The code may change in the future.  The visual 
+image with rotation looks a little off in the 
+examples below, but the code seems correct.  If you 
+find an example where this is obviously off, please 
+report to the maintainer – especially if you find a 
+fix for this.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rasterImageAdj(image, xleft=par('usr')[1], 
+    ybottom=par('usr')[3], xright=par('usr')[2], 
+    ytop=par('usr')[4], angle = 0, interpolate = TRUE, 
+    xsub=NULL, ysub=NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>image</code></td>
+<td>
+
+<p>a <code>raster</code> object, or an object that can be 
+coerced to one by <code>as.raster</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xleft</code></td>
+<td>
+
+<p>a vector (or scalar) of left x positions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ybottom</code></td>
+<td>
+
+<p>a vector (or scalar) of bottom y positions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xright</code></td>
+<td>
+
+<p>a vector (or scalar) of right x positions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ytop</code></td>
+<td>
+
+<p>a vector (or scalar) of top y positions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>angle</code></td>
+<td>
+
+<p>angle of rotation in degrees, anti-clockwise 
+about the centroid of <code>image</code>.  
+</p>
+<p>NOTE:  <code>rasterImage</code> rotates around 
+(<code>xleft</code>, <code>ybottom</code>).  <code>rasterImage</code> 
+rotates around the center <code>((xleft+xright)/2, 
+    (ybottom+ytop)/2)</code>.  See the examples.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interpolate</code></td>
+<td>
+
+<p>a logical vector (or scalar) indicating whether to 
+apply linear interpolation to the image when 
+drawing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xsub, ysub</code></td>
+<td>
+
+<p>subscripts to subset <code>image</code>  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>graphical parameters (see <code>par</code>).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>1.  <code>imagePixels</code> = number of (x, y) pixels in 
+<code>image</code>.  Do this using 
+<code>dim(as.raster(image))[2:1]</code>, because the 
+first dimension of <code>image</code> can be either x or 
+y depending on <code>class(image)</code>.  For example 
+<code>link[EBImage]{Image}</code> returns <code>dim</code> with 
+x first then y and an optional third dimension for 
+color.  A simple 3-dimensional array is assumed by
+<code>rasterImage</code> to have the y dimension 
+first.  <code>as.raster</code> puts all these in a
+standard format with y first, then x.
+</p>
+<p>2. <code>imageUnits &lt;- c(x=xright-xleft, ytop-ybottom)</code>
+</p>
+<p>3.  <code>xyinches</code> = (x, y) units per inch in the 
+current plot, obtained from <code>xyinch</code>.
+</p>
+<p>4.  Compute pixel density (pixels per inch) in both 
+x and y dimension:  <code>pixelsPerInch &lt;- 
+  imagePixels * xyinches / imageUnits</code>.
+</p>
+<p>5.  Compute <code>imageUnitsAdj</code> solving 4 for 
+<code>imageUnits</code> and replacing <code>pixelsPerInch</code>
+by the max pixel density:  <code>imageUnitsAdj &lt;-
+  imagePixels * xyinches / max(pixelsPerInch)</code>.
+</p>
+<p>6.  <code>(dX, dY) = imageUnitsAdj/2</code> = half of the 
+(width, height) in plotting units.  
+</p>
+<p>7.  <code>cntr = (xleft, ybottom) + (dX, dY)</code>.  
+</p>
+<p><code>xleft0  = cntr[1]+sin((angle-90)*pi/180)*dX*sqrt(2)</code>; 
+</p>
+<p><code>ybottom0= cntr[2]-cos((angle-90)*pi/180)*dY*sqrt(2)</code>;
+</p>
+<p><code>(xright0, ytop0)</code> 
+= (upper right without rotation about lower left)
+</p>
+<p><code>xright0 = xleft0+imageUnitsAdj[2]</code>
+</p>
+<p><code>ytop0 = ybottom0+imageUnitsAdj[2]</code>
+</p>
+<p>8.  <code>rasterImage(image, xleft0, ybottom0, 
+            xright0, ytop0, angle, interpolate, ...)</code>
+</p>
+
+
+<h3>Value</h3>
+
+<p>a named vector giving the values of <code>xleft</code>, 
+<code>ybottom</code>, <code>xright</code>, and <code>ytop</code> 
+passed to <code>rasterImage</code>.  
+(<code>rasterImage</code> returns <code>NULL</code>, 
+at least for some inputs.)  This shows the adjustment, 
+shrinking toward the center and rotating as desired.  
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves</p>
+
+
+<h3>See Also</h3>
+
+<p><code>rasterImage</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># something to plot 
+logo.jpg &lt;- file.path(R.home('doc'), 'html', 'logo.jpg')
+if(require(jpeg)){
+##
+## 1.  Shrink as required
+##
+  Rlogo &lt;- try(readJPEG(logo.jpg))
+  if(inherits(Rlogo, 'array')){  
+  
+    all.equal(dim(Rlogo), c(76, 100, 3))
+  
+
+    plot(1:2)
+# default
+    rasterImageAdj(Rlogo)
+
+    plot(1:2, type='n', asp=0.75)
+# Tall and thin
+    rasterImage(Rlogo, 1, 1, 1.2, 2)
+# Fix
+    rasterImageAdj(Rlogo, 1.2, 1, 1.4, 2)
+
+# short and wide
+    rasterImage(Rlogo, 1.4, 1, 2, 1.2)
+# Fix
+    rasterImage(Rlogo, 1.4, 1.2, 2, 1.4)
+##
+## 2.  rotate 
+##
+#  2.1.  angle=90:  rasterImage left of rasterImageAdj
+    plot(0:1, 0:1, type='n', asp=1)
+    rasterImageAdj(Rlogo, .5, .5, 1, 1, 90)
+    rasterImage(Rlogo, .5, .5, 1, 1, 90)
+#  2.2.  angle=180:  rasterImage left and below 
+    plot(0:1, 0:1, type='n', asp=1)
+    rasterImageAdj(Rlogo, .5, .5, 1, 1, 180)
+    rasterImage(Rlogo, .5, .5, 1, 1, 180)
+#  2.3.  angle=270:  rasterImage below 
+    plot(0:1, 0:1, type='n', asp=1)
+    rasterImageAdj(Rlogo, .5, .5, 1, 1, 270)
+    rasterImage(Rlogo, .5, .5, 1, 1, 270)
+## 
+## 3.  subset 
+##
+  dim(Rlogo)
+# 76 100 3
+  Rraster &lt;- as.raster(Rlogo)
+  dim(Rraster)
+# 76 100:  
+# x=1:100, left to right 
+# y=1:76, top to bottom 
+  rasterImageAdj(Rlogo, 0, 0, .5, .5, xsub=40:94)
+}
+}
+</code></pre>
+
+
+</div>

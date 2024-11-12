@@ -1,0 +1,584 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>twoSamplePermutationTestLocation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Two-Sample or Paired-Sample Randomization (Permutation) Test for Location
+</h2>
+
+<h3>Description</h3>
+
+<p>Perform a two-sample or paired-sample randomization (permutation) test for 
+location based on either means or medians.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  twoSamplePermutationTestLocation(x, y, fcn = "mean", alternative = "two.sided", 
+    mu1.minus.mu2 = 0, paired = FALSE, exact = FALSE, n.permutations = 5000, 
+    seed = NULL, tol = sqrt(.Machine$double.eps))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector of observations from population 1.    
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+
+<p>numeric vector of observations from population 2.    
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are allowed but will be removed.
+</p>
+<p>In the case when <code>paired=TRUE</code>, the argument <code>y</code> must have the same number 
+of elements as the argument <code>x</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fcn</code></td>
+<td>
+
+<p>character string indicating which location parameter to compare between the two 
+groups.  The possible values are <code>fcn="mean"</code> (the default) and 
+<code>fcn="median"</code>.  This argument is ignored when <code>paired=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+
+<p>character string indicating the kind of alternative hypothesis.  The possible values 
+are <code>"two.sided"</code> (the default), <code>"less"</code>, and <code>"greater"</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu1.minus.mu2</code></td>
+<td>
+
+<p>numeric scalar indicating the hypothesized value of the difference between the 
+means or medians.  The default value is <code>mu1.minus.mu2=0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired</code></td>
+<td>
+
+<p>logical scalar indicating whether to perform a paired or two-sample permutation 
+test.  The possible values are <code>paired=FALSE</code> (the default; indicates a 
+two-sample permutation test) and <code>paired=TRUE</code> (indicates take differences of 
+pairs and perform a one-sample permutation test).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exact</code></td>
+<td>
+
+<p>logical scalar indicating whether to perform the exact permutation test (i.e., 
+enumerate all possible permutations) or simply sample from the permutation 
+distribution.  The default value is <code>exact=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.permutations</code></td>
+<td>
+
+<p>integer indicating how many times to sample from the permutation distribution when 
+<code>exact=FALSE</code>.  The default value is <code>n.permutations=5000</code>.  
+This argument is ignored when <code>exact=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>positive integer to pass to the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> function <code>set.seed</code>.  The 
+default is <code>seed=NULL</code>, in which case the current value of 
+<code>.Random.seed</code> is used.  
+Using the <code>seed</code> argument lets you reproduce the exact same result if all 
+other arguments stay the same.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+
+<p>numeric scalar indicating the tolerance to use for computing the p-value for the 
+two-sample permutation test.  The default value is <br><code>tol=sqrt(.Machine$double.eps)</code>.  See the DETAILS section below for more 
+information.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><b>Randomization Tests</b> <br>
+In 1935, R.A. Fisher introduced the idea of a <b><em>randomization test</em></b> 
+(Manly, 2007, p. 107; Efron and Tibshirani, 1993, Chapter 15), which is based on 
+trying to answer the question:  “Did the observed pattern happen by chance, 
+or does the pattern indicate the null hypothesis is not true?”  A randomization 
+test works by simply enumerating all of the possible outcomes under the null 
+hypothesis, then seeing where the observed outcome fits in.  A randomization test 
+is also called a <b><em>permutation test</em></b>, because it involves permuting the 
+observations during the enumeration procedure (Manly, 2007, p. 3).
+</p>
+<p>In the past, randomization tests have not been used as extensively as they are now 
+because of the “large” computing resources needed to enumerate all of the 
+possible outcomes, especially for large sample sizes.  The advent of more powerful 
+personal computers and software has allowed randomization tests to become much 
+easier to perform.  Depending on the sample size, however, it may still be too 
+time consuming to enumerate all possible outcomes.  In this case, the randomization 
+test can still be performed by sampling from the randomization distribution, and 
+comparing the observed outcome to this sampled permutation distribution.
+<br></p>
+<p><em>Two-Sample Randomization Test for Location</em> (<code>paired=FALSE</code>) <br>
+Let <code class="reqn">\underline{x} = x_1, x_2, \ldots, x_{n1}</code> be a vector of <code class="reqn">n1</code> 
+independent and identically distributed (i.i.d.) observations
+from some distribution with location parameter (e.g., mean or median) <code class="reqn">\theta_1</code>, 
+and let <code class="reqn">\underline{y} = y_1, y_2, \ldots, y_{n2}</code> be a vector of <code class="reqn">n2</code> 
+i.i.d. observations from the same distribution with possibly different location 
+parameter <code class="reqn">\theta_2</code>.
+</p>
+<p>Consider the test of the null hypothesis that the difference in the location 
+parameters is equal to some specified value: 
+</p>
+<p style="text-align: center;"><code class="reqn">H_0: \delta = \delta_0 \;\;\;\;\;\; (1)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">\delta = \theta_1 - \theta_2 \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>and <code class="reqn">\delta_0</code> denotes the hypothesized difference in the meansures of 
+location (usually <code class="reqn">\delta_0 = 0</code>).
+</p>
+<p>The three possible alternative hypotheses are the upper one-sided alternative 
+(<code>alternative="greater"</code>)
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \delta &gt; \delta_0 \;\;\;\;\;\; (3)</code>
+</p>
+
+<p>the lower one-sided alternative (<code>alternative="less"</code>)
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \delta &lt; \delta_0 \;\;\;\;\;\; (4)</code>
+</p>
+
+<p>and the two-sided alternative
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \delta \ne \delta_0 \;\;\;\;\;\; (5)</code>
+</p>
+
+<p>To perform the test of the null hypothesis (1) versus any of the three 
+alternatives (3)-(5), you can use the two-sample permutation test.  The two 
+sample permutation test is based on trying to answer the question, 
+“Did the observed difference in means or medians happen by chance, or 
+does the observed difference indicate that the null hypothesis is not true?”  
+Under the null hypothesis, the underlying distributions for each group are the 
+same, therefore it should make no difference which group an observation gets 
+assigned to.  The two-sample permutation test works by simply enumerating all 
+possible permutations of group assignments, and for each permutation computing 
+the difference between the measures of location for each group 
+(Manly, 2007, p. 113; Efron and Tibshirani, 1993, p. 202).  The measure of 
+location for a group could be the mean, median, or any other measure you want to 
+use.  For example, if the observations from Group 1 are 3 and 5, and the 
+observations from Group 2 are 4, 6, and 7, then there are 10 different ways of 
+splitting these five observations into one group of size 2 and another group of 
+size 3.  The table below lists all of the possible group assignments, along with 
+the differences in the group means.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <b>Group 1</b> </td>
+<td style="text-align: left;"> <b>Group 2</b> </td>
+<td style="text-align: left;"> <b>Mean 1 - Mean 2</b> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  3, 4           </td>
+<td style="text-align: left;"> 5, 6, 7        </td>
+<td style="text-align: left;"> -2.5  </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  3, 5           </td>
+<td style="text-align: left;"> 4, 6, 7        </td>
+<td style="text-align: left;"> -1.67 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  3, 6           </td>
+<td style="text-align: left;"> 4, 5, 7        </td>
+<td style="text-align: left;"> -0.83 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  3, 7           </td>
+<td style="text-align: left;"> 4, 5, 6        </td>
+<td style="text-align: left;">  0    </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  4, 5           </td>
+<td style="text-align: left;"> 3, 6, 7        </td>
+<td style="text-align: left;"> -0.83 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  4, 6           </td>
+<td style="text-align: left;"> 3, 5, 7        </td>
+<td style="text-align: left;">  0    </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  4, 7           </td>
+<td style="text-align: left;"> 3, 5, 6        </td>
+<td style="text-align: left;">  0.83 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  5, 6           </td>
+<td style="text-align: left;"> 3, 4, 7        </td>
+<td style="text-align: left;">  0.83 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  5, 7           </td>
+<td style="text-align: left;"> 3, 4, 6        </td>
+<td style="text-align: left;">  1.67 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  6, 7           </td>
+<td style="text-align: left;"> 3, 4, 5        </td>
+<td style="text-align: left;">  2.5
+  </td>
+</tr>
+</table>
+<p>In this example, the <em>observed</em> group assignments and difference in means 
+are shown in the second row of the table.
+</p>
+<p>For a one-sided upper alternative (Equation (3)), the p-value is computed as the 
+proportion of times that the differences of the means (or medians) in the 
+permutation distribution are greater than or equal to the observed difference in 
+means (or medians).  For a one-sided lower alternative hypothesis (Equation (4)), 
+the p-value is computed as the proportion of times that the differences in the means 
+(or medians) in the permutation distribution are less than or equal to the observed 
+difference in the means (or medians).  For a two-sided alternative hypothesis 
+(Equation (5)), the p-value is computed as the proportion of times the absolute 
+values of the differences in the means (or medians) in the permutation distribution 
+are greater than or equal to the absolute value of the observed difference in the 
+means (or medians).
+</p>
+<p>For this simple example, the one-sided upper, one-sided lower, and two-sided 
+p-values are 0.9, 0.2 and 0.4, respectively.
+</p>
+<p><b>Note:</b> Because of the nature of machine arithmetic and how the permutation 
+distribution is computed, a one-sided upper p-value is computed as the proportion 
+of times that the differences of the means (or medians) in the permutation 
+distribution are greater than or equal to 
+[the observed difference in means (or medians) - a small tolerance value], where the 
+tolerance value is determined by the argument <code>tol</code>.  Similarly, a one-sided 
+lower p-value is computed as the proportion of times that the differences in the 
+means (or medians) in the permutation distribution are less than or equal to 
+[the observed difference in the means (or medians) + a small tolerance value].  
+Finally, a two-sided p-value is computed as the proportion of times the absolute 
+values of the differences in the means (or medians) in the permutation distribution 
+are greater than or equal to 
+[the absolute value of the observed difference in the means (or medians) - a small tolerance value].
+</p>
+<p>In this simple example, we assumed the hypothesized differences in the means under 
+the null hypothesis was <code class="reqn">\delta_0 = 0</code>.  If we had hypothesized a different 
+value for <code class="reqn">\delta_0</code>, then we would have had to subtract this value from each of 
+the observations in Group 1 before permuting the group assignments to compute the 
+permutation distribution of the differences of the means.  As in the case of the 
+one-sample permutation test, if the sample sizes 
+for the groups become too large to compute all possible permutations of the group 
+assignments, the permutation test can still be performed by sampling from the 
+permutation distribution and comparing the observed difference in locations to the 
+sampled permutation distribution of the difference in locations.
+</p>
+<p>Unlike the two-sample Student's t-test, we do not have to worry 
+about the normality assumption when we use a permutation test.  The permutation test 
+still assumes, however, that under the null hypothesis, the distributions of the 
+observations from each group are exactly the same, and under the alternative 
+hypothesis there is simply a shift in location (that is, the whole distribution of 
+group 1 is shifted by some constant relative to the distribution of group 2).  
+Mathematically, this can be written as follows:
+</p>
+<p style="text-align: center;"><code class="reqn">F_1(t) = F_2(t - \delta), \;\; -\infty &lt; t &lt; \infty \;\;\;\;\; (6)</code>
+</p>
+
+<p>where <code class="reqn">F_1</code> and <code class="reqn">F_2</code> denote the cumulative distribution functions for 
+group 1 and group 2, respectively.  If <code class="reqn">\delta &gt; 0</code>, this implies that the 
+observations in group 1 tend to be larger than the observations in group 2, and 
+if <code class="reqn">\delta &lt; 0</code>, this implies that the observations in group 1 tend to be 
+smaller than the observations in group 2.  Thus, the shape and spread (variance) 
+of the two distributions should be the same whether the null hypothesis is true or 
+not.  Therefore, the Type I error rate for a permutation test can be affected by 
+differences in variances between the two groups.
+<br></p>
+<p><em>Confidence Intervals for the Difference in Means or Medians</em> <br>
+Based on the relationship between hypothesis tests and confidence intervals, it is 
+possible to construct a two-sided or one-sided <code class="reqn">(1-\alpha)100\%</code> confidence 
+interval for the difference in means or medians based on the two-sample permutation 
+test by finding the values of <code class="reqn">\delta_0</code> that correspond to obtaining a 
+p-value of <code class="reqn">\alpha</code> (Manly, 2007, pp. 18–20, 114).  A confidence interval 
+based on the bootstrap however, will yield a similar type of confidence interval 
+(Efron and Tibshirani, 1993, p. 214); see the help file for 
+<code>boot</code> in the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> package <span class="pkg">boot</span>.
+<br></p>
+<p><b>Paired-Sample Randomization Test for Location</b> (<code>paired=TRUE</code>) <br>
+When the argument <code>paired=TRUE</code>, the arguments <code>x</code> and <code>y</code> are 
+assumed to have the same length, and the <code class="reqn">n1 = n2 = n</code> differences
+<code class="reqn">y_i = x_i - y_i</code>, <code class="reqn">i = 1, 2, \ldots, n</code> are assumed to be independent 
+observations from some symmetric distribution with mean <code class="reqn">\mu</code>.  The 
+one-sample permutation test can then be applied 
+to the differences.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class <code>"permutationTest"</code> containing the results of the hypothesis 
+test.  See the help file for <code>permutationTest.object</code> for details.
+</p>
+
+
+<h3>Note</h3>
+
+<p>A frequent question in environmental statistics is “Is the concentration of 
+chemical X in Area A greater than the concentration of chemical X in Area B?”.  
+For example, in groundwater detection monitoring at hazardous and solid waste sites, 
+the concentration of a chemical in the groundwater at a downgradient well must be 
+compared to “background”.  If the concentration is “above” the 
+background then the site enters assessment monitoring.  As another example, soil 
+cleanup at a Superfund site may involve comparing the concentration of a chemical 
+in the soil at a “cleaned up” site with the concentration at a 
+“background” site.  If the concentration at the “cleaned up” site is 
+“greater” than the background concentration, then further investigation and 
+remedial action may be required.  Determining what it means for the chemical 
+concentration to be “greater” than background is a policy decision: you may 
+want to compare averages, medians, 95'th percentiles, etc.
+</p>
+<p>Hypothesis tests you can use to compare “location” between two groups include:  
+Student's t-test, Fisher's randomization test 
+(described in this help file), the Wilcoxon rank sum test, 
+other two-sample linear rank tests, 
+the quantile test, and a test based on a bootstrap confidence 
+interval.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Efron, B., and R.J. Tibshirani. (1993).  <em>An Introduction to the Bootstrap</em>.  
+Chapman and Hall, New York, Chapter 15.
+</p>
+<p>Manly, B.F.J. (2007).  <em>Randomization, Bootstrap and Monte Carlo Methods in 
+Biology</em>.  Third Edition. Chapman &amp; Hall, New York, Chapter 6.
+</p>
+<p>Millard, S.P., and N.K. Neerchal. (2001).  
+<em>Environmental Statistics with S-PLUS</em>.  CRC Press, Boca Raton, FL, 
+pp.426–431.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>permutationTest.object</code>, <code>plot.permutationTest</code>, 
+<code>oneSamplePermutationTest</code>, <br><code>twoSamplePermutationTestProportion</code>, 
+Hypothesis Tests, <code>boot</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 10 observations from a lognormal distribution with parameters 
+  # mean=5 and cv=2, and and 20 observations from a lognormal distribution with 
+  # parameters mean=10 and cv=2.  Test the null hypothesis that the means of the 
+  # two distributions are the same against the alternative that the mean for 
+  # group 1 is less than the mean for group 2. 
+  # (Note: the call to set.seed allows you to reproduce the same data 
+  # (dat1 and dat2), and setting the argument seed=732 in the call to 
+  # twoSamplePermutationTestLocation() lets you reproduce this example by 
+  # getting the same sample from the permutation distribution).
+
+  set.seed(256) 
+  dat1 &lt;- rlnormAlt(10, mean = 5, cv = 2) 
+  dat2 &lt;- rlnormAlt(20, mean = 10, cv = 2) 
+
+  test.list &lt;- twoSamplePermutationTestLocation(dat1, dat2, 
+    alternative = "less", seed = 732) 
+
+  # Print the results of the test 
+  #------------------------------
+  test.list 
+
+  #Results of Hypothesis Test
+  #--------------------------
+  #
+  #Null Hypothesis:                 mu.x-mu.y = 0
+  #
+  #Alternative Hypothesis:          True mu.x-mu.y is less than 0
+  #
+  #Test Name:                       Two-Sample Permutation Test
+  #                                 Based on Differences in Means
+  #                                 (Based on Sampling
+  #                                 Permutation Distribution
+  #                                 5000 Times)
+  #
+  #Estimated Parameter(s):          mean of x =  2.253439
+  #                                 mean of y = 11.825430
+  #
+  #Data:                            x = dat1
+  #                                 y = dat2
+  #
+  #Sample Sizes:                    nx = 10
+  #                                 ny = 20
+  #
+  #Test Statistic:                  mean.x - mean.y = -9.571991
+  #
+  #P-value:                         0.001
+
+
+  # Plot the results of the test 
+  #-----------------------------
+  dev.new()
+  plot(test.list)
+
+  #==========
+
+  # The guidance document "Statistical Methods for Evaluating the Attainment of 
+  # Cleanup Standards, Volume 3: Reference-Based Standards for Soils and Solid 
+  # Media" (USEPA, 1994b, pp. 6.22-6.25) contains observations of 
+  # 1,2,3,4-Tetrachlorobenzene (TcCB) in ppb at a Reference Area and a Cleanup Area.  
+  # These data are stored in the data frame EPA.94b.tccb.df.  Use the 
+  # two-sample permutation test to test for a difference in means between the 
+  # two areas vs. the alternative that the mean in the Cleanup Area is greater.  
+  # Do the same thing for the medians.
+  #
+  # The permutation test based on comparing means shows a significant differnce, 
+  # while the one based on comparing medians does not.
+
+
+  # First test for a difference in the means.
+  #------------------------------------------
+
+  mean.list &lt;- with(EPA.94b.tccb.df, 
+    twoSamplePermutationTestLocation(
+      TcCB[Area=="Cleanup"], TcCB[Area=="Reference"], 
+      alternative = "greater", seed = 47)) 
+
+  mean.list
+
+  #Results of Hypothesis Test
+  #--------------------------
+  #
+  #Null Hypothesis:                 mu.x-mu.y = 0
+  #
+  #Alternative Hypothesis:          True mu.x-mu.y is greater than 0
+  #
+  #Test Name:                       Two-Sample Permutation Test
+  #                                 Based on Differences in Means
+  #                                 (Based on Sampling
+  #                                 Permutation Distribution
+  #                                 5000 Times)
+  #
+  #Estimated Parameter(s):          mean of x = 3.9151948
+  #                                 mean of y = 0.5985106
+  #
+  #Data:                            x = TcCB[Area == "Cleanup"]  
+  #                                 y = TcCB[Area == "Reference"]
+  #
+  #Sample Sizes:                    nx = 77
+  #                                 ny = 47
+  #
+  #Test Statistic:                  mean.x - mean.y = 3.316684
+  #
+  #P-value:                         0.0206
+
+  dev.new()
+  plot(mean.list)
+
+
+  #----------
+
+  # Now test for a difference in the medians.
+  #------------------------------------------
+
+  median.list &lt;- with(EPA.94b.tccb.df, 
+    twoSamplePermutationTestLocation(
+      TcCB[Area=="Cleanup"], TcCB[Area=="Reference"], 
+      fcn = "median", alternative = "greater", seed = 47)) 
+
+  median.list
+
+  #Results of Hypothesis Test
+  #--------------------------
+  #
+  #Null Hypothesis:                 mu.x-mu.y = 0
+  #
+  #Alternative Hypothesis:          True mu.x-mu.y is greater than 0
+  #
+  #Test Name:                       Two-Sample Permutation Test
+  #                                 Based on Differences in Medians
+  #                                 (Based on Sampling
+  #                                 Permutation Distribution
+  #                                 5000 Times)
+  #
+  #Estimated Parameter(s):          median of x = 0.43
+  #                                 median of y = 0.54
+  #
+  #Data:                            x = TcCB[Area == "Cleanup"]  
+  #                                 y = TcCB[Area == "Reference"]
+  #
+  #Sample Sizes:                    nx = 77
+  #                                 ny = 47
+  #
+  #Test Statistic:                  median.x - median.y = -0.11
+  #
+  #P-value:                         0.936
+
+  dev.new()
+  plot(median.list)
+
+  #==========
+
+  # Clean up
+  #---------
+  rm(test.list, mean.list, median.list)
+  graphics.off()
+</code></pre>
+
+
+</div>

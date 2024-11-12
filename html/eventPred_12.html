@@ -1,0 +1,210 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predictEnrollment</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict enrollment</h2>
+
+<h3>Description</h3>
+
+<p>Utilizes a pre-fitted enrollment model to generate
+enrollment times for new subjects and provide a prediction
+interval for the expected time to reach the enrollment target.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predictEnrollment(
+  df = NULL,
+  target_n,
+  enroll_fit,
+  lags = 30,
+  pilevel = 0.9,
+  nyears = 4,
+  nreps = 500,
+  showsummary = TRUE,
+  showplot = TRUE,
+  by_treatment = FALSE,
+  ngroups = 1,
+  alloc = NULL,
+  treatment_label = NULL,
+  fix_parameter = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>The subject-level enrollment data, including <code>trialsdt</code>,
+<code>randdt</code> and <code>cutoffdt</code>. The data should also include
+<code>treatment</code> coded as 1, 2, and so on, and
+<code>treatment_description</code> for prediction
+by treatment group. By default, it is set to <code>NULL</code>
+for enrollment prediction at the design stage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target_n</code></td>
+<td>
+<p>The target number of subjects to enroll in the study.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>enroll_fit</code></td>
+<td>
+<p>The pre-fitted enrollment model used to
+generate predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lags</code></td>
+<td>
+<p>The day lags to compute the average enrollment rate to
+carry forward for the B-spline enrollment model. By default,
+it is set to 30.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pilevel</code></td>
+<td>
+<p>The prediction interval level. By default,
+it is set to 0.90.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nyears</code></td>
+<td>
+<p>The number of years after the data cut for prediction.
+By default, it is set to 4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nreps</code></td>
+<td>
+<p>The number of replications for simulation. By default,
+it is set to 500.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showsummary</code></td>
+<td>
+<p>A Boolean variable to control whether or not to
+show the prediction summary. By default, it is set to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showplot</code></td>
+<td>
+<p>A Boolean variable to control whether or not to
+show the prediction plot. By default, it is set to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by_treatment</code></td>
+<td>
+<p>A Boolean variable to control whether or not to
+predict enrollment by treatment group. By default,
+it is set to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ngroups</code></td>
+<td>
+<p>The number of treatment groups for enrollment prediction
+at the design stage. By default, it is set to 1.
+It is replaced with the actual number of
+treatment groups in the observed data if <code>df</code> is not <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alloc</code></td>
+<td>
+<p>The treatment allocation in a randomization block.
+By default, it is set to <code>NULL</code>, which yields equal allocation
+among the treatment groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatment_label</code></td>
+<td>
+<p>The treatment labels for treatments in a
+randomization block for design stage prediction.
+It is replaced with the treatment_description
+in the observed data if <code>df</code> is not <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix_parameter</code></td>
+<td>
+<p>Whether to fix parameters at the maximum
+likelihood estimates when generating new data for prediction.
+Defaults to FALSE, in which case, parameters will be drawn from
+their approximate posterior distributions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>enroll_fit</code> variable can be used for enrollment prediction
+at the design stage. A piecewise Poisson model can be parameterized
+through the time intervals, <code>accrualTime</code>, which is
+treated as fixed, and the enrollment rates in the intervals,
+<code>accrualIntensity</code>, the log of which is used as the
+model parameter. For the homogeneous Poisson, time-decay,
+and piecewise Poisson models, <code>enroll_fit</code> is used to
+specify the prior distribution of model parameters, with
+a very small variance being used to fix the parameter values.
+It should be noted that the B-spline model is not appropriate
+for use during the design stage.
+</p>
+<p>During the enrollment stage, <code>enroll_fit</code> is the enrollment model
+fit based on the observed data. The fitted enrollment model is used to
+generate enrollment times for new subjects.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of prediction results, which includes important information
+such as the median, lower and upper percentiles for the estimated
+time to reach the target number of subjects, as well as simulated
+enrollment data for new subjects. The data for the
+prediction plot is also included within the list.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Kaifeng Lu, <a href="mailto:kaifenglu@gmail.com">kaifenglu@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Xiaoxi Zhang and Qi Long. Stochastic modeling and prediction for
+accrual in clinical trials. Stat in Med. 2010; 29:649-658.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Enrollment prediction at the design stage
+
+enroll_pred &lt;- predictEnrollment(
+  target_n = 300,
+  enroll_fit = list(model = "piecewise poisson",
+                    theta = log(26/9*seq(1, 9)/30.4375),
+                    vtheta = diag(9)*1e-8,
+                    accrualTime = seq(0, 8)*30.4375),
+  pilevel = 0.90, nreps = 100)
+
+</code></pre>
+
+
+</div>

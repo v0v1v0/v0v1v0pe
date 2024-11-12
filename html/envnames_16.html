@@ -1,0 +1,190 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>environment_name</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Retrieve the name of an environment</h2>
+
+<h3>Description</h3>
+
+<p>Retrieve the name of an environment as the <code>environmentName</code> function of the base package does,
+but extending its functionality to retrieving the names of user-defined environments and function
+execution environments.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">environment_name(
+  env = parent.frame(),
+  envir = NULL,
+  envmap = NULL,
+  matchname = FALSE,
+  ignore = NULL,
+  include_functions = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>environment whose name is of interest.
+It can be given as an object of class environment, as a string with the name of the environment,
+or as a string with the memory address of the environment.
+The latter is useful to find out if a given memory address is the reference of an environment object.
+Note that the variable passed may or may <em>not</em> exist in the calling environment, as the purpose
+of this function is also to search for it (and return its name if it is an environment).
+It defaults to parent.frame(), meaning that the name of the environment that calls this function is retrieved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>environment where <code>env</code> should be searched for. When <code>NULL</code>, <code>env</code> is searched in
+the whole workspace, including packages and user-defined environments, recursively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envmap</code></td>
+<td>
+<p>data frame containing a lookup table with name-address pairs of environment names and
+addresses to be used when searching for environment <code>env</code>. It defaults to <code>NULL</code> which means that the
+lookup table is constructed on the fly with the environments defined in the <code>envir</code> environment
+–if not <code>NULL</code>–, or in the whole workspace if <code>envir=NULL</code>.
+See the details section for more information on its structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>matchname</code></td>
+<td>
+<p>flag indicating whether the match for <code>env</code> is based on its name or on its
+memory address. In the latter case all environments sharing the same memory address of the given
+environment are returned. Such scenario happens when, for instance, different
+environment objects have been defined equal to another environment (as in <code>env1 &lt;- env</code>).
+It defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignore</code></td>
+<td>
+<p>one or more environment names to ignore if found during the search. These environments
+are removed from the output. It should be given as a character array if more than one environments
+should be ignored. See the details section for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_functions</code></td>
+<td>
+<p>flag indicating whether to look for user-defined environments inside function
+execution environments. This should be used with care because in a complicated function chain, some function
+execution environments may contain environments that point to other environments (e.g. the 'envclos' environment
+in the <code>eval()</code> function when running tests using the <code>test_that</code> package).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>env</code> is an environment it is searched for in the <code>envir</code> environment using its memory address.
+If <code>env</code> is a string containing a valid 16-digit memory address (enclosed in &lt; &gt;), the memory address
+itself is searched for among the defined environments in the <code>envir</code> environment.
+In both cases, if <code>envir=NULL</code> the search is carried out in the whole workspace. 
+</p>
+<p>It may happen that more than one environment exist with the same memory address (for instance
+if an environment is a copy of another environment). In such case, if <code>matchname=FALSE</code>,
+the names of ALL the environments matching <code>env</code>'s memory address are returned. Otherwise,
+only the environments matching the given name are returned.
+</p>
+<p>If <code>envmap</code> is passed it should be a data frame providing an address-name pair lookup table
+of environments and should contain at least the following columns:
+</p>
+
+<ul>
+<li>
+<p><code>location</code> for user-defined environments, the name of the environment where the environment
+is located; otherwise <code>NA</code>.
+</p>
+</li>
+<li>
+<p><code>pathname</code> the full <em>environment path</em> to reach the environment separated by <code>$</code>
+(e.g. <code>"env1$env$envx"</code>)
+</p>
+</li>
+<li>
+<p><code>address</code> an 8-digit (32-bit architectures) thru 16-digit (64-bit architectures) memory address
+of the environment given in <code>pathname</code> enclosed in &lt; &gt; (e.g. <code>"&lt;0000000007DCFB38&gt;"</code>
+(64-bit architectures))
+Be ware that Linux Debian distributions may have a 12-digit memory address representation.
+So the best way to know is to check a memory address by calling e.g. 'address("x")'.
+</p>
+</li>
+</ul>
+<p>Passing an <code>envmap</code> lookup table is useful for speedup purposes, in case several calls to this
+function will be performed in the context of an unchanged set of defined environments.
+Such <code>envmap</code> data frame can be created by calling get_env_names.
+Use this parameter with care, as the matrix passed may not correspond to the actual mapping of existing
+environments to their addresses and in that case results may be different from those expected.
+</p>
+<p>The following example illustrates the use of the <code>ignore</code> parameter:
+</p>
+<p><code>for (e in c(globalenv(), baseenv())) { print(environment_name(e, ignore="e")) }</code>
+</p>
+<p>That is, we iterate on a set of environments and we don't want the loop variable (an environment itself)
+to show up as part of the output generated by the call to <code>environment_name()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>matchname=FALSE</code> (the default), an array containing the names of all the environments
+(defined in the <code>envir</code> environment if <code>envir</code> is not <code>NULL</code>) having the same memory address
+as the <code>env</code> environment.
+</p>
+<p>If <code>matchname=TRUE</code>, the environment name contained in <code>env</code> is used in addition to the memory
+address to check the matched environments (potentially many if they have the same memory address)
+so that only the environments having the same name and address as the <code>env</code> environment are returned.
+Note that several environments may be found if environments with the same name are defined in
+different environments.
+WARNING: in this case, the name is matched exactly as the expression given in <code>env</code>. So for instance,
+if <code>env=globalenv()$env1</code> the name <code>"globalenv()$env1"</code> is checked and this will not return any
+environments since no environment can be called like that. For such scenario call the function with
+parameter <code>env=env1</code> instead, or optionally with <code>env=env1</code> and <code>envir=globalenv()</code>
+if the <code>env1</code> environment should be searched for just in the global environment.
+</p>
+<p>If <code>env</code> is not found or it is not an environment, <code>NULL</code> is returned.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Retrieve name of a user-defined environment
+env1 &lt;- new.env()
+environment_name(env1)                   		# "env1"
+
+# Retrieve the name of an environment given as a memory address
+env1_address = get_obj_address(globalenv()$env1)
+environment_name(env1_address)           		# "env1"
+
+# Create a copy of the above environment
+env1_copy &lt;- env1
+environment_name(env1)                   		# "env1" "env1_copy"
+# Retrieve just the env1 environment name
+environment_name(env1, matchname=TRUE)   		# "env1"
+
+# Retrieve the name of an environment defined within another environment
+with(env1, envx &lt;- new.env())
+environment_name(env1$envx)              		# "env1$envx" "env1_copy$envx"
+environment_name(env1$envx, matchname=TRUE)
+  ## NULL, because the environment name is "envx", NOT "env1$envx"
+
+# Get a function's execution environment name
+with(env1, f &lt;- function() { cat("We are inside function", environment_name()) })  
+    ## "We are inside function env1$f"
+</code></pre>
+
+
+</div>

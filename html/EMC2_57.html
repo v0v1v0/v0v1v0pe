@@ -1,0 +1,158 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_emc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Custom function for more controlled model estimation</h2>
+
+<h3>Description</h3>
+
+<p>Although typically users will rely on <code>fit</code>, this function can be used for more fine-tuned specification of estimation needs.
+The function will throw an error if a stage is skipped,
+the stages have to be run in order ("preburn", "burn", "adapt", "sample").
+More details can be found in the <code>fit</code> help files (<code>?fit</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_emc(
+  emc,
+  stage,
+  stop_criteria,
+  p_accept = 0.8,
+  step_size = 100,
+  verbose = FALSE,
+  verboseProgress = FALSE,
+  fileName = NULL,
+  particles = NULL,
+  particle_factor = 50,
+  cores_per_chain = 1,
+  cores_for_chains = length(emc),
+  max_tries = 20,
+  n_blocks = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>emc</code></td>
+<td>
+<p>An emc object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stage</code></td>
+<td>
+<p>A string. Indicates which stage is to be run, either <code>preburn</code>, <code>burn</code>, <code>adapt</code> or <code>sample</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop_criteria</code></td>
+<td>
+<p>A list. Defines the stopping criteria and for which types of parameters these should hold. See <code>?fit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_accept</code></td>
+<td>
+<p>A double. The target acceptance probability of the MCMC process.
+This fine-tunes the width of the search space to obtain the desired acceptance probability. Defaults to .8</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step_size</code></td>
+<td>
+<p>An integer. After each step, the stopping requirements as
+specified by <code>stop_criteria</code> are checked and proposal distributions are updated. Defaults to 100.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. Whether to print messages between each step with the current status regarding the stop_criteria.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verboseProgress</code></td>
+<td>
+<p>Logical. Whether to print a progress bar within each step or not. Will print one progress bar for each chain and only if cores_for_chains = 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fileName</code></td>
+<td>
+<p>A string. If specified will autosave emc at this location on every iteration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>particles</code></td>
+<td>
+<p>An integer. How many particles to use, default is <code>NULL</code> and <code>particle_factor</code> is used instead.
+If specified will override <code>particle_factor</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>particle_factor</code></td>
+<td>
+<p>An integer. <code>particle_factor</code> multiplied by the square root of the number of sampled parameters determines the number of particles used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores_per_chain</code></td>
+<td>
+<p>An integer. How many cores to use per chain.
+Parallelizes across participant calculations. Only available on Linux or Mac OS.
+For Windows, only parallelization across chains (<code>cores_for_chains</code>) is available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores_for_chains</code></td>
+<td>
+<p>An integer. How many cores to use across chains.
+Defaults to the number of chains. the total number of cores used is equal to <code>cores_per_chain</code> * <code>cores_for_chains</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_tries</code></td>
+<td>
+<p>An integer. How many times should it try to meet the finish
+conditions as specified by stop_criteria? Defaults to 20. max_tries is ignored if the required number of iterations has not been reached yet.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_blocks</code></td>
+<td>
+<p>An integer. Number of blocks. Will block the parameter chains such that they are updated in blocks. This can be helpful in extremely tough models with a large number of parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An emc object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# First define a design
+design_DDMaE &lt;- design(data = forstmann,model=DDM,
+                           formula =list(v~0+S,a~E, t0~1, s~1, Z~1, sv~1, SZ~1),
+                           constants=c(s=log(1)))
+# Then make the emc, we've omitted a prior here for brevity so default priors will be used.
+emc &lt;- make_emc(forstmann, design)
+
+# Now for example we can specify that we only want to run the "preburn" phase
+# for MCMC 200 iterations
+emc &lt;- run_emc(emc, stage = "preburn", stop_criteria = list(iter = 200))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

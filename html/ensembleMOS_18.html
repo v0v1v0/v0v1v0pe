@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>controlMOSgev0</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Control parameters for censored generalized extreme value distribution EMOS models
+</h2>
+
+<h3>Description</h3>
+
+<p>Specifies a list of values controling the censored generalized extreme value distribution
+EMOS fit of ensemble forecasts.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">controlMOSgev0(optimRule = c("Nelder-Mead", "L-BFGS-B", "BFGS"),
+               coefRule = c("square", "none", "positive"),
+               varRule = c("square", "none"),
+               start = list(a = NULL, B = NULL, 
+                            s = NULL, c = NULL, 
+                            d = NULL, q = NULL),
+               maxIter = Inf)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>optimRule</code></td>
+<td>
+
+<p>Numerical optimization method to be supplied to <code>optim</code>. 
+Options are "BFGS" for the Broyden-Fletcher-Goldfarb-Shanno algorithm,
+"L-BFGS-B" for a constrained version thereof, and "Nelder-Mead" for the
+Nelder-Mead method, see optim for details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefRule</code></td>
+<td>
+
+<p>Method to control non-negativity of regression
+estimates. Options are:
+</p>
+
+<ul>
+<li> <p><code>"square"</code> EMOS coefficients are
+parameterized as squares and thus gauranteed to be non-negative.
+</p>
+</li>
+<li> <p><code>"positive"</code> finds non-negative coefficents
+iteratively by setting negative estimates at the current iteration
+to zero. 
+</p>
+</li>
+<li> <p><code>"none"</code> no restriction on the coefficient
+estimates.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varRule</code></td>
+<td>
+
+<p>Method to control non-negativity of the scale parameters.
+Options <code>"square"</code> and <code>"none"</code> are the same as in
+<code>coefRule</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+
+<p>A list of starting parameters, <code>a</code>, <code>B</code>, <code>s</code>, 
+<code>c</code>, <code>d</code> and <code>q</code> specifying initial values for the 
+location, scale and shape coefficients supplied to <code>optim</code>. See details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIter</code></td>
+<td>
+
+<p>An integer specifying the upper limit of the number of iterations
+used to fit the model.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that only minimum CRPS estimation is available and
+chosen by default.
+</p>
+<p>If no value is assigned to an argument, the first entry of 
+the list of possibly choices will be used by default.
+</p>
+<p>Given an ensemble of size <code class="reqn">m</code>: <code class="reqn">X_1, \ldots , X_m</code>, the
+following generalized extreme value distribution EMOS
+model left-censored at 0 is fit by <code>ensembleMOSgev0</code>: 
+</p>
+<p style="text-align: center;"><code class="reqn">Y ~ GEV_0(\mu,\sigma,q)</code>
+</p>
+
+<p>where <code class="reqn">GEV_0</code> denotes the generalized extreme value distribution
+left-censored at zero,
+with location <code class="reqn">\mu</code>, scale <code class="reqn">\sigma</code> and shape <code class="reqn">q</code>. The model is 
+parametrized such that the mean <code class="reqn">m</code> is a linear function
+<code class="reqn">a + b_1 X_1 + \ldots + b_m X_m + s p_0</code>
+of the ensemble forecats, where <code class="reqn">p_0</code> denotes the ratio of ensemble forecasts
+that are exactly 0, and the shape parameter <code class="reqn">\sigma</code> is a linear
+function of the ensemble variance <code class="reqn">c + d MD(X_1,\ldots,X_m)</code>, where
+<code class="reqn">MD(X_1,\ldots,X_m)</code> is Gini's mean difference. 
+See ensembleMOSgev0 for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list whose components are the input arguments and their assigned
+values.
+</p>
+
+
+<h3>References</h3>
+
+<p>M. Scheuerer, Probabilistic quantitative precipitation forecasting using ensemble
+model output statistics. <em>Quarterly Journal of the Royal Meteorological
+Society</em> 140:1086–1096, 2014.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleMOScsg0</code>,
+<code>fitMOScsg0</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("ensBMAtest", package = "ensembleBMA")
+
+ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+obs &lt;- paste("PCP24","obs", sep = ".")
+ens &lt;- paste("PCP24", ensMemNames, sep = ".")
+prcpTestData &lt;- ensembleData(forecasts = ensBMAtest[,ens],
+                             dates = ensBMAtest[,"vdate"],
+                             observations = ensBMAtest[,obs],
+                             station = ensBMAtest[,"station"],
+                             forecastHour = 48,
+                             initializationTime = "00")
+                             
+prcpTestFitGEV0 &lt;- ensembleMOSgev0(prcpTestData, trainingDays = 25,
+                        dates = "2008010100",
+                        control = controlMOSgev0(maxIter = as.integer(100),
+                           optimRule = "Nelder-Mead",
+                           coefRule= "none", 
+                           varRule = "square"))
+</code></pre>
+
+
+</div>

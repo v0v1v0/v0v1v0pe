@@ -1,0 +1,277 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Layer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A multilayer network representation.</h2>
+
+<h3>Description</h3>
+
+<p>A function for specifying the LHS of a multilayer
+(a.k.a. multiplex, a.k.a. multirelational, a.k.a. multivariate)
+ERGM in the framework of Krivitsky et al. (2020).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Layer(..., .symmetric = NULL, .bipartite = NULL, .active = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>layer specification, in one of three formats:
+</p>
+
+<ol>
+<li>
+<p> An (optionally named) list of identically-dimensioned
+networks.
+</p>
+</li>
+<li>
+<p> Several networks as (optionally named) arguments.
+</p>
+</li>
+<li>
+<p> A single network, a character vector, and several optional
+arguments. Then, the layers are values of the named edge
+attributes. If the vector has named elements (e.g.,
+<code>c(a="advice", c="collaboration")</code>), the layers will be
+renamed accordingly. The optional arguments <code>.symmetric</code> and
+<code>.bipartite</code> are then interpreted as described below.
+</p>
+</li>
+</ol>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.symmetric</code></td>
+<td>
+<p>If the layer specification is via a single
+network with edge attributes and the network is directed, an
+optional logical vector to specify which of the layers should be
+treated as undirected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.bipartite</code></td>
+<td>
+<p>If the layer specification is via a single
+network with edge attributes and the network is unipartite, an
+optional integer vector to specify which of the layers should be
+treated as bipartite and how many <code>b1</code> vertices there are.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.active</code></td>
+<td>
+<p>A nodal attribute specification
+(<code>? nodal_attributes</code>) specifying which nodes on each network
+<em>may</em> have ties, or a list with an element for each network. The
+list will be recycled up to the number of layers.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A network object with layer metadata.
+</p>
+
+
+<h3>Specifying models for multilayer network</h3>
+
+<p>In order to fit a model for multilayer
+networks, first use <code>Layer</code> construct an LHS network that
+<code>ergm()</code> will understand as multilayered.
+</p>
+<p>Used in the formula directly, most, but not all, <span class="pkg">ergm</span> terms will
+sum their statistics over the observed layers.
+</p>
+<p>Some terms are <em>layer-aware</em>, however. By convention, layer-aware
+terms have capital <code>L</code> appended to them. For example,
+<code>mutualL</code> is a layer-aware generalization of
+<code>mutual</code>. These terms have one or more explicit
+(usually optional) layer specification arguments. By convention, an
+argument that requires one layer specification is named <code>L=</code> and
+one that requires a list of specifications (constructed by <code>list()</code>
+or <code>c()</code>) is named <code>Ls=</code>; and a specification of the form <code>~.</code> is a
+placeholder for all observed layers.
+</p>
+<p>Operator <code>L(formula, Ls=...)</code> can be used to evaluate
+arbitrary terms in the <code>formula</code> on specified layers.
+</p>
+<p>Layer specification documentation follows.
+</p>
+
+
+<h4>Layer Logic</h4>
+
+<p>Each formula's right-hand side describes an observed layer <em>or</em> some
+"logical" layer, whose ties are a function of corresponding ties in
+observed layers. (Krivitsky et al. 2020)
+</p>
+<p>The observed layers can be referenced either by name or by number (i.e.,
+order in which they were passed to <code>Layer</code>). When referencing by
+number, enclose the number in quotation marks (e.g., "1") or
+backticks (e.g., “<code>1</code>”).
+</p>
+<p>Arithmetical, relational,
+and logical operators can be used to combine them. All
+listed operators are implemented, as well as functions <code>abs</code>,
+<code>round</code>, and <code>sign</code>. Standard
+operator precedence applies, so use of parentheses is
+recommended to ensure the logical expression is what it looks like.
+</p>
+<p><strong>Important:</strong> For performance reasons, <span class="pkg">ergm.multi</span>'s
+Layer Logic implementation uses integer arithmetic. This means, in
+particular, that <code>/</code> will round down instead of returning a
+fraction (as <code>%/%</code> does in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>), and <code>round()</code> function without a
+second argument (which can be negative to round to the nearest 10,
+100, etc.) is not meaningful and will be ignored.
+</p>
+<p>For example, if LHS is <code>Layer(A=nwA, B=nwB)</code>, both <code>~`2`</code> and
+<code>~B</code> refer to <code>nwB</code>, while <code>A&amp;!B</code> refers to a
+“logical” layer that has ties that are in <code>nwA</code> but not in
+<code>nwB</code>.
+</p>
+<p>Transpose function <code>t</code> applied to a directed layer will reverse
+the direction of all relations (transposing the sociomatrix). Unlike the
+others, it can only be used on an observed layer directly. For example,
+<code>~t(`1`)&amp;t(`2`)</code> is valid but <code>~t(`1`&amp;`2`)</code> is not.
+</p>
+<p>At this time, logical expressions that produce complete graphs from empty
+graph inputs (e.g., <code>A==B</code> or <code>!A</code>) are not supported.
+</p>
+
+
+
+<h4>Summing layers</h4>
+
+<p>Some of the terms that call for a list of layers (i.e., have <code>Ls=</code>
+arguments) will sum the statistic over the layers. For example,
+<code>Layer(nw1,nw2)~L(~edges, c(~`1`,~(`2`&amp;!`1`)))</code> produces the
+number of edges in layer 1 plus the number of edges in layer 2 but
+not in layer 1.
+</p>
+<p>For these formulas, one can specify the layer's weight on its left-handside.
+For example, <code>Layer(nw1,nw2)~L(~edges, c(3~`1`,-1~(`2`&amp;!`1`)))</code> will
+produce three times the number of edges in layer 1, minus the number of
+edges in layer 2 but not in layer 1.
+</p>
+
+
+
+<h3>Note</h3>
+
+<p>The resulting network will be the "least common denominator"
+network: if not all layers have the same bipartedness, all layers
+will appear as unipartite to the statistics, and if any are
+directed, all will be. However, certain operator terms, particularly <code>Symmetrize()</code> and <code>S()</code>, can be
+used to construct a bipartite subgraph of a unipartite graph or
+change directedness.
+</p>
+
+
+<h3>References</h3>
+
+<p>Krivitsky PN, Koehly LM, Marcum CS (2020).
+“Exponential-family Random Graph Models for Multi-layer Networks.”
+<em>Psychometrika</em>, <b>85</b>(3), 630–659.
+<a href="https://doi.org/10.1007/s11336-020-09720-7">doi:10.1007/s11336-020-09720-7</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Help on model specification for specific terms.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(florentine)
+
+# Method 1: list of networks
+flo &lt;- Layer(list(m = flomarriage, b = flobusiness))
+ergm(flo ~ L(~edges, ~m)+L(~edges, ~b))
+
+# Method 2: networks as arguments
+flo &lt;- Layer(m = flomarriage, b = flobusiness)
+ergm(flo ~ L(~edges, ~m)+L(~edges, ~b))
+
+# Method 3: edge attributes (also illustrating renaming):
+flo &lt;- flomarriage | flobusiness
+flo[,, names.eval="marriage"] &lt;- as.matrix(flomarriage)
+flo[,, names.eval="business"] &lt;- as.matrix(flobusiness)
+flo # edge attributes
+flo &lt;- Layer(flo, c(m="marriage", b="business"))
+ergm(flo ~ L(~edges, ~m)+L(~edges, ~b))
+
+### Specifying modes and mixed bipartitedness
+
+# Suppose we have a two-mode network with 5 nodes on Mode 1 and 15
+# on Mode 2, and suppose that we observe two layers, one only among
+# actors of Mode 1 and the other bipartite between Modes 1 and 2.
+
+# Construct the two layers' networks:
+nw1 &lt;- network.initialize(20, dir=FALSE)
+nw12 &lt;- network.initialize(20, dir=FALSE, bipartite=5)
+nw1 %v% "mode" &lt;- rep(1:2,c(5,15))
+
+# For testing: the maximal set of edges for each type of network:
+nw1[1:5,1:5] &lt;- 1
+nw12[1:5,6:20] &lt;- 1
+
+# The .active argument specifies the following:
+# * nw1's vertices are only active if their mode=1 (i.e., 1-2, 2-1,
+#   and 2-2 can't have edges).
+# * nw12's vertices are all active, but the network is bipartite,
+#   so constraints will be adjusted automatically.
+lnw &lt;- Layer(nw1, nw12, .active=list(~mode==1, ~TRUE))
+
+summary(lnw~
+edges+ # 5*4/2+5*15 = 10+75 = 85
+L(~edges,~`1`)+ # 5*4/2 = 10
+L(~edges,~`2`)+ # 5*15 = 75
+L(~edges,~(`1`|`2`))+ # This logical layer has contents of both, so also 85.
+L(~edges,~(`1`&amp;`2`)) # There is no overlap between the two layers, so 0.
+)
+
+# Layer-aware terms can be used:
+
+nw1[,] &lt;-0
+nw1[1,2:3] &lt;- 1
+nw1[2,3] &lt;- 1
+nw12[,] &lt;- 0
+nw12[1,6:7] &lt;- 1
+nw12[2,6:7] &lt;- 1
+
+lnw &lt;- Layer(nw1, nw12, .active=list(~mode==1,~TRUE))
+
+summary(lnw~L(~triangles, ~`1`)+ # 1-2-3 triangle.
+  L(~triangles, ~`1`|`2`)+ # 1-2-3, 1-2-6, 1-2-7 triangles
+  dgwespL(L.base=~`1`, Ls.path=list(~`2`,~`2`)) # 1-2-6 and 1-2-7 only
+)
+
+# Because the layers are represented as a block-diagonal matrix,
+# this will only count triangles entirely contained within a single
+# layer, i.e., 1-2-3:
+summary(lnw~triangles)
+
+# If you need to evaluate bipartite-only statistics on the second
+# layer, you need to use the S() operator to select the bipartite
+# view:
+summary(lnw~L(~S(~b1degree(1:3)+b2degree(1:3),1:5~6:20), ~`2`))
+
+</code></pre>
+
+
+</div>

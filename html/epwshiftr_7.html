@@ -1,0 +1,264 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>extract_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract data</h2>
+
+<h3>Description</h3>
+
+<p><code>extract_data()</code> takes an <code>epw_cmip6_coord</code> object generated using
+<code>match_coord()</code> and extracts CMIP6 data using the coordinates and years of
+interest specified.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">extract_data(
+  coord,
+  years = NULL,
+  unit = FALSE,
+  out_dir = NULL,
+  by = NULL,
+  keep = is.null(out_dir),
+  compress = 100
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>coord</code></td>
+<td>
+<p>An <code>epw_cmip6_coord</code> object created using <code>match_coord()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>years</code></td>
+<td>
+<p>An integer vector indicating the target years to be included in
+the data file. All other years will be excluded. If <code>NULL</code>, no
+subsetting on years will be performed. Default: <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unit</code></td>
+<td>
+<p>If <code>TRUE</code>, units will be added to values using
+<code>units::set_units()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out_dir</code></td>
+<td>
+<p>The directory to save extracted data using <code>fst::write_fst()</code>.
+If <code>NULL</code>, all data will be kept in memory by default. Default: <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>A character vector of variable names used to split data
+during extraction. Should be a subset of:
+</p>
+
+<ul>
+<li> <p><code>"experiment"</code>: root experiment identifiers
+</p>
+</li>
+<li> <p><code>"source"</code>: model identifiers
+</p>
+</li>
+<li> <p><code>"variable"</code>: variable identifiers
+</p>
+</li>
+<li> <p><code>"activity"</code>: activity identifiers
+</p>
+</li>
+<li> <p><code>"frequency"</code>: sampling frequency
+</p>
+</li>
+<li> <p><code>"variant"</code>: variant label
+</p>
+</li>
+<li> <p><code>"resolution"</code>: approximate horizontal resolution
+</p>
+</li>
+</ul>
+<p>If <code>NULL</code> and <code>out_dir</code> is given, file name <code>data.fst</code> will be used. Default:
+<code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+<p>Whether keep extracted data in memory. Default: <code>TRUE</code> if
+<code>out_dir</code> is <code>NULL</code>, and <code>FALSE</code> otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compress</code></td>
+<td>
+<p>A single integer in the range 0 to 100, indicating the amount
+of compression to use. Lower values mean larger file sizes. Default:
+<code>100</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>extract_data()</code> supports common calendars, including <code style="white-space: pre;">⁠365_day⁠</code> and
+<code style="white-space: pre;">⁠360_day⁠</code>, thanks to the PCICt package.
+</p>
+<p><code>extract_data()</code> uses future.apply
+underneath. You can use your preferable future backend to
+speed up data extraction in parallel. By default, <code>extract_data()</code> uses
+<code>future::sequential</code> backend, which runs things in sequential.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>epw_cmip6_data</code> object, which is basically a list of 3 elements:
+</p>
+
+<ul>
+<li> <p><code>epw</code>: An eplusr::Epw object whose longitude and latitude are used to
+extract CMIP6 data. It is the same object as created in <code>match_coord()</code>
+</p>
+</li>
+<li> <p><code>meta</code>: A list containing basic metadata of input EPW, including <code>city</code>,
+<code>state_province</code>, <code>country</code>, <code>latitude</code> and <code>longitude</code>.
+</p>
+</li>
+<li> <p><code>data</code>: An empty <code>data.table::data.table()</code> if <code>keep</code> is <code>FALSE</code> or a
+<code>data.table::data.table()</code> of 14 columns if <code>keep</code> is <code>TRUE</code>:</p>
+
+<table>
+<tr>
+<td style="text-align: right;">
+   No. </td>
+<td style="text-align: left;"> Column </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   1 </td>
+<td style="text-align: left;"> <code>activity_drs</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Activity DRS (Data Reference Syntax) </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   2 </td>
+<td style="text-align: left;"> <code>institution_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Institution identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   3 </td>
+<td style="text-align: left;"> <code>source_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Model identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   4 </td>
+<td style="text-align: left;"> <code>experiment_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Root experiment identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   5 </td>
+<td style="text-align: left;"> <code>member_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> A compound construction from <code>sub_experiment_id</code> and <code>variant_label</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   6 </td>
+<td style="text-align: left;"> <code>table_id</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Table identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   7 </td>
+<td style="text-align: left;"> <code>lon</code> </td>
+<td style="text-align: left;"> Double </td>
+<td style="text-align: left;"> Longitude of extracted location </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   8 </td>
+<td style="text-align: left;"> <code>lat</code> </td>
+<td style="text-align: left;"> Double </td>
+<td style="text-align: left;"> Latitude of extracted location </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   9 </td>
+<td style="text-align: left;"> <code>dist</code> </td>
+<td style="text-align: left;"> Double </td>
+<td style="text-align: left;"> The spherical distance in km between EPW location and grid coordinates </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   10 </td>
+<td style="text-align: left;"> <code>datetime</code> </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> Datetime for the predicted value </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   11 </td>
+<td style="text-align: left;"> <code>variable</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Variable identifier </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   12 </td>
+<td style="text-align: left;"> <code>description</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Variable long name </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   13 </td>
+<td style="text-align: left;"> <code>units</code> </td>
+<td style="text-align: left;"> Character </td>
+<td style="text-align: left;"> Units of variable </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+   14 </td>
+<td style="text-align: left;"> <code>value</code> </td>
+<td style="text-align: left;"> Double </td>
+<td style="text-align: left;"> The actual predicted value </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+</td>
+</tr>
+</table>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+coord &lt;- match_coord("path_to_an_EPW")
+extract_data(coord, years = 2030:2060)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

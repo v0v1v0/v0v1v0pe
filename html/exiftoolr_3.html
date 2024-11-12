@@ -1,0 +1,139 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exif_read</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read EXIF and other metadata from files</h2>
+
+<h3>Description</h3>
+
+<p>Reads EXIF and other metadata into a <code>data.frame</code> by calling Phil
+Harvey's ExifTool command-line application.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">exif_read(
+  path,
+  tags = NULL,
+  recursive = FALSE,
+  args = NULL,
+  quiet = TRUE,
+  pipeline = c("json", "csv")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>A vector of filenames.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tags</code></td>
+<td>
+<p>A vector of tags to output. It is a good idea to specify this
+when reading large numbers of files, as it decreases the output overhead
+significantly. Spaces will be stripped in the output data frame. This
+parameter is not case-sensitive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recursive</code></td>
+<td>
+<p><code>TRUE</code> to pass the <code>"-r"</code> option to ExifTool.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args</code></td>
+<td>
+<p>Additional arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>Use <code>FALSE</code> to display diagnostic information. Default
+value is <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pipeline</code></td>
+<td>
+<p>One of <code>"json"</code> (the default) or <code>"csv"</code>. Controls
+whether the exiftool executable, behind the scenes, extracts metadata
+into a JSON data structure or a tabular csv. The JSON pipeline works
+well in most cases, but (as documented at
+<a href="https://exiftool.org/exiftool_pod.html">https://exiftool.org/exiftool_pod.html</a>) does not properly handle
+non-UTF-8 character sets. If the metadata fields include characters that
+are not encoded using UTF-8 and that need to be handled by setting the
+<code>"-charset"</code> option, use the <code>"csv"</code> pipeline as demonstrated
+in the second example below.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>From the <a href="https://exiftool.org">ExifTool website</a>:
+"ExifTool is a platform-independent Perl library plus a command-line
+application for reading, writing and editing meta information in a wide
+variety of files. ExifTool supports many different metadata formats
+including EXIF, GPS, IPTC, XMP, JFIF, GeoTIFF, ICC Profile, Photoshop IRB,
+FlashPix, AFCP and ID3, as well as the maker notes of many digital cameras
+by Canon, Casio, DJI, FLIR, FujiFilm, GE, GoPro, HP, JVC/Victor, Kodak,
+Leaf, Minolta/Konica-Minolta, Motorola, Nikon, Nintendo, Olympus/Epson,
+Panasonic/Leica, Pentax/Asahi, Phase One, Reconyx, Ricoh, Samsung, Sanyo,
+Sigma/Foveon and Sony."
+</p>
+<p>For more information, see the <a href="https://exiftool.org">ExifTool
+website</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame of class <code>"exiftoolr"</code> with one row per file
+processed. The first column, named <code>"SourceFile"</code> gives the name(s)
+of the processed files. Subsequent columns contain info from the tags
+read from those files.
+</p>
+<p>Note that binary tags such as thumbnails are loaded as
+<a href="https://en.wikipedia.org/wiki/Base64">base64-encoded strings</a> that
+start with <code>"base64:"</code>. Although these are truncated in the printed
+representation of the <code>data.frame</code> returned by the function, they
+are left unaltered in the <code>data.frame</code> itself.
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://exiftool.org">https://exiftool.org</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+files &lt;- dir(system.file(package = "exiftoolr", "images"),
+             pattern = "LaSals|Lizard", full.names = TRUE)
+exif_read(files)
+exif_read(files, tags = c("filename", "imagesize"))
+
+## Use pipeline="csv" for images needing explicit specification
+## and proper handling of a non-default character sets
+img_file &lt;- system.file(package = "exiftoolr", "images", "QS_Hongg.jpg")
+args &lt;- c("-charset", "exiftool=cp1250")
+res &lt;- exif_read(img_file, args = args, pipeline = "csv")
+res[["City"]]  ## "Zurich", with an umlaut over the "u"
+
+## End(Not run)
+</code></pre>
+
+
+</div>

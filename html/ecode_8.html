@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eode_get_cripoi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Find Equilibrium Point</h2>
+
+<h3>Description</h3>
+
+<p>Finds an equilibrium point (or critical point) of an ODE system based on
+Newton iteration method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eode_get_cripoi(
+  x,
+  init_value,
+  eps = 0.001,
+  max_step = 0.01,
+  method = c("Newton", "GradDesc"),
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Object of class "<code>eode</code>" representing an ODE system.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_value</code></td>
+<td>
+<p>An object of class "<code>pp</code>" representing a phase point
+giving start estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>Precision for the stopping criterion. Iteration will stop after
+the movement of the phase point in a single step is smaller than <code>eps</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_step</code></td>
+<td>
+<p>Maximum number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>one of "Newton", "GradDesc"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical, whether to print the iteration process.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class "<code>pp</code>" representing an equilibrium point found.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Example 1: Lotka-Volterra competition model
+eq1 &lt;- function(x, y, r1 = 1, a11 = 1, a12 = 2) (r1 - a11 * x - a12 * y) * x
+eq2 &lt;- function(x, y, r2 = 1, a21 = 2, a22 = 1) (r2 - a21 * x - a22 * y) * y
+x &lt;- eode(dxdt = eq1, dydt = eq2)
+eode_get_cripoi(x, init_value = pp(list(x = 0.5, y = 0.5)))
+
+## Example 2: Susceptible-infected model
+dX_Cdt &lt;- function(X_C, Y_C, X_A, Y_A, nu = 0.15, beta = 0.1, mu = 0.15, g = 0.04) {
+  nu * (X_A + Y_A) - beta * X_C * (Y_C + Y_A) - (mu + g) * X_C
+}
+
+dY_Cdt &lt;- function(X_C, Y_C, Y_A, beta = 0.1, mu = 0.15, g = 0.04, rho = 0.2) {
+  beta * X_C * (Y_C + Y_A) - (mu + g + rho) * Y_C
+}
+
+dX_Adt &lt;- function(X_C, Y_C, X_A, Y_A, beta = 0.1, g = 0.04) {
+  g * X_C - beta * X_A * (Y_C + Y_A)
+}
+
+dY_Adt &lt;- function(X_A, Y_C, Y_A, beta = 0.1, g = 0.04, rho = 0.2) {
+  beta * X_A * (Y_C + Y_A) + g * Y_C - rho * Y_A
+}
+
+x &lt;- eode(
+  dX_Cdt = dX_Cdt, dY_Cdt = dY_Cdt, dX_Adt = dX_Adt, dY_Adt = dY_Adt,
+  constraint = c("X_C&gt;=0", "Y_C&gt;=0", "X_A&gt;=0", "Y_A&gt;=0")
+)
+eode_get_cripoi(x, init_value = pp(list(X_C = 1, Y_C = 1, X_A = 1, Y_A = 1)))
+</code></pre>
+
+
+</div>

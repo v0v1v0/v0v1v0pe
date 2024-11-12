@@ -1,0 +1,337 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>binIRT</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Two-parameter Binary IRT estimation via EM </h2>
+
+<h3>Description</h3>
+
+<p><code>binaryIRT</code> estimates a binary IRT model with two response categories. Estimation
+is conducted using the EM algorithm described in the reference paper below. The algorithm will
+produce point estimates that are comparable to those of <code>ideal</code>,
+but will do so much more rapidly and also scale better with larger data sets.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  binIRT(.rc, .starts = NULL, .priors = NULL, .D = 1L, .control = NULL,
+  .anchor_subject = NULL, .anchor_outcomes = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.rc</code></td>
+<td>
+<p>  a list object, in which .rc$votes is a matrix of numeric values containing the data
+to be scaled.  Respondents are assumed to be on rows, and items assumed to be on columns, so the
+matrix is assumed to be of dimension (N x J).  For each item, ‘1’, and ‘-1’ represent different
+responses (i.e. yes or no votes) with ‘0’ as a missing data record.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.starts</code></td>
+<td>
+<p> a list containing several matrices of starting values for the parameters.
+The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>alpha</code></dt>
+<dd>
+<p>  A (J x 1) matrix of starting values for the item difficulty parameter <code class="reqn">alpha</code>.</p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x D) matrix of starting values for the item discrimination parameter <code class="reqn">\beta</code>.</p>
+</dd>
+<dt><code>x</code></dt>
+<dd>
+<p>  An (N x D) matrix of starting values for the respondent ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.priors</code></td>
+<td>
+<p>  list, containing several matrices of starting values for the parameters.
+The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>x$mu</code></dt>
+<dd>
+<p>  A (D x D) prior means matrix for respondent ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+<dt><code>x$sigma</code></dt>
+<dd>
+<p>  A (D x D) prior covariance matrix for respondent ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+<dt><code>beta$mu</code></dt>
+<dd>
+<p>  A (D+1 x 1) prior means matrix for <code class="reqn">\alpha_j</code> and <code class="reqn">\beta_j</code>.</p>
+</dd>
+<dt><code>beta$sigma</code></dt>
+<dd>
+<p>  A (D+1 x D+1) prior covariance matrix for <code class="reqn">\alpha_j</code> and <code class="reqn">\beta_j</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.D</code></td>
+<td>
+<p> integer, indicates number of dimensions to estimate. Only a
+1 dimension is currently supported. If a higher dimensional model is
+requested, <code>binIRT</code> exits with an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.control</code></td>
+<td>
+<p>list, specifying some control functions for estimation.  Options include the following:
+</p>
+
+<dl>
+<dt><code>threads</code></dt>
+<dd>
+<p>  integer, indicating number of cores to use. Default is to use a single core, but more can be
+supported if more speed is desired.</p>
+</dd>
+<dt><code>verbose</code></dt>
+<dd>
+<p>  boolean, indicating whether output during estimation should be verbose or not.  Set FALSE by default.</p>
+</dd>
+<dt><code>thresh</code></dt>
+<dd>
+<p>  numeric. Algorithm will run until all
+parameters have a correlation greater than (1 - threshold) across
+consecutive iterations. Set at 1e-6 by default.</p>
+</dd>
+<dt><code>maxit</code></dt>
+<dd>
+<p>  integer. Sets the maximum number of iterations the algorithm can run. Set at 500 by default.</p>
+</dd>
+<dt><code>checkfreq</code></dt>
+<dd>
+<p>  integer. Sets frequency of verbose output by number of iterations. Set at 50 by default.</p>
+</dd>
+<dt><code>asEM</code></dt>
+<dd>
+<p>  boolean. Sets EM or variational EM algorithm. Set is TRUE.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.anchor_subject</code></td>
+<td>
+<p> integer, the index of the subect to be used in
+anchoring the orientation/polarity of the underlying latent
+dimensions. Defaults to <code>NULL</code> and no anchoring is done.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.anchor_outcomes</code></td>
+<td>
+<p> logical, should an outcomes-based metric be
+used to anchor the orientation of the underlying space. The
+outcomes-based anchoring uses a model-free/non-parametric
+approximation to quantify each item's difficulty and each subject's
+ability. The post-processing then rotates the model-dependent results
+to match the model-free polarity. Defaults to <code>FALSE</code> and no
+anchoring is done.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>binIRT</code>.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>means</code></td>
+<td>
+<p> list, containing several matrices of point estimates for the parameters corresponding
+to the inputs for the priors.  The list should contain the following matrices.
+</p>
+
+<dl>
+<dt><code>x</code></dt>
+<dd>
+<p>  A (N x 1) matrix of point estimates for the respondent ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>   A (J x D+1 ) matrix of point estimates for the item parameters <code class="reqn">\alpha</code> and <code class="reqn">\beta</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars</code></td>
+<td>
+<p> list, containing several matrices of variance estimates for parameters corresponding
+to the inputs for the priors.  Note that these variances are those recovered via variational approximation,
+and in most cases they are known to be far too small and generally unusable.  Better estimates of variances
+can be obtained manually via the parametric bootstrap.  The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>x</code></dt>
+<dd>
+<p>  A (N x 1) matrix of variances for the respondent ideal points <code class="reqn">x_i</code>.</p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x D+1 ) matrix of variances for the item parameters <code class="reqn">\alpha</code> and <code class="reqn">\beta</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runtime</code></td>
+<td>
+<p> A list of fit results, with elements listed as follows:</p>
+</td>
+</tr>
+</table>
+<dl>
+<dt><code>iters</code></dt>
+<dd>
+<p>  integer, number of iterations run.</p>
+</dd>
+<dt><code>conv</code></dt>
+<dd>
+<p>  integer, convergence flag. Will return 1 if threshold reached, and 0 if maximum number of iterations reached.</p>
+</dd>
+<dt><code>threads</code></dt>
+<dd>
+<p>  integer, number of threads used to estimated model.</p>
+</dd>
+<dt><code>tolerance</code></dt>
+<dd>
+<p>  numeric, tolerance threshold for convergence.  Identical to thresh argument in input to .control list.</p>
+</dd>
+</dl>
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p> Number of respondents in estimation, should correspond to number of rows in roll call matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>j</code></td>
+<td>
+<p> Number of items in estimation, should correspond to number of columns in roll call matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p> Number of dimensions in estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p> Function call used to generate output.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Kosuke Imai <a href="mailto:imai@harvard.edu">imai@harvard.edu</a>
+</p>
+<p>James Lo <a href="mailto:lojames@usc.edu">lojames@usc.edu</a>
+</p>
+<p>Jonathan Olmsted <a href="mailto:jpolmsted@gmail.com">jpolmsted@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Kosuke Imai, James Lo, and Jonathan Olmsted “Fast Estimation of Ideal Points with Massive Data.”
+Working Paper. American Political Science Review, Vol. 110, No. 4 (December), pp. 631-656.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>'convertRC', 'makePriors', 'getStarts'.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Data from 109th US Senate
+data(s109)
+
+## Convert data and make starts/priors for estimation
+rc &lt;- convertRC(s109)
+p &lt;- makePriors(rc$n, rc$m, 1)
+s &lt;- getStarts(rc$n, rc$m, 1)
+
+## Conduct estimates
+lout &lt;- binIRT(.rc = rc,
+                .starts = s,
+                .priors = p,
+                .control = {
+                    list(threads = 1,
+                         verbose = FALSE,
+                         thresh = 1e-6
+                         )
+                }
+                )
+
+## Look at first 10 ideal point estimates
+lout$means$x[1:10]
+
+
+lout2 &lt;- binIRT(.rc = rc,
+                .starts = s,
+                .priors = p,
+                .control = {
+                    list(threads = 1,
+                         verbose = FALSE,
+                         thresh = 1e-6
+                         )
+                },
+                .anchor_subject = 2
+                )
+                                        # Rotates so that Sen. Sessions (R AL)
+                                        # has more of the estimated trait
+
+lout3 &lt;- binIRT(.rc = rc,
+                .starts = s,
+                .priors = p,
+                .control = {
+                    list(threads = 1,
+                         verbose = FALSE,
+                         thresh = 1e-6
+                         )
+                },
+                .anchor_subject = 10
+                )
+                                        # Rotates so that Sen. Boxer (D CA)
+                                        # has more of the estimated trait
+
+cor(lout2$means$x[, 1],
+    lout3$means$x[, 1]
+    )
+                                        # = -1 --&gt; same numbers, flipped
+                                        # orientation
+
+</code></pre>
+
+
+</div>

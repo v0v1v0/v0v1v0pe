@@ -1,0 +1,149 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>geoFoldContrast</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Assign geographically-distinct k-folds to background/absence sites</h2>
+
+<h3>Description</h3>
+
+<p>This function generates geographically-distinct cross-validation folds, or "geo-folds" of background or absence sites (i.e., "contrast" sites). Each contrast site is assigned to a fold based on the fold of the presence site that is closest. Typically, this function is run after <code>geoFold</code> is run to assign presences to folds.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">geoFoldContrast(
+  contrast,
+  pres,
+  presFolds,
+  contrastLongLat = 1:2,
+  presLongLat = 1:2,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+<p>A "spatial points" object representing contrast sites:
+</p>
+
+<ul>
+<li>
+<p> A <code>SpatVector</code> or <code>sf</code> vector with points
+</p>
+</li>
+<li>
+<p> A <code>data.frame</code> or <code>matrix</code>: Points will be assumed to have the WGS84 coordinate system (i.e., unprojected), and <code>contrastLongLat</code> should denote the columns with coordinates.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pres</code></td>
+<td>
+<p>A "spatial points" object representing presence sites:
+</p>
+
+<ul>
+<li>
+<p> A <code>SpatVector</code> or <code>sf</code> vector with points
+</p>
+</li>
+<li>
+<p> A <code>data.frame</code> or <code>matrix</code>: Points will be assumed to have the WGS84 coordinate system (i.e., unprojected), and <code>presLongLat</code> should denote the columns with coordinates.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>presFolds</code></td>
+<td>
+<p>Numeric vector: These provide the folds to which <code>pres</code> are assigned. There must be one value per point in <code>pres</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrastLongLat, presLongLat</code></td>
+<td>
+<p>Character or integer vector: A character or integer vector specifying the columns in <code>contrast</code> and <code>pres</code> corresponding to longitude and latitude (in that order). The default is to assume that the first two columns in <code>contrast</code> represent coordinates. These are ignored if <code>contrast</code> or <code>pres</code> are a <code>SpatVector</code> or an <code>sf</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments (unused)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A vector of integers the same length as the number of points in <code>contrast</code>. Each integer indicates which fold a point in <code>contrast</code> belongs to.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>geoFold</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(sf)
+library(terra)
+
+# lemur occurrence data
+data(mad0)
+data(lemurs)
+crs &lt;- getCRS('WGS84')
+ll &lt;- c('longitude', 'latitude')
+
+# use occurrences of all species... easier to see on map
+occs &lt;- st_as_sf(lemurs, coords = ll, crs = getCRS('WGS84'))
+
+# create 100 background points
+mad0 &lt;- vect(mad0)
+bg &lt;- spatSample(mad0, 100)
+
+### assign 3 folds to occurrences and to background sites
+k &lt;- 3
+minIn &lt;- floor(nrow(occs) / k) # maximally spread between folds
+
+presFolds &lt;- geoFold(occs, k = k, minIn = minIn)
+bgFolds &lt;- geoFoldContrast(bg, pres = occs, presFolds = presFolds)
+
+# number of sites per fold
+table(presFolds)
+table(bgFolds)
+
+# map
+plot(mad0, border = 'gray', main = paste(k, 'geo-folds'))
+plot(bg, pch = 3, col = bgFolds + 1, add = TRUE)
+plot(st_geometry(occs), pch = 20 + presFolds, bg = presFolds + 1, add = TRUE)
+
+legend(
+	'bottomright',
+	legend = c(
+		'presence fold 1',
+		'presence fold 2',
+		'presence fold 3',
+		'background fold 1',
+		'background fold 2',
+		'background fold 3'
+	),
+	pch = c(21, 22, 23, 3, 3),
+	col = c(rep('black', 3), 2, 3),
+	pt.bg = c(2, 3, 4, NA, NA)
+)
+</code></pre>
+
+
+</div>

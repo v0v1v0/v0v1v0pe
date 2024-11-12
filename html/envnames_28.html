@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_obj_value</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Return the value of the object at a given parent generation leading to the specified object</h2>
+
+<h3>Description</h3>
+
+<p>This function is mostly useful in debugging contexts to query the value of a variable in
+specific environments of the calling stack.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_obj_value(obj, n = 0, silent = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>object whose value should be returned. The object can be passed either as a variable name or
+as a string representing the object whose value is of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>number of parent generations to go back to retrieve the value of the object that leads to <code>obj</code>
+in the function calling chain. See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>when <code>FALSE</code>, the names of the environments and objects in those environments are printed,
+as those environments are traversed by this function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The result of this function is similar to using <code>eval()</code> or <code>evalq()</code> but not
+quite the same. Refer to the Details and Examples sections for explantion and illustration
+of the differences.
+</p>
+<p>The purpose of this function is to get the value of object <code>obj</code> in a given parent environment.
+</p>
+<p>Note that conceptually this is NOT the same as calling <code>evalq(obj, parent.frame(n))</code>,
+because of the following:
+</p>
+
+<ul>
+<li> <p><code>evalq()</code> evaluates the object named <code>obj</code> in the environment that is at the
+<code>n</code>-th parent generation. (Note the use of <code>evalq()</code> and not <code>eval()</code> because 
+the latter evaluates the object at the calling environment first, before passing it
+for evaluation to the given parent environment.)
+</p>
+</li>
+<li> <p><code>get_obj_value()</code> first looks for the object in the <code>n</code>-th parent generation
+that <em>led</em> to the <code>obj</code> object in the calling environment (i.e. the environment
+that calls <code>get_obj_value()</code> and only <em>then</em> evaluates it at the <code>n</code>-th parent generation.
+</p>
+</li>
+</ul>
+<p>The job performed by <code>get_obj_value()</code> is done as follows:
+at each parent generation, there is a pair of "object name" &lt;-&gt; "object value".
+The task of this function is to retrieve the object name at a given parent generation
+and then its value based on the "path" (of variable names) that leads to the variable
+in the function that calls <code>get_obj_value()</code>.
+</p>
+<p>In practice though the result of <code>get_obj_value()</code> is the same as the value
+of the queried object at the calling function, since the value of the variables leading
+to that object are all the same through the calling stack.
+But using <code>get_obj_value()</code> can provide additional information if we set parameter
+<code>silent=FALSE</code>: in such case the function shows the name of the different
+variables that lead to the queried object in the calling function. An example is given
+in the Examples section.
+</p>
+<p>The function can also be used to query the value of any object in a particular environment,
+i.e. not necessarily the value of an object <em>leading</em> to an object existing in
+the calling environment. This can be done somewhat with less writing than using <code>evalq()</code>.
+</p>
+<p>If the <code>obj</code> is given as a string, it also evaluates to the object value when an object
+with that name exists in the given parent generation. However, the object should be passed
+with no explicit reference to the environment where it is defined.
+For instance we should use <code>with(env1, get_obj_value("z"))</code> and
+<em>not</em> <code>get_obj_value("env1$z")</code>, which returns simply <code>"env1$z"</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The value of the object in the <code>n</code>-th parent generation from the calling
+environment, as described in the Details section.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>get_obj_name()</code> which returns the <em>name</em> of the object in the calling stack
+leading to the queried object in the calling environment.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example of using get_obj_value() from within a function
+# The value returned by get_obj_value() is compared to the values returned by eval() and evalq()
+compareResultsOfDiferentEvaluations &lt;- function(x) {
+  cat("Looking at the path of variables leading to parameter 'x':\n")
+  xval = get_obj_value(x, n=1, silent=FALSE)
+  cat("Value of 'x' at parent generation 1 using get_obj_value():", xval, "\n")
+  cat("Value of 'x' at parent generation 1 using eval():", eval(x, parent.frame(1)), "\n")
+  cat("Value of 'x' at parent generation 1 using evalq():", evalq(x, parent.frame(1)), "\n")
+}
+g &lt;- function(y) {
+  x = 2
+  compareResultsOfDiferentEvaluations(y)
+}
+z = 3
+g(z) 
+   ## Note how the result of get_obj_value() is the same as eval() (=3)
+   ## but not the same as evalq() (=2) because the queried object (x)
+   ## exists in the queried parent generation (g()) with value 2.
+   ## The results of eval() and get_obj_value() are the same but
+   ## obtained in two different ways:
+   ## - eval() returns the value of 'x' in the calling function (even though
+   ## the evaluation environment is parent.frame(1), because eval() first
+   ## evaluates the object in the calling environment)
+   ## - get_obj_value() returns the value of 'y' in the parent generation
+   ## of the calling function (which is the execution environment of g())
+   ## since 'y' is the variable leading to variable 'x' in the calling function.
+   ##
+   ## NOTE however, that using get_obj_value() does NOT provide any new
+   ## information to the result of eval(), since the variable values are
+   ## transmitted UNTOUCHED through the different generations in the
+   ## function calling chain.
+   ## FURTHERMORE, the same value is returned by simply referencing 'x'
+   ## so we don't need neither the use of get_obj_value() nor eval().
+   ## The only interesting result would be provided by the evalq() call
+   ## which looks for variable 'x' at the parent generation and evaluates it.
+
+# Example of calling get_obj_value() from outside a function
+x = 3
+v = c(4, 2)
+get_obj_value(x)         # 3
+get_obj_value("x")       # 3
+get_obj_value(3)         # 3
+get_obj_value(v[1])      # 4
+
+</code></pre>
+
+
+</div>

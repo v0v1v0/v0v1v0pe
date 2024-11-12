@@ -1,0 +1,210 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>comprehension</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Vectorized Comprehension in R</h2>
+
+<h3>Description</h3>
+
+<p>Functions that provide Python-style list (and related) comprehension.
+Comprehensions convert <code>for</code> loops into <code>lapply</code> functions
+before evaluation. Support for multiple variables, name assignment, nested loops,
+custom iterators, if-else statements, and variety of return types included.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Comp(map = lapply, fun = NULL)
+
+List(loop, clust = NULL, fun = NULL)
+
+Env(loop, clust = NULL)
+
+Vec(loop, clust = NULL, drop.names = FALSE)
+
+Num(loop, clust = NULL, drop.names = FALSE)
+
+Chr(loop, clust = NULL, drop.names = FALSE)
+
+Logical(loop, clust = NULL, drop.names = FALSE)
+
+Mat(loop, clust = NULL, by.col = TRUE)
+
+DF(loop, clust = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>map</code></td>
+<td>
+<p>function, such as <code>lapply</code>, that is used for the comprehension</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>function to be called on result after comprehension</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loop</code></td>
+<td>
+<p>a <code>for</code> loop with format: <code>for (var in seq) &lt;name =&gt; &lt;if (cond)&gt; expr</code>. See "details" below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clust</code></td>
+<td>
+<p>cluster to use for <code>parallel</code> computations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop.names</code></td>
+<td>
+<p>logical; should names be dropped after conversion? Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by.col</code></td>
+<td>
+<p>should comprehension on matrix group by columns or rows? Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The comprehension functions parse an R loop expression into <code>lapply</code>
+functions to allow for more readable code and easy creation and conversion
+of vectors. The general syntax for a loop expression is as follows:
+</p>
+<p><code>for (var in seq) &lt;name=&gt; &lt;if (cond)&gt; expr</code>
+</p>
+<p>where <code>&lt;...&gt;</code> denotes optional statements. The <code>seq</code> can be any R object:
+a list, matrix, data.frame, environment, function, etc. The function <code>iter</code>
+is called on the <code>seq</code>. So the behavior can be easily described for custom
+classes or objects. See <code>helpers</code> for functions like <code>zip</code>
+that can be used with <code>seq</code>.
+</p>
+<p>Multiple variables can be used in <code>var</code> by separating the names with a period ".".
+For example, <code>i.j</code> is equivalent looping with variables <code>i</code> and <code>j</code>.
+The downside is that periods cannot be used in the <code>var</code> name. When multiple variables
+are used, the object received from the sequence at each iteration is split and its
+elements assigned in order to each of the variables. If the <code>var</code> is <code>i.j</code> and
+the object received in the iteration was <code>c(2,4,6)</code>, then <code>i=2</code>, <code>j=4</code>,
+and 6 would not be assigned. Since variables are split on periods, <code>i..j</code> could
+be used to assign the first and third elements, or <code>.i.j</code> the second and third.
+Any number of variables can be used. Note that the entire object is returned if
+there are no periods in the name, so use <code>i..</code> if only the first object is needed.
+</p>
+<p>To provide names within a loop, preface the expression with the desired <code>name</code> for
+that particular object followed by <code>=</code>. <code>name</code> can be any expression, just
+make sure to surround any <code>if</code> chain for the name with parentheses, or the R
+parser will not detect that the assignment operator is associated with the <code>expr</code>.
+Behind the scenes, the expression on the left-hand side of <code>"="</code> is wrapped in
+an <code>sapply</code> function and the results are assigned to the <code>names</code>
+of the right-hand side result.
+</p>
+<p>The <code>if</code> statement can contain any number of <code>if-else</code> statements and can
+be nested. Similarly, <code>for</code> statements can be nested any number of times and
+converted to <code>lapply</code> as long as the expression is a self-contained <code>for</code> loop.
+</p>
+<p>Though comprehensions are functions, both <code>List(for ...)</code> and <code>List[for ...]</code>
+syntax are supported. See <code>..</code> for a convenience wrapper around <code>Vec</code>.
+</p>
+<p>The different comprehensions primarily describe the return value, with <code>List</code>
+return a "list" and <code>Num</code> returning a numeric vector. If the object cannot be
+converted, then an error will be produced. For <code>Env</code>, the objects must be
+named. This means that either the name must be assigned within the loop or the
+loop is performed across a named object and the name is preserved. Another
+difference is that is some comprehensions - though related to atomic vectors -
+convert <code>for</code> to <code>sapply</code> while others convert to <code>lapply</code>.
+</p>
+<p>The <code>Comp</code> function is used to create custom comprehensions. It should be
+supplied with a <code>map</code> function such as <code>lapply</code> that
+accepts arguments: <code>X</code> for the argument over which the comprehension
+iterates, <code>FUN</code> a function applied to each element, and <code>...</code> for
+additional arguments passed to the <code>FUN</code>. <code>Comp</code> also accepts a
+post-evaluation function, <code>fun</code>, that is applied to the result. This
+could be used to ensure that the result complies to some class or other
+restriction.
+</p>
+<p>Users can also specify a cluster to use. If specified, then a parallel version
+of <code>lapply</code> or <code>sapply</code> is used based on <code>parLapply</code> and <code>parSapply</code>
+from the <code>parallel</code> package. This can greatly
+reduce the calculation time for different operations, but has additional overhead
+that makes the cost greater than the benefit for relatively small vectors. See
+<code>auto_cluster</code> for auto-creation.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Determined by the function. <code>List</code> returns an object of class 'list',
+<code>Num</code> returns a numeric vector, etc. See the descriptions of each function for
+their return type.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>Comp</code>: Create generalized comprehension function
+</p>
+</li>
+<li> <p><code>List</code>: Generate a 'list' from a <code>for</code> loop
+</p>
+</li>
+<li> <p><code>Env</code>: Generate an 'environment' from a <code>for</code> loop
+</p>
+</li>
+<li> <p><code>Vec</code>: Generate a flat, atomic 'vector' from a <code>for</code> loop
+</p>
+</li>
+<li> <p><code>Num</code>: Generate a 'numeric' vector from a <code>for</code> loop
+</p>
+</li>
+<li> <p><code>Chr</code>: Generate a 'character' vector from a <code>for</code> loop
+</p>
+</li>
+<li> <p><code>Logical</code>: Generate a 'logical' vector from a <code>for</code> loop
+</p>
+</li>
+<li> <p><code>Mat</code>: Generate a 'matrix' from a <code>for</code> loop
+</p>
+</li>
+<li> <p><code>DF</code>: Generate a 'data.frame' from a <code>for</code> loop
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">people &lt;- list(
+  John = list(age = 30, weight = 180, mood = "happy", gender = "male"),
+  April = list(age = 26, weight = 110, mood = "sad", gender = "female"),
+  Jill = list(age = 42, weight = 125, mood = "ok", gender = "female")
+)
+
+weight_kg &lt;- Num(for (i in people) i$weight/2.2)
+gender &lt;- Chr(for (i in people) i$gender)
+gender_tab &lt;- List(for (i in c("male", "female")) i = length(which(gender == i)))
+
+Chr(for (..i.j in people) paste0(i, " &amp; ", j))
+
+Chr(for (i.j in items(people)) paste0(i, " is ", j$age, " years old."))
+
+e &lt;- Env(for (i.j in items(people)) i = j$age)
+e$John
+
+Num(for (i in 1:10) for (j in 2:6) if (i == j) i^2)
+
+</code></pre>
+
+
+</div>

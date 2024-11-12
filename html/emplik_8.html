@@ -1,0 +1,234 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>el.cen.EM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical likelihood ratio for mean 
+with right, left or doubly censored data, by EM algorithm</h2>
+
+<h3>Description</h3>
+
+<p>This program uses EM algorithm to compute the maximized 
+(wrt <code class="reqn">p_i</code>) empirical
+log likelihood function for right, left or doubly censored data with 
+the MEAN constraint:
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_{d_i=1}  p_i f(x_i)  = \int f(t) dF(t) = \mu . </code>
+</p>
+
+<p>Where <code class="reqn">p_i = \Delta F(x_i)</code> is a probability,
+<code class="reqn">d_i</code> is the censoring indicator, 1(uncensored), 0(right censored),
+2(left censored). 
+It also returns those <code class="reqn">p_i</code>. 
+</p>
+<p>The empirical log likelihood been maximized is
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_{d_i=1} \log \Delta F(x_i) + \sum_{d_i=0} \log [1-F(x_i)] 
+    + \sum_{d_i=2}  \log F(x_i) . </code>
+</p>
+ 
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">el.cen.EM(x,d,wt=rep(1,length(d)),fun=function(t){t},mu,maxit=50,error=1e-9,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector containing the observed survival times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>a vector containing the censoring indicators, 
+1-uncensored; 0-right censored; 2-left censored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wt</code></td>
+<td>
+<p>a weight vector (case weight). positive. same length as d</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a left continuous (weight) function used to calculate
+the mean as in <code class="reqn">H_0</code>.
+<code>fun(t)</code> must be able to take a vector input <code>t</code>.
+Default to the identity function <code class="reqn">f(t)=t</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>a real number used in the constraint, the mean value of <code class="reqn">f(X)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>an optional integer, used to control maximum number of
+iterations. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error</code></td>
+<td>
+<p>an optional positive real number specifying the tolerance of
+iteration error. This is the bound of the
+<code class="reqn">L_1</code> norm of the difference of two successive weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments, if any, to pass to <code>fun</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This implementation is all in R and have several for-loops in it. 
+A faster version would use C to do the for-loop part.
+But this version seems faster enough and is easier to port to Splus.
+</p>
+<p>We return the log likelihood all the time. Sometimes, (for right censored
+and no censor case) we also return the -2 log likelihood ratio.
+In other cases, you have to plot a curve with many values of the 
+parameter, mu, to
+find out where is the place the log likelihood becomes maximum.
+And from there you can get -2 log likelihood ratio between
+the maximum location and your current parameter in Ho.
+</p>
+<p>In order to get a proper distribution as NPMLE, we automatically
+change the <code class="reqn">d</code> for the largest observation to 1
+(even if it is right censored), similar for the left censored, 
+smallest observation.
+<code class="reqn">\mu</code> is a given constant. 
+When the given constants <code class="reqn">\mu</code> is too far
+away from the NPMLE, there will be no distribution
+satisfy the constraint.
+In this case the computation will stop.
+The -2 Log empirical likelihood ratio
+should be infinite. 
+</p>
+<p>The constant <code>mu</code> must be inside 
+<code class="reqn">( \min f(x_i) , \max f(x_i) ) </code>
+for the computation to continue. 
+It is always true that the NPMLE values are feasible. So when the
+computation stops, try move the <code>mu</code> closer
+to the NPMLE — 
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_{d_i=1} p_i^0 f(x_i) </code>
+</p>
+ 
+<p><code class="reqn">p_i^0</code> taken to be the jumps of the NPMLE of CDF. 
+Or use a different <code>fun</code>. 
+</p>
+<p>Difference to the function <code>el.cen.EM2</code>: here duplicate (input) observations 
+are collapsed (with weight 2, 3, ... etc.) but those
+will stay separate by default in the <code>el.cen.EM2</code>. This will lead to
+a different <code>loglik</code> value. But the <code>-2LLR</code> value should be same
+in either version. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>the maximized empirical log likelihood under the constraint. This may be different from the result of el.cen.EM2
+because here the tied observations are collapes into 1 with weight. (while el.cen.EM2 do not). 
+However, the -2LLR should be the same.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>locations of CDF that have positive mass. tied obs. are collapesd</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>the jump size of CDF at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>If available, it is Minus two times the 
+Empirical Log Likelihood Ratio.
+Should be approximately chi-square distributed under Ho.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pval</code></td>
+<td>
+<p>The P-value of the test, using chi-square approximation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lam</code></td>
+<td>
+<p>The Lagrange multiplier. Added 5/2007.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Zhou, M. (2005). Empirical likelihood ratio with arbitrary censored/truncated data by EM algorithm. 
+<em>Journal of Computational and Graphical Statistics</em>, 643-656.
+</p>
+<p>Murphy, S. and van der Vaart (1997)
+Semiparametric likelihood ratio inference.
+<em>Ann. Statist.</em> <b> 25</b>, 1471-1509.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## example with tied observations
+x &lt;- c(1, 1.5, 2, 3, 4, 5, 6, 5, 4, 1, 2, 4.5)
+d &lt;- c(1,   1, 0, 1, 0, 1, 1, 1, 1, 0, 0,   1)
+el.cen.EM(x,d,mu=3.5)
+## we should get "-2LLR" = 1.2466....
+myfun5 &lt;- function(x, theta, eps) {
+u &lt;- (x-theta)*sqrt(5)/eps 
+INDE &lt;- (u &lt; sqrt(5)) &amp; (u &gt; -sqrt(5)) 
+u[u &gt;= sqrt(5)] &lt;- 0 
+u[u &lt;= -sqrt(5)] &lt;- 1 
+y &lt;- 0.5 - (u - (u)^3/15)*3/(4*sqrt(5)) 
+u[ INDE ] &lt;- y[ INDE ] 
+return(u)
+}
+el.cen.EM(x, d, fun=myfun5, mu=0.5, theta=3.5, eps=0.1)
+## example of using wt in the input. Since the x-vector contain
+## two 5 (both d=1), and two 2(both d=0), we can also do
+xx &lt;- c(1, 1.5, 2, 3, 4, 5, 6, 4, 1, 4.5)
+dd &lt;- c(1,   1, 0, 1, 0, 1, 1, 1, 0,   1)
+wt &lt;- c(1,   1, 2, 1, 1, 2, 1, 1, 1,   1)
+el.cen.EM(x=xx, d=dd, wt=wt, mu=3.5)
+## this should be the same as the first example.
+</code></pre>
+
+
+</div>

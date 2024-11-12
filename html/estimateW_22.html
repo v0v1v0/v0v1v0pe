@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>W_sampler</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>An R6 class for sampling the elements of <code class="reqn">W</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>An R6 class for sampling the elements of <code class="reqn">W</code>
+</p>
+<p>An R6 class for sampling the elements of <code class="reqn">W</code>
+</p>
+
+
+<h3>Format</h3>
+
+<p>An <code>R6Class</code> generator object
+</p>
+
+
+<h3>Details</h3>
+
+<p>This class samples the spatial weight matrix. Use the function W_priors class for setup.
+</p>
+<p>The sampling procedure relies on conditional Bernoulli posteriors outlined in
+Krisztin and Piribauer (2022).
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>W_prior</code></dt>
+<dd>
+<p>The current <code>W_priors</code></p>
+</dd>
+<dt><code>curr_w</code></dt>
+<dd>
+<p>numeric, non-negative <code class="reqn">n</code> by <code class="reqn">n</code> spatial weight matrix with zeros
+on the main diagonal. Depending on the <code>W_priors</code> settings can be symmetric and/or
+row-standardized.</p>
+</dd>
+<dt><code>curr_W</code></dt>
+<dd>
+<p>binary <code class="reqn">n</code> by <code class="reqn">n</code> spatial connectivity matrix <code class="reqn">\Omega</code></p>
+</dd>
+<dt><code>curr_A</code></dt>
+<dd>
+<p>The current spatial projection matrix <code class="reqn">I - \rho W</code>.</p>
+</dd>
+<dt><code>curr_AI</code></dt>
+<dd>
+<p>The inverse of <code>curr_A</code></p>
+</dd>
+<dt><code>curr_logdet</code></dt>
+<dd>
+<p>The current log-determinant of <code>curr_A</code></p>
+</dd>
+<dt><code>curr_rho</code></dt>
+<dd>
+<p>single number between -1 and 1 or NULL, depending on whether the sampler updates
+the spatial autoregressive parameter <code class="reqn">\rho</code>. Set while invoking <code>initialize</code>
+or using the function <code>set_rho</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-W_sampler-new"><code>W_sampler$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-W_sampler-set_rho"><code>W_sampler$set_rho()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-W_sampler-sample"><code>W_sampler$sample()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-W_sampler-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>W_sampler$new(W_prior, curr_rho = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>W_prior</code></dt>
+<dd>
+<p>The list returned by <code>W_priors</code></p>
+</dd>
+<dt><code>curr_rho</code></dt>
+<dd>
+<p>optional single number between -1 and 1. Value of the spatial autoregressive
+parameter <code class="reqn">\rho</code>. Defaults to NULL, in which case no updates of the log-determinant, the spatial
+projection matrix, and its inverse are carried out.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-W_sampler-set_rho"></a>
+
+
+
+<h4>Method <code>set_rho()</code>
+</h4>
+
+<p>If the spatial autoregressive parameter <code class="reqn">\rho</code> is updated during the sampling procedure the log determinant, the
+spatial projection matrix <code class="reqn">I - \rho W</code> and it's inverse must be updated. This function should be
+used for a consistent update. At least the new scalar value for <code class="reqn">\rho</code> must be supplied.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>W_sampler$set_rho(new_rho, newLogdet = NULL, newA = NULL, newAI = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>new_rho</code></dt>
+<dd>
+<p>single, number; must be between -1 and 1.</p>
+</dd>
+<dt><code>newLogdet</code></dt>
+<dd>
+<p>An optional value for the log determinant corresponding to <code>newW</code> and <code>curr_rho</code></p>
+</dd>
+<dt><code>newA</code></dt>
+<dd>
+<p>An optional value for the spatial projection matrix using <code>newW</code> and <code>curr_rho</code></p>
+</dd>
+<dt><code>newAI</code></dt>
+<dd>
+<p>An optional value for the matrix inverse of <code>newA</code></p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-W_sampler-sample"></a>
+
+
+
+<h4>Method <code>sample()</code>
+</h4>
+
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>W_sampler$sample(Y, curr_sigma, mu, lag_mu = matrix(0, nrow(tY), ncol(tY)))</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>Y</code></dt>
+<dd>
+<p>The <code class="reqn">n</code> by <code class="reqn">tt</code> matrix of responses</p>
+</dd>
+<dt><code>curr_sigma</code></dt>
+<dd>
+<p>The variance parameter <code class="reqn">\sigma^2</code></p>
+</dd>
+<dt><code>mu</code></dt>
+<dd>
+<p>The <code class="reqn">n</code> by <code class="reqn">tt</code> matrix of means.</p>
+</dd>
+<dt><code>lag_mu</code></dt>
+<dd>
+<p><code class="reqn">n</code> by <code class="reqn">tt</code> matrix of means that will be spatially lagged with
+the estimated <code class="reqn">W</code>. Defaults to a matrix with zero elements.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>References</h3>
+
+<p>Krisztin, T., and Piribauer, P. (2022) A Bayesian approach for the estimation
+of weight matrices in spatial autoregressive models. <em>Spatial Economic Analysis</em>, 1-20.
+</p>
+
+
+</div>

@@ -1,0 +1,94 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>data.frame2glmnet.matrix</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert a data.frame into a matrix ready for glmnet</h2>
+
+<h3>Description</h3>
+
+<p>Function to convert categorical variables into dummy variables ready for <code>glmnet_fit</code> and  <code>glmnet_predict</code>. Additionally, it also removes constant columns.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data.frame2glmnet.matrix_fit(x)
+data.frame2glmnet.matrix(m, x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>model to conduct the conversion, obtained with <code>data.frame2glmnet.matrix_fit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>data.frame to be converted.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that the returned matrix might differ from the design matrix of a linear model because for categoric variables with more than two levels, it creates as many dummy variables as levels (which is ok for lasso).</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix ready for <code>glmnet_fit</code> and <code>glmnet_predict</code>.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Joaquim Radua and Aleix Solanes</p>
+
+
+<h3>See Also</h3>
+
+<p><code>glmnet_predict</code> for obtaining predictions,
+<code>cv</code> for conducting a cross-validation.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create random x (predictors) and y (binary)
+x = cbind(
+  as.data.frame(matrix(rnorm(10000), ncol = 20)),
+  matrix(sample(letters, 2500, TRUE), ncol = 5)
+)
+y = 1 * (plogis(apply(x[,1:5], 1, sum) + rnorm(500, 0, 0.1)) &gt; 0.5)
+
+# Predict y via cross-validation, including conversion to matrix
+fit_fun = function (x_training, y_training) {
+  m = list(
+    matrix = data.frame2glmnet.matrix_fit(x_training)
+  )
+  x_mat = data.frame2glmnet.matrix(m$matrix, x_training)
+  m$lasso = glmnet_fit(x_mat, y_training, family = "binomial")
+  m
+}
+predict_fun = function (m, x_test) {
+  x_mat = data.frame2glmnet.matrix(m$matrix, x_test)
+  glmnet_predict(m$lasso, x_mat)
+}
+# Only 2 folds to ensure the example runs quickly
+res = cv(x, y, family = "binomial", fit_fun = fit_fun, predict_fun = predict_fun, nfolds = 2)
+
+# Show accuracy
+se = mean(res$predictions$y.pred[res$predictions$y == 1] &gt; 0.5)
+sp = mean(res$predictions$y.pred[res$predictions$y == 0] &lt; 0.5)
+bac = (se + sp) / 2
+cat("Sensitivity:", round(se, 2), "\n")
+cat("Specificity:", round(sp, 2), "\n")
+cat("Balanced accuracy:", round(bac, 2), "\n")
+</code></pre>
+
+
+</div>

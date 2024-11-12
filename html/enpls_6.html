@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>enpls.ad</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ensemble Partial Least Squares for Model Applicability Domain Evaluation</h2>
+
+<h3>Description</h3>
+
+<p>Model applicability domain evaluation with ensemble partial least squares.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">enpls.ad(x, y, xtest, ytest, maxcomp = NULL, cvfolds = 5L,
+  space = c("sample", "variable"), method = c("mc", "boot"),
+  reptimes = 500L, ratio = 0.8, parallel = 1L)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Predictor matrix of the training set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Response vector of the training set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xtest</code></td>
+<td>
+<p>List, with the i-th component being the i-th test set's
+predictor matrix (see example code below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ytest</code></td>
+<td>
+<p>List, with the i-th component being the i-th test set's
+response vector (see example code below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxcomp</code></td>
+<td>
+<p>Maximum number of components included within each model.
+If not specified, will use the maximum number possible (considering
+cross-validation and special cases where n is smaller than p).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cvfolds</code></td>
+<td>
+<p>Number of cross-validation folds used in each model
+for automatic parameter selection, default is <code>5</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>space</code></td>
+<td>
+<p>Space in which to apply the resampling method.
+Can be the sample space (<code>"sample"</code>) or
+the variable space (<code>"variable"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Resampling method. <code>"mc"</code> (Monte-Carlo resampling)
+or <code>"boot"</code> (bootstrapping). Default is <code>"mc"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reptimes</code></td>
+<td>
+<p>Number of models to build with Monte-Carlo resampling
+or bootstrapping.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ratio</code></td>
+<td>
+<p>Sampling ratio used when <code>method = "mc"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>Integer. Number of CPU cores to use.
+Default is <code>1</code> (not parallelized).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing:
+</p>
+
+<ul>
+<li> <p><code>tr.error.mean</code> -
+absolute mean prediction error for training set
+</p>
+</li>
+<li> <p><code>tr.error.median</code> -
+absolute median prediction error for training set
+</p>
+</li>
+<li> <p><code>tr.error.sd</code> -
+prediction error sd for training set
+</p>
+</li>
+<li> <p><code>tr.error.matrix</code> -
+raw prediction error matrix for training set
+</p>
+</li>
+<li> <p><code>te.error.mean</code> -
+list of absolute mean prediction error for test set(s)
+</p>
+</li>
+<li> <p><code>te.error.median</code> -
+list of absolute median prediction error for test set(s)
+</p>
+</li>
+<li> <p><code>te.error.sd</code> -
+list of prediction error sd for test set(s)
+</p>
+</li>
+<li> <p><code>te.error.matrix</code> -
+list of raw prediction error matrix for test set(s)
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>Note that for <code>space = "variable"</code>, <code>method</code> could
+only be <code>"mc"</code>, since bootstrapping in the variable space
+will create duplicated variables, and that could cause problems.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Nan Xiao &lt;<a href="https://nanx.me">https://nanx.me</a>&gt;
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("alkanes")
+x &lt;- alkanes$x
+y &lt;- alkanes$y
+
+# training set
+x.tr &lt;- x[1:100, ]
+y.tr &lt;- y[1:100]
+
+# two test sets
+x.te &lt;- list(
+  "test.1" = x[101:150, ],
+  "test.2" = x[151:207, ]
+)
+y.te &lt;- list(
+  "test.1" = y[101:150],
+  "test.2" = y[151:207]
+)
+
+set.seed(42)
+ad &lt;- enpls.ad(
+  x.tr, y.tr, x.te, y.te,
+  space = "variable", method = "mc",
+  ratio = 0.9, reptimes = 50
+)
+print(ad)
+plot(ad)
+# the interactive plot requires a HTML viewer
+## Not run: 
+plot(ad, type = "interactive")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

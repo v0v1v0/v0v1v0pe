@@ -1,0 +1,294 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epinet</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Uses epidemic data to perform Bayesian inference on a contact network</h2>
+
+<h3>Description</h3>
+
+<p>Performs Bayesian inference on parameters
+for an SEIR epidemic model and a random graph
+model, given recovery (and perhaps also exposure/infective) times
+for each individual infected during the course of an epidemic.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epinet(formula, epidata, dyadiccovmat, mcmcinput = MCMCcontrol(), 
+	priors = priorcontrol(), verbose = TRUE)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>an object of class <code>formula</code> giving a symbolic description of the model to be fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epidata</code></td>
+<td>
+<p>input data consisting of exposure, infection, and recovery times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dyadiccovmat</code></td>
+<td>
+<p>matrix of dyadic covariates (X).  Can be constructed using <code>BuildX</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mcmcinput </code></td>
+<td>
+<p>list of control options for MCMC algorithm.  Can be constructed using <code>MCMCcontrol</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priors</code></td>
+<td>
+<p>list of prior distributions and parameters.  Can be constructed using <code>priorcontrol</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>boolean variable specifying whether progress and information messages are
+displayed during the course of the MCMC routine.  Defaults to TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p> Uses exposed, infective, and removal times from the infected nodes of an epidemic
+in order to perform inference on the parameters of the network and epidemic models.   
+</p>
+<p>The formula will consist of variables (column names) found in the dyadiccovmat parameter.  By default, the model will include an intercept term.
+</p>
+<p>epidata is an <code class="reqn">N</code> row by 5 column array giving the identity, likely parent, and exposed, infective, 
+and removal times for each of the <code class="reqn">N</code> individuals in the population, as well as the values of any nodal 
+covariates.  Column 1 gives the ID (an integer) of the node, and column 2 gives the identity of the probable 
+parent of the node (if known).  Columns 3, 4, and 5 give the exposed, infective, and removal times.  Individuals who were not infected
+during the course of the epidemic should have NA coded in columns 3, 4, and 5; the records for these
+individuals should appear AFTER those corresponding to the individuals that were infected during the
+epidemic.  Note that if the times are not internally consistent, an error message will be generated and no 
+inference will be performed. It is necessary to include data for exposure and infective times, even 
+if these values are not known (in this case, set the respective entries to NA).  
+</p>
+<p>Any data rows corresponding to individuals not infected during the course of the epidemic, if present, 
+must occur at the end of the array, after all rows for infected individuals.  These rows must have removal times of NA. 
+</p>
+<p>dyadiccovmat is an <code class="reqn">{N \choose 2}</code> row by <code class="reqn">(k+2)</code> column matrix containing the dyadic covariates for the population, where <code class="reqn">N</code> is the number of individuals in the population and <code class="reqn">k</code> is the number of dyadic covariates used in the model.  The matrix contains one row for each dyad (pair of nodes).  Columns 1 and 2 give the ID of the two nodes comprising the dyad, and the remaining <code class="reqn">k</code> columns give the covariate values. 
+</p>
+<p>Uses an algorithm similar to that described in Groendyke and Welch (2018), Groendyke et al. (2010), and Britton and O'Neill (2002).
+</p>
+
+
+<h3>Value</h3>
+
+	
+<table>
+<tr style="vertical-align: top;">
+<td><code>accept</code></td>
+<td>
+<p>vector containing the number of times a proposed new value was accepted for the parameters 
+(P, eta, G, beta, thetai, ki, thetae, ke).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>propose</code></td>
+<td>
+<p>vector containing the number of times a new value was proposed for the parameters 
+(P, eta, G, beta, thetai, ki, thetae, ke).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>llkd</code></td>
+<td>
+<p>vector containing the log-likelihood at each iteration of the MCMC algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>vector containing the sample for parameter beta.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thetai</code></td>
+<td>
+<p>vector containing the sample for parameter thetai.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thetae</code></td>
+<td>
+<p>vector containing the sample for parameter thetae.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ki</code></td>
+<td>
+<p>vector containing the sample for parameter ki.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ke</code></td>
+<td>
+<p>vector containing the sample for parameter ke.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eta</code></td>
+<td>
+<p>2-dimensional array containing the samples for the eta parameters.  The <code class="reqn">i^{th}</code> column contains the 
+sample for the <code class="reqn">i^{th}</code> eta parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initexp</code></td>
+<td>
+<p>vector containing the sample for parameter kappa (identity of initial exposed).
+Will only vary when both the exposure and infection times are assumed unknown.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initexptime</code></td>
+<td>
+<p>vector containing the sample for parameter <code class="reqn">E_{\kappa}</code> (initial exposure time).
+Will only vary when the exposure times are assumed unknown.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exptimes</code></td>
+<td>
+<p>if exposure times are inferred and corresponding posterior samples are returned, this is two-dimensional 
+array containing the inferred exposure times (exptimes[<code class="reqn">i</code>, ] contains the sample of exposure times for node <code class="reqn">i</code>). 
+Otherwise, this will be NULL.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inftimes</code></td>
+<td>
+<p>if infection times are inferred and corresponding posterior samples are returned, this is two-dimensional 
+array containing the inferred infection times (inftimes[<code class="reqn">i</code>, ] contains the sample of infection times for node <code class="reqn">i</code>). 
+Otherwise, this will be NULL.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rectimes</code></td>
+<td>
+<p>vector containing the original recovery times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nodeid</code></td>
+<td>
+<p>vector containing the node IDs for the individuals in the population.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transtree</code></td>
+<td>
+<p>A two-dimensional array containing the sample for inferred transmission tree.  transtree[<code class="reqn">i</code>, ] contains the sample
+of parent nodes for node <code class="reqn">i</code>.  A parent node of -999 for <code class="reqn">i</code> designates that <code class="reqn">i</code> is the initial exposed node.  If the transmission tree 
+is not inferred and returned, this will be NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>the formula used in the inference routine.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mcmcinfo</code></td>
+<td>
+<p>input settings for the MCMC chain</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Chris Groendyke <a href="mailto:cgroendyke@gmail.com">cgroendyke@gmail.com</a>,
+David Welch <a href="mailto:david.welch@auckland.ac.nz">david.welch@auckland.ac.nz</a> </p>
+
+
+<h3>References</h3>
+
+<p>Groendyke, C. and Welch, D.  2018.  epinet: An R Package to Analyze Epidemics Spread across Contact Networks, <em>Journal of Statistical Software</em>, <b>83-11</b>.	
+</p>
+<p>Groendyke, C., Welch, D. and Hunter, D.  2012. A Network-based Analysis of the 1861 
+Hagelloch Measles Data, <em>Biometrics</em>, <b>68-3</b>.
+</p>
+<p>Groendyke, C., Welch, D. and Hunter, D.  2010. Bayesian inference for contact networks given
+epidemic data, <em>Scandinavian Journal of Statistics</em>, <b>38-3</b>.
+</p>
+<p>Britton, T. and O'Neill, P.D. 2002. Bayesian inference for stochastic epidemics in populations 
+with random social structure, <em>Scandinavian Journal of Statistics</em>, <b>29-3</b>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>BuildX</code> for building a dyadic covariate matrix, 
+<code>MCMCcontrol</code> for specifying control parameters for the MCMC algorithm,
+<code>priorcontrol</code> for specifying prior distributions and their hyperparameters, 
+<code>epi2newick</code> and <code>write.epinet</code> for writing the output of the algorithm
+to file, and <code>plot.epinet</code> for plotting the posterior samples of the transmission
+tree.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simulate an epidemic through a network of 30
+set.seed(3)
+N &lt;- 30
+# Build dyadic covariate matrix (X)
+# Have a single covariate for overall edge density; this is the Erdos-Renyi model
+nodecov &lt;- matrix(1:N,nrow = N)
+dcm &lt;- BuildX(nodecov)
+# Simulate network and then simulate epidemic over network
+examplenet &lt;- SimulateDyadicLinearERGM(N, dyadiccovmat=dcm, eta=-1.8)
+exampleepidemic &lt;- SEIR.simulator(examplenet, N = 30, 
+    beta = 0.3, ki = 2, thetai = 5, latencydist="gamma")
+# Set inputs for MCMC algorithm
+mcmcinput &lt;- MCMCcontrol(nsamp = 5000, thinning = 10, etapropsd = 0.2) 
+priorcontrol &lt;- priorcontrol(bprior = c(0, 1), tiprior = c(1, 3), teprior = c(1, 3), 
+    etaprior = c(0, 10), kiprior = c(2, 8), keprior = c(2, 8), priordists = "uniform")
+# Run MCMC algorithm on this epidemic
+# Note: Not enough data or iterations for any real inference
+examplemcmc &lt;- epinet( ~ 1, exampleepidemic, dcm, mcmcinput, priorcontrol)
+
+## Not run: 
+# Note: This may take a few minutes to run.
+set.seed(1)
+N &lt;- 50
+mycov &lt;- data.frame(id = 1:N, xpos = runif(N), ypos = runif(N))
+dyadCov &lt;- BuildX(mycov, binaryCol = list(c(2, 3)),binaryFunc = c("euclidean"))
+# Build network
+eta &lt;- c(0,-7)
+net &lt;- SimulateDyadicLinearERGM(N = N, dyadiccovmat = dyadCov, eta = eta)
+# Simulate epidemic
+epi &lt;- SEIR.simulator(M = net, N = N, beta = 1, ki = 3, thetai = 7, ke = 3, latencydist = "gamma")
+# Run MCMC routine on simulated epidemic
+mcmcinput &lt;- MCMCcontrol(nsamp = 1000000, thinning = 100, etapropsd = c(1, 1))
+priors &lt;- priorcontrol(bprior = c(0, 4), tiprior = c(1, 15), teprior = c(1, 15), 
+	etaprior = c(0, 10, 0, 10), kiprior = c(1, 7), keprior = c(1, 7), priordists = "uniform")
+out &lt;- epinet(~ xpos.ypos.L2Dist, epidata = epi, dyadiccovmat = dyadCov,
+	mcmcinput = mcmcinput, priors = priors)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

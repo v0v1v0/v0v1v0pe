@@ -1,0 +1,332 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams2ilias</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Exams in ILIAS Format</h2>
+
+<h3>Description</h3>
+
+<p>Automatic generation of exams in QTI 1.2 with some tweaks
+(still under development) for the learning management system ILIAS.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  exams2ilias(file, n = 1L, nsamp = NULL, dir = ".",
+    name = NULL, quiet = TRUE, edir = NULL, tdir = NULL, sdir = NULL,
+    verbose = FALSE, resolution = 100, width = 4, height = 4, svg = FALSE,
+    encoding  = "UTF-8", num = list(fix_num = FALSE, minvalue = NA),
+    mchoice = list(maxchars = c(3, NA, 3), minvalue = NA),
+    schoice = mchoice, string = NULL, cloze = NULL,
+    template = "ilias",
+    duration = NULL, stitle = "Exercise", ititle = "Question",
+    adescription = "Please solve the following exercises.",
+    sdescription = "Please answer the following question.", 
+    maxattempts = 1, cutvalue = 0, solutionswitch = TRUE, zip = TRUE,
+    points = NULL, eval = list(partial = TRUE, negative = FALSE),
+    converter = "pandoc-mathjax", xmlcollapse = TRUE,
+    metasolution = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamp</code></td>
+<td>
+<p>integer. The number(s) of exercise files sampled from each
+list element of <code>file</code>. Sampling without replacement is used
+if possible. (Only if some element of <code>nsamp</code> is larger than
+the length of the corresponding element in <code>file</code>, sampling
+with replacement is used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The default is the current working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting exercises and ZIP file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>logical. Should output be suppressed when calling
+<code>xweave</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edir</code></td>
+<td>
+<p>character specifying the path of the directory (along with its
+sub-directories) in which the files in <code>file</code> are stored
+(see also <code>xexams</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdir</code></td>
+<td>
+<p>character specifying a temporary directory, by default
+this is chosen via <code>tempfile</code>. Note that this
+is cleaned up (i.e., existing files are deleted) and only certain
+temporary files are preserved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdir</code></td>
+<td>
+<p>character specifying a directory for storing supplements, by
+default this is chosen via <code>tempfile</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical. Should information on progress of exam generation
+be reported?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution, width, height</code></td>
+<td>
+<p>numeric. Options for rendering PNG (or SVG)
+graphics passed to <code>xweave</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>svg</code></td>
+<td>
+<p>logical. Should graphics be rendered in SVG or PNG (default)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>character, ignored. The encoding is always assumed to be UTF-8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num</code></td>
+<td>
+<p>function or named list applied to numerical (i.e., type <code>num</code>)
+questions. If <code>num</code> is a function, <code>num</code> will be used
+for generating the item body of the question, see function <code>make_itembody_qti12()</code>
+(or <code>make_itembody_qti21()</code>).
+If <code>num</code> is a named list, these arguments will be passed to function
+<code>make_itembody_qti12()</code> (or <code>make_itembody_qti21()</code> using <code>exams2qti21()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mchoice, schoice, string, cloze</code></td>
+<td>
+<p>function or named list applied to multiple choice,
+single choice, string, and cloze questions (i.e., type <code>mchoice</code>, <code>schoice</code>,
+<code>string</code>, and <code>cloze</code>), respectively. See argument <code>num</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>character. The IMS QTI 1.2 or 2.1 template that should be used. Currently,
+the package provides <code>"qti12.xml"</code> and <code>"qti21.xml"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>duration</code></td>
+<td>
+<p>integer. Set the duration of the exam in minutes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stitle</code></td>
+<td>
+<p>character. A title that should be used for the sections. May be a vector of
+length 1 to use the same title for each section, or a vector containing different section
+titles.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ititle</code></td>
+<td>
+<p>character. A title that should be used for the assessment items. May be a vector
+of length 1 to use the same title for each item, or a vector containing different item
+titles. Note that the maximum of different item titles is the number of sections/questions
+that are used for the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adescription</code></td>
+<td>
+<p>character. Description (of length 1) for the overall assessment (i.e., exam).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdescription</code></td>
+<td>
+<p>character. Vector of descriptions for each section, omitted if empty
+(or <code>NULL</code> or <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxattempts</code></td>
+<td>
+<p>integer. The maximum attempts for one question. This may also be a vector
+so that the maximum number of attempts varies across questions. A value of <code>Inf</code> or
+<code>0</code> signals that the attempts per question are not limited.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutvalue</code></td>
+<td>
+<p>numeric. The cutvalue at which the exam is passed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solutionswitch</code></td>
+<td>
+<p>logical. Should the question/item solutionswitch be enabled?
+In OLAT this means that the correct solution is shown after an incorrect solution
+was entered by an examinee (i.e., this is typically only useful if <code>maxattempts = 1</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zip</code></td>
+<td>
+<p>logical. Should the resulting XML file (plus supplements) be zipped?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>integer. How many points should be assigned to each exercise? Note that this
+argument overules any exercise points that are provided within an <code>"\expoints{}"</code> tag
+in the <code>.Rnw</code> file. The vector of points supplied is expanded to the number of exercises in
+the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eval</code></td>
+<td>
+<p>named list, specifies the settings for the evaluation policy, see function
+<code>exams_eval</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converter</code></td>
+<td>
+<p>character. Argument passed on to <code>make_exercise_transform_html</code>.
+The default for <code>converter</code> is set to <code>"ttm"</code> unless there are Rmd
+exercises in <code>file</code> where <code>"pandoc"</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xmlcollapse</code></td>
+<td>
+<p>logical or character. Should line breaks be collapsed in the XML
+code. If <code>TRUE</code> everything is collapsed with spaces (<code>" "</code>) but other collapse
+characters could be supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metasolution</code></td>
+<td>
+<p>logical. Should the solution be added to the XML
+output as qtimetadata tag? This currently only works for ILIAS essay
+questions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed on to <code>make_exercise_transform_html</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>exams2ilias</code> is a convenience interface to <code>exams2qti12</code>
+for generating QTI 1.2 with some tweaks for ILIAS (<a href="https://www.ilias.de/">https://www.ilias.de/</a>).
+The support for ILIAS so far is somewhat rudimentary. Not all question
+types are currently supported. What has been tested most extensively, are
+string questions with open answers and solutions; these are rendered into
+ILIAS essay questions within a question pool. Also mchoice and schoice
+questions render in ILIAS, but have received less amount of testing.
+Numeric and cloze questions do not work yet.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>exams2ilias</code> returns a list of exams as generated by <code>xexams</code>.
+</p>
+<p>If <code>zip</code> is <code>TRUE</code> (default), an ILIAS Questionpool object is generated.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>exams2qti12</code>,
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+library("exams")
+options(device.ask.default = FALSE)
+
+## define an exams (= list of exercises)
+myexam &lt;- list(
+  ## multiple-choice with graphics
+  c("boxplots.Rmd", "scatterplot.Rmd"),
+
+  ## multiple-choice with output or tables
+  c("ttest.Rmd", "anova.Rmd", "relfreq.Rmd"),
+
+  ## single-choice
+  c("deriv2.Rmd", "swisscapital.Rmd"),
+
+  ## string (closed)
+  "function.Rmd",
+  
+  ## string (open-ended)
+  "essayreg.Rmd"
+)
+
+## output directory
+dir.create(mydir &lt;- tempfile())
+
+## generate .zip with ILIAS Questionpool in temporary directory
+## using a few customization options
+exams2ilias(myexam, n = 3, dir = mydir,
+  maxattempts = 3,
+  num = list(digits = 1),
+  mchoice = list(shuffle = TRUE, enumerate = FALSE),
+  solutionswitch = FALSE
+)
+dir(mydir)
+</code></pre>
+
+
+</div>

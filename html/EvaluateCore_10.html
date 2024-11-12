@@ -1,0 +1,152 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dist.evaluate.core</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Distance Measures</h2>
+
+<h3>Description</h3>
+
+<p>Compute average Entry-to-nearest-entry distance
+(\(E\text{-}EN\)),
+Accession-to-nearest-entry distance
+(\(E\text{-}EN\)) and
+Entry-to-entry distance (\(E\text{-}EN\))
+(Odong et al. 2013)
+to evaluate a core set (CS) selected from an entire collection (EC).
+<script id="MathJax-script" async src="../../mathjaxr/doc/mathjax/es5/tex-chtml-full.js"></script></p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dist.evaluate.core(data, names, quantitative, qualitative, selected, d = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The data as a data frame object. The data frame should possess
+one row per individual and columns with the individual names and multiple
+trait/character data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+<p>Name of column with the individual names as a character string</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantitative</code></td>
+<td>
+<p>Name of columns with the quantitative traits as a
+character vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qualitative</code></td>
+<td>
+<p>Name of columns with the qualitative traits as a character
+vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selected</code></td>
+<td>
+<p>Character vector with the names of individuals selected in
+core collection and present in the <code>names</code> column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>A distance matrix of class "<code>dist</code>" with individual names in
+the <code>names</code> column in data as labels. If <code>NULL</code> (default),
+then a distance matrix is computed using Gower's metric.
+(Gower 1971).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame with the average values of
+\(E\text{-}EN\),
+\(E\text{-}EN\) and
+\(E\text{-}EN\).
+</p>
+
+
+<h3>References</h3>
+
+<p>Gower JC (1971).
+“A general coefficient of similarity and some of its properties.”
+<em>Biometrics</em>, <b>27</b>(4), 857–871.<br><br> Odong TL, Jansen J, van Eeuwijk FA, van Hintum TJL (2013).
+“Quality of core collections for effective utilisation of genetic resources review, discussion and interpretation.”
+<em>Theoretical and Applied Genetics</em>, <b>126</b>(2), 289–305.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>evaluateCore</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data("cassava_CC")
+data("cassava_EC")
+
+ec &lt;- cbind(genotypes = rownames(cassava_EC), cassava_EC)
+ec$genotypes &lt;- as.character(ec$genotypes)
+rownames(ec) &lt;- NULL
+
+core &lt;- rownames(cassava_CC)
+
+quant &lt;- c("NMSR", "TTRN", "TFWSR", "TTRW", "TFWSS", "TTSW", "TTPW", "AVPW",
+           "ARSR", "SRDM")
+qual &lt;- c("CUAL", "LNGS", "PTLC", "DSTA", "LFRT", "LBTEF", "CBTR", "NMLB",
+          "ANGB", "CUAL9M", "LVC9M", "TNPR9M", "PL9M", "STRP", "STRC",
+          "PSTR")
+
+ec[, qual] &lt;- lapply(ec[, qual],
+                     function(x) factor(as.factor(x)))
+
+dist.evaluate.core(data = ec, names = "genotypes", quantitative = quant,
+                   qualitative = qual, selected = core)
+
+
+####################################
+# Compare with corehunter
+####################################
+
+library(corehunter)
+# Prepare phenotype dataset
+dtype &lt;- c(rep("RD", length(quant)),
+           rep("NS", length(qual)))
+rownames(ec) &lt;- ec[, "genotypes"]
+ecdata &lt;- corehunter::phenotypes(data = ec[, c(quant, qual)],
+                                 types = dtype)
+
+# Compute average distances
+EN &lt;- evaluateCore(core = rownames(cassava_CC), data = ecdata,
+                   objective = objective("EN", "GD"))
+AN &lt;- evaluateCore(core = rownames(cassava_CC), data = ecdata,
+                   objective = objective("AN", "GD"))
+EE &lt;- evaluateCore(core = rownames(cassava_CC), data = ecdata,
+                   objective = objective("EE", "GD"))
+EN
+AN
+EE
+
+
+</code></pre>
+
+
+</div>

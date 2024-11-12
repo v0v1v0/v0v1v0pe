@@ -1,0 +1,171 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sim_exposure</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate time series of exposure values</h2>
+
+<h3>Description</h3>
+
+<p>Simulates a time series of binary or continuous exposure values with or
+without seasonal trends. It also allows the user to use a custom function for
+the shape of the exposure trend.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sim_exposure(n, central = NULL, sd = NULL, trend = "no trend",
+  slope = 1, amp = 0.6, exposure_type = NULL, start.date = "2001-01-01",
+  cust_exp_func = NULL, cust_exp_args = NULL, cust_expdraw = NULL,
+  cust_expdraw_args = list())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>A non-negative integer specifying the number of days to simulate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>central</code></td>
+<td>
+<p>A numeric value specifying the mean probability of exposure
+(for binary data) or the mean exposure value (for continuous data).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd</code></td>
+<td>
+<p>A numeric value giving the standard deviation of the exposure
+values from the exposure trend line.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend</code></td>
+<td>
+<p>A character string that specifies the desired trend function.
+Options are:
+</p>
+
+<ul>
+<li>
+<p>"no trend": No trend, either seasonal or long-term (default).
+</p>
+</li>
+<li>
+<p>"cos1": A seasonal trend only.
+</p>
+</li>
+<li>
+<p>"cos2": A seasonal trend with variable amplitude across years.
+</p>
+</li>
+<li>
+<p>"cos3": A seasonal trend with steadily decreasing amplitude over time.
+</p>
+</li>
+<li>
+<p>"linear": A linear long-term trend with no seasonal trend.
+</p>
+</li>
+<li>
+<p>"curvilinear": A curved long-term trend with no seasonal trend.
+</p>
+</li>
+<li>
+<p>"cos1linear": A seasonal trend plus a linear long-term trend.
+</p>
+</li>
+</ul>
+<p>See the package vignette for examples of the shapes of these trends.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slope</code></td>
+<td>
+<p>A numeric value specifying the slope of the trend, to be used
+with <code>trend = "linear"</code> or <code>trend = "cos1linear"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amp</code></td>
+<td>
+<p>A numeric value specifying the amplitude of the seasonal trend.
+Must be between -1 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exposure_type</code></td>
+<td>
+<p>A character string specifying the type of exposure.
+Choices are "binary" or "continuous".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start.date</code></td>
+<td>
+<p>A date of the format "yyyy-mm-dd" from which to begin
+simulating daily exposures</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cust_exp_func</code></td>
+<td>
+<p>An R object specifying the function to use to generate custom
+exposure values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cust_exp_args</code></td>
+<td>
+<p>A list of arguments used in the user-specified custom
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cust_expdraw</code></td>
+<td>
+<p>An R object specifying a user-created function
+which determines the distribution of random noise off of the trend line.
+This function must have inputs <code>n</code> and <code>prob</code> for a binary exposure
+function and inputs <code>n</code> and <code>mean</code> for a continuous exposure function.
+The custom function must output a vector of simulated exposure values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cust_expdraw_args</code></td>
+<td>
+<p>A list of arguments other than <code>n</code> required by the
+<code>cust_expdraw</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame with two columns: date (<code>date</code>) and simulated
+exposure values (<code>x</code>).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">sim_exposure(n = 5, central = 0.25, exposure_type = "binary")
+sim_exposure(n = 5, central = 100, sd = 10, exposure_type = "continuous")
+library(ggplot2)
+x_cont &lt;- sim_exposure(n = 1000, central = 100, sd = 10,
+                       exposure_type = "continuous",
+                       trend = "cos1linear", amp = 0.6)
+ggplot(x_cont, aes(x = date, y = x)) + geom_point()
+x_cust &lt;- sim_exposure(n = 1000, cust_exp_func = "custom_exposure",
+                       cust_exp_args = list(metric = "temp"))
+ggplot(x_cust, aes(x = date, y = x)) + geom_point()
+</code></pre>
+
+
+</div>

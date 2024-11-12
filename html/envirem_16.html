@@ -1,0 +1,116 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>petExtremes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>PET Extremes</h2>
+
+<h3>Description</h3>
+
+<p>Calculates summed PET of the coldest, warmest, wettest and driest quarters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">petExtremes(PETstack, precipStack, meantempStack)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>PETstack</code></td>
+<td>
+<p>SpatRaster of monthly PET,
+layer names assumed to end in month numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precipStack</code></td>
+<td>
+<p>SpatRaster of monthly precipitation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meantempStack</code></td>
+<td>
+<p>SpatRaster of monthly mean temperature</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Generates summed monthly PET for the warmest, coldest, wettest and driest 
+3 consecutive months. Previous versions of the envirem package incorrectly 
+calculated mean quarterly PET.
+</p>
+
+
+<h3>Value</h3>
+
+<p>SpatRaster of PETColdestQuarter, PETWarmestQuarter, PETWettestQuarter, PETDriestQuarter
+in mm / month.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Pascal Title
+</p>
+
+
+<h3>References</h3>
+
+<p>Metzger, M.J., Bunce, R.G.H., Jongman, R.H.G., Sayre, R., Trabucco, A. &amp; Zomer, R. (2013). 
+A high-resolution bioclimate map of the world: a unifying framework for global 
+biodiversity research and monitoring. <em>Global Ecology and Biogeography</em>, 
+<strong>22</strong>, 630-638.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>monthlyPET</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Find example rasters
+rasterFiles &lt;- list.files(system.file('extdata', package='envirem'), full.names=TRUE)
+env &lt;- rast(rasterFiles)
+
+# identify the appropriate layers
+meantemp &lt;- grep('mean', names(env), value=TRUE)
+solar &lt;- grep('solrad', names(env), value=TRUE)
+maxtemp &lt;- grep('tmax', names(env), value=TRUE)
+mintemp &lt;- grep('tmin', names(env), value=TRUE)
+precip &lt;- grep('prec', names(env), value=TRUE)
+
+# read them in as SpatRasters
+meantemp &lt;- env[[meantemp]]
+solar &lt;- env[[solar]]
+maxtemp &lt;- env[[maxtemp]]
+mintemp &lt;- env[[mintemp]]
+tempRange &lt;- abs(maxtemp - mintemp)
+precip &lt;- env[[precip]]
+
+# set up naming scheme - only precip is different from default
+assignNames(precip = 'prec_##')
+
+# get monthly PET
+pet &lt;- monthlyPET(meantemp, solar, tempRange)
+
+petExtremes(pet, precip, meantemp)
+
+# set back to defaults
+assignNames(reset = TRUE)
+
+</code></pre>
+
+
+</div>

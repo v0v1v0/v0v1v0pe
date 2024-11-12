@@ -1,0 +1,291 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm-parallel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parallel Processing in the <code>ergm</code> Package</h2>
+
+<h3>Description</h3>
+
+<p>Using clusters multiple CPUs or CPU cores to speed up ERGM
+estimation and simulation.
+</p>
+<p>The <code>ergm.getCluster</code> function is usually called
+internally by the ergm process (in
+<code>ergm_MCMC_sample()</code>) and will attempt to start the
+appropriate type of cluster indicated by the
+<code>control.ergm()</code> settings. It will also check that the
+same version of <code>ergm</code> is installed on each node.
+</p>
+<p>The <code>ergm.stopCluster</code> shuts down a
+cluster, but only if <code>ergm.getCluster</code> was responsible for
+starting it.
+</p>
+<p>The <code>ergm.restartCluster</code> restarts and returns a cluster,
+but only if <code>ergm.getCluster</code> was responsible for starting it.
+</p>
+<p><code>nthreads</code> is a simple generic to obtain the number of
+parallel processes represented by its argument, keeping in mind
+that having no cluster (e.g., <code>NULL</code>) represents one thread.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm.getCluster(control = NULL, verbose = FALSE, stop_on_exit = parent.frame())
+
+ergm.stopCluster(..., verbose = FALSE)
+
+ergm.restartCluster(control = NULL, verbose = FALSE)
+
+set.MT_terms(n)
+
+get.MT_terms()
+
+nthreads(clinfo = NULL, ...)
+
+## S3 method for class 'cluster'
+nthreads(clinfo = NULL, ...)
+
+## S3 method for class ''NULL''
+nthreads(clinfo = NULL, ...)
+
+## S3 method for class 'control.list'
+nthreads(clinfo = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a <code>control.ergm()</code> (or similar) list of
+parameter values from which the parallel settings should be read;
+can also be <code>NULL</code>, in which case an existing cluster is used
+if started, or no cluster otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop_on_exit</code></td>
+<td>
+<p>An <code>environment</code> or <code>NULL</code>. If an
+<code>environment</code>, defaulting to that of the calling function, the
+cluster will be stopped when the calling the frame in question
+exits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>not currently used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>an integer specifying the number of threads to use; 0 (the
+starting value) disables multithreading, and <code class="reqn">-1</code> or
+<code>NA</code> sets it to the number of CPUs detected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clinfo</code></td>
+<td>
+<p>a <code>cluster</code> or another object.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For estimation that require MCMC, ergm can take
+advantage of multiple CPUs or CPU cores on the system on which it
+runs, as well as computing clusters through one of two mechanisms:
+</p>
+<dl>
+<dt>Running MCMC chains in parallel</dt>
+<dd>
+<p> Packages
+<code>parallel</code> and <code>snow</code> are used to to facilitate this, all cluster
+types that they support are supported.
+</p>
+<p>The number of nodes used and the parallel API are controlled using
+the <code>parallel</code> and <code>parallel.type</code> arguments passed to the control
+functions, such as <code>control.ergm()</code>.
+</p>
+<p>The <code>ergm.getCluster()</code> function is usually called internally by
+the ergm process (in <code>ergm_MCMC_sample()</code>) and will attempt to
+start the appropriate type of cluster indicated by the
+<code>control.ergm()</code> settings. The <code>ergm.stopCluster()</code> is helpful if
+the user has directly created a cluster.
+</p>
+<p>Further details on the various cluster types are included below.</p>
+</dd>
+<dt>Multithreaded evaluation of model terms</dt>
+<dd>
+<p> Rather than running
+multiple MCMC chains, it is possible to attempt to accelerate
+sampling by evaluating qualified terms' change statistics in
+multiple threads run in parallel. This is done using the
+<a href="https://www.openmp.org/">OpenMP</a> API.
+</p>
+<p>However, this introduces a nontrivial amont of computational
+overhead. See below for a list of the major factors affecting
+whether it is worthwhile.</p>
+</dd>
+</dl>
+<p>Generally, the two approaches should not be used at the same time
+without caution. In particular, by default, cluster slave nodes
+will not “inherit” the multithreading setting; but
+<code style="white-space: pre;">⁠parallel.inherit.MT=⁠</code> control parameter can override that. Their
+relative advantages and disadvantages are as follows:
+</p>
+
+<ul>
+<li>
+<p> Multithreading terms cannot take advantage of clusters but only
+of CPUs and cores.
+</p>
+</li>
+<li>
+<p> Parallel MCMC chains produce several independent chains;
+multithreading still only produces one.
+</p>
+</li>
+<li>
+<p> Multithreading terms actually accellerates sampling, including
+the burn-in phase; parallel MCMC's multiple burn-in runs are
+effectively “wasted”.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p><code>set.MT_terms()</code> returns the previous setting, invisibly.
+</p>
+<p><code>get.MT_terms()</code> returns the current setting.
+</p>
+
+
+<h3>Different types of clusters</h3>
+
+<dl>
+<dt>PSOCK clusters</dt>
+<dd>
+<p> The <code>parallel</code> package is used with PSOCK clusters
+by default, to utilize multiple cores on a system. The number of
+cores on a system can be determined with the <code>detectCores()</code>
+function.
+</p>
+<p>This method works with the base installation of R on all platforms,
+and does not require additional software.
+</p>
+<p>For more advanced applications, such as clusters that span multiple
+machines on a network, the clusters can be initialized manually,
+and passed into <code>ergm()</code> and others using the <code>parallel</code> control
+argument. See the second example below.</p>
+</dd>
+<dt>MPI clusters</dt>
+<dd>
+<p> To use MPI to accelerate ERGM sampling,
+pass the control parameter <code>parallel.type="MPI"</code>.
+ergm requires the <a href="https://CRAN.R-project.org/package=snow"><span class="pkg">snow</span></a> and <a href="https://CRAN.R-project.org/package=Rmpi"><span class="pkg">Rmpi</span></a> packages to
+communicate with an MPI cluster.
+</p>
+<p>Using MPI clusters requires the system to have an existing MPI
+installation.  See the MPI documentation for your particular
+platform for instructions.
+</p>
+<p>To use <code>ergm()</code> across multiple machines in a high performance
+computing environment, see the section "User initiated clusters"
+below.</p>
+</dd>
+<dt>User initiated clusters</dt>
+<dd>
+<p> A cluster can be passed into <code>ergm()</code>
+with the <code>parallel</code> control parameter. <code>ergm()</code> will detect the
+number of nodes in the cluster, and use all of them for MCMC
+sampling. This method is flexible: it will accept any cluster type
+that is compatible with <code>snow</code> or <code>parallel</code> packages.
+</p>
+</dd>
+</dl>
+<h3>When is multithreading terms worthwhile?</h3>
+
+
+<ul>
+<li>
+<p> The more terms with statistics the model has, the more
+benefit from parallel execution.
+</p>
+</li>
+<li>
+<p> The more expensive the terms in the model are, the more benefit
+from parallel execution. For example, models with terms like
+<code>gwdsp</code> will generally get more benefit than models where all
+terms are dyad-independent.
+</p>
+</li>
+<li>
+<p> Sampling more dense networks will generally get more benefit than
+sparse networks. Network size has little, if any, effect.
+</p>
+</li>
+<li>
+<p> More CPUs/cores usually give greater speed-up, but only up to a
+point, because the amount of overhead grows with the number of
+threads; it is often better to “batch” the terms into a smaller
+number of threads than possible.
+</p>
+</li>
+<li>
+<p> Any other workload on the system will have a more severe effect
+on multithreaded execution. In particular, do not run more
+threads than CPUs/cores that you want to allocate to the tasks.
+</p>
+</li>
+<li>
+<p> Under Windows, even compiling with OpenMP appears to introduce
+unacceptable amounts of overhead, so it is disabled for Windows
+at compile time. To enable, <em>delete</em> <code>src/Makevars.win</code> and
+recompile from scratch.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>The this is a setting global to the <code>ergm</code> package and all of
+its C functions, including when called from other packages via
+the <code>Linking-To</code> mechanism.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# Uses 2 SOCK clusters for MCMLE estimation
+data(faux.mesa.high)
+nw &lt;- faux.mesa.high
+fauxmodel.01 &lt;- ergm(nw ~ edges + isolates + gwesp(0.2, fixed=TRUE), 
+                     control=control.ergm(parallel=2, parallel.type="PSOCK"))
+summary(fauxmodel.01)
+
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,209 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>atdf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Auto-Tail Dependence Function
+</h2>
+
+<h3>Description</h3>
+
+<p>Computes (and by default plots) estimates of the auto-tail dependence function(s) (atdf) based on
+either chi (rho) or chibar (rhobar), or both.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">atdf(x, u, lag.max = NULL, type = c("all", "rho", "rhobar"), plot = TRUE,
+    na.action = na.fail, ...)
+
+## S3 method for class 'atdf'
+plot(x, type = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>For <code>atdf</code>: a univariate time series object or a numeric vector.  For the <code>plot</code> method function, a list object of class “atdf”.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>numeric between 0 and 1 (non-inclusive) determining the level F^(-1)(u) over which to compute the atdf.  Typically, this should be close to 1, but low enough to incorporate enough data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag.max</code></td>
+<td>
+<p>The maximum lag for which to compute the atdf.  Default is 10*log10(n), where n is the length of the data.  Will be automatically limited to one less than the total number of observations in the series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character string stating which type of atdf to calculate/plot (rho, rhobar or both).  If NULL the <code>plot</code> method function will take the type to be whatever was passed to the call to <code>atdf</code>.  If “all”, then a 2 by 1 panel of two plots are graphed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>logical, should the plot be made or not?  If TRUE, output is returned invisibly.  If FALSE, output is returned normally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>function to be called to handle missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Further arguments to be passed to the <code>plot</code> method function or to <code>plot</code>.  Note that if <code>main</code>, <code>xlab</code> or <code>ylab</code> are used with type “all”, then the labels/title will be applied to both plots, which is probably not desirable.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The tail dependence functions are those described in, e.g., Reiss and Thomas (2007) Eq (2.60) for "chi" and Eq (13.25) "chibar", and estimated by Eq (2.62) and Eq (13.28), resp.  See also, Sibuya (1960) and Coles (2001) sec. 8.4, as well as other texts on EVT such as Beirlant et al. (2004) sec. 9.4.1 and 10.3.4 and de Haan and Ferreira (2006).
+</p>
+<p>Specifically, for two series X and Y with associated df's F and G, chi, a function of u, is defined as
+</p>
+<p>chi(u) = Pr[Y &gt; G^(-1)(u) | X &gt; F^(-1)(u)] = Pr[V &gt; u | U &gt; u],
+</p>
+<p>where (U,V) = (F(X),G(Y))–i.e., the copula.  Define chi = limit as u goes to 1 of chi(u).
+</p>
+<p>The coefficient of tail dependence, chibar(u) was introduced by Coles et al. (1999), and is given by
+</p>
+<p>chibar(u) = 2*log(Pr[U &gt; u])/log(Pr[U &gt; u, V &gt; u]) - 1.
+</p>
+<p>Define chibar = limit as u goes to 1 of chibar(u).
+</p>
+<p>The auto-tail dependence function using chi(u) and/or chibar(u) employs X against itself at different lags.
+</p>
+<p>The associated estimators for the auto-tail dependence functions employed by these functions are based on the above two coefficients of tail dependence, and are given by Reiss and Thomas (2007) Eq (2.65) and (13.28) for a lag h as
+</p>
+<p>rho.hat(u, h) = sum( min(x_i, x_(i+h) ) &gt; sort(x)[floor(n*u)])/(n*(1-u))   [based on chi]
+</p>
+<p>and
+</p>
+<p>rhobar.hat(u, h) = 2*log(1 - u)/log(sum(min(x_i,x_(i+h)) &gt; sort(x)[floor(n*u)])/(n - h)) - 1.
+</p>
+<p>Some properties of the above dependence coefficients, chi(u), chi, and chibar(u) and chibar, are that 0 &lt;= chi(u), chi &lt;= 1, where if X and Y are stochastically independent, then chi(u) = 1 - u, and chibar = 0.  If X = Y (perfectly dependent), then chi(u) = chi = 1.  For chibar(u) and chibar, we have that -1 &lt;= chibar(u), chibar &lt;= 1.  If U = V, then chibar = 1.  If chi = 0, then chibar &lt; 1 (tail independence with chibar determining the degree of dependence).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list object of class “atdf” is returned with components: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call </code></td>
+<td>
+<p>The function calling string.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type </code></td>
+<td>
+<p>character naming the type of atdf computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>series</code></td>
+<td>
+<p>character string naming the series used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag</code></td>
+<td>
+<p>numeric vector giving the lags used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>atdf</code></td>
+<td>
+<p>numeric vector or if type is “all”, two-column matrix giving the estimated auto-tail dependence function values.</p>
+</td>
+</tr>
+</table>
+<p>The plot method functoin does not return anything.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Eric Gilleland
+</p>
+
+
+<h3>References</h3>
+
+<p>Beirlant, J., Goegebeur, Y., Teugels, J. and Segers, J. (2004) <em>Statistics of Extremes: Theory and Applications</em>.  Chichester, West Sussex, England, UK: Wiley, ISBN 9780471976479, 522pp.
+</p>
+<p>Coles, S.  (2001) <em>An introduction to statistical modeling of extreme values</em>, London, U.K.: Springer-Verlag, 208 pp.
+</p>
+<p>Coles, S., Heffernan, J. E., and Tawn, J. A. (1999) Dependence measures for extreme value analyses.  <em>Extremes</em>, <b>2</b>, 339–365.
+</p>
+<p>de Haan, L. and Ferreira, A. (2006) <em>Extreme Value Theory: An Introduction</em>.  New York, NY, USA: Springer, 288pp.
+</p>
+<p>Reiss, R.-D. and Thomas, M. (2007) <em>Statistical Analysis of Extreme Values: with applications to insurance, finance, hydrology and other fields</em>. Birkhauser, 530pp., 3rd edition.
+</p>
+<p>Sibuya, M. (1960) Bivariate extreme statistics.  <em>Ann. Inst. Math. Statist.</em>, <b>11</b>, 195–210.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>acf</code>, <code>pacf</code>, <code>taildep</code>, <code>taildep.test</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">z &lt;- arima.sim(n = 63, list(ar = c(0.8897, -0.4858), ma = c(-0.2279, 0.2488)),
+               sd = sqrt(0.1796))
+hold &lt;- atdf(z, 0.8, plot=FALSE)
+par(mfrow=c(2,2))
+acf(z, xlab="")
+pacf(z, xlab="")
+plot(hold, type="chi")
+plot(hold, type="chibar")
+
+y &lt;- cbind(z[2:63], z[1:62])
+y &lt;- apply(y, 1, max)
+hold2 &lt;- atdf(y, 0.8, plot=FALSE)
+par(mfrow=c(2,2))
+acf(y, xlab="")
+pacf(y, xlab="")
+plot(hold2, type="chi")
+plot(hold2, type="chibar")
+
+## Not run: 
+data(Fort)
+atdf(Fort[,5], 0.9)
+
+data(Tphap)
+atdf(Tphap$MaxT, 0.8)
+
+data(PORTw)
+atdf(PORTw$TMX1, u=0.9)
+atdf(PORTw$TMX1, u=0.8)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,98 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>manual_correction</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Manual correction</h2>
+
+<h3>Description</h3>
+
+<p>When finding wrong or unexpected values in an exported table, it can be useful to temporarily correct them by hard-coding a value.
+However, this manual correction should be undone as soon as the central database is updated with the correction.
+</p>
+
+<ul>
+<li> <p><code>manual_correction()</code> applies a correction in a specific table column location and throws an error if the correction is already in place. This check applies only once per R session so you can source your script without errors.
+</p>
+</li>
+<li> <p><code>reset_manual_correction()</code> resets all checks. For instance, it is called by <code>read_trialmaster()</code>.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">manual_correction(
+  data,
+  col,
+  rows,
+  wrong,
+  correct,
+  verbose = getOption("edc_correction_verbose", TRUE)
+)
+
+reset_manual_correction()
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data, col, rows</code></td>
+<td>
+<p>the rows of a column of a dataframe where the error lies</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wrong</code></td>
+<td>
+<p>the actual wrong value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correct</code></td>
+<td>
+<p>the temporary correction value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>whether to print informations (once)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Nothing, used for side effects
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+x = iris %&gt;% mutate(id=row_number(), .before=1) %&gt;% as_tibble()
+x$Sepal.Length[c(1,3,5)]
+
+#1st correction is silent
+manual_correction(x, Sepal.Length, rows=c(1,3,5),
+                  wrong=c(5.1, 4.7, 5.0), correct=c(5, 4, 3))
+x$Sepal.Length[c(1,3,5)]
+
+#further correction is silent
+manual_correction(x, Sepal.Length, rows=c(1,3,5),
+                  wrong=c(5.1, 4.7, 5.0), correct=c(5, 4, 3)) 
+                  
+#if the database is corrected, an error is thrown
+## Not run: 
+reset_manual_correction()
+x$Sepal.Length[c(1,3,5)] = c(5, 4, 3) #mimics db correction
+manual_correction(x, Sepal.Length, rows=c(1,3,5),
+                  wrong=c(5.1, 4.7, 5.0), correct=c(5, 4, 3))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

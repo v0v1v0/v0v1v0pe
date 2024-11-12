@@ -1,0 +1,287 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>transfn_exdqlmISVB</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Transfer Function exDQLM - ISVB algorithm</h2>
+
+<h3>Description</h3>
+
+<p>The function applies an Importance Sampling Variational Bayes (ISVB) algorithm to estimate the posterior of an exDQLM with exponential decay transfer function component.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">transfn_exdqlmISVB(
+  y,
+  p0,
+  model,
+  X,
+  df,
+  dim.df,
+  lam,
+  tf.df,
+  fix.gamma = FALSE,
+  gam.init = NA,
+  fix.sigma = TRUE,
+  sig.init = NA,
+  dqlm.ind = FALSE,
+  exps0,
+  tol = 0.1,
+  n.IS = 500,
+  n.samp = 200,
+  PriorSigma = NULL,
+  PriorGamma = NULL,
+  tf.m0 = rep(0, 2),
+  tf.C0 = diag(1, 2),
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A univariate time-series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p0</code></td>
+<td>
+<p>The quantile of interest, a value between 0 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>List of the state-space model including <code>GG</code>, <code>FF</code>, prior parameters <code>m0</code> and <code>C0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>A univariate time-series which will be the input of the transfer function component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Discount factors for each block.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dim.df</code></td>
+<td>
+<p>Dimension of each block of discount factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lam</code></td>
+<td>
+<p>Transfer function rate parameter lambda, a value between 0 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tf.df</code></td>
+<td>
+<p>Discount factor(s) used for the transfer function component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix.gamma</code></td>
+<td>
+<p>Logical value indicating whether to fix gamma at <code>gam.init</code>. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gam.init</code></td>
+<td>
+<p>Initial value for gamma (skewness parameter), or value at which gamma will be fixed if <code>fix.gamma=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix.sigma</code></td>
+<td>
+<p>Logical value indicating whether to fix sigma at <code>sig.init</code>. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig.init</code></td>
+<td>
+<p>Initial value for sigma (scale parameter), or value at which sigma will be fixed if <code>fix.sigma=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dqlm.ind</code></td>
+<td>
+<p>Logical value indicating whether to fix gamma at <code>0</code>, reducing the exDQLM to the special case of the DQLM. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exps0</code></td>
+<td>
+<p>Initial value for dynamic quantile. If <code>exps0</code> is not specified, it is set to the DLM estimate of the <code>p0</code> quantile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>Tolerance for convergence of dynamic quantile estimates. Default is <code>tol=0.1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.IS</code></td>
+<td>
+<p>Number of particles for the importance sampling of joint variational distribution of sigma and gamma. Default is <code>n.IS=500</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.samp</code></td>
+<td>
+<p>Number of samples to draw from the approximated posterior distribution. Default is <code>n.samp=200</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PriorSigma</code></td>
+<td>
+<p>List of parameters for inverse gamma prior on sigma; shape <code>a_sig</code> and scale <code>b_sig</code>. Default is an inverse gamma with mean 1 (or <code>sig.init</code> if provided) and variance 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PriorGamma</code></td>
+<td>
+<p>List of parameters for truncated student-t prior on gamma; center <code>m_gam</code>, scale <code>s_gam</code> and degrees of freedom <code>df_gam</code>. Default is a standard student-t with 1 degree of freedom, truncated to the support of gamma.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tf.m0</code></td>
+<td>
+<p>Prior mean of the transfer function component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tf.C0</code></td>
+<td>
+<p>Prior covariance of the transfer function component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical value indicating whether progress should be displayed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list of the following is returned:
+</p>
+
+<ul>
+<li> <p><code>run.time</code> - Algorithm run time in seconds.
+</p>
+</li>
+<li> <p><code>iter</code> - Number of iterations until convergence was reached.
+</p>
+</li>
+<li> <p><code>dqlm.ind</code> - Logical value indicating whether gamma was fixed at <code>0</code>, reducing the exDQLM to the special case of the DQLM.
+</p>
+</li>
+<li> <p><code>model</code> - List of the augmented state-space model including <code>GG</code>, <code>FF</code>, prior parameters <code>m0</code> and <code>C0</code>.
+</p>
+</li>
+<li> <p><code>p0</code> - The quantile which was estimated.
+</p>
+</li>
+<li> <p><code>df</code> - Discount factors used for each block, including transfer function component.
+</p>
+</li>
+<li> <p><code>dim.df</code> - Dimension used for each block of discount factors, including transfer function component.
+</p>
+</li>
+<li> <p><code>lam</code> - Transfer function rate parameter lambda.
+</p>
+</li>
+<li> <p><code>sig.init</code> - Initial value for sigma, or value at which sigma was fixed if <code>fix.sigma=TRUE</code>.
+</p>
+</li>
+<li> <p><code>seq.sigma</code> - Sequence of sigma estimated by the algorithm until convergence.
+</p>
+</li>
+<li> <p><code>samp.theta</code> - Posterior sample of the state vector variational distribution.
+</p>
+</li>
+<li> <p><code>samp.post.pred</code> - Sample of the posterior predictive distributions.
+</p>
+</li>
+<li> <p><code>map.standard.forecast.errors</code> - MAP standardized one-step-ahead forecast errors.
+</p>
+</li>
+<li> <p><code>samp.sigma</code> - Posterior sample of scale parameter sigma variational distribution.
+</p>
+</li>
+<li> <p><code>samp.vts</code> - Posterior sample of latent parameters, v_t, variational distributions.
+</p>
+</li>
+<li> <p><code>theta.out</code> - List containing the variational distribution of the state vector including filtered distribution parameters (<code>fm</code> and <code>fC</code>) and smoothed distribution parameters (<code>sm</code> and <code>sC</code>).
+</p>
+</li>
+<li> <p><code>vts.out</code> - List containing the variational distributions of latent parameters v_t.
+</p>
+</li>
+<li> <p><code>median.kt</code> - Median number of time steps until the effect of X_t is less than or equal to 1e-3.
+</p>
+</li>
+</ul>
+<p>If <code>dqlm.ind=FALSE</code>, the list also contains:
+</p>
+
+<ul>
+<li> <p><code>gam.init</code> - Initial value for gamma, or value at which gamma was fixed if <code>fix.gamma=TRUE</code>.
+</p>
+</li>
+<li> <p><code>seq.gamma</code> - Sequence of gamma estimated by the algorithm until convergence.
+</p>
+</li>
+<li> <p><code>samp.gamma</code> - Posterior sample of skewness parameter gamma variational distribution.
+</p>
+</li>
+<li> <p><code>samp.sts</code> - Posterior sample of latent parameters, s_t, variational distributions.
+</p>
+</li>
+<li> <p><code>gammasig.out</code> - List containing the IS estimate of the variational distribution of sigma and gamma.
+</p>
+</li>
+<li> <p><code>sts.out</code> - List containing the variational distributions of latent parameters s_t.
+</p>
+</li>
+</ul>
+<p>Or if <code>dqlm.ind=TRUE</code>, the list also contains:
+</p>
+
+<ul><li> <p><code>sig.out</code> - List containing the IS estimate of the variational distribution of sigma.
+</p>
+</li></ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+y = scIVTmag[1:1095]
+X = ELIanoms[1:1095]
+trend.comp = polytrendMod(1,mean(y),10)
+seas.comp = seasMod(365,c(1,2,4),C0=10*diag(6))
+model = combineMods(trend.comp,seas.comp)
+M1 = transfn_exdqlmISVB(y,p0=0.85,model=model,
+                          X,df=c(1,1),dim.df = c(1,6),
+                          gam.init=-3.5,sig.init=15,
+                          lam=0.38,tf.df=c(0.97,0.97))
+
+
+</code></pre>
+
+
+</div>

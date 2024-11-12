@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>read.jdbc.ffdf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read data from a JDBC connection into an ffdf.</h2>
+
+<h3>Description</h3>
+
+<p>Read data from a JDBC connection into an <code>ffdf</code>. This can for example be used to import
+large datasets from Oracle, SQLite, MySQL, PostgreSQL, Hive or other SQL databases into R. <br></p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">read.jdbc.ffdf(
+  query = NULL,
+  dbConnect.args = list(drv = NULL, dbname = NULL, username = "", password = ""),
+  dbSendQuery.args = list(),
+  dbFetch.args = list(),
+  x = NULL,
+  nrows = -1,
+  first.rows = NULL,
+  next.rows = NULL,
+  levels = NULL,
+  appendLevels = TRUE,
+  asffdf_args = list(),
+  BATCHBYTES = getOption("ffbatchbytes"),
+  VERBOSE = FALSE,
+  colClasses = NULL,
+  transFUN = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>query</code></td>
+<td>
+<p>the SQL query to execute on the JDBC connection</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dbConnect.args</code></td>
+<td>
+<p>a list of arguments to pass to JDBC's <code>RJDBC::dbConnect</code> (like drv, dbname, username, password). See the examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dbSendQuery.args</code></td>
+<td>
+<p>a list containing database-specific parameters which will be passed to to pass to <code>RJDBC::dbSendQuery</code>.
+Defaults to an empty list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dbFetch.args</code></td>
+<td>
+<p>a list containing optional database-specific parameters which will be passed to to pass to <code>RJDBC::dbFetch</code>. 
+Defaults to an empty list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>NULL or an optional ffdf object to which the read records are appended. 
+See documentation in read.table.ffdf for more details and the example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrows</code></td>
+<td>
+<p>Number of rows to read from the query resultset. Default value of -1 reads in all rows.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>first.rows</code></td>
+<td>
+<p>chunk size (rows) to read for first chunk from the query resultset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>next.rows</code></td>
+<td>
+<p>chunk size (rows) to read sequentially for subsequent chunks from the query resultset. Currently, this must be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>levels</code></td>
+<td>
+<p>optional specification of factor levels. A list with as names the names the columns of the data.frame 
+fetched in the first.rows, containing levels of the factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>appendLevels</code></td>
+<td>
+<p>logical. A vector of permissions to expand levels for factor columns. See documentation in <code>read.table.ffdf</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asffdf_args</code></td>
+<td>
+<p>further arguments passed to <code>as.ffdf</code> (ignored if 'x' gives an ffdf object )</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BATCHBYTES</code></td>
+<td>
+<p>integer: bytes allowed for the size of the data.frame storing the result of reading one chunk. 
+See documentation in <code>read.table.ffdf</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VERBOSE</code></td>
+<td>
+<p>logical: TRUE to verbose timings for each processed chunk (default FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colClasses</code></td>
+<td>
+<p>See documentation in <code>read.table.ffdf</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transFUN</code></td>
+<td>
+<p>function applied to the data frame after each chunk is retreived by <code>RJDBC::dbFetch</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional parameters passed on to transFUN</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Opens up the JDBC connection using <code>RJDBC::dbConnect</code>, sends the query using <code>RJDBC::dbSendQuery</code> and <code>RJDBC::dbFetch</code>-es 
+the results in batches of next.rows rows. Heavily borrowed from <code>read.table.ffdf</code>
+</p>
+
+
+<h3>Value</h3>
+
+<p>An ffdf object unless the query returns zero records in which case the function will return the data.frame
+returned by <code>RJDBC::dbFetch</code> and possibly transFUN.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>read.table.ffdf, read.jdbc.ffdf</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+require(ff)
+
+##
+## Example query using data in sqlite
+##
+require(RSQLite)
+dbfile &lt;- system.file("smalldb.sqlite3", package="ETLUtils")
+drv &lt;- JDBC(driverClass = "org.sqlite.JDBC", classPath = "/usr/local/lib/sqlite-jdbc-3.7.2.jar")
+query &lt;- "select * from testdata limit 10000"
+x &lt;- read.jdbc.ffdf(query = query, 
+ dbConnect.args = list(drv = drv, url = sprintf("jdbc:sqlite:%s", dbfile)), 
+ first.rows = 100, next.rows = 1000, VERBOSE=TRUE)
+class(x)
+x[1:10, ]
+
+## End(Not run)
+</code></pre>
+
+
+</div>

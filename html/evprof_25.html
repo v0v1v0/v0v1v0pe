@@ -1,0 +1,83 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_energy_models</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get a tibble of energy GMM for every user profile</h2>
+
+<h3>Description</h3>
+
+<p>This function simulates random energy values, makes the density curve and overlaps
+the simulated density curve with the real density curve of the user profile's energy values.
+This is useful to appreciate how the modeled values fit the real ones and increase
+or decrease the number of Gaussian components.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_energy_models(sessions_profiles, log = TRUE, by_power = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sessions_profiles</code></td>
+<td>
+<p>tibble, sessions data set in evprof
+<a href="https://mcanigueral.github.io/evprof/articles/sessions-format.html">standard format</a>
+with user profile attribute <code>Profile</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, whether to transform <code>ConnectionStartDateTime</code> and
+<code>ConnectionHours</code> variables to natural logarithmic scale (base = <code>exp(1)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by_power</code></td>
+<td>
+<p>Logical, true to fit the energy models for every charging rate separately</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>tibble
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(dplyr)
+
+# Classify each session to the corresponding user profile
+sessions_profiles &lt;- california_ev_sessions_profiles %&gt;%
+  dplyr::sample_frac(0.05)
+
+# Get a table with the energy GMM parameters
+get_energy_models(sessions_profiles, log = TRUE)
+
+# If there is a `Power` variable in the data set
+# you can create an energy model per power rate and user profile
+# First it is convenient to round the `Power` values for more generic models
+sessions_profiles &lt;- sessions_profiles %&gt;%
+  mutate(Power = round_to_interval(Power, 3.7)) %&gt;%
+  filter(Power &lt; 11)
+sessions_profiles$Power[sessions_profiles$Power == 0] &lt;- 3.7
+get_energy_models(sessions_profiles, log = TRUE, by_power = TRUE)
+
+
+
+
+
+</code></pre>
+
+
+</div>

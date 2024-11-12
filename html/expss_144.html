@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fre</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simple frequencies with support of labels, weights and multiple response variables.</h2>
+
+<h3>Description</h3>
+
+<p><code>fre</code> returns data.frame with six columns: labels or values, counts, 
+valid percent (excluding NA), percent (with NA), percent of responses(for 
+single-column <code>x</code> it equals to valid percent) and cumulative percent of 
+responses.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fre(
+  x,
+  weight = NULL,
+  drop_unused_labels = TRUE,
+  prepend_var_lab = FALSE,
+  stat_lab = getOption("expss.fre_stat_lab", c("Count", "Valid percent", "Percent",
+    "Responses, %", "Cumulative responses, %"))
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector/data.frame/list. data.frames are considered as multiple
+response variables. If <code>x</code> is list then vertically stacked frequencies
+for each element of list will be generated,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>numeric vector. Optional case weights. NA's and negative weights
+treated as zero weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop_unused_labels</code></td>
+<td>
+<p>logical. Should we drop unused value labels?
+Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prepend_var_lab</code></td>
+<td>
+<p>logical. Should we prepend variable label before value
+labels? By default we will add variable labels to value labels only if
+<code>x</code> or predictor is list (several variables).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat_lab</code></td>
+<td>
+<p>character. Labels for the frequency columns.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>object of class 'etable'. Basically it's a data.frame but class
+is needed for custom methods.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(mtcars)
+mtcars = mtcars %&gt;% 
+    apply_labels(
+        mpg = "Miles/(US) gallon",
+        cyl = "Number of cylinders",
+        disp = "Displacement (cu.in.)",
+        hp = "Gross horsepower",
+        drat = "Rear axle ratio",
+        wt = "Weight (lb/1000)",
+        qsec = "1/4 mile time",
+        vs = "Engine",
+        vs = c("V-engine" = 0, 
+                "Straight engine" = 1),
+        am = "Transmission",
+        am = c(automatic = 0, 
+                manual=1),
+        gear = "Number of forward gears",
+        carb = "Number of carburetors"
+    )
+
+fre(mtcars$vs)
+
+# stacked frequencies
+fre(list(mtcars$vs, mtcars$am))
+
+# multiple-choice variable
+# brands - multiple response question
+# Which brands do you use during last three months? 
+set.seed(123)
+brands = data.frame(t(replicate(20,sample(c(1:5,NA),4,replace = FALSE))))
+# score - evaluation of tested product
+score = sample(-1:1,20,replace = TRUE)
+var_lab(brands) = "Used brands"
+val_lab(brands) = make_labels("
+                              1 Brand A
+                              2 Brand B
+                              3 Brand C
+                              4 Brand D
+                              5 Brand E
+                              ")
+
+var_lab(score) = "Evaluation of tested brand"
+val_lab(score) = make_labels("
+                             -1 Dislike it
+                             0 So-so
+                             1 Like it    
+                             ")
+
+fre(brands)
+
+# stacked frequencies
+fre(list(score, brands))
+
+</code></pre>
+
+
+</div>

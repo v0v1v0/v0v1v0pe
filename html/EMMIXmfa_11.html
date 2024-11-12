@@ -1,0 +1,395 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mcfa</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Mixture of Common Factor Analyzers
+</h2>
+
+<h3>Description</h3>
+
+<p>Functions for fitting mixtures of common factor analyzers (MCFA)
+models.
+MCFA models are mixture of factor analyzers
+(belong to the class of multivariate finite mixture models)
+with a common component matrix for the
+factor loadings before the transformation of the latent factors to be
+white noise. It is designed specifically for the task of displaying the
+observed data points in a  lower (<em>q</em>-dimensional) space,
+where <em>q</em> is the number of factors adopted in the
+factor-analytic representation of the observed vector.
+</p>
+<p>The <code>mcfa</code> function fits mixtures common factor analyzers
+where the  components distributions belong to the family of
+multivariate normal distributions.
+The <code>mctfa</code> function fits
+mixtures of common <em>t</em>-factor analyzers where
+the component distributions corresponds to multivariate
+<em>t</em> distributions.
+Maximum likelihood estimates of the model parameters are obtained
+using the Expectation–Maximization algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mcfa(Y, g, q, itmax = 500, nkmeans = 5, nrandom = 20,
+  tol = 1.e-5, init_clust = NULL, init_para = NULL,
+  init_method = NULL, conv_measure = 'diff',
+  warn_messages = TRUE, ...)
+mctfa(Y, g, q, itmax = 500, nkmeans = 5, nrandom = 20,
+  tol = 1.e-5, df_init = rep(30, g), df_update = TRUE,
+  init_clust = NULL, init_para = NULL, init_method = NULL,
+  conv_measure = 'diff', warn_messages = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+<p>A matrix or a data frame of which rows correspond to
+observations and columns to variables.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g</code></td>
+<td>
+
+<p>Number of components.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+
+<p>Number of factors.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itmax</code></td>
+<td>
+
+<p>Maximum number of EM iterations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nkmeans</code></td>
+<td>
+
+<p>The number of times the k-means algorithm to be used in partition
+the data into <code>g</code> groups. These groupings are then used in
+initializing the parameters for the EM algorithm.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrandom</code></td>
+<td>
+
+<p>The number of random <code>g</code>-group partitions for the data to be used
+initializing the EM algorithm.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+
+<p>The EM algorithm terminates if the measure of convergence falls below
+this value.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_clust</code></td>
+<td>
+
+<p>A vector or matrix consisting of partition of samples to be used
+in the EM algorithm. For matrix of partitions, columns must corresponds
+individual partitions of the data. Optional.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_para</code></td>
+<td>
+
+<p>A list containing model parameters to be used as initial
+parameter estimates for the EM algorithm. Optional.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_method</code></td>
+<td>
+
+<p>To determine how the initial parameter values are computed. See Details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conv_measure</code></td>
+<td>
+
+<p>The default <code>'diff'</code> stops the EM iterations if
+|<code class="reqn">l^{(k+1)}</code> - <code class="reqn">l^{(k)}</code>| &lt; <code>tol</code> where
+<code class="reqn">l^{(k)}</code> is the log-likelihood at the <code class="reqn">k</code>th EM iteration.
+If <code>'ratio'</code>, then the convergence of the EM steps is measured
+using the |(<code class="reqn">l^{(k+1)}</code> - <code class="reqn">l^{(k)}</code>)/<code class="reqn">l^{(k+1)}</code>|.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df_init</code></td>
+<td>
+
+<p>Initial values of the degree of freedom parameters for <code>mctfa</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df_update</code></td>
+<td>
+
+<p>If <code>df_update = TRUE</code> (default), then the degree of freedom parameters
+values will be updated during the EM iterations.
+Otherwise, if <code>df_update = FALSE</code>, they will be fixed at the initial
+values specified in <code>df_init</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn_messages</code></td>
+<td>
+
+<p>With <code>warn_messages = TRUE</code> (default), the output would
+include some description of the reasons where, if any, the model fitting
+function failed to provide a fit for a given set of initial
+parameter values.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Not used.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>With <code>init_method = NULL</code>, the default,
+model parameters are initialized using all available methods.
+With the <code>init_method = "rand-A"</code>, the initialization of
+the parameters is done using the procedure in
+Baek et al. (2010) where initial values for elements of
+<code class="reqn">A</code> are drawn from the <code class="reqn">N(0, 1)</code> distribution.
+This method is appropriate when the columns of the data
+are on the same scale. The
+<code>init_method = "eigen-A"</code>
+takes the first <code class="reqn">q</code> eigenvectors of <code class="reqn">Y</code> as the
+initial value for the loading matrix <code class="reqn">A</code>. 
+If <code>init_method = "gmf"</code> then the data are factorized using
+<code>gmf</code> with <code class="reqn">q</code> factors and the resulting loading
+matrix is used as the initial value for <code class="reqn">A</code>.
+</p>
+<p>If specified, the optional argument <code>init_para</code>
+must be a list or an object of class <code>mcfa</code> or <code>mctfa</code>.
+When fitting an <code>mcfa</code> model, only the
+model parameters <code>q</code>, <code>g</code>,
+<code>pivec</code>, <code>A</code>, <code>xi</code>,
+<code>omega</code>, and <code>D</code> are extracted from
+<code>init_para</code>, while one extra parameter
+<code>nu</code> is extracted when fitting <code>mctfa</code>.
+Everything else in <code>init_para</code> will be discarded.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class <code>c("emmix", "mcfa")</code> or <code>c("emmix",
+"mctfa")</code> containing the fitted model parameters is returned.
+Details of the components are as follows:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>g</code></td>
+<td>
+
+<p>Number of mixture components.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+
+<p>Number of factors.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pivec</code></td>
+<td>
+
+<p>Mixing proportions of the components.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+
+<p>Loading matrix. Size <code class="reqn">p \times q</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+
+<p>Matrix containing factor means for components in columns.
+Size <code class="reqn">q \times g</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omega</code></td>
+<td>
+
+<p>Array containing factor covariance matrices for components.
+Size <code class="reqn">q \times q \times g</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+
+<p>Error covariance matrix. Size <code class="reqn">p \times p.</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Uscores</code></td>
+<td>
+
+<p>Estimated conditional expected component scores of the
+unobservable factors given the data and the component membership.
+Size <code class="reqn">n \times q \times g</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Umean</code></td>
+<td>
+
+<p>Means of the estimated conditional expected factors scores over
+estimated posterior distributions. Size <code class="reqn">n \times q</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Uclust</code></td>
+<td>
+
+<p>Alternative estimate of <code>Umean</code> where the posterior probabilities
+for each sample are replaced by component indicator vectors
+which contain one in the element corresponding to the highest posterior
+probability while others zero.  Size <code class="reqn">n \times q</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clust</code></td>
+<td>
+<p>Cluster labels.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>Posterior probabilities.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logL</code></td>
+<td>
+<p>Log-likelihood at the convergence.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BIC</code></td>
+<td>
+<p>Bayesian information criterion.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn_msg</code></td>
+<td>
+<p>Description of error messages, if any.
+</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Suren Rathnayake, Jangsun Baek, Geoff McLachlan
+</p>
+
+
+<h3>References</h3>
+
+<p>Baek J, McLachlan GJ, and Flack LK (2010). Mixtures of factor analyzers
+with common factor loadings: applications to the clustering and visualisation
+of high-dimensional data. <em>IEEE Transactions on Pattern Analysis and
+Machine Intelligence</em> <strong>32</strong>, 2089–2097.
+</p>
+<p>Baek J, and McLachlan GJ (2011). Mixtures of common <em>t</em>-factor analyzers
+for clustering highdimensional microarray data.
+<em>Bioinformatics</em> <strong>27</strong>, 1269–1276.
+</p>
+<p>McLachlan GJ, Baek J, and Rathnayake SI (2011). Mixtures of factor analyzers
+for the analysis of high-dimensional data.
+In <em>Mixture Estimation and Applications</em>,
+KL Mengersen, CP Robert, and DM Titterington (Eds).
+Hoboken, New Jersey: Wiley, pp. 171–191.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mfa</code>, <code>plot_factors</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">mcfa_fit &lt;- mcfa(iris[, -5], g = 3, q = 3, itmax = 25,
+                  nkmeans = 5, nrandom = 5, tol = 1.e-5)
+
+plot(mcfa_fit)
+
+mctfa_fit &lt;- mcfa(iris[, -5], g = 3, q = 3, itmax = 500,
+                  nkmeans = 5, nrandom = 5, tol = 1.e-5, df_update = TRUE)
+
+</code></pre>
+
+
+</div>

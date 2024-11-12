@@ -1,0 +1,117 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecospat.niche.zProjGeo</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Projection of Occurrence Densities to the Geography</h2>
+
+<h3>Description</h3>
+
+<p>Creates a raster in geography with each pixel containing the occurrence densities extracted from a z object generated with <code>ecospat.grid.clim.dyn</code>.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecospat.niche.zProjGeo(z,zproj,env,cor)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>occurrence density grid created by <code>ecospat.grid.clim.dyn</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zproj</code></td>
+<td>
+<p>NULL or occurrence density grid created by <code>ecospat.grid.clim.dyn</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>A SpatRaster of environmental variables corresponding to the background (<code>glob1</code> in <code>ecospat.grid.clim.dyn</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cor</code></td>
+<td>
+<p>FALSE by default. If TRUE corrects the occurrence densities of each species by the prevalence of the environments in their range</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>extracts the occurrence density of z and project them in geography. If zproj=NULL, the occurrence density of z is extracted for each point of the background of z (<code>glob1</code>) using <code>extract</code> (package terra). The values are binded to the geographic coordinates of <code>env</code> and a raster is then recreated using <code>rast</code> with the argument type="xyz".If zproj is a occurrence density object, the background <code>glob1</code> of this object is chosen and the projection is made on this background.<code>env</code> must then must be the same as used to create zproj.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>raster of class RasterLayer</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Olivier Broennimann <a href="mailto:olivier.broennimann@unil.ch">olivier.broennimann@unil.ch</a></p>
+
+
+<h3>References</h3>
+
+<p>Broennimann, O., M.C. Fitzpatrick, P.B. Pearman, B. Petitpierre, L. Pellissier, N.G. Yoccoz, W. Thuiller, M.J. Fortin, C. Randin, N.E. Zimmermann, C.H. Graham and A. Guisan. 2012. Measuring ecological niche overlap from occurrence and spatial environmental data. <em>Global Ecology and Biogeography</em>, <b>21</b>:481-497.
+</p>
+<p>Petitpierre, B., C. Kueffer, O. Broennimann, C. Randin, C. Daehler and A. Guisan. 2012. Climatic niche shifts are rare among terrestrial plant invaders. <em>Science</em>, <b>335</b>:1344-1348.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ecospat.plot.niche.dyn</code>, <code>ecospat.niche.dynIndexProjGeo</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(ade4)
+library(terra)
+
+data("ecospat.testNiche")
+spp &lt;- ecospat.testNiche
+xy.sp1&lt;-subset(spp,species=="sp1")[2:3] #Bromus_erectus
+
+env&lt;-terra::rast(system.file("extdata","ecospat.testEnv.tif",package="ecospat"))
+#plot(env)
+
+env.sp1&lt;-terra::extract(env,xy.sp1)[,-1]
+env.bkg&lt;-na.exclude(terra::values(env))
+
+#################################### PCA-ENVIRONMENT ##################################
+
+pca.cal &lt;- ade4::dudi.pca(env.bkg, center = TRUE, scale = TRUE, scannf = FALSE, nf = 2)
+
+# predict the scores on the axes
+scores.bkg &lt;- pca.cal$li  #scores for background climate
+scores.sp1 &lt;- ade4::suprow(pca.cal,env.sp1)$lisup				#scores for sp1
+
+# calculation of occurence density (niche z)
+  
+z1 &lt;- ecospat.grid.clim.dyn(scores.bkg, scores.bkg, scores.sp1,R=100)
+
+plot(z1$z.uncor)
+points(scores.sp1)
+
+#################################### occurrence density in space ##################################
+
+# sp1
+geoz1&lt;-ecospat.niche.zProjGeo(z1,zproj=NULL,env=env)
+plot(geoz1,main="z1")
+points(xy.sp1)
+</code></pre>
+
+
+</div>

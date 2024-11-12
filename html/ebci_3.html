@@ -1,0 +1,225 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ebci</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute empirical Bayes confidence intervals by shrinking toward regression</h2>
+
+<h3>Description</h3>
+
+<p>Computes empirical Bayes estimators based on shrinking towards a regression,
+and associated robust empirical Bayes confidence intervals (EBCIs), as well
+as length-optimal robust EBCIs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ebci(
+  formula,
+  data,
+  se,
+  weights = NULL,
+  alpha = 0.1,
+  kappa = NULL,
+  wopt = FALSE,
+  fs_correction = "PMT"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>object of class <code>"formula"</code> (or one that can be coerced
+to that class) of the form <code>Y ~ predictors</code>, where <code>Y</code> is a
+preliminary unbiased estimator, and <code>predictors</code> are predictors
+<code class="reqn">X</code> that guide the direction of shrinkage. For shrinking toward the
+grand mean, use <code>Y ~ 1</code>, and for shrinking toward <code>0</code> use
+<code>Y ~ 0</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>optional data frame, list or environment (or object coercible by
+<code>as.data.frame</code> to a data frame) containing the preliminary
+estimator <code>Y</code> and the predictors. If not found in <code>data</code>, these
+variables are taken from <code>environment(formula)</code>, typically the
+environment from which the function is called.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>Standard errors <code class="reqn">\sigma</code> associated with the preliminary
+estimates <code>Y</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>An optional vector of weights to be used in the fitting
+process in computing <code class="reqn">\delta</code>, <code class="reqn">\mu_2</code> and
+<code class="reqn">\kappa</code>. Should be <code>NULL</code> or a numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Determines confidence level, <code class="reqn">1-\alpha</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kappa</code></td>
+<td>
+<p>If non-<code>NULL</code>, use pre-specified value for the kurtosis
+<code class="reqn">\kappa</code> of <code class="reqn">\theta-X'\delta</code> (such as
+<code>Inf</code>), instead of computing it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wopt</code></td>
+<td>
+<p>If <code>TRUE</code>, also compute length-optimal robust EBCIs. These
+are robust EBCIs centered at estimates with the shrinkage factor
+<code class="reqn">w_i</code> chosen to minimize the length of the resulting EBCI.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fs_correction</code></td>
+<td>
+<p>Finite-sample correction method used to compute
+<code class="reqn">\mu_2</code> and <code class="reqn">\kappa</code>. These corrections ensure that
+we do not shrink the preliminary estimates <code>Y</code> all the way to zero.
+If <code>"PMT"</code>, use posterior mean truncation, if <code>"FPLIB"</code> use
+limited information Bayesian approach with a flat prior, and if
+<code>"none"</code>, truncate the estimates at <code>0</code> for <code class="reqn">\mu_2</code>
+and <code>1</code> for <code class="reqn">\kappa</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list with the following components: </p>
+
+<dl>
+<dt><code>mu2</code></dt>
+<dd>
+<p>Estimated second moment of
+<code class="reqn">\theta-X'\delta</code>, <code class="reqn">\mu_2</code>. Vector
+of length 2, the first element corresponds to the estimate after the
+finite-sample correction as specified by <code>fs_correction</code>, the second
+element is the uncorrected estimate.</p>
+</dd>
+<dt><code>kappa</code></dt>
+<dd>
+<p>Estimated kurtosis <code class="reqn">\kappa</code> of
+<code class="reqn">\theta-X'\delta</code>. Vector of length 2 with the same
+structure as <code>mu2</code>.</p>
+</dd>
+<dt><code>delta</code></dt>
+<dd>
+<p>Estimated regression coefficients <code class="reqn">\delta</code></p>
+</dd>
+<dt><code>X</code></dt>
+<dd>
+<p>Matrix of regressors</p>
+</dd>
+<dt><code>alpha</code></dt>
+<dd>
+<p>Determines confidence level <code class="reqn">1-\alpha</code> used.</p>
+</dd>
+<dt><code>df</code></dt>
+<dd>
+<p>Data frame with components described below.</p>
+</dd>
+</dl>
+<p><code>df</code> has the following components:
+</p>
+
+<dl>
+<dt><code>w_eb</code></dt>
+<dd>
+<p>EB shrinkage factors,
+<code class="reqn">\mu_{2}/(\mu_{2}+\sigma^2_i)</code></p>
+</dd>
+<dt><code>w_opt</code></dt>
+<dd>
+<p>Length-optimal shrinkage factors</p>
+</dd>
+<dt><code>ncov_pa</code></dt>
+<dd>
+<p>Maximal non-coverage of parametric EBCIs</p>
+</dd>
+<dt><code>len_eb</code></dt>
+<dd>
+<p>Half-length of robust EBCIs based on EB shrinkage, so
+that the intervals take the form <code>cbind(th_eb-len_eb, th_eb+len_eb)</code></p>
+</dd>
+<dt><code>len_op</code></dt>
+<dd>
+<p>Half-length of robust EBCIs based on length-optimal
+shrinkage, so that the intervals take the form <code>cbind(th_op-len_op,
+th_op+len_op)</code></p>
+</dd>
+<dt><code>len_pa</code></dt>
+<dd>
+<p>Half-length of parametric EBCIs, which take the form
+<code>cbind(th_eb-len_pa, th_eb+len_a)</code></p>
+</dd>
+<dt><code>len_us</code></dt>
+<dd>
+<p>Half-length of unshrunk CIs, which take the form
+<code>cbind(th_us-len_us, th_us+len_us)</code></p>
+</dd>
+<dt><code>th_us</code></dt>
+<dd>
+<p>Unshrunk estimate <code class="reqn">Y</code></p>
+</dd>
+<dt><code>th_eb</code></dt>
+<dd>
+<p>EB estimate.</p>
+</dd>
+<dt><code>th_op</code></dt>
+<dd>
+<p>Estimate based on length-optimal shrinkage.</p>
+</dd>
+<dt><code>se</code></dt>
+<dd>
+<p>Standard error <code class="reqn">\sigma</code>, as supplied by the
+argument <code>se</code></p>
+</dd>
+<dt><code>weights</code></dt>
+<dd>
+<p>Weights used</p>
+</dd>
+<dt><code>residuals</code></dt>
+<dd>
+<p>The residuals <code class="reqn">Y_i-X_i\delta</code></p>
+</dd>
+</dl>
+<h3>References</h3>
+
+
+<p><cite>Armstrong, Timothy B., Kolesár, Michal, and Plagborg-Møller, Mikkel
+(2020): Robust Empirical Bayes Confidence Intervals,
+<a href="https://arxiv.org/abs/2004.03448">https://arxiv.org/abs/2004.03448</a></cite>
+</p>
+
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Same specification as in empirical example in Armstrong, Kolesár
+## and Plagborg-Møller (2020), but only use data on NY commuting zones
+r &lt;- ebci(theta25 ~ stayer25, data=cz[cz$state=="NY", ],
+          se=se25, weights=1/se25^2)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,204 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>step_feature_hash</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dummy Variables Creation via Feature Hashing</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#soft-deprecated"><img src="../help/figures/lifecycle-soft-deprecated.svg" alt="[Soft-deprecated]"></a>
+</p>
+<p><code>step_feature_hash()</code> is being deprecated in favor of
+<code>textrecipes::step_dummy_hash()</code>. This function creates a <em>specification</em>
+of a recipe step that will convert nominal data (e.g. character or factors)
+into one or more numeric binary columns using the levels of the original
+data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">step_feature_hash(
+  recipe,
+  ...,
+  role = "predictor",
+  trained = FALSE,
+  num_hash = 2^6,
+  preserve = deprecated(),
+  columns = NULL,
+  keep_original_cols = FALSE,
+  skip = FALSE,
+  id = rand_id("feature_hash")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>recipe</code></td>
+<td>
+<p>A recipe object. The step will be added to the
+sequence of operations for this recipe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more selector functions to choose variables
+for this step. See <code>selections()</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>role</code></td>
+<td>
+<p>For model terms created by this step, what analysis role should
+they be assigned? By default, the new columns created by this step from
+the original variables will be used as <em>predictors</em> in a model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained</code></td>
+<td>
+<p>A logical to indicate if the quantities for
+preprocessing have been estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_hash</code></td>
+<td>
+<p>The number of resulting dummy variable columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preserve</code></td>
+<td>
+<p>Use <code>keep_original_cols</code> instead to specify whether the
+selected column(s) should be retained in addition to the new dummy
+variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>columns</code></td>
+<td>
+<p>A character vector for the selected columns. This is <code>NULL</code>
+until the step is trained by <code>recipes::prep()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_original_cols</code></td>
+<td>
+<p>A logical to keep the original variables in the
+output. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip</code></td>
+<td>
+<p>A logical. Should the step be skipped when the
+recipe is baked by <code>bake()</code>? While all operations are baked
+when <code>prep()</code> is run, some operations may not be able to be
+conducted on new data (e.g. processing the outcome variable(s)).
+Care should be taken when using <code>skip = TRUE</code> as it may affect
+the computations for subsequent operations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A character string that is unique to this step to identify it.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>step_feature_hash()</code> will create a set of binary dummy variables from a
+factor or character variable. The values themselves are used to determine
+which row that the dummy variable should be assigned (as opposed to having a
+specific column that the value will map to).
+</p>
+<p>Since this method does not rely on a pre-determined assignment of levels to
+columns, new factor levels can be added to the selected columns without
+issue. Missing values result in missing values for all of the hashed columns.
+</p>
+<p>Note that the assignment of the levels to the hashing columns does not try to
+maximize the allocation. It is likely that multiple levels of the column will
+map to the same hashed columns (even with small data sets). Similarly, it is
+likely that some columns will have all zeros. A zero-variance filter (via
+<code>recipes::step_zv()</code>) is recommended for any recipe that uses hashed columns.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated version of <code>recipe</code> with the new step added to the
+sequence of any existing operations.
+</p>
+
+
+<h3>Tidying</h3>
+
+<p>When you <code>tidy()</code> this step, a tibble is retruned with
+columns <code>terms</code> and <code>id</code>:
+</p>
+
+<dl>
+<dt>terms</dt>
+<dd>
+<p>character, the selectors or variables selected</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>character, id of this step</p>
+</dd>
+</dl>
+<h3>Case weights</h3>
+
+<p>The underlying operation does not allow for case weights.
+</p>
+
+
+<h3>References</h3>
+
+<p>Weinberger, K, A Dasgupta, J Langford, A Smola, and J Attenberg. 2009.
+"Feature Hashing for Large Scale Multitask Learning." In Proceedings of the
+26th Annual International Conference on Machine Learning, 1113–20. ACM.
+</p>
+<p>Kuhn and Johnson (2020) <em>Feature Engineering and Selection: A Practical
+Approach for Predictive Models</em>. CRC/Chapman Hall
+<a href="https://bookdown.org/max/FES/encoding-predictors-with-many-categories.html">https://bookdown.org/max/FES/encoding-predictors-with-many-categories.html</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>recipes::step_dummy()</code>, <code>recipes::step_zv()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(grants, package = "modeldata")
+rec &lt;-
+  recipe(class ~ sponsor_code, data = grants_other) %&gt;%
+  step_feature_hash(
+    sponsor_code,
+    num_hash = 2^6, keep_original_cols = TRUE
+  ) %&gt;%
+  prep()
+
+# How many of the 298 locations ended up in each hash column?
+results &lt;-
+  bake(rec, new_data = NULL, starts_with("sponsor_code")) %&gt;%
+  distinct()
+
+apply(results %&gt;% select(-sponsor_code), 2, sum) %&gt;% table()
+
+</code></pre>
+
+
+</div>

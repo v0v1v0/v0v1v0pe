@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>summarise_measures</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Aggregate an experience study</h2>
+
+<h3>Description</h3>
+
+<p><code>summarise_measures()</code> functions the same as <code>dplyr::summarise()</code> and
+returns a new data frame per combination of grouping variable. However,
+this function is is streamlined to return the sum of an experience study's
+measures instead of any arbitrary summary function. These measures are
+identified via the <code>measure_sets</code> argument which can be provided directly
+or be guessed using regular expressions (<code>regexs</code>). See
+<code>guess_measure_sets()</code> for additional detail on how this guessing is
+implemented.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">summarise_measures(
+  .data,
+  measure_sets = guess_measure_sets(.data),
+  na.rm = TRUE,
+  .groups = "drop",
+  .by = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>A <code>base::data.frame()</code> that houses an experience study.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>measure_sets</code></td>
+<td>
+<p>A (potentially named) list of measure sets. Only need to specify once if
+chaining multiple <code>expstudy</code> functions as the <code>measure_sets</code> will be
+passed as an attribute in results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>logical.  Should missing values (including <code>NaN</code>) be
+removed?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.groups</code></td>
+<td>
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a> Grouping structure of the
+result.
+</p>
+
+<ul>
+<li>
+<p> "drop_last": dropping the last level of grouping. This was the
+only supported option before version 1.0.0.
+</p>
+</li>
+<li>
+<p> "drop": All levels of grouping are dropped.
+</p>
+</li>
+<li>
+<p> "keep": Same grouping structure as <code>.data</code>.
+</p>
+</li>
+<li>
+<p> "rowwise": Each row is its own group.
+</p>
+</li>
+</ul>
+<p>When <code>.groups</code> is not specified, it is chosen
+based on the number of rows of the results:
+</p>
+
+<ul>
+<li>
+<p> If all the results have 1 row, you get "drop_last".
+</p>
+</li>
+<li>
+<p> If the number of rows varies, you get "keep" (note that returning a
+variable number of rows was deprecated in favor of <code>reframe()</code>, which
+also unconditionally drops all levels of grouping).
+</p>
+</li>
+</ul>
+<p>In addition, a message informs you of that choice, unless the result is ungrouped,
+the option "dplyr.summarise.inform" is set to <code>FALSE</code>,
+or when <code>summarise()</code> is called from a function in a package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.by</code></td>
+<td>
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>
+</p>
+<p>&lt;<code>tidy-select</code>&gt; Optionally, a selection of columns to
+group by for just this operation, functioning as an alternative to <code>group_by()</code>. For
+details and examples, see ?dplyr_by.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object <em>usually</em> of the same type as <code>.data</code>.
+</p>
+
+<ul>
+<li>
+<p> The rows come from the underlying <code>group_keys()</code>.
+</p>
+</li>
+<li>
+<p> The columns are a combination of the grouping keys and the summary
+expressions that you provide.
+</p>
+</li>
+<li>
+<p> The grouping structure is controlled by the <code style="white-space: pre;">⁠.groups=⁠</code> argument, the
+output may be another grouped_df, a tibble or a rowwise data frame.
+</p>
+</li>
+<li>
+<p> Data frame attributes are <strong>not</strong> preserved, because <code>summarise()</code>
+fundamentally creates a new data frame.
+</p>
+</li>
+</ul>
+<h3>Naming convention</h3>
+
+<p><code>expstudy</code> uses a naming convention where some functions are prefixed by the
+underling <code>dplyr</code> verb. The purpose of this is to associate the resulting
+structure of the <code>expstudy</code> function with a very similar output as what the
+<code>dplyr</code> function would produce. Note that the intention here is not replace
+all <code>dplyr</code> use cases but instead add specific functionality to streamline
+routine experience study analyses.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">mortexp |&gt;
+  dplyr::group_by(
+    UNDERWRITING_CLASS
+  ) |&gt;
+  summarise_measures()
+</code></pre>
+
+
+</div>

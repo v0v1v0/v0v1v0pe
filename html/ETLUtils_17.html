@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>write.odbc.ffdf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Write ffdf data to a database table by using a ODBC connection.</h2>
+
+<h3>Description</h3>
+
+<p>Write <code>ffdf</code> data to a database table by using a ODBC connection.
+This can for example be used to store large ffdf datasets from R in
+Oracle, SQLite, MySQL, PostgreSQL, Hive or other SQL databases. <br>
+Mark that for very large datasets, these SQL databases might have tools to speed up by bulk loading.
+You might also consider that as an alternative to using this procedure.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">write.odbc.ffdf(
+  x,
+  tablename,
+  odbcConnect.args = list(dsn = NULL, uid = "", pwd = ""),
+  RECORDBYTES = sum(.rambytes[vmode(x)]),
+  BATCHBYTES = getOption("ffbatchbytes"),
+  by = NULL,
+  VERBOSE = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the <code>ffdf</code> to write to the database</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tablename</code></td>
+<td>
+<p>character string with the name of the table to store the data in. Passed on to <code>sqlSave</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>odbcConnect.args</code></td>
+<td>
+<p>a list of arguments to pass to ODBC's <code>odbcConnect</code> (like dsn, uid, pwd). See the examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RECORDBYTES</code></td>
+<td>
+<p>optional integer scalar representing the bytes needed to process a single row of the ffdf</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BATCHBYTES</code></td>
+<td>
+<p>integer: bytes allowed for the size of the data.frame storing the result of reading one chunk. 
+See documentation in <code>read.table.ffdf</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>integer passed on to <code>chunk</code> indicating to write to the database in chunks of this size. Overwrites
+the behaviour of BATCHBYTES and RECORDBYTES.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VERBOSE</code></td>
+<td>
+<p>logical: TRUE to verbose timings for each processed chunk (default FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional parameters passed on to <code>sqlSave</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Opens up the ODBC connection using <code>RODBC::odbcConnect</code>, writes data to the SQL table
+using <code>RODBC::sqlSave</code> by extracting the data in batches from the <code>ffdf</code>
+and appending them to the table.
+</p>
+
+
+<h3>Value</h3>
+
+<p>invisible()
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>sqlSave</code>, <code>chunk</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## Using the sqlite database (smalldb.sqlite3) in the /inst folder of the package
+## set up the sqlite ODBC driver (www.stats.ox.ac.uk/pub/bdr/RODBC-manual.pd) 
+## and call it 'smalltestsqlitedb' 
+##
+## Not run: 
+require(RODBC)
+x &lt;- read.odbc.ffdf(
+  query = "select * from testdata limit 10000",
+  odbcConnect.args = list(
+   dsn="smalltestsqlitedb", uid = "", pwd = "", 
+   believeNRows = FALSE, rows_at_time = 1), 
+  nrows = -1, 
+  first.rows = 100, next.rows = 1000, VERBOSE = TRUE)
+  
+write.odbc.ffdf(x = x, tablename = "testdata", rownames = FALSE, append = TRUE,
+  odbcConnect.args = list(
+   dsn="smalltestsqlitedb", uid = "", pwd = "", 
+   believeNRows = FALSE, rows_at_time = 1),  
+  by = 1000, VERBOSE=TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

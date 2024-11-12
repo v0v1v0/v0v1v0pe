@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ebTobit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical Bayes Matrix Estimation under a Tobit Likelihood</h2>
+
+<h3>Description</h3>
+
+<p>Fit and estimate the nonparametric maximum likelihood estimator in R^p
+(p &gt;= 1) when the likelihood is Gaussian and possibly interval censored. If
+p = 1, then <code>L</code>, <code>R</code>, and <code>gr</code> may be vectors (they are
+immediately converted into matrices internally).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ebTobit(
+  L,
+  R = L,
+  gr = (R + L)/2,
+  s1 = 1,
+  algorithm = "EM",
+  pos_lik = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>n x p matrix of lower bounds on observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>n x p matrix of upper bounds on observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gr</code></td>
+<td>
+<p>m x p matrix of grid points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s1</code></td>
+<td>
+<p>a single numeric standard deviation or an n x p matrix of standard
+deviations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algorithm</code></td>
+<td>
+<p>method to fit prior, either a function or function name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos_lik</code></td>
+<td>
+<p>boolean indicating whether to lower-bound the likelihood
+matrix with <code>.Machine$double.xmin</code> (default: TRUE); helps avoid possible
+divide-by-zero errors in <code>algorithm</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed into fitting method such as <code>rtol</code>
+and <code>maxiter</code>, see for example <code>EM</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Each observation is stored in a pair of matrices, <code>L</code> and <code>R</code>. If
+L_ij = R_ij then a direct measurement X_ij ~ N(theta, s1^2) is made; 
+if L_ij &lt; R_ij then the measurement is censored so that L_ij &lt; X_ij &lt; R_ij.
+</p>
+<p>To use a custom fitting algorithm, define a function <code>MyAlg</code> that
+takes in an n x m likelihood matrix: P_ij = P(L_i, R_i | theta = t_j) and
+returns a vector of estimated prior weights for t_j. Once <code>MyAlg</code> is
+defined, fit the prior by using <code>algorithm = "MyAlg"</code> or use the
+function itself <code>algorithm = MyAlg</code>.
+</p>
+<p>Alternative fitting algorithms "ConvexPrimal"and "ConvexDual" have been
+(wrappers of <code>REBayes::KWPrimal</code> and <code>REBayes::KWDual</code>,
+respectively) included and can be used if MOSEK and <code>REBayes</code> are
+properly installed.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a fitted <code>ebTobit</code> object containing at least the prior weights,
+corresponding grid/support points, and likelihood matrix relating the grid to
+the observations
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(1)
+n &lt;- 100
+p &lt;- 5
+r &lt;- 2
+U.true &lt;- matrix(stats::rexp(n*r), n, r)
+V.true &lt;- matrix(sample(x = c(1,4,7), 
+                        size = p*r, 
+                        replace = TRUE, 
+                        prob = c(0.7, 0.2, 0.1)), 
+                 p, r)
+TH &lt;- tcrossprod(U.true, V.true)
+X &lt;- TH + matrix(stats::rnorm(n*p), n, p)
+
+# fit uncensored method
+fit1 &lt;- ebTobit(X)
+
+# fit left-censored method
+ldl &lt;- 1 # lower and upper detection limits
+udl &lt;- Inf
+L &lt;- ifelse(X &lt; ldl, 0, ifelse(X &lt;= udl, X, udl))
+R &lt;- ifelse(X &lt; ldl, ldl, ifelse(X &lt;= udl, X, Inf))
+fit2 &lt;- ebTobit(L, R)
+</code></pre>
+
+
+</div>

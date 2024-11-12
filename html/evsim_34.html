@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate_sessions</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulation of EV sessions</h2>
+
+<h3>Description</h3>
+
+<p>Simulate EV charging sessions given the <code>evmodel</code> object and other contextual parameters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulate_sessions(
+  evmodel,
+  sessions_day,
+  user_profiles,
+  charging_powers,
+  dates,
+  resolution
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>evmodel</code></td>
+<td>
+<p>object of class <code>evmodel</code> built with <code>{evprof}</code>
+(see this <a href="https://mcanigueral.github.io/evprof/articles/evmodel.html">link</a> for more information)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sessions_day</code></td>
+<td>
+<p>tibble with variables <code>time_cycle</code> (names corresponding to <code>evmodel$models$time_cycle</code>) and <code>n_sessions</code> (number of daily sessions per day for each time-cycle model)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user_profiles</code></td>
+<td>
+<p>tibble with variables <code>time_cycle</code>, <code>profile</code>, <code>ratio</code> and optionally <code>power</code>.
+It can also be <code>NULL</code> to use the <code>evmodel</code> original user profiles distribution.
+The powers must be in kW and the ratios between 0 and 1.
+The user profiles with a value of <code>power</code> will be simulated with this specific charging power.
+If <code>power</code> is <code>NA</code> then it is simulated according to the ratios of next parameter <code>charging_powers</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>charging_powers</code></td>
+<td>
+<p>tibble with variables <code>power</code> and <code>ratio</code>.
+The powers must be in kW and the ratios between 0 and 1.
+This is used to simulate the charging power of user profiles without a specific charging power in <code>user_profiles</code> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+<p>date sequence that will set the time frame of the simulated sessions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>integer, time resolution (in minutes) of the sessions datetime variables</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Some adaptations have been done to the output of the Gaussian models:
+the minimum simulated energy is considered to be 1 kWh, while the minimum
+connection duration is 30 minutes.
+</p>
+
+
+<h3>Value</h3>
+
+<p>tibble
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+library(lubridate)
+
+# Get the example `evmodel`
+ev_model &lt;- evsim::california_ev_model
+
+# Simulate EV charging sessions, considering that the Worktime sessions
+# during Workdays have 11 kW, while all Visit sessions charge at 3.7kW or
+# 11kW, with a distribution of 30% and 70% respectively.
+
+simulate_sessions(
+  ev_model,
+  sessions_day = tibble(
+    time_cycle = c("Workday", "Weekend"),
+    n_sessions = c(15, 10)
+  ),
+  user_profiles = tibble(
+    time_cycle = c("Workday", "Workday", "Weekend"),
+    profile = c("Visit", "Worktime", "Visit"),
+    ratio = c(0.5, 0.5, 1),
+    power = c(NA, 11, NA)
+  ),
+  charging_powers = tibble(
+    power = c(3.7, 11),
+    ratio = c(0.3, 0.7)
+  ),
+  dates = seq.Date(today(), today()+days(4), length.out = 4),
+  resolution = 15
+)
+
+</code></pre>
+
+
+</div>

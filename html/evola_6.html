@@ -1,0 +1,95 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DT_technow</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Genotypic and Phenotypic data from single cross hybrids (Technow et al.,2014)
+</h2>
+
+<h3>Description</h3>
+
+<p>This dataset contains phenotpic data for 2 traits measured in 1254 single cross hybrids coming from the cross of Flint x Dent heterotic groups. In addition contains the genotipic data (35,478 markers) for each of the 123 Dent lines and 86 Flint lines. The purpose of this data is to demosntrate the prediction of unrealized crosses (9324 unrealized crosses, 1254 evaluated, total 10578 single crosses). We have added the additive relationship matrix (A) but can be easily obtained using the A.mat function on the marker data. Please if using this data for your own research cite Technow et al. (2014) publication (see References).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("DT_technow")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>The format is:
+chr "DT_technow"
+</p>
+
+
+<h3>Source</h3>
+
+<p>This data was extracted from Technow et al. (2014).
+</p>
+
+
+<h3>References</h3>
+
+<p>If using this data for your own research please cite:
+</p>
+<p>Technow et al. 2014. Genome properties and prospects of genomic predictions of hybrid performance in a Breeding program of maize. Genetics 197:1343-1355.
+</p>
+<p>Giovanny Covarrubias-Pazaran (2024).  evola: a simple evolutionary algorithm for complex problems. To be submitted to Bioinformatics.
+</p>
+<p>Gaynor, R. Chris, Gregor Gorjanc, and John M. Hickey. 2021. AlphaSimR: an R package for breeding program simulations. G3 Gene|Genomes|Genetics 11(2):jkaa017. https://doi.org/10.1093/g3journal/jkaa017.
+</p>
+<p>Chen GK, Marjoram P, Wall JD (2009). Fast and Flexible Simulation of DNA Sequence Data. Genome Research, 19, 136-142. http://genome.cshlp.org/content/19/1/136.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(DT_technow)
+DT &lt;- DT_technow
+DT$occ &lt;- 1; DT$occ[1]=0
+M &lt;- M_technow
+
+
+  A &lt;- A.mat(M)
+  # run the genetic algorithm
+  # we assig a weight to x'Ax of (20*pi)/180=0.34
+  res&lt;-evolafit(formula = c(GY, occ)~hy,
+                dt= DT, 
+                # constraints: if sum is greater than this ignore
+                constraintsUB = c(Inf,100), 
+                # constraints: if sum is smaller than this ignore
+                constraintsLB= c(-Inf,-Inf),
+                # weight the traits for the selection
+                traitWeight = c(1,0), 
+                # population parameters
+                nCrosses = 100, nProgeny = 10, 
+                recombGens=1, nChr=1, mutRate=0,
+                # coancestry parameters
+                A=A, lambda= (20*pi)/180 , nQTLperInd = 70, 
+                # selection parameters
+                propSelBetween = 0.5, propSelWithin =0.5, 
+                nGenerations = 20, keepBest=FALSE) 
+  
+  best = bestSol(res)["pop","GY"]
+  xa = (res$M %*% DT$GY)[best,]; xa 
+  xAx = res$M[best,] %*% A %*% res$M[best,]; xAx 
+  sum(res$M[best,]) # total # of inds selected
+  
+  pmonitor(res)
+  plot(DT$GY, col=as.factor(res$M[best,]), 
+       pch=(res$M[best,]*19)+1)
+       
+  pareto(res)
+
+
+
+
+</code></pre>
+
+
+</div>

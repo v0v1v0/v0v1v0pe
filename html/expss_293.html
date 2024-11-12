@@ -1,0 +1,639 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tab_significance_options</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Mark significant differences between columns in the table</h2>
+
+<h3>Description</h3>
+
+
+<ul>
+<li>
+<p><code>significance_cpct</code> conducts z-tests between column percent in
+the result of cross_cpct. Results are calculated with the same formula 
+as in prop.test without continuity correction.
+</p>
+</li>
+<li>
+<p><code>significance_means</code> conducts t-tests between column means in
+the result of cross_mean_sd_n. Results are calculated with the same formula 
+as in t.test.
+</p>
+</li>
+<li>
+<p><code>significance_cases</code> conducts chi-squared tests on the subtable of
+table with counts in the result of cross_cases. Results are calculated
+with the same formula as in chisq.test.
+</p>
+</li>
+<li>
+<p><code>significance_cell_chisq</code> compute cell chi-square test on table
+with column percent. The cell chi-square test looks at each table cell and
+tests whether it is significantly different from its expected value in the
+overall table. For example, if it is thought that variations in political
+opinions might depend on the respondent's age, this test can be used to
+detect which cells contribute significantly to that dependence. Unlike the
+chi-square test (<code>significance_cases</code>), which is carried out on a whole
+set of rows and columns, the cell chi-square test is carried out
+independently on each table cell. Although the significance level of the cell
+chi-square test is accurate for any given cell, the cell tests cannot be used
+instead of the chi-square test carried out on the overall table. Their
+purpose is simply to point to the parts of the table where dependencies
+between row and column categories may exist.</p>
+</li>
+</ul>
+<p>For <code>significance_cpct</code> and <code>significance_means</code> there are three
+type of comparisons which can be conducted simultaneously (argument
+<code>compare_type</code>):
+</p>
+
+<ul>
+<li>
+<p><code>subtable</code> provide comparisons between all columns inside each
+subtable.
+</p>
+</li>
+<li>
+<p><code>previous_column</code> is a comparison of each column of the subtable
+with the previous column. It is useful if columns are periods or survey
+waves.
+</p>
+</li>
+<li>
+<p><code>first_column</code> provides comparison the table first column with
+all other columns in the table. <code>adjusted_first_column</code> is also
+comparison with the first column but with adjustment for common base. It is
+useful if the first column is total column and other columns are subgroups of
+this total. Adjustments are made according to algorithm in IBM SPSS
+Statistics Algorithms v20, p. 263. Note that with these adjustments t-tests
+between means are made with equal variance assumed (as with <code>var_equal =
+TRUE</code>).</p>
+</li>
+</ul>
+<p>By now there are no adjustments for multiple-response variables (results of 
+mrset) in the table columns so significance tests are rather 
+approximate for such cases.
+Also, there are functions for the significance testing in the sequence of
+custom tables calculations (see tables):
+</p>
+
+<ul>
+<li>
+<p><code>tab_last_sig_cpct</code>, <code>tab_last_sig_means</code> and 
+<code>tab_last_sig_cpct</code> make the same tests as their analogs mentioned 
+above. It is recommended to use them after appropriate statistic function: 
+tab_stat_cpct, tab_stat_mean_sd_n and tab_stat_cases.
+
+</p>
+</li>
+<li>
+<p><code>tab_significance_options</code> With this function we can set
+significance options for the entire custom table creation sequence.
+</p>
+</li>
+<li>
+<p><code>tab_last_add_sig_labels</code> This function applies 
+<code>add_sig_labels</code>  to the last calculated table - it adds labels (letters
+by default) for significance to columns header. It may be useful if you want
+to combine a table with significance with table without it.
+</p>
+</li>
+<li>
+<p><code>tab_last_round</code> This function rounds numeric columns in the
+last calculated table to specified number of digits. It is sometimes
+needed if you want to combine table with significance with table without it.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">tab_significance_options(
+  data,
+  sig_level = 0.05,
+  min_base = 2,
+  delta_cpct = 0,
+  delta_means = 0,
+  correct = TRUE,
+  compare_type = "subtable",
+  bonferroni = FALSE,
+  subtable_marks = "greater",
+  inequality_sign = "both" %in% subtable_marks,
+  sig_labels = LETTERS,
+  sig_labels_previous_column = c("v", "^"),
+  sig_labels_first_column = c("-", "+"),
+  sig_labels_chisq = c("&lt;", "&gt;"),
+  keep = c("percent", "cases", "means", "sd", "bases"),
+  row_margin = c("auto", "sum_row", "first_column"),
+  total_marker = "#",
+  total_row = 1,
+  digits = get_expss_digits(),
+  na_as_zero = FALSE,
+  var_equal = FALSE,
+  mode = c("replace", "append"),
+  as_spss = FALSE
+)
+
+tab_last_sig_cpct(
+  data,
+  sig_level = 0.05,
+  delta_cpct = 0,
+  min_base = 2,
+  compare_type = "subtable",
+  bonferroni = FALSE,
+  subtable_marks = c("greater", "both", "less"),
+  inequality_sign = "both" %in% subtable_marks,
+  sig_labels = LETTERS,
+  sig_labels_previous_column = c("v", "^"),
+  sig_labels_first_column = c("-", "+"),
+  keep = c("percent", "bases"),
+  na_as_zero = FALSE,
+  total_marker = "#",
+  total_row = 1,
+  digits = get_expss_digits(),
+  as_spss = FALSE,
+  mode = c("replace", "append"),
+  label = NULL
+)
+
+tab_last_sig_means(
+  data,
+  sig_level = 0.05,
+  delta_means = 0,
+  min_base = 2,
+  compare_type = "subtable",
+  bonferroni = FALSE,
+  subtable_marks = c("greater", "both", "less"),
+  inequality_sign = "both" %in% subtable_marks,
+  sig_labels = LETTERS,
+  sig_labels_previous_column = c("v", "^"),
+  sig_labels_first_column = c("-", "+"),
+  keep = c("means", "sd", "bases"),
+  var_equal = FALSE,
+  digits = get_expss_digits(),
+  mode = c("replace", "append"),
+  label = NULL
+)
+
+tab_last_sig_cases(
+  data,
+  sig_level = 0.05,
+  min_base = 2,
+  correct = TRUE,
+  keep = c("cases", "bases"),
+  total_marker = "#",
+  total_row = 1,
+  digits = get_expss_digits(),
+  mode = c("replace", "append"),
+  label = NULL
+)
+
+tab_last_sig_cell_chisq(
+  data,
+  sig_level = 0.05,
+  min_base = 2,
+  subtable_marks = c("both", "greater", "less"),
+  sig_labels_chisq = c("&lt;", "&gt;"),
+  correct = TRUE,
+  keep = c("percent", "bases", "none"),
+  row_margin = c("auto", "sum_row", "first_column"),
+  total_marker = "#",
+  total_row = 1,
+  total_column_marker = "#",
+  digits = get_expss_digits(),
+  mode = c("replace", "append"),
+  label = NULL
+)
+
+tab_last_round(data, digits = get_expss_digits())
+
+tab_last_add_sig_labels(data, sig_labels = LETTERS)
+
+significance_cases(
+  x,
+  sig_level = 0.05,
+  min_base = 2,
+  correct = TRUE,
+  keep = c("cases", "bases"),
+  total_marker = "#",
+  total_row = 1,
+  digits = get_expss_digits()
+)
+
+significance_cell_chisq(
+  x,
+  sig_level = 0.05,
+  min_base = 2,
+  subtable_marks = c("both", "greater", "less"),
+  sig_labels_chisq = c("&lt;", "&gt;"),
+  correct = TRUE,
+  keep = c("percent", "bases", "none"),
+  row_margin = c("auto", "sum_row", "first_column"),
+  total_marker = "#",
+  total_row = 1,
+  total_column_marker = "#",
+  digits = get_expss_digits()
+)
+
+cell_chisq(cases_matrix, row_base, col_base, total_base, correct)
+
+significance_cpct(
+  x,
+  sig_level = 0.05,
+  delta_cpct = 0,
+  min_base = 2,
+  compare_type = "subtable",
+  bonferroni = FALSE,
+  subtable_marks = c("greater", "both", "less"),
+  inequality_sign = "both" %in% subtable_marks,
+  sig_labels = LETTERS,
+  sig_labels_previous_column = c("v", "^"),
+  sig_labels_first_column = c("-", "+"),
+  keep = c("percent", "bases"),
+  na_as_zero = FALSE,
+  total_marker = "#",
+  total_row = 1,
+  digits = get_expss_digits(),
+  as_spss = FALSE
+)
+
+add_sig_labels(x, sig_labels = LETTERS)
+
+significance_means(
+  x,
+  sig_level = 0.05,
+  delta_means = 0,
+  min_base = 2,
+  compare_type = "subtable",
+  bonferroni = FALSE,
+  subtable_marks = c("greater", "both", "less"),
+  inequality_sign = "both" %in% subtable_marks,
+  sig_labels = LETTERS,
+  sig_labels_previous_column = c("v", "^"),
+  sig_labels_first_column = c("-", "+"),
+  keep = c("means", "sd", "bases"),
+  var_equal = FALSE,
+  digits = get_expss_digits()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame/intermediate_table for <code>tab_*</code> functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig_level</code></td>
+<td>
+<p>numeric. Significance level - by default it equals to <code>0.05</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_base</code></td>
+<td>
+<p>numeric. Significance test will be conducted if both
+columns have bases greater or equal to <code>min_base</code>. By default, it equals to <code>2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta_cpct</code></td>
+<td>
+<p>numeric. Minimal delta between percent for which we mark 
+significant differences (in percent points) - by default it equals to zero.
+Note that, for example, for minimal 5 percent point difference
+<code>delta_cpct</code> should be equals 5, not 0.05.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta_means</code></td>
+<td>
+<p>numeric. Minimal delta between means for which we mark 
+significant differences  - by default it equals to zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correct</code></td>
+<td>
+<p>logical indicating whether to apply continuity correction when
+computing the test statistic for 2 by 2 tables. Only for
+<code>significance_cases</code> and <code>significance_cell_chisq</code>. For details
+see chisq.test. <code>TRUE</code> by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compare_type</code></td>
+<td>
+<p>Type of compare between columns. By default, it is 
+<code>subtable</code> - comparisons will be conducted between columns of each 
+subtable. Other possible values are: <code>first_column</code>, 
+<code>adjusted_first_column</code> and <code>previous_column</code>. We can conduct
+several tests simultaneously.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bonferroni</code></td>
+<td>
+<p>logical. <code>FALSE</code> by default. Should we use Bonferroni
+adjustment by the number of comparisons in each row?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subtable_marks</code></td>
+<td>
+<p>character. One of "greater", "both" or "less". By
+deafult we mark only values which are significantly greater than some other
+columns. For <code>significance_cell_chisq</code> default is "both".We can change
+this behavior by setting an argument to <code>less</code> or <code>both</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inequality_sign</code></td>
+<td>
+<p>logical. FALSE if <code>subtable_marks</code> is "less" or 
+"greater". Should we show <code>&gt;</code> or <code>&lt;</code> before significance marks of
+subtable comparisons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig_labels</code></td>
+<td>
+<p>character vector. Labels for marking differences between
+columns of subtable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig_labels_previous_column</code></td>
+<td>
+<p>a character vector with two elements. Labels
+for marking a difference with the previous column. First mark means 'lower' (by
+default it is <code>v</code>) and the second means greater (<code>^</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig_labels_first_column</code></td>
+<td>
+<p>a character vector with two elements. Labels 
+for marking a difference with the first column of the table. First mark means
+'lower' (by default it is <code>-</code>) and the second means 'greater'
+(<code>+</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig_labels_chisq</code></td>
+<td>
+<p>a character vector with two labels 
+for marking a difference with row margin of the table. First mark means
+'lower' (by default it is <code>&lt;</code>) and the second means 'greater'
+(<code>&gt;</code>). Only for <code>significance_cell_chisq</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+<p>character. One or more from "percent", "cases", "means", "bases", 
+"sd" or "none". This argument determines which statistics will remain in
+the table after significance marking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row_margin</code></td>
+<td>
+<p>character. One of values "auto" (default), "sum_row", or
+"first_column". If it is "auto" we try to find total column in the subtable
+by <code>total_column_marker</code>. If the search is failed, we use the sum of
+each rows as row total. With "sum_row" option we always sum each row to get
+margin. Note that in this case result for multiple response variables in
+banners may be incorrect. With "first_column" option we use table first
+column as row margin for all subtables. In this case result for the
+subtables with incomplete bases may be incorrect. Only for
+<code>significance_cell_chisq</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total_marker</code></td>
+<td>
+<p>character. Total rows mark in the table. "#" by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total_row</code></td>
+<td>
+<p>integer/character. In the case of the several totals per
+subtable it is a number or name of total row for the significance
+calculation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>an integer indicating how much digits after decimal separator</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na_as_zero</code></td>
+<td>
+<p>logical. <code>FALSE</code> by default. Should we treat
+<code>NA</code>'s as zero cases?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var_equal</code></td>
+<td>
+<p>a logical variable indicating whether to treat the two
+variances as being equal. For details see t.test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>character. One of <code>replace</code>(default) or <code>append</code>. In
+the first case the previous result in the sequence of table calculation
+will be replaced with result of significance testing. In the second case
+result of the significance testing will be appended to sequence of table
+calculation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_spss</code></td>
+<td>
+<p>a logical. FALSE by default. If TRUE, proportions which
+are equal to zero or one will be ignored. Also will be ignored categories
+with bases less than 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>character. Label for the statistic in the <code>tab_*</code>. Ignored
+if the <code>mode</code> is equals to <code>replace</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total_column_marker</code></td>
+<td>
+<p>character. Mark for total columns in the
+subtables. "#" by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>table (class <code>etable</code>): result of cross_cpct with 
+proportions and bases for <code>significance_cpct</code>, result of 
+cross_mean_sd_n with means, standard deviations and valid N for 
+<code>significance_means</code>, and result of cross_cases with counts and
+bases for <code>significance_cases</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cases_matrix</code></td>
+<td>
+<p>numeric matrix with counts size R*C</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row_base</code></td>
+<td>
+<p>numeric vector with row bases, length R</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col_base</code></td>
+<td>
+<p>numeric vector with col bases, length C</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total_base</code></td>
+<td>
+<p>numeric single value, total base</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>tab_last_*</code> functions return objects of class
+<code>intermediate_table</code>. Use tab_pivot to get the final result -
+<code>etable</code> object. Other functions return <code>etable</code> object with
+significant differences.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>cross_cpct, cross_cases, cross_mean_sd_n, tables,
+compare_proportions, compare_means, prop.test,
+t.test, chisq.test
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(mtcars)
+mtcars = apply_labels(mtcars,
+                      mpg = "Miles/(US) gallon",
+                      cyl = "Number of cylinders",
+                      disp = "Displacement (cu.in.)",
+                      hp = "Gross horsepower",
+                      drat = "Rear axle ratio",
+                      wt = "Weight (lb/1000)",
+                      qsec = "1/4 mile time",
+                      vs = "Engine",
+                      vs = c("V-engine" = 0,
+                             "Straight engine" = 1),
+                      am = "Transmission",
+                      am = c("Automatic" = 0,
+                             "Manual"=1),
+                      gear = "Number of forward gears",
+                      carb = "Number of carburetors"
+)
+
+## Not run: 
+mtcars_table = cross_cpct(mtcars, 
+                          list(cyl, gear),
+                          list(total(), vs, am)
+                          )
+
+significance_cpct(mtcars_table)
+# comparison with first column
+significance_cpct(mtcars_table, compare_type = "first_column")
+
+# comparison with first column and inside subtable
+significance_cpct(mtcars_table, 
+            compare_type = c("first_column", "subtable"))
+
+# only significance marks
+significance_cpct(mtcars_table, keep = "none")
+
+# means
+mtcars_means = cross_mean_sd_n(mtcars, 
+                               list(mpg, wt, hp),
+                               list(total(), vs, cyl))
+                               )
+                        
+significance_means(mtcars_means) 
+
+# mark values which are less and greater
+significance_means(mtcars_means, subtable_marks = "both")
+
+# chi-squared test
+mtcars_cases = cross_cases(mtcars, 
+                           list(cyl, gear),
+                           list(total(), vs, am)
+                           )
+                         
+significance_cases(mtcars_cases)  
+
+# cell chi-squared test
+# increase number of cases to avoid warning about chi-square approximation
+mtcars2 = add_rows(mtcars, mtcars, mtcars)
+
+tbl = cross_cpct(mtcars2, gear, am)
+significance_cell_chisq(tbl)
+
+# table with multiple variables
+tbl = cross_cpct(mtcars2, list(gear, cyl), list(total(), am, vs))
+significance_cell_chisq(tbl, sig_level = .0001)  
+
+# custom tables with significance
+mtcars %&gt;% 
+    tab_significance_options(subtable_marks = "both") %&gt;% 
+    tab_cells(mpg, hp) %&gt;% 
+    tab_cols(total(), vs, am) %&gt;% 
+    tab_stat_mean_sd_n() %&gt;% 
+    tab_last_sig_means(keep = "means") %&gt;% 
+    tab_cells(cyl, gear) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_last_sig_cpct() %&gt;% 
+    tab_pivot()   
+    
+# Overcomplicated examples - we move significance marks to
+# separate columns. Columns with statistics remain numeric    
+mtcars %&gt;% 
+    tab_significance_options(keep = "none", 
+                         sig_labels = NULL, 
+                         subtable_marks = "both",  
+                         mode = "append") %&gt;% 
+    tab_cols(total(), vs, am) %&gt;% 
+    tab_cells(mpg, hp) %&gt;% 
+    tab_stat_mean_sd_n() %&gt;% 
+    tab_last_sig_means() %&gt;% 
+    tab_last_hstack("inside_columns") %&gt;% 
+    tab_cells(cyl, gear) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_last_sig_cpct() %&gt;% 
+    tab_last_hstack("inside_columns") %&gt;% 
+    tab_pivot(stat_position = "inside_rows") %&gt;% 
+    drop_empty_columns()    
+
+## End(Not run)   
+</code></pre>
+
+
+</div>

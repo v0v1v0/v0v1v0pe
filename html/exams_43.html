@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make_exercise_transform_pandoc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Transform Exercises via Pandoc</h2>
+
+<h3>Description</h3>
+
+<p>Generate an exercise transformer function based on
+<code>pandoc_convert</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  make_exercise_transform_pandoc(to = "latex", base64 = to != "latex",
+    attachfile = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>to</code></td>
+<td>
+<p>character. Specification of the output text format, typically
+<code>"latex"</code>, <code>"html"</code>, or <code>"markdown"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base64</code></td>
+<td>
+<p>logical. Should supplementary files be embedded using Base 64 coding?
+Argument <code>base64</code> may also be a character vector of file suffixes that should be encoded, e.g.
+<code>base64 = c("png", "rda")</code> will only encode PNG images and binary <code>.rda</code> files.
+If set to <code>NULL</code> only image files will be encoded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attachfile</code></td>
+<td>
+<p>logical. Should <code>attachfile</code> rather than <code>url</code> be used
+in LaTeX, e.g., for embedding data files in PDF.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments to be passed on to <code>pandoc_convert</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The generator function <code>make_exercise_transform_pandoc</code> returns a function
+that can be used for the <code>transform</code> steps in <code>xexams</code>.
+It is a wrapper to <code>pandoc_convert</code> from <span class="pkg">rmarkdown</span>
+but adds a couple of convenience features that are typically needed in R/exams
+exercises. Supplementary files can be handled by Base 64 encoding (often used
+for HTML output) or via attachfile in LaTeX (sometimes useful for PDF output).
+Some additional LaTeX commands and environments are supported, e.g., Sweave environments
+or negated logical comparison symbols. Finally, some default options from
+pandoc are changed, namely the defaults <code>--wrap=preserve</code> (instead of
+<code>--wrap=auto</code>) and <code>--columns=99999</code> (instead of <code>--columns=72</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>make_exercise_transform_pandoc</code> returns a function that is suitable for being
+supplied as <code>driver$transform</code> to <code>xexams</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>xexams</code>,
+<code>make_exercise_transform_html</code>,
+<code>pandoc_convert</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+options(device.ask.default = FALSE)
+
+## default transformation to LaTeX output
+textrafo &lt;- make_exercise_transform_pandoc()
+
+## custom transformation to Markdown output without Base 64 files
+mdtrafo &lt;- make_exercise_transform_pandoc(to = "markdown", base64 = FALSE)
+
+## read "lm" exercise via xexams, i.e., without transformation
+## Rmd yields Markdown, Rnw yields LaTeX
+lm_md &lt;- xexams("lm.Rmd")[[1]][[1]]
+lm_tex &lt;- xexams("lm.Rnw")[[1]][[1]]
+
+## original Markdown and transformed LaTeX
+writeLines(lm_md$question)
+writeLines(textrafo(lm_md)$question)
+
+## original LaTeX and transformed Markdown
+writeLines(lm_tex$question)
+writeLines(mdtrafo(lm_tex)$question)
+</code></pre>
+
+
+</div>

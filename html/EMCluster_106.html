@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Initialization and EM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Initialization and EM Algorithm</h2>
+
+<h3>Description</h3>
+
+<p>These functions perform initializations (including em.EM and RndEM)
+followed by the EM iterations for model-based clustering of finite mixture
+multivariate Gaussian distribution with unstructured dispersion
+in both of unsupervised and semi-supervised clusterings.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">init.EM(x, nclass = 1, lab = NULL, EMC = .EMC,
+        stable.solution = TRUE, min.n = NULL, min.n.iter = 10,
+        method = c("em.EM", "Rnd.EM"))
+em.EM(x, nclass = 1, lab = NULL, EMC = .EMC,
+      stable.solution = TRUE, min.n = NULL, min.n.iter = 10)
+rand.EM(x, nclass = 1, lab = NULL, EMC = .EMC.Rnd,
+        stable.solution = TRUE, min.n = NULL, min.n.iter = 10)
+exhaust.EM(x, nclass = 1, lab = NULL,
+           EMC = .EMControl(short.iter = 1, short.eps = Inf),
+           method = c("em.EM", "Rnd.EM"),
+           stable.solution = TRUE, min.n = NULL, min.n.iter = 10);
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the data matrix, dimension <code class="reqn">n\times p</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nclass</code></td>
+<td>
+<p>the desired number of clusters, <code class="reqn">K</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lab</code></td>
+<td>
+<p>labeled data for semi-supervised clustering,
+length <code class="reqn">n</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EMC</code></td>
+<td>
+<p>the control for the EM iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stable.solution</code></td>
+<td>
+<p>if returning a stable solution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.n</code></td>
+<td>
+<p>restriction for a stable solution, the minimum number
+of observations for every final clusters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.n.iter</code></td>
+<td>
+<p>restriction for a stable solution, the minimum number
+of iterations for trying a stable solution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>an initialization method.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>init.EM</code> calls either <code>em.EM</code> if <code>method="em.EM"</code> or
+<code>rand.EM</code> if <code>method="Rnd.EM"</code>.
+</p>
+<p>The <code>em.EM</code> has two steps: short-EM has loose convergent
+tolerance controlled by <code>.EMC$short.eps</code> and try several random
+initializations controlled by <code>.EMC$short.iter</code>, while long-EM
+starts from the best short-EM result (in terms of log likelihood) and
+run to convergence with a tight tolerance controlled by <code>.EMC$em.eps</code>.
+</p>
+<p>The <code>rand.EM</code> also has two steps: first randomly pick several
+random initializations controlled by <code>.EMC$short.iter</code>, and
+second starts from the best of the random result
+(in terms of log likelihood) and run to convergence.
+</p>
+<p>The <code>lab</code> is only for the semi-supervised clustering, and it contains
+pre-labeled indices between 1 and <code class="reqn">K</code> for labeled observations.
+Observations with index 0 is non-labeled and has to be clustered by
+the EM algorithm. Indices will be assigned by the results of the EM
+algorithm. See <code>demo(allinit_ss,'EMCluster')</code> for details.
+</p>
+<p>The <code>exhaust.EM</code> also calls the <code>init.EM</code> with different
+<code>EMC</code> and perform <code>exhaust.iter</code> times of EM algorithm
+with different initials. The best result is returned.
+</p>
+
+
+<h3>Value</h3>
+
+<p>These functions return an object <code>emobj</code> with class <code>emret</code>
+which can be used in post-process or other functions such as
+<code>e.step</code>, <code>m.step</code>, <code>assign.class</code>, <code>em.ic</code>,
+and <code>dmixmvn</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Wei-Chen Chen <a href="mailto:wccsnow@gmail.com">wccsnow@gmail.com</a> and Ranjan Maitra.
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://www.stat.iastate.edu/people/ranjan-maitra">https://www.stat.iastate.edu/people/ranjan-maitra</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>emcluster</code>, <code>.EMControl</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(EMCluster, quietly = TRUE)
+set.seed(1234)
+x &lt;- da1$da
+
+ret.em &lt;- init.EM(x, nclass = 10, method = "em.EM")
+ret.Rnd &lt;- init.EM(x, nclass = 10, method = "Rnd.EM", EMC = .EMC.Rnd)
+
+emobj &lt;- simple.init(x, nclass = 10)
+ret.init &lt;- emcluster(x, emobj, assign.class = TRUE)
+
+par(mfrow = c(2, 2))
+plotem(ret.em, x)
+plotem(ret.Rnd, x)
+plotem(ret.init, x)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

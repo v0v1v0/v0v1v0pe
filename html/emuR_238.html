@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>runBASwebservice_all</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Runs several BAS webservices, starting from an orthographic transcription</h2>
+
+<h3>Description</h3>
+
+<p>This function calls the BAS webservices G2P, MAUS, Pho2Syl, MINNI and (if necessary) Chunker.
+Starting from an orthographic transcription, it derives a tokenized orthographical word tier
+using the G2P tool. It also derives canonical pronunciations (in SAMPA) for the words.
+If at least one audio file is longer than 60 seconds, the function then calls the Chunker webservice
+to presegment the recordings. Subsequently, the webservice MAUS is called to derive a phonetic
+segmentation. A second, rough segmentation is created by running the phoneme decoder MINNI.
+Finally, syllabification is performed by calling Pho2Syl. <strong>This function requires an internet connection.</strong>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">runBASwebservice_all(
+  handle,
+  transcriptionAttributeDefinitionName,
+  language,
+  orthoAttributeDefinitionName = "ORT",
+  canoAttributeDefinitionName = "KAN",
+  mausAttributeDefinitionName = "MAU",
+  minniAttributeDefinitionName = "MINNI",
+  sylAttributeDefinitionName = "MAS",
+  canoSylAttributeDefinitionName = "KAS",
+  chunkAttributeDefinitionName = "TRN",
+  runMINNI = TRUE,
+  patience = 0,
+  resume = FALSE,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>handle</code></td>
+<td>
+<p>emuDB handle</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transcriptionAttributeDefinitionName</code></td>
+<td>
+<p>name of the attribute (not level!) containing an orthographic transcription.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>language</code></td>
+<td>
+<p>language(s) to be used. If you pass a single string (e.g. "deu-DE"), this language will be used for all bundles.
+Alternatively, you can select the language for every bundle individually. To do so, you must pass a data frame with the columns
+session, bundle, language. This data frame must contain one row for every bundle in your emuDB.
+Up-to-date lists of the languages accepted by all webservices can be found here:
+<a href="https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/help">https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/help</a></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>orthoAttributeDefinitionName</code></td>
+<td>
+<p>attribute name for orthographic words</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>canoAttributeDefinitionName</code></td>
+<td>
+<p>attribute name for canonical pronunciations of words</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mausAttributeDefinitionName</code></td>
+<td>
+<p>attribute name for the MAUS segmentation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minniAttributeDefinitionName</code></td>
+<td>
+<p>attribute name for the MINNI segmentation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sylAttributeDefinitionName</code></td>
+<td>
+<p>attribute name for syllable segmentation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>canoSylAttributeDefinitionName</code></td>
+<td>
+<p>attribute name for syllabified canonical pronunciations of words</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chunkAttributeDefinitionName</code></td>
+<td>
+<p>attribute name for the chunk segmentation.
+Please note that the chunk segmentation will only be generated if your emuDB contains
+audio files beyond the one minute mark.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runMINNI</code></td>
+<td>
+<p>if set to <code>TRUE</code> (the default) the MINNI service is also run. As the MINNI service contains
+less languages than the others it can be useful to turn this off.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>patience</code></td>
+<td>
+<p>If a web service call fails, it is repeated a further n times, with n being the value of patience.
+Must be set to a value between 0 and 3.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resume</code></td>
+<td>
+<p>If a previous call to this function has failed (and you think you have fixed the issue
+that caused the error), you can set resume=TRUE to recover any progress made up to that point. This
+will only work if your R temporary directory has not been deleted or emptied in the meantime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Display progress bars and other information</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>All necessary level, attribute and link definitions are created in the process.
+Note that this function will run all BAS webservices with default parameters, with four exceptions:
+</p>
+
+<ul>
+<li>
+<p>Chunker: force=rescue
+</p>
+</li>
+<li>
+<p>G2P: embed=maus
+</p>
+</li>
+<li>
+<p>Pho2Syl: wsync=yes
+</p>
+</li>
+<li>
+<p>MAUS: USETRN=[true if Chunker was called or transcription is a segment tier, false otherwise]
+</p>
+</li>
+</ul>
+<p>If you wish to change parameters, you must use the individual runBASwebservices functions. This will also allow
+you to carry out manual corrections in between the steps, or to use different languages for different webservices.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other BAS webservice functions: 
+<code>runBASwebservice_chunker()</code>,
+<code>runBASwebservice_g2pForPronunciation()</code>,
+<code>runBASwebservice_g2pForTokenization()</code>,
+<code>runBASwebservice_maus()</code>,
+<code>runBASwebservice_minni()</code>,
+<code>runBASwebservice_pho2sylCanonical()</code>,
+<code>runBASwebservice_pho2sylSegmental()</code>
+</p>
+
+
+</div>

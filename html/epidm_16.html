@@ -1,0 +1,199 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>uk_patient_id</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Patient ID record grouping</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</p>
+<p>Groups patient records from multiple isolates with a single integer patientID
+by grouping patient identifiers.
+</p>
+<p>Grouping is based on five stages:
+</p>
+
+<ol>
+<li>
+<p> matching nhs number and date of birth
+</p>
+</li>
+<li>
+<p> Hospital number &amp;  Date of Birth
+</p>
+</li>
+<li>
+<p> NHS number &amp; Hospital Number
+</p>
+</li>
+<li>
+<p> Date of Birth &amp; Surname IF nhs unknown
+</p>
+</li>
+<li>
+<p> Sex &amp; Date of Birth &amp; Fuzzy Name
+</p>
+</li>
+</ol>
+<p>Identifiers are copied over where they are missing or invalid to the grouped
+records.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">uk_patient_id(
+  x,
+  nhs_number,
+  hospital_number,
+  date_of_birth,
+  sex_mfu,
+  forename = "NONAME",
+  surname = "NONAME",
+  .sortOrder,
+  .keepValidNHS = FALSE,
+  .forceCopy = FALSE,
+  .experimental = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data.frame or data.table containing the cleaned line list</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nhs_number</code></td>
+<td>
+<p>a column as a character containing the patient NHS numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hospital_number</code></td>
+<td>
+<p>a column as a character containing the patient
+Hospital numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date_of_birth</code></td>
+<td>
+<p>a column as a date variable containing the patient
+date of birth in date format</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sex_mfu</code></td>
+<td>
+<p>column as a character containing the patient sex;
+NOTE only works if coded only as character versions of Male/Female/Unknown;
+does not currently work with additional options <code style="white-space: pre;">⁠#future update⁠</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forename</code></td>
+<td>
+<p>a column as a character containing the patient forename;
+leave as NONAME if unavailable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>surname</code></td>
+<td>
+<p>a column as a character containing the patient surname;
+leave as NONAME if unavailable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.sortOrder</code></td>
+<td>
+<p>optional; a column as a character to allow a sorting
+order on the id generation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.keepValidNHS</code></td>
+<td>
+<p>optional, default FALSE; set TRUE if you wish to retain
+the column with the NHS checksum result stored as a BOOLEAN</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.forceCopy</code></td>
+<td>
+<p>optional, default FALSE; TRUE will force data.table to take a copy
+instead of editing the data without reference</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.experimental</code></td>
+<td>
+<p>optional, default FALSE; TRUE will enable the
+experimental features for recoding NA values based on the mode</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A dataframe with one new variable:
+</p>
+
+<dl>
+<dt><code>id</code></dt>
+<dd>
+<p>a unique patient id</p>
+</dd>
+<dt><code>valid_nhs</code></dt>
+<dd>
+<p>if retained using argument <code>.keepValidNHS=TRUE</code>, a
+BOOLEAN containing the result of the NHS checksum validation</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">id_test &lt;- data.frame(
+  nhs_n = c(
+    9434765919,9434765919,9434765919,NA,NA,
+    3367170666,5185293519,5185293519,5185293519,8082318562,NA,NA,NA
+  ),
+  hosp_n = c(
+    '13','13','13','UNKNOWN','13','13','13','31','31','96','96',NA,'96'),
+  sex = c(rep('F',6),rep('Male',4), 'U', 'U', 'M'),
+  dateofbirth = as.Date(
+    c(
+      '1988-10-06','1988-10-06','1900-01-01','1988-10-06','1988-10-06',
+      '1988-10-06','1988-10-06','1988-10-06','1988-10-06','2020-01-28',
+      '2020-01-28','2020-01-28','2020-01-28'
+    )
+  ),
+  firstname = c(
+    'Danger','Danger','Denger','Danger','Danger','DANGER','Danger',
+    'Danger','Danger','Crazy','Crazy','Krazy','C'
+  ),
+  lastname = c(
+    'Mouse','Mause','Mouse','Moose','Moose','Mouse','MOUSe',
+    'Mouse','Mouse','Frog','FROG','Frug','Frog'
+  ),
+  testdate = sample(seq.Date(Sys.Date()-21,Sys.Date(),"day"),13,replace = TRUE)
+)
+uk_patient_id(x = id_test,
+              nhs_number = 'nhs_n',
+              hospital_number = 'hosp_n',
+              forename = 'firstname',
+              surname = 'lastname',
+              sex_mfu = 'sex',
+              date_of_birth = 'dateofbirth',
+              .sortOrder = 'testdate')[]
+
+</code></pre>
+
+
+</div>

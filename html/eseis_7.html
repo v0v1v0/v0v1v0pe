@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>aux_getFDSNdata</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Download seismic data from FDSN data base</h2>
+
+<h3>Description</h3>
+
+<p>The function accesses the specified FDSN internet data base(s) and 
+downloads seismic data based on the network and station IDs and time
+constraints.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">aux_getFDSNdata(
+  start,
+  duration,
+  channel = "BHZ",
+  network,
+  station,
+  url,
+  link_only = FALSE,
+  eseis = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p><code>POSIXct</code> value, start time of the data to query.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>duration</code></td>
+<td>
+<p><code>Numeric</code> value, length of the data to query, in 
+seconds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>channel</code></td>
+<td>
+<p><code>Character</code> value, seismic channel to get. Default is
+<code>"BHZ"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p><code>Character</code> vector, two-character FDSN network ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>station</code></td>
+<td>
+<p><code>Character</code> vector, FDSN station ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>url</code></td>
+<td>
+<p><code>Character</code> vector, FDSN URL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>link_only</code></td>
+<td>
+<p><code>Logical</code> vector, return only FDSN link instead of
+downloading and importing the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eseis</code></td>
+<td>
+<p><code>Logical</code> scalar, option to read data to an <code>eseis</code>
+object (recommended, see documentation of 
+<code>aux_initiateeseis</code>), default is <code>TRUE</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A convenient way to get all the required input data is using the 
+function <code>aux_getFDSNstation</code> before. It will return all the 
+information in a structured way.
+</p>
+<p>It is possible to use the function to process more than one data set. In 
+this case, the arguments <code>network</code>, <code>station</code> and <code>url</code> 
+must match pairwise. The arguments <code>start</code>, <code>duration</code> and 
+<code>channel</code> will be treated as constants if not also provided as 
+vectors.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>List</code> object with imported seismic data for each provided 
+set of input arguments.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>See Also</h3>
+
+<p>aux_get_FDSNstation, read_mseed
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+
+## get stations &lt; 0.6 degrees away from Piz Chengalo collapse
+x &lt;- aux_getFDSNstation(centre = c(46.3, 9.6),
+                        radius = 0.6,
+                        access = TRUE)
+
+## sort statiions by distance
+x &lt;- x[order(x$distance),]
+
+## download available data
+d &lt;- aux_getFDSNdata(start = as.POSIXct(x = "2017-08-23 07:30:00", 
+                                        tz = "UTC"),
+                     duration = 180, 
+                     network = x$network_ID, 
+                     station = x$station_code, 
+                     url = x$network_url)
+
+## remove stations without available data
+x &lt;- x[!unlist(lapply(d, is.null)),]
+d &lt;- d[!unlist(lapply(d, is.null))]
+
+## generate plots of the three nearest stations
+par(mfcol = c(3, 1))
+
+for(i in 1:3) {
+
+  plot_signal(data = d[[i]],
+              main = paste(x$ID[i], 
+                           " | ",
+                           round(x$distance[i], 2),
+                           "distance (DD)"))
+} 
+
+## End(Not run)
+                     
+</code></pre>
+
+
+</div>

@@ -1,0 +1,296 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>boxcoxTransform</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Apply a Box-Cox Power Transformation to a Set of Data
+</h2>
+
+<h3>Description</h3>
+
+<p>Apply a Box-Cox power transformation to a set of data to attempt to induce 
+normality and homogeneity of variance.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  boxcoxTransform(x, lambda, eps = .Machine$double.eps)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>a numeric vector of positive numbers.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+<p>finite numeric scalar indicating what power to use for the 
+Box-Cox transformation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+
+<p>finite, positive numeric scalar.  When the absolute value of <code>lambda</code> is less 
+than <code>eps</code>, lambda is assumed to be 0 for the Box-Cox transformation.  
+The default value is <code>eps=.Machine$double.eps</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Two common assumptions for several standard parametric hypothesis tests are:
+</p>
+
+<ol>
+<li>
+<p> The observations all come from a normal distribution.
+</p>
+</li>
+<li>
+<p> The observations all come from distributions with the same variance.
+</p>
+</li>
+</ol>
+<p>For example, the standard one-sample t-test assumes all the observations 
+come from the same normal distribution, and the standard two-sample t-test 
+assumes that all the observations come from a normal distribution with the same 
+variance, although the mean may differ between the two groups.  For standard 
+linear regression models, these assumptions can be stated as:  the error terms 
+all come from a normal distribution with mean 0 and and a constant variance.
+</p>
+<p>Often, especially with environmental data, the above assumptions do not hold 
+because the original data are skewed and/or they follow a distribution that is 
+not really shaped like a normal distribution.  It is sometimes possible, however, 
+to transform the original data so that the transformed observations in fact come 
+from a normal distribution or close to a normal distribution.  The transformation 
+may also induce homogeneity of variance and, for the case of a linear regression 
+model, a linear relationship between the response and predictor variable(s).
+</p>
+<p>Sometimes, theoretical considerations indicate an appropriate transformation.  
+For example, count data often follow a Poisson distribution, 
+and it can be shown that taking the square root of observations from a Poisson 
+distribution tends to make these data look more bell-shaped 
+(Johnson et al., 1992, p.163; Johnson and Wichern, 2007, p.192; Zar, 2010, p.291).  
+A common example in the environmental field is that chemical concentration data 
+often appear to come from a lognormal distribution or some 
+other positively-skewed distribution (e.g., gamma).  
+In this case, taking the logarithm of the observations often appears to yield 
+normally distributed data.
+</p>
+<p>Ideally, a data transformation is chosen based on knowledge of the process 
+generating the data, as well as graphical tools such as 
+quantile-quantile plots and histograms.
+</p>
+<p>Box and Cox (1964) presented a formalized method for deciding on a data 
+transformation.  Given a random variable <code class="reqn">X</code> from some distribution with 
+only positive values, the Box-Cox family of power transformations is defined as:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <code class="reqn">Y</code> </td>
+<td style="text-align: left;"> = </td>
+<td style="text-align: left;"> <code class="reqn">\frac{X^\lambda - 1}{\lambda}</code> </td>
+<td style="text-align: left;"> <code class="reqn">\lambda \ne 0</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+          </td>
+<td style="text-align: left;">   </td>
+<td style="text-align: left;"> <code class="reqn">log(X)</code>                        </td>
+<td style="text-align: left;"> <code class="reqn">\lambda = 0 \;\;\;\;\;\; (1)</code>
+  </td>
+</tr>
+</table>
+<p>where <code class="reqn">Y</code> is assumed to come from a normal distribution.  This transformation is 
+continuous in <code class="reqn">\lambda</code>.  Note that this transformation also preserves ordering;  
+that is, if <code class="reqn">X_1 &lt; X_2</code> then <code class="reqn">Y_1 &lt; Y_2</code>.  
+</p>
+<p>Box and Cox (1964) proposed choosing the appropriate value of <code class="reqn">\lambda</code> 
+based on maximizing a likelihood function.  See the help file for 
+<code>boxcox</code> for details.
+</p>
+<p>Note that for non-zero values of <code class="reqn">\lambda</code>, instead of using the formula of 
+Box and Cox in Equation (1), you may simply use the power transformation:
+</p>
+<p style="text-align: center;"><code class="reqn">Y = X^\lambda \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>since these two equations differ only by a scale difference and origin shift, 
+and the essential character of the transformed distribution remains unchanged.
+</p>
+<p>The value <code class="reqn">\lambda=1</code> corresponds to no transformation.  Values of 
+<code class="reqn">\lambda</code> less than 1 shrink large values of <code class="reqn">X</code>, and are therefore 
+useful for transforming positively-skewed (right-skewed) data.  Values of 
+<code class="reqn">\lambda</code> larger than 1 inflate large values of <code class="reqn">X</code>, and are therefore 
+useful for transforming negatively-skewed (left-skewed) data 
+(Helsel and Hirsch, 1992, pp.13-14; Johnson and Wichern, 2007, p.193).  
+Commonly used values of <code class="reqn">\lambda</code> include 0 (log transformation), 
+0.5 (square-root transformation), -1 (reciprocal), and -0.5 (reciprocal root).
+</p>
+<p>It is often recommend that when dealing with several similar data sets, it is best 
+to find a common transformation that works reasonably well for all the data sets, 
+rather than using slightly different transformations for each data set 
+(Helsel and Hirsch, 1992, p.14; Shumway et al., 1989).
+</p>
+
+
+<h3>Value</h3>
+
+<p>numeric vector of transformed observations.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Data transformations are often used to induce normality, homoscedasticity, 
+and/or linearity, common assumptions of parametric statistical tests and 
+estimation procedures.  Transformations are not “tricks” used by the 
+data analyst to hide what is going on, but rather useful tools for 
+understanding and dealing with data (Berthouex and Brown, 2002, p.61).  
+Hoaglin (1988) discusses “hidden” transformations that are used everyday, 
+such as the pH scale for measuring acidity.
+</p>
+<p>In the case of a linear model, there are at least two approaches to improving 
+a model fit:  transform the <code class="reqn">Y</code> and/or <code class="reqn">X</code> variable(s), and/or use 
+more predictor variables.  Often in environmental data analysis, we assume the 
+observations come from a lognormal distribution and automatically take 
+logarithms of the data.  For a simple linear regression 
+(i.e., one predictor variable), if regression diagnostic plots indicate that a 
+straight line fit is not adequate, but that the variance of the errors 
+appears to be fairly constant, you may only need to transform the predictor 
+variable <code class="reqn">X</code> or perhaps use a quadratic or cubic model in <code class="reqn">X</code>.  
+On the other hand, if the diagnostic plots indicate that the constant 
+variance and/or normality assumptions are suspect, you probably need to consider 
+transforming the response variable <code class="reqn">Y</code>.  Data transformations for 
+linear regression models are discussed in Draper and Smith (1998, Chapter 13) 
+and Helsel and Hirsch (1992, pp. 228-229).
+</p>
+<p>One problem with data transformations is that translating results on the 
+transformed scale back to the original scale is not always straightforward.  
+Estimating quantities such as means, variances, and confidence limits in the 
+transformed scale and then transforming them back to the original scale 
+usually leads to biased and inconsistent estimates (Gilbert, 1987, p.149; 
+van Belle et al., 2004, p.400).  For example, exponentiating the confidence 
+limits for a mean based on log-transformed data does not yield a 
+confidence interval for the mean on the original scale.  Instead, this yields 
+a confidence interval for the median (see the help file for <code>elnormAlt</code>).  
+It should be noted, however, that quantiles (percentiles) and rank-based 
+procedures are invariant to monotonic transformations 
+(Helsel and Hirsch, 1992, p.12).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Berthouex, P.M., and L.C. Brown. (2002). 
+<em>Statistics for Environmental Engineers, Second Edition</em>. 
+Lewis Publishers, Boca Raton, FL.
+</p>
+<p>Box, G.E.P., and D.R. Cox. (1964).  An Analysis of Transformations 
+(with Discussion).  <em>Journal of the Royal Statistical Society, Series B</em> 
+<b>26</b>(2), 211–252.
+</p>
+<p>Draper, N., and H. Smith. (1998). <em>Applied Regression Analysis</em>. Third Edition. 
+John Wiley and Sons, New York, pp.47-53.
+</p>
+<p>Gilbert, R.O. (1987). <em>Statistical Methods for Environmental Pollution 
+Monitoring</em>. Van Nostrand Reinhold, NY.
+</p>
+<p>Helsel, D.R., and R.M. Hirsch. (1992).  
+<em>Statistical Methods in Water Resources Research</em>. 
+Elsevier, New York, NY.
+</p>
+<p>Hinkley, D.V., and G. Runger. (1984).  The Analysis of Transformed Data 
+(with Discussion).  <em>Journal of the American Statistical Association</em> 
+<b>79</b>, 302–320.
+</p>
+<p>Hoaglin, D.C., F.M. Mosteller, and J.W. Tukey, eds. (1983).  
+<em>Understanding Robust and Exploratory Data Analysis</em>.  
+John Wiley and Sons, New York, Chapter 4.
+</p>
+<p>Hoaglin, D.C. (1988).  Transformations in Everyday Experience. 
+<em>Chance</em> <b>1</b>, 40–45.
+</p>
+<p>Johnson, N. L., S. Kotz, and A.W. Kemp. (1992).  <em>Univariate 
+Discrete Distributions, Second Edition</em>.  John Wiley and Sons, New York, 
+p.163.
+</p>
+<p>Johnson, R.A., and D.W. Wichern. (2007).  
+<em>Applied Multivariate Statistical Analysis, Sixth Edition</em>.  
+Pearson Prentice Hall, Upper Saddle River, NJ, pp.192–195.
+</p>
+<p>Shumway, R.H., A.S. Azari, and P. Johnson. (1989).  
+Estimating Mean Concentrations Under Transformations for Environmental 
+Data With Detection Limits.  <em>Technometrics</em> <b>31</b>(3), 347–356.
+</p>
+<p>Stoline, M.R. (1991).  An Examination of the Lognormal and Box and Cox 
+Family of Transformations in Fitting Environmental Data.  
+<em>Environmetrics</em> <b>2</b>(1), 85–106.
+</p>
+<p>van Belle, G., L.D. Fisher, Heagerty, P.J., and Lumley, T. (2004). 
+<em>Biostatistics: A Methodology for the Health Sciences, 2nd Edition</em>. 
+John Wiley &amp; Sons, New York.
+</p>
+<p>Zar, J.H. (2010). <em>Biostatistical Analysis</em>. 
+Fifth Edition. Prentice-Hall, Upper Saddle River, NJ, 
+Chapter 13.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>boxcox</code>, Data Transformations, Goodness-of-Fit Tests.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 30 observations from a lognormal distribution with 
+  # mean=10 and cv=2, then look at some normal quantile-quantile 
+  # plots for various transformations.
+  # (Note: the call to set.seed simply allows you to reproduce this example.)
+
+  set.seed(250) 
+  x &lt;- rlnormAlt(30, mean = 10, cv = 2)
+
+  dev.new() 
+  qqPlot(x, add.line = TRUE)
+
+  dev.new()
+  qqPlot(boxcoxTransform(x, lambda = 0.5), add.line = TRUE) 
+
+  dev.new()
+  qqPlot(boxcoxTransform(x, lambda = 0), add.line = TRUE) 
+  
+
+  # Clean up
+  #---------
+  rm(x)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,181 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compareResponse</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compare two response curves along one or more predictors</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates a suite of metrics reflecting of niche overlap for two response curves. Response curves are predicted responses of a uni- or multivariate model along a single variable. Depending on the user-specified settings the function calculates these values either at each pair of values of <code>pred1</code> and <code>pred2</code> <em>or</em> along a smoothed version of <code>pred1</code> and <code>pred2</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compareResponse(
+  pred1,
+  pred2,
+  data,
+  predictor = names(data),
+  adjust = FALSE,
+  gap = Inf,
+  smooth = FALSE,
+  smoothN = 1000,
+  smoothRange = c(0, 1),
+  graph = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pred1</code></td>
+<td>
+<p>Numeric list. Predictions from first model along <code>data</code> (one value per row in <code>data</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pred2</code></td>
+<td>
+<p>Numeric list. Predictions from second model along <code>data</code> (one value per row in <code>data</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame or matrix corresponding to <code>pred1</code> and <code>pred2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor</code></td>
+<td>
+<p>Character list. Name(s) of predictor(s) for which to calculate comparisons. These must appear as column names in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adjust</code></td>
+<td>
+<p>Logical. If <code>TRUE</code> then subtract the mean of <code>pred1</code> from <code>pred1</code> and the mean of <code>pred2</code> from <code>pred2</code> before analysis. Useful for comparing the shapes of curves while controlling for different elevations (intercepts).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gap</code></td>
+<td>
+<p>Numeric &gt;0. Proportion of range of predictor variable across which to assume a gap exists. Calculation of <code>areaAbsDiff</code> will  ignore gaps wide than this. To ensure the entire range of the data is included set this equal to <code>Inf</code> (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth</code></td>
+<td>
+<p>Logical. If <code>TRUE</code> then the responses are first smoothed using loess() then compared at <code>smoothN</code> values along each predictor. If <code>FALSE</code>, then comparisons are conducted at the raw values <code>pred1</code> and <code>pred2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smoothN</code></td>
+<td>
+<p><code>NULL</code> or positive integer. Number of values along "pred" at which to calculate comparisons. Only used if <code>smooth</code> is <code>TRUE</code>. If <code>NULL</code>, then comparisons are calculated at each value in data. If a number, then comparisons are calculated at <code>smoothN</code> values of <code>data[ , pred]</code> that cover the range of <code>data[ , pred]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smoothRange</code></td>
+<td>
+<p>2-element numeric list or <code>NULL</code>. If <code>smooth</code> is <code>TRUE</code>, then force loess predictions &lt; <code>smoothRange[1]</code> to equal <code>smoothRange[1]</code> and predictions &gt; <code>smoothRange[2]</code> to equal <code>smoothRange[2]</code>. Ignored if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>graph</code></td>
+<td>
+<p>Logical. If <code>TRUE</code> then plot predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to pass to functions like <code>sum()</code> (for example, <code>na.rm=TRUE</code>) and to <code>overlap()</code> (for example, <code>w</code> for weights). Note that if <code>smooth = TRUE</code>, then passing an argument called <code>w</code> will likely cause a warning and make results circumspect <em>unless</em> weights are pre-calculated for each of the <code>smoothN</code> points along a particular predictor.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Either a data frame (if <code>smooth = FALSE</code> or a list object with the smooth model plus a data frame (if <code>smooth = TRUE</code>) . The data frame represents metrics comparing response curves of <code>pred1</code> and <code>pred2</code>:
+</p>
+
+<ul>
+<li> <p><code>predictor</code> Predictor for which comparison was made
+</p>
+</li>
+<li> <p><code>n</code> Number of values of predictor at which comparison was calculated
+</p>
+</li>
+<li> <p><code>adjust</code> <code>adjust</code> argument.
+</p>
+</li>
+<li> <p><code>smooth</code> <code>smooth</code> argument.
+</p>
+</li>
+<li> <p><code>meanDiff</code> Mean difference between predictions of <code>pred1</code> and <code>pred2</code> (higher ==&gt; more different).
+</p>
+</li>
+<li> <p><code>meanAbsDiff</code> Mean absolute value of difference between predictions of <code>pred1</code> and <code>pred2</code> (higher ==&gt; more different).
+</p>
+</li>
+<li> <p><code>areaAbsDiff</code> Sum of the area between curves predicted by <code>pred1</code> and <code>pred2</code>, standardized by total potential area between the two curves (i.e., the area available between the minimum and maximum prediction along the minimum and maximum values of the predictor) (higher ==&gt; more different).
+</p>
+</li>
+<li> <p><code>d</code> Schoener's <em>D</em>
+</p>
+</li>
+<li> <p><code>i</code> Hellinger's <em>I</em> (adjusted to have a range [0, 1])
+</p>
+</li>
+<li> <p><code>esp</code> Godsoe's ESP
+</p>
+</li>
+<li> <p><code>cor</code> Pearson correlation between predictions of <code>pred1</code> and <code>pred2</code>.
+</p>
+</li>
+<li> <p><code>rankCor</code> Spearman rank correlation between predictions of <code>pred1</code> and <code>pred2</code>.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Warren, D.L., Glor, R.E., and Turelli, M.  2008.  Environmental niche equivalency versus conservatism: Quantitative approaches to niche evolution.  Evolution 62:2868-2883.
+</p>
+<p>Warren, D.L., Glor, R.E., and Turelli, M.  2008.  Erratum.  Evolution 62:2868-2883.
+</p>
+<p>Godsoe, W.  2014.  Inferring the similarity of species distributions using Species Distribution Models.  Ecography 37:130-136.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>nicheOverlapMetrics</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(123)
+data &lt;- data.frame(
+	x1=seq(-1, 1, length.out=100),
+	x2=seq(-1, 1, length.out=100) + rnorm(100, 0, 0.3)
+)
+
+pred1 &lt;- 1 / (1 + exp(-(0.3 + 2 * (data$x1 - 0.2) -0.3 * data$x2)))
+pred2 &lt;- 1 / (1 + exp(-(-0 + 0.1 * data$x1 - 4 * data$x1^2 + 0.4 * data$x2)))
+
+compareResponse(pred1, pred2, data, graph=TRUE)
+compareResponse(pred1, pred2, data, smooth=TRUE, graph=TRUE)
+compareResponse(pred1, pred2, data, adjust=TRUE, graph=TRUE)
+
+</code></pre>
+
+
+</div>

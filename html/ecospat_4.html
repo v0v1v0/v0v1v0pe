@@ -1,0 +1,102 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecospat.binary.model</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate Binary Models</h2>
+
+<h3>Description</h3>
+
+<p>Generate a binary map from a continuous model prediction.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecospat.binary.model (Pred, Threshold)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Pred</code></td>
+<td>
+<p>a <code>SpatRaster</code> object predicted suitabilities from a SDM prediction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Threshold</code></td>
+<td>
+<p>A threshold to convert continous maps into binary maps (e.g. the output of the function <code>ecospat.mpa</code>() or use the <code>optimal.thresholds</code> from PresenceAbsence R package.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function generates a binary model prediction (presence/absence) from an original model applying a threshold. The threshold could be arbitrary, or be based on the maximum acceptable error of false negatives (i.e. percentage of the presence predicted as absences, omission error).</p>
+
+
+<h3>Value</h3>
+
+<p>The binary model prediction (presence/absence).</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Ruben G. Mateo <a href="mailto:rubeng.mateo@gmail.com">rubeng.mateo@gmail.com</a> with contributions of Frank Breiner <a href="mailto:frank.breiner@wsl.ch">frank.breiner@wsl.ch</a> and Flavien Collart</p>
+
+
+<h3>References</h3>
+
+<p>Fielding, A.H. and J.F. Bell. 1997. A review of methods for the assessment of prediction errors in conservation presence/absence models. <em>Environmental Conservation</em>, <b>24</b>: 38-49.
+</p>
+<p>Engler, R., A Guisan and L. Rechsteiner. 2004. An improved approach for predicting the distribution of rare and endangered species from occurrence and pseudo-absence data. <em>Journal of Applied Ecology</em>, <b>41</b>, 263-274.
+</p>
+<p>Liu, C., Berry, P. M., Dawson, T. P. and R. G. Pearson. 2005. Selecting thresholds of occurrence in the prediction of species distributions. <em>Ecography</em>, <b>28</b>, 385-393.
+</p>
+<p>Jimenez-Valverde, A. and J.M.Lobo. 2007. Threshold criteria for conversion of probability of species presence to either-or presence-absence. <em>Acta oecologica</em>, <b>31</b>, 361-369.
+</p>
+<p>Liu, C., White, M. and G. Newell. 2013. Selecting thresholds for the prediction of species occurrence with presence-only data. <em>J. Biogeogr.</em>, <b>40</b>, 778-789.
+</p>
+<p>Freeman, E.A. and G.G. Moisen. 2008. A comparison of the performance of threshold criteria for binary classification in terms of predicted prevalence and kappa. <em>Ecological Modelling</em>, <b>217</b>, 48-58.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ecospat.mpa</code>, <code>optimal.thresholds</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(terra)
+# coordinates of the plots
+xy &lt;- ecospat.testData[,2:3]
+
+# environmental data
+predictors &lt;- terra::rast(system.file("extdata","ecospat.testEnv.tif",package="ecospat"))
+
+env &lt;- terra::extract(predictors,xy,ID=FALSE)  
+spData &lt;- cbind.data.frame(occ=ecospat.testData$Veronica_alpina,env)
+mod &lt;- glm(occ~ddeg0+I(ddeg0^2)+srad68+I(srad68^2),data=spData,family = binomial())
+
+# predict to entire dataset
+pred &lt;- terra::predict(predictors,mod,type="response") 
+  
+### make binary maps
+# use MPA to convert suitability to binary map
+
+mpa.cutoff &lt;- ecospat.mpa(pred,xy[spData$occ==1,],perc = 0.9) # 90% presences encompassed
+pred.bin.mpa &lt;- ecospat.binary.model(pred,mpa.cutoff)
+
+plot(pred.bin.mpa)
+points(xy[spData$occ==1,])
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,181 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Genotyping and SNP Detection using Next Generation Sequencing Data
+</h2>
+
+<h3>Description</h3>
+
+<p>This function implements the method described in 'An Empirical Bayes Method for Genotyping and SNP detection Using Multi-sample Next-generation Sequencing Data'.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecm(dat,cvg,eps=1e-6,max.steps=500,eps.bisec=1e-6,ini.m=-7,ini.d=-7)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+
+<p>a n*m matrix: the ith row, jth column of the matrix represents the non-reference counts of ith sample at jth position. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cvg</code></td>
+<td>
+
+<p>a n*m matrix: the ith row, jth column of the matrix represents the depth of ith sample at jth position. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+
+<p>a single value: a threshold to control the convergence criterion. The default is 1e-06.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.steps</code></td>
+<td>
+
+<p>a single value: the maximum steps to run iterative algorithm to estimate parameters. The default is 500.(Adjustment is needed according to the number of parameters to estimate and the initial value of them.) 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps.bisec</code></td>
+<td>
+
+<p>a single value: a threshold to control the convergence criterion of bisection criterion. The default is 1e-06.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ini.m</code></td>
+<td>
+
+<p>the initial value of each element of mu. We suggest users to use default -7.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ini.d</code></td>
+<td>
+
+<p>the initial value of each element of delta. We suggest users to use default -7.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function implements the method described in 'An Empirical Bayes Method for Genotyping and SNP detection Using Multi-sample Next-generation Sequencing Data'. 
+According to the paper, users can do genotyping with the estimated genotypes("geno.est"), 
+and do SNP detection with the posterior probabilities of RR("post.probs$zRR"), based on the non-reference counts("dat")and depth("cvg").
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>par.est</code></td>
+<td>
+<p>a list including the estimate of position effect(mu), sample effect(delta), and the probability of RR and RV.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>post.probs</code></td>
+<td>
+<p>3 matrix: the estimate of the posterior probabilities of 3 genotypes for n samples at m positions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>steps</code></td>
+<td>
+<p>the total steps to run iterative algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geno.est</code></td>
+<td>
+<p>a n*m matrix: the estimated genotypes(0 for RR, 1 for RV and 2 for VV) of n samples at m positions.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Na You &lt;youn@mail.sysu.edu.cn&gt; and Gongyi Huang&lt;53hgy@163.com&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Na You and Gongyi Huang.(2016) An Empirical Bayes Method for Genotyping and SNP detection Using Multi-sample Next-generation Sequencing Data.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#---------generate simulation data-----------
+#start:generate simulation data#
+set.seed(2016)
+m &lt;- 100
+m0 &lt;- m*0.95
+m1 &lt;- m-m0
+n &lt;- 30
+Q &lt;- 0.8
+z &lt;- cbind(matrix(0,n,m0),matrix(rbinom(n*m1,1,Q),n,m1))
+b &lt;- which(z==1)
+R &lt;- 0.8 # proportion of homozygous SNP
+w &lt;- rbinom(length(which(z==1)),1,R)
+# z are genotypes
+z[b[which(w==0)]] &lt;- 1
+z[b[which(w==1)]] &lt;- 2
+mu &lt;- rep(-3,m)# stands for no effect
+delta &lt;- rep(-3,n)# stands for no effect
+er.p &lt;- -abs(outer(delta,mu,"+"))
+p &lt;- rlogit(er.p)
+p[which(z==1)] &lt;- 1/2
+p[which(z==2)] &lt;- 1-p[which(z==2)]
+cvg &lt;- matrix(rbinom(m*n,50,0.5),n,m)
+dat &lt;- matrix(sapply(1:(m*n),function(i) rbinom(1,cvg[i],p[i])),n,m)
+#end:generate simulation data-#
+#-----genotyping and SNP detection----------------
+res &lt;- ecm(dat=dat,cvg=cvg)
+mean(z!=res$geno.est)#genotyping error
+#----------call SNP---------
+#start:call snp#
+# define a function to calculate power, typeI error and FDR.
+cutsnp &lt;- function(fdr,alpha,true){
+wh &lt;- (true!=0)
+tp &lt;- sum((wh)&amp;(fdr&lt;alpha));
+tn &lt;- sum((!wh)&amp;(fdr&gt;=alpha));
+fp &lt;- sum((!wh)&amp;(fdr&lt;alpha));
+fn &lt;- sum((wh)&amp;(fdr&gt;=alpha));
+pw  &lt;- tp/(tp+fn);
+t1 &lt;- fp/(fp+tn);
+fdr &lt;- fp/(fp+tp);
+return(c(TP=tp,TN=tn,FP=fp,FN=fn,power=pw,typeI=t1,FDR=fdr))
+}
+cutsnp(fdr=res$post.probs$zRR,alpha=0.001,true=z)
+cutsnp(fdr=res$post.probs$zRR,alpha=0.01,true=z)
+cutsnp(fdr=res$post.probs$zRR,alpha=0.05,true=z)
+#end:call snp#
+</code></pre>
+
+
+</div>

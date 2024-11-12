@@ -1,0 +1,474 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ebnm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Solve the EBNM problem</h2>
+
+<h3>Description</h3>
+
+<p>Solves the empirical Bayes normal means (EBNM) problem using a specified
+family of priors. For an article-length introduction to the package, see
+Willwerscheid and Stephens (2021), cited in <strong>References</strong> below.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ebnm(
+  x,
+  s = 1,
+  prior_family = c("point_normal", "point_laplace", "point_exponential", "normal",
+    "horseshoe", "normal_scale_mixture", "unimodal", "unimodal_symmetric",
+    "unimodal_nonnegative", "unimodal_nonpositive", "generalized_binary", "npmle",
+    "deconvolver", "flat", "point_mass", "ash"),
+  mode = 0,
+  scale = "estimate",
+  g_init = NULL,
+  fix_g = FALSE,
+  output = ebnm_output_default(),
+  optmethod = NULL,
+  control = NULL,
+  ...
+)
+
+ebnm_output_default()
+
+ebnm_output_all()
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A vector of observations. Missing observations (<code>NA</code>s) are
+not allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>A vector of standard errors (or a scalar if all are equal).
+Standard errors may not be exactly zero, and
+missing standard errors are not allowed. Two prior families have
+additional restrictions: when horseshoe priors are used, errors
+must be homoskedastic; and since function
+<code>deconv</code> in package <code>deconvolveR</code> takes
+<code class="reqn">z</code>-scores, the "deconvolver" family requires that all standard errors
+be equal to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_family</code></td>
+<td>
+<p>A character string that specifies the prior family
+<code class="reqn">G</code>. See <strong>Details</strong> below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>A scalar specifying the mode of the prior <code class="reqn">g</code> or
+<code>"estimate"</code> if the mode is to be estimated from the data. This
+parameter is ignored by the NPMLE, the <code>deconvolveR</code> family,
+and the improper uniform (or "flat") prior. For generalized binary priors,
+which are bimodal, the mode parameter specifies the mode of the truncated
+normal component (the location of the point mass is fixed at zero).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>A scalar or vector specifying the scale parameter(s) of the
+prior or <code>"estimate"</code> if the scale parameters are to be estimated
+from the data. This parameter is ignored by the flat prior and the family
+of point mass priors.
+</p>
+<p>The interpretation of <code>scale</code> depends on the prior
+family. For normal and point-normal families, it is a scalar
+specifying the standard deviation of the normal component. For
+point-Laplace and point-exponential families, it is a scalar specifying
+the scale parameter of the Laplace or exponential component. For the horseshoe
+family, it corresponds to <code class="reqn">s\tau</code> in the usual parametrization of
+the <code>horseshoe</code> distribution. For the family of generalized
+binary priors, it specifies the ratio of the (untruncated) standard
+deviation of the normal component to its mode.
+This ratio must be fixed in advance (i.e., argument <code>"estimate"</code> is
+unavailable for generalized binary priors). For the NPMLE and <code>deconvolveR</code>
+prior family, <code>scale</code> is a scalar specifying the distance between
+successive means in the grid of point masses or normal distributions
+used to estimate <code class="reqn">g</code>.
+For all other prior families, which are implemented using the function
+<code>ash</code> in package <code>ashr</code>, it is a vector specifying
+the parameter <code>mixsd</code> to be passed to <code>ash</code> or <code>"estimate"</code>
+if <code>mixsd</code> is to be chosen by <code>ebnm</code>. (Note that <code>ebnm</code> chooses
+<code>mixsd</code> differently from <code>ash</code>: see functions
+<code>ebnm_scale_normalmix</code>, <code>ebnm_scale_unimix</code>, and
+<code>ebnm_scale_npmle</code> for details. To use the <code>ash</code> grid, set
+<code>scale = "estimate"</code> and pass in <code>gridmult</code> as an additional
+parameter. See <code>ash</code> for defaults and details.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g_init</code></td>
+<td>
+<p>The prior distribution <code class="reqn">g</code>. Usually this is left
+unspecified (<code>NULL</code>) and estimated from the data. However, it can be
+used in conjuction with <code>fix_g = TRUE</code> to fix the prior (useful, for
+example, to do computations with the "true" <code class="reqn">g</code> in simulations). If
+<code>g_init</code> is specified but <code>fix_g = FALSE</code>, <code>g_init</code>
+specifies the initial value of <code class="reqn">g</code> used during optimization. For
+non-parametric priors, this has the side effect of fixing the <code>mode</code>
+and <code>scale</code> parameters. If <code>g_init</code> is supplied, it should be
+an object of class <code>normalmix</code> for normal, point-normal,
+scale mixture of normals, and <code>deconvolveR</code> prior families, as well as
+for the NPMLE; class <code>laplacemix</code> for
+point-Laplace families; class <code>gammamix</code> for point-exponential
+families; class <code>horseshoe</code> for horseshoe families; class
+<code>unimix</code> for <code>unimodal_</code> families; or class
+<code>tnormalmix</code> for generalized binary priors. An object of
+class <code>ebnm</code> can also be supplied as argument, provided that field
+<code>fitted_g</code> contains a prior of the correct class (see
+<strong>Examples</strong> below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix_g</code></td>
+<td>
+<p>If <code>TRUE</code>, fix the prior <code class="reqn">g</code> at <code>g_init</code> instead
+of estimating it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>A character vector indicating which values are to be returned.
+Function <code>ebnm_output_default()</code> provides the default return values, while
+<code>ebnm_output_all()</code> lists all possible return values. See <strong>Value</strong>
+below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optmethod</code></td>
+<td>
+<p>A string specifying which optimization function is to be
+used. Since all non-parametric families rely upon external packages, this
+parameter is only available for parametric families (point-normal,
+point-Laplace, point-exponential, and normal). Options include <code>"nlm"</code>,
+<code>"lbfgsb"</code> (which calls
+<code>optim</code> with <code>method = "L-BFGS-B"</code>), and <code>"trust"</code> (which
+calls into package <code>trust</code>). Other options are <code>"nohess_nlm"</code>,
+<code>"nograd_nlm"</code>, and <code>"nograd_lbfgsb"</code>, which use numerical
+approximations rather than exact expressions for the Hessian and (for
+the latter two) the gradient. The default option is <code>"nohess_nlm"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters to be passed to the optimization
+function. <code>optimize</code> is used for normal and horseshoe
+prior families, while <code>nlm</code> is used for parametric
+families unless parameter <code>optmethod</code> specifies otherwise.
+<code>nlm</code> is also used for the <code>deconvolveR</code> prior family.
+For ash families (including scale mixtures of normals, the NPMLE, and
+all <code>unimodal_</code> families), function <code>mixsqp</code> in
+package <code>mixsqp</code> is the default. For generalized binary priors,
+function <code>optim</code> is used with <code>method = "L-BFGS-B"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters. When a <code>unimodal_</code> prior family is used,
+these parameters are passed to function <code>ash</code> in package
+<code>ashr</code>. Although it
+does not call into <code>ashr</code>, the scale mixture of normals family accepts
+parameter <code>gridmult</code> for purposes of comparison. When <code>gridmult</code>
+is set, an <code>ashr</code>-style grid will be used instead of the default
+<code>ebnm</code> grid. When the "deconvolver" family is used, additional
+parameters are passed to function <code>deconv</code> in
+package <code>deconvolveR</code>. Families of generalized binary priors take several
+additional parameters; see <code>ebnm_generalized_binary</code>. In all
+other cases, additional parameters are ignored.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Given vectors of data <code>x</code> and standard errors <code>s</code>, <code>ebnm</code>
+solves the "empirical Bayes normal means" (EBNM) problem for various
+choices of prior family.
+The model is </p>
+<p style="text-align: center;"><code class="reqn">x_j | \theta_j, s_j \sim N(\theta_j, s_j^2)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\theta_j \sim g \in G,</code>
+</p>
+<p> where <code class="reqn">g</code>, which is referred to as the
+"prior distribution" for <code class="reqn">\theta</code>, is to be estimated from among
+some specified family of prior distributions <code class="reqn">G</code>. Several options
+for <code class="reqn">G</code> are implemented, some parametric and others non-parametric;
+see below for examples.
+</p>
+<p>Solving the EBNM problem involves
+two steps. First, <code class="reqn">g \in  G</code> is estimated via maximum marginal likelihood:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{g} := \arg\max_{g \in G} L(g),</code>
+</p>
+<p> where
+</p>
+<p style="text-align: center;"><code class="reqn">L(g) := \prod_j \int p(x_j | \theta_j, s_j)  g(d\theta_j).</code>
+</p>
+
+<p>Second, posterior distributions
+<code class="reqn">p(\theta_j | x_j, s_j, \hat{g})</code> and/or summaries
+such as posterior means and posterior second moments are computed.
+</p>
+<p>Implemented prior families include:
+</p>
+
+<dl>
+<dt><code>point_normal</code></dt>
+<dd>
+<p>The family of mixtures where one
+component is a point mass at <code class="reqn">\mu</code> and the other is a normal
+distribution centered at <code class="reqn">\mu</code>.</p>
+</dd>
+<dt><code>point_laplace</code></dt>
+<dd>
+<p>The family of mixtures where one
+component is a point mass at <code class="reqn">\mu</code> and the other is a
+double-exponential distribution centered at <code class="reqn">\mu</code>.</p>
+</dd>
+<dt><code>point_exponential</code></dt>
+<dd>
+<p>The family of mixtures where one
+component is a point mass at <code class="reqn">\mu</code> and the other is a
+(nonnegative) exponential distribution with mode <code class="reqn">\mu</code>.</p>
+</dd>
+<dt><code>normal</code></dt>
+<dd>
+<p>The family of normal distributions.</p>
+</dd>
+<dt><code>horseshoe</code></dt>
+<dd>
+<p>The family of horseshoe distributions.</p>
+</dd>
+<dt><code>normal_scale_mixture</code></dt>
+<dd>
+<p>The family of scale mixtures of
+normals.</p>
+</dd>
+<dt><code>unimodal</code></dt>
+<dd>
+<p>The family of all unimodal distributions.</p>
+</dd>
+<dt><code>unimodal_symmetric</code></dt>
+<dd>
+<p>The family of symmetric unimodal
+distributions.</p>
+</dd>
+<dt><code>unimodal_nonnegative</code></dt>
+<dd>
+<p>The family of unimodal
+distributions with support constrained to be greater than the mode.</p>
+</dd>
+<dt><code>unimodal_nonpositive</code></dt>
+<dd>
+<p>The family of unimodal
+distributions with support constrained to be less than the mode.</p>
+</dd>
+<dt><code>generalized_binary</code></dt>
+<dd>
+<p>The family of mixtures where one
+component is a point mass at zero and the other is a truncated
+normal distribution with lower bound zero and nonzero mode. See
+Liu et al. (2023), cited in <strong>References</strong> below.</p>
+</dd>
+<dt><code>npmle</code></dt>
+<dd>
+<p>The family of all distributions.</p>
+</dd>
+<dt><code>deconvolver</code></dt>
+<dd>
+<p>A non-parametric exponential family with
+a natural spline basis. Like <code>npmle</code>, there is no unimodal
+assumption, but whereas <code>npmle</code> produces spiky estimates for
+<code class="reqn">g</code>, <code>deconvolver</code> estimates are much more regular. See
+<code>deconvolveR-package</code> for details and
+references.</p>
+</dd>
+<dt><code>flat</code></dt>
+<dd>
+<p>The "non-informative" improper uniform prior, which
+yields posteriors </p>
+<p style="text-align: center;"><code class="reqn">\theta_j | x_j, s_j \sim N(x_j, s_j^2).</code>
+</p>
+</dd>
+<dt><code>point_mass</code></dt>
+<dd>
+<p>The family of point masses <code class="reqn">\delta_\mu</code>.
+Posteriors are point masses at <code class="reqn">\mu</code>.</p>
+</dd>
+<dt><code>ash</code></dt>
+<dd>
+<p>Calls into function <code>ash</code> in
+package <code>ashr</code>. Can be used to make direct comparisons of
+<code>ebnm</code> and <code>ashr</code> implementations of prior families such as
+scale mixtures of normals and the NPMLE.</p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>An <code>ebnm</code> object. Depending on the argument to <code>output</code>, the
+object is a list containing elements:
+</p>
+
+<dl>
+<dt><code>data</code></dt>
+<dd>
+<p>A data frame containing the observations <code>x</code>
+and standard errors <code>s</code>.</p>
+</dd>
+<dt><code>posterior</code></dt>
+<dd>
+<p>A data frame of summary results (posterior
+means, standard deviations, second moments, and local false sign
+rates).</p>
+</dd>
+<dt><code>fitted_g</code></dt>
+<dd>
+<p>The fitted prior <code class="reqn">\hat{g}</code> (an object of
+class <code>normalmix</code>, <code>laplacemix</code>,
+<code>gammamix</code>, <code>unimix</code>,
+<code>tnormalmix</code>, or <code>horseshoe</code>).</p>
+</dd>
+<dt><code>log_likelihood</code></dt>
+<dd>
+<p>The optimal log likelihood attained,
+<code class="reqn">L(\hat{g})</code>.</p>
+</dd>
+<dt><code>posterior_sampler</code></dt>
+<dd>
+<p>A function that can be used to
+produce samples from the posterior. For all prior families other
+than the horseshoe, the sampler takes a single parameter
+<code>nsamp</code>, the number of posterior samples to return per
+observation. Since <code>ebnm_horseshoe</code> returns an MCMC sampler,
+it additionally takes parameter <code>burn</code>, the number of burn-in
+samples to discard.</p>
+</dd>
+</dl>
+<p>S3 methods <code>coef</code>, <code>confint</code>, <code>fitted</code>, <code>logLik</code>,
+<code>nobs</code>, <code>plot</code>, <code>predict</code>, <code>print</code>, <code>quantile</code>,
+<code>residuals</code>, <code>simulate</code>, <code>summary</code>, and <code>vcov</code>
+have been implemented for <code>ebnm</code> objects. For details, see the
+respective help pages, linked below under <strong>See Also</strong>.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>ebnm_output_default()</code>: Lists the default return values.
+</p>
+</li>
+<li> <p><code>ebnm_output_all()</code>: Lists all valid return values.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Jason Willwerscheid and Matthew Stephens (2021).
+<code>ebnm</code>: an <code>R</code> Package for solving the empirical Bayes
+normal means problem using a variety of prior families. arXiv:2110.00152.
+</p>
+<p>Yusha Liu, Peter Carbonetto, Jason Willwerscheid, Scott A Oakes, Kay F Macleod,
+and Matthew Stephens (2023). Dissecting tumor transcriptional heterogeneity
+from single-cell RNA-seq data by generalized binary covariance decomposition.
+bioRxiv 2023.08.15.553436.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>A plotting method is available for <code>ebnm</code> objects: see
+<code>plot.ebnm</code>.
+</p>
+<p>For other methods, see <code>coef.ebnm</code>, <code>confint.ebnm</code>,
+<code>fitted.ebnm</code>, <code>logLik.ebnm</code>,
+<code>nobs.ebnm</code>, <code>predict.ebnm</code>,
+<code>print.ebnm</code>, <code>print.summary.ebnm</code>,
+<code>quantile.ebnm</code>, <code>residuals.ebnm</code>,
+<code>simulate.ebnm</code>,
+<code>summary.ebnm</code>, and <code>vcov.ebnm</code>.
+</p>
+<p>Calling into functions <code>ebnm_point_normal</code>,
+<code>ebnm_point_laplace</code>,
+<code>ebnm_point_exponential</code>, <code>ebnm_normal</code>,
+<code>ebnm_horseshoe</code>,
+<code>ebnm_normal_scale_mixture</code>, <code>ebnm_unimodal</code>,
+<code>ebnm_unimodal_symmetric</code>,
+<code>ebnm_unimodal_nonnegative</code>,
+<code>ebnm_unimodal_nonpositive</code>,
+<code>ebnm_generalized_binary</code>, <code>ebnm_npmle</code>,
+<code>ebnm_deconvolver</code>, <code>ebnm_flat</code>,
+<code>ebnm_point_mass</code>, and <code>ebnm_ash</code>
+is equivalent to calling into <code>ebnm</code> with <code>prior_family</code> set
+accordingly.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">theta &lt;- c(rep(0, 100), rexp(100))
+s &lt;- 1
+x &lt;- theta + rnorm(200, 0, s)
+
+# The following are equivalent:
+pn.res &lt;- ebnm(x, s, prior_family = "point_normal")
+pn.res &lt;- ebnm_point_normal(x, s)
+
+# Inspect results:
+logLik(pn.res)
+plot(pn.res)
+
+# Fix the scale parameter:
+pl.res &lt;- ebnm_point_laplace(x, s, scale = 1)
+
+# Estimate the mode:
+normal.res &lt;- ebnm_normal(x, s, mode = "estimate")
+plot(normal.res) # posterior means shrink to a value different from zero
+
+# Use an initial g (this fixes mode and scale for ash priors):
+normalmix.res &lt;- ebnm_normal_scale_mixture(x, s, g_init = pn.res)
+
+# Fix g and get different output (including a posterior sampler):
+pn.res &lt;- ebnm_point_normal(x, s, g_init = pn.res, fix_g = TRUE,
+                            output = ebnm_output_all())
+
+# Sample from the posterior:
+pn.samp &lt;- simulate(pn.res, nsim = 100)
+
+# Quantiles and HPD confidence intervals can be obtained via sampling:
+set.seed(1)
+pn.quantiles &lt;- quantile(pn.res, probs = c(0.1, 0.9))
+pn.quantiles[1:5, ]
+confint(pn.res, level = 0.8, parm = 1:5)
+
+# Examples of usage of control parameter:
+#  point_normal uses nlm:
+pn.res &lt;- ebnm_point_normal(x, s, control = list(print.level = 1))
+#  unimodal uses mixsqp:
+unimodal.res &lt;- ebnm_unimodal(x, s, control = list(verbose = TRUE))
+
+</code></pre>
+
+
+</div>

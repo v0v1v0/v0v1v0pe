@@ -1,0 +1,180 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>erpavetest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Significance testing of averaged ERPs.</h2>
+
+<h3>Description</h3>
+
+<p>The function first calculates averaged ERP values within a predetermined number of equally-spaced intervals then tests
+for significance of the relationship between averaged ERPs and covariates in a linear model framework.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">erpavetest(dta, design, design0 = NULL, nintervals = 10, 
+method = c("none","BH","holm","hochberg","hommel","bonferroni","BY","fdr"),alpha = 0.05)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dta</code></td>
+<td>
+<p>Data frame containing the ERP curves: each column corresponds to a time frame and each row to a curve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>Design matrix of the nonnull model for the relationship between the ERP and the experimental variables.
+Typically the output of the function model.matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design0</code></td>
+<td>
+<p>Design matrix of the null model. Typically a submodel of the nonnull model, obtained by removing columns from design.
+Default is NULL, corresponding to the model with no covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nintervals</code></td>
+<td>
+<p>Number of intervals in the partition of the whole interval of observation. Default is 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>FDR- or FWER- controlling multiple testing procedures as available in the function p.adjust. Default is "none", for no multiplicity correction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>The FDR or FWER control level. Default is 0.05</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pval</code></td>
+<td>
+<p>p-values of the tests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correctedpval</code></td>
+<td>
+<p>Corrected p-values, for the multiplicity of tests. Depends on the multiple testing method (see function p.adjust).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>significant</code></td>
+<td>
+<p>Indices of the time points for which the test is positive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>segments</code></td>
+<td>
+<p>Factor giving the membership of timepoints to each interval in the partition.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>Breakpoints of the partition.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+<p>Pointwise F-statistics if p&gt;1, where p is the difference between the numbers of parameters in the nonnull and null models. Otherwise, if p=1, the function
+returns pointwise t-statistics (signed square-roots of F-statistics).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df1</code></td>
+<td>
+<p>Residual degrees of freedom for the nonnull model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df0</code></td>
+<td>
+<p>Residual degrees of freedom for the null model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>signal</code></td>
+<td>
+<p>Estimated signal: a pxT matrix, where T the number of frames.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r2</code></td>
+<td>
+<p>R-squared values for each of the T linear models.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>David Causeur, IRMAR, UMR 6625 CNRS, Agrocampus Ouest, Rennes, France.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>erptest</code>, <code>erpfatest</code>, <code>gbtest</code>, <code>p.adjust</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(impulsivity)
+
+# Paired t-tests for the comparison of the ERP curves in the two conditions, 
+# within experimental group High, at channel CPZ
+
+erpdta.high = impulsivity[impulsivity$Group=="High",5:505] 
+   # ERP curves for subjects in group 'High'
+covariates.high = impulsivity[impulsivity$Group=="High",1:4]
+   # Experimental covariates for subjects in group 'High'
+
+design = model.matrix(~C(Subject,sum)+Condition,data=covariates.high)
+   # Design matrix to compare ERP curves in the two conditions
+design0 = model.matrix(~C(Subject,sum),data=covariates.high)
+   # Design matrix for the null model (no condition effect)
+
+tests = erpavetest(erpdta.high,design,design0)
+   
+time_pt = seq(0,1000,2)     # sequence of time points (1 time point every 2ms in [0,1000])
+nbs = 20                    # Number of B-splines for the plot of the effect curve
+effect=which(colnames(design)=="ConditionSuccess")
+erpplot(erpdta.high,design=design,frames=time_pt,effect=effect,xlab="Time (ms)",
+        ylab=expression(Effect~curve~(mu~V)),bty="l",ylim=c(-3,3),nbs=nbs,
+        cex.axis=1.25,cex.lab=1.25,interval="simultaneous")
+   # with interval="simultaneous", both the pointwise and the simultaneous confidence bands
+   # are plotted
+abline(v=time_pt[tests$breaks],lty=2,col="darkgray")
+   # Add a grid to show breakpoints
+points(time_pt[tests$significant],rep(0,length(tests$significant)),pch=16,col="blue")
+   # Identifies significant time points by blue dots
+title("Success-Failure effect curve with 95 percent C.I.",cex.main=1.25)
+mtext(paste("12 subjects - Group 'High' - ",nbs," B-splines",sep=""),cex=1.25)
+
+
+</code></pre>
+
+
+</div>

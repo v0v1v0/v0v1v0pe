@@ -1,0 +1,1826 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Idd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parse, Query and Modify EnergyPlus Input Data Dictionary (IDD)</h2>
+
+<h3>Description</h3>
+
+<p>eplusr provides parsing of and programmatic access to EnergyPlus
+Input Data Dictionary (IDD) files, and objects. It contains all data needed
+to parse EnergyPlus models. <code>Idd</code> class provides parsing and printing while
+IddObject provides detailed information of curtain class.
+</p>
+
+
+<h3>Overview</h3>
+
+<p>EnergyPlus operates off of text input files written in its own Input
+Data File (IDF) format. IDF files are similar to XML files in that they are
+intended to conform to a data schema written using similar syntax. For XML,
+the schema format is XSD; for IDF, the schema format is IDD. For each release
+of EnergyPlus, valid IDF files are defined by the "Energy+.idd" file shipped
+with the release.
+</p>
+<p>eplusr tries to detect all installed EnergyPlus in default installation
+locations when loading, i.e. <code style="white-space: pre;">⁠C:\\EnergyPlusVX-X-0⁠</code> on Windows,
+<code style="white-space: pre;">⁠/usr/local/EnergyPlus-X-Y-0⁠</code> on Linux, and
+<code style="white-space: pre;">⁠/Applications/EnergyPlus-X-Y-0⁠</code> on macOS and stores all found locations
+internally. This data is used to locate the distributed "Energy+.idd" file of
+each EnergyPlus version. And also, every time an IDD file is parsed, an <code>Idd</code>
+object is created and cached in an environment.
+</p>
+<p>Parsing an IDD file starts from <code>use_idd()</code>. When using <code>use_idd()</code>, eplusr
+will first try to find the cached <code>Idd</code> object of that version, if possible.
+If failed, and EnergyPlus of that version is available (see <code>avail_eplus()</code>),
+the <code>"Energy+.idd"</code> distributed with EnergyPlus will be parsed and cached. So
+each IDD file only needs to be parsed once and can be used when parsing every
+IDF file of that version.
+</p>
+<p>Internally, the powerful <a href="https://cran.r-project.org/package=data.table">data.table</a>
+package is used to speed up the whole IDD parsing process and store the
+results. However, it will still take about 2-3 sec per IDD. Under the hook,
+eplusr uses a SQL-like structure to store both IDF and IDD data in
+data.table::data.table format. Every IDD will be parsed and stored in
+four tables:
+</p>
+
+<ul>
+<li> <p><code>group</code>: contains group index and group names.
+</p>
+</li>
+<li> <p><code>class</code>: contains class names and properties.
+</p>
+</li>
+<li> <p><code>field</code>: contains field names and field properties.
+</p>
+</li>
+<li> <p><code>reference</code>: contains cross-reference data of fields.
+</p>
+</li>
+</ul>
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-Idd-new"><code>Idd$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-version"><code>Idd$version()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-build"><code>Idd$build()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-path"><code>Idd$path()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-group_name"><code>Idd$group_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-from_group"><code>Idd$from_group()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-class_name"><code>Idd$class_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-required_class_name"><code>Idd$required_class_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-unique_class_name"><code>Idd$unique_class_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-extensible_class_name"><code>Idd$extensible_class_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-group_index"><code>Idd$group_index()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-class_index"><code>Idd$class_index()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-is_valid_group"><code>Idd$is_valid_group()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-is_valid_class"><code>Idd$is_valid_class()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-object"><code>Idd$object()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-objects"><code>Idd$objects()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-object_relation"><code>Idd$object_relation()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-objects_in_relation"><code>Idd$objects_in_relation()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-objects_in_group"><code>Idd$objects_in_group()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-to_table"><code>Idd$to_table()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-to_string"><code>Idd$to_string()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idd-print"><code>Idd$print()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-Idd-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create an <code>Idd</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$new(path, encoding = "unknown")</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>path</code></dt>
+<dd>
+<p>Either a path, a connection, or literal data (either a single
+string or a raw vector) to an EnergyPlus Input Data Dictionary
+(IDD). If a file path, that file usually has a extension
+<code>.idd</code>.</p>
+</dd>
+<dt><code>encoding</code></dt>
+<dd>
+<p>The file encoding of input IDD. Should be one of
+<code>"unknown"</code>, <code style="white-space: pre;">⁠"Latin-1" and ⁠</code>"UTF-8"<code style="white-space: pre;">⁠. The default is ⁠</code>"unknown"' which means that the file is encoded in the native
+encoding.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>It takes an EnergyPlus Input Data Dictionary (IDD) as input and
+returns an <code>Idd</code> object.
+</p>
+<p>It is suggested to use helper <code>use_idd()</code> which supports to directly
+take a valid IDD version as input and search automatically the
+corresponding file path.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An <code>Idd</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{Idd$new(file.path(eplus_config(8.8)$dir, "Energy+.idd"))
+
+# Preferable way
+idd &lt;- use_idd(8.8, download = "auto")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-version"></a>
+
+
+
+<h4>Method <code>version()</code>
+</h4>
+
+<p>Get the version of current <code>Idd</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$version()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$version()⁠</code> returns the version of current <code>Idd</code> in a
+<code>base::numeric_version()</code> format. This makes it easy to direction
+compare versions of different <code>Idd</code>s, e.g. <code>idd$version() &gt; 8.6</code> or
+<code>idd1$version() &gt; idd2$version()</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>base::numeric_version()</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get version
+idd$version()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-build"></a>
+
+
+
+<h4>Method <code>build()</code>
+</h4>
+
+<p>Get the build tag of current <code>Idd</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$build()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$build()⁠</code> returns the build tag of current <code>Idd</code>. If no build tag is
+found, <code>NA</code> is returned.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>base::numeric_version()</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get build tag
+idd$build()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-path"></a>
+
+
+
+<h4>Method <code>path()</code>
+</h4>
+
+<p>Get the file path of current <code>Idd</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$path()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$path()⁠</code> returns the full path of current <code>Idd</code> or <code>NULL</code> if the
+<code>Idd</code> object is created using a character vector and not saved
+locally.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p><code>NULL</code> or a single string.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get path
+idd$path()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-group_name"></a>
+
+
+
+<h4>Method <code>group_name()</code>
+</h4>
+
+<p>Get names of groups
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$group_name()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$group_name()⁠</code> returns names of groups current <code>Idd</code> contains.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get names of all groups Idf contains
+idd$group_name()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-from_group"></a>
+
+
+
+<h4>Method <code>from_group()</code>
+</h4>
+
+<p>Get the name of group that specified class belongs to
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$from_group(class)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of valid class names in current
+<code>Idd</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$from_group()⁠</code> returns the name of group that specified class
+belongs to.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$from_group(c("Version", "Schedule:Compact"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-class_name"></a>
+
+
+
+<h4>Method <code>class_name()</code>
+</h4>
+
+<p>Get names of classes
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$class_name(index = NULL, by_group = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>index</code></dt>
+<dd>
+<p>An integer vector of class indices.</p>
+</dd>
+<dt><code>by_group</code></dt>
+<dd>
+<p>If <code>TRUE</code>, a list is returned which separates class
+names by the group they belong to. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$class_name()⁠</code> returns names of classes current <code>Idd</code> contains
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector if <code>by_group</code> is <code>FALSE</code> and a list of
+character vectors when <code>by_group</code> is <code>TRUE</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get names of the 10th to 20th class
+idd$class_name(10:20)
+
+# get names of all classes in Idf
+idd$class_name()
+
+# get names of all classes grouped by group names in Idf
+idd$class_name(by_group = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-required_class_name"></a>
+
+
+
+<h4>Method <code>required_class_name()</code>
+</h4>
+
+<p>Get the names of required classes
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$required_class_name()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$required_class_name()⁠</code> returns the names of required classes in
+current <code>Idd</code>. "Require" means that for any Idf there should be at
+least one object.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$required_class_name()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-unique_class_name"></a>
+
+
+
+<h4>Method <code>unique_class_name()</code>
+</h4>
+
+<p>Get the names of unique-object classes
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$unique_class_name()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$unique_class_name()⁠</code> returns the names of unique-object classes in
+current <code>Idd</code>. "Unique-object" means that for any Idf there should
+be at most one object in those classes.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$unique_class_name()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-extensible_class_name"></a>
+
+
+
+<h4>Method <code>extensible_class_name()</code>
+</h4>
+
+<p>Get the names of classes with extensible fields
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$extensible_class_name()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$extensible_class_name()⁠</code> returns the names of classes with
+extensible fields in current <code>Idd</code>. "Extensible fields" indicate
+fields that can be added dynamically, such like the X, Y and Z
+vertices of a building surface.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$extensible_class_name()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-group_index"></a>
+
+
+
+<h4>Method <code>group_index()</code>
+</h4>
+
+<p>Get the indices of specified groups
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$group_index(group = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector of valid group names.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$group_index()⁠</code> returns the indices of specified groups in
+current <code>Idd</code>. A group index is just an integer indicating its
+appearance order in the <code>Idd</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An integer vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$group_index()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-class_index"></a>
+
+
+
+<h4>Method <code>class_index()</code>
+</h4>
+
+<p>Get the indices of specified classes
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$class_index(class = NULL, by_group = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of valid class names.</p>
+</dd>
+<dt><code>by_group</code></dt>
+<dd>
+<p>If <code>TRUE</code>, a list is returned which separates class
+names by the group they belong to. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$class_index()⁠</code> returns the indices of specified classes in
+current <code>Idd</code>. A class index is just an integer indicating its
+appearance order in the <code>Idd</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An integer vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$class_index()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-is_valid_group"></a>
+
+
+
+<h4>Method <code>is_valid_group()</code>
+</h4>
+
+<p>Check if elements in input character vector are valid group names.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$is_valid_group(group)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector to check.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_valid_group()⁠</code> returns <code>TRUE</code>s if given character vector
+contains valid group names in the context of current <code>Idd</code>, and
+<code>FALSE</code>s otherwise.
+</p>
+<p>Note that case-sensitive matching is performed, which means that
+<code>"Location and Climate"</code> is a valid group name but <code>"location and climate"</code> is not.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A logical vector with the same length as input character
+vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$is_valid_group(c("Schedules", "Compliance Objects"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-is_valid_class"></a>
+
+
+
+<h4>Method <code>is_valid_class()</code>
+</h4>
+
+<p>Check if elements in input character vector are valid class names.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$is_valid_class(class)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector to check.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_valid_class()⁠</code> returns <code>TRUE</code>s if given character vector
+contains valid class names in the context of current <code>Idd</code>, and
+<code>FALSE</code>s otherwise.
+</p>
+<p>Note that case-sensitive matching is performed, which means that
+<code>"Version"</code> is a valid class name but <code>"version"</code> is not.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A logical vector with the same length as input character
+vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$is_valid_class(c("Building", "ShadowCalculation"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-object"></a>
+
+
+
+<h4>Method <code>object()</code>
+</h4>
+
+<p>Extract an IddObject object using class index or name.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$object(class)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A single integer specifying the class index or a single
+string specifying the class name.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$object()⁠</code> returns an IddObject object specified by a class ID
+or name.
+</p>
+<p>Note that case-sensitive matching is performed, which means that
+<code>"Version"</code> is a valid class name but <code>"version"</code> is not.
+</p>
+<p>For convenience, underscore-style names are allowed, e.g.
+<code>Site_Location</code> is equivalent to <code>Site:Location</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An IddObject object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$object(3)
+
+idd$object("Building")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-objects"></a>
+
+
+
+<h4>Method <code>objects()</code>
+</h4>
+
+<p>Extract multiple IddObject objects using class indices or names.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$objects(class)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>An integer vector specifying class indices or a character
+vector specifying class names.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$objects()⁠</code> returns a named list of IddObject objects using class
+indices or names. The returned list is named using class names.
+</p>
+<p>Note that case-sensitive matching is performed, which means that
+<code>"Version"</code> is a valid class name but <code>"version"</code> is not.
+</p>
+<p>For convenience, underscore-style names are allowed, e.g.
+<code>Site_Location</code> is equivalent to <code>Site:Location</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IddObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$objects(c(3,10))
+
+idd$objects(c("Version", "Material"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-object_relation"></a>
+
+
+
+<h4>Method <code>object_relation()</code>
+</h4>
+
+<p>Extract the relationship between class fields.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$object_relation(
+  which,
+  direction = c("all", "ref_to", "ref_by"),
+  class = NULL,
+  group = NULL,
+  depth = 0L
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>which</code></dt>
+<dd>
+<p>A single integer specifying the class index or a single
+string specifying the class name.</p>
+</dd>
+<dt><code>direction</code></dt>
+<dd>
+<p>The relation direction to extract. Should be one of
+<code>"all"</code>, <code>"ref_to"</code> or <code>"ref_by"</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of class names used for searching
+relations. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector of group names used for searching
+relations. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>depth</code></dt>
+<dd>
+<p>If &gt; 0, the relation is searched recursively. A
+simple example of recursive reference: one material named
+<code>mat</code> is referred by a construction named <code>const</code>, and <code>const</code>
+is also referred by a surface named <code>surf</code>. If <code>NULL</code>,
+all possible recursive relations are returned. Default: <code>0</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>Many fields in Idd can be referred by others. For example, the
+<code style="white-space: pre;">⁠Outside Layer⁠</code> and other fields in <code>Construction</code> class refer to the
+<code>Name</code> field in <code>Material</code> class and other material related classes.
+Here it means that the <code style="white-space: pre;">⁠Outside Layer⁠</code> field <strong>refers to</strong> the <code>Name</code>
+field and the <code>Name</code> field is <strong>referred by</strong> the <code style="white-space: pre;">⁠Outside Layer⁠</code>.
+</p>
+<p><code style="white-space: pre;">⁠$object_relation()⁠</code> provides a simple interface to get this kind of
+relation. It takes a single class index or name and also a relation
+direction, and returns an <code>IddRelation</code> object which contains data
+presenting such relation above. For instance, if
+<code>idd$object_relation("Construction", "ref_to")</code> gives results below:
+</p>
+<div class="sourceCode"><pre>-- Refer to Others ---------------------------
+  Class: &lt;Construction&gt;
+  |- Field: &lt;02: Outside Layer&gt;
+  |  v~~~~~~~~~~~~~~~~~~~~~~~~~
+  |  |- Class: &lt;Material&gt;
+  |  |  \- Field: &lt;1: Name&gt;
+  |  |
+  |  |- Class: &lt;Material:NoMass&gt;
+  |  |  \- Field: &lt;1: Name&gt;
+  |  |
+  |  |- Class: &lt;Material:InfraredTransparent&gt;
+  |  |  \- Field: &lt;1: Name&gt;
+  |  |
+  ......
+</pre></div>
+<p>This means that the value of field <code style="white-space: pre;">⁠Outside Layer⁠</code> in class
+<code>Construction</code> can be one of values from field <code>Name</code> in class
+<code>Material</code>, field <code>Name</code> in class <code>Material:NoMass</code>, field <code>Name</code> in
+class <code>Material:InfraredTransparent</code> and etc. All those classes can
+be further easily extracted using <code style="white-space: pre;">⁠$objects_in_relation()⁠</code> method
+described below.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An <code>IddRelation</code> object, which is a list of 3
+<code>data.table::data.table()</code>s named <code>ref_to</code> and <code>ref_by</code>.
+Each <code>data.table::data.table()</code> contains 12 columns.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# check each construction layer's possible references
+idd$object_relation("Construction", "ref_to")
+
+# check where construction being used
+idd$object_relation("Construction", "ref_by")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-objects_in_relation"></a>
+
+
+
+<h4>Method <code>objects_in_relation()</code>
+</h4>
+
+<p>Extract multiple IddObject objects referencing each others.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$objects_in_relation(
+  which,
+  direction = c("ref_to", "ref_by"),
+  class = NULL,
+  group = NULL,
+  depth = 0L
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>which</code></dt>
+<dd>
+<p>A single integer specifying the class index or a single
+string specifying the class name.</p>
+</dd>
+<dt><code>direction</code></dt>
+<dd>
+<p>The relation direction to extract. Should be either
+<code>"ref_to"</code> or <code>"ref_by"</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of valid class names in the
+current Idd. It is used to restrict the classes to be
+returned. If <code>NULL</code>, all possible classes are considered and
+corresponding IddObject objects are returned if
+relationships are found. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector of valid group names in the
+current Idd. It is used to restrict the groups to be
+returned. If <code>NULL</code>, all possible groups are considered and
+corresponding IddObject objects are returned if
+relationships are found. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>depth</code></dt>
+<dd>
+<p>If &gt; 0, the relation is searched recursively. A
+simple example of recursive reference: one material named
+<code>mat</code> is referred by a construction named <code>const</code>, and <code>const</code>
+is also referred by a surface named <code>surf</code>. If <code>NULL</code>,
+all possible recursive relations are returned. Default: <code>0</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$objects_in_relation()⁠</code> returns a named list of IddObject objects
+that have specified relationship with given class. The first element of
+returned list is always the specified class itself. If that
+class does not have specified relationship with other classes, a list
+that only contains specified class itself is returned.
+</p>
+<p>For instance, <code>idd$objects_in_relation("Construction", "ref_by")</code>
+will return a named list of an IddObject object named
+<code>Construction</code> and also all other IddObject objects that can refer
+to field values in class <code>Construction</code>. Similarly,
+<code>idd$objects_in_relation("Construction", "ref_to")</code> will return a
+named list of an IddObject object named <code>Construction</code> and also all
+other IddObject objects that <code>Construction</code> can refer to.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An named list of IddObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get class Construction and all classes that it can refer to
+idd$objects_in_relation("Construction", "ref_to")
+
+# get class Construction and all classes that refer to it
+idd$objects_in_relation("Construction", "ref_by")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-objects_in_group"></a>
+
+
+
+<h4>Method <code>objects_in_group()</code>
+</h4>
+
+<p>Extract all IddObject objects in one group.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$objects_in_group(group)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>group</code></dt>
+<dd>
+<p>A single string of valid group name for current <code>Idd</code>
+object.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$objects_in_group()⁠</code> returns a named list of all IddObject objects
+in specified group. The returned list is named using class names.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IddObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get all classes in Schedules group
+idd$objects_in_group("Schedules")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-to_table"></a>
+
+
+
+<h4>Method <code>to_table()</code>
+</h4>
+
+<p>Format <code>Idd</code> classes as a data.frame
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$to_table(class, all = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of class names.</p>
+</dd>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all available fields defined in IDD for
+specified class will be returned. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$to_table()⁠</code> returns a data.table that
+contains basic data of specified classes.
+The returned data.table has 3 columns:
+</p>
+
+<ul>
+<li> <p><code>class</code>: Character type. Current class name.
+</p>
+</li>
+<li> <p><code>index</code>: Integer type. Field indexes.
+</p>
+</li>
+<li> <p><code>field</code>: Character type. Field names.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>A data.table with 3 columns.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# extract data of class Material
+idd$to_table(class = "Material")
+
+# extract multiple class data
+idd$to_table(c("Construction", "Material"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-to_string"></a>
+
+
+
+<h4>Method <code>to_string()</code>
+</h4>
+
+<p>Format <code>Idf</code> classes as a character vector
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$to_string(class, leading = 4L, sep_at = 29L, sep_each = 0L, all = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of class names.</p>
+</dd>
+<dt><code>leading</code></dt>
+<dd>
+<p>Leading spaces added to each field. Default: <code>4L</code>.</p>
+</dd>
+<dt><code>sep_at</code></dt>
+<dd>
+<p>The character width to separate value string and field
+string. Default: <code>29L</code> which is the same as IDF Editor.</p>
+</dd>
+<dt><code>sep_each</code></dt>
+<dd>
+<p>A single integer of how many empty strings to insert
+between different classes. Default: <code>0</code>.</p>
+</dd>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all available fields defined in IDD for
+specified class will be returned. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$to_string()⁠</code> returns the text format of specified classes. The
+returned character vector can be pasted into an IDF file as empty
+objects of specified classes.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get text format of class Material
+head(idd$to_string(class = "Material"))
+
+# get text format of multiple class
+idd$to_string(c("Material", "Construction"))
+
+# tweak output formatting
+idd$to_string(c("Material", "Construction"), leading = 0, sep_at = 0, sep_each = 5)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idd-print"></a>
+
+
+
+<h4>Method <code>print()</code>
+</h4>
+
+<p>Print <code>Idd</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idd$print()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$print()⁠</code> prints the <code>Idd</code> object giving the information of version,
+build tag and total class numbers.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The <code>Idd</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idd$print()
+}
+
+</pre>
+</div>
+
+
+
+
+<h3>Author(s)</h3>
+
+<p>Hongyuan Jia
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://github.com/NREL/EnergyPlus/tree/develop/src/IDF_Editor">IDFEditor</a>,
+<a href="https://openstudio-sdk-documentation.s3.amazonaws.com/cpp/OpenStudio-2.5.1-doc/utilities/html/idf_page.html">OpenStudio utilities library</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>IddObject class which provides detailed information of
+curtain class
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## ------------------------------------------------
+## Method `Idd$new`
+## ------------------------------------------------
+
+## Not run: Idd$new(file.path(eplus_config(8.8)$dir, "Energy+.idd"))
+
+# Preferable way
+idd &lt;- use_idd(8.8, download = "auto")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$version`
+## ------------------------------------------------
+
+## Not run: 
+# get version
+idd$version()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$build`
+## ------------------------------------------------
+
+## Not run: 
+# get build tag
+idd$build()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$path`
+## ------------------------------------------------
+
+## Not run: 
+# get path
+idd$path()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$group_name`
+## ------------------------------------------------
+
+## Not run: 
+# get names of all groups Idf contains
+idd$group_name()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$from_group`
+## ------------------------------------------------
+
+## Not run: 
+idd$from_group(c("Version", "Schedule:Compact"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$class_name`
+## ------------------------------------------------
+
+## Not run: 
+# get names of the 10th to 20th class
+idd$class_name(10:20)
+
+# get names of all classes in Idf
+idd$class_name()
+
+# get names of all classes grouped by group names in Idf
+idd$class_name(by_group = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$required_class_name`
+## ------------------------------------------------
+
+## Not run: 
+idd$required_class_name()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$unique_class_name`
+## ------------------------------------------------
+
+## Not run: 
+idd$unique_class_name()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$extensible_class_name`
+## ------------------------------------------------
+
+## Not run: 
+idd$extensible_class_name()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$group_index`
+## ------------------------------------------------
+
+## Not run: 
+idd$group_index()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$class_index`
+## ------------------------------------------------
+
+## Not run: 
+idd$class_index()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$is_valid_group`
+## ------------------------------------------------
+
+## Not run: 
+idd$is_valid_group(c("Schedules", "Compliance Objects"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$is_valid_class`
+## ------------------------------------------------
+
+## Not run: 
+idd$is_valid_class(c("Building", "ShadowCalculation"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$object`
+## ------------------------------------------------
+
+## Not run: 
+idd$object(3)
+
+idd$object("Building")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$objects`
+## ------------------------------------------------
+
+## Not run: 
+idd$objects(c(3,10))
+
+idd$objects(c("Version", "Material"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$object_relation`
+## ------------------------------------------------
+
+## Not run: 
+# check each construction layer's possible references
+idd$object_relation("Construction", "ref_to")
+
+# check where construction being used
+idd$object_relation("Construction", "ref_by")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$objects_in_relation`
+## ------------------------------------------------
+
+## Not run: 
+# get class Construction and all classes that it can refer to
+idd$objects_in_relation("Construction", "ref_to")
+
+# get class Construction and all classes that refer to it
+idd$objects_in_relation("Construction", "ref_by")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$objects_in_group`
+## ------------------------------------------------
+
+## Not run: 
+# get all classes in Schedules group
+idd$objects_in_group("Schedules")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$to_table`
+## ------------------------------------------------
+
+## Not run: 
+# extract data of class Material
+idd$to_table(class = "Material")
+
+# extract multiple class data
+idd$to_table(c("Construction", "Material"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$to_string`
+## ------------------------------------------------
+
+## Not run: 
+# get text format of class Material
+head(idd$to_string(class = "Material"))
+
+# get text format of multiple class
+idd$to_string(c("Material", "Construction"))
+
+# tweak output formatting
+idd$to_string(c("Material", "Construction"), leading = 0, sep_at = 0, sep_each = 5)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idd$print`
+## ------------------------------------------------
+
+## Not run: 
+idd$print()
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>contour</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Contour functions for tidy and geospatial kernel estimates</h2>
+
+<h3>Description</h3>
+
+<p>Contour functions for tidy and geospatial kernel estimates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'tidy_ks'
+contourLevels(x, cont=c(25,50,75), group=FALSE, ...)
+## S3 method for class 'sf_ks'
+contourLevels(x, cont=c(25,50,75), group=FALSE, ...)
+contour_breaks(data, cont=c(25,50,75), group=FALSE)
+label_percent(y)
+
+st_get_contour(x, cont=c(25,50,75), breaks, which_deriv_ind, disjoint=TRUE,
+    as_point=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x,data</code></td>
+<td>
+<p>tidy kernel estimate (output from <code>tidy_k*</code>) or geospatial kernel estimate (output from <code>st_k*</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cont</code></td>
+<td>
+<p>vector of contour levels. Default is c(25,50,75).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>flag to compute contour levels per group. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>tibble or vector of contour levels (e.g. output from <code>contour_breaks</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which_deriv_ind</code></td>
+<td>
+<p>derivative index (only required for <code>st_kdde</code> objects)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>disjoint</code></td>
+<td>
+<p>flag to compute disjoint contours. Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_point</code></td>
+<td>
+<p>flag to return polygons as point coordinates in tidy format. Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>factor variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters (not implemented)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>By default, the 1% to 99% contours are computed for an <code>st_k*</code> output, though a plot of all 99 of them would be too crowded. <code>st_get_contour</code> selects a subset of these, as specified by <code>cont</code>. If a contour level in <code>cont</code> does not already exist or if absolute contour levels are specified in <code>breaks</code>, then the corresponding contours are computed. If <code>disjoint=TRUE</code> (default) then the contours are computed as a set of disjoint multipolygons: this allows for plotting without overlapping transparent colours. If <code>disjoint=FALSE</code> then the contours are overlapping and so their colours alpha-mixed, but they strictly satisfy the probabilistic definition, e.g. a 25% contour region is the smallest region that contains 25% of the probability mass defined by the kernel estimate, see <code>geom_contour_ks</code>.
+</p>
+<p>Since these default probability contours are relative contour levels, they aren't suitable for producing a contour plot with fixed contour levels across all groups. It may require trial and error to obtain a single set of contour levels which is appropriate for all groups: one possible choice is provided by <code>contour_breaks</code>. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>The output from <code>contour_breaks</code> is a tibble of the values of the contour breaks. The output from <code>st_get_contour</code> is an sf object of the contours as multipolygons.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>geom_contour_ks</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(ggplot2)
+data(crabs, package="MASS")
+crabs2 &lt;- dplyr::select(crabs, FL, CW, sex)
+crabs2 &lt;- dplyr::group_by(crabs2, sex)
+t1 &lt;- tidy_kde(crabs2)
+b &lt;- contour_breaks(t1)
+ggplot(t1, aes(x=FL, y=CW)) + 
+    geom_contour_filled_ks(colour=1, breaks=b) + facet_wrap(~sex)
+
+crabs3 &lt;- dplyr::select(crabs, FL, CW)
+t2 &lt;- tidy_kde(crabs3)
+ggplot(t2, aes(x=FL, y=CW)) + 
+    geom_contour_filled_ks(colour=1, cont=c(50,75,97.5))
+
+## extract contour polygons
+crabs2s &lt;- sf::st_as_sf(crabs2, coords=c("FL","CW"))
+t2 &lt;- st_kde(crabs2s)
+t2 &lt;- st_get_contour(t2, breaks=b, as_point=TRUE)
+t2 &lt;- dplyr::rename(t2, FL=X, CW=Y)
+ggplot(t2, aes(x=FL, y=CW)) + 
+    geom_polygon(aes(fill=contlabel, subgroup=contlabel_group), col=1) + 
+    scale_fill_viridis_d() + guides(fill=guide_legend(reverse=TRUE)) + 
+    facet_wrap(~sex) 
+</code></pre>
+
+
+</div>

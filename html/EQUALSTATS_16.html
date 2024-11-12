@@ -1,0 +1,119 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>function.rbind_different_column_numbers</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Combine Multiple Dataframes with Different Column Numbers
+</h2>
+
+<h3>Description</h3>
+
+<p><span class="pkg">Base</span> function <code>rbind.data.frame</code> requires that the multiple data frames to be combined must have the same column numbers and names. For producing reports for 'EQUAL-STATS', data frames with different column numbers and names are required. This function allows this combination.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">function.rbind_different_column_numbers(list, include_columns)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>list</code></td>
+<td>
+<p>A list of data frames to be combined provided as a <code>list</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_columns</code></td>
+<td>
+<p>Whether the column names of each data frame should be included as the first row indicated as <code>"Yes"</code> or <code>"No"</code>. Default is <code>"Yes"</code>. It is unsual to require <code>"No"</code> in this function.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>A data frame with the multiple rows combined.</p>
+</td>
+</tr></table>
+<h3>Note</h3>
+
+<p>This is part of a suite of functions required to allow 'EQUAL-STATS' program to run. This is unlikely to be used as a stand alone function.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Kurinchi Gurusamy
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://sites.google.com/view/equal-group/home">https://sites.google.com/view/equal-group/home</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>base::rbind.data.frame()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a simulated data frames
+df &lt;- cbind.data.frame(
+  Age = rnorm(3000, 40, 10),
+  Height = rnorm(3000,165,15),
+  `Length of hospital stay` = rpois(3000, 8),
+  `Number of infections` = rpois(3000, 3)
+)
+# Calculate means and standard deviations for normally distributed variables
+# and median and upper and lower quartiles for non-normally distributed variables
+summary_measures &lt;- lapply(1:ncol(df), function(y) {
+  if (y&lt;=2) {
+    output &lt;- cbind.data.frame(
+      Variable = colnames(df)[y],
+      Mean = mean(df[,y]),
+      `Standard deviation` = sd(df[,y])
+    )
+  } else {
+    output &lt;- cbind.data.frame(
+      Variable = colnames(df)[y],
+      Median = quantile(df[,y], probs = 0.5),
+      `Lower quartile` = quantile(df[,y], probs = 0.25),
+      `Upper quartile` = quantile(df[,y], probs = 0.75)
+    )
+  }
+  return(output)
+})
+# Combine the normally and non-normally distributed variables
+normally_distributed_variables &lt;- rbind.data.frame(summary_measures[[1]], summary_measures[[2]])
+non_normally_distributed_variables &lt;- rbind.data.frame(summary_measures[[3]], summary_measures[[4]])
+# Combining the variables in a single data frame using
+# rbind.data.frame causes error
+combined_data_frame &lt;- try(rbind.data.frame(normally_distributed_variables,
+non_normally_distributed_variables))
+combined_data_frame
+# Combining the variables in a single data_frame using
+# function.rbind_different_column_numbers does not cause error
+# Note that data frames must be supplied as a list
+# (any number of data frames can be present in the list)
+# Final function ####
+combined_data_frame_new_function &lt;- function.rbind_different_column_numbers(
+list(normally_distributed_variables, non_normally_distributed_variables)
+)
+combined_data_frame_new_function
+</code></pre>
+
+
+</div>

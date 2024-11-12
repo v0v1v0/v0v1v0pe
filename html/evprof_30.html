@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_bivarGMM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot Bivariate Gaussian Mixture Models</h2>
+
+<h3>Description</h3>
+
+<p>Plot Bivariate Gaussian Mixture Models
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_bivarGMM(
+  sessions,
+  models,
+  profiles_names = seq(1, nrow(models)),
+  points_size = 0.25,
+  lines_size = 1,
+  legend_nrow = 2,
+  log = FALSE,
+  start = getOption("evprof.start.hour")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sessions</code></td>
+<td>
+<p>tibble, sessions data set in evprof
+<a href="https://mcanigueral.github.io/evprof/articles/sessions-format.html">standard format</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>tibble, parameters of the clusters' GMM models obtained with
+function <code>cluster_sessions</code> (object <code>models</code> of the returned list)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>profiles_names</code></td>
+<td>
+<p>names of profiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points_size</code></td>
+<td>
+<p>size of scatter points in the plot</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lines_size</code></td>
+<td>
+<p>size of lines in the plot</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend_nrow</code></td>
+<td>
+<p>number of rows in legend</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, whether to transform <code>ConnectionStartDateTime</code> and
+<code>ConnectionHours</code> variables to natural logarithmic scale (base = <code>exp(1)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>integer, start hour in the x axis of the plot.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>ggplot2 plot
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+
+# Select working day sessions (`Timecycle == 1`) that
+# disconnect the same day (`Disconnection == 1`)
+sessions_day &lt;- california_ev_sessions %&gt;%
+  divide_by_timecycle(
+    months_cycles = list(1:12), # Not differentiation between months
+    wdays_cycles = list(1:5, 6:7) # Differentiation between workdays/weekends
+  ) %&gt;%
+  divide_by_disconnection(
+    division_hour = 10, start = 3
+  ) %&gt;%
+  filter(
+    Disconnection == 1, Timecycle == 1
+  ) %&gt;%
+  sample_frac(0.05)
+plot_points(sessions_day, start = 3)
+
+# Identify two clusters
+sessions_clusters &lt;- cluster_sessions(
+  sessions_day, k=2, seed = 1234, log = TRUE
+)
+
+# Plot the clusters found
+plot_bivarGMM(
+  sessions = sessions_clusters$sessions,
+  models = sessions_clusters$models,
+  log = TRUE, start = 3
+)
+
+</code></pre>
+
+
+</div>

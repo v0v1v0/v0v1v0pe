@@ -1,0 +1,369 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>crossval</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Cross validate an extended generalised linear hidden Markov model.
+</h2>
+
+<h3>Description</h3>
+
+<p>Calculates a number of cross validation log likelihood values
+for a hidden Markov model (usually one fitted by the <code>eglhmm()</code>
+function).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">    crossval(model,data,nrep,frac=0.8,type,id="id",minNcomp=100,
+             seed=NULL,crossVerb=FALSE,lastPar=NULL,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+<p>A list having components with names selected from those
+of objects returned by <code>eglhmm()</code> e.g. <code>distr</code>,
+<code>theta</code>, <code>formula</code> etc.  Typically <code>model</code> will
+be of class <code>"eglhmm"</code> and will have been returned by
+the <code>eglhmm()</code> function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A data frame containing the observations to which the cross
+validation are to be fitted.
+</p>
+<p>It is of course up to the user to ensure that a specified
+value of <code>data</code> makes sense, i.e. is consistent with the
+other arguments.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrep</code></td>
+<td>
+
+<p>Positive nteger scalar; the number of replications, i.e. the
+number of cross validation calculations undertaken.  If argument
+<code>lastPar</code> (see below) is supplied then <code>nrep</code> is ignored
+and is silently set equal to 1.  If <code>lastPar</code> is <code>NULL</code>
+then <code>nrep</code> must be supplied, otherwise an error is thrown.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frac</code></td>
+<td>
+<p>Postive scaler, less than 1.  The fraction of the
+data randomly selected to be used as <code>training data</code> on each
+replication.  (The remaining data, i.e. those data <em>not</em>
+used as training data, are used as <code>validation</code> data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>Integer scalar, equal to either 1 or 2, which determines the nature
+of the sampling used to produce the training and validation data.
+If <code>type=1</code> then these data sets are obtained by sampling
+data points individually.  The training data are obtained by
+setting a fraction <code>1 - frac</code> of the observed emission values
+(those which are <em>not</em> missing already) equal to <code>NA</code>.
+The validation data are the complement of the training data.
+</p>
+<p>If <code>type=2</code> then the <em>components</em> of <code>data</code> are
+randomly sampled (and used in their entirety, either for training
+or for validation).  The components are determined from the column
+of <code>data</code> the name of which is specified by the argument
+<code>id</code>; if there is no such column, then an error is thrown.
+Sampling the components means sampling the levels of (the factor)
+<code>data[,id]</code>.
+</p>
+<p>Obviously it is sensible to use <code>type=2</code> <em>only</em>
+if <code>data</code> has a <em>large</em> number of components.  By
+default this number is required to be at least 100.  (See
+<code>minNcomp</code> below.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+
+<p>Character scalar specifying the column to be used to determine the
+individual independent time series that make up the data.  Ignored
+unless <code>type=2</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minNcomp</code></td>
+<td>
+
+<p>Integer scalar specifying the minimum number of components (number
+of levels of <code>data["id"]</code>) that <code>data</code> must have in order
+for <code>type=2</code> to used.  Ignored if <code>type</code> is equal to 1.
+</p>
+<p>If the number of components is less than the default value of
+<code>minNcomp</code> (i.e. 100) then it is strongly recommended that
+<code>type=1</code> be used instead.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Positive integer scalar to be used as a seed for the random
+number generator (so as to enable reproducibility).  If not
+supplied, it is randomly chosen from the sequence <code>1:1e6</code>.
+Note that if <code>nrep &gt; 1</code> then after this seed is set, a vector
+<code>SEEDS</code> of “auxiliary” seeds, of length <code>nrep</code>,
+is chosen from the sequence <code>1:1e6</code> and the seed is set
+from the corresponding entry of this vector at the start of each
+replication.  If <code>nrep==1</code> then the sampling for the single
+replication that occurs is determined by <code>seed</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crossVerb</code></td>
+<td>
+
+<p>Logical scalar.  Should brief “progress reports” (letting
+the user know what is happening with respect to replicate <code>repl</code>,
+for each <code>repl</code>) be produced?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lastPar</code></td>
+<td>
+
+<p>The last values of the (relevant) fitted paramenters, provided as
+an attribute of a component of the list returned by the function
+currently under consideration (i.e. <code>crossval()</code>, whenever
+the process of fitting the model in question to the training data
+did not converge.  These values can be used as starting values so
+as to carry on with the fitting process from where the previous
+attempt left off.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Possible additional arguments to be passed to <code>eglhmm()</code> via
+<code>update()</code>, e.g. <code>itmax</code>, <code>tolerance</code>, ... .
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>On each replication a random subset comprising <code>frac</code> of
+the data is selected to serve as training data.  The complement
+of this subset is used as validation data.  The model specified
+by <code>model</code> is fitted to the training data.  It is possible
+to over-ride some of the details of the specifications producing
+<code>model</code>, via the <code>...</code> argument of <code>crossval()</code>.
+After the model is fitted to the training data, the log likelihood
+of the validation data is calculated on the basis of that
+fitted model.
+</p>
+<p>If the procedure for fitting a model to the training data fails
+to converge, then the corresponding entry of the list returned by
+this function is <code>NA</code>.  In this case, the entry is assigned an
+attribute <code>lastPar</code>, (the estimates of the model parameters
+that were current when the fitting algorithm terminated)
+which will in turn have attributes <code>trnDat</code>, <code>valDat</code>
+(the training data in question and the corresponding validation
+data), and <code>seed</code> (the value of the seed that was set before
+the sampling that determined <code>trnDat</code> and <code>valDat</code>
+took place).  The value of <code>seed</code> is <code>SEEDS[i]</code>
+(if <code>nrep&gt;1</code> and the entry in question was the <code>i</code>th
+entry of the returned list) or the value of the <code>seed</code>
+argument of this function or its random replacement if this
+argument was not supplied (if <code>nrep==1</code>).
+</p>
+<p>The attribute <code>lastPar</code> enables the user to continue the
+procedure for fitting a model to the training data, starting
+from where the procedure, that failed to converge, left off.
+Continuing the procedure is easily effected by calling
+<code>crossval()</code> with argument <code>par0</code> set equal to the
+<code>lastPar</code> attribute of the relevant entry of the list that
+was previously returned by this function.
+</p>
+<p>If <code>type==1</code> then the training and validation data are
+created in a somewhat subtle manner.  The procedure necessitates
+referring to the “original” data.  The data frame that
+is passed to <code>eglhmm()</code> is a “replicated” version
+of the original data, with each row of the original data being
+repeated once for each level of <code>state</code> (and a <code>"state"</code>
+column — factor — being added to the resulting data frame).
+If <code>type==2</code> the procedure is conceptually simpler.
+The procedure in the <code>type==1</code> setting is as follows:
+</p>
+
+<ul>
+<li>
+<p> Let <code class="reqn">S</code> be the set of indices of all non-missing values
+in the column of the original data that contains the emissions.
+</p>
+</li>
+<li>
+<p> Select at random a subset <code class="reqn">V</code> of <code class="reqn">S</code> so that
+the size of <code class="reqn">V</code> is the fraction <code>frac</code> of the size
+of <code class="reqn">S</code>.
+</p>
+</li>
+<li>
+<p> Let <code class="reqn">T</code> be the complement in <code class="reqn">S</code> of <code class="reqn">V</code>.
+</p>
+</li>
+<li>
+<p> The training data are formed by replacing by <code>NA</code> all
+those values of the emissions column in the original data whose
+indices are in <code class="reqn">T</code>.
+</p>
+</li>
+<li>
+<p> The validation data are formed
+by replacing by <code>NA</code> all those values of the emissions
+column in the original data, whose indices are in <code class="reqn">V</code>.
+</p>
+</li>
+<li>
+<p> Then replicate both the training and validation data in
+the manner described above.
+</p>
+<p>If <code>type==2</code> then the training data are formed by selecting
+at random a fraction <code>frac</code> of the levels of the column of
+<code>data</code> named <code>"id"</code>.  (If there is no such column, an
+error is thrown.)  The training data then consist of those rows
+of <code>data</code> corresponding to the selected levels of <code>id</code>.
+The validation data then consist of those rows of <code>data</code>
+which are not in the training data.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>If <code>nrep&gt;1</code> the returned value is list of length <code>nrep</code>.
+The <code>i</code>th entry of this list is the log likelihood of the
+validation data with respect to the model fitted to the training
+data, for the <code>i</code>th random selection of these two subsets.
+This entry will be <code>NA</code> if the attempt to fit a model
+to the training data was unsuccessful.  The <code>i</code>th entry
+has an attribute <code>seed</code> (singular) which is the value of
+the seed that was set prior to the random sampling that chose
+the training and validation data.  If the <code>i</code>th entry is
+<code>NA</code> it will also have an attribute <code>lastPar</code> which
+in turn will have attributes <code>trnDat</code> and <code>valDat</code>.
+See <b>Details</b>.
+</p>
+<p>If <code>nrep&gt;1</code> then the returned value also has an attribute
+<code>seeds</code> (plural) which is vector of length <code>nrep+1</code>,
+consisting of the “auxiliary” seed vector <code>SEEDS</code>
+(see the argument <code>seed</code>) together with the “over all”
+seed (possibly equal to the <code>seed</code> argument) that was set for
+the random number generator before any sampling was undertaken.
+Note that the <code>i</code>th entry of this <code>seeds</code> attribute
+is the same as the <code>seed</code> attribute of the <code>i</code>th entry
+of the returned valuel
+</p>
+<p>If <code>nrep==1</code> then the returned value is a single numeric
+scalar which is the log likelihood of the validation data or
+<code>NA</code> if the fitting procedure did not converge for the
+training data.  It has an attribute <code>seed</code> which is equal
+to the <code>seed</code> argument or its random replacement.  If the
+value is <code>NA</code> then it has a further attribute <code>lastPar</code>.
+(See above.)
+</p>
+
+
+<h3>Note</h3>
+
+<p>If the function fails to fit the model, obtained from the training
+data, to the validation data, then the value returned is <code>NA</code>.
+This value will have an attribute <code>lastPar</code>.  This attribute
+will in turn have attributes, <code>trnDat</code> and <code>valDat</code>,
+the training data and validation data which were being used
+in the failed fitting procedure.  Supplying an appropriate
+value of <code>lastPar</code> enables the continuation of the fitting
+procedure, starting from where the procedure previously left off.
+See <b>Details</b> for a little more information.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:r.turner@auckland.ac.nz">r.turner@auckland.ac.nz</a><br></p>
+
+
+<h3>References</h3>
+
+<p>Celeux, Gilles and Durand, Jean-Baptiste (2008).  Selecting
+hidden Markov model state number with cross-validated likelihood.
+<em>Computational Statistics</em> <b>23</b> 541–564, <code>DOI
+10.1007/s00180-007-0097-1</code>.
+</p>
+<p>Smyth, Padhraic (2000).  Model selection for probabilistic clustering
+using cross-validated likelihood.  <em>Statistics and Computing</em>
+<b>9</b> 63–72.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>eglhmm()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+ids   &lt;- paste0("s",1001:1101)
+cc  &lt;- ccSim[ccSim$id 
+cc$id &lt;- factor(cc$id)
+cvll1 &lt;- vector("list",9)
+set.seed(42)
+SEEDS &lt;- sample(1:1e6,9)
+for(k in 1:9) {
+    cat("k =",k,"started\n")
+    fit  &lt;- eglhmm(categMC ~ 1, distr="M", method="em", data=cc, K=k,
+                   itmax=1500,cells="id",verb=TRUE)
+    cvll1[[k]] &lt;- crossval(fit,nrep=5,type=2,seed=SEEDS[k],tolerance=1e-4,
+                           verbose=FALSE,crossVerb=TRUE)
+    cat("k =",k,"finished\n")
+}
+
+## End(Not run)
+fit   &lt;- eglhmm(y ~ 1, data=Downloads,K=4,distr="P",verb=TRUE,cf="singlecell")
+# Use artifically low value of itmax so that crossval() fails to
+# fit the model to the training data
+cvll2 &lt;- crossval(fit,nrep=5,type=1,verbose=TRUE,seed=322596,itmax=5)
+cvll3 &lt;- crossval(fit,type=1,verbose=TRUE,lastPar=attr(cvll2[[1]],"lastPar"))
+# So cvll3 carried on, in one instance, from where the first
+# attempted fit in cvll2 gave up.
+
+</code></pre>
+
+
+</div>

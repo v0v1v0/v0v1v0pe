@@ -1,0 +1,506 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Interp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Interpolate between numbers or numbers of characters 
+</h2>
+
+<h3>Description</h3>
+
+<p>Numeric interpolation is defined in the usual 
+way:  
+</p>
+<p><code>xOut &lt;- x*(1-proportion) + y*proportion</code> 
+</p>
+<p>Character interpolation does linear interpolation 
+on the number of characters of <code>x</code> and 
+<code>y</code>.  If <code>length(proportion) == 1</code>, 
+interpolation is done on <code>cumsum(nchar(.))</code>.  
+If <code>length(proportion) &gt; 1</code>, interpolation 
+is based on <code>nchar</code>.  In either case, 
+the interpolant is rounded to an integer number 
+of characters.  <code>Interp</code> then returns 
+<code>substring(y, ...)</code> unless <code>nchar(x)</code> &gt; 
+<code>nchar(y)</code>, when it returns 
+<code>substring(x, ...)</code>.  
+</p>
+<p>Character interpolation is used in two cases:  
+(1) At least one of <code>x</code> and <code>y</code> is 
+character.  
+(2) At least one of <code>x</code> and <code>y</code> is 
+neither logical, integer, numeric, complex nor 
+raw, and <code>class(unclass(.))</code> is either 
+integer or character.  
+</p>
+<p>In all other cases, numeric interpolation is 
+used.  
+</p>
+<p>NOTE:  This seems to provide a relatively simple 
+default for what most people would want from 
+the six classes of atomic vectors (logical, 
+integer, numeric, complex, raw, and character) 
+and most other classes.  For example, 
+<code>class(unclass(factor))</code> is integer.  The
+second rule would apply to this converting it to 
+character.  The <code>coredata</code> of an 
+object of class <code>zoo</code> could be 
+most anything, but this relatively simple rule 
+would deliver what most people want in most case.  
+An exception would be an object with integer 
+<code>coredata</code>.  To handle this as numeric, a 
+<code>Interp.zoo</code> function would have to be 
+written.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Interp(x, ...)
+## Default S3 method:
+Interp(x, y, proportion, 
+        argnames=character(3), 
+        message0=character(0), ...)
+InterpChkArgs(x, y, proportion, 
+        argnames=character(3), 
+        message0=character(0), ...)
+InterpChar(argsChk, ...)        
+InterpNum(argsChk, ...)        
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+ 
+<p>two vectors of the same class or to be 
+coerced to the same class.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proportion</code></td>
+<td>
+
+<p>A number or numeric vector assumed to be 
+between 0 and 1.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>argnames</code></td>
+<td>
+
+<p>a character vector of length 3 giving 
+arguments <code>name.x</code>, <code>name.y</code>, 
+and <code>proportion</code> to pass to 
+<code>compareLengths</code> to improve 
+the value  of any diagnostic message in 
+case lengths are not compatible.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>message0</code></td>
+<td>
+
+<p>A character string to be passed with 
+<code>argnames</code> to 
+<code>compareLengths</code> to improve 
+the value of any diagnostic message in 
+case lengths are not compatible.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>argsChk</code></td>
+<td>
+
+<p>a list as returned by <code>interpChkArgs</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>optional arguments for 
+<code>compareLengths</code>  
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>Interp</code> is an S3 generic function to 
+allow users to easily modify the behavior 
+to interpolate between special classes of 
+objects.  
+</p>
+<p><code>Interp</code> has two basic algorithms for 
+"Numeric" and "Character" interpolation.  
+</p>
+<p>The computations begin by calling 
+<code>InterpChkArgs</code> to dispose quickly of 
+simple cases (e.g, <code>x</code> or <code>y</code> 
+<code>missing</code> or <code>length</code> 
+0 or if <code>proportion</code> is &lt;= 0 or &gt;= 1 or 
+<code>missing</code>).  It returns a list.  
+</p>
+<p>If the list contains a component named 
+<code>xout</code>, <code>Interp</code> returns that value 
+with no further computations.  
+</p>
+<p>Otherwise, the list returned by 
+<code>InterpChkArgs</code> includes components 
+"algorithm", "x", "y", "proportion", 
+<code>pLength1</code> (defined below), "raw", and 
+"outclass".  The "algorithm" component must 
+be either "Numeric" or "Character".  That 
+algorithm is then performed as discussed below 
+using arguments "x", "y", and "proportion";  
+all three will have the same length.  The 
+class of "x" and "y" will match the algorithm.  
+The list component "raw" is logical:  
+<code>TRUE</code> if the output will be raw or such 
+that <code>class(unclass(.))</code> of the output will 
+be raw.  In that case, a "Numeric" interpolation 
+will be transformed back into "raw".  "outclass" 
+will either be a list of attributes to apply to 
+the output or NA.  If a list, <code>xout</code> will be 
+added as component ".Data" to the list "outclass" 
+and then then processed as 
+<code>do.call('structure', outclass)</code> to produce 
+the desired output.  
+</p>
+<p>These two basic algorithms ("Numeric" and 
+"Character") are the same if <code>proportion</code> 
+is missing or not numeric:  In that case 
+<code>Interp</code> throws an error.  
+</p>
+<p>We now consider "Character" first, because it's 
+domain of applicability is easier to describe.  
+The "Numeric" algorithm is used in all other 
+cases
+</p>
+<p>1.  "CHARACTER" 
+</p>
+<p>* 1.1.  The "CHARACTER" algorithm is used when 
+at least one of <code>x</code> and <code>y</code> is neither
+logical, integer, numeric, complex nor raw and
+satisfies one of the following two additional
+conditions:  
+</p>
+<p>** 1.1.1.  Either <code>x</code> or <code>y</code> is
+character. 
+</p>
+<p>** 1.1.2.  <code>class(unclass(.))</code> for at least 
+one of <code>x</code> and <code>y</code> is either character
+or integer.  
+</p>
+<p>NOTE:  The strengths and weaknesses of 1.1.2 can 
+be seen in considering factors and integer 
+vectors of class <code>zoo</code>:  For 
+both, <code>class(unclass(.))</code> is integer.  For
+factors, we want to use <code>as.character(.)</code>. 
+For <code>zoo</code> objects with 
+<code>coredata</code> of class integer, 
+we would want to use numeric interpolation.  
+This is not allowed with the current code but
+could be easily implemented by writing 
+<code>Interp.zoo</code>.  
+</p>
+<p>* 1.2.  If either <code>x</code> or <code>y</code> is missing 
+or has <code>length</code> 0, the one that is 
+provided is returned unchanged. 
+</p>
+<p>* 1.3.  Next determine the class of the output. 
+This depends on whether neither, one or both of
+<code>x</code> and <code>y</code> have one of the six classes
+of atomic vectors  (logical, integer, numeric,
+complex, raw, character):  
+</p>
+<p>** 1.3.1.  If both <code>x</code> and <code>y</code> have 
+one of the six atomic classes and one is 
+character, return a character object.  
+</p>
+<p>** 1.3.2.  If only one of <code>x</code> and <code>y</code> 
+have an atomic class, return an object of the
+class of the other.  
+</p>
+<p>** 1.3.3.  If neither of <code>x</code> nor <code>y</code> 
+have a basic class, return an object with the
+class of  <code>y</code>.  
+</p>
+<p>* 1.4.  Set <code>pLength1 &lt;- 
+  (length(proportion) == 1)</code>:  
+</p>
+<p>** 1.4.1.  <code>If(pLength1)</code> do the linear 
+interpolation on <code>cumsum(nchar(.))</code>.   
+</p>
+<p>** 1.4.2.  Else do the linear interpolation on 
+<code>nchar</code>.  
+</p>
+<p>* 1.5.  Next check <code>x</code>, <code>y</code> and 
+<code>proportion</code> for comparable lengths:  If 
+all have length 0, return an object of the
+appropriate class.  Otherwise, call 
+<code>compareLengths(x, proportion)</code>, 
+<code>compareLengths(y, proportion)</code>, and 
+<code>compareLengths(x, y)</code>.  
+</p>
+<p>* 1.6.  Extend <code>x</code>, <code>y</code>, and 
+<code>proportion</code> to the length of the longest
+using <code>rep</code>.  
+</p>
+<p>* 1.7. <code>nchOut</code> &lt;- the number of 
+characters to output using numeric 
+interpolation and rounding the result to 
+integer.  
+</p>
+<p>* 1.8.  Return <code>substring(y, 1, nchOut)</code> 
+except when the number of characters from 
+<code>x</code> exceed those from <code>y</code>, in which 
+case return <code>substring(x, 1, nchOut)</code>.  
+[NOTE:  This meets the naive end conditions 
+that the number of characters matches that of
+<code>x</code> when <code>proportion</code> is 0 and matches 
+that of <code>y</code> when <code>proportion</code> is 1.  
+This can be used to "erase" characters moving 
+from one frame to the next in a video.  See the
+examples.   
+</p>
+<p>2.  "NUMERIC"
+</p>
+<p>* 2.1.  Confirm that this does NOT satisfy the
+condition for the "Character" algorithm.  
+</p>
+<p>* 2.2.  If either <code>x</code> or <code>y</code> is missing 
+or has <code>length</code> 0, return the one
+provided.  
+</p>
+<p>* 2.3.  Next determine the class of the output.  
+As for "Character" described in section 1.3, this
+depends on whether neither, one or both of
+<code>x</code> and <code>y</code> have a basic class other
+than character (logical, integer, numeric, 
+complex, raw):  
+</p>
+<p>** 2.3.1.  If <code>proportion</code> &lt;= 0, return 
+<code>x</code> unchanged.  If <code>proportion</code> &gt;= 1,
+return <code>y</code> unchanged.  
+</p>
+<p>** 2.3.2.  If neither <code>x</code> nor <code>y</code> has 
+a basic class, return an object of class equal
+that of <code>y</code>.
+</p>
+<p>** 2.3.3.  If exactly one of <code>x</code> and 
+<code>y</code> does not have a basic class, return an
+object of class determined by 
+<code>class(unclass(.))</code> of the non-basic
+argument.  
+</p>
+<p>** 2.3.4.  When interpolating between two objects 
+of class raw, convert the interpolant back to
+class raw.  Do this even when 2.3.2 or 2.3.3
+applies and <code>class(unclass(.))</code> of both
+<code>x</code> and <code>y</code> are of class raw.  
+</p>
+<p>* 2.4.  Next check <code>x</code>, <code>y</code> and 
+<code>proportion</code> for comparable lengths:  If 
+all have length 0, return an object of the
+appropriate class.  Otherwise, call 
+<code>compareLengths(x, proportion)</code>, 
+<code>compareLengths(y, proportion)</code>, and 
+<code>compareLengths(x, y)</code>.    
+</p>
+<p>* 2.5.  Compute the desired interpolation and 
+convert it to the required class per step 2.3
+above.    
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>Interp</code> returns a vector whose class is
+described in "* 1.3" and "* 2.3" in "Details"
+above.  
+</p>
+<p><code>InterpChkArgs</code> returns a list or throws an
+error as described in "Details" above.  
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves</p>
+
+
+<h3>References</h3>
+
+<p>The <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html">
+<em>Writing R Extensions</em></a> manual (available via 
+<code>help.start()</code>) lists six different classes
+of atomic vectors:  <code>logical</code>, 
+<code>integer</code>, <code>numeric</code>, 
+<code>complex</code>, <code>raw</code> and 
+<code>character</code>.  See also Wickham, 
+Hadley (2014) <em>Advanced R</em>, especially 
+<a href="http://adv-r.had.co.nz/Data-structures.html">Wickham 
+(2013, section on "Atomic vectors" in the 
+chapter on   "Data structures")</a>.  
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>classIndex</code>
+<code>interpPairs</code>
+</p>
+<p>Many other packages have functions with names 
+like <code>interp</code>, <code>interp1</code>, and 
+<code>interpolate</code>.  Some do one-dimensional 
+interpolation.  Others do two-dimensional
+interpolation.  Some offer different kinds of
+interpolation beyond linear.  At least one is a
+wrapper for <code>approx</code>.  
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  numerics 
+## 
+# 1.1.  standard 
+xNum &lt;- interpChar(1:3, 4:5, (0:3)/4)
+# answer 
+xN. &lt;- c(1, 2.75, 3.5, 4)
+
+all.equal(xNum, xN.)
+
+
+# 1.2.  with x but not y:  
+# return that vector with a warning
+
+xN1 &lt;- Interp(1:4, p=.5)
+# answer 
+xN1. &lt;- 1:4
+
+all.equal(xN1, xN1.)
+
+
+##
+## 2.  Single character vector 
+##
+
+
+i.5 &lt;- Interp(c('a', 'bc', 'def'), character(0), p=0.3)
+# with y = NULL or character(0), 
+# Interp returns x 
+
+all.equal(i.5, c('a', 'bc', 'def'))
+
+
+i.5b &lt;- Interp('', c('a', 'bc', 'def'), p=0.3)
+# Cumulative characters (length(proportion)=1):  
+#     0.3*(total 6 characters) = 1.2 characters
+i.5. &lt;- c('a', 'b', '')
+
+all.equal(i.5b, i.5.)
+
+
+##
+## 3.  Reverse character example 
+##
+i.5c &lt;- Interp(c('a', 'bc', 'def'), '', 0.3)
+# check:  0.7*(total 6 characers) = 4.2 characters
+i.5c. &lt;- c('a', 'bc', 'd')
+
+all.equal(i.5c, i.5c.)
+
+
+##
+## 4.  More complicated example
+##
+xCh &lt;- Interp('', c('Do it', 'with R.'), 
+              c(0, .5, .9)) 
+# answer 
+xCh. &lt;- c('', 'with', 'Do i') 
+
+all.equal(xCh, xCh.)
+
+##
+## 5.  Still more complicated 
+##
+xC2 &lt;- Interp(c('a', 'fabulous', 'bug'), 
+                  c('bigger or', 'just', 'big'), 
+                  c(.3, .3, 1) )
+x.y.longer &lt;- c('bigger or', 'fabulous', 'big')
+# use y with ties 
+# nch smaller        1          4         3
+# nch larger         9          8         3
+# d.char             8,         4,        0 
+# prop              .3,        .7,        1 
+# prop*d.char      2.4,       2.8,        0
+# smaller+p*d        3,         7,        3
+xC2. &lt;- c('big', 'fabulou', 'big')                 
+
+all.equal(xC2, xC2.)
+
+
+##
+## 6.  with one NULL 
+##
+null1 &lt;- Interp(NULL, 1, .3)
+
+all.equal(null1, 1)
+
+
+null2 &lt;- Interp('abc', NULL, .3)
+
+all.equal(null2, 'abc')
+
+##
+## 7.  length=0 
+##
+log0 &lt;- interpChar(logical(0), 2, .6)
+
+all.equal(log0, 1.2)
+
+
+##
+## 8.  Date
+##
+(Jan1.1980 &lt;- as.Date('1980-01-01'))
+
+Jan1.1972i &lt;- Interp(0, Jan1.1980, .2)
+# check 
+Jan1.1972 &lt;- as.Date('1972-01-01')
+
+
+all.equal(Jan1.1972, round(Jan1.1972i))
+
+
+##
+## 9.  POSIXct 
+##
+(Jan1.1980c &lt;- as.POSIXct(Jan1.1980))
+
+(Jan1.1972ci &lt;- Interp(0, Jan1.1980c, .2))
+# check 
+(Jan1.1972ct &lt;- as.POSIXct(Jan1.1972))
+
+
+abs(difftime(Jan1.1972ct, Jan1.1972ci, 
+             units="days"))&lt;0.5
+
+</code></pre>
+
+
+</div>

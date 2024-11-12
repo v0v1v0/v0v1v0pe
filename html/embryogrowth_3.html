@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ChangeSSM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate set of parameters for different forms of thermal norm of reaction</h2>
+
+<h3>Description</h3>
+
+<p>Generate a set of parameters for thermal reaction norm model.<br>
+If initial.parameters is NULL and resultmcmc is not NULL, it will generate parameters and SE based on the average of the curves.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ChangeSSM(
+  result = NULL,
+  resultmcmc = NULL,
+  temperatures = seq(from = 20, to = 35, by = 0.1),
+  parameters = NULL,
+  initial.parameters = NULL,
+  fixed.parameters = NULL,
+  outmcmc = "quantiles",
+  progressbar = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>result</code></td>
+<td>
+<p>A result obtained by searchR()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resultmcmc</code></td>
+<td>
+<p>A result obtained by GRTRN_MHmcmc()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temperatures</code></td>
+<td>
+<p>A vector with incubation temperatures in degrees Celsius</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>A vector of parameters for model to be converted. Not necessary if result is provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial.parameters</code></td>
+<td>
+<p>NULL or a vector of parameters for initial model model to be fited</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.parameters</code></td>
+<td>
+<p>NULL of a vector of parameters to be used but fixed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outmcmc</code></td>
+<td>
+<p>What statistic will be estimated if a mcmc is provided. Can be "mean-sd" or "quantiles".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progressbar</code></td>
+<td>
+<p>If TRUE, a progressbar is shown</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>A control list to be used with optim, see ?optim</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>ChangeSSM convert different forms of thermal norm of reaction
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector with parameters or a result object formatted with new parameters is result is non null
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Marc Girondot
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+data(resultNest_6p_SSM)
+x1 &lt;- resultNest_6p_SSM$par
+data(resultNest_4p_SSM)
+x2 &lt;- resultNest_4p_SSM$par
+temperaturesC &lt;- (200:350)/10
+s &lt;- ChangeSSM(temperatures=temperaturesC, parameters=x1, initial.parameters=x2)
+sY &lt;- plotR(resultNest_6p_SSM, ylim=c(0,3), col="black", curve = "ML")
+plotR(resultNest_4p_SSM, col="red", scaleY=sY, new=FALSE)
+plotR(s$par, col="green", scaleY=sY, new=FALSE, curve = "ML")
+legend("topleft", legend=c("r function to mimic", "Initial new r function", 
+"Fitted new r function"), lty=c(1, 1, 1), col=c("black", "red", "green"))
+# Other example to fit anchored parameters
+data(resultNest_4p_SSM)
+x0 &lt;- resultNest_4p_SSM$par
+t &lt;- hist(resultNest_4p_SSM, plot=FALSE)
+x &lt;- c(3.4, 3.6, 5.4, 5.6, 7.6, 7.5, 3.2)
+names(x) &lt;- seq(from=range(t$temperatures)[1], to=range(t$temperatures)[2], 
+     length.out=7)
+newx &lt;- ChangeSSM(temperatures = (200:350)/10, parameters = x0, 
+       initial.parameters = x, 
+       control=list(maxit=5000))
+ # Example on how to generate a set of SSM parameters from anchored parameters
+ xanchor &lt;- GenerateAnchor(nests=resultNest_4p_SSM)
+ x &lt;- resultNest_4p_SSM$par
+ xanchor["294"] &lt;- 0
+ xanchor["308"] &lt;- 2.3291035
+ x &lt;- ChangeSSM(parameters = xanchor,
+                     initial.parameters = x, control=list(maxit=5000))
+ sY &lt;- plotR(resultNest_4p_SSM$par, ylim = c(0,3), curve="ML")
+ plotR(xprime$par, col="red", scaleY=sY, new=FALSE, curve="ML") 
+ legend("topleft", legend=c("Fitted parameters", "Constrainted parameters"), lty=1, 
+        col=c("black", "red"))
+ # Weibull model
+ x &lt;- ChangeSSM(temperatures = (200:350)/10,
+                parameters = resultNest_4p_SSM$par,
+                initial.parameters = structure(c(73, 300, 26), 
+                                               .Names = c("k", "lambda", "scale")), 
+                control=list(maxit=1000))
+ # normal asymmetric model
+ x &lt;- ChangeSSM(temperatures = (200:350)/10,
+               parameters = resultNest_4p_SSM$par,
+               initial.parameters = structure(c(3, 10, 8, 32), 
+               .Names = c("Scale", "sdL", "sdH", "Peak")), 
+               control=list(maxit=1000))
+ # trigonometric model
+ x &lt;- ChangeSSM(temperatures = (200:350)/10,
+               parameters = resultNest_4p_SSM$par,
+               initial.parameters = structure(c(3, 20, 40, 32), 
+               .Names = c("Max", "LengthB", "LengthE", "Peak")), 
+               control=list(maxit=1000))
+
+ # example with a mcmc object, CI being 2.SD
+ # Note the symmetric CI
+data(resultNest_mcmc_4p_SSM)
+new_result &lt;- ChangeSSM(resultmcmc = resultNest_mcmc_4p_SSM, result = resultNest_4p_SSM,
+                        temperatures = seq(from = 20, to = 35, by = 0.1), 
+                        outmcmc = "mean-sd", 
+                        initial.parameters = NULL)
+
+plotR(new_result, ylim=c(0, 3), curve="ML")
+ # example with a mcmc object, CI being defined by 2.5%-97.5% quantiles
+ # Note the asymmetric CI
+data(resultNest_mcmc_4p_SSM)
+new_result &lt;- ChangeSSM(resultmcmc = resultNest_mcmc_4p_SSM, result = resultNest_4p_SSM,
+                        temperatures = seq(from = 20, to = 35, by = 0.1), 
+                        outmcmc = "quantiles", 
+                        initial.parameters = NULL)
+ 
+plotR(new_result, ylim=c(0, 3), curve="ML")
+plotR(new_result, ylim=c(0, 3), curve="ML quantiles")
+
+# A little trick
+# to convert SSM4 to SSM6, you can use:
+
+x4 &lt;- c('DHA' = 69.718935117894063, 
+         'DHH' = 497.81709040501079, 
+         'T12H' = 308.95543713889509, 
+         'Rho25' = 255.24186073771696)
+
+x6 &lt;- c(x4["DHA"], 
+.        x4["DHH"], 
+.        'DHL' = x4[["DHH"]], 
+.        'DT' = 0.5, 
+.        'T12L' = x4[["T12H"]], 
+.        x4['Rho25'])
+
+## End(Not run)
+</code></pre>
+
+
+</div>

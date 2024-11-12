@@ -1,0 +1,151 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ratio_test</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ratio test</h2>
+
+<h3>Description</h3>
+
+<p>Calculates a ratio test to compare two LC or LT values from two separate probit or logit models. This function is based on the ratio test developed in <a href="https://setac.onlinelibrary.wiley.com/doi/abs/10.1897/05-320R.1">Wheeler et al. 2006. 10.1897/05-320R.1</a> which has been suggested as a replacement to the common method of comparing confidence intervals to determine differences.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ratio_test(model_1, model_2, percentage = NULL,
+           type = NULL, compare = NULL, log_base = NULL, log_x = TRUE,
+           obj_type = NULL, conf_type = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model_1</code></td>
+<td>
+<p>first model used in the ratio test. Should be an object of either a probit or logit model created using the <code>glm()</code> function. See example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_2</code></td>
+<td>
+<p>second model used in the ratio test. Should be an object of either a
+probit or logit model created using the <code>glm()</code> function. See example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>percentage</code></td>
+<td>
+<p>either a single value or a vector for given LC or LT percentage desired to compare.
+Percentage is the same value used for the argument <code>p</code> in all <code>LC_</code> and <code>LT_</code> functions. For example, 50 will return and compare LC50 values for the two models. If more than one LC value is desired specify by creating a vector. LC values can be calculated down to the 1e-16 of a percentage (e.g. LC99.99). However, the tibble produced can and will round to nearest whole number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Link type needs to be specified to either <code>"probit"</code> which is default and will return and used in calculations for a probit model for the desired LCs or LTs. If specified to <code>"logit"</code> then <code>ratio_test</code> will return and calculate using a logit model for the desired LCs or LTs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compare</code></td>
+<td>
+<p>Supply a character string to be used in the output letting the user know what models the LCs or LTs are being compared. Default output is "Model 1 - Model 2". See example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log_base</code></td>
+<td>
+<p>default is <code>10</code> and will be used to  calculate results using the anti of <code>log10()</code> given that the x variable has been <code>log10</code> transformed. If <code>FALSE</code> results will not be back transformed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log_x</code></td>
+<td>
+<p>default is <code>TRUE</code> and will calculate results using the antilog of determined by <code>log_base</code> given that the x variable has been <code>log()</code> transformed. If <code>FALSE</code> results will not be back transformed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj_type</code></td>
+<td>
+<p>default is  <code>"list"</code> which requires both <code>model_1</code> and <code>model_2</code> arguments to be model objects, in the form of a list, from <code>glm()</code> functions. Alternatively <code>"df"</code> can be used which will require both <code>model_1</code> and <code>model_2</code> arguments to be data.frame objects created when running either <code>LC_</code> or <code>LT_</code> functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf_type</code></td>
+<td>
+<p>default is <code>"fl"</code> which if <code>"df"</code> is supplied will correct covariance values if h is above 1 as fudicial confidence limits use a heterogeneity factor, h, to correct variances when chi-square p value is less than 0.15. <code>conf_type</code> can also be <code>"dm"</code>, delta method, which doesn't use a heterogeneity correction factor therefore covariance will not be uncorrected. This argument is only needed if you are using the dataframe objects from <code>LC_</code> or <code>LT_</code> functions and have used the delta method in that analysis.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A tibble with <code>percentage</code> for the LC or LT value desired for the above percentage argument, <code>dose_1</code> and <code>dose_2</code> displayed calculated backtransformed or untransformed doses for the desired LC or LT values. Standard Error (<code>se</code>), Z test statistic (<code>test_stat</code>) and <code>p_value</code> determined using Z test statistic as determined using formulas in <a href="https://setac.onlinelibrary.wiley.com/doi/abs/10.1897/05-320R.1">Wheeler et al. 2006</a>.
+.
+</p>
+
+
+<h3>References</h3>
+
+<p>Wheeler, M.W., Park, R.M., and Bailey, A.J., 2006. Comparing median lethal concentration values using confidence interval overlap or ratio tests, Environ. Toxic. Chem. 25(5), 1441-1444.<a href="https://setac.onlinelibrary.wiley.com/doi/abs/10.1897/05-320R.1">10.1897/05-320R.1</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># view lamprey_tox data
+
+head(lamprey_tox)
+
+# using glm() to detemine LC values using probit model for May and June
+
+m &lt;- glm((response / total) ~ log10(dose),
+         data = lamprey_tox[lamprey_tox$nominal_dose != 0, ],
+         subset = c(month == "May"),
+         weights = total,
+         family = binomial(link = "probit"))
+
+
+j &lt;- glm((response / total) ~ log10(dose),
+         data = lamprey_tox[lamprey_tox$nominal_dose != 0, ],
+         subset = c(month == "June"),
+         weights = total,
+         family = binomial(link = "probit"))
+
+# now that both May and June models have been made. use ratio_test to
+# compare LC50 values or whatever LC values of interest.
+
+ratios &lt;- ratio_test(model_1 = m, model_2 = j, percentage = 50,
+compare = "May - June")
+
+# view ratio test results
+
+ratios
+
+# you can also use LC_probit to create the models and use ratio test
+
+m_1 &lt;- LC_probit((response / total) ~ log10(dose), p = c(50, 99),
+weights = total,
+data = lamprey_tox[lamprey_tox$nominal_dose != 0, ],
+subset = c(month == "May"))
+
+
+
+j_1 &lt;- LC_probit((response / total) ~ log10(dose), p = c(50, 99),
+weights = total,
+data = lamprey_tox[lamprey_tox$nominal_dose != 0, ],
+subset = c(month == "June"))
+
+
+
+ratios_2 &lt;- ratio_test(model_1 = m_1, model_2 = j_1, percentage = 50,
+compare = "May - June", obj_type = "df")
+
+ratios_2
+
+</code></pre>
+
+
+</div>

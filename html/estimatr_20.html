@@ -1,0 +1,370 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>iv_robust</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Two-Stage Least Squares Instrumental Variables Regression</h2>
+
+<h3>Description</h3>
+
+<p>This formula estimates an instrumental variables regression
+using two-stage least squares with a variety of options for robust
+standard errors
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">iv_robust(
+  formula,
+  data,
+  weights,
+  subset,
+  clusters,
+  fixed_effects,
+  se_type = NULL,
+  ci = TRUE,
+  alpha = 0.05,
+  diagnostics = FALSE,
+  return_vcov = TRUE,
+  try_cholesky = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>an object of class formula of the regression and the instruments.
+For example, the formula <code>y ~ x1 + x2 | z1 + z2</code> specifies <code>x1</code> and <code>x2</code>
+as endogenous regressors and <code>z1</code> and <code>z2</code> as their respective instruments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>data.frame</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>the bare (unquoted) names of the weights variable in the
+supplied data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>An optional bare (unquoted) expression specifying a subset
+of observations to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+<p>An optional bare (unquoted) name of the variable that
+corresponds to the clusters in the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed_effects</code></td>
+<td>
+<p>An optional right-sided formula containing the fixed
+effects that will be projected out of the data, such as <code>~ blockID</code>. Do not
+pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
+variables with large numbers of groups and when using "HC1" or "stata" standard errors.
+See 'Details'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_type</code></td>
+<td>
+<p>The sort of standard error sought. If <code>clusters</code> is
+not specified the options are "HC0", "HC1" (or "stata", the equivalent),
+"HC2" (default), "HC3", or
+"classical". If <code>clusters</code> is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+<p>logical. Whether to compute and return p-values and confidence
+intervals, TRUE by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>The significance level, 0.05 by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diagnostics</code></td>
+<td>
+<p>logical. Whether to compute and return instrumental variable diagnostic statistics and tests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_vcov</code></td>
+<td>
+<p>logical. Whether to return the variance-covariance
+matrix for later usage, TRUE by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>try_cholesky</code></td>
+<td>
+<p>logical. Whether to try using a Cholesky
+decomposition to solve least squares instead of a QR decomposition,
+FALSE by default. Using a Cholesky decomposition may result in speed gains, but should only
+be used if users are sure their model is full-rank (i.e., there is no
+perfect multi-collinearity)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function performs two-stage least squares estimation to fit
+instrumental variables regression. The syntax is similar to that in
+<code>ivreg</code> from the <code>AER</code> package. Regressors and instruments
+should be specified in a two-part formula, such as
+<code>y ~ x1 + x2 | z1 + z2 + z3</code>, where <code>x1</code> and <code>x2</code> are
+regressors and <code>z1</code>, <code>z2</code>, and <code>z3</code> are instruments. Unlike
+<code>ivreg</code>, you must explicitly specify all exogenous regressors on
+both sides of the bar.
+</p>
+<p>The default variance estimators are the same as in <code>lm_robust</code>.
+Without clusters, we default to <code>HC2</code> standard errors, and with clusters
+we default to <code>CR2</code> standard errors. 2SLS variance estimates are
+computed using the same estimators as in <code>lm_robust</code>, however the
+design matrix used are the second-stage regressors, which includes the estimated
+endogenous regressors, and the residuals used are the difference
+between the outcome and a fit produced by the second-stage coefficients and the
+first-stage (endogenous) regressors. More notes on this can be found at
+<a href="https://declaredesign.org/r/estimatr/articles/mathematical-notes.html">the mathematical appendix</a>.
+</p>
+<p>If <code>fixed_effects</code> are specified, both the outcome, regressors, and instruments
+are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying
+fixed effects in this way will result in large speed gains with standard error
+estimators that do not need to invert the matrix of fixed effects. This means using
+"classical", "HC0", "HC1", "CR0", or "stata" standard errors will be faster than other
+standard error estimators. Be wary when specifying fixed effects that may result
+in perfect fits for some observations or if there are intersecting groups across
+multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
+with an unbalanced panel where one year you only have data for one country).
+</p>
+<p>If <code>diagnostics</code> are requested, we compute and return three sets of diagnostics.
+First, we return tests for weak instruments using first-stage F-statistics (<code>diagnostic_first_stage_fstatistic</code>). Specifically,
+the F-statistics reported compare the model regressing each endogeneous variable on both the
+included exogenous variables and the instruments to a model where each endogenous variable is
+regressed only on the included exogenous variables (without the instruments). A significant F-test
+for weak instruments provides evidence against the null hypothesis that the instruments are weak.
+Second, we return tests for the endogeneity of the endogenous variables, often called the Wu-Hausman
+test  (<code>diagnostic_endogeneity_test</code>). We implement the regression test from Hausman (1978), which allows for robust variance estimation.
+A significant endogeneity test provides evidence against the null that all the variables are exogenous.
+Third, we return a test for the correlation between the instruments and the error term  (<code>diagnostic_overid_test</code>). We implement
+the Wooldridge (1995) robust score test, which is identical to Sargan's (1958) test with classical
+standard errors. This test is only reported if the model is overidentified (i.e. the number of
+instruments is greater than the number of endogenous regressors), and if no weights are specified.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"iv_robust"</code>.
+</p>
+<p>The post-estimation commands functions <code>summary</code> and <code>tidy</code>
+return results in a <code>data.frame</code>. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions <code>coef</code>, <code>vcov</code>,
+<code>confint</code>, and <code>predict</code>.
+</p>
+<p>An object of class <code>"iv_robust"</code> is a list containing at least the
+following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>the estimated coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.error</code></td>
+<td>
+<p>the estimated standard errors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+<p>the t-statistic</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>the estimated degrees of freedom</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>the p-values from a two-sided t-test using <code>coefficients</code>, <code>std.error</code>, and <code>df</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.low</code></td>
+<td>
+<p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.high</code></td>
+<td>
+<p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term</code></td>
+<td>
+<p>a character vector of coefficient names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>the significance level specified by the user</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_type</code></td>
+<td>
+<p>the standard error type specified by the user</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res_var</code></td>
+<td>
+<p>the residual variance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nobs</code></td>
+<td>
+<p>the number of observations used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>the number of columns in the design matrix (includes linearly dependent columns!)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rank</code></td>
+<td>
+<p>the rank of the fitted model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>the fitted variance covariance matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.squared</code></td>
+<td>
+<p>the <code class="reqn">R^2</code> of the second stage regression</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adj.r.squared</code></td>
+<td>
+<p>the <code class="reqn">R^2</code> of the second stage regression, but penalized for having more parameters, <code>rank</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fstatistic</code></td>
+<td>
+<p>a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>firststage_fstatistic</code></td>
+<td>
+<p>a vector with the value of the first stage F-statistic with the numerator and denominator degrees of freedom, useful for a test for weak instruments</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weighted</code></td>
+<td>
+<p>whether or not weights were applied</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the original function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.values</code></td>
+<td>
+<p>the matrix of predicted means</p>
+</td>
+</tr>
+</table>
+<p>We also return <code>terms</code> with the second stage terms and <code>terms_regressors</code> with the first stage terms, both of which used by <code>predict</code>. If <code>fixed_effects</code> are specified, then we return <code>proj_fstatistic</code>, <code>proj_r.squared</code>, and <code>proj_adj.r.squared</code>, which are model fit statistics that are computed on the projected model (after demeaning the fixed effects).
+</p>
+<p>We also return various diagnostics when <code>`diagnostics` == TRUE</code>. These are stored in <code>diagnostic_first_stage_fstatistic</code>, <code>diagnostic_endogeneity_test</code>, and <code>diagnostic_overid_test</code>. They have the test statistic, relevant degrees of freedom, and p.value in a named vector. See 'Details' for more. These are printed in a formatted table when the model object is passed to <code>summary()</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics &amp; Data Analysis 66: 8-1. <a href="https://doi.org/10.1016/j.csda.2013.03.024">doi:10.1016/j.csda.2013.03.024</a>
+</p>
+<p>Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(fabricatr)
+dat &lt;- fabricate(
+  N = 40,
+  Y = rpois(N, lambda = 4),
+  Z = rbinom(N, 1, prob = 0.4),
+  D  = Z * rbinom(N, 1, prob = 0.8),
+  X = rnorm(N),
+  G = sample(letters[1:4], N, replace = TRUE)
+)
+
+# Instrument for treatment `D` with encouragement `Z`
+tidy(iv_robust(Y ~ D + X | Z + X, data = dat))
+
+# Instrument with Stata's `ivregress 2sls , small rob` HC1 variance
+tidy(iv_robust(Y ~ D | Z, data = dat, se_type = "stata"))
+
+# With clusters, we use CR2 errors by default
+dat$cl &lt;- rep(letters[1:5], length.out = nrow(dat))
+tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl))
+
+# Again, easy to replicate Stata (again with `small` correction in Stata)
+tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl, se_type = "stata"))
+
+# We can also specify fixed effects, that will be taken as exogenous regressors
+# Speed gains with fixed effects are greatests with "stata" or "HC1" std.errors
+tidy(iv_robust(Y ~ D | Z, data = dat, fixed_effects = ~ G, se_type = "HC1"))
+
+</code></pre>
+
+
+</div>

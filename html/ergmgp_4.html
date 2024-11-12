@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EGPRateEst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Estimate Event Rates for an ERGM Generating Process
+</h2>
+
+<h3>Description</h3>
+
+<p>Given an EGP, estimate either the expected time required for a specified number of transitions to occur, or the expected number of transitions within a specified time period.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EGPRateEst(formula, coef, process = c("LERGM", "CRSAOM", "CI", "DS",
+    "CDCSTERGM", "CFCSTERGM", "CSTERGM", "CTERGM"), time.target = NULL,
+    event.target = NULL, reps = 25, cores = 1, rate.factor = 1, 
+    verbose = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>an ERGM formula for the EGP (or a list with <code>formation</code> and <code>dissolution</code> formulas, for <code>CSTERGM</code> processes).  The left-hand side is used as the initial state.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+
+<p>a vector of EGP coefficients, or a list of vectors with elements <code>formation</code> and <code>dissolution</code> for <code>CSTERGM</code> and variants.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>process</code></td>
+<td>
+
+<p>the ERGM generating process to use.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time.target</code></td>
+<td>
+
+<p>if specified, the length of the time period for which trajectories should be simulated (in which case the estimand is the number of events within this period). 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>event.target</code></td>
+<td>
+
+<p>if specified, the number of transition events over which trajectories should be simulated (in which case the estimand is the time required for this number of events to be realized). 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reps</code></td>
+<td>
+
+<p>number of replicate trajectories to use.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+
+<p>number of cores to use for simultaneous simulation of trajectories.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rate.factor</code></td>
+<td>
+
+<p>rate or pacing factor (sets the time scale).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>logical; show progress information?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>additional arguments to <code>simEGP</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function can be used to estimate the expected amount of time needed for a specific number of transitions to be realized (in which case <code>event.target</code> should be supplied) or the expected number of transition events occurring within a specified time period (in which case <code>time.target</code> should be supplied).  Either way, one of <code>time.target</code> and <code>event.target</code> must be given.  The function works by simulating <code>reps</code> trajectories (using <code>simEGP</code>) for the specified time/number of events, and returning the mean outcome (along with some other associated statistics).
+</p>
+<p>A typical use case for this function is to calibrate the simulation time needed to obtain a reasonable number of transitions from some starting point (e.g., to ensure burn-in).  Simply simulating a fixed number of transition events will result in a biased system state; however, one can avoid this problem by using this function to determine the average duration needed for the desired number of events to be realized, and then using this duration as a stopping rule for subsequent simulations.  Alternately, another use is to estimate the rate at which events accrue, e.g. to estimate compute time or memory requirements for a longer simulation study.  Some processes are particularly prone to entering regimes in which they produce very large numbers of events per unit phenomenological time, and it can be useful to identify this issue before committing resources to simulating a long trajectory.
+</p>
+<p>Note that, at present, all trajectories have the same starting point (the network on the left-hand side of the input formula).  They are hence coupled by the initial condition (despite being otherwise independent).  When equilibrium estimates from short sequences are desired, it may be wise to call this function more than once with different starting networks and integrate the results.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector containing the mean outcome (time or event count), its standard error, the standard deviation of the outcome, and the number of replicates used.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Carter T. Butts <a href="mailto:buttsc@uci.edu">buttsc@uci.edu</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Butts, Carter T.  (2023).  “Continuous Time Graph Processes with Known ERGM Equilibria: Contextual Review, Extensions, and Synthesis.” <em>Journal of Mathematical Sociology</em>.  <a href="https://doi.org/10.1080/0022250X.2023.2180001">doi:10.1080/0022250X.2023.2180001</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ergmgp</code> for information on EGPs, <code>ergm</code> for information on ERGM specifications, <code>simEGP</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Simulate a small network with triadic dependence
+n &lt;- 25
+set.seed(1331)
+co &lt;- c(log(2.5/(n-3.5)), -0.75)
+net &lt;- simulate(network.initialize(n, directed=FALSE) ~ edges + esp(0),
+    coef = co)
+
+#Estimate the time needed for 500 events in a LERGM
+etime &lt;- EGPRateEst(net ~ edges + esp(0), coef = co, process = "LERGM",
+    event.target = 500)
+etime
+
+#Estimate the mean number of events in the above time
+eevents &lt;- EGPRateEst(net ~ edges + esp(0), coef = co, process = "LERGM",
+    time.target = etime[1])
+eevents   #Expectation should be close to 500
+
+</code></pre>
+
+
+</div>

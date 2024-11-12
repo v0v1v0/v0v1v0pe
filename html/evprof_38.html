@@ -1,0 +1,119 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_model_clusters</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot all bi-variable GMM (clusters) with the colors corresponding
+to the assigned user profile. This shows which clusters correspond to which
+user profile, and the proportion of every user profile.</h2>
+
+<h3>Description</h3>
+
+<p>Plot all bi-variable GMM (clusters) with the colors corresponding
+to the assigned user profile. This shows which clusters correspond to which
+user profile, and the proportion of every user profile.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_model_clusters(
+  subsets_clustering = list(),
+  clusters_definition = list(),
+  profiles_ratios,
+  log = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>subsets_clustering</code></td>
+<td>
+<p>list with clustering results of each subset
+(direct output from function <code>cluser_sessions()</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters_definition</code></td>
+<td>
+<p>list of tibbles with clusters definitions
+(direct output from function <code>define_clusters()</code>) of each sub-set</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>profiles_ratios</code></td>
+<td>
+<p>tibble with columns <code>profile</code> and <code>ratio</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, whether to transform <code>ConnectionStartDateTime</code> and
+<code>ConnectionHours</code> variables to natural logarithmic scale (base = <code>exp(1)</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>ggplot2
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+
+# Select working day sessions (`Timecycle == 1`) that
+# disconnect the same day (`Disconnection == 1`)
+sessions_day &lt;- evprof::california_ev_sessions_profiles %&gt;%
+  filter(Timecycle == "Workday") %&gt;%
+  sample_frac(0.05)
+plot_points(sessions_day, start = 3)
+
+# Identify two clusters
+sessions_clusters &lt;- cluster_sessions(
+  sessions_day, k=2, seed = 1234, log = TRUE
+)
+
+# Plot the clusters found
+plot_bivarGMM(
+  sessions = sessions_clusters$sessions,
+  models = sessions_clusters$models,
+  log = TRUE, start = 3
+)
+
+# Define the clusters with user profile interpretations
+clusters_definitions &lt;- define_clusters(
+  models = sessions_clusters$models,
+  interpretations = c(
+    "Connections during all day (high variability)",
+    "Connections during working hours"#'
+  ),
+  profile_names = c("Visitors", "Workers"),
+  log = TRUE
+)
+
+# Create a table with the connection GMM parameters
+connection_models &lt;- get_connection_models(
+  subsets_clustering = list(sessions_clusters),
+  clusters_definition = list(clusters_definitions)
+)
+
+# Plot all bi-variable GMM (clusters) with the colors corresponding
+# to their assigned user profile
+plot_model_clusters(
+  subsets_clustering = list(sessions_clusters),
+  clusters_definition = list(clusters_definitions),
+  profiles_ratios = connection_models[c("profile", "ratio")]
+)
+
+
+</code></pre>
+
+
+</div>

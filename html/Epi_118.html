@@ -1,0 +1,184 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>matshade</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Plot confidence intervals as shaded areas around lines.
+</h2>
+
+<h3>Description</h3>
+
+<p>Uses an x-vector and a matrix of 3*N columns with estimates and ci.s
+to produce the lines of estimates and confidence intervals as shaded
+areas in transparent colours around the lines of the estimates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">matshade( x, y, lty = 1,
+          col = 1:(ncol(y)/3), col.shade=col, alpha=0.15,
+         plot = dev.cur()==1,
+          ... )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Numerical vector. Unlike <code>matplot</code> this can only be a vector.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A matrix with 3*N columns — representing estimates and
+confidence bounds for N curves. Order of columns are assumed to be
+(est,lo,hi,est,lo,hi...) (or (est,hi,lo...))
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lty</code></td>
+<td>
+<p>Line types for the curves.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col</code></td>
+<td>
+<p>Color(s) of the estimated curves.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col.shade</code></td>
+<td>
+<p>Color(s) of the shaded areas. These are the colors
+that are made transparent by the <code>alpha</code> factor. Defaults to
+the same colors as the lines.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Number in [0,1] indicating the transparency of the colors for
+the confidence intervals. Larger values makes the shades
+darker. Can be a vector which then applies to the curves in turn.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>Logical. Should a new plot frame be started? If no device
+is active, the default is to start one, and plot all <code>y</code>s versus
+x in transparent color. On the rare occasion a device is open, but
+no plot have been called you will get an error telling that plot.new
+has not been called yet, in which case you should explicitly set
+<code>plot</code> to <code>TRUE</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed on to <code>matplot</code> (if
+<code>plot=TRUE</code>) and <code>matlines</code> for use when plotting
+the lines. Note that <code>lwd=0</code> will cause lines to be omitted and
+only the shades be plotted. 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>All shaded areas are plotted first, the curves added
+afterwards, so that lines are not 'overshadowed'.
+</p>
+<p>If there are NAs in <code>x</code> or <code>y</code> there will be separate shaded
+areas for each non-<code>NA</code> sequence. Applies separately to each set
+of confidence bands in <code>y</code>. 
+</p>
+<p>Note that if you repeat the same command, you will get the curves
+and the shaded areas overplotted in the same frame, so the effect is to
+have the shades darker, because the transparent colors are plotted on
+top of those from the first command.
+</p>
+
+
+<h3>Value</h3>
+
+<p>NULL. Used for its side effects.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pc.matshade</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Follow-up data of Danish DM patients
+data( DMlate )
+mL &lt;- Lexis( entry=list(age=dodm-dobth,per=dodm),
+              exit=list(per=dox),
+       exit.status=factor(!is.na(dodth),labels=c("Alive","Dead")),
+              data=DMlate )
+# Split follow-up and model by splines
+sL &lt;- splitLexis( mL, breaks=0:100, time.scale="age")
+## Not run: 
+# the same thing with popEpi
+sL &lt;- splitMulti( mL, age=0:100 )    
+        
+## End(Not run)
+# Mortality rates separately for M and F:
+mort &lt;- glm( (lex.Xst=="Dead") ~ sex*Ns(age,knots=c(15,3:8*10)),
+             offset = log(lex.dur),
+             family = poisson,
+               data = sL )
+## Not run: 
+# The counterpart with gam
+library( mgcv )
+mort &lt;- gam( (lex.Xst=="Dead") ~ s(age,by=sex) + sex,
+             offset = log(lex.dur),
+             family = poisson,
+               data = sL )
+       
+## End(Not run)
+# predict rates (per 1000 PY) for men and women
+ndM &lt;- data.frame( age=10:90, sex="M", lex.dur=1 )
+ndF &lt;- data.frame( age=10:90, sex="F", lex.dur=1 )
+# gam objects ignores the offset in prediction so
+# lex.dur=1000 in prediction frame wll not work.
+prM &lt;- ci.pred( mort, ndM )*1000
+prF &lt;- ci.pred( mort, ndF )*1000
+# predict rate-ratio
+MFr &lt;- ci.exp( mort, ctr.mat=list(ndM,ndF) )
+# plot lines with shaded confidence limits
+# for illustration we make a holes for the RRs:
+MFr[40:45,2] &lt;- NA
+MFr[44:49,1] &lt;- NA
+matshade( ndM$age, cbind( MFr, prF, prM ), col=c(1,2,4), lwd=3,
+          log="y", xlab="Age", ylab="Mortality per 1000 PY (and RR)" )
+abline( h=1 )
+</code></pre>
+
+
+</div>

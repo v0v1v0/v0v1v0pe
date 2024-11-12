@@ -1,0 +1,98 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_nwstats</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract Network Statistics from netsim or netdx Object</h2>
+
+<h3>Description</h3>
+
+<p>Extracts network statistics from a network epidemic model
+simulated with <code>netsim</code> or a network diagnostics object
+simulated with <code>netdx</code>. Statistics can be returned either
+as a single data frame or as a list of matrices (one matrix
+for each simulation).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_nwstats(x, sim, network = 1, mode = c("data.frame", "list"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An <code>EpiModel</code> object of class <code>netsim</code> or
+<code>netdx</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sim</code></td>
+<td>
+<p>A vector of simulation numbers from the extracted object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p>Network number, for <code>netsim</code> objects with multiple
+overlapping networks (advanced use, and not applicable to <code>netdx</code>
+objects).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>Either <code>"data.frame"</code> or <code>"list"</code>, indicating the
+desired output.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame or list of matrices containing the network statistics.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Two-group Bernoulli random graph TERGM
+nw &lt;- network_initialize(n = 100)
+nw &lt;- set_vertex_attribute(nw, "group", rep(1:2, each = 50))
+formation &lt;- ~edges
+target.stats &lt;- 50
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 20)
+est &lt;- netest(nw, formation, target.stats, coef.diss, verbose = FALSE)
+
+dx &lt;- netdx(est, nsim = 3, nsteps = 10, verbose = FALSE,
+            nwstats.formula = ~edges + isolates)
+get_nwstats(dx)
+get_nwstats(dx, sim = 1)
+
+# SI epidemic model
+param &lt;- param.net(inf.prob = 0.3, inf.prob.g2 = 0.15)
+init &lt;- init.net(i.num = 10, i.num.g2 = 10)
+control &lt;- control.net(type = "SI", nsteps = 10, nsims = 3,
+                       nwstats.formula = ~edges + meandeg + degree(0:5),
+                       verbose = FALSE)
+mod &lt;- netsim(est, param, init, control)
+
+# Extract the network statistics from all or sets of simulations
+get_nwstats(mod)
+get_nwstats(mod, sim = 2)
+get_nwstats(mod, sim = c(1, 3))
+
+# On the fly summary stats
+summary(get_nwstats(mod))
+colMeans(get_nwstats(mod))
+
+</code></pre>
+
+
+</div>

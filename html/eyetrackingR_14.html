@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make_boot_splines_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bootstrap resample splines for time-series data.</h2>
+
+<h3>Description</h3>
+
+<p>Deprecated. Performing this analysis should be done by calling <code>analyze_time_bins(test="boot_splines")</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">make_boot_splines_data(
+  data,
+  predictor_column,
+  within_subj,
+  aoi,
+  bs_samples,
+  smoother,
+  resolution,
+  alpha,
+  ...
+)
+
+## S3 method for class 'time_sequence_data'
+make_boot_splines_data(
+  data,
+  predictor_column,
+  within_subj,
+  aoi = NULL,
+  bs_samples = 1000,
+  smoother = "smooth.spline",
+  resolution = NULL,
+  alpha = 0.05,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The output of <code>time_sequence_data()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor_column</code></td>
+<td>
+<p>What predictor var to split by? Maximum two conditions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within_subj</code></td>
+<td>
+<p>Are the two conditions within or between subjects?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aoi</code></td>
+<td>
+<p>Which AOI do you wish to perform the analysis on?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bs_samples</code></td>
+<td>
+<p>How many iterations to run bootstrap resampling? Default 1000</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smoother</code></td>
+<td>
+<p>Smooth data using "smooth.spline," "loess," or "none" for no smoothing</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>What resolution should we return predicted splines at, in ms? e.g., 10ms = 100
+intervals per second, or hundredths of a second. Default is the same size as time-bins.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>p-value when the groups are sufficiently "diverged"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Ignored</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This method builds confidence intervals around proportion-looking data by bootstrap resampling.
+Data can be smoothed by fitting smoothing splines. This function performs the bootstrap resampling,
+<code>analyze_boot_splines</code> generates confidence intervals and tests for divergences.
+</p>
+<p>Limited to statistical test between two conditions.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A bootstrapped distribution of samples for each time-bin
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul><li> <p><code>make_boot_splines_data(time_sequence_data)</code>: 
+</p>
+</li></ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+data(word_recognition)
+data &lt;- make_eyetrackingr_data(word_recognition, 
+                               participant_column = "ParticipantName",
+                               trial_column = "Trial",
+                               time_column = "TimeFromTrialOnset",
+                               trackloss_column = "TrackLoss",
+                               aoi_columns = c('Animate','Inanimate'),
+                               treat_non_aoi_looks_as_missing = TRUE )
+response_window &lt;- subset_by_window(data, window_start_time = 15500, 
+                                    window_end_time = 21000, rezero = FALSE)
+response_time &lt;- make_time_sequence_data(response_window, time_bin_size = 500, aois = "Animate", 
+                                         predictor_columns = "Sex", 
+                                         summarize_by = "ParticipantName")
+                                         
+df_bootstrapped &lt;- make_boot_splines_data(response_time, 
+                                          predictor_column = 'Sex', 
+                                          within_subj = FALSE, 
+                                          bs_samples = 500, 
+                                          alpha = .05,
+                                          smoother = "smooth.spline") 
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

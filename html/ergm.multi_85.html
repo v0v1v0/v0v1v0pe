@@ -1,0 +1,227 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>combine_networks</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A single block-diagonal network created by combining multiple networks</h2>
+
+<h3>Description</h3>
+
+<p>Given a list of compatible networks, the <code>combine_networks()</code> returns a single
+block-diagonal network, preserving attributes that can be
+preserved.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">combine_networks(
+  nwl,
+  ignore.nattr = c("mnext"),
+  ignore.vattr = c(),
+  ignore.eattr = c(),
+  blockID.vattr = ".NetworkID",
+  blockName.vattr = NULL,
+  detect.edgecov = FALSE,
+  keep.unshared.attr = FALSE,
+  subnet.cache = FALSE
+)
+
+## S3 method for class 'combined_networks'
+print(x, ...)
+
+## S3 method for class 'combined_networks'
+summary(object, ...)
+
+## S3 method for class 'summary.combined_networks'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nwl</code></td>
+<td>
+<p>a list of <code>network::network</code>s to be combined; they
+must have similar fundamental properties: directedness and
+bipartedness, though their sizes (and the size of each bipartite
+group) can vary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignore.nattr, ignore.vattr, ignore.eattr</code></td>
+<td>
+<p>network, vertex, and
+edge attributes not to be processed as described below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blockID.vattr</code></td>
+<td>
+<p>name of the vertex attribute into which to store
+the index of the network to which that vertex originally belonged.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blockName.vattr</code></td>
+<td>
+<p>if not <code>NULL</code>, the name of the vertex
+attribute into which to store the name of the network to which
+that vertex originally belonged.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>detect.edgecov</code></td>
+<td>
+<p>if <code>TRUE</code>, combine network attributes that
+look like dyadic covariate (<code>ergm::edgecov</code>) matrices into a
+block-diagonal matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.unshared.attr</code></td>
+<td>
+<p>whether to keep those network, vertex,
+and edge attributes not shared by all networks in the list; if
+<code>TRUE</code>, positions corresponding to networks lacking the
+attribute are replaced with <code>NA</code>, <code>NULL</code>, or some other
+placeholder; incompatible with <code>detect.edgecov==TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subnet.cache</code></td>
+<td>
+<p>whether to save the input network list as an
+attribute of the combined network, so that if the network is
+resplit using on the same attribute (e.g. using
+<code>uncombine_network()</code>), an expensive call to <code>split.network()</code>
+can be avoided, at the cost of storage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x, object</code></td>
+<td>
+<p>a combined network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments to methods.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of class <code>combined_networks</code> inheriting from
+<code>network::network</code> with a block-diagonal structure (or its
+bipartite equivalent) comprising the networks passed in <code>nwl</code>. In
+particular,
+</p>
+
+<ul>
+<li>
+<p> the returned network's size is the sum of the input networks';
+</p>
+</li>
+<li>
+<p> its basic properties (directedness and bipartednes) are the same;
+</p>
+</li>
+<li>
+<p> the input networks' sociomatrices (both edge presence and edge
+attributes) are the blocks in the sociomatrix of the returned
+network;
+</p>
+</li>
+<li>
+<p> vertex attributes are concatenated;
+</p>
+</li>
+<li>
+<p> edge attributes are assigned to their respective edges in
+the returned network;
+</p>
+</li>
+<li>
+<p> network attributes are stored in a list; but if
+<code>detect.edgecov==TRUE</code>, those network attributes that have the
+same dimension as the sociomatrices of the constituent networks,
+they are combined into a single block-diagonal matrix that is
+then stored as that attribute.
+</p>
+</li>
+</ul>
+<p>In addition, two new vertex attributes, specified by
+<code>blockID.vattr</code> and (optionally) <code>blockName.vattr</code> contain,
+respectively, the index in <code>nwl</code> of the network from which that
+vertex came and its name, determined as follows:
+</p>
+
+<ol>
+<li>
+<p> If <code>nwl</code> is a named list, names from the list are used.
+</p>
+</li>
+<li>
+<p> If not 1, but the network has an attribute <code>title</code>, it is used.
+</p>
+</li>
+<li>
+<p> Otherwise, a numerical index is used.
+</p>
+</li>
+</ol>
+<p>If <code>blockID.vattr</code> already exists on the constituent networks, the
+index is <em>prepended</em> to the attribute.
+</p>
+<p>The values of <code>blockID.vattr</code> and <code>blockName.vattr</code> are stored in
+network attributes <code>".blockID.vattr"</code> and <code>".blockName.vattr"</code>.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>print(combined_networks)</code>: A wrapper around
+<code>network::print.network()</code> to print constituent network
+information and omit some internal variables.
+</p>
+</li>
+<li> <p><code>summary(combined_networks)</code>: A wrapper around
+<code>network::summary.network()</code> to print constituent network
+information and omit some internal variables.
+</p>
+</li>
+<li> <p><code>print(summary.combined_networks)</code>: A wrapper around
+<code>network::print.summary.network()</code> to print constituent network
+information and omit some internal variables.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(samplk)
+
+o1 &lt;- combine_networks(list(samplk1, samplk2, samplk3))
+image(as.matrix(o1))
+head(get.vertex.attribute(o1, ".NetworkID"))
+o2 &lt;- combine_networks(list(o1, o1))
+image(as.matrix(o2))
+head(get.vertex.attribute(o2, ".NetworkID", unlist=FALSE))
+
+data(florentine)
+f1 &lt;- combine_networks(list(business=flobusiness, marriage=flomarriage),
+                       blockName.vattr=".NetworkName")
+image(as.matrix(f1))
+head(get.vertex.attribute(f1, ".NetworkID"))
+head(get.vertex.attribute(f1, ".NetworkName"))
+</code></pre>
+
+
+</div>

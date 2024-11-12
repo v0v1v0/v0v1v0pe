@@ -1,0 +1,253 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cutLexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Cut follow-up at a specified date for each person.
+</h2>
+
+<h3>Description</h3>
+
+<p>Follow-up intervals in a Lexis object are divided into two
+sub-intervals: one before and one after an intermediate event.  The
+intermediate event may denote a change of state, in which case the
+entry and exit status variables in the split Lexis object are
+modified.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cutLexis( data, cut, timescale = 1,
+                     new.state = nlevels(data$lex.Cst)+1,
+                     new.scale = FALSE,
+                  split.states = FALSE,
+                   progressive = FALSE,
+              precursor.states = transient(data),
+                         count = FALSE )
+countLexis( data, cut, timescale = 1 )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>Lexis</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut</code></td>
+<td>
+<p>A numeric vector with the times of the intermediate event.
+If a time is missing (<code>NA</code>) then the event is assumed to occur
+at time <code>Inf</code>. <code>cut</code> can also be a dataframe, see details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timescale</code></td>
+<td>
+<p>The timescale that <code>cut</code> refers to. Numeric or character.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new.state</code></td>
+<td>
+<p>The state to which a transition occur at time
+<code>cut</code>. It may be a single value, which is then applied to all
+rows of <code>data</code>, or a vector with a separate value for each row</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new.scale</code></td>
+<td>
+<p>Name of the timescale defined as "time since entry to
+new.state". If <code>TRUE</code> a name for the new scale is constructed.
+See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split.states</code></td>
+<td>
+<p>Should states that are not precursor states be split
+according to whether the intermediate event has occurred.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progressive</code></td>
+<td>
+<p>a logical flag that determines the changes to exit
+status. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precursor.states</code></td>
+<td>
+<p>an optional vector of states to be considered
+as "less severe" than <code>new.state</code>. See Details below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>count</code></td>
+<td>
+<p>logical indicating whether the <code>countLexis</code> options should
+be used. Specifying <code>count=TRUE</code> amounts to calling <code>countLexis</code>,
+in which case the arguments <code>new.state</code>, <code>progressive</code> and
+<code>precursor.states</code> will be ignored. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>cutLexis</code> function allows a number of different ways
+of specifying the cutpoints and of modifying the status variable.
+</p>
+<p>If the <code>cut</code> argument is a dataframe it must have columns <code>lex.id</code>,
+<code>cut</code> and <code>new.state</code>. The values of <code>lex.id</code> must be unique.
+In this case it is assumed that each row represents a cutpoint (on the
+timescale indicated in the argument <code>timescale</code>). This cutpoint will
+be applied to all records in <code>data</code> with the corresponding <code>lex.id</code>.
+This makes it possible to apply <code>cutLexis</code> to a split <code>Lexis</code> object.
+</p>
+<p>If a <code>new.state</code> argument is supplied, the status variable is
+only modified at the time of the cut point. However, it is often
+useful to modify the status variable after the cutpoint when an
+important event occurs. There are three distinct ways of doing this.
+</p>
+<p>If the <code>progressive=TRUE</code> argument is given, then a "progressive"
+model is assumed, in which the status can either remain the same or
+increase during follow-up, but never decrease. This assumes that the
+state variables <code>lex.Cst</code> and <code>lex.Xst</code> are either numeric or
+ordered factors. In this case, if
+<code>new.state=X</code>, then any exit status with a value less than
+<code>X</code> is replaced with <code>X</code>. The Lexis object
+must already be progressive, so that there are no rows for which the
+exit status is less than the entry status. If <code>lex.Cst</code> and
+<code>lex.Xst</code> are factors they must be ordered factors if
+<code>progressive=TRUE</code> is given.
+</p>
+<p>As an alternative to the <code>progressive</code> argument, an explicit
+vector of precursor states, that are considered less severe than the
+new state, may be given. If <code>new.state=X</code> and
+<code>precursor.states=c(Y,Z)</code> then any exit status of <code>Y</code> or
+<code>Z</code> in the second interval is replaced with <code>X</code> and all
+other values for the exit status are retained.
+</p>
+<p>The <code>countLexis</code> function is a variant of <code>cutLexis</code> when
+the cutpoint marks a recurrent event, and the status variable is used
+to count the number of events that have occurred. Times given in <code>cut</code>
+represent times of new events. Splitting with
+<code>countLexis</code> increases the status variable by 1. If the current
+status is <code>X</code> and the exit status is <code>Y</code> before cutting,
+then after cutting the entry status is <code>X</code>, <code>X+1</code> for
+the first and second intervals, respectively, and the exit status is
+<code>X+1</code>, <code>Y+1</code> respectively. Moreover the values of the status
+is increased by 1 for all intervals for all intervals after the cut
+for the person in question. Hence, a call to <code>countLexis</code> is
+needed for as many times as the person with most events. But also it
+is immaterial in what order the cutpoints are entered.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>Lexis</code> object, for which each follow-up interval containing
+the cutpoint is split in two: one before and one after the
+cutpoint. Any record representing follow up after the cutpoint has its
+value of <code>lex.Cst</code> updated to the new state. An extra time-scale
+is added; the time since the event at <code>cut</code>. This time scale will
+be <code>NA</code> for any follow-up prior to the intermediate event.
+</p>
+<p>The function <code>tsNA20</code> will replace all missing values in
+timescales with 0. This is commonly meeded when timescales defined as
+time since entry into an intermediate state are used in modeling. But
+you do not want to do that permanently in the cut data frame.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The <code>cutLexis</code> function superficially resembles the
+<code>splitLexis</code> function. However, the <code>splitLexis</code> function
+splits on a vector of common cut-points for all rows of the Lexis
+object, whereas the <code>cutLexis</code> function splits on a single time
+point, which may be distinct for each row, modifies the status
+variables, adds a new timescale and updates the attribute
+"time.since". This attribute is a character vector of the same length
+as the "time.scales" attribute, whose value is '""' if the
+corresponding timescale is defined for any piece of follow-up, and if
+the corresponding time scale is defined by say
+<code>cutLexis(obj,new.state="A",new.scale=TRUE)</code>, it has the value
+"A".
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, Steno Diabetes Center, <a href="mailto:b@bxc.dk">b@bxc.dk</a>,
+Martyn Plummer, <a href="mailto:martyn.plummer@r-project.org">martyn.plummer@r-project.org</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mcutLexis</code>,
+<code>rcutLexis</code>,
+<code>addCov.Lexis</code>,
+<code>splitLexis</code>,
+<code>Lexis</code>,
+<code>summary.Lexis</code>,
+<code>timeSince</code>,
+<code>boxes.Lexis</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># A small artificial example
+xx &lt;- Lexis( entry=list(age=c(17,24,33,29),per=c(1920,1933,1930,1929)),
+             duration=c(23,57,12,15), exit.status=c(1,2,1,2) )
+xx
+cut &lt;- c(33,47,29,50)
+cutLexis(xx, cut, new.state=3, precursor=1)
+cutLexis(xx, cut, new.state=3, precursor=2)
+cutLexis(xx, cut, new.state=3, precursor=1:2)
+# The same as the last example
+cutLexis(xx, cut, new.state=3)
+
+# The same example with a factor status variable
+yy &lt;- Lexis(entry = list(age=c(17,24,33,29),per=c(1920,1933,1930,1929)),
+            duration = c(23,57,12,15),
+            entry.status = factor(rep("alpha",4),
+            levels=c("alpha","beta","gamma")),
+            exit.status = factor(c("alpha","beta","alpha","beta"),
+            levels=c("alpha","beta","gamma")))
+
+cutLexis(yy,c(33,47,29,50),precursor="alpha",new.state="gamma")
+cutLexis(yy,c(33,47,29,50),precursor=c("alpha","beta"),new.state="aleph")
+
+## Using a dataframe as cut argument
+rl &lt;- data.frame( lex.id=1:3, cut=c(19,53,26), timescale="age", new.state=3 )
+rl
+cutLexis( xx, rl )
+cutLexis( xx, rl, precursor=1 )
+cutLexis( xx, rl, precursor=0:2 )
+
+## It is immaterial in what order splitting and cutting is done
+xs &lt;- splitLexis( xx, breaks=seq(0,100,10), time.scale="age" )
+xs
+xsC &lt;- cutLexis(xs, rl, precursor=0 )
+
+xC &lt;- cutLexis( xx, rl, pre=0 )
+xC
+xCs &lt;- splitLexis( xC, breaks=seq(0,100,10), time.scale="age" )
+xCs
+str(xCs)
+</code></pre>
+
+
+</div>

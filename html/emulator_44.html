@@ -1,0 +1,127 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sigmahatsquared</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimator for sigma squared</h2>
+
+<h3>Description</h3>
+
+<p>Returns maximum likelihood estimate for sigma squared.  The
+“<code>.A</code>” form does not need <code>Ainv</code>, thus removing the need to
+invert <code>A</code>.  Note that this form is <em>slower</em> than
+the other if <code>Ainv</code> is known in advance, as <code>solve(.,.)</code> is slow.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sigmahatsquared(H, Ainv, d)
+sigmahatsquared.A(H, A, d)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>Regressor matrix (eg as returned by <code>regressor.multi()</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>Correlation matrix (eg <code>corr.matrix(val)</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ainv</code></td>
+<td>
+<p>Inverse of the correlation matrix (eg <code>solve(corr.matrix(val))</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Vector of observations</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The formula is
+</p>
+<p style="text-align: center;"><code class="reqn">\frac{y^T\left(A^{-1}-A^{-1}H(H^T A^{-1}H)^{-1} H^T
+    A^{-1}\right)y}{n-q-2}</code>
+</p>
+
+<p>where <code class="reqn">y</code> is the data vector, <code class="reqn">H</code> the matrix whose rows are the
+regressor functions of the design matrix, <code class="reqn">A</code> the correlation
+matrix, <code class="reqn">n</code> the number of observations and <code class="reqn">q</code> the number of
+elements in the basis function.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p>J. Oakley and A. O'Hagan, 2002. <em>Bayesian Inference for the
+Uncertainty Distribution of Computer Model Outputs</em>, Biometrika
+89(4), pp769-784
+</p>
+</li>
+<li>
+<p>R. K. S. Hankin 2005. <em>Introducing BACCO, an R bundle for
+Bayesian analysis of computer code output</em>, Journal of Statistical
+Software, 14(16)
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## First, set sigmasquared to a value that we will try to estimate at the end:
+REAL.SIGMASQ &lt;- 0.3
+
+## First, some data:
+val &lt;- latin.hypercube(100,6)
+H &lt;- regressor.multi(val,func=regressor.basis)
+
+## now some scales:
+ fish &lt;- c(1,1,1,1,1,4)
+
+## A and Ainv
+A &lt;- corr.matrix(as.matrix(val),scales=fish)
+Ainv &lt;- solve(A)
+
+## a real relation; as used in helppage for interpolant:
+real.relation &lt;- function(x){sum( (1:6)*x )}
+
+## use the real relation:
+d &lt;- apply(val,1,real.relation)
+
+## now add some Gaussian process noise:
+d.noisy &lt;-  as.vector(rmvnorm(n=1,mean=d, REAL.SIGMASQ*A))
+
+## now estimate REAL.SIGMASQ:
+sigmahatsquared(H,Ainv,d.noisy)
+
+## That shouldn't be too far from the real value specified above.
+
+## Finally, a sanity check:
+sigmahatsquared(H,Ainv,d.noisy) - sigmahatsquared.A(H,A=A,d.noisy)
+
+</code></pre>
+
+
+</div>

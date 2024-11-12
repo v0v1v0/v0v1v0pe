@@ -1,0 +1,390 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>maxlogLreg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximum Likelihood Estimation for parametric linear regression models</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>
+</p>
+<p>Function to compute maximum likelihood estimators (MLE) of regression parameters
+of any distribution implemented in <code>R</code> with covariates (linear predictors).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">maxlogLreg(
+  formulas,
+  y_dist,
+  support = NULL,
+  data = NULL,
+  subset = NULL,
+  fixed = NULL,
+  link = NULL,
+  start = NULL,
+  lower = NULL,
+  upper = NULL,
+  optimizer = "nlminb",
+  control = NULL,
+  silent = FALSE,
+  StdE_method = c("optim", "numDeriv"),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formulas</code></td>
+<td>
+<p>a list of formula objects. Each element must have an <code>~</code>,
+with the terms on the right separated by <code>+</code> operators. The response
+variable on the left side is optional. Linear predictor of each parameter must
+be specified with the name of the parameter followed by the suffix <code>'.fo'</code>.
+See the examples below for further illustration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_dist</code></td>
+<td>
+<p>a formula object that specifies the distribution of the response
+variable. On the left side of <code>~</code> must be the response,
+and in the right side must be the name o de probability
+density/mass function. See the section <strong>Details</strong> and the
+examples below for further illustration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>support</code></td>
+<td>
+<p>a list with the following entries:
+</p>
+
+<ul>
+<li> <p><code>interval</code>: a two dimensional atomic vector indicating
+the set of possible values of a random variable having the
+distribution specified in <code>y_dist</code>.
+</p>
+</li>
+<li> <p><code>type</code>: character indicating if distribution has a
+<code>discrete</code> or a <code>continous</code> random variable.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an optional data frame containing the variables in the model.
+If data is not specified, the variables are taken from the
+environment from which <code>maxlogLreg</code> is called.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations to be used
+in the fitting process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>a list with fixed/known parameters of distribution of interest.
+Fixed parameters must be passed with its name and its value (known).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>link</code></td>
+<td>
+<p>a list with names of parameters to be linked, and names of the
+link function object. For names of parameters, please visit
+documentation of density/mass function. There are three link
+functions available: <code>log_link</code>, <code>logit_link</code>
+and <code>NegInv_link</code>. Take into account: the order
+used in argument <code>over</code> corresponds to the order in argument
+<code>link</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>a numeric vector with initial values for the parameters to be
+estimated. Zero is the default value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>a numeric vector with lower bounds, with the same lenght of
+argument <code>start</code> (for box-constrained optimization). <code>-Inf</code>
+is the default value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>a numeric vector with upper bounds, with the same lenght of
+argument <code>start</code> (for box-constrained optimization). <code>Inf</code>
+is the default value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimizer</code></td>
+<td>
+<p>a length-one character vector with the name of optimization
+routine.  <code>nlminb</code>, <code>optim</code> and
+<code>DEoptim</code> are available; <code>nlminb</code>
+is the default routine.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>control parameters of the optimization routine. Please, visit
+documentation of selected optimizer for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>logical. If TRUE, warnings of <code>maxlogL</code> are suppressed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>StdE_method</code></td>
+<td>
+<p>a length-one character vector with the routine for Hessian
+matrix computation. The This is needed for standard error
+estimation. The options available are <code>"optim"</code> and
+<code>"numDeriv"</code>. For further information, visit
+<code>optim</code> or <code>hessian</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments to be supplied to the optimization routine.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>maxlogLreg</code> computes programmatically the log-likelihood
+(log L) function corresponding for the following model:
+</p>
+<p style="text-align: center;"><code class="reqn">
+  y_i \stackrel{iid.}{\sim} \mathcal{D}(\theta_{i1},\theta_{i2},\dots,
+  \theta_{ij}, \dots, \theta_{ik})
+</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">
+  g(\boldsymbol{\theta}_{j}) = \boldsymbol{\eta}_{j} = \mathbf{X}_j^\top
+  \boldsymbol{\beta}_j,
+</code>
+</p>
+
+<p>where,
+</p>
+
+<ul>
+<li> <p><code class="reqn">g_k(\cdot)</code> is the <code class="reqn">k</code>-th link function.
+</p>
+</li>
+<li> <p><code class="reqn">\boldsymbol{\eta}_{j}</code> is the value of the linear predictor for the
+$j^th$ for all the observations.
+</p>
+</li>
+<li> <p><code class="reqn">\boldsymbol{\beta}_j = (\beta_{0j}, \beta_{1j},\dots,
+        \beta_{(p_j-1)j})^\top</code> are the fixed effects vector, where <code class="reqn">p_j</code>
+is the number of parameters in linear predictor <code class="reqn">j</code> and
+<code class="reqn">\mathbf{X}_j</code> is a known design matrix of order <code class="reqn">n\times p_j</code>.
+These terms are specified in <code>formulas</code> argument.
+</p>
+</li>
+<li> <p><code class="reqn">\mathcal{D}</code> is the distribution specified in argument
+<code>y_dist</code>.
+</p>
+</li>
+</ul>
+<p>Then, <code>maxlogLreg</code> maximizes the log L through <code>optim</code>,
+<code>nlminb</code> or <code>DEoptim</code>. <code>maxlogLreg</code> generates
+an S3 object of class <code>maxlogL</code>.
+</p>
+<p>Estimation with censorship can be handled with <code>Surv</code> objects
+(see example 2). The output object stores the corresponding censorship matrix,
+defined as <code class="reqn">r_{il} = 1</code> if sample unit <code class="reqn">i</code> has status <code class="reqn">l</code>, or
+<code class="reqn">r_{il} = 0</code> in other case. <code class="reqn">i=1,2,\dots,n</code> and <code class="reqn">l=1,2,3</code>
+(<code class="reqn">l=1</code>: observation status, <code class="reqn">l=2</code>: right censorship status,
+<code class="reqn">l=3</code>: left censorship status).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with class <code>maxlogL</code> containing the following
+lists:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>A list with output information about estimation and method used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inputs</code></td>
+<td>
+<p>A list with all input arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outputs</code></td>
+<td>
+<p>A list with additional information. The most important outputs
+are:
+</p>
+
+<ul>
+<li> <p><code>npar</code>: number of parameters.
+</p>
+</li>
+<li> <p><code>n</code>: sample size
+</p>
+</li>
+<li> <p><code>Stde_method</code>: standard error computation method.
+</p>
+</li>
+<li> <p><code>b_lenght</code>: a list with the number of regression parameters.
+</p>
+</li>
+<li> <p><code>design_matrix</code>: a list with the <code class="reqn">\mathbf{X}</code> matrix
+for each parameter, the response values (called <code>y</code>) and
+the censorship matrix (called <code>status</code>). See the Details
+section for further information.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+
+<ul>
+<li>
+<p> The following generic functions can be used with a <code>maxlogL</code>
+object: <code>summary, print, logLik, AIC</code>.
+</p>
+</li>
+<li>
+<p> Noncentrality parameters must be named as <code>ncp</code> in the
+distribution.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Jaime Mosquera Gutiérrez, <a href="mailto:jmosquerag@unal.edu.co">jmosquerag@unal.edu.co</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Nelder JA, Mead R (1965).
+“A Simplex Method for Function Minimization.”
+<em>The Computer Journal</em>, <b>7</b>(4), 308–313.
+ISSN 0010-4620, <a href="https://doi.org/10.1093/comjnl/7.4.308">doi:10.1093/comjnl/7.4.308</a>, <a href="https://academic.oup.com/comjnl/article-lookup/doi/10.1093/comjnl/7.4.308">https://academic.oup.com/comjnl/article-lookup/doi/10.1093/comjnl/7.4.308</a>.
+</p>
+<p>Fox PA, Hall AP, Schryer NL (1978).
+“The PORT Mathematical Subroutine Library.”
+<em>ACM Transactions on Mathematical Software</em>, <b>4</b>(2), 104–126.
+ISSN 00983500, <a href="https://doi.org/10.1145/355780.355783">doi:10.1145/355780.355783</a>, <a href="https://dl.acm.org/doi/10.1145/355780.355783">https://dl.acm.org/doi/10.1145/355780.355783</a>.
+</p>
+<p>Nash JC (1979).
+<em>Compact Numerical Methods for Computers. Linear Algebra and Function Minimisation</em>, 2nd Edition edition.
+Adam Hilger, Bristol.
+</p>
+<p>Dennis JE, Gay DM, Walsh RE (1981).
+“An Adaptive Nonlinear Least-Squares Algorithm.”
+<em>ACM Transactions on Mathematical Software</em>, <b>7</b>(3), 348–368.
+ISSN 00983500, <a href="https://doi.org/10.1145/355958.355965">doi:10.1145/355958.355965</a>, <a href="https://dl.acm.org/doi/10.1145/355958.355965">https://dl.acm.org/doi/10.1145/355958.355965</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary.maxlogL</code>, <code>optim</code>, <code>nlminb</code>,
+<code>DEoptim</code>, <code>DEoptim.control</code>,
+<code>maxlogL</code>, <code>bootstrap_maxlogL</code>
+</p>
+<p>Other maxlogL: 
+<code>hazard_fun()</code>,
+<code>maxlogL()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(EstimationTools)
+
+#--------------------------------------------------------------------------------
+# Example 1: Estimation in simulated normal distribution
+n &lt;- 1000
+x &lt;- runif(n = n, -5, 6)
+y &lt;- rnorm(n = n, mean = -2 + 3 * x, sd = exp(1 + 0.3* x))
+norm_data &lt;- data.frame(y = y, x = x)
+
+# It does not matter the order of distribution parameters
+formulas &lt;- list(sd.fo = ~ x, mean.fo = ~ x)
+support &lt;- list(interval = c(-Inf, Inf), type = 'continuous')
+
+norm_mod &lt;- maxlogLreg(formulas, y_dist = y ~ dnorm, support = support,
+                       data = norm_data,
+                       link = list(over = "sd", fun = "log_link"))
+summary(norm_mod)
+
+
+#--------------------------------------------------------------------------------
+# Example 2: Fitting with censorship
+# (data from https://www.itl.nist.gov/div898/handbook/apr/section4/apr413.htm)
+
+failures &lt;- c(55, 187, 216, 240, 244, 335, 361, 373, 375, 386)
+fails &lt;- c(failures, rep(500, 10))
+status &lt;- c(rep(1, length(failures)), rep(0, 10))
+Wei_data &lt;- data.frame(fails = fails, status = status)
+
+# Formulas with linear predictors
+formulas &lt;- list(scale.fo=~1, shape.fo=~1)
+support &lt;- list(interval = c(0, Inf), type = 'continuous')
+
+# Bounds for optimization. Upper bound set with default values (Inf)
+start &lt;- list(
+  scale = list(Intercept = 100),
+  shape = list(Intercept = 10)
+)
+lower &lt;- list(
+  scale = list(Intercept = 0),
+  shape = list(Intercept = 0)
+)
+
+mod_weibull &lt;- maxlogLreg(formulas, y_dist = Surv(fails, status) ~ dweibull,
+                          support = c(0, Inf), start = start,
+                          lower = lower, data = Wei_data)
+summary(mod_weibull)
+
+
+#--------------------------------------------------------------------------------
+
+</code></pre>
+
+
+</div>

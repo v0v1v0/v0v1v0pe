@@ -1,0 +1,515 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams2moodle</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Exams in Moodle XML Format</h2>
+
+<h3>Description</h3>
+
+<p>Automatic generation of exams in Moodle XML format.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  exams2moodle(file, n = 1L, nsamp = NULL, dir = ".",
+    name = NULL, quiet = TRUE, edir = NULL,
+    tdir = NULL, sdir = NULL, verbose = FALSE, rds = FALSE,
+    resolution = 100, width = 4, height = 4, svg = FALSE, encoding = "UTF-8",
+    iname = TRUE, stitle = NULL,
+    testid = FALSE, zip = FALSE, num = NULL, mchoice = NULL,
+    schoice = mchoice, string = NULL, cloze = NULL,
+    points = NULL, rule = NULL, pluginfile = TRUE, forcedownload = FALSE,
+    converter = "pandoc-mathjax", envir = NULL, engine = NULL,
+    table = "table_shade", css = NULL, ...)
+
+  make_question_moodle(name = NULL, solution = TRUE,
+    shuffle = FALSE, penalty = 0, answernumbering = "abc",
+    usecase = FALSE, cloze_mchoice_display = NULL, cloze_schoice_display = NULL,
+    truefalse = c("True", "False"), enumerate = FALSE, abstention = NULL,
+    eval = list(partial = TRUE, negative = FALSE, rule = "false2"),
+    essay = NULL, numwidth = NULL, stringwidth = NULL,
+    css = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamp</code></td>
+<td>
+<p>integer. The number(s) of exercise files sampled from each
+list element of <code>file</code>. Sampling without replacement is used
+if possible. (Only if some element of <code>nsamp</code> is larger than
+the length of the corresponding element in <code>file</code>, sampling
+with replacement is used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. The default is the current working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting exercises and ZIP file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>logical. Should output be suppressed when calling
+<code>xweave</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edir</code></td>
+<td>
+<p>character specifying the path of the directory (along with its
+sub-directories) in which the files in <code>file</code> are stored
+(see also <code>xexams</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdir</code></td>
+<td>
+<p>character specifying a temporary directory, by default
+this is chosen via <code>tempfile</code>. Note that this
+is cleaned up (i.e., existing files are deleted) and only certain
+temporary files are preserved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdir</code></td>
+<td>
+<p>character specifying a directory for storing supplements, by
+default this is chosen via <code>tempfile</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical. Should information on progress of exam generation
+be reported?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rds</code></td>
+<td>
+<p>logical indicating whether the return list should also be
+saved as an RDS data file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution, width, height</code></td>
+<td>
+<p>numeric. Options for rendering PNG (or SVG)
+graphics passed to <code>xweave</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>svg</code></td>
+<td>
+<p>logical. Should graphics be rendered in SVG or PNG (default)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>character, ignored. The encoding is always assumed to be UTF-8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>argument passed to <code>xweave</code> (which passes
+it to <code>knit</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>engine</code></td>
+<td>
+<p>argument passed to <code>xweave</code> indicating whether
+<code>"Sweave"</code> (default) or <code>"knitr"</code> should be used for rendering Rnw exercises.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>table</code></td>
+<td>
+<p>character or logical. Control the style for tables in an exercise
+via a custom class: <code>"table_shade"</code> (equivalent to <code>table = TRUE</code>),
+<code>"table_rule"</code>, and <code>"table_grid"</code> being provided. See also the details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>css</code></td>
+<td>
+<p>character. A character string (or vector) containing the path(s) to
+CSS style file(s). Alternatively, a string (or vector) with a <code>&lt;style&gt;</code>
+tag to be included in every exercise. This is used internally for the <code>table</code>
+styles above, see also the details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iname</code></td>
+<td>
+<p>logical. Should the exam <code>name</code> be included in the path in the <code>&lt;category&gt;</code>
+tag in the final XML file? This option may be useful when questions should be added to
+certain already existing question banks, i.e. <code>iname = TRUE</code> will include the exam
+<code>name</code> by <code>$course$/ExamName/</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stitle</code></td>
+<td>
+<p>character. For the questions specified in argument <code>file</code>, additional section
+titles may be set. The section titles will then be added to the <code>&lt;category&gt;</code>
+tag in the final XML file (see also argument <code>iname</code>), i.e. the section name
+for each question will be written to <code>$course$/ExamName/SectionName</code>. Note that section
+names may also be provided in the <code>\exsection{}</code> tag in the exercise file of the
+question. However, section names that are specified in <code>stitle</code> will overwrite
+<code>\exsection{}</code> tags. <code>stitle</code> may also include <code>NA</code>, e.g.
+<code>stitle = c("Exercise 1", NA, "Exercise 3")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testid</code></td>
+<td>
+<p>logical. Should an unique test id be added to the exam <code>name</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zip</code></td>
+<td>
+<p>logical. Should the resulting XML file be zipped?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num</code></td>
+<td>
+<p>function or named list applied to numerical (i.e., <code>num</code>) questions.
+If <code>num</code> is a function, this will be used to set up the question XML code.
+If <code>num</code> is a list, such a function is generated on the fly via <code>make_question_moodle</code>
+using the arguments in the list. For example, <code>num = list(solution = FALSE)</code>
+can be used to suppress embedding the solution text in the XML.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mchoice, schoice, string, cloze</code></td>
+<td>
+<p>function or named list applied to multiple choice, 
+single choice, string, and cloze questions (i.e., type <code>mchoice</code>, <code>schoice</code>,
+<code>string</code>, and <code>cloze</code>), respectively. For more guidance see argument <code>num</code>
+and the details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>integer. How many points should be assigned to each exercise? Note that this
+argument overules any exercise points that are provided within an <code>"\expoints{}"</code> tag
+in the exercise file. The vector of points supplied is expanded to the number of exercises in
+the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+<p>character specifying which rule to use for negative partial credits. See function
+<code>exams_eval</code>. Note that Moodle is somewhat restrictive about the number of
+multiple-choice alternatives when using partial credits (see below for details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pluginfile</code></td>
+<td>
+<p>logical. Should supplements be included in the Moodle XML file via Moodle's
+Pluginfile mechanism? This is the default but may not work with older versions of Moodle (&lt;2.5).
+If set to <code>FALSE</code> supplements like graphics and data are included as data URIs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forcedownload</code></td>
+<td>
+<p>logical. Should all supplementary links be forced to download when clicked
+(as opposed to opening in the browser)? Only supported if <code>pluginfile = TRUE</code>.    
+If <code>forcedownload = FALSE</code> the behavior typically depends on the browser,
+user settings, and file type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solution</code></td>
+<td>
+<p>logical. Should the question solution, if available, be added in the question
+XML?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shuffle</code></td>
+<td>
+<p>For <code>mchoice</code> and <code>schoice</code> exercises, if set to <code>TRUE</code> will
+force Moodle to additionally shuffle the provided answer list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalty</code></td>
+<td>
+<p>numeric. Specifies the penalty tag for a question.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>answernumbering</code></td>
+<td>
+<p>character. Specifies how choice questions should be numbered,
+allowed values are: <code>"abc"</code> (default), <code>"ABCD"</code>, <code>"123"</code> or <code>"none"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>usecase</code></td>
+<td>
+<p>logical. Should string questions be case sensitive or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cloze_mchoice_display, cloze_schoice_display</code></td>
+<td>
+<p>character. In <code>cloze</code> questions,
+the user may set the visual appearance of choice questions. If <code>NULL</code> (default),
+<code>"MULTIRESPONSE"</code> (column of checkboxes) is used for <code>mchoice</code> questions and
+<code>"MULTICHOICE"</code> (drop-down menu) for <code>schoice</code> questions unless math markup is present in the question list.
+The latter is not rendered in drop-down menus and hence <code>"MULTICHOICE_V"</code> (radio buttons, vertical column) are used.
+Other options include a horizontal row of either checkboxes (<code>"MULTIRESPONSE_H"</code>) or
+radio buttons (<code>"MULTICHOICE_H"</code>), respectively. Shuffled versions of all display types are also
+available (since Moodle 3.0) by appending an "S", e.g., <code>"MULTICHOICE_S"</code> or
+<code>"MULTICHOICE_VS"</code> etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truefalse</code></td>
+<td>
+<p>character of length 2. For single choice answers in <code>cloze</code> questions,
+the user may specify the possible options shown.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>enumerate</code></td>
+<td>
+<p>logical. In <code>cloze</code> questions, if set to <code>TRUE</code>, the answerlist and
+solutionlist will be enumerated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>abstention</code></td>
+<td>
+<p>character or logical. Should an explicit abstention option be added
+in single/multiple choice exercises? The character text specified is used for an
+extra button in Moodle which (when selected) always leads to zero points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eval</code></td>
+<td>
+<p>named list, specifies the settings for the evaluation policy, see function
+<code>exams_eval</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>essay</code></td>
+<td>
+<p>logical. Should <code>string</code> questions be rendered into Moodle <code>shortanswer</code>
+or <code>essay</code> questions? The default is to use <code>shortanswer</code> unless either
+<code>essay=TRUE</code> or the exercise's metainformation is set to <code>essay</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numwidth, stringwidth</code></td>
+<td>
+<p>logical, numeric, or character. Should the width of
+all <code>num</code> or <code>string</code> sub-items, respectively, in a <code>cloze</code> be fixed to
+the same width? This can be accomplished by adding a wrong solution with a suitable
+length to all sub-items in Moodle XML. The default (<code>NULL</code> or equivalently
+<code>FALSE</code>) is not to do so but let Moodle decide the width of each cell based
+on the respective correct solution. Alternatively, the arguments can be set to
+<code>TRUE</code> (then the maximum width from the correct solutions is used), an
+integer (indicating the maximum width) or a character (like <code>"1111111"</code>,
+to be used as the wrong solution). Both arguments can also be set through
+exextra tags in each of the exercises' meta-information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converter, ...</code></td>
+<td>
+<p>arguments passed on to <code>make_exercise_transform_html</code>.
+The default for <code>converter</code> is <code>"pandoc-mathjax"</code> which assumes that the quiz
+is imported in a Moodle site with MathJax plugin activated (which is the default setting in
+Moodle). For using MathML instead of MathJax the <code>converter</code> can be set to
+<code>NULL</code> or <code>"pandoc-mathml"</code> etc. For details see Zeileis (2019).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>exams2moodle</code> produces an XML file that may be uploaded into Moodle. It proceeds by (1)
+calling <code>xweave</code> on each exercise, (2) reading the resulting Markdown or
+LaTeX text, (3) transforming the text to HTML, and (4) embedding the HTML code in a Moodle XML
+file for exams/quizzes.
+</p>
+<p>For steps (1) and (2) the standard drivers in <code>xexams</code> are used. In step (3), a suitable
+transformation function is set up on the fly using <code>make_exercise_transform_html</code>, see also
+the details section in <code>exams2html</code>.
+</p>
+<p>For step (4), the function will cycle through all questions and exams to generate the final Moodle
+XML file. The structure of the resulting XML file is such that one category
+will be set for the exam/quiz using the exam/quiz <code>name</code> (or this category may be
+suppressed (i.e., not included in the XML) by setting <code>iname = FALSE</code>), followed by one
+category/section for each question, while the replicates of each question will be included in the
+corresponding category/section. Note that category/section names may also be provided in the
+<code>exsection</code> tag in the exercise files, or within argument <code>stitle</code> in
+<code>exams2moodle</code>. This may be useful when questions should automatically be added to already
+existing Moodle question banks. (See also the argument descriptions above.)
+</p>
+<p>The XML code for each question type (numeric, multiple-choice, etc.) is set up by separate functions
+that can be specified through the separate arguments <code>num</code>, <code>mchoice</code>, <code>schoice</code>,
+<code>string</code>, and <code>cloze</code> in <code>exams2moodle</code>. While it is possible to pass a
+suitable function to these arguments, it is more common to set suitable functions up on the fly
+using <code>make_question_moodle</code>. In this case, the arguments <code>num</code>, <code>mchoice</code>,
+<code>schoice</code>, <code>string</code> and <code>cloze</code> can be lists of arguments to pass on to
+<code>make_question_moodle</code>. For example, to suppress numbering the multiple-choice answer items
+with a/b/c/... one has to specify <code>mchoice = list(answernumbering = "none")</code> (which, by default,
+also gets passed on to <code>schoice</code>).
+</p>
+<p>When using partial credits for multiple-choice exercises, only certain numbers of alternatives
+are supported in Moodle. This is because the Moodle XML format just supports certain percentages
+which can be added or subtracted from the score of an item. Therefore, it may not be possible
+to use partial credits for certain combinations of true and false answer alternatives when the
+overall number of alternatives is greater than 10.
+</p>
+<p>When specifying cloze exercises, two approaches are possible: Either a <code>answerlist</code> with
+all questions is provided within the <code>question</code> or, alternatively, the answer fields can
+be placed anywhere in the <code>question</code> text. For the latter, the strings <code>##ANSWER1##</code>,
+<code>##ANSWER2##</code>, etc., have to be used, see the exercises <code>"boxhist2"</code> and
+<code>"fourfold2"</code> for illustration and Appendix C in Zeileis et al. (2014) for further
+details.
+</p>
+<p>To fix the width of numeric answer fields withing cloze exercises (in order not to convey any
+clues about the length of the correct solution), the <code>exextra[numwidth]</code> metainformation
+command can be used in the exercise file. For example, it can be set to
+<code>\exextra[numwidth,logical]{TRUE}</code>, <code>\exextra[numwidth,numeric]{5}</code>, or
+<code>\exextra[numwidth,character]{100.0}</code>.
+</p>
+<p>In order to generate open-ended text questions in Moodle one can use <code>string</code> questions and
+then additionally set <code>exstringtype</code> to <code>essay</code> and/or <code>file</code>. See the <code>"essayreg"</code>
+question for a worked example. On top of the basic <code>exstringtype</code> one can make further
+Moodle-specific customizations via some <code>exextra</code> options, namely:
+</p>
+
+<ul>
+<li> <p><code>essay</code>: logical. Enables the essay function.
+</p>
+</li>
+<li> <p><code>format</code>: character. Type of text field (one of: <code>plain</code>, <code>editor</code>, editorfilepicker monospaced noinline)
+</p>
+</li>
+<li> <p><code>required</code>: logical. Whether an answer is required.
+</p>
+</li>
+<li> <p><code>attachments</code>: numeric. How many attachments can be uploaded.
+</p>
+</li>
+<li> <p><code>attachmentsrequired</code>: numeric. The number of required attachments.
+</p>
+</li>
+</ul>
+<p>To control the style used for rendering the HTML in Moodle exercises, it is possible to
+include some custom CSS (cascading style sheets) code via the argument <code>css</code>. In
+particular, the <code>exams2moodle</code> function leverages this for table formatting. It
+includes its own CSS for this purpose if one of the classes <code>"table_shade"</code> (rows
+highlighted with different shades of gray), <code>"table_rule"</code> (with
+horizontal lines), or <code>"table_grid"</code> (with both horizontal and vertical lines) is used.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>exams2moodle</code> returns a list of exams as generated by <code>xexams</code>.
+</p>
+<p><code>make_question_moodle</code> returns a function that generates the XML code
+for the question in Moodle's XML standard.
+</p>
+
+
+<h3>References</h3>
+
+<p>Dougiamas M, et al. (2022). <em>Moodle, Version 4.0</em>.
+<a href="https://moodle.org/">https://moodle.org/</a>.
+</p>
+<p>MoodleDocs (2022). <em>Moodle XML Format</em>.
+<a href="https://docs.moodle.org/en/Moodle_XML">https://docs.moodle.org/en/Moodle_XML</a>
+</p>
+<p>Zeileis A, Umlauf N, Leisch F (2014).
+Flexible Generation of E-Learning Exams in R: Moodle Quizzes, OLAT Assessments, and Beyond.
+<em>Journal of Statistical Software</em>, <b>58</b>(1), 1–36.
+<a href="https://doi.org/10.18637/jss.v058.i01">doi:10.18637/jss.v058.i01</a>.
+</p>
+<p>Zeileis A (2019).
+<em>Mathematical Notation in Online R/exams</em>.
+<a href="https://www.R-exams.org/tutorials/math/">https://www.R-exams.org/tutorials/math/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>xexams</code>,
+<code>ttm</code>,
+<code>tth</code>,
+<code>tex2image</code>,
+<code>make_exercise_transform_html</code>,
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+library("exams")
+options(device.ask.default = FALSE)
+
+## define an exams (= list of exercises)
+myexam &lt;- list(
+  "boxplots.Rmd",
+  c("tstat.Rmd", "ttest.Rmd", "confint.Rmd"),
+  c("regression.Rmd", "anova.Rmd"),
+  c("scatterplot.Rmd", "boxhist.Rmd"),
+  "relfreq.Rmd"
+)
+
+## output directory
+dir.create(mydir &lt;- tempfile())
+
+## generate moodle quiz in temporary directory
+## using a few customization options
+exams2moodle(myexam, n = 3, dir = mydir,
+  num = list(solution = FALSE),
+  mchoice = list(shuffle = TRUE)
+)
+dir(mydir)
+</code></pre>
+
+
+</div>

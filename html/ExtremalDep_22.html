@@ -1,0 +1,184 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fGEV</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting of the Generalized Extreme Value Distribution</h2>
+
+<h3>Description</h3>
+
+<p>Maximum-likelihood and Metropolis-Hastings algorithm for the estimation of the generalized extreme value distribution.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fGEV(data, par.start, method="Frequentist", u, cov, 
+     optim.method="BFGS", optim.trace=0, sig0, nsim)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A vector representing the data, which may contain missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par.start</code></td>
+<td>
+<p>A vector of length <code class="reqn">3</code> giving the starting values for the parameters to be estimated. If missing, moment estimates are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character string indicating whether the estimation is done following a <code>"Frequentist"</code> or <code>"Bayesian"</code> approach.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>A real indicating a high threshold. If supplied a threshld exceedance approach is taken and computations use the censored likelihood. If missing, a block maxima approach is taken and the regular GEV likelihood is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov</code></td>
+<td>
+<p>A matrix of covariates to define a linear model for the location parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.method</code></td>
+<td>
+<p>The optimization method to be used. Required when <code>method="Frequentist"</code>. See <code>optim</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.trace</code></td>
+<td>
+<p>A non-negative interger tracing the progress of the optimization. Required when <code>method="Frequentist"</code>. See <code>optim</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig0</code></td>
+<td>
+<p>Positive reals representing the initial value for the scaling parameter of the multivariate normal proposal distribution for both margins. Required when <code>method="Bayesian"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>An integer indicating the number of iterations in the Metropolis-Hastings algorithm. Required when <code>method="Bayesian"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When <code>cov</code> is a vector of ones then the location parameter <code class="reqn">\mu</code> is constant. On the contrary, when <code>cov</code> is provided, it represents the design matrix for the linear model on <code class="reqn">\mu</code> (the number of columns in the matrix indicates the number of linear predictors).
+When <code>u=NULL</code> or missing, the likelihood function is given by </p>
+<p style="text-align: center;"><code class="reqn">\prod_{i=1}^{n}g(x_i; \mu, \sigma, \xi)</code>
+</p>
+<p> where <code class="reqn">g(\cdot;\mu,\sigma,\xi)</code> represents the GEV pdf, whereas when a threshold value is set the likelihood is given by </p>
+<p style="text-align: center;"><code class="reqn">k_n \log\left( G(u;\mu,\sigma,\xi) \right) \times \prod_{i=1}^n \frac{\partial}{\partial x}G(x;\mu,\sigma,\xi)|_{x=x_i} </code>
+</p>
+<p> where <code class="reqn">G(\cdot;\mu,\sigma,\xi)</code> is the GEV cdf and <code class="reqn">k_n</code> is the empirical estimate of the probability of being greater than the threshold <code>u</code>. 
+</p>
+<p>Note that the case <code class="reqn">\xi&lt;=0</code> is not yet considered when <code>u</code> is considered.
+</p>
+<p>The choice <code>method="Bayesian"</code> applies a random walk Metropolis-Hastings algorithm as described in Section 3.1 and Step 1 and 2 of Algorithm 1 from Beranger et al. (2021). The algorithm may restart for several reasons including if the proposed value of the parameters changes too much from the current value (see Garthwaite et al. (2016) for more details.)
+</p>
+<p>The choice <code>method="Frequentist"</code> uses the <code>optim</code> function to find the maximum likelihood estimator.
+</p>
+
+
+<h3>Value</h3>
+
+<p>When <code>method="Frequentist"</code> the routine returns a list including the parameter estimates (<code>est</code>) and associated variance-covariance matrix (<code>varcov</code>) and standard errors (<code>stderr</code>).
+When <code>method="Bayesian"</code> the routine returns a list including
+</p>
+
+<dl>
+<dt>param_post:</dt>
+<dd>
+<p>the parameter posterior sample;</p>
+</dd>
+<dt>accepted:</dt>
+<dd>
+<p>a binary vector indicating which proposal was accepted;</p>
+</dd> 
+<dt>straight.reject:</dt>
+<dd>
+<p>a binary vector indicating which proposal were rejected straight away given that the proposal is a multivariate normal and there are conditions on the parameter values;</p>
+</dd>
+<dt>nsim:</dt>
+<dd>
+<p>the number of simulations in the algorithm;</p>
+</dd>
+<dt>sig.vec:</dt>
+<dd>
+<p>the vector of updated scaling parameter in the multivariate normal porposal distribution at each iteration;</p>
+</dd>
+<dt>sig.restart:</dt>
+<dd>
+<p>the value of the scaling parameter in the multivariate normal porposal distribution when the algorithm needs to restart;</p>
+</dd>
+<dt>acc.vec:</dt>
+<dd>
+<p>a vector of acceptance probabilities at each iteration.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Simone Padoan, <a href="mailto:simone.padoan@unibocconi.it">simone.padoan@unibocconi.it</a>,
+<a href="https://faculty.unibocconi.it/simonepadoan/">https://faculty.unibocconi.it/simonepadoan/</a>;
+Boris Beranger, <a href="mailto:borisberanger@gmail.com">borisberanger@gmail.com</a>
+<a href="https://www.borisberanger.com">https://www.borisberanger.com</a>;
+</p>
+
+
+<h3>References</h3>
+
+<p>Beranger, B., Padoan, S. A. and Sisson, S. A. (2021).
+Estimation and uncertainty quantification for extreme quantile regions.
+<em>Extremes</em>, <b>24</b>, 349-375.
+</p>
+<p>Garthwaite, P. H., Fan, Y. and Sisson S. A. (2016). 
+Adaptive optimal scaling of Metropolis-Hastings algorithms using the Robbins-Monro process. 
+<em>Communications in Statistics - Theory and Methods</em>, <b>45</b>(17), 5098-5111.
+</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>dGEV</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##################################################
+### Example - Pollution levels in Milan, Italy ###
+##################################################
+
+data(MilanPollution)
+
+# Frequentist estimation
+fit &lt;- fGEV(Milan.winter$PM10)
+fit$est
+
+# Bayesian estimation with high threshold
+cov &lt;- cbind(rep(1,nrow(Milan.winter)), Milan.winter$MaxTemp, 
+             Milan.winter$MaxTemp^2)
+u &lt;- quantile(Milan.winter$PM10, prob=0.9, type=3, na.rm=TRUE)
+
+  fit2 &lt;- fGEV(data=Milan.winter$PM10, par.start=c(50,0,0,20,1), 
+               method="Bayesian", u=u, cov=cov, sig0=0.1, nsim=5e+4) 
+
+</code></pre>
+
+
+</div>

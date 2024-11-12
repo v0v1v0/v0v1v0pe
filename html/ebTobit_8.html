@@ -1,0 +1,83 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>likMat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Helper Function - generate likelihood matrix</h2>
+
+<h3>Description</h3>
+
+<p>Compute a matrix L whose entries are L[i,k] = P(L_i, R_i | theta = t_k) for
+observations (L_i, R_i) and grid of means t_k.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">likMat(L, R, gr, s1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>n x p matrix of lower bounds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>n x p matrix of upper bounds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gr</code></td>
+<td>
+<p>m x p matrix of candidate means</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s1</code></td>
+<td>
+<p>n x p matrix of standard deviations</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the n x m likelihood matrix under partial interval censoring
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># set-up
+n = 100; m = 50; p = 5
+gr = matrix(stats::rnorm(m*p), m, p)
+L = R = matrix(stats::rnorm(n*p), n, p)
+s1 = matrix(1, n, p)
+missing.idx = sample.int(n = n*p, size = p*p)
+L[missing.idx] = L[missing.idx] - stats::runif(p, 0, 1)
+
+# R solution
+lik = matrix(nrow = n, ncol = m)
+for (i in 1:n) {
+    for(k in 1:m) {
+        lik[i,k] = prod(ifelse(
+            L[i,] == R[i,],
+            stats::dnorm(L[i,]-gr[k,], sd = s1[i,]),
+            stats::pnorm(R[i,]-gr[k,], sd = s1[i,]) - stats::pnorm(L[i,]-gr[k,], sd = s1[i,])
+        ))
+    }
+}
+
+# Compare R to RcppParallel method
+all.equal(lik, likMat(L, R, gr, s1))
+</code></pre>
+
+
+</div>

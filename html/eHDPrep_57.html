@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>semantic_enrichment</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Semantic enrichment</h2>
+
+<h3>Description</h3>
+
+<p>Enriches a dataset with additional (meta-)variables derived from the semantic
+commonalities between variables (columns).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">semantic_enrichment(
+  data,
+  ontology,
+  mapping_file,
+  mode = "in",
+  root,
+  label_attr = "name",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Required. Numeric data frame or matrix containing variables present in
+the mapping file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ontology</code></td>
+<td>
+<p>Required. One of: </p>
+<ul>
+<li>
+<p> Path to ontology edge table in .csv format (String)</p>
+</li>
+<li>
+<p> Edge
+table in data frame format </p>
+</li>
+<li>
+<p> Graph containing the chosen ontology -
+must be in <code>tidygraph</code> format or coercible
+to this format.</p>
+</li>
+</ul>
+<p>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mapping_file</code></td>
+<td>
+<p>Required. Path to csv file or data frame containing mapping
+information. Should contain two columns only. The first column should
+contain column names, present in the data frame. The second column should
+contain the name of entities present in the ontology object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>Character constant specifying the directionality of the edges.
+One of: "in" or "out".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>root</code></td>
+<td>
+<p>Required. Name of root node identifier in column 1 to calculate node depth
+from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_attr</code></td>
+<td>
+<p>Node attribute containing labels used for column names when
+creating metavariable aggregations. Default: "name"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments to pass to <code>read_csv</code> when reading 'mapping_file'.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Semantic enrichment generates meta-variables from the aggregation of data
+variables (columns) via their most informative common ancestor. Meta-variables are
+labelled using the syntax: <code>MV_[label_attr]_[Aggregation function]</code>. The
+data variables are aggregated row-wise by their maximum, minimum, mean, sum,
+and product. Meta-variables with zero entropy (no information) are not
+appended to the data.
+See the "Semantic Enrichment" section in the vignette of 'eHDPrep' for more
+information: <code>vignette("Introduction_to_eHDPrep", package = "eHDPrep")</code>
+</p>
+
+
+<h3>Value</h3>
+
+<p>Semantically enriched dataset
+</p>
+
+
+<h3>Note</h3>
+
+<p>A warning may be shown regarding the '.add' argument being deprecated, this is
+believed to be an issue with 'tidygraph' which may be resolved in a future release: 
+&lt;https://github.com/thomasp85/tidygraph/issues/131&gt;. Another warning may be shown regarding the 'neimode' argument being deprecated, this is
+believed to be an issue with 'tidygraph' which may be resolved in a future release: 
+&lt;https://github.com/thomasp85/tidygraph/issues/156&gt;. These warning messages are not believed to have
+an effect on the functionality of 'eHDPrep'.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other high level functionality: 
+<code>apply_quality_ctrl()</code>,
+<code>assess_quality()</code>,
+<code>review_quality_ctrl()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">require(magrittr)
+require(dplyr)
+data(example_ontology)
+data(example_mapping_file)
+data(example_data)
+
+#' # define datatypes
+tibble::tribble(~"var", ~"datatype",
+"patient_id", "id",
+"tumoursize", "numeric",
+"t_stage", "ordinal_tstage",
+"n_stage", "ordinal_nstage",
+"diabetes_merged", "character",
+"hypertension", "factor",
+"rural_urban", "factor",
+"marital_status", "factor",
+"SNP_a", "genotype",
+"SNP_b", "genotype",
+"free_text", "freetext") -&gt; data_types
+
+# create post-QC data
+example_data %&gt;%
+  merge_cols(diabetes_type, diabetes, "diabetes_merged", rm_in_vars = TRUE) %&gt;%
+  apply_quality_ctrl(patient_id, data_types,
+                     bin_cats =c("No" = "Yes", "rural" = "urban"),
+                     to_numeric_matrix = TRUE) %&gt;%
+                     suppressMessages() -&gt;
+                     post_qc_data
+
+# minimal example on first four coloums of example data:
+semantic_enrichment(post_qc_data[1:10,1:4],
+                    dplyr::slice(example_ontology, 1:7,24),
+                    example_mapping_file[1:3,], root = "root") -&gt; res
+# see Note section of documentation for information on possible warnings.
+
+# summary of result:
+tibble::glimpse(res)
+
+
+# full example:
+ res &lt;- semantic_enrichment(post_qc_data, example_ontology,
+ example_mapping_file, root = "root")
+ # see Note section of documentation for information on possible warnings.
+
+</code></pre>
+
+
+</div>

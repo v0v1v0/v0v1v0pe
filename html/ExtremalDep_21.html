@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fExtDepSpat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting of a max-stable process</h2>
+
+<h3>Description</h3>
+
+<p>This function uses the Stephenson-Tawn likelihood to estimate parameters of max-stable models.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fExtDepSpat(model, z, sites, hit, jw, thresh, DoF, range, smooth, 
+            alpha, par0, acov1, acov2, parallel, ncores, args1, args2, 
+            seed=123, method = "BFGS", sandwich=TRUE,
+            control = list(trace=1, maxit=50, REPORT=1, reltol=0.0001))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A character string indicating the max-stable model, currently extremal-t (<code>"ET"</code>) and extremal skew-t (<code>"EST"</code>) only available. Note that the Schlather model can be obtained as a special case by specifying the extremal-t model with <code>DoF=1</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>A <code class="reqn">(n \times d)</code> matrix containing <code class="reqn">n</code> observations at <code class="reqn">d</code> locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sites</code></td>
+<td>
+<p>A <code class="reqn">(d \times 2)</code> matrix corresponding to the coordinates of locations where the processes is simulated. Each row corresponds to a location.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hit</code></td>
+<td>
+<p>A <code class="reqn">(n \times d)</code> matrix containing the hitting scenarios for each observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jw</code></td>
+<td>
+<p>An integer between <code class="reqn">2</code> and <code class="reqn">d</code>, indicating the tuples considered in the composite likelihood. If <code>jw=d</code> the full likelihood is considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thresh</code></td>
+<td>
+<p>A positive real indicating the threshold value for pairwise distances. See <code>details</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DoF</code></td>
+<td>
+<p>A positive real indicating a fixed value of the degree of freedom of the extremal-t and extremal skew-t models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>range</code></td>
+<td>
+<p>A positive real indicating a fixed value of the range parameter for the power exponential correlation function (only correlation function currently available).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth</code></td>
+<td>
+<p>A positive real in <code class="reqn">(0,2]</code> indicating a fixed value of the smoothness parameter for the power exponential correlation function (only correlation function currently available).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>A vector of length <code class="reqn">3</code> indicating fixed values of the skewness parameters <code class="reqn">\alpha_0</code>, <code class="reqn">\alpha_1</code> and <code class="reqn">\alpha_2</code> for the extremal skew-t model. If some components are <code>NA</code>, then the corresponding parameter will be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par0</code></td>
+<td>
+<p>A vector of initial value of the parameter vector, in order the degree of freedom <code class="reqn">\nu</code>, the range <code class="reqn">r</code>, the smoothness <code class="reqn">\eta</code> and the skewness parameters <code class="reqn">\alpha_0</code>, <code class="reqn">\alpha_1</code>. Its length depends on the model and the number of fixed parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>acov1, acov2</code></td>
+<td>
+<p>Vectors of length <code class="reqn">d</code> representing covariates to model the skewness parameter of the extremal skew-t model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>A logical value; if <code>TRUE</code> parallel computing is done.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+<p>An integer indicating the number of cores considered in the parallel socket cluster of type <code>'PSOCK'</code>, based on the <code>makeCluster</code> routine from the <code>parallel</code> package. Required if <code>parallel=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args1, args2</code></td>
+<td>
+<p>Lists specifying details about the Monte Carlo simulation schereme to compute multivariate CDFs. See <code>details</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>An integer for reproduciblity in the CDF computations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character string indicating the optimisation method to be used. See <code>optim</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sandwich</code></td>
+<td>
+<p>A logical value; if <code>TRUE</code> the standard errors of the estimates are computed from the Sandwich (Godambe) information matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameter for the optimisation. See <code>optim</code> for more details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This routine follows the methodology developped by Beranger et al. (2021). It uses on the Stephenson-Tawn which relies on the knowledge of time occurrences of each block maxima. Rather than considering all partitions of the set <code class="reqn">\{1, \ldots,d\}</code>, the likelihood is computed using the observed partition. Let <code class="reqn">\Pi = (\pi_1, \ldots, \pi_K)</code> denote the observed partition, then the Stephenson-Tawn likelihood is given by
+</p>
+<p style="text-align: center;"><code class="reqn">L(\theta;z) = \exp \left\{ - V(z;\theta) \right\} \times \prod^{K}_{k=1} - V_{\pi_k}(z;\theta),</code>
+</p>
+<p> where <code class="reqn">V_{\pi}</code> represents the partial derivative(s) of <code class="reqn">V(z;\theta)</code> with respect to <code class="reqn">\pi</code>.
+</p>
+<p>When <code>jw=d</code> the full Stephenson-Tawn likelihood is considered whereas for values lower than <code class="reqn">d</code> a composite likelihood approach is taken. 
+</p>
+<p>The argument <code>thresh</code> is required when the composite likelihood is used. A tuple of size <code>jw</code>, is assigned a weight of one if the maximum pairwise distance between corresponding locations is less that <code>thresh</code> and a weight of zero otherwise.
+</p>
+<p>Arguments <code>args1</code> and <code>args2</code> relate to specifications of the Monte Carlo simulation scheme to compute multivariate CDF evaluations. These should take the form of lists including the minimum and maximum number of simulations used (<code>Nmin</code> and <code>Nmax</code>), the absolute error (<code>eps</code>) and whether the error should be controlled on the log-scale (<code>logeps</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list comprising of the vector of estimated parameters (<code>est</code>), the composite likelihood order (<code>jw</code>), the maximised log-likelihood value (<code>LL</code>). In addition, if <code>sandwich=TRUE</code> the the standard errors from the sandwich information matrix are reported via <code>stderr.sand</code> as well as the TIC for model selection (<code>TIC</code>). Finally, if the composite likelihood is considered, a matrix with all tuples considered with a weight of 1 are reported in <code>cmat</code>. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Simone Padoan, <a href="mailto:simone.padoan@unibocconi.it">simone.padoan@unibocconi.it</a>,
+<a href="https://faculty.unibocconi.it/simonepadoan/">https://faculty.unibocconi.it/simonepadoan/</a>;
+Boris Beranger, <a href="mailto:borisberanger@gmail.com">borisberanger@gmail.com</a>
+<a href="https://www.borisberanger.com">https://www.borisberanger.com</a>;
+</p>
+
+
+<h3>References</h3>
+
+<p>Beranger, B., Stephenson, A. G. and Sisson, S.A. (2021)
+High-dimensional inference using the extremal skew-t process
+<em>Extremes</em>, <b>24</b>, 653-685.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fExtDepSpat</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(14342)
+
+# Simulation of 20 locations
+Ns &lt;- 20
+sites &lt;- matrix(runif(Ns*2)*10-5,nrow=Ns,ncol=2)
+for(i in 1:2) sites[,i] &lt;- sites[,i] - mean(sites[,i])
+
+# Simulation of 50 replicates from the Extremal-t model
+Ny &lt;- 50
+z &lt;- rExtDepSpat(Ny, sites, model="ET", cov.mod="powexp", DoF=1, 
+                 range=3, nugget=0, smooth=1.5, 
+                 control=list(method="exact"))
+                 
+# Fit the extremal-t using the full Stephenson-Tawn likelihood
+args1 &lt;- list(Nmax=50L, Nmin=5L, eps=0.001, logeps=FALSE)
+args2 &lt;- list(Nmax=500L, Nmin=50L, eps=0.001, logeps=TRUE)
+## Not run: 
+fit1 &lt;- fExtDepSpat(model="ET", z=z$vals, sites=sites, hit=z$hits,
+                    par0=c(3,1,1), parallel=TRUE, ncores=6,
+                    args1=args1, args2=args2, control = list(trace=0))
+fit1$est
+
+## End(Not run)
+</code></pre>
+
+
+</div>

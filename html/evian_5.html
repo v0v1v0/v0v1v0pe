@@ -1,0 +1,170 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>evian</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Evidential analysis for genetic data using regression models</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the likelihood intervals for genetic association in a genomic region of interest. Covariates can be accommodated.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">evian(data, bim, xcols = NULL, ycol = NULL, covariateCol = NULL,
+      formula = NULL, robust = FALSE, model='additive', m=200,
+      bse = 5, lolim = NULL, hilim = NULL, kcutoff = c(8,32,100,1000),
+      multiThread = 1, family='gaussian',plinkCC=F)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame includes a column for the response variable, one or multiple columns of genotype data (coded as <code>0, 1, 2,</code> or <code>NA</code>), and optionally columns for covariates. Headers are assumed. If the data is from related individuals, an additional column named <code>'FID'</code> needs to be included to specify the related structure. Using the PLINK toolkit with option <code>--recodeA</code> can produce the file in the required format and is recommended.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bim</code></td>
+<td>
+<p>a data frame with six columns representing chromosome, SNP ID, physical distance, base pair position, effective allele, and reference allele. i.e. data from a file in PLINK binary format (bim). No header is assumed, but the ordering of the columns must follow the standard bim file format.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ycol</code></td>
+<td>
+<p>numeric; column index in the <code>data</code> data frame for the column representing the response variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xcols</code></td>
+<td>
+<p>numeric vector; the column range in the <code>data</code> where genotype information is stored. Note that although a range of X is required, only one SNP at a time is calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariateCol</code></td>
+<td>
+<p>numeric or numeric vector; optional argument specifying which columns represent covariates. If left as <code>NULL</code>, no covariates will be included and the model <code>Y~snp</code> will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>string; this is an alternative way of specifying model rather than using <code>xcols</code> and <code>ycol</code> arguments. This model follows the same format as the <code>glm</code> function (e.g. <code>Y~snp1+age+sex</code>). Note that in the case where multiple SNPs are included, only one SNP will be considered (e.g. given <code>Y~snp1+snp2</code>, the function will consider snp1 as the parameter of interests). The function can automatically identify SNPs with rsID as proper Xs, and would treat all other predictors as covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>robust</code></td>
+<td>
+<p>logical; default <code>FALSE</code>. If <code>TRUE</code>, then a robust adjustment is applied to the likelihood function to account for clustering in the data; See robust_forCluster.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>a string that specifies the mode of inheritance parameterization: <br><code>additive, dominant, recessive,</code> or <code>overdominance</code>. Default <code>additive</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>numeric; the density of the grid at which to compute the standardized likelihood function. A beta grid is defined as the grid of values for the SNP parameter used to
+evaluate the likelihood function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bse</code></td>
+<td>
+<p>numeric; the number of beta standard errors to utilize in constraining the beta grid limits. Beta grid is evaluated at <code class="reqn">\beta</code> +/- <code>bse</code>*s.e.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lolim</code></td>
+<td>
+<p>numeric; the lower limit for the grid or the minimum value of the regression parameter <code class="reqn">\beta</code> used to calculate the likelihood function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hilim</code></td>
+<td>
+<p>numeric; the upper limit for the grid or the maximum value of the regression parameter <code class="reqn">\beta</code> used to calculate the likelihood funciton. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kcutoff</code></td>
+<td>
+<p>numeric or numeric vector; default = <code>c(8,32,100,1000)</code>. The strength of evidence criterion k. The function will calculate the <code>1/k</code> standardized likelihood intervals for each value provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multiThread</code></td>
+<td>
+<p>numeric; number of threads to use for parallel computing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>the link function for <code>glm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plinkCC</code></td>
+<td>
+<p>A boolean type that specifies how case/control are coded. case/control were coded 1/0 if it is FALSE, and were coded 2/1 if TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>evian</code> is the main function called to calculate the <code>1/k</code> likelihood intervals for the additive, dominant, recessive, or overdominance genotypic models. This function calls <code>calculateEvianMLE</code> in parallel to calculate the likelihood for each SNP. The calculation details can be found in <code>calculateEvianMLE</code>.
+</p>
+<p>The input for the <code>data</code> and <code>bim</code> arguments can be obtained from the PLINK files; <code>data</code> is expected to follow PLINK format when run with the <code>--recodeA</code> option and <code>bim</code> can be obtained directly from a PLINK binary format file. Note if covariates are to be included, it is expected that the covariates are appended to the <code>data</code> file with a header for each covariate.
+</p>
+<p>The statistical model can be specified in two ways. Column index can be provided through the <code>xcols</code>, <code>ycol</code>, and <code>covariateCol</code> arguments or through the <code>formula</code> argument, which can accept a formula specified as the <code>formula</code> argument in the R <code>glm</code> function. We recommend using <code>xcols</code>, <code>ycol</code>, and <code>covariateCol</code> arguments in most scenarios as this is relatively easier to input and it works for all the cases that we have considered so far. The alternative <code>formula</code> argument is not able to detect non-rsID variants as parameters of interests, and is only suggested in the scenario where only a single variant is of interest and that its rsID is known in advance. Since the profileLikelihood can only accomendate scalar parameter and thus if multiple rsID variants are inputted through <code>formula</code> option, it will only assume the first one to be parameter of interests.s
+</p>
+<p>Parallel computing is avaliable through the use of the <code>multiThread</code> argument. This parallelization uses the <code>foreach</code> and <code>doMC</code> packages and will typically reduce computation time significantly. Due to this dependency, parallelization is not available on Windows OS as <code>foreach</code> and <code>doMC</code> are not supported on Windows.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function outputs the row-combined the results from <code>calculateEvianMLE</code> for each of the SNPs included in the data/bim files. The exact output for each SNP can be found in the <code>calculateEvianMLE</code> documentation.
+</p>
+
+
+<h3>Note</h3>
+
+<p>When <code>lolim/hilim</code> is NOT defined, then the boundaries of the beta grid will be determined by the default <code>bse=5</code>, or a <code>bse</code> defined by the user. Otherwise, the user can define the exact beta grid boundaries using <code>lolim/hilim</code>.
+</p>
+<p>In some cases the beta grid (using <code>bse</code> or <code>lolim/hilim</code>) may need to be increased substantially (<code>bse</code> as large as 15) if covariates are present in the formula. This is automatically dealt by the current function, but contribute to longer computation time to find the appropriate ranges. Estimation may become inaccurate with large number of correlated covariates, which is a known limitation of profile likelihoods.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>calculateEvianMLE</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(evian_linear_raw)
+data(evian_linear_bim)
+rst1=evian(data=evian_linear_raw, bim=evian_linear_bim, xcols=10:ncol(evian_linear_raw),
+ycol=6, covariateCol=c(5,7:9), robust=FALSE, model="additive", m=200, lolim=-0.4,
+hilim=0.4, kcutoff = c(32,100), multiThread=1,family='gaussian',plinkCC=FALSE)
+
+
+</code></pre>
+
+
+</div>

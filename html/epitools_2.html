@@ -1,0 +1,169 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ageadjust.indirect</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Age standardization by indirect method, with exact confidence intervals</h2>
+
+<h3>Description</h3>
+
+<p>Calculates age standardized (adjusted) rates and "exact" confidence
+intervals using the indirect method
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ageadjust.indirect(count, pop, stdcount, stdpop, stdrate = NULL,
+conf.level = 0.95)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>count</code></td>
+<td>
+<p>vector of age-specific count of events</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pop</code></td>
+<td>
+<p>vector of age-specific person-years or population estimates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stdcount</code></td>
+<td>
+<p>vector of age-specific standard counts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stdpop</code></td>
+<td>
+<p>vector of age-specific standarad population</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stdrate</code></td>
+<td>
+<p>vector of age-specific standard rates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+<p>confidence level (default = 0.95)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To make valid comparisons between rates from different groups (e.g.,
+geographic area, ethnicity), one must often adjust for differences in
+age distribution to remove the confounding affect of age. When the
+number of events or rates are very small (as is often the case for
+local area studies), the normal approximation  method of calculating
+confidence intervals may give a negative number for the lower
+confidence limit. To avoid this common pitfall, one can approximate
+exact confidence intervals. This function implements this  method
+(Anderson 1998).
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>$sir</code></td>
+<td>
+<p>observed, expected, standardized incidence ratio, and
+confidence interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$rate</code></td>
+<td>
+<p>crude.rate, adjusted rate, and confidence interval</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Visit <a href="https://repitools.wordpress.com/">https://repitools.wordpress.com/</a> for the latest</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Tomas Aragon, <a href="mailto:aragon@berkeley.edu">aragon@berkeley.edu</a>,
+<a href="http://www.phdata.science">http://www.phdata.science</a>. Thanks to Giles Crane
+(<a href="mailto:giles.crane@doh.state.nj.us">giles.crane@doh.state.nj.us</a>) for reporting error in
+'ageadjust.indirect' function.</p>
+
+
+<h3>References</h3>
+
+<p>Anderson RN, Rosenberg HM. Age Standardization of Death
+Rates: Implementation of the Year 200 Standard. National Vital
+Statistics Reports; Vol 47 No. 3. Hyattsville, Maryland: National
+Center for Health Statistics. 1998, pp. 13-19. Available at
+<a href="http://www.cdc.gov/nchs/data/nvsr/nvsr47/nvs47_03.pdf">http://www.cdc.gov/nchs/data/nvsr/nvsr47/nvs47_03.pdf</a>.
+</p>
+<p>Steve Selvin. Statistical Analysis of Epidemiologic Data (Monographs in
+Epidemiology and Biostatistics, V. 35), Oxford University Press; 3rd
+edition (May 1, 2004) 
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See also <code>ageadjust.direct</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##From Selvin (2004)
+##enter data
+dth60 &lt;- c(141, 926, 1253, 1080, 1869, 4891, 14956, 30888,
+41725, 26501, 5928)
+
+pop60 &lt;- c(1784033, 7065148, 15658730, 10482916, 9939972,
+10563872, 9114202, 6850263, 4702482, 1874619, 330915)
+
+dth40 &lt;- c(45, 201, 320, 670, 1126, 3160, 9723, 17935,
+22179, 13461, 2238)
+
+pop40 &lt;- c(906897, 3794573, 10003544, 10629526, 9465330,
+8249558, 7294330, 5022499, 2920220, 1019504, 142532)
+
+##calculate age-specific rates
+rate60 &lt;- dth60/pop60
+rate40 &lt;- dth40/pop40
+
+#create array for display
+tab &lt;- array(c(dth60, pop60, round(rate60*100000,1), dth40, pop40,
+round(rate40*100000,1)),c(11,3,2))
+agelabs &lt;- c("&lt;1", "1-4", "5-14", "15-24", "25-34", "35-44", "45-54",
+"55-64", "65-74", "75-84", "85+")
+dimnames(tab) &lt;- list(agelabs,c("Deaths", "Population", "Rate"),
+c("1960", "1940"))
+tab
+
+##implement direct age standardization using 'ageadjust.direct'
+dsr &lt;- ageadjust.direct(count = dth40, pop = pop40, stdpop = pop60)
+round(100000*dsr, 2) ##rate per 100,000 per year
+
+##implement indirect age standardization using 'ageadjust.indirect'
+isr &lt;- ageadjust.indirect(count = dth40, pop = pop40,
+                          stdcount = dth60, stdpop = pop60)
+round(isr$sir, 2)         ##standarized incidence ratio
+round(100000*isr$rate, 1) ##rate per 100,000 per year
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,87 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidyst_kcurv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tidy and geospatial kernel summary density curvature estimates</h2>
+
+<h3>Description</h3>
+
+<p>Tidy and geospatial versions of kernel summary density curvature estimates for 2-dimensional data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_kcurv(data, ...)
+st_kcurv(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>tidy kernel density curvature estimate (output from <code>tidy_kdde(deriv_order=2)</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>geospatial density curvature estimate (output from <code>st_kdde(deriv_order=2)</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters in <code>ks::kcurv</code> function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A kernel density summary curvature estimate is a modification of a kernel density curvature estimate where the matrix of second order partial derivative values is summarised as a scalar value. For details of the computation of the kernel density summary curvature estimate, see <code>?ks::kcurv</code>. The bandwidth matrix of smoothing parameters is computed as in <code>ks::kdde(deriv_order=2)</code>. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>The output from <code>*_kcurv</code> have the same structure as the input kernel density curvature estimate from <code>*_kdde</code>, except that <code>estimate</code> indicates the summary curvature values rather than the density curvature values, and that <code>deriv_group</code> for each of the partial derivatives is collapsed into a single grouping.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## tidy kernel summary density curvature estimate
+library(ggplot2)
+data(crabs, package="MASS")
+crabs2 &lt;- dplyr::select(crabs, FL, CW)
+t1 &lt;- tidy_kdde(crabs2, deriv_order=2)
+t2 &lt;- tidy_kcurv(t1)
+gt1 &lt;- ggplot(t2, aes(x=FL, y=CW)) 
+gt1 + geom_contour_filled_ks(colour=1) + scale_fill_brewer(palette="Oranges")
+
+## geospatial kernel summary density curvature estimate
+data(wa)
+data(grevilleasf)
+hakeoides &lt;- dplyr::filter(grevilleasf, species=="hakeoides")
+s1 &lt;- st_kdde(hakeoides, deriv_order=2)
+s2 &lt;- st_kcurv(s1)
+
+## base R plot
+xlim &lt;- c(1.2e5, 1.1e6); ylim &lt;- c(6.1e6, 7.2e6)
+plot(wa, xlim=xlim, ylim=ylim)
+plot(s2, add=TRUE)
+
+## geom_sf plot
+gs1 &lt;- ggplot(s2) + geom_sf(data=wa, fill=NA) + ggthemes::theme_map()
+gs1 + geom_sf(data=st_get_contour(s2), aes(fill=label_percent(contlabel))) +
+    colorspace::scale_fill_discrete_sequential(h1=30,c1=360,c2=30) +
+    coord_sf(xlim=xlim, ylim=ylim)
+</code></pre>
+
+
+</div>

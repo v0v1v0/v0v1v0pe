@@ -1,0 +1,226 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>create_eml</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create EML metadata</h2>
+
+<h3>Description</h3>
+
+<p>Create EML metadata
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">create_eml(
+  path,
+  source_id,
+  derived_id,
+  script,
+  script_description,
+  is_about = NULL,
+  contact,
+  user_id,
+  user_domain,
+  basis_of_record = NULL,
+  url = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>(character) Path to the directory containing ecocomDP tables, conversion script, and where EML metadata will be written.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>source_id</code></td>
+<td>
+<p>(character) Identifier of a data package published in a supported repository. Currently, the EDI Data Repository is supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>derived_id</code></td>
+<td>
+<p>(character) Identifier of the dataset being created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>script</code></td>
+<td>
+<p>(character) Name of file used to convert <code>source_id</code> to <code>derived_id</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>script_description</code></td>
+<td>
+<p>(character) Description of <code>script</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>is_about</code></td>
+<td>
+<p>(named character) An optional argument for specifying dataset level annotations describing what this dataset "is about".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contact</code></td>
+<td>
+<p>(data.frame) Contact information for the person that created this ecocomDP dataset, containing these columns:
+</p>
+
+<ul>
+<li>
+<p> givenName
+</p>
+</li>
+<li>
+<p> surName
+</p>
+</li>
+<li>
+<p> organizationName
+</p>
+</li>
+<li>
+<p> electronicMailAddress
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user_id</code></td>
+<td>
+<p>(character) Identifier of user associated with <code>user_domain</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user_domain</code></td>
+<td>
+<p>(character) Domain (data repository) the <code>user_id</code> belongs to. Currently, EDI is supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>basis_of_record</code></td>
+<td>
+<p>(character) An optional argument to facilitate creation of a Darwin Core record from this dataset using <code>convert_to_dwca()</code>. Use this to define the Darwin Core property <a href="https://dwc.tdwg.org/terms/#dwc:basisOfRecord">basisOfRecord</a> as <a href="http://rs.tdwg.org/dwc/terms/HumanObservation">HumanObservation</a> or <a href="http://rs.tdwg.org/dwc/terms/MachineObservation">MachineObservation</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>url</code></td>
+<td>
+<p>(character) URL to the publicly accessible directory containing ecocomDP tables, conversion script, and EML metadata. This argument supports direct download of the data entities by a data repository and is used for automated revisioning and publication.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function creates an EML record for an ecocomDP by combining metadata from <code>source_id</code> with boiler-plate metadata describing the ecocomDP model. Changes to the <code>source_id</code> EML include:
+</p>
+
+<ul>
+<li> <p><strong>&lt;access&gt;</strong> Adds <code>user_id</code> to the list of principals granted read and write access to the ecocomDP data package this EML describes.
+</p>
+</li>
+<li> <p><strong>&lt;title&gt;</strong> Adds a note that this is a derived data package in the ecocomDP format.
+</p>
+</li>
+<li> <p><strong>&lt;pubDate&gt;</strong> Adds the date this EML was created.
+</p>
+</li>
+<li> <p><strong>&lt;abstract&gt;</strong> Adds a note that this is a derived data package in the ecocomDP format.
+</p>
+</li>
+<li> <p><strong>&lt;keywordSet</strong> Adds the "ecocomDP" keyword to enable search and discovery of all ecocomDP data packages in the data repository it is published, and 7 terms from the LTER Controlled vocabulary: "communities", "community composition", "community dynamics", "community patterns", "species composition", "species diversity", and "species richness". Darwin Core Terms listed under <code>basis_of_record</code> are listed and used by <code>convert_to_dwca()</code> to create a Darwin Core Archive of this ecocomDP data package.
+</p>
+</li>
+<li> <p><strong>&lt;intellectualRights&gt;</strong> Keeps intact the original intellectual rights license <code>source_id</code> was released under, or uses <a href="https://creativecommons.org/publicdomain/zero/1.0/legalcode">CCO</a> if missing.
+</p>
+</li>
+<li> <p><strong>&lt;taxonomicCoverage&gt;</strong> Appends to the taxonomic coverage element with data supplied in the ecocomDP taxon table.
+</p>
+</li>
+<li> <p><strong>&lt;contact&gt;</strong> Adds the ecocomDP creator as a point of contact.
+</p>
+</li>
+<li> <p><strong>&lt;methodStep&gt;</strong> Adds a note that this data package was created by the <code>script</code>, and adds provenance metadata noting that this is a derived dataset and describes where the <code>source_id</code> can be accessed.
+</p>
+</li>
+<li> <p><strong>&lt;dataTables&gt;</strong> Replaces the <code>source_id</code> table metadata with descriptions of the the ecocomDP tables.
+</p>
+</li>
+<li> <p><strong>&lt;otherEntity&gt;</strong> Adds <code>script</code> and <code>script_description</code>. otherEntities of <code>source_id</code> are removed.
+</p>
+</li>
+<li> <p><strong>&lt;annotations&gt;</strong> Adds boilerplate annotations describing the ecocomDP at the dataset, entity, and entity attribute levels.
+</p>
+</li>
+</ul>
+<p>Taxa listed in the taxon table, and resolved to one of the supported authority systems (i.e. <a href="https://www.itis.gov/">ITIS</a>, <a href="https://www.marinespecies.org/">WORMS</a>, or <a href="https://gbif.org">GBIF</a>), will have their full taxonomic hierarchy expanded, including any common names for each level.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An EML metadata file.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Create directory with ecocomDP tables for create_eml()
+mypath &lt;- paste0(tempdir(), "/data")
+dir.create(mypath)
+inpts &lt;- c(ants_L1$tables, path = mypath)
+do.call(write_tables, inpts)
+file.copy(system.file("extdata", "create_ecocomDP.R", package = "ecocomDP"), mypath)
+dir(mypath)
+
+# Describe, with annotations, what the source L0 dataset "is about"
+dataset_annotations &lt;- c(
+  `species abundance` = "http://purl.dataone.org/odo/ECSO_00001688",
+  Population = "http://purl.dataone.org/odo/ECSO_00000311",
+  `level of ecological disturbance` = "http://purl.dataone.org/odo/ECSO_00002588",
+  `type of ecological disturbance` = "http://purl.dataone.org/odo/ECSO_00002589")
+
+# Add self as contact information incase questions arise
+additional_contact &lt;- data.frame(
+  givenName = 'Colin',
+  surName = 'Smith',
+  organizationName = 'Environmental Data Initiative',
+  electronicMailAddress = 'csmith@mail.com',
+  stringsAsFactors = FALSE)
+
+# Create EML
+eml &lt;- create_eml(
+  path = mypath,
+  source_id = "knb-lter-hfr.118.33",
+  derived_id = "edi.193.5",
+  is_about = dataset_annotations,
+  script = "create_ecocomDP.R",
+  script_description = "A function for converting knb-lter-hrf.118 to ecocomDP",
+  contact = additional_contact,
+  user_id = 'ecocomdp',
+  user_domain = 'EDI',
+  basis_of_record = "HumanObservation")
+
+dir(mypath)
+View(eml)
+
+# Clean up
+unlink(mypath, recursive = TRUE)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

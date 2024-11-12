@@ -1,0 +1,115 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ePerformance</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Enhanced Performance Evaluation</h2>
+
+<h3>Description</h3>
+
+<p>This function generates Precision-Recall and ROC curves, including threshold information for binary classification models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ePerformance(task, trained_model, splits)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>task</code></td>
+<td>
+<p>mlr3 binary classification task object specifying the task details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained_model</code></td>
+<td>
+<p>mlr3 trained learner (model) object obtained after training</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+<p>mlr3 object defining data splits for train and test sets</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>ROC and Precision-Recall curves with threshold information
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Set environment variables for reproducibility
+Sys.setenv(LANG = "en") # Change R language to English!
+RNGkind("L'Ecuyer-CMRG") # Change to L'Ecuyer-CMRG instead of the default "Mersenne-Twister"
+
+# Load required libraries
+library("explainer")
+
+# Set seed for reproducibility
+seed &lt;- 246
+set.seed(seed)
+
+# Load necessary packages
+if (!requireNamespace("mlbench", quietly = TRUE)) stop("mlbench not installed.")
+if (!requireNamespace("mlr3learners", quietly = TRUE)) stop("mlr3learners not installed.")
+if (!requireNamespace("ranger", quietly = TRUE)) stop("ranger not installed.")
+# Load BreastCancer dataset
+utils::data("BreastCancer", package = "mlbench")
+
+# Keep the target column as "Class"
+target_col &lt;- "Class"
+
+# Change the positive class to "malignant"
+positive_class &lt;- "malignant"
+
+# Keep only the predictor variables and outcome
+mydata &lt;- BreastCancer[, -1] # 1 is ID
+
+# Remove rows with missing values
+mydata &lt;- na.omit(mydata)
+
+# Create a vector of sex categories
+sex &lt;- sample(c("Male", "Female"), size = nrow(mydata), replace = TRUE)
+
+# Create a vector of age categories
+mydata$age &lt;- as.numeric(sample(seq(18, 60), size = nrow(mydata), replace = TRUE))
+
+# Add a sex column to the mydata data frame (for fairness analysis)
+mydata$sex &lt;- factor(sex, levels = c("Male", "Female"), labels = c(1, 0))
+
+# Create a classification task
+maintask &lt;- mlr3::TaskClassif$new(
+  id = "my_classification_task",
+  backend = mydata,
+  target = target_col,
+  positive = positive_class
+)
+
+# Create a train-test split
+set.seed(seed)
+splits &lt;- mlr3::partition(maintask)
+
+# Add a learner (machine learning model base)
+# Here we use random forest for example (you can use any other available model)
+mylrn &lt;- mlr3::lrn("classif.ranger", predict_type = "prob")
+
+# Train the model
+mylrn$train(maintask, splits$train)
+
+# Make predictions on new data
+mylrn$predict(maintask, splits$test)
+ePerformance(task = maintask, trained_model = mylrn, splits = splits)
+</code></pre>
+
+
+</div>

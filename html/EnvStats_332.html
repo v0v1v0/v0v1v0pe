@@ -1,0 +1,561 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>linearTrendTestPower</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Power of a t-Test for Linear Trend
+</h2>
+
+<h3>Description</h3>
+
+<p>Compute the power of a parametric test for linear trend, given the sample size or 
+predictor variable values, scaled slope, and significance level.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  linearTrendTestPower(n, x = lapply(n, seq), slope.over.sigma = 0, alpha = 0.05, 
+    alternative = "two.sided", approx = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>numeric vector of sample sizes.  All values of <code>n</code> must be positive integers 
+larger than 2.  This argument is ignored when <code>x</code> is supplied.  
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are not allowed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector of predictor variable values, or a list in which each component is 
+a numeric vector of predictor variable values.  Usually, the predictor variable is 
+time (e.g., days, months, quarters, etc.).  The default value is 
+<code>x=lapply(n,seq)</code>, which yields a list in which the i'th component is the 
+seqence of integers from 1 to the i'th value of the vector <code>n</code>.  If <code>x</code> 
+is a numeric vector, it must contain at least three elements, two of which must be 
+unique.  If <code>x</code> is a list of numeric vectors, each component of <code>x</code> 
+must contain at least three elements, two of which must be unique.  
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are not allowed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slope.over.sigma</code></td>
+<td>
+
+<p>numeric vector specifying the ratio of the true slope to the standard deviation of 
+the error terms (<code class="reqn">\sigma</code>).  This is also called the "scaled slope".  The 
+default value is <code>slope.over.sigma=0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>numeric vector of numbers between 0 and 1 indicating the Type I error level 
+associated with the hypothesis test.  The default value is <code>alpha=0.05</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+
+<p>character string indicating the kind of alternative hypothesis.  The possible values 
+are <code>"two.sided"</code> (the default), <code>"greater"</code>, and <code>"less"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>approx</code></td>
+<td>
+
+<p>logical scalar indicating whether to compute the power based on an approximation to 
+the non-central t-distribution.  The default value is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the argument <code>x</code> is a vector, it is converted into a list with one 
+component.  If the arguments <code>n</code>, <code>x</code>, <code>slope.over.sigma</code>, and 
+<code>alpha</code> are not all the same length, they are replicated to be the same 
+length as the length of the longest argument.
+</p>
+<p><b>Basic Model</b> <br>
+Consider the simple linear regression model
+</p>
+<p style="text-align: center;"><code class="reqn">Y = \beta_0 + \beta_1 X + \epsilon \;\;\;\;\;\; (1)</code>
+</p>
+
+<p>where <code class="reqn">X</code> denotes the predictor variable (observed without error), 
+<code class="reqn">\beta_0</code> denotes the intercept, <code class="reqn">\beta_1</code> denotes the slope, and the 
+error term <code class="reqn">\epsilon</code> is assumed to be a random variable from a normal 
+distribution with mean 0 and standard deviation <code class="reqn">\sigma</code>.  Let
+</p>
+<p style="text-align: center;"><code class="reqn">(\underline{x}, \underline{y}) = (x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n) \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>denote <code class="reqn">n</code> independent observed <code class="reqn">(X,Y)</code> pairs from the model (1).
+</p>
+<p>Often in environmental data analysis, we are interested in determining whether there 
+is a trend in some indicator variable over time.  In this case, the predictor 
+variable <code class="reqn">X</code> is time (e.g., day, month, quarter, year, etc.), and the <code class="reqn">n</code> 
+values of the response variable <code class="reqn">Y</code> represent measurements taken over time.  
+The slope then represents the change in the average of the response variable per 
+one unit of time.
+</p>
+<p>When the argument <code>x</code> is a numeric vector, it represents the 
+<code class="reqn">n</code> values of the predictor variable.  When the argument <code>x</code> is a 
+list, each component of <code>x</code> is a numeric vector that represents a set values 
+of the predictor variable (and the number of elements may vary by component).  
+By default, the argument <code>x</code> is a list for which the i'th component is simply 
+the integers from 1 to the value of the i'th element of the argument <code>n</code>, 
+representing, for example, Day 1, Day2, ..., Day <code>n[i]</code>.
+</p>
+<p>In the discussion that follows, be sure not to confuse the intercept and slope 
+coefficients <code class="reqn">\beta_0</code> and <code class="reqn">\beta_1</code> with the Type II error of the 
+hypothesis test, which is denoted by <code class="reqn">\beta</code>.
+<br></p>
+<p><b>Estimation of Coefficients and Confidence Interval for Slope</b> <br>
+The standard least-squares estimators of the slope and intercept are given by:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\beta}_1 = \frac{S_{xy}}{S_{xx}} \;\;\;\;\;\; (3)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x} \;\;\;\;\;\; (4)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">S_{xy} = \sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y}) \;\;\;\;\;\; (5)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">S_{xx} = \sum_{i=1}^n (x_i - \bar{x})^2 \;\;\;\;\;\; (6)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\bar{x} = \frac{1}{n} \sum_{i=1}^n x_i \;\;\;\;\;\; (7)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\bar{y} = \frac{1}{n} \sum_{i=1}^n y_i \;\;\;\;\;\; (8)</code>
+</p>
+
+<p>(Draper and Smith, 1998, p.25; Zar, 2010, p.332-334; Berthoux and Brown, 2002, p.297; 
+Helsel and Hirsch, p.226).  The estimator of slope in Equation (3) has a normal 
+distribution with mean equal to the true slope, and variance given by:
+</p>
+<p style="text-align: center;"><code class="reqn">Var(\hat{\beta}_1) = \sigma_{\hat{\beta}_1}^2 = \frac{\sigma^2}{S_{xx}} \;\;\;\;\;\; (9)</code>
+</p>
+
+<p>(Draper and Smith, 1998, p.35; Zar, 2010, p.341; Berthoux and Brown, 2002, p.299; 
+Helsel and Hirsch, 1992, p.227). Thus, a <code class="reqn">(1-\alpha)100\%</code> two-sided confidence 
+interval for the slope is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">[ \hat{\beta}_1 - t_{n-2}(1-\alpha/2) \hat{\sigma}_{\hat{\beta}_1}, \;\; \hat{\beta}_1 + t_{n-2}(1-\alpha/2) \hat{\sigma}_{\hat{\beta}_1} ] \;\;\;\;\;\; (10)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}_{\hat{\beta}_1} = \frac{\hat{\sigma}}{\sqrt{S_{xx}}} \;\;\;\;\;\; (11)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}^2 = s^2 = \frac{1}{n-2} \sum_{i=1}^n (y_i - \hat{y}_i)^2 \;\;\;\;\;\; (12)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1 x_i \;\;\;\;\;\; (13)</code>
+</p>
+
+<p>and <code class="reqn">t_{\nu}(p)</code> denotes the <code class="reqn">p</code>'th quantile of 
+Student's t-distribution with <code class="reqn">\nu</code> degrees of freedom 
+(Draper and Smith, 1998, p.36; Zar, 2010, p.343; Berthoux and Brown, 2002, p.300; 
+Helsel and Hirsch, 1992, p.240).
+<br></p>
+<p><b>Testing for a Non-Zero Slope</b> <br>
+Consider the null hypothesis of a zero slope coefficient:
+</p>
+<p style="text-align: center;"><code class="reqn">H_0: \beta_1 = 0 \;\;\;\;\;\; (14)</code>
+</p>
+
+<p>The three possible alternative hypotheses are the upper one-sided alternative 
+(<code>alternative="greater"</code>):
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \beta_1 &gt; 0 \;\;\;\;\;\; (15)</code>
+</p>
+
+<p>the lower one-sided alternative (<code>alternative="less"</code>)
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \beta_1 &lt; 0 \;\;\;\;\;\; (16)</code>
+</p>
+
+<p>and the two-sided alternative (<code>alternative="two.sided"</code>)
+</p>
+<p style="text-align: center;"><code class="reqn">H_a: \beta_1 \ne 0 \;\;\;\;\;\; (17)</code>
+</p>
+
+<p>The test of the null hypothesis (14) versus any of the three alternatives (15)-(17) is 
+based on the Student t-statistic:
+</p>
+<p style="text-align: center;"><code class="reqn">t = \frac{\hat{\beta}_1}{\hat{\sigma}_{\hat{\beta}_1}} =  \frac{\hat{\beta}_1}{s/\sqrt{S_{xx}}} \;\;\;\;\;\; (18)</code>
+</p>
+
+<p>Under the null hypothesis (14), the t-statistic in (18) follows a 
+Student's t-distribution with <code class="reqn">n-2</code> degrees of freedom 
+(Draper and Smith, 1998, p.36; Zar, 2010, p.341; 
+Helsel and Hirsch, 1992, pp.238-239).
+</p>
+<p>The formula for the power of the test of a zero slope depends on which alternative 
+is being tested.  
+The two subsections below describe exact and approximate formulas for the power of 
+the test.  Note that none of the equations for the power of the t-test 
+requires knowledge of the values <code class="reqn">\beta_1</code> or <code class="reqn">\sigma</code> 
+(the population standard deviation of the error terms), only the ratio 
+<code class="reqn">\beta_1/\sigma</code>.  The argument <code>slope.over.sigma</code> is this ratio, and it is 
+referred to as the “scaled slope”.
+<br></p>
+<p><b><em>Exact Power Calculations</em></b> (<code>approx=FALSE</code>) <br>
+This subsection describes the exact formulas for the power of the t-test for a 
+zero slope.
+<br></p>
+<p><em>Upper one-sided alternative</em> (<code>alternative="greater"</code>) <br>
+The standard Student's t-test rejects the null hypothesis (1) in favor of the 
+upper alternative hypothesis (2) at level-<code class="reqn">\alpha</code> if
+</p>
+<p style="text-align: center;"><code class="reqn">t \ge t_{\nu}(1 - \alpha) \;\;\;\;\;\; (19)</code>
+</p>
+
+<p>where 
+</p>
+<p style="text-align: center;"><code class="reqn">\nu = n - 2 \;\;\;\;\;\; (20)</code>
+</p>
+
+<p>and, as noted previously, <code class="reqn">t_{\nu}(p)</code> denotes the <code class="reqn">p</code>'th quantile of 
+Student's t-distribution with <code class="reqn">\nu</code> degrees of freedom.    
+The power of this test, denoted by <code class="reqn">1-\beta</code>, where <code class="reqn">\beta</code> denotes the 
+probability of a Type II error, is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">1 - \beta = Pr[t_{\nu, \Delta} \ge t_{\nu}(1 - \alpha)] = 1 - G[t_{\nu}(1 - \alpha), \nu, \Delta] \;\;\;\;\;\; (21)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">\Delta = \sqrt{S_{xx}} \frac{\beta_1}{\sigma} \;\;\;\;\;\; (22)</code>
+</p>
+
+<p>and <code class="reqn">t_{\nu, \Delta}</code> denotes a 
+non-central Student's t-random variable with 
+<code class="reqn">\nu</code> degrees of freedom and non-centrality parameter <code class="reqn">\Delta</code>, and 
+<code class="reqn">G(x, \nu, \Delta)</code> denotes the cumulative distribution function of this 
+random variable evaluated at <code class="reqn">x</code> (Johnson et al., 1995, pp.508-510).  
+Note that when the predictor variable <code class="reqn">X</code> represents equally-spaced measures 
+of time (e.g., days, months, quarters, etc.) and 
+</p>
+<p style="text-align: center;"><code class="reqn">x_i = i, \;\; i = 1, 2, \ldots, n \;\;\;\;\;\; (23)</code>
+</p>
+
+<p>then the non-centrality parameter in Equation (22) becomes:
+</p>
+<p style="text-align: center;"><code class="reqn">\Delta = \sqrt{\frac{(n-1)n(n+1)}{12}} \frac{\beta_1}{\sigma} \;\;\;\;\;\; (24)</code>
+</p>
+
+<p><br></p>
+<p><em>Lower one-sided alternative</em> (<code>alternative="less"</code>) <br>
+The standard Student's t-test rejects the null hypothesis (1) in favor of the 
+lower alternative hypothesis (3) at level-<code class="reqn">\alpha</code> if
+</p>
+<p style="text-align: center;"><code class="reqn">t \le t_{\nu}(\alpha) \;\;\;\;\;\; (25)</code>
+</p>
+
+<p>and the power of this test is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">1 - \beta = Pr[t_{\nu, \Delta} \le t_{\nu}(\alpha)] = G[t_{\nu}(\alpha), \nu, \Delta] \;\;\;\;\;\; (26)</code>
+</p>
+
+<p><br></p>
+<p><em>Two-sided alternative</em> (<code>alternative="two.sided"</code>) <br>
+The standard Student's t-test rejects the null hypothesis (14) in favor of the 
+two-sided alternative hypothesis (17) at level-<code class="reqn">\alpha</code> if
+</p>
+<p style="text-align: center;"><code class="reqn">|t| \ge t_{\nu}(1 - \alpha/2) \;\;\;\;\;\; (27)</code>
+</p>
+
+<p>and the power of this test is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">1 - \beta = Pr[t_{\nu, \Delta} \le t_{\nu}(\alpha/2)] + Pr[t_{\nu, \Delta} \ge t_{\nu}(1 - \alpha/2)]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">= G[t_{\nu}(\alpha/2), \nu, \Delta] + 1 - G[t_{\nu}(1 - \alpha/2), \nu, \Delta] \;\;\;\;\;\; (28)</code>
+</p>
+
+<p>The power of the t-test given in Equation (28) can also be expressed in terms of the 
+cumulative distribution function of the non-central F-distribution 
+as follows. Let <code class="reqn">F_{\nu_1, \nu_2, \Delta}</code> denote a 
+non-central F random variable with <code class="reqn">\nu_1</code> and 
+<code class="reqn">\nu_2</code> degrees of freedom and non-centrality parameter <code class="reqn">\Delta</code>, and let 
+<code class="reqn">H(x, \nu_1, \nu_2, \Delta)</code> denote the cumulative distribution function of this 
+random variable evaluated at <code class="reqn">x</code>. Also, let <code class="reqn">F_{\nu_1, \nu_2}(p)</code> denote 
+the <code class="reqn">p</code>'th quantile of the central F-distribution with <code class="reqn">\nu_1</code> and 
+<code class="reqn">\nu_2</code> degrees of freedom.  It can be shown that
+</p>
+<p style="text-align: center;"><code class="reqn">(t_{\nu, \Delta})^2 \cong F_{1, \nu, \Delta^2} \;\;\;\;\;\; (29)</code>
+</p>
+
+<p>where <code class="reqn">\cong</code> denotes “equal in distribution”.  Thus, it follows that
+</p>
+<p style="text-align: center;"><code class="reqn">[t_{\nu}(1 - \alpha/2)]^2 = F_{1, \nu}(1 - \alpha) \;\;\;\;\;\; (30)</code>
+</p>
+
+<p>so the formula for the power of the t-test given in Equation (28) can also be 
+written as:
+</p>
+<p style="text-align: center;"><code class="reqn">1 - \beta = Pr\{(t_{\nu, \Delta})^2  \ge [t_{\nu}(1 - \alpha/2)]^2\}</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">= Pr[F_{1, \nu, \Delta^2} \ge F_{1, \nu}(1 - \alpha)] = 1 - H[F_{1, \nu}(1-\alpha), 1, \nu, \Delta^2] \;\;\;\;\;\; (31)</code>
+</p>
+
+<p><br></p>
+<p><b><em>Approximate Power Calculations</em></b> (<code>approx=TRUE</code>) <br>
+Zar (2010, pp.115–118) presents an approximation to the power for the t-test 
+given in Equations (21), (26), and (28) above.  His approximation to the power 
+can be derived by using the approximation
+</p>
+<p style="text-align: center;"><code class="reqn">\sqrt{S_{xx}} \frac{\beta_1}{s} \approx \sqrt{SS_{xx}} \frac{\beta_1}{\sigma} = \Delta \;\;\;\;\;\; (32)</code>
+</p>
+
+<p>where <code class="reqn">\approx</code> denotes “approximately equal to”.  Zar's approximation 
+can be summarized in terms of the cumulative distribution function of the 
+non-central t-distribution as follows:
+</p>
+<p style="text-align: center;"><code class="reqn">G(x, \nu, \Delta) \approx G(x - \Delta, \nu, 0) = G(x - \Delta, \nu) \;\;\;\;\;\; (33)</code>
+</p>
+
+<p>where <code class="reqn">G(x, \nu)</code> denotes the cumulative distribution function of the 
+central Student's t-distribution with <code class="reqn">\nu</code> degrees of freedom evaluated at 
+<code class="reqn">x</code>.
+</p>
+<p>The following three subsections explicitly derive the approximation to the power of 
+the t-test for each of the three alternative hypotheses.
+<br></p>
+<p><em>Upper one-sided alternative</em> (<code>alternative="greater"</code>) <br>
+The power for the upper one-sided alternative (15) given in Equation (21) can be 
+approximated as:
+</p>
+<p style="text-align: center;"><code class="reqn">1 - \beta = Pr[t \ge t_{\nu}(1 - \alpha)]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">= Pr[\frac{\hat{\beta}_1}{s/\sqrt{S_{xx}}} \ge t_{\nu}(1 - \alpha) - \sqrt{S_{xx}}\frac{\beta_1}{s}]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\approx Pr[t_{\nu} \ge t_{\nu}(1 - \alpha) - \Delta]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">= 1 - Pr[t_{\nu} \le t_{\nu}(1 - \alpha) - \Delta]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn"> = 1 - G[t_{\nu}(1-\alpha) - \Delta, \nu] \;\;\;\;\;\; (34)</code>
+</p>
+
+<p>where <code class="reqn">t_{\nu}</code> denotes a central Student's t-random variable with <code class="reqn">\nu</code> 
+degrees of freedom.
+<br></p>
+<p><em>Lower one-sided alternative</em> (<code>alternative="less"</code>) <br>
+The power for the lower one-sided alternative (16) given in Equation (26) can be 
+approximated as:
+</p>
+<p style="text-align: center;"><code class="reqn">1 - \beta = Pr[t \le t_{\nu}(\alpha)]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">= Pr[\frac{\hat{\beta}_1}{s/\sqrt{S_{xx}}} \le t_{\nu}(\alpha) - \sqrt{S_{xx}}\frac{\beta_1}{s}]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\approx Pr[t_{\nu} \le t_{\nu}(\alpha) - \Delta]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn"> = G[t_{\nu}(\alpha) - \Delta, \nu] \;\;\;\;\;\; (35)</code>
+</p>
+
+<p><br></p>
+<p><em>Two-sided alternative</em> (<code>alternative="two.sided"</code>) <br>
+The power for the two-sided alternative (17) given in Equation (28) can be 
+approximated as:
+</p>
+<p style="text-align: center;"><code class="reqn">1 - \beta = Pr[t \le t_{\nu}(\alpha/2)] + Pr[t \ge t_{\nu}(1 - \alpha/2)]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">= Pr[\frac{\hat{\beta}_1}{s/\sqrt{S_{xx}}} \le t_{\nu}(\alpha/2) - \sqrt{SS_{xx}}\frac{\beta_1}{s}] + Pr[\frac{\hat{\beta}_1}{s/\sqrt{S_{xx}}} \ge t_{\nu}(1 - \alpha) - \sqrt{SS_{xx}}\frac{\beta_1}{s}]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\approx Pr[t_{\nu} \le t_{\nu}(\alpha/2) - \Delta] + Pr[t_{\nu} \ge t_{\nu}(1 - \alpha/2) - \Delta]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">= G[t_{\nu}(\alpha/2) - \Delta, \nu] + 1 - G[t_{\nu}(1-\alpha/2) - \Delta, \nu] \;\;\;\;\;\; (36)</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>a numeric vector powers.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Often in environmental data analysis, we are interested in determining whether 
+there is a trend in some indicator variable over time.  In this case, the predictor 
+variable <code class="reqn">X</code> is time (e.g., day, month, quarter, year, etc.), and the <code class="reqn">n</code> 
+values of the response variable represent measurements taken over time.  The slope 
+then represents the change in the average of the response variable per one unit of 
+time.
+</p>
+<p>You can use the parametric model (1) to model your data, then use the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> function 
+<code>lm</code> to fit the regression coefficients and the <code>summary.lm</code> 
+function to perform a test for the significance of the slope coefficient.  The 
+function <code>linearTrendTestPower</code> computes the power of this t-test, given a 
+fixed value of the sample size, scaled slope, and significance level.
+</p>
+<p>You can also use Kendall's nonparametric test for trend 
+if you don't want to assume the error terms are normally distributed.  When the 
+errors are truly normally distributed, the asymptotic relative efficiency of 
+Kendall's test for trend versus the parametric t-test for a zero slope is 0.98, 
+and Kendall's test can be more powerful than the parametric t-test when the errors 
+are not normally distributed.  Thus the function <code>linearTrendTestPower</code> can 
+also be used to estimate the power of Kendall's test for trend.
+</p>
+<p>In the course of designing a sampling program, an environmental scientist may wish 
+to determine the relationship between sample size, significance level, power, and 
+scaled slope if one of the objectives of the sampling program is to determine 
+whether a trend is occurring.  The functions <code>linearTrendTestPower</code>, 
+<code>linearTrendTestN</code>, <code>linearTrendTestScaledMds</code>, and <br><code>plotLinearTrendTestDesign</code> can be used to investigate these 
+relationships.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Berthouex, P.M., and L.C. Brown. (2002). 
+<em>Statistics for Environmental Engineers</em>.  Second Edition.   
+Lewis Publishers, Boca Raton, FL.
+</p>
+<p>Draper, N., and H. Smith. (1998).  <em>Applied Regression Analysis</em>.  
+Third Edition.  John Wiley and Sons, New York, Chapter 1.
+</p>
+<p>Helsel, D.R., and R.M. Hirsch. (1992). 
+<em>Statistical Methods in Water Resources Research</em>. 
+Elsevier, New York, NY, Chapter 9.
+</p>
+<p>Johnson, N. L., S. Kotz, and N. Balakrishnan. (1995).  <em>Continuous Univariate 
+Distributions, Volume 2</em>.  Second Edition.  John Wiley and Sons, New York, 
+Chapters 28, 31
+</p>
+<p>Millard, S.P., and N.K. Neerchal. (2001). <em>Environmental Statistics with S-PLUS</em>. 
+CRC Press, Boca Raton, FL.
+</p>
+<p>Zar, J.H. (2010). <em>Biostatistical Analysis</em>. Fifth Edition. 
+Prentice-Hall, Upper Saddle River, NJ.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>linearTrendTestN</code>, <code>linearTrendTestScaledMds</code>, 
+<code>plotLinearTrendTestDesign</code>, <code>lm</code>, <br><code>summary.lm</code>, <code>kendallTrendTest</code>, 
+Power and Sample Size, Normal, <code>t.test</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Look at how the power of the t-test for zero slope increases with increasing 
+  # sample size:
+
+  seq(5, 30, by = 5) 
+  #[1] 5 10 15 20 25 30 
+
+  power &lt;- linearTrendTestPower(n = seq(5, 30, by = 5), slope.over.sigma = 0.1) 
+
+  round(power, 2) 
+  #[1] 0.06 0.13 0.34 0.68 0.93 1.00
+
+  #----------
+
+  # Repeat the last example, but compute the approximate power instead of the 
+  # exact:
+
+  power &lt;- linearTrendTestPower(n = seq(5, 30, by = 5), slope.over.sigma = 0.1, 
+    approx = TRUE) 
+
+  round(power, 2) 
+  #[1] 0.05 0.11 0.32 0.68 0.93 0.99
+
+  #----------
+
+  # Look at how the power of the t-test for zero slope increases with increasing 
+  # scaled slope:
+
+  seq(0.05, 0.2, by = 0.05) 
+  #[1] 0.05 0.10 0.15 0.20 
+
+  power &lt;- linearTrendTestPower(15, slope.over.sigma = seq(0.05, 0.2, by = 0.05)) 
+
+  round(power, 2) 
+  #[1] 0.12 0.34 0.64 0.87
+
+  #----------
+
+  # Look at how the power of the t-test for zero slope increases with increasing 
+  # values of Type I error:
+
+  power &lt;- linearTrendTestPower(20, slope.over.sigma = 0.1, 
+    alpha = c(0.001, 0.01, 0.05, 0.1)) 
+
+  round(power, 2) 
+  #[1] 0.14 0.41 0.68 0.80
+
+  #----------
+
+  # Show that for a simple regression model, you get a greater power of detecting 
+  # a non-zero slope if you take all the observations at two endpoints, rather than 
+  # spreading the observations evenly between two endpoints. 
+  # (Note: This design usually cannot work with environmental monitoring data taken 
+  # over time since usually observations taken close together in time are not 
+  # independent.)
+
+  linearTrendTestPower(x = 1:10, slope.over.sigma = 0.1) 
+  #[1] 0.1265976
+
+
+  linearTrendTestPower(x = c(rep(1, 5), rep(10, 5)), slope.over.sigma = 0.1) 
+  #[1] 0.2413823
+
+  #==========
+
+  # Clean up
+  #---------
+  rm(power)
+</code></pre>
+
+
+</div>

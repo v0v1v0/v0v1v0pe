@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spatial_migrate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Migrate signals of a seismic event through a grid of locations.</h2>
+
+<h3>Description</h3>
+
+<p>The function performs signal migration in space in order to determine 
+the location of a seismic signal.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spatial_migrate(
+  data,
+  d_stations,
+  d_map,
+  snr,
+  v,
+  dt,
+  normalise = TRUE,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>Numeric</code> matrix or <code>eseis</code> object, seismic signals 
+to cross-correlate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_stations</code></td>
+<td>
+<p><code>Numeric</code> matrix, inter-station distances. Output 
+of <code>spatial_distance</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_map</code></td>
+<td>
+<p><code>List</code> object, distance maps for each station. Output 
+of <code>spatial_distance</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>snr</code></td>
+<td>
+<p><code>Numeric</code> vector, optional signal-to-noise-ratios for 
+each signal trace, used for normalisation. If omitted it is calculated
+from input signals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p><code>Numeric</code> value, mean velocity of seismic waves (m/s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p><code>Numeric</code> value, sampling period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalise</code></td>
+<td>
+<p><code>Logical</code> value, option to normalise stations 
+correlations by signal-to-noise-ratios.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p><code>Logical</code> value, option to show extended function 
+information as the function is running. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>With the switch from the package raster to the package terra, the 
+resulting distance maps can no longer be saved in lists as distance
+maps. Thus, the function re-defines the distance SpatRaster objects by
+a list of data on crs, extent, resolution and raster values. As a 
+consequence, plotting the data requires turning them into a SpatRaster
+object, first (see examples).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A SpatialGridDataFrame-object with Gaussian probability density
+function values for each grid cell.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+
+## create synthetic DEM
+dem &lt;- terra::rast(nrows = 20, ncols = 20, 
+                   xmin = 0, xmax = 10000, 
+                   ymin= 0, ymax = 10000, 
+                   vals = rep(0, 400))
+
+## define station coordinates
+sta &lt;- data.frame(x = c(1000, 9000, 5000),
+                  y = c(1000, 1000, 9000),
+                  ID = c("A", "B", "C"))
+
+## create synthetic signal (source in the center of the DEM)
+s &lt;- rbind(dnorm(x = 1:1000, mean = 500, sd = 50),
+           dnorm(x = 1:1000, mean = 500, sd = 50),
+           dnorm(x = 1:1000, mean = 500, sd = 50))
+
+## plot DEM and stations
+terra::plot(dem)
+
+text(x = sta$x, 
+     y = sta$y, 
+     labels = sta$ID)
+
+## calculate spatial distance maps and inter-station distances
+D &lt;- spatial_distance(stations = sta[,1:2],
+                             dem = dem)
+                             
+## restore SpatRaster object for plotting purpose
+D_map_1 &lt;- terra:rast(crs = D$maps[[1]]$crs,
+                      ext = D$maps[[1]]$ext,
+                      res = D$maps[[1]]$res,
+                      val = D$maps[[1]]$values)
+                      
+## plot distance map
+terra::plot(D_map_1) 
+
+## locate signal
+e &lt;- spatial_migrate(data = s, 
+                     d_stations = D$matrix, 
+                     d_map = D$maps, 
+                     v = 1000, 
+                     dt = 1/100)
+
+## get most likely location coordinates
+e_max &lt;- spatial_pmax(data = e)
+
+## plot location estimate, most likely location estimate and stations
+terra::plot(e)
+points(e_max[1], 
+       e_max[2],
+       pch = 20)
+points(sta[,1:2])
+ 
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

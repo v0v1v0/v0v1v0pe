@@ -1,0 +1,115 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>diagnostics</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Diagnostics plots for MCMC algorithm.</h2>
+
+<h3>Description</h3>
+
+<p>This function displays traceplots of the scaling parameter from the proposal distribution of the adaptive MCMC scheme and the associated acceptance probability.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">diagnostics(mcmc)    
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>mcmc</code></td>
+<td>
+<p>An output of the <code>fGEV</code> or <code>fExtDep.np</code> function with <code>method="Bayesian"</code>.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>When <code>mcmc</code> is the output of <code>fGEV</code> then this corresponds to a marginal estimation and therefore <code>diagnostics</code> will  display in a first plot the value of <code class="reqn">\tau</code> the scaling parameter in the multivariate normal proposal which directly affects the acceptance rate of the proposal parameter values that are displayed in the second plot.
+</p>
+<p>When <code>mcmc</code> is the output of <code>fExtDep.np</code>, then this corresponds to an estimation of the dependence structure following the procedure given in Algorithm 1 of Beranger et al. (2021). If the margins are jointly estimated with the dependence (step 1 and 2 of the algorithm) then <code>diagnostics</code> provides trace plots of the corresponding scaling parameters (<code class="reqn">\tau_1,\tau_2</code>) and acceptance probabilities. For the dependence structure (step 3 of the algorithm), a trace plot of the polynomial order <code class="reqn">\kappa</code> is given with the associated acceptance probability.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a graph of traceplots of the scaling parameter from the proposal distribution of the adaptive MCMC scheme and the associated acceptance probability.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Simone Padoan, <a href="mailto:simone.padoan@unibocconi.it">simone.padoan@unibocconi.it</a>,
+<a href="https://faculty.unibocconi.it/simonepadoan/">https://faculty.unibocconi.it/simonepadoan/</a>;
+Boris Beranger, <a href="mailto:borisberanger@gmail.com">borisberanger@gmail.com</a>
+<a href="https://www.borisberanger.com">https://www.borisberanger.com</a>;
+Giulia Marcon, <a href="mailto:giuliamarcongm@gmail.com">giuliamarcongm@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Beranger, B., Padoan, S. A. and Sisson, S. A. (2021).
+Estimation and uncertainty quantification for extreme quantile regions.
+<em>Extremes</em>, <b>24</b>, 349-375.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fExtDep.np</code>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##################################################
+### Example - Pollution levels in Milan, Italy ###
+##################################################
+	
+## Not run: 
+
+### Here we will only model the dependence structure	
+data(MilanPollution)
+
+data &lt;- Milan.winter[,c("NO2","SO2")] 
+data &lt;- as.matrix(data[complete.cases(data),])
+
+# Thereshold
+u &lt;- apply(data, 2, function(x) quantile(x, prob=0.9, type=3))
+
+# Hyperparameters
+hyperparam &lt;- list(mu.nbinom = 6, var.nbinom = 8, a.unif=0, b.unif=0.2)
+
+### Standardise data to univariate Frechet margins
+
+f1 &lt;- fGEV(data=data[,1], method="Bayesian", sig0 = 0.1, nsim = 5e+4)
+diagnostics(f1)
+burn1 &lt;- 1:30000
+gev.pars1 &lt;- apply(f1$param_post[-burn1,],2,mean)
+sdata1 &lt;- trans2UFrechet(data=data[,1], pars=gev.pars1, type="GEV")
+
+f2 &lt;- fGEV(data=data[,2], method="Bayesian", sig0 = 0.1, nsim = 5e+4)
+diagnostics(f2)
+burn2 &lt;- 1:30000
+gev.pars2 &lt;- apply(f2$param_post[-burn2,],2,mean)
+sdata2 &lt;- trans2UFrechet(data=data[,2], pars=gev.pars2, type="GEV")
+
+sdata &lt;- cbind(sdata1,sdata2)
+
+### Bayesian estimation using Bernstein polynomials
+
+pollut1 &lt;- fExtDep.np(method="Bayesian", data=sdata, u=TRUE,
+                      mar.fit=FALSE, k0=5, hyperparam = hyperparam, nsim=5e+4)
+
+diagnostics(pollut1)
+
+
+## End(Not run)
+	
+</code></pre>
+
+
+</div>

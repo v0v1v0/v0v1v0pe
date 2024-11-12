@@ -1,0 +1,102 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>save-ggplot-module</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Save <code>ggplot</code> module</h2>
+
+<h3>Description</h3>
+
+<p>Save a <code>ggplot</code> object in various format and resize it before saving.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">save_ggplot_ui(
+  id,
+  output_format = c("png", "pdf", "svg", "jpeg", "bmp", "eps", "tiff")
+)
+
+save_ggplot_modal(
+  id,
+  title = NULL,
+  output_format = c("png", "pdf", "svg", "jpeg", "bmp", "eps", "tiff")
+)
+
+save_ggplot_server(id, plot_rv)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Module ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_format</code></td>
+<td>
+<p>Output formats offered to the user.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>Modal's title.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot_rv</code></td>
+<td>
+<p>A <code>reactiveValues</code> with a slot <code>plot</code> containing a <code>ggplot</code> object.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>No value. Use in UI &amp; server of shiny application.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(shiny)
+library(ggplot2)
+library(esquisse)
+
+
+ui &lt;- fluidPage(
+  tags$h2("Save a ggplot"),
+  selectInput("var", "Variable:", names(economics)[-1]),
+  plotOutput("plot", width = "600px"),
+  actionButton("save", "Save this plot")
+)
+
+server &lt;- function(input, output, session) {
+  
+  rv &lt;- reactiveValues(plot = NULL)
+  
+  output$plot &lt;- renderPlot({
+    rv$plot &lt;- ggplot(economics) + 
+      geom_line(aes(date, !!sym(input$var))) + 
+      theme_minimal()
+    rv$plot
+  })
+  
+  observeEvent(input$save, {
+    save_ggplot_modal("ID", "Save plot")
+  })
+  save_ggplot_server("ID", rv)
+}
+
+if (interactive())
+  shinyApp(ui, server)
+</code></pre>
+
+
+</div>

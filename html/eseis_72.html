@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spatial_amplitude</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Locate the source of a seismic event by modelling amplutide attenuation</h2>
+
+<h3>Description</h3>
+
+<p>The function fits a model of signal amplitude attenuation for all grid
+cells of the distance data sets and returns the residual sum as measure
+of the most likely source location of an event.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spatial_amplitude(
+  data,
+  coupling,
+  d_map,
+  aoi,
+  v,
+  q,
+  f,
+  a_0,
+  normalise = TRUE,
+  output = "variance",
+  cpu
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>Numeric</code> matrix or <code>eseis</code> object, seismic signals
+to work with. Since the function will calculate the maxima of the data it
+is usually the envelopes of the data that should be used here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coupling</code></td>
+<td>
+<p><code>Numeric</code> vector, coupling efficiency factors for each
+seismic station. The best coupled station (or the one with the highest
+amplification) must receive <code>1</code>, the others must be scaled relatively
+to this one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_map</code></td>
+<td>
+<p><code>List</code> object, distance maps for each station. Output 
+of <code>spatial_distance</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aoi</code></td>
+<td>
+<p><code>raster</code> object that defines which pixels are used to 
+locate the source. If omitted, the entire distance map extent is used. 
+<code>aoi</code> and <code>d_map</code> objects must have the same extents, 
+projections and pixel sizes. The <code>aoi</code> map must be of logical values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p><code>Numeric</code> value, mean velocity of seismic waves (m/s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p><code>Numeric</code> value, quality factor of the ground.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p><code>Numeric</code> value, frequency for which to model the
+attenuation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a_0</code></td>
+<td>
+<p><code>Logical</code> value, start parameter of the source amplitude,
+if not provided, a best guess is made as 100 times the maximum amplitude
+value of the data set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalise</code></td>
+<td>
+<p><code>Logical</code> value, option to normalise sum of
+residuals between 0 and 1. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p><code>Character</code> value, type of metric the function returns.
+One out of <code>"residuals"</code> (sums of the squared model residuals) or
+<code>"variance"</code> (variance reduction, cf. Walter et al. (2017)). Default
+is <code>"variance"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cpu</code></td>
+<td>
+<p><code>Numeric</code> value, fraction of CPUs to use. If omitted, 
+only one CPU will be used.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A raster object with the location output metrics for each
+grid cell.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+
+## create synthetic DEM
+dem &lt;- terra::rast(xmin = 0, xmax = 10000, 
+                  ymin= 0, ymax = 10000, 
+                  res = c(500, 500),
+                  vals = rep(0, 400))
+
+## define station coordinates
+sta &lt;- data.frame(x = c(1000, 9000, 5000),
+                 y = c(1000, 1000, 9000),
+                 ID = c("A", "B", "C"))
+
+## create synthetic signal (source in towards lower left corner of the DEM)
+s &lt;- rbind(dnorm(x = 1:1000, mean = 500, sd = 50) * 100,
+          dnorm(x = 1:1000, mean = 500, sd = 50) * 2,
+          dnorm(x = 1:1000, mean = 500, sd = 50) * 1)
+
+## plot DEM and stations
+terra::plot(dem)
+text(x = sta$x, 
+    y = sta$y, 
+    labels = sta$ID)
+
+## calculate spatial distance maps and inter-station distances
+D &lt;- eseis::spatial_distance(stations = sta[,1:2],
+                            dem = dem)
+
+## locate signal
+e &lt;- eseis::spatial_amplitude(data = s, 
+                             d_map = D$maps, 
+                             v = 500, 
+                             q = 50, 
+                             f = 10)
+
+## get most likely location coordinates (example contains two equal points)
+e_max &lt;- spatial_pmax(data = e)
+
+## plot output
+terra::plot(e)
+points(e_max[1], 
+      e_max[2],
+      pch = 20)
+points(sta[,1:2])
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

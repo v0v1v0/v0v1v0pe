@@ -1,0 +1,115 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>split_by</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Splits data.frame into list of data.frames that can be analyzed separately</h2>
+
+<h3>Description</h3>
+
+<p>Splits data.frame into list of data.frames that can be analyzed separately.
+These data.frames are sets of cases that have the same values for the
+specified split variables. Any missing values in split variables are dropped
+together with the corresponding values of <code>data</code>. <code>split_off</code> works
+with lists of data.frames or objects that can be coerced to data.frame and
+assumed to have compatible structure. Resulting rows will be sorted in order
+of the split variables.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">split_by(data, ..., drop = TRUE)
+
+split_off(data, groups = NULL, rownames = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame for <code>split_by</code>/list for <code>split_off</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>unquoted variables names (see keep) by which <code>data</code>
+will be split into list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>should we drop combination of levels with zero observation? TRUE
+by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>character If it is not <code>NULL</code> then we add list
+names as variable to result of <code>split_off</code> with the name specified by
+<code>groups</code>. If it is <code>TRUE</code> then name will be <code>.groups</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rownames</code></td>
+<td>
+<p>character If it is not <code>NULL</code> then we add data.frames
+rownames as variable to result of <code>split_off</code> with the name specified
+by <code>rownames</code>. If it is <code>TRUE</code> then name will be 
+<code>.rownames</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>split_by</code> returns list of data.frames/<code>split_off</code>
+returns data.frame
+</p>
+
+
+<h3>See Also</h3>
+
+<p>split
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# usage of 'groups', 'rownames'
+data(mtcars)
+# add labels to dataset
+mtcars %&gt;% 
+    apply_labels(mpg = "Miles/(US) gallon",
+                 disp = "Displacement (cu.in.)",
+                 wt = "Weight",
+                 hp = "Gross horsepower",
+                 vs = "Engine",
+                 vs = num_lab(" 
+                                   0 V-engine
+                                   1 Straight engine
+                                   "),
+                 
+                 am = "Transmission",
+                 am = num_lab(" 
+                                   0 Automatic
+                                   1 Manual
+                                   ")
+    ) %&gt;% 
+    split_by(am, vs) %&gt;% 
+    to_list({
+        res = lm(mpg ~ hp + disp + wt, data = .x)
+        cbind(Coef. = coef(res), confint(res))
+    }) %&gt;% 
+    split_off(groups = TRUE, rownames = "variable")
+</code></pre>
+
+
+</div>

@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_env_names</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a lookup table with address-name pairs of environments</h2>
+
+<h3>Description</h3>
+
+<p>Return a data frame containing the address-name pairs of system, package, namespace, user-defined,
+and function execution environments in the whole workspace or within a given environment.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_env_names(envir = NULL, include_functions = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>environment where environments are searched for to construct the lookup table.
+It defaults to <code>NULL</code> which means that all environments in the whole workspace should be searched for
+and all packages in the <code>search()</code> path should be returned including their namespace environments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_functions</code></td>
+<td>
+<p>flag indicating whether to include in the returned data frame 
+user-defined environments defined inside function execution environments.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The table includes the empty environment as well when the address-name pairs map is constructed
+on the whole workspace.
+</p>
+<p>The search for environments is recursive, meaning that a search is carried out for environments defined
+within other user-defined environments and, when <code>include_functions=TRUE</code> within function execution
+environments.
+</p>
+<p>The search within packages is always on <em>exported objects</em> only.
+</p>
+<p>If <code>envir=NULL</code> the lookup table includes all system, package, and namespace environments
+in the <code>search()</code> path, as well as all user-defined found in <em>any</em> of those environments
+(with recursive search), and all function execution environments.
+</p>
+<p>If <code>envir</code> is not <code>NULL</code> the lookup table includes just the user-defined and
+function execution environments found inside the given environment (with recursive search).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame containing the following seven columns:
+</p>
+
+<ul>
+<li>
+<p><code>type</code> type of environment ("user" for user-defined environments,
+"function" for function execution environments, "system/package" for system or package environments,
+"namespace" for namespace environments, and "empty" for empty environments such as emptyenv()).
+</p>
+</li>
+<li>
+<p><code>location</code> location of the environment, which is only non-<code>NA</code> for user-defined
+and function execution environments: 
+</p>
+
+<ul>
+<li>
+<p> for a user-defined environment, the location is the system environment or package where
+the environment resides (note that this may be different from the parent environment if the
+parent environment was set during creation with the <code>parent=</code> option of the <code>new.env()</code>
+function or using the <code>parent.env()</code> function)
+</p>
+</li>
+<li>
+<p> for a function execution environment, the location is the function's enclosing environment, i.e. the environment
+where the function is defined.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>locationaddress</code> the memory address of the <code>location</code> environment.
+</p>
+</li>
+<li>
+<p><code>address</code> memory address of the environment. This is the key piece of information used
+by the package to retrieve the environment name with the <code>environment_name()</code> function.
+For functions, this is the address of the function's execution environment.
+</p>
+</li>
+<li>
+<p><code>pathname</code> path to the environment and its name. This is the combination of columns
+<code>path</code> and <code>name</code> whose values are put together separated by <code>$</code>.
+</p>
+</li>
+<li>
+<p><code>path</code> path to the environment (i.e. all environments that need to be traversed in order
+to reach the environment).
+</p>
+</li>
+<li>
+<p><code>name</code> name of the environment.
+</p>
+</li>
+</ul>
+<p>The <code>type</code> column is used to distinguish between user-defined environments, function execution
+environments, package or system environments, namespace environments, and empty environments.
+</p>
+<p>The data frame is empty if no environments are found in the given <code>envir</code> environment.
+</p>
+<p><code>NULL</code> is returned when an error occurs.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create example of chained environments
+env1 &lt;- new.env()
+with(env1, env11 &lt;- new.env())
+with(env1$env11, envx &lt;- new.env())
+
+# Address-name pairs of all environments defined in the workspace,
+# including environments in the search path
+get_env_names()  # returns a data frame with at least the following user environments:
+                 # "env1", "env1$env11", "env1$env11$envx"  
+
+# Address-name pairs of the environments defined in a given user-defined environment
+get_env_names(env1)  # returns a data frame with the following user environments:
+                     # "env11", "env11$envx"
+
+# Address-name pairs of the environments defined in a given package
+get_env_names(as.environment("package:stats")) # should return an empty data frame
+                                               # (since the stats package does not
+                                               # have any environments defined)
+</code></pre>
+
+
+</div>

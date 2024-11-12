@@ -1,0 +1,237 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mapping</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Mapping management</h2>
+
+<h3>Description</h3>
+
+<p>Mapping management
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mapping_create(
+  conn,
+  index,
+  body,
+  type = NULL,
+  update_all_types = FALSE,
+  include_type_name = NULL,
+  ...
+)
+
+mapping_get(conn, index = NULL, type = NULL, include_type_name = NULL, ...)
+
+field_mapping_get(
+  conn,
+  index = NULL,
+  type = NULL,
+  field,
+  include_defaults = FALSE,
+  include_type_name = NULL,
+  ...
+)
+
+type_exists(conn, index, type, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>an Elasticsearch connection object, see <code>connect()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>(character) An index</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>body</code></td>
+<td>
+<p>(list) Either a list or json, representing the query.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>(character) A document type</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>update_all_types</code></td>
+<td>
+<p>(logical) update all types. default: <code>FALSE</code>.
+This parameter is deprecated in ES v6.3.0 and higher, see
+https://github.com/elastic/elasticsearch/pull/28284</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_type_name</code></td>
+<td>
+<p>(logical) If set to <code>TRUE</code>, you can include a type
+name, if not an error will occur. default: not set. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Curl options passed on to crul::verb-PUT, crul::verb-GET,
+or crul::verb-HEAD</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>field</code></td>
+<td>
+<p>(character) One or more field names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_defaults</code></td>
+<td>
+<p>(logical) Whether to return default values</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Find documentation for each function at:
+</p>
+
+<ul>
+<li> <p><code>mapping_create</code> -
+<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-mapping.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-mapping.html</a>
+</p>
+</li>
+<li> <p><code>type_exists</code> -
+<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-types-exists.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-types-exists.html</a>
+</p>
+</li>
+<li> <p><code>mapping_delete</code> - FUNCTION DEFUNCT - instead of deleting mapping, delete
+index and recreate index with new mapping
+</p>
+</li>
+<li> <p><code>mapping_get</code> -
+<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-mapping.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-mapping.html</a>
+</p>
+</li>
+<li> <p><code>field_mapping_get</code> -
+<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-field-mapping.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-field-mapping.html</a>
+</p>
+</li>
+</ul>
+<p>See <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html</a>
+for information on type removal
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# connection setup
+(x &lt;- connect())
+
+# Used to check if a type/types exists in an index/indices
+type_exists(x, index = "plos", type = "article")
+type_exists(x, index = "plos", type = "articles")
+type_exists(x, index = "shakespeare", type = "line")
+
+# The put mapping API allows to register specific mapping definition for a specific type.
+## a good mapping body
+body &lt;- list(properties = list(
+ journal = list(type="text"),
+ year = list(type="long")
+))
+if (!index_exists(x, "plos")) index_create(x, "plos")
+mapping_create(x, index = "plos", type = "citation", body=body)
+## OR if above fails, try
+mapping_create(x, index = "plos", type = "citation", body=body,
+  include_type_name=TRUE)
+## ES &gt;= 7, no type
+mapping_create(x, index = "plos", body=body)
+
+### or as json
+body &lt;- '{
+  "properties": {
+    "journal": { "type": "text" },
+      "year": { "type": "long" }
+}}'
+mapping_create(x, index = "plos", type = "citation", body=body)
+mapping_get(x, "plos", "citation")
+
+## A bad mapping body
+body &lt;- list(things = list(properties = list(
+  journal = list("text")
+)))
+# mapping_create(x, index = "plos", type = "things", body=body)
+
+# Get mappings
+mapping_get(x, '_all')
+mapping_get(x, index = "plos")
+mapping_get(x, index = c("shakespeare","plos"))
+# mapping_get(x, index = "shakespeare", type = "act")
+# mapping_get(x, index = "shakespeare", type = c("act","line"))
+
+# Get field mappings
+plosdat &lt;- system.file("examples", "plos_data.json",
+  package = "elastic")
+plosdat &lt;- type_remover(plosdat)
+invisible(docs_bulk(x, plosdat))
+field_mapping_get(x, index = "_all", field = "text")
+field_mapping_get(x, index = "plos", field = "title")
+field_mapping_get(x, index = "plos", field = "*")
+field_mapping_get(x, index = "plos", field = "title", include_defaults = TRUE)
+field_mapping_get(x, type = c("article","record"), field = c("title","class"))
+field_mapping_get(x, type = "a*", field = "t*")
+
+# Create geospatial mapping
+if (index_exists(x, "gbifgeopoint")) index_delete(x, "gbifgeopoint")
+file &lt;- system.file("examples", "gbif_geopoint.json",
+  package = "elastic")
+file &lt;- type_remover(file)
+index_create(x, "gbifgeopoint")
+body &lt;- '{
+ "properties" : {
+   "location" : { "type" : "geo_point" }
+ }
+}'
+mapping_create(x, "gbifgeopoint", body = body)
+invisible(docs_bulk(x, file))
+
+# update_all_fields, see also ?fielddata
+if (x$es_ver() &lt; 603) {
+ mapping_create(x, "shakespeare", "record", update_all_types=TRUE, body = '{
+   "properties": {
+     "speaker": { 
+       "type":     "text",
+       "fielddata": true
+     }
+   }
+ }')
+} else {
+ index_create(x, 'brownchair')
+ mapping_create(x, 'brownchair', body = '{
+   "properties": {
+     "foo": { 
+       "type":     "text",
+       "fielddata": true
+     }
+   }
+ }')
+}
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

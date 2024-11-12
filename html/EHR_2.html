@@ -1,0 +1,83 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>addLastDose</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Add Lastdose Data</h2>
+
+<h3>Description</h3>
+
+<p>Add lastdose data to data set from the <code>buildDose</code> process.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">addLastDose(buildData, lastdoseData)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>buildData</code></td>
+<td>
+<p>data.frame, output of <code>buildDose</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lastdoseData</code></td>
+<td>
+<p>data.frame with columns filename, ld_start, lastdose, raw_time, time_type</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Lastdose is a datetime string associated with dose data. Information on time
+of last dose can be extracted within the <code>extractMed</code> function
+(i.e., <code>medExtractR</code>) using the argument
+<code>lastdose=TRUE</code>. Raw extracted times should first be processed using the
+<code>processLastDose</code> function to convert to datetime format before providing
+to <code>addLastDose</code>. This function then combines the processed last dose times with output
+from the <code>buildDose</code> process by file name to pair last dose times with dosing regimens based on position.
+Alternatively, the user can provide their own table of lastdose data. In this case, with position
+information absent, the lastdose data should be restricted to one unique last dose time per
+unique patient ID-date identifier.
+</p>
+<p>In the case where <code>lastdoseData</code> is output from <code>processLastDose</code>, it is possible to
+have more than one extracted last dose time. In this case, rules are applied to determine which
+time should be kept. First, we give preference to an explicit time expression (e.g., "10:30pm")
+over a duration expression (e.g., "14 hour level"). Then, we pair last dose times with drug regimens
+based on minimum distance between last dose time start position and drug name start position.
+</p>
+<p>See EHR Vignette for Extract-Med and Pro-Med-NLP for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a data.frame with the ‘lastdose’ column added.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Get build data
+data(tac_mxr_parsed)
+# don't combine lastdose at this stage
+tac_build &lt;- buildDose(tac_mxr_parsed, preserve = 'lastdose')
+# Get processed last dose data
+tac_mxr &lt;- read.csv(system.file("examples", "tac_mxr.csv", package = "EHR"))
+data(tac_metadata)
+data(tac_lab)
+ld_data &lt;- processLastDose(tac_mxr, tac_metadata, tac_lab)
+
+addLastDose(tac_build, ld_data)
+
+</code></pre>
+
+
+</div>

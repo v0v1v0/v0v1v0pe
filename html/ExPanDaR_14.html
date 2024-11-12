@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prepare_regression_table</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prepares a Regression Table</h2>
+
+<h3>Description</h3>
+
+<p>Builds a regression table based on a set of user-specified models or a single model and a partitioning variable.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prepare_regression_table(
+  df,
+  dvs,
+  idvs,
+  feffects = rep("", length(dvs)),
+  clusters = rep("", length(dvs)),
+  models = rep("auto", length(dvs)),
+  byvar = "",
+  format = "html"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Data frame containing the data to estimate the models on.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dvs</code></td>
+<td>
+<p>A character vector containing the variable names for the dependent variable(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idvs</code></td>
+<td>
+<p>A character vector or a a list of character vectors containing the variable names of the independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>feffects</code></td>
+<td>
+<p>A character vector or a a list of character vectors containing the variable names of the fixed effects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+<p>A character vector or a a list of character vectors containing the variable names of the cluster variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>A character vector indicating the model types to be estimated ('ols', 'logit', or 'auto')</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>byvar</code></td>
+<td>
+<p>A factorial variable to estimate the model on (only possible if only one model is being estimated).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p>A character scalar that is passed on <code>stargazer</code> as <code>type</code> to determine the presentation
+format ("html", "text", or "latex").</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This is a wrapper function calling the stargazer package. For numeric
+dependent variables the models are estimated using <code>lm</code>
+for models without and <code>plm</code> for models with fixed
+effects. Binary dependent variable models are estimated using
+<code>glm</code> (with <code>family = binomial(link="logit")</code>).
+You can override this behavior by specifying the model with the
+<code>models</code> parameter. Multinomial logit models are not supported.
+Clustered standard errors are estimated using <code>plm</code>'s robust
+covariance matrix estimators for OLS and
+<code>cluster.vcov</code> for logit models.
+Only up to two dimensions are supported for fixed effects and standard
+error clusters need to be also present as fixed effects.
+If run with <code>byvar</code>, only levels that have more observations than
+coefficients are estimated.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing two items
+</p>
+
+<dl>
+<dt>"models"</dt>
+<dd>
+<p>A list containing the model results and by values if appropriate</p>
+</dd>
+<dt>"table"</dt>
+<dd>
+<p>The output of <code>stargazer</code> containing the table</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">df &lt;- data.frame(year = as.factor(floor(stats::time(datasets::EuStockMarkets))),
+                 datasets::EuStockMarkets)
+dvs = c("DAX", "SMI", "CAC", "FTSE")
+idvs = list(c("SMI", "CAC", "FTSE"),
+            c("DAX", "CAC", "FTSE"),
+            c("SMI", "DAX", "FTSE"),
+            c("SMI", "CAC", "DAX"))
+feffects = list("year", "year", "year", "year")
+clusters = list("year", "year", "year", "year")
+t &lt;- prepare_regression_table(df, dvs, idvs, feffects, clusters, format = "text")
+t$table
+t &lt;- prepare_regression_table(df, "DAX", c("SMI", "CAC", "FTSE"), byvar="year", format = "text")
+print(t$table)
+</code></pre>
+
+
+</div>

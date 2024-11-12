@@ -1,0 +1,5945 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Idf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read, Modify, and Run an EnergyPlus Model</h2>
+
+<h3>Description</h3>
+
+<p>eplusr provides parsing EnergyPlus Input Data File (IDF) files and strings
+in a hierarchical structure, which was extremely inspired by
+<a href="https://openstudio-sdk-documentation.s3.amazonaws.com/cpp/OpenStudio-2.5.1-doc/utilities/html/idf_page.html">OpenStudio utilities library</a>,
+but with total different data structure under the hook.
+</p>
+
+
+<h3>Details</h3>
+
+<p>eplusr uses <code>Idf</code> class to present the whole IDF file and use IdfObject
+to present a single object in IDF. Both <code>Idf</code> and IdfObject contain member
+functions for helping modify the data in IDF so it complies with the
+underlying IDD (EnergyPlus Input Data Dictionary).
+</p>
+<p>Under the hook, eplusr uses a SQL-like structure to store both IDF and IDD
+data in different data.table::data.tables. So to modify an EnergyPlus model
+in eplusr is equal to change the data in those IDF tables accordingly, in the
+context of specific IDD data. This means that a corresponding Idd object is
+needed whenever creating an <code>Idf</code> object. eplusr provides several
+helpers to easily download IDD files and create Idd objects.
+</p>
+<p>All IDF reading process starts with function <code>read_idf()</code> which returns an
+<code>Idf</code> object. <code>Idf</code> class provides lots of methods to programmatically query
+and modify EnergyPlus models.
+</p>
+<p>Internally, the powerful <a href="https://cran.r-project.org/package=data.table">data.table</a>
+package is used to speed up the whole IDF parsing process and store the
+results. Under the hook, eplusr uses a SQL-like structure to store both IDF
+and IDD data in data.table::data.table format. Every IDF will be parsed and
+stored in three tables:
+</p>
+
+<ul>
+<li> <p><code>object</code>: contains object IDs, names and comments.
+</p>
+</li>
+<li> <p><code>value</code>: contains field values
+</p>
+</li>
+<li> <p><code>reference</code>: contains cross-reference data of field values.
+</p>
+</li>
+</ul>
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-Idf-new"><code>Idf$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-version"><code>Idf$version()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-path"><code>Idf$path()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-group_name"><code>Idf$group_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-class_name"><code>Idf$class_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-is_valid_group"><code>Idf$is_valid_group()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-is_valid_class"><code>Idf$is_valid_class()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-definition"><code>Idf$definition()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-object_id"><code>Idf$object_id()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-object_name"><code>Idf$object_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-object_num"><code>Idf$object_num()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-is_valid_id"><code>Idf$is_valid_id()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-is_valid_name"><code>Idf$is_valid_name()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-object"><code>Idf$object()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-objects"><code>Idf$objects()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-object_unique"><code>Idf$object_unique()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-objects_in_class"><code>Idf$objects_in_class()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-objects_in_group"><code>Idf$objects_in_group()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-object_relation"><code>Idf$object_relation()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-objects_in_relation"><code>Idf$objects_in_relation()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-search_object"><code>Idf$search_object()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-dup"><code>Idf$dup()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-add"><code>Idf$add()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-set"><code>Idf$set()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-del"><code>Idf$del()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-purge"><code>Idf$purge()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-duplicated"><code>Idf$duplicated()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-unique"><code>Idf$unique()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-rename"><code>Idf$rename()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-insert"><code>Idf$insert()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-load"><code>Idf$load()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-update"><code>Idf$update()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-paste"><code>Idf$paste()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-search_value"><code>Idf$search_value()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-replace_value"><code>Idf$replace_value()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-validate"><code>Idf$validate()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-is_valid"><code>Idf$is_valid()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-to_string"><code>Idf$to_string()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-to_table"><code>Idf$to_table()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-external_deps"><code>Idf$external_deps()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-is_unsaved"><code>Idf$is_unsaved()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-save"><code>Idf$save()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-run"><code>Idf$run()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-last_job"><code>Idf$last_job()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-geometry"><code>Idf$geometry()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-view"><code>Idf$view()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-print"><code>Idf$print()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Idf-clone"><code>Idf$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-Idf-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create an <code>Idf</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$new(path, idd = NULL, encoding = "unknown")</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>path</code></dt>
+<dd>
+<p>Either a path, a connection, or literal data (either a single
+string or a raw vector) to an EnergyPlus Input Data File
+(IDF). If a file path, that file usually has a extension
+<code>.idf</code>.</p>
+</dd>
+<dt><code>idd</code></dt>
+<dd>
+<p>Any acceptable input of <code>use_idd()</code>. If <code>NULL</code>, which is the
+default, the version of IDF will be passed to <code>use_idd()</code>. If
+the input is an <code>.ddy</code> file which does not have a version
+field, the latest version of Idf cached will be used.</p>
+</dd>
+<dt><code>encoding</code></dt>
+<dd>
+<p>The file encoding of input IDF. Should be one of
+<code>"unknown"</code>, <code style="white-space: pre;">⁠"Latin-1" and ⁠</code>"UTF-8"<code style="white-space: pre;">⁠. The default is ⁠</code>"unknown"' which means that the file is encoded in the native
+encoding.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>It takes an EnergyPlus Input Data File (IDF) as input and returns an
+<code>Idf</code> object.
+</p>
+<p>Currently, Imf file is not fully supported. All EpMacro lines will be treated
+as normal comments of the nearest downwards object. If input is an Imf file,
+a warning will be given during parsing. It is recommended to convert the Imf
+file to an Idf file and use ParametricJob class to conduct
+parametric analysis.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An <code>Idf</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# example model shipped with eplusr from EnergyPlus v8.8
+path_idf &lt;- system.file("extdata/1ZoneUncontrolled.idf", package = "eplusr") # v8.8
+
+# If neither EnergyPlus v8.8 nor Idd v8.8 was found, error will
+# occur. If Idd v8.8 is found, it will be used automatically.
+idf &lt;- Idf$new(path_idf)
+
+# argument `idd` can be specified explicitly using `use_idd()`
+idf &lt;- Idf$new(path_idf, idd = use_idd(8.8))
+
+# you can set `download` arugment to "auto" in `use_idd()` if you
+# want to automatically download corresponding IDD file when
+# necessary
+idf &lt;- Idf$new(path_idf, use_idd(8.8, download = "auto"))
+
+# Besides use a path to an IDF file, you can also provide IDF in literal
+# string format
+string_idf &lt;-
+    "
+    Version, 8.8;
+    Building,
+        Building;                !- Name
+    "
+
+Idf$new(string_idf, use_idd(8.8, download = "auto"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-version"></a>
+
+
+
+<h4>Method <code>version()</code>
+</h4>
+
+<p>Get the version of current <code>Idf</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$version()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$version()⁠</code> returns the version of current <code>Idf</code> in a
+<code>base::numeric_version()</code> format. This makes it easy to direction
+compare versions of different <code>Idf</code>s, e.g. <code>idf$version() &gt; 8.6</code> or
+<code>idf1$version() &gt; idf2$version()</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>base::numeric_version()</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get version
+idf$version()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-path"></a>
+
+
+
+<h4>Method <code>path()</code>
+</h4>
+
+<p>Get the file path of current <code>Idf</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$path()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$path()⁠</code> returns the full path of current <code>Idf</code> or <code>NULL</code> if the
+<code>Idf</code> object is created using a character vector and not saved
+locally.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p><code>NULL</code> or a single string.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get path
+idf$path()
+
+# return `NULL` if Idf is not created from a file
+Idf$new("Version, 8.8;\n")$path()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-group_name"></a>
+
+
+
+<h4>Method <code>group_name()</code>
+</h4>
+
+<p>Get names of groups
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$group_name(all = FALSE, sorted = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>FALSE</code>, only names of groups in current <code>Idf</code> object
+will be returned. If <code>TRUE</code>, all group names in the underlying
+Idd will be returned. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>sorted</code></dt>
+<dd>
+<p>Only applicable when <code>all</code> is <code>FALSE</code>. If <code>TRUE</code>,
+duplications in returned group or class names are removed, and
+unique names are further sorted according to their occurrences
+in the underlying Idd. Default: <code>TRUE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$group_name()⁠</code> returns names of groups current <code>Idf</code> contains or
+the underlying Idd object contains.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get names of all groups Idf contains
+idf$group_name()
+
+# get group name of each object in Idf
+idf$group_name(sorted = FALSE)
+
+# get names of all available groups in underlying Idd
+idf$group_name(all = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-class_name"></a>
+
+
+
+<h4>Method <code>class_name()</code>
+</h4>
+
+<p>Get names of classes
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$class_name(all = FALSE, sorted = TRUE, by_group = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>FALSE</code>, only names of classes in current <code>Idf</code> object
+will be returned. If <code>TRUE</code>, all class names in the underlying
+Idd will be returned. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>sorted</code></dt>
+<dd>
+<p>Only applicable when <code>all</code> is <code>FALSE</code>. If <code>TRUE</code>,
+duplications in returned group or class names are removed, and
+unique names are further sorted according to their occurrences
+in the underlying Idd. Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>by_group</code></dt>
+<dd>
+<p>Only applicable when <code>all</code> or <code>sorted</code> is <code>TRUE</code>. If
+<code>TRUE</code>, a list is returned which separates class names by the
+group they belong to.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$class_name()⁠</code> returns names of classes current <code>Idf</code> contains or
+the underlying Idd object contains.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector if <code>by_group</code> is <code>FALSE</code> and a list of
+character vectors when <code>by_group</code> is <code>TRUE</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get names of all classes in Idf
+idf$class_name()
+
+# get names of all classes grouped by group names in Idf
+idf$class_name(by_group = TRUE)
+
+# get class name of each object in Idf
+idf$class_name(sorted = FALSE)
+
+# get names of all available classes in underlying Idd
+idf$class_name(all = TRUE)
+
+# get names of all available classes grouped by group names in
+# underlying Idd
+idf$class_name(all = TRUE, by_group = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-is_valid_group"></a>
+
+
+
+<h4>Method <code>is_valid_group()</code>
+</h4>
+
+<p>Check if elements in input character vector are valid group names.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$is_valid_group(group, all = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector to check.</p>
+</dd>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>FALSE</code>, check if input characters are valid group names
+for current <code>Idf</code>. If <code>TRUE</code>, check if input characters are
+valid group names for underlying Idd. Default: FALSE</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_valid_group()⁠</code> returns <code>TRUE</code>s if given character vector
+contains valid group names in the context of current <code>Idf</code> (when
+<code>all</code> is <code>FALSE</code>) or current underlying Idd (when <code>all</code> is <code>TRUE</code>).
+</p>
+<p>Note that case-sensitive matching is performed, which means that
+<code>"Location and Climate"</code> is a valid group name but <code>"location and climate"</code> is not.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A logical vector with the same length as input character
+vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# check if input is a valid group name in current Idf
+idf$is_valid_group(c("Schedules", "Compliance Objects"))
+
+# check if input is a valid group name in underlying Idd
+idf$is_valid_group(c("Schedules", "Compliance Objects"), all = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-is_valid_class"></a>
+
+
+
+<h4>Method <code>is_valid_class()</code>
+</h4>
+
+<p>Check if elements in input character vector are valid class names.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$is_valid_class(class, all = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector to check.</p>
+</dd>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>FALSE</code>, check if input characters are valid class names
+for current <code>Idf</code>. If <code>TRUE</code>, check if input characters are
+valid class names for underlying Idd. Default: FALSE</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_valid_class()⁠</code> returns <code>TRUE</code>s if given character vector
+contains valid class names in the context of current <code>Idf</code> (when
+<code>all</code> is <code>FALSE</code>) or current underlying Idd (when <code>all</code> is <code>TRUE</code>),
+and <code>FALSE</code>s otherwise.
+</p>
+<p>Note that case-sensitive matching is performed, which means that
+<code>"Version"</code> is a valid class name but <code>"version"</code> is not.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A logical vector with the same length as input character
+vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# check if input is a valid class name in current Idf
+idf$is_valid_class(c("Building", "ShadowCalculation"))
+
+# check if input is a valid class name in underlying Idd
+idf$is_valid_class(c("Building", "ShadowCalculation"), all = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-definition"></a>
+
+
+
+<h4>Method <code>definition()</code>
+</h4>
+
+<p>Get the IddObject object for specified class.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$definition(class = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A <strong>single</strong> string of valid class name in current
+Idd. If <code>NULL</code>, the underlying Idd object is returned.
+Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$definition()⁠</code> returns an IddObject of given class. IddObject
+contains all data used for parsing and creating an IdfObject. For
+details, please see IddObject class.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An IddObject object if class is not <code>NULL</code> or an Idd
+object if class is <code>NULL</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get the IddObject object for specified class
+idf$definition("Version")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-object_id"></a>
+
+
+
+<h4>Method <code>object_id()</code>
+</h4>
+
+<p>Get the unique ID for each object in specified classes in the <code>Idf</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$object_id(class = NULL, simplify = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector that contains valid class names for
+current <code>Idf</code> object. If <code>NULL</code>, all classes in current <code>Idf</code>
+object are used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>simplify</code></dt>
+<dd>
+<p>If <code>TRUE</code>, an integer vector contains object IDs of
+all specified classes is returned. If <code>FALSE</code>, a named list
+that contains object IDs for each specified class is returned.
+Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>In <code>Idf</code>, each object is assigned with an integer as an universally
+unique identifier (UUID) in the context of current <code>Idf</code>. UUID is
+not reused even if the object associated is deleted.
+</p>
+<p><code style="white-space: pre;">⁠$object_id()⁠</code> returns an integer vector (when <code>simplify</code> is <code>TRUE</code>)
+or a named list (when <code>simplify</code> is <code>FALSE</code>) of integer vectors that
+contain object IDs in each specified class. The returned list is
+named using specified class names.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An integer vector (when <code>simplify</code> is <code>TRUE</code>) or a named list
+of integer vectors (when <code>simplify</code> is <code>FALSE</code>).
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get IDs of all objects in current Idf object
+idf$object_id()
+
+# get IDs of all objects in current Idf object, and merge them into a
+# single integer vector
+idf$object_id(simplify = TRUE)
+
+# get IDs of objects in class Version and Zone
+idf$object_id(c("Version", "Zone"))
+
+# get IDs of objects in class Version and Zone, and merge them into a
+# single integer vector
+idf$object_id(c("Version", "Zone"), simplify = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-object_name"></a>
+
+
+
+<h4>Method <code>object_name()</code>
+</h4>
+
+<p>Get names for objects in specified classes in the <code>Idf</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$object_name(class = NULL, simplify = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector that contains valid class names for
+current <code>Idf</code>. If <code>NULL</code>, all classes in current <code>Idf</code> are
+used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>simplify</code></dt>
+<dd>
+<p>If <code>TRUE</code>, a character vector contains object names
+of all specified classes is returned. If <code>FALSE</code>, a named list
+that contains a character vector for each specified class is
+returned. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>In <code>Idf</code>, each object is assigned with a single string as the name
+for it, if the class it belongs to has name attribute, e.g. class
+<code>RunPeriod</code>, <code>Material</code> and etc. That name should be unique among all
+objects in that class. EnergyPlus will fail with an error if
+duplications are found among object names in a class.
+</p>
+<p><code style="white-space: pre;">⁠$object_name()⁠</code> returns a character vector (when <code>simplify</code> is
+<code>TRUE</code>) or a named list (when <code>simplify</code> is <code>FALSE</code>) of character
+vectors that contain object IDs in each specified class. The returned
+list is named using specified class names. If specified class does
+not have name attribute, <code>NA</code>s are returned.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector (when <code>simplify</code> is <code>TRUE</code>) or a named
+list of character vectors (when <code>simplify</code> is <code>FALSE</code>).
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get names of all objects in current Idf object
+idf$object_name()
+
+# get names of all objects in current Idf object, and merge them into
+# a single character vector
+idf$object_name(simplify = TRUE)
+
+# get names of objects in class Version and Zone
+idf$object_name(c("Version", "Zone"))
+
+# get names of objects in class Version and Zone, and merge them into
+# a single character vector
+idf$object_name(c("Version", "Zone"), simplify = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-object_num"></a>
+
+
+
+<h4>Method <code>object_num()</code>
+</h4>
+
+<p>Get number of objects in specified classes in the Idf object.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$object_num(class = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector that contains valid class names for
+underlying Idd. If <code>NULL</code>, all classes in current <code>Idf</code> are
+used, and the total object number is returned. Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$object_num()⁠</code> returns an integer vector of object number in
+specified classes. <code>0</code> is returned if there is no object in that
+class.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An integer vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get total number of objects
+idf$object_num()
+
+# get number of objects in class Zone and Schedule:Compact
+idf$object_num(c("Zone", "Schedule:Compact"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-is_valid_id"></a>
+
+
+
+<h4>Method <code>is_valid_id()</code>
+</h4>
+
+<p>Check if elements in input integer vector are valid object IDs.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$is_valid_id(id, class = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>id</code></dt>
+<dd>
+<p>An integer vector to check.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A single string indicates the class where the objects to
+check against. If <code>NULL</code>, all classes in current <code>Idf</code> are
+used. Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_valid_id()⁠</code> returns <code>TRUE</code>s if given integer vector
+contains valid object IDs in current <code>Idf</code> object.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A logical vector with the same length as input integer
+vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$is_valid_id(c(51, 1000))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-is_valid_name"></a>
+
+
+
+<h4>Method <code>is_valid_name()</code>
+</h4>
+
+<p>Check if elements in input character vector are valid object names.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$is_valid_name(name, class = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>name</code></dt>
+<dd>
+<p>A character vector to check.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A single string indicates the class where the objects to
+check against. If <code>NULL</code>, all classes in current <code>Idf</code> are
+used. Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_valid_name()⁠</code> returns <code>TRUE</code>s if given character vector
+contains valid object names in current <code>Idf</code> object.
+</p>
+<p>Note that <strong>case-insensitive</strong> matching is performed, which means
+that <code>"rOoF"</code> is equivalent to <code>"roof"</code>. This behavior is consistent
+in all methods that take object name(s) as input.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A logical vector with the same length as input character
+vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$is_valid_name(c("Simple One Zone (Wireframe DXF)", "ZONE ONE", "a"))
+
+# name matching is case-insensitive
+idf$is_valid_name(c("simple one zone (wireframe dxf)", "zone one", "a"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-object"></a>
+
+
+
+<h4>Method <code>object()</code>
+</h4>
+
+<p>Extract an IdfObject object using object ID or name.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$object(which, class = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>which</code></dt>
+<dd>
+<p>A single integer specifying the object ID or a single
+string specifying the object name.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector that contains valid class names for
+current <code>Idf</code> object used to locate objects. If <code>NULL</code>, all
+classes in current <code>Idf</code> object are used. Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$object()⁠</code> returns an IdfObject object specified by an object ID
+or name.
+</p>
+<p>Note that unlike object ID, which is always unique across the whole
+<code>Idf</code> object, different objects can have the same name. If the name
+given matches multiple objects, an error is issued showing what
+objects are matched by the same name. This behavior is consistent in
+all methods that take object name(s) as input. In this case, it is
+suggested to directly use object ID instead of name.
+</p>
+<p>Note that <strong>case-insensitive</strong> matching is performed for object
+names, which means that <code>"rOoF"</code> is equivalent to <code>"roof"</code>. This
+behavior is consistent in all methods that take object name(s) as
+input.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An IdfObject object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get an object whose ID is 3
+idf$object(3)
+
+# get an object whose name is "simple one zone (wireframe dxf)"
+# NOTE: object name matching is case-insensitive
+idf$object("simple one zone (wireframe dxf)")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-objects"></a>
+
+
+
+<h4>Method <code>objects()</code>
+</h4>
+
+<p>Extract multiple IdfObject objects using object IDs or names.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$objects(which)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>which</code></dt>
+<dd>
+<p>An integer vector specifying object IDs or a character
+vector specifying object names.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$objects()⁠</code> returns a named list of IdfObject objects using object
+IDS or names. The returned list is named using object names.
+</p>
+<p>Note that unlike object ID, which is always unique across the whole
+<code>Idf</code> object, different objects can have the same name. If the name
+given matches multiple objects, an error is issued showing what
+objects are matched by the same name. This behavior is consistent in
+all methods that take object name(s) as input. In this case, it is
+suggested to directly use object ID instead of name.
+</p>
+<p>Note that <strong>case-insensitive</strong> matching is performed for object
+names, which means that <code>"rOoF"</code> is equivalent to <code>"roof"</code>. This
+behavior is consistent in all methods that take object name(s) as
+input.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get objects whose IDs are 3 and 10
+idf$objects(c(3,10))
+
+# get objects whose names are "Simple One Zone (Wireframe DXF)" and "ZONE ONE"
+# NOTE: object name matching is case-insensitive
+idf$objects(c("Simple One Zone (Wireframe DXF)", "zone one"))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-object_unique"></a>
+
+
+
+<h4>Method <code>object_unique()</code>
+</h4>
+
+<p>Extract the IdfObject in class with <code>unique-object</code> attribute.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$object_unique(class)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A single string of valid class name for current <code>Idf</code>
+object.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>For each version of an <code>Idf</code> object, the corresponding underlying
+Idd describe how many objects can be defined in each class. Classes
+that have <code>unique-object</code> attribute can only hold a single object,
+e.g. <code>Version</code>, <code>SimulationControl</code> and etc. <code style="white-space: pre;">⁠$object_unique()⁠</code> can
+be used to directly return the IdfObject in one <code>unique-object</code>
+class. An error will be issued if there are multiple objects in that
+class or input class is not an <code>unique-object</code> class. This makes sure
+that <code style="white-space: pre;">⁠$object_unique()⁠</code> always returns a single IdfObject.
+</p>
+<p><code>Idf</code> class also provides custom S3 method of <code>$</code> and <code>[[</code> to
+make it more convenient to get the IdfObject in <code>unique-object</code>
+class. Basically, <code>idf$ClassName</code> and <code>idf[["ClassName"]]</code>,
+where <code>ClassName</code> is a single valid class name, is equivalent to
+<code>idf$object_unique(ClassName)</code> if <code>ClassName</code> is an <code>unique-object</code>
+class. For convenience, underscore-style names are allowed when using
+<code>$</code>, e.g.  <code>Site_Location</code> is equivalent to <code>Site:Location</code>. For
+instance, <code>idf$Site_Location</code> and also <code>idf[["Site_Location"]]</code> will
+both return the IdfObjects in <code>Site:Location</code> class. Note that
+unlike <code style="white-space: pre;">⁠$object_unique()⁠</code>, <code>idf$ClassName</code> and <code>idf[["ClassName"]]</code>
+will directly return <code>NULL</code> instead of giving an error when
+<code>ClassName</code> is not a valid class name in current <code>Idf</code> object. This
+makes it possible to use <code>is.null(idf$ClassName)</code> to check if
+<code>ClassName</code> is a valid class or not.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An IdfObject object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get the SimulationColtrol object
+idf$object_unique("SimulationControl")
+
+# S3 "[[" and "$" can also be used
+idf$SimulationControl
+idf[["SimulationControl"]]
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-objects_in_class"></a>
+
+
+
+<h4>Method <code>objects_in_class()</code>
+</h4>
+
+<p>Extract all IdfObject objects in one class.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$objects_in_class(class)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A single string of valid class name for current <code>Idf</code>
+object.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$objects_in_class()⁠</code> returns a named list of all IdfObject objects
+in specified class. The returned list is named using object names.
+</p>
+<p><code>Idf</code> class also provides custom S3 method of <code>$</code> and <code>[[</code> to
+make it more convenient to get all IdfObject objects in one class.
+Basically, <code>idf$ClassName</code> and <code>idf[["ClassName"]]</code>, where
+<code>ClassName</code> is a single valid class name, is equivalent to
+<code>idf$objects_in_class(ClassName)</code> if <code>ClassName</code> is not an
+<code>unique-object</code> class. For convenience, <em>underscore-style</em> names are
+allowed, e.g.  <code>BuildingSurface_Detailed</code> is equivalent to
+<code>BuildingSurface:Detailed</code> when using <code>$</code>. For instance,
+<code>idf$BuildingSurface_Detailed</code> and also
+<code>idf[["BuildingSurface:Detailed"]]</code> will both return all IdfObject
+objects in <code>BuildingSurface:Detailed</code> class. Note that
+unlike <code style="white-space: pre;">⁠$objects_in_class()⁠</code>, <code>idf$ClassName</code> and
+<code>idf[["ClassName"]]</code> will directly return <code>NULL</code> instead of giving
+an error when <code>ClassName</code> is not a valid class name in current <code>Idf</code>
+object. This makes it possible to use <code>is.null(idf$ClassName)</code> to
+check if <code>ClassName</code> is a valid class or not.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get all objects in Zone class
+idf$objects_in_class("Zone")
+
+# S3 "[[" and "$" can also be used
+idf$Zone
+idf[["Zone"]]
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-objects_in_group"></a>
+
+
+
+<h4>Method <code>objects_in_group()</code>
+</h4>
+
+<p>Extract all IdfObject objects in one group.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$objects_in_group(group)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>group</code></dt>
+<dd>
+<p>A single string of valid group name for current <code>Idf</code>
+object.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$objects_in_group()⁠</code> returns a named list of all IdfObject objects
+in specified group. The returned list is named using object names.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get all objects in Schedules group
+idf$objects_in_group("Schedules")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-object_relation"></a>
+
+
+
+<h4>Method <code>object_relation()</code>
+</h4>
+
+<p>Extract the relationship between object field values.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$object_relation(
+  which,
+  direction = c("all", "ref_to", "ref_by", "node"),
+  object = NULL,
+  class = NULL,
+  group = NULL,
+  depth = 0L,
+  keep = FALSE,
+  class_ref = c("both", "none", "all")
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>which</code></dt>
+<dd>
+<p>A single integer specifying object ID or a single string
+specifying object name.</p>
+</dd>
+<dt><code>direction</code></dt>
+<dd>
+<p>The relation direction to extract. Should be either
+<code>"all"</code>, <code>"ref_to"</code>, <code>"ref_by"</code> and <code>"node"</code>.</p>
+</dd>
+<dt><code>object</code></dt>
+<dd>
+<p>A character vector of object names or an integer vector
+of object IDs used for searching relations. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of class names used for searching
+relations. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector of group names used for searching
+relations. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>depth</code></dt>
+<dd>
+<p>If &gt; 0, the relation is searched recursively. A
+simple example of recursive reference: one material named
+<code>mat</code> is referred by a construction named <code>const</code>, and <code>const</code>
+is also referred by a surface named <code>surf</code>. If <code>NULL</code>,
+all possible recursive relations are returned. Default: <code>0</code>.</p>
+</dd>
+<dt><code>keep</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all fields of specified object are returned
+regardless they have any relations with other objects or not.
+If <code>FALSE</code>, only fields in specified object that have
+relations with other objects are returned. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>class_ref</code></dt>
+<dd>
+<p>Specify how to handle class-name-references. Class
+name references refer to references in like field <code style="white-space: pre;">⁠Component 1 Object Type⁠</code> in <code>Branch</code> objects. Their value refers to other
+many class names of objects, instaed of referring to specific
+field values. There are 3 options in total, i.e. <code>"none"</code>,
+<code>"both"</code> and <code>"all"</code>, with <code>"both"</code> being the default.
+* <code>"none"</code>: just ignore class-name-references. It is a reasonable
+option, as for most cases, class-name-references always come
+along with field value references. Ignoring
+class-name-references will not impact the most part of the
+relation structure.
+* <code>"both"</code>: only include class-name-references if this object
+also reference field values of the same one. For example, if the
+value of field <code style="white-space: pre;">⁠Component 1 Object Type⁠</code> is
+<code>Coil:Heating:Water</code>, only the object that is referenced in the
+next field <code style="white-space: pre;">⁠Component 1 Name⁠</code> is treated as referenced by
+<code style="white-space: pre;">⁠Component 1 Object Type⁠</code>. This is the default option.
+* <code>"all"</code>: include all class-name-references. For example, if the
+value of field <code style="white-space: pre;">⁠Component 1 Object Type⁠</code> is
+<code>Coil:Heating:Water</code>, all objects in <code>Coil:Heating:Water</code> will
+be treated as referenced by that field. This is the most
+aggressive option.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>Many fields in Idd can be referred by others. For example, the
+<code style="white-space: pre;">⁠Outside Layer⁠</code> and other fields in <code>Construction</code> class refer to the
+<code>Name</code> field in <code>Material</code> class and other material related classes.
+Here it means that the <code style="white-space: pre;">⁠Outside Layer⁠</code> field <strong>refers to</strong> the <code>Name</code>
+field and the <code>Name</code> field is <strong>referred by</strong> the <code style="white-space: pre;">⁠Outside Layer⁠</code>. In
+EnergyPlus, there is also a special type of field called <code>Node</code>,
+which together with <code>Branch</code>, <code>BranchList</code> and other classes define
+the topography of the HVAC connections. A outlet node of a component
+can be referred by another component as its inlet node, but can also
+exists independently, such as zone air node.
+</p>
+<p><code style="white-space: pre;">⁠$object_relation()⁠</code> provides a simple interface to get this kind of
+relation. It takes a single object ID or name and also a relation
+direction, and returns an <code>IdfRelation</code> object which contains data
+presenting such relation above. For instance, if
+<code>model$object_relation("WALL-1", "ref_to")</code> gives results below:
+</p>
+<div class="sourceCode"><pre>-- Refer to Others ------------------------
+  Class: &lt;Construction&gt;
+  \- Object [ID:2] &lt;WALL-1&gt;
+     \- 2: "WD01";        !- Outside Layer
+        v~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        \- Class: &lt;Material&gt;
+           \- Object [ID:1] &lt;WD01&gt;
+              \- 1: "WD01";        !- Name
+</pre></div>
+<p>This means that the value <code>"WD01"</code> of <code style="white-space: pre;">⁠Outside Layer⁠</code> in a
+construction named <code>WALL-1</code> refers to a material named <code>WD01</code>. All
+those objects can be further easily extracted using
+<code style="white-space: pre;">⁠$objects_in_relation()⁠</code> method described below.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An <code>IdfRelation</code> object, which is a list of 3
+<code>data.table::data.table()</code>s named <code>ref_to</code>, <code>ref_by</code> and <code>node</code>.
+Each <code>data.table::data.table()</code> contains 24 columns.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# check each layer's reference of a construction named FLOOR
+idf$object_relation("floor", "ref_to")
+
+# check where is this construction being used
+idf$object_relation("floor", "ref_by")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-objects_in_relation"></a>
+
+
+
+<h4>Method <code>objects_in_relation()</code>
+</h4>
+
+<p>Extract multiple IdfObject objects referencing each others.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$objects_in_relation(
+  which,
+  direction = c("ref_to", "ref_by", "node"),
+  object = NULL,
+  class = NULL,
+  group = NULL,
+  depth = 0L,
+  class_ref = c("both", "none", "all")
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>which</code></dt>
+<dd>
+<p>A single integer specifying object ID or a single string
+specifying object name.</p>
+</dd>
+<dt><code>direction</code></dt>
+<dd>
+<p>The relation direction to extract. Should be one of
+<code>"ref_to"</code>, <code>"ref_by"</code> or <code>"node"</code>.</p>
+</dd>
+<dt><code>object</code></dt>
+<dd>
+<p>A character vector of object names or an integer vector
+of object IDs used for searching relations. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of valid class names in the
+underlying Idd. It is used to restrict the classes to be
+returned. If <code>NULL</code>, all possible classes are considered and
+corresponding IdfObject objects are returned if
+relationships are found. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector of valid group names in the
+underlying Idd. It is used to restrict the groups to be
+returned. If <code>NULL</code>, all possible groups are considered and
+corresponding IdfObject objects are returned if
+relationships are found. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>depth</code></dt>
+<dd>
+<p>If &gt; 0, the relation is searched recursively. A
+simple example of recursive reference: one material named
+<code>mat</code> is referred by a construction named <code>const</code>, and <code>const</code>
+is also referred by a surface named <code>surf</code>. If <code>NULL</code>,
+all possible recursive relations are returned. Default: <code>0</code>.</p>
+</dd>
+<dt><code>class_ref</code></dt>
+<dd>
+<p>Specify how to handle class-name-references. Class
+name references refer to references in like field <code style="white-space: pre;">⁠Component 1 Object Type⁠</code> in <code>Branch</code> objects. Their value refers to other
+many class names of objects, instaed of refering to specific
+field values. There are 3 options in total, i.e. <code>"none"</code>,
+<code>"both"</code> and <code>"all"</code>, with <code>"both"</code> being the default.
+* <code>"none"</code>: just ignore class-name-references. It is a reasonable
+option, as for most cases, class-name-references always come
+along with field value references. Ignoring
+class-name-references will not impact the most part of the
+relation structure.
+* <code>"both"</code>: only include class-name-references if this object
+also reference field values of the same one. For example, if the
+value of field <code style="white-space: pre;">⁠Component 1 Object Type⁠</code> is
+<code>Coil:Heating:Water</code>, only the object that is referenced in the
+next field <code style="white-space: pre;">⁠Component 1 Name⁠</code> is treated as referenced by
+<code style="white-space: pre;">⁠Component 1 Object Type⁠</code>. This is the default option.
+* <code>"all"</code>: include all class-name-references. For example, if the
+value of field <code style="white-space: pre;">⁠Component 1 Object Type⁠</code> is
+<code>Coil:Heating:Water</code>, all objects in <code>Coil:Heating:Water</code> will
+be treated as referenced by that field. This is the most
+aggressive option.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$objects_in_relation()⁠</code> returns a named list of IdfObject objects
+that have specified relationship with given object. The first element of
+returned list is always the specified object itself. If that
+object does not have specified relationship with other objects in
+specified <code>class</code>, a list that only contains specified object itself
+is returned.
+</p>
+<p>For instance, assuming that <code>const</code> is a valid object name in
+<code>Construction</code> class, <code>idf$objects_in_relation("const", "ref_by", "BuildingSurface:Detailed")</code>
+will return a named list of an IdfObject object named <code>const</code> and
+also all other IdfObject objects in <code>BuildingSurface:Detailed</code>
+class that refer to field values in <code>const</code>. Similarly,
+<code>idf$objects_in_relation("const", "ref_to", "Material")</code>
+will return a named list of an IdfObject object named <code>const</code> and
+also all other IdfObject objects in <code>Material</code> class that <code>const</code>
+refers to. This makes it easy to directly extract groups of related
+objects and then use <code style="white-space: pre;">⁠$insert()⁠</code> method or other methods
+described below to insert them or extract data.
+</p>
+<p>There are lots of recursive references in a model. For instance, a
+material can be referred by a construction, that construction can be
+referred by a building surface, and that building surface can be
+referred by a window on that surface. These objects related
+recursively can be extracted by setting <code>recursive</code> to <code>TRUE</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get a construction named FLOOR and all materials it uses
+idf$objects_in_relation("floor", "ref_to")
+
+# get a construction named FLOOR and all surfaces that uses it
+idf$objects_in_relation("floor", "ref_by", class = "BuildingSurface:Detailed")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-search_object"></a>
+
+
+
+<h4>Method <code>search_object()</code>
+</h4>
+
+<p>Extract multiple IdfObject objects using regular expression on
+names.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$search_object(
+  pattern,
+  class = NULL,
+  ignore.case = FALSE,
+  perl = FALSE,
+  fixed = FALSE,
+  useBytes = FALSE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>pattern, ignore.case, perl, fixed, useBytes</code></dt>
+<dd>
+<p>All are directly
+passed to base::grepl.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of valid class names in the
+underlying Idd. It is used to restrict the classes to be
+returned. If <code>NULL</code>, all possible classes are considered and
+corresponding IdfObject objects are returned if
+<code>pattern</code> is met Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$search_object()⁠</code> returns a named list of IdfObject objects whose
+names meet the given regular expression in specified classes.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get all objects whose names contains "floor"
+idf$search_object("floor", ignore.case = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-dup"></a>
+
+
+
+<h4>Method <code>dup()</code>
+</h4>
+
+<p>Duplicate existing objects.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$dup(...)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>Integer vectors of object IDs and character vectors of
+object names. If input is named, its name will be used as the
+name of newly created objects.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$dup()⁠</code> takes integer vectors of object IDs and character vectors of
+object names, duplicates objects specified, and returns a list of
+newly created IdfObject objects. The names of input are used as new
+names for created IdfObjects. If input is not named, new names are
+the names of duplicated objects with a suffix <code>"_1"</code>, <code>"_2"</code> and etc,
+depending on how many times that object has been duplicated. Note an
+error will be issued if trying to assign a new name to an object
+which belongs to a class that does not have name attribute.
+</p>
+<p>Assigning newly added objects with an existing name in current <code>Idf</code>
+object is prohibited if current validation level includes object name
+conflicting checking. For details, please see <code>level_checks()</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# duplicate an object named "FLOOR"
+idf$dup("floor") # New object name 'FLOOR_1' is auto-generated
+
+# duplicate that object again by specifing object ID
+idf$dup(16) # New object name 'FLOOR_2' is auto-generated
+
+# duplicate that object two times and giving new names
+idf$dup(new_floor = "floor", new_floor2 = 16)
+
+# duplicate that object multiple times using variable inputs
+floors_1 &lt;- c(new_floor3 = "floor", new_floor4 = "floor")
+floors_2 &lt;- setNames(rep(16, 5), paste0("flr", 1:5))
+idf$dup(floors_1, floors_2)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-add"></a>
+
+
+
+<h4>Method <code>add()</code>
+</h4>
+
+<p>Add new objects.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$add(..., .default = TRUE, .all = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>Lists of object definitions. Each list should be named
+with a valid class name. There is a special element <code>.comment</code>
+in each list, which will be used as the comments of newly
+added object.</p>
+</dd>
+<dt><code>.default</code></dt>
+<dd>
+<p>If <code>TRUE</code>, default values are used for those blank
+fields if possible. If <code>FALSE</code>, empty fields are kept blank.
+Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>.all</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all fields are added. If <code>FALSE</code>, only minimum
+required fields are added. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$add()⁠</code> takes new object definitions in list format, adds
+corresponding objects in specified classes, returns a list of newly
+added IdfObject objects. The returned list will be named using
+newly added object names. Every list should be named using a valid
+class name.  Underscore-style class name is allowed for class name.
+Names in each list element are treated as field names. Values without
+names will be inserted according to their position. There is a
+special element named <code>.comment</code> in each list, which will be used as
+the comments of newly added object.
+</p>
+<p>Empty objects can be added using an empty list, e.g.
+<code>idf$add(Building = list())</code>. All empty fields will be filled with
+corresponding default value if <code>.default</code> is <code>TRUE</code>, leaving other
+fields as blanks. However, adding blank objects may not be allowed if
+there are required fields in that class and current validate level
+includes missing-required-field checking. For what kind of validation
+components will be performed during adding new objects, please see
+<code>level_checks()</code>.
+</p>
+<p>Note that <code>.()</code> can be used as an alias as <code>list()</code>, e.g.
+<code>idf$add(Building = .())</code> is equivalent to
+<code>idf$add(Building = list())</code>.
+</p>
+<p>Field name matching is <strong>case-insensitive</strong>. For convenience,
+underscore-style field names are also allowed, e.g. <code>eNd_MoNtH</code> is
+equivalent to <code style="white-space: pre;">⁠End Month⁠</code>. This behavior is consistent among all
+methods that take field names as input.
+</p>
+<p>There is no need to give all field values if only specific fields are
+interested, as long as other fields are not required. For example, to
+define a new object in <code>RunPeriod</code> class, the following is enough (at
+least for EnergyPlus v8.8):
+</p>
+<div class="sourceCode"><pre>idf$add(
+    RunPeriod = list(
+        "my run period",
+        begin_month = 1, begin_day_of_month = 1,
+        end_month = 1, end_day_of_month = 31
+    ),
+    .default = TRUE
+)
+</pre></div>
+<p>If not all field names are given, positions of those values without
+field names are determined after those values with names. E.g. in
+<code>idf$add(Construction = list("out_layer", name = "name"))</code>,
+<code>"out_layer"</code> will be treated as the value for field <code style="white-space: pre;">⁠Outside Layer⁠</code>
+in <code>Construction</code> class, since the value for field <code>Name</code> has been
+specified using explicit field name.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# add a new Building object with all default values
+empty &lt;- empty_idf(8.8) # create an empty Idf
+empty$add(Building = .())
+
+# add a new Building object with all default values and comments
+empty &lt;- empty_idf(8.8) # create an empty Idf
+empty$add(Building = .(.comment = c("this is", "a new building")))
+
+# add a new RunPeriod object with all possible fields
+empty &lt;- empty_idf(8.8) # create an empty Idf
+empty$add(Building = list(), RunPeriod = list("rp", 1, 1, 1, 31), .all = TRUE)
+
+# add objects using variable inputs
+empty &lt;- empty_idf(8.8) # create an empty Idf
+objs1 &lt;- list(Schedule_Constant = list("const"), Building = list())
+rp &lt;- list(RunPeriod = list("rp", 2, 1, 2, 28))
+empty$add(objs1, rp)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-set"></a>
+
+
+
+<h4>Method <code>set()</code>
+</h4>
+
+<p>Set values of existing objects.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$set(..., .default = TRUE, .empty = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>Lists of object definitions. Each list should be named
+with a valid object name or ID denoted in style <code>..ID</code>. There
+is a special element <code>.comment</code> in each list, which will be
+used as new comments of modified object, overwriting existing
+comments if any.</p>
+</dd>
+<dt><code>.default</code></dt>
+<dd>
+<p>If <code>TRUE</code>, default values are used for those blank
+fields if possible. If <code>FALSE</code>, empty fields are kept blank.
+Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>.empty</code></dt>
+<dd>
+<p>If <code>TRUE</code>, trailing empty fields are kept. Default:
+<code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$set()⁠</code> takes new field value definitions in list format, sets new
+values for fields in objects specified, and returns a list of
+modified IdfObjects. The returned list will be named using names of
+modified objects. Every list in <code style="white-space: pre;">⁠$set()⁠</code> should be named with a
+valid object name. Object ID can also be used but have to be combined
+with prevailing two periods <code>..</code>, e.g. <code>..10</code> indicates the object
+with ID <code>10</code>. Similar to
+<a href="../../eplusr/html/Idf.html#method-add"><code>$add()</code></a>, a
+special element <code>.comment</code> in each list will be used as the <strong>new</strong>
+comments for modified object, overwriting the old ones. Names in list
+element are treated as field names.
+</p>
+<p>Note that <code>.()</code> can be used as an alias as <code>list()</code>, e.g.
+<code>idf$set(Building = .(...))</code> is equivalent to
+<code>idf$set(Building = list(...))</code>.
+</p>
+<p>There is two special syntax in <code style="white-space: pre;">⁠$set()⁠</code>, which is inspired by the
+<a href="https://cran.r-project.org/package=eplusr">data.table</a> package:
+</p>
+
+<ul>
+<li> <p><code>class := list(field = value)</code>: Note the use of <code style="white-space: pre;">⁠:=⁠</code> instead of
+<code>=</code>. The main difference is that, unlike <code>=</code>, the left hand side of
+<code style="white-space: pre;">⁠:=⁠</code> should be a valid class name in current <code>Idf</code> object. It will
+set the field of all objects in specified class to specified value.
+</p>
+</li>
+<li> <p><code>.(object, object) := list(field = value)</code>: Similar like above, but
+note the use of <code>.()</code> in the left hand side. You can put multiple
+object ID or names in <code>.()</code>. It will set the field of all specified
+objects to specified value.
+</p>
+</li>
+</ul>
+<p>You can delete a field by assigning <code>NULL</code> to it, e.g. <code>list(fld = NULL)</code> means to delete the value of field <code>fld</code>, in the condition
+that <code>.default</code> is <code>FALSE</code>, <code>fld</code> is not a required field and the
+index of <code>fld</code> is larger than the number minimum fields required for
+that class. If those conditions are not required, <code>fld</code> will be left
+as blank if <code>.default</code> is <code>FALSE</code> or filled with default value if
+<code>.default</code> is <code>TRUE</code>.
+</p>
+<p>By default, trailing empty fields that are not required will be
+removed and only minimum required fields are kept. For example, if
+<code>rp</code> is an object in <code>RunPeriod</code> class in an <code>Idf</code> of version 8.8,
+by default empty field with index larger than 11 will be removed
+since they are all non-required fields. You can keep the trailing
+empty fields by setting <code>.empty</code> to <code>TRUE</code>.
+</p>
+<p>New fields that currently do not exist in that object can also be
+set. They will be automatically added on the fly.
+</p>
+<p>Field name matching is <strong>case-insensitive</strong>. For convenience,
+underscore-style field names are also allowed, e.g. <code>eNd_MoNtH</code> is
+equivalent to <code style="white-space: pre;">⁠End Month⁠</code>.
+</p>
+<p>If not all field names are given, positions of those values without
+field names are determined after those values with names. E.g. in
+<code>idf$set(floor = list("out_layer", name = "name"))</code>, <code>"out_layer"</code>
+will be treated as the value for field <code style="white-space: pre;">⁠Outside Layer⁠</code> in an object
+named <code>floor</code>, since the value for field <code>Name</code> has been specified
+using explicit field name.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# modify an object by name (case-insensitive)
+idf$set(r13layer = list(roughness = "smooth"))
+
+# modify an object by ID
+idf$set(..12 = list(roughness = "rough"))
+
+# overwrite existing object comments
+idf$set(r13layer = list(.comment = c("New comment")))
+
+# assign default values to fields
+idf$set(r13layer = list(solar_absorptance = NULL), .default = TRUE)
+
+# set field values to blanks
+idf$set(r13layer = list(solar_absorptance = NULL), .default = FALSE)
+
+# set field values to blank and delete trailing fields
+idf$set(r13layer = list(visible_absorptance = NULL), .default = FALSE)
+
+# set field values to blank and keep blank fields
+idf$set(r13layer = list(visible_absorptance = NULL), .default = FALSE, .empty = TRUE)
+
+# set all fields in one class
+idf$set(Material_NoMass := list(visible_absorptance = 0.9))
+
+# set multiple objects in one class
+idf$set(.("r13layer", "r31layer") := list(solar_absorptance = 0.8))
+# above is equivalent to
+idf$set(r13layer = list(solar_absorptance = 0.8),
+        r31layer = list(solar_absorptance = 0.8)
+)
+
+# use variable input
+sets &lt;- list(r13layer = list(roughness = "smooth"))
+idf$set(sets)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-del"></a>
+
+
+
+<h4>Method <code>del()</code>
+</h4>
+
+<p>Delete existing objects
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$del(
+  ...,
+  .ref_by = FALSE,
+  .ref_to = FALSE,
+  .recursive = FALSE,
+  .force = FALSE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>integer vectors of object IDs and character vectors of
+object names in current <code>Idf</code> object.</p>
+</dd>
+<dt><code>.ref_by</code></dt>
+<dd>
+<p>If <code>TRUE</code>, objects whose fields refer to input objects
+will also be deleted. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>.ref_to</code></dt>
+<dd>
+<p>If <code>TRUE</code>, objects whose fields are referred by input
+objects will also be deleted. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>.recursive</code></dt>
+<dd>
+<p>If <code>TRUE</code>, relation searching is performed
+recursively, in case that objects whose fields refer to target
+object are also referred by another object, and also objects
+whose fields are referred by target object are also referred
+by another object. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>.force</code></dt>
+<dd>
+<p>If <code>TRUE</code>, objects are deleted even if they are
+referred by other objects.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$del()⁠</code> takes integer vectors of object IDs and character vectors of
+object names, and deletes objects specified.
+</p>
+<p>If current validate level includes reference
+checking, objects will not be allowed to be deleted if they are
+referred by other objects. For example, an error will be issued if
+you want to delete one material that is referred by other
+constructions, because doing so will result in invalid field value
+references. You may bypass this if you really want to by setting
+<code>.force</code> to <code>TRUE</code>.
+</p>
+<p>When <code>.ref_by</code> or <code>.ref_to</code> is <code>TRUE</code>, objects will be deleted
+only when they have and only have relation with input objects but not
+any other objects. For example, a construction <code>const</code> consist of 4
+different materials. If <code>.ref_to</code> is <code>TRUE</code>, that 4 materials will
+only be deleted when they are only used in <code>const</code>, but not used in
+any other objects.
+</p>
+<p>There are recursively reference relations in <code>Idf</code> object. For
+example, one material's name is referenced by one construction, and
+that construction's name can be referred by another surface. You can
+delete all of them by setting <code>.recursive</code> to <code>TRUE</code>.
+</p>
+<p>If <code>.ref_by</code> is <code>TRUE</code>, objects whose fields refer to input objects
+will also be deleted.
+</p>
+<p>IF <code>.ref_to</code> is <code>TRUE</code>, objects whose fields
+are referred by input objects will also be deleted.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Idf</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# delete objects using names
+idf$object("Fraction") # ScheduleTypeLimits
+idf$del("Fraction")
+
+# delete objects using IDs
+idf$objects(c(39, 40)) # Output:Variable
+idf$del(39, 40)
+
+# cannot delete objects that are referred by others
+level_checks()$reference # reference-checking is enable by default
+idf$del("r13layer") # error
+
+# force to delete objects even thay are referred by others
+idf$del("r13layer", .force = TRUE)
+
+# delete objects and also objects that refer to them
+idf$del("r31layer", .ref_by = TRUE) # Construction 'ROOF31' will be kept
+
+# delete objects and also objects that they refer to
+idf$del("extlights", .ref_to = TRUE) # Schedule 'AlwaysOn' will be kept
+
+# delete objects and also other objects that refer to them recursively
+idf$del("roof31", .ref_by = TRUE, .recursive = TRUE)
+
+# delete objects using variable inputs
+ids &lt;- idf$object_id("Output:Variable", simplify = TRUE)
+idf$del(ids)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-purge"></a>
+
+
+
+<h4>Method <code>purge()</code>
+</h4>
+
+<p>Purge resource objects that are not used
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$purge(object = NULL, class = NULL, group = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>object</code></dt>
+<dd>
+<p>an integer vector of object IDs or a character vector
+of object names in current <code>Idf</code> object. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of valid class names in current <code>Idf</code>
+object. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector of valid group names in current <code>Idf</code>
+object. Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$purge()⁠</code> takes an integer vector of object IDs or a character
+vectors of object names, and deletes resource objects specified that
+are not used by any objects.
+</p>
+<p>Here resource objects indicate all objects that can be referenced by
+other objects, e.g. all schedules. <code style="white-space: pre;">⁠$purge()⁠</code> will ignore any inputs
+that are not resources. If inputs contain objects from multiple
+classes, references among them are also taken into account, which
+means purging is performed hierarchically. If both materials and
+constructions are specified, the latter will be purged first, because
+it is possible that input constructions reference input materials.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Idf</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# purge unused "Fraction" schedule type
+idf$purge("on/off") # ScheduleTypeLimits
+
+# purge all unused schedule types
+idf$purge(class = "ScheduleTypeLimits")
+
+# purge all unused schedule related objects
+idf$purge(group = "Schedules")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-duplicated"></a>
+
+
+
+<h4>Method <code>duplicated()</code>
+</h4>
+
+<p>Determine duplicated objects
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$duplicated(object = NULL, class = NULL, group = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>object</code></dt>
+<dd>
+<p>an integer vector of object IDs or a character vector
+of object names in current <code>Idf</code> object. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of valid class names in current <code>Idf</code>
+object. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector of valid group names in current <code>Idf</code>
+object. Default: <code>NULL</code>.
+</p>
+<p>If all <code>object</code>, <code>class</code> and <code>group</code> are <code>NULL</code>, duplication checking
+is performed on the whole <code>Idf</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$duplicated()⁠</code> takes an integer vector of object IDs or a character
+vectors of object names, and returns a <code>data.table::data.table()</code>
+to show whether input objects contain duplications or not.
+</p>
+<p>Here duplicated objects refer to objects whose field values are the
+same except the names. Object comments are just ignored during
+comparison.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> of 4 columns:
+</p>
+
+<ul>
+<li> <p><code>class</code>: Character. Names of classes that input objects belong to
+</p>
+</li>
+<li> <p><code>id</code>: Integer. Input object IDs
+</p>
+</li>
+<li> <p><code>name</code>: Character. Input object names
+</p>
+</li>
+<li> <p><code>duplicate</code>: Integer. The IDs of objects that input objects
+duplicate. If input object is not a duplication, <code>NA</code> is returned
+</p>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# check if there are any duplications in the Idf
+idf$duplicated(class = "ScheduleTypeLimits")
+
+# check if there are any duplications in the schedule types
+idf$duplicated(class = "ScheduleTypeLimits")
+
+# check if there are any duplications in the schedule groups and
+# material class
+idf$duplicated(class = "Material", group = "Schedules")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-unique"></a>
+
+
+
+<h4>Method <code>unique()</code>
+</h4>
+
+<p>Remove duplicated objects
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$unique(object = NULL, class = NULL, group = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>object</code></dt>
+<dd>
+<p>an integer vector of object IDs or a character vector
+of object names in current <code>Idf</code> object. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of valid class names in current <code>Idf</code>
+object. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>group</code></dt>
+<dd>
+<p>A character vector of valid group names in current <code>Idf</code>
+object. Default: <code>NULL</code>.
+</p>
+<p>If all <code>object</code>, <code>class</code> and <code>group</code> are <code>NULL</code>, duplication checking
+is performed on the whole <code>Idf</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$unique()⁠</code> takes an integer vector of object IDs or a character
+vectors of object names, and remove duplicated objects.
+</p>
+<p>Here duplicated objects refer to objects whose field values are the
+same except the names. Object comments are just ignored during
+comparison.
+</p>
+<p><code style="white-space: pre;">⁠$unique()⁠</code> will only keep the first unique object and remove all
+redundant objects. Value referencing the redundant objects will be
+redirected into the unique object.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Idf</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# remove duplications in the Idf
+idf$unique(class = "ScheduleTypeLimits")
+
+# remove duplications in the schedule types
+idf$unique(class = "ScheduleTypeLimits")
+
+# remove duplications in the schedule groups and material class
+idf$unique(class = "Material", group = "Schedules")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-rename"></a>
+
+
+
+<h4>Method <code>rename()</code>
+</h4>
+
+<p>Rename existing objects
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$rename(...)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>Integer vectors of valid object IDs and character vectors
+of valid object names in current <code>Idf</code> object. Each element
+should be named. Names of input vectors are used as the new
+object names</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$rename()⁠</code> takes named character vectors of object names and named
+integer vectors of object IDs, renames specified objects to names of
+input vectors and returns a list of renamed IdfObjects. The
+returned list will be named using names of modified objects. An error
+will be issued if trying to "rename" an object which does not have
+name attribute. When renaming an object that is referred by other
+objects, corresponding fields that refer to that object's name will
+also be changed accordingly.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of renamed IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$objects(c("on/off", "test 352a"))
+idf$rename(on_off = "on/off", test_352a = 51)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-insert"></a>
+
+
+
+<h4>Method <code>insert()</code>
+</h4>
+
+<p>Insert new objects from IdfObjects
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$insert(..., .unique = TRUE, .empty = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>IdfObjects or lists of IdfObjects from same version as
+current <code>Idf</code> object.</p>
+</dd>
+<dt><code>.unique</code></dt>
+<dd>
+<p>If there are duplications in input IdfObjects or
+there is same object in current <code>Idf</code> object, duplications in
+input are removed. Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>.empty</code></dt>
+<dd>
+<p>If <code>TRUE</code>, trailing empty fields are kept. Default:
+<code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$insert()⁠</code> takes IdfObjects or lists of IdfObjects as input,
+inserts them into current <code>Idf</code> objects, and returns a list of
+inserted IdfObjects. The returned list will be named using names of
+inserted objects.
+</p>
+<p><code style="white-space: pre;">⁠$insert()⁠</code> is quite useful to insert objects from other <code>Idf</code>
+objects. However, you cannot insert an IdfObject which comes from a
+different version than current <code>Idf</code> object.
+</p>
+<p><code style="white-space: pre;">⁠$insert()⁠</code> will skip IdfObjects that have exactly same fields in
+current <code>Idf</code> object. If input IdfObject has the same name as one
+IdfObject in current <code>Idf</code> object but field values are not equal,
+an error will be issued if current validate level
+includes conflicted-name checking.
+</p>
+<p>By default, trailing empty fields that are not required will be
+removed and only minimum required fields are kept. You can keep the
+trailing empty fields by setting <code>.empty</code> to <code>TRUE</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of inserted IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# insert all material from another IDF
+path_idf2 &lt;- file.path(eplus_config(8.8)$dir, "ExampleFiles/5ZoneTDV.idf")
+idf2 &lt;- Idf$new(path_idf2)
+idf$insert(idf2$Material)
+
+# insert objects from same Idf is equivalent to using Idf$dup()
+idf$insert(idf$SizingPeriod_DesignDay)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-load"></a>
+
+
+
+<h4>Method <code>load()</code>
+</h4>
+
+<p>Load new objects from characters or data.frames
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$load(..., .unique = TRUE, .default = TRUE, .empty = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>Character vectors or data.frames of object definitions.</p>
+</dd>
+<dt><code>.unique</code></dt>
+<dd>
+<p>If <code>TRUE</code>, and there are duplications in input
+IdfObjects or there is same object in current <code>Idf</code> object,
+duplications in input are removed. Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>.default</code></dt>
+<dd>
+<p>If <code>TRUE</code>, default values are filled for those blank
+fields if possible. Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>.empty</code></dt>
+<dd>
+<p>If <code>TRUE</code>, trailing empty fields are kept. Default:
+<code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$load()⁠</code> is similar to
+<a href="../../eplusr/html/Idf.html#method-insert"><code>$insert()</code></a>,
+except it takes directly character vectors or data.frames as
+IdfObject definitions, insert corresponding objects into current
+<code>Idf</code> object and returns a named list of newly added IdfObjects.
+The returned list will be named using names of added objects. This
+makes it easy to create objects using the output from<code style="white-space: pre;">⁠$to_string()⁠</code>
+and <code style="white-space: pre;">⁠$to_table()⁠</code> method from
+<a href="../../eplusr/html/Idd.html#method-to_string"><code>Idd</code></a>,
+<a href="../../eplusr/html/IddObject.html#method-to_string"><code>IddObject</code></a>,
+also from
+<a href="../../eplusr/html/Idf.html#method-to_string"><code>Idf</code></a>,
+and
+<a href="../../eplusr/html/IdfObject.html#method-to_string"><code>IdfObject</code></a>,
+class.
+</p>
+<p>For object definitions in character vector format, they follow the
+same rules as a normal IDF file:
+</p>
+
+<ul>
+<li>
+<p> Each object starts with a class name and a comma (<code style="white-space: pre;">⁠,⁠</code>);
+</p>
+</li>
+<li>
+<p> Separates each values with a comma (<code style="white-space: pre;">⁠,⁠</code>);
+</p>
+</li>
+<li>
+<p> Ends an object with a semicolon (<code style="white-space: pre;">⁠;⁠</code>) for the last value.
+</p>
+</li>
+</ul>
+<p>Each character vector can contain:
+</p>
+
+<ul>
+<li>
+<p> One single object, e.g. <code>c("Building,", "MyBuilding;")</code>, or
+"Building, MyBuilding;".
+</p>
+</li>
+<li>
+<p> Multiple objects, e.g. <code>c("Building, MyBuilding;", "SimulationControl, Yes")</code>.
+</p>
+</li>
+</ul>
+<p>You can also provide an option header to indicate if input objects
+are presented in IP units, using <code style="white-space: pre;">⁠!-Option ViewInIPunits⁠</code>. If this
+header does not exist, then all values are treated as in SI units.
+</p>
+<p>For object definitions in data.frame format, it is highly recommended
+to use <code style="white-space: pre;">⁠$to_table()⁠</code> method in
+<a href="../../eplusr/html/Idd.html#method-to_table"><code>Idd</code></a>,
+Idd,
+<a href="../../eplusr/html/IddObject.html#method-to_table"><code>IddObject</code></a>,
+IddObject,
+<a href="../../eplusr/html/Idf.html#method-to_table"><code>Idf</code></a>,
+and
+<a href="../../eplusr/html/IdfObject.html#method-to_table"><code>IdfObject</code></a>,
+class to create an acceptable data.frame template. A
+valid definition requires at least three columns described below.
+Note that column order does not matter.
+</p>
+
+<ul>
+<li> <p><code>class</code>:Character type. Valid class names in the underlying
+Idd object.
+</p>
+</li>
+<li> <p><code>index</code>:Integer type. Valid field indices for each class.
+</p>
+</li>
+<li> <p><code>value</code>:Character type or list type. Value for each field
+to be added.
+</p>
+
+<ul>
+<li>
+<p> If character type, usually when <code>string_value</code> is <code>TRUE</code>
+in method <code style="white-space: pre;">⁠$to_table()⁠</code> in
+<a href="../../eplusr/html/Idf.html#method-to_table"><code>Idf</code></a>
+and
+<a href="../../eplusr/html/IdfObject.html#method-to_table"><code>IdfObject</code></a>
+class. Note that
+each value should be given as a string even if the corresponding
+field is a numeric type.
+</p>
+</li>
+<li>
+<p> If list type, usually when <code>string_value</code> is set to
+<code>FALSE</code> in method<code style="white-space: pre;">⁠$to_table()⁠</code> in
+<a href="../../eplusr/html/Idf.html#method-to_table"><code>Idf</code></a>
+and
+<a href="../../eplusr/html/IdfObject.html#method-to_table"><code>IdfObject</code></a>
+class.
+Each value should have the right type as the corresponding field
+definition.  Otherwise, errors will be issued if current
+validation level includes invalid-type checking.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>id</code>: <strong>Optional</strong>. Integer type. If input data.frame includes
+multiple object definitions in a same class, values in <code>id</code> column
+will be used to distinguish each definition. If <code>id</code> column does
+not exists, it assumes that each definition is separated by <code>class</code>
+column and will issue an error if there is any duplication in the
+<code>index</code> column.
+</p>
+</li>
+</ul>
+<p>Note that <code style="white-space: pre;">⁠$load()⁠</code> assumes all definitions are from the same version
+as current <code>Idf</code> object. If input definition is from different
+version, parsing error may occur.
+</p>
+<p>By default, trailing empty fields that are not required will be
+removed and only minimum required fields are kept. You can keep the
+trailing empty fields by setting <code>.empty</code> to <code>TRUE</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of loaded IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# load objects from character vectors
+idf$load(
+    c("Material,",
+      "    mat,                     !- Name",
+      "    MediumSmooth,            !- Roughness",
+      "    0.667,                   !- Thickness {m}",
+      "    0.115,                   !- Conductivity {W/m-K}",
+      "    513,                     !- Density {kg/m3}",
+      "    1381;                    !- Specific Heat {J/kg-K}"),
+
+    "Construction, const, mat;"
+)
+
+# load objects from data.frame definitions
+dt &lt;- idf$to_table(class = "Material")
+dt[field == "Name", value := paste(value, 1)]
+dt[field == "Thickness", value := "0.5"]
+idf$load(dt)
+
+# by default, duplications are removed
+idf$load(idf$to_table(class = "Material"))
+
+# keep empty fields as they are
+idf$load("Material, mat1, smooth, 0.5, 0.2, 500, 1000,,, 0.5;", .default = FALSE)
+
+# keep trailing empty fields
+idf$load("Material, mat2, smooth, 0.5, 0.2, 500, 1000,,,;",
+    .default = FALSE, .empty = TRUE
+)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-update"></a>
+
+
+
+<h4>Method <code>update()</code>
+</h4>
+
+<p>Update existing object values from characters or data.frames
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$update(..., .default = TRUE, .empty = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>Character vectors or data.frames of object definitions.</p>
+</dd>
+<dt><code>.default</code></dt>
+<dd>
+<p>If <code>TRUE</code>, default values are filled for those blank
+fields if possible. Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>.empty</code></dt>
+<dd>
+<p>If <code>TRUE</code>, trailing empty fields are kept. Default:
+<code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$update()⁠</code> is similar to
+<a href="../../eplusr/html/Idf.html#method-set"><code>$set()</code></a>, except
+it takes directly character vectors or data.frames as IdfObject
+definitions, updates new values for fields in objects specified, and
+returns a named list of modified IdfObjects. The returned list will
+be named using names of modified objects. This makes it easy to
+update object values using the output from <code style="white-space: pre;">⁠$to_string()⁠</code> and
+<code style="white-space: pre;">⁠$to_table⁠</code> method from
+<a href="../../eplusr/html/Idf.html#method-to_string"><code>Idf</code></a>,
+and
+<a href="../../eplusr/html/IdfObject.html#method-to_string"><code>IdfObject</code></a>,
+class.
+</p>
+<p>The format of object definitions is similar to <code style="white-space: pre;">⁠$load()⁠</code>.
+</p>
+<p>For object definitions in character vector format, object names are
+used to locate which objects to update. Objects that have name
+attribute should have valid names. This means that there is no way to
+update object names using character vector format, but this can be
+achieved using data.frame format as it uses object IDs instead of
+object names to locate objects. The format of acceptable characters
+follows the same rules as a normal IDF file:
+</p>
+
+<ul>
+<li>
+<p> Each object starts with a class name and a comma (<code style="white-space: pre;">⁠,⁠</code>);
+</p>
+</li>
+<li>
+<p> Separates each values with a comma (<code style="white-space: pre;">⁠,⁠</code>);
+</p>
+</li>
+<li>
+<p> Ends an object with a semicolon (<code style="white-space: pre;">⁠;⁠</code>) for the last value.
+</p>
+</li>
+</ul>
+<p>Each character vector can contain:
+</p>
+
+<ul>
+<li>
+<p> One single object, e.g. <code>c("Building,", "MyBuilding;")</code>, or
+"Building, MyBuilding;".
+</p>
+</li>
+<li>
+<p> Multiple objects, e.g. <code>c("Building, MyBuilding;", "SimulationControl, Yes")</code>.
+</p>
+</li>
+</ul>
+<p>You can also provide an option header to indicate if input objects
+are presented in IP units, using <code style="white-space: pre;">⁠!-Option ViewInIPunits⁠</code>. If this
+header does not exist, then all values are treated as in SI units.
+</p>
+<p>For object definitions in data.frame format, it is highly recommended
+to use <code style="white-space: pre;">⁠$to_table()⁠</code> method in
+<a href="../../eplusr/html/Idf.html#method-to_table"><code>Idf</code></a>,
+and
+<a href="../../eplusr/html/IdfObject.html#method-to_table"><code>IdfObject</code></a>,
+class to create an acceptable data.frame template. A valid definition
+requires three columns described below. Note that column order does
+not matter.
+</p>
+
+<ul>
+<li> <p><code>id</code>: Integer type. Valid IDs of objects to update.
+</p>
+</li>
+<li> <p><code>index</code>:Integer type. Valid field indices for each object.
+</p>
+</li>
+<li> <p><code>value</code>:Character type or list type. Value for each field
+to be added.
+</p>
+
+<ul>
+<li>
+<p> If character type, usually when <code>string_value</code> is <code>TRUE</code>
+in method <code style="white-space: pre;">⁠$to_table()⁠</code> in
+<a href="../../eplusr/html/Idf.html#method-to_table"><code>Idf</code></a>
+and
+<a href="../../eplusr/html/IdfObject.html#method-to_table"><code>IdfObject</code></a>
+class. Note that
+each value should be given as a string even if the corresponding
+field is a numeric type.
+</p>
+</li>
+<li>
+<p> If list type, usually when <code>string_value</code> is set to
+<code>FALSE</code> in method <code style="white-space: pre;">⁠$to_table()⁠</code> in
+<a href="../../eplusr/html/Idf.html#method-to_table"><code>Idf</code></a>
+and
+<a href="../../eplusr/html/IdfObject.html#method-to_table"><code>IdfObject</code></a>
+class.
+Each value should have the right type as the corresponding field
+definition.  Otherwise, errors will be issued if current
+validation level includes invalid-type checking.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Note that <code style="white-space: pre;">⁠$update()⁠</code> assumes all definitions are from the same version
+as current <code>Idf</code> object. If input definition is from different
+version, parsing error may occur.
+</p>
+<p>By default, trailing empty fields that are not required will be
+removed and only minimum required fields are kept. You can keep the
+trailing empty fields by setting <code>.empty</code> to <code>TRUE</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of updated IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# update objects from string definitions:
+str &lt;- idf$to_string("zone one", header = FALSE, format = "new_top")
+str[8] &lt;- "2," # Multiplier
+idf$update(str)
+
+# update objects from data.frame definitions:
+dt &lt;- idf$to_table("zone one")
+dt[field == "Multiplier", value := "1"]
+idf$update(dt)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-paste"></a>
+
+
+
+<h4>Method <code>paste()</code>
+</h4>
+
+<p>Paste new objects from IDF Editor
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$paste(in_ip = FALSE, ver = NULL, unique = TRUE, empty = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>in_ip</code></dt>
+<dd>
+<p>Set to <code>TRUE</code> if the IDF file is open with <code>Inch-Pound</code>
+view option toggled. Numeric values will automatically
+converted to SI units if necessary. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>ver</code></dt>
+<dd>
+<p>The version of IDF file open by IDF Editor, e.g. <code>8.6</code>,
+<code>"8.8.0"</code>. If <code>NULL</code>, assume that the file has the same
+version as current Idf object. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>unique</code></dt>
+<dd>
+<p>If <code>TRUE</code>, and there are duplications in copied objects
+from IDF Editor or there is same object in current Idf,
+duplications in input are removed. Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>empty</code></dt>
+<dd>
+<p>If <code>TRUE</code>, trailing empty fields are kept. Default:
+<code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$paste()⁠</code> reads the contents (from clipboard) of copied objects from IDF
+Editor (after hitting <code style="white-space: pre;">⁠Copy Obj⁠</code> button), inserts corresponding
+objects into current <code>Idf</code> object and returns a named list of newly
+added IdfObjects. The returned list will be named using names of
+added objects. As IDF Editor is only available on Windows platform,
+<code style="white-space: pre;">⁠$paste()⁠</code> only works on Windows too.
+</p>
+<p>There is no version data copied to the clipboard when copying objects in
+IDF Editor. <code style="white-space: pre;">⁠$paste()⁠</code> assumes the file open in IDF Editor has the
+same version as current <code>Idf</code> object. This may not be always true.
+Please check the version before running <code style="white-space: pre;">⁠$paste()⁠</code>, or explicitly
+specify the version of file opened by IDF Editor using <code>ver</code>
+parameter. Parsing error may occur if there is a version mismatch.
+</p>
+<p>By default, trailing empty fields that are not required will be
+removed and only minimum required fields are kept. You can keep the
+trailing empty fields by setting <code>.empty</code> to <code>TRUE</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of loaded IdfObject objects.
+</p>
+
+
+<hr>
+<a id="method-Idf-search_value"></a>
+
+
+
+<h4>Method <code>search_value()</code>
+</h4>
+
+<p>Search objects by field values using regular expression
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$search_value(
+  pattern,
+  class = NULL,
+  ignore.case = FALSE,
+  perl = FALSE,
+  fixed = FALSE,
+  useBytes = FALSE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>pattern, ignore.case, perl, fixed, useBytes</code></dt>
+<dd>
+<p>All of them are
+directly passed to base::grepl and
+base::gsub.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of invalid class names in current
+<code>Idf</code> object to search for values. If <code>NULL</code>, all classes are
+used. Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$search_value()⁠</code> returns a list of IdfObjects that contain values
+which match the given pattern. If no matched found, <code>NULL</code> is
+returned invisibly. The returned list will be named using names of
+matched objects.
+</p>
+<p>Note that during matching, all values are treated as characters,
+including numeric values.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# search values that contains "floor"
+idf$search_value("floor", ignore.case = TRUE)
+
+# search values that contains "floor" in class Construction
+idf$search_value("floor", "Construction", ignore.case = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-replace_value"></a>
+
+
+
+<h4>Method <code>replace_value()</code>
+</h4>
+
+<p>Replace object field values using regular expression
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$replace_value(
+  pattern,
+  replacement,
+  class = NULL,
+  ignore.case = FALSE,
+  perl = FALSE,
+  fixed = FALSE,
+  useBytes = FALSE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>pattern, replacement, ignore.case, perl, fixed, useBytes</code></dt>
+<dd>
+<p>All of
+them are directly passed to base::grepl and
+base::gsub.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of invalid class names in current
+<code>Idf</code> object to search for values. If <code>NULL</code>, all classes are
+used. Default: <code>NULL</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$replace_value()⁠</code> returns a list of IdfObjects whose values have
+been replaced using given pattern. If no matched found, <code>NULL</code> is
+returned invisibly. The returned list will be named using names of
+matched objects.
+</p>
+<p>Note that during matching, all values are treated as characters,
+including numeric values.
+</p>
+<p>Modifying object values using regular expression is not recommended.
+Consider to use
+<a href="../../eplusr/html/Idf.html#method-set"><code>$set()</code></a>
+and
+<a href="../../eplusr/html/Idf.html#method-update"><code>$update()</code></a>
+if possible.
+Validation rules also apply during replacing.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of IdfObject objects.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# search values that contains "win" and replace them with "windows"
+idf$replace_value("win", "windows")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-validate"></a>
+
+
+
+<h4>Method <code>validate()</code>
+</h4>
+
+<p>Check possible object field value errors
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$validate(level = eplusr_option("validate_level"))</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>level</code></dt>
+<dd>
+<p>One of <code>"none"</code>, <code>"draft"</code>, <code>"final"</code> or a list of 10
+elements with same format as <code>custom_validate()</code> output.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$validate()⁠</code> checks if there are errors in current <code>Idf</code> object
+under specified validation level and returns an <code>IdfValidity</code> object.
+<code style="white-space: pre;">⁠$validate()⁠</code> is useful to help avoid some common errors before
+running the model. By default, validation is performed when calling
+all methods that modify objects, e.g.
+<a href="../../eplusr/html/Idf.html#method-dup"><code>$dup()</code></a>
+<a href="../../eplusr/html/Idf.html#method-add"><code>$add()</code></a>,
+<a href="../../eplusr/html/Idf.html#method-set"><code>$set()</code></a>,
+<a href="../../eplusr/html/Idf.html#method-del"><code>$del()</code></a>,
+and etc.
+</p>
+<p>In total, there are 10 different validate checking components:
+</p>
+
+<ul>
+<li> <p><code>required_object</code>: Check if required objects are missing in current
+<code>Idf</code>.
+</p>
+</li>
+<li> <p><code>unique_object</code>: Check if there are multiple objects in one
+unique-object class. An unique-object class means that there should
+be at most only one object existing in that class.
+</p>
+</li>
+<li> <p><code>unique_name</code>: Check if all objects in each class have unique names.
+</p>
+</li>
+<li> <p><code>extensible</code>: Check if all fields in an extensible group have
+values. An extensible group is a set of fields that should be
+treated as a whole, such like the X, Y and Z vertices of a building
+surfaces. An extensible group should be added or deleted together.
+<code>extensible</code> component checks if there are some, but not all,
+fields in an extensible group are empty.
+</p>
+</li>
+<li> <p><code>required_field</code>: Check if all required fields have values.
+</p>
+</li>
+<li> <p><code>auto_field</code>: Check if all fields filled with value <code>"Autosize"</code> and
+<code>"Autocalculate"</code> are actual autosizable and autocalculatable
+fields or not.
+</p>
+</li>
+<li> <p><code>type</code>: Check if all fields have value types complied with their
+definitions, i.e. character, numeric and integer fields should be
+filled with corresponding type of values.
+</p>
+</li>
+<li> <p><code>choice</code>: Check if all choice fields are filled with valid choice
+values.
+</p>
+</li>
+<li> <p><code>range</code>: Check if all numeric fields have values within prescibed
+ranges.
+</p>
+</li>
+<li> <p><code>reference</code>: Check if all fields whose values refer to other fields
+are valid.
+</p>
+</li>
+</ul>
+<p>The <code>level</code> argument controls what checkings should be performed.
+<code>level</code> here is just a list of 10 element which specify the toggle
+status of each component. You can use helper <code>custom_validate()</code> to
+get that list and pass it directly to <code>level</code>.
+</p>
+<p>There are 3 predefined validate level that indicates different
+combinations of checking components, i.e. <code>none</code>, <code>draft</code> and
+<code>final</code>. Basically, <code>none</code> level just does not perform any
+checkings; <code>draft</code> includes 5 components, i.e. <code>auto_field</code>, <code>type</code>,
+<code>unique_name</code>, <code>choice</code> and <code>range</code>; and <code>final</code> level includes all
+10 components. You can always get what components each level contains
+using <code>level_checks()</code>. By default, the result from
+<code>eplusr_option("validate_level")</code> is passed to <code>level</code>. If not set,
+<code>final</code> level is used.
+</p>
+<p>Underneath, an <code>IdfValidity</code> object which <code style="white-space: pre;">⁠$validate()⁠</code> returns is a
+list of 13 element as shown below. Each element or several elements
+represents the results from a single validation checking component.
+</p>
+
+<ul>
+<li> <p><code>missing_object</code>: Result of <code>required_object</code> checking.
+</p>
+</li>
+<li> <p><code>duplicate_object</code>: Result of <code>unique_object</code> checking.
+</p>
+</li>
+<li> <p><code>conflict_name</code>: Result of <code>unique_name</code> checking.
+</p>
+</li>
+<li> <p><code>incomplete_extensible</code>: Result of <code>extensible</code> checking.
+</p>
+</li>
+<li> <p><code>missing_value</code>: Result of <code>required_field</code> checking.
+</p>
+</li>
+<li> <p><code>invalid_autosize</code>: Result of <code>auto_field</code> checking for invalid
+<code>Autosize</code> field values.
+</p>
+</li>
+<li> <p><code>invalid_autocalculate</code>: Result of <code>auto_field</code> checking for
+invalid <code>Autocalculate</code> field values.
+</p>
+</li>
+<li> <p><code>invalid_character</code>: Result of <code>type</code> checking for invalid
+character field values.
+</p>
+</li>
+<li> <p><code>invalid_numeric</code>: Result of <code>type</code> checking for invalid
+numeric field values.
+</p>
+</li>
+<li> <p><code>invalid_integer</code>: Result of <code>type</code> checking for invalid
+integer field values.
+</p>
+</li>
+<li> <p><code>invalid_choice</code>: Result of <code>choice</code> checking.
+</p>
+</li>
+<li> <p><code>invalid_range</code>: Result of <code>range</code> checking.
+</p>
+</li>
+<li> <p><code>invalid_reference</code>: Result of <code>reference</code> checking.
+</p>
+</li>
+</ul>
+<p>Except <code>missing_object</code>, which is a character vector of class names
+that are missing, all other elements are
+data.table with 9 columns containing data
+of invalid field values:
+</p>
+
+<ul>
+<li> <p><code>object_id</code>: IDs of objects that contain invalid values
+</p>
+</li>
+<li> <p><code>object_name</code>: names of objects that contain invalid values
+</p>
+</li>
+<li> <p><code>class_id</code>: indexes of classes that invalid objects belong to
+</p>
+</li>
+<li> <p><code>class_name</code>: names of classes that invalid objects belong to
+</p>
+</li>
+<li> <p><code>field_id</code>: indexes (at Idd level) of object fields that are invalid
+</p>
+</li>
+<li> <p><code>field_index</code>: indexes of object fields in corresponding that are invalid
+</p>
+</li>
+<li> <p><code>field_name</code>: names (without units) of object fields that are invalid
+</p>
+</li>
+<li> <p><code>units</code>: SI units of object fields that are invalid
+</p>
+</li>
+<li> <p><code>ip_units</code>: IP units of object fields that are invalid
+</p>
+</li>
+<li> <p><code>type_enum</code>: An integer vector indicates types of invalid fields
+</p>
+</li>
+<li> <p><code>value_id</code>: indexes (at Idf level) of object field values that are invalid
+</p>
+</li>
+<li> <p><code>value_chr</code>: values (converted to characters) of object fields that are
+invalid
+</p>
+</li>
+<li> <p><code>value_num</code>: values (converted to numbers in SI units) of object fields
+that are invalid
+</p>
+</li>
+</ul>
+<p>Knowing the internal structure of <code>IdfValidity</code>, it is easy to extract
+invalid IdfObjects you interested in. For example, you can get all IDs of
+objects that contain invalid value references using
+<code>model$validate()$invalid_reference$object_id</code>. Then using
+<a href="../../eplusr/html/Idf.html#method-set"><code>$set()</code></a>
+method to correct them.
+</p>
+<p>Different validate result examples are shown below:
+</p>
+
+<ul>
+<li>
+<p> No error is found:
+</p>
+<div class="sourceCode"><pre>v No error found.
+</pre></div>
+<p>Above result shows that there is no error found after conducting all
+validate checks in specified validate level.
+</p>
+</li>
+<li>
+<p> Errors are found:
+</p>
+<div class="sourceCode"><pre> x [2] Errors found during validation.
+=========================================================================
+
+-- [2] Invalid Autocalculate Field --------------------------------------
+   Fields below cannot be `autocalculate`:
+
+    Class: &lt;AirTerminal:SingleDuct:VAV:Reheat&gt;
+    \- Object [ID:176] &lt;SPACE5-1 VAV Reheat&gt;
+       +- 17: AUTOCALCULATE, !- Maximum Flow per Zone Floor Area During Reheat {m3/s-m2}
+       \- 18: AUTOCALCULATE; !- Maximum Flow Fraction During Reheat
+</pre></div>
+<p>Above result shows that after all validate components
+performed under current validate level, 2 invalid field values
+are found. All of them are in a object named <code style="white-space: pre;">⁠SPACE5-1 VAV Reheat⁠</code>
+with ID <code>176</code>. They are invalid because those two fields do not
+have an autocalculatable attribute but are given <code>AUTOCALCULATE</code>
+value. Knowing this info, one simple way to fix the
+error is to correct those two fields by doing:
+</p>
+<div class="sourceCode"><pre>idf$set(..176 =
+    list(`Maximum Flow per Zone Floor Area During Reheat` = "autosize",
+         `Maximum Flow Fraction During Reheat` = "autosize"
+    )
+)
+</pre></div>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>An <code>IdfValidity</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$validate()
+
+# check at predefined validate level
+idf$validate("none")
+idf$validate("draft")
+idf$validate("final")
+
+# custom validate checking components
+idf$validate(custom_validate(auto_field = TRUE, choice = TRUE))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-is_valid"></a>
+
+
+
+<h4>Method <code>is_valid()</code>
+</h4>
+
+<p>Check if there is any error in current <code>Idf</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$is_valid(level = eplusr_option("validate_level"))</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>level</code></dt>
+<dd>
+<p>One of <code>"none"</code>, <code>"draft"</code>, <code>"final"</code> or a list of 10
+elements with same format as <code>custom_validate()</code> output.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_valid()⁠</code> checks if there are errors in current <code>Idf</code> object
+under specified validation level and returns <code>TRUE</code> or <code>FALSE</code>
+accordingly. For detailed description on validate checking, see
+<a href="../../eplusr/html/Idf.html#method-validate"><code>$validate()</code></a>
+documentation above.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single logical value of <code>TRUE</code> or <code>FALSE</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$is_valid()
+
+# check at predefined validate level
+idf$is_valid("none")
+idf$is_valid("draft")
+idf$is_valid("final")
+
+# custom validate checking components
+idf$is_valid(custom_validate(auto_field = TRUE, choice = TRUE))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-to_string"></a>
+
+
+
+<h4>Method <code>to_string()</code>
+</h4>
+
+<p>Format <code>Idf</code> as a character vector
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$to_string(
+  which = NULL,
+  class = NULL,
+  comment = TRUE,
+  header = TRUE,
+  format = eplusr_option("save_format"),
+  leading = 4L,
+  sep_at = 29L
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>which</code></dt>
+<dd>
+<p>Either an integer vector of valid object IDs or a
+character vector of valid object names. If <code>NULL</code>, the whole
+<code>Idf</code> object is converted. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of class names. If <code>NULL</code>, all
+classed in current <code>Idf</code> object is converted. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>comment</code></dt>
+<dd>
+<p>If <code>FALSE</code>, all comments will not be included.
+Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>header</code></dt>
+<dd>
+<p>If <code>FALSE</code>, the header will not be included. Default:
+<code>TRUE</code>.</p>
+</dd>
+<dt><code>format</code></dt>
+<dd>
+<p>Specific format used when formatting. Should be one of
+<code>"asis"</code>, <code>"sorted"</code>, <code>"new_top"</code>, and <code>"new_bot"</code>.
+</p>
+
+<ul>
+<li>
+<p> If <code>"asis"</code>, <code>Idf</code> object will be formatted in the same way as it
+was when first read. If <code>Idf</code> object does not contain any format
+saving option, which is typically the case when the model was not
+saved using eplusr or IDFEditor, <code>"sorted"</code> will be used.
+</p>
+</li>
+<li> <p><code>"sorted"</code>, <code>"new_top"</code> and <code>"new_bot"</code> are the same as the save
+options <code>"Sorted"</code>, <code>"Original with New at Top"</code>, and <code>"Original with New at Bottom"</code> in IDFEditor. Default:
+<code>eplusr_option("save_format")</code>.
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>leading</code></dt>
+<dd>
+<p>Leading spaces added to each field. Default: <code>4L</code>.</p>
+</dd>
+<dt><code>sep_at</code></dt>
+<dd>
+<p>The character width to separate value string and field
+string. Default: <code>29L</code> which is the same as IDF Editor.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$to_string()⁠</code> returns the text format of parts or whole <code>Idf</code>
+object.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get text format of the whole Idf
+head(idf$to_string())
+
+# get text format of the whole Idf, excluding the header and all comments
+head(idf$to_string(comment = FALSE, header = FALSE))
+
+# get text format of all objects in class Material
+head(idf$to_string(class = "Material", comment = FALSE, header = FALSE))
+
+# get text format of some objects
+head(idf$to_string(c("floor", "zone one")))
+
+# tweak output formatting
+head(idf$to_string("floor", leading = 0, sep_at = 0))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-to_table"></a>
+
+
+
+<h4>Method <code>to_table()</code>
+</h4>
+
+<p>Format <code>Idf</code> as a data.frame
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$to_table(
+  which = NULL,
+  class = NULL,
+  string_value = TRUE,
+  unit = FALSE,
+  wide = FALSE,
+  align = FALSE,
+  all = FALSE,
+  group_ext = c("none", "group", "index"),
+  force = FALSE,
+  init = FALSE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>which</code></dt>
+<dd>
+<p>Either an integer vector of valid object IDs or a
+character vector of valid object names. If <code>NULL</code>, the whole
+<code>Idf</code> object is converted. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>A character vector of class names. If <code>NULL</code>, all
+classed in current <code>Idf</code> object is converted. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>string_value</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all field values are returned as
+character. If <code>FALSE</code>, <code>value</code> column in returned
+data.table is a list column with
+each value stored as corresponding type. Note that if the
+value of numeric field is set to <code>"Autosize"</code> or
+<code>"Autocalculate"</code>, it is left as it is, leaving the returned
+type being a string instead of a number. Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>unit</code></dt>
+<dd>
+<p>Only applicable when <code>string_value</code> is <code>FALSE</code>. If
+<code>TRUE</code>, values of numeric fields are assigned with units using
+<code>units::set_units()</code> if applicable. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>wide</code></dt>
+<dd>
+<p>Only applicable if target objects belong to a same class.
+If <code>TRUE</code>, a wide table will be returned, i.e. first three
+columns are always <code>id</code>, <code>name</code> and <code>class</code>, and then every
+field in a separate column. Note that this requires all
+objects specified must from the same class.
+Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>align</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all objects in the same class will have the
+same field number. The number of fields is the same as the
+object that have the most fields among objects specified.
+Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all available fields defined in IDD for the
+class that objects belong to will be returned. Default:
+<code>FALSE</code>.</p>
+</dd>
+<dt><code>group_ext</code></dt>
+<dd>
+<p>Should be one of <code>"none"</code>, <code>"group"</code> or <code>"index"</code>.
+If not <code>"none"</code>, <code>value</code> column in returned
+<code>data.table::data.table()</code> will be converted into a list.
+If <code>"group"</code>, values from extensible fields will be grouped by the
+extensible group they belong to. For example, coordinate
+values of each vertex in class <code>BuildingSurface:Detailed</code> will
+be put into a list. If <code>"index"</code>, values from extensible fields
+will be grouped by the extensible field indice they belong to.
+For example, coordinate values of all x coordinates will be
+put into a list. If <code>"none"</code>, nothing special will be done.
+Default: <code>"none"</code>.</p>
+</dd>
+<dt><code>force</code></dt>
+<dd>
+<p>If <code>TRUE</code>, <code>wide</code> can be <code>TRUE</code> even though there are
+multiple classes in input. This can result in a data.table
+with lots of columns. But may be useful when you know that
+target classes have the exact same fields, e.g.
+<code>Ceiling:Adiabatic</code> and <code>Floor:Adiabatic</code>. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>init</code></dt>
+<dd>
+<p>If <code>TRUE</code>, a table for new object input will be returned
+with all values filled with defaults. In this case, <code>object</code>
+input will be ignored. The <code>id</code> column will be filled with
+possible new object IDs. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$to_table()⁠</code> returns a data.table that
+contains core data of specified objects.
+The returned data.table has 5 columns:
+</p>
+
+<ul>
+<li> <p><code>id</code>: Integer type. Object IDs.
+</p>
+</li>
+<li> <p><code>name</code>: Character type. Object names.
+</p>
+</li>
+<li> <p><code>class</code>: Character type. Current class name.
+</p>
+</li>
+<li> <p><code>index</code>: Integer type. Field indexes.
+</p>
+</li>
+<li> <p><code>field</code>: Character type. Field names.
+</p>
+</li>
+<li> <p><code>value</code>: Character type if <code>string_value</code> is <code>TRUE</code> or list type if
+<code>string_value</code> is <code>FALSE</code> or <code>group_ext</code> is not <code>"none"</code>. Field values.
+</p>
+</li>
+</ul>
+<p>Note that when <code>group_ext</code> is not <code>"none"</code>, <code>index</code> and <code>field</code>
+values will not match the original field indices and names. In this
+case, <code>index</code> will only indicate the indices of sequences. For
+<code>field</code> column, specifically:
+</p>
+
+<ul>
+<li>
+<p> When <code>group_ext</code> is <code>"group"</code>, each field name in a extensible group
+will be abbreviated using <code>abbreviate()</code> with <code>minlength</code> being
+<code>10L</code> and all abbreviated names will be separated by <code>|</code> and
+combined together. For example, field names in the extensible group
+(<code style="white-space: pre;">⁠Vertex 1 X-coordinate⁠</code>, <code style="white-space: pre;">⁠Vertex 1 Y-coordinate⁠</code>, <code style="white-space: pre;">⁠Vertex 1 Z-coordinate⁠</code>) in class <code>BuildiBuildingSurface:Detailed</code> will be
+merged into one name <code>Vrtx1X-crd|Vrtx1Y-crd|Vrtx1Z-crd</code>.
+</p>
+</li>
+<li>
+<p> When <code>group_ext</code> is <code>"index"</code>, the extensible group indicator in field
+names will be removed. Take the same example as above, the
+resulting field names will be <code style="white-space: pre;">⁠Vertex X-coordinate⁠</code>, <code style="white-space: pre;">⁠Vertex Y-coordinate⁠</code>, and <code style="white-space: pre;">⁠Vertex Z-coordinate⁠</code>.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>A data.table with 6 columns (if
+<code>wide</code> is <code>FALSE</code>) or at least 6 columns (if <code>wide</code> is <code>TRUE</code>).
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# extract whole Idf data
+idf$to_table()
+
+# extract all data from class Material
+idf$to_table(class = "Material")
+
+# extract multiple object data
+idf$to_table(c("FLOOR", "ZONE ONE"))
+
+# keep value types and put actual values into a list column
+idf$to_table(c("FLOOR", "ZONE ONE"), string_value = FALSE)$value
+
+# add the unit to each value
+idf$to_table(c("FLOOR", "ZONE ONE"), string_value = FALSE, unit = TRUE)
+
+# get all possible fields
+idf$to_table("ZONE ONE", all = TRUE)
+
+# make sure all objects in same class have the same number of fields
+idf$to_table(class = "Construction", align = TRUE)
+
+# get a wide table with string values
+idf$to_table(class = "Construction", wide = TRUE)
+
+# get a wide table with actual values
+idf$to_table(class = "OtherEquipment", wide = TRUE, string_value = FALSE)
+
+# group extensible by extensible group number
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "group")
+
+# group extensible by extensible group number and convert into a wide table
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "group", wide = TRUE)
+
+# group extensible by extensible field index
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "index")
+
+# group extensible by extensible field index and convert into a wide table
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "index", wide = TRUE)
+
+# when grouping extensible, 'string_value' and 'unit' still take effect
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "index",
+    wide = TRUE, string_value = FALSE, unit = TRUE
+)
+
+# create table for new object input
+idf$to_table(class = "BuildingSurface:Detailed", init = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-external_deps"></a>
+
+
+
+<h4>Method <code>external_deps()</code>
+</h4>
+
+<p>Get external file dependencies that the Idf needs for simulation.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$external_deps(full = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>full</code></dt>
+<dd>
+<p>If <code>TRUE</code>, a data.table is
+returned giving details about the objects and fields that use those
+external file dependencies. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$external_deps()⁠</code> returns information of files that are used as
+external resources for the simulation.
+</p>
+<p>Currently, classes below are checked:
+</p>
+
+<ul>
+<li> <p><code>Schedule:File:Shading</code>
+</p>
+</li>
+<li> <p><code>Schedule:File</code>
+</p>
+</li>
+<li> <p><code>Construction:WindowDataFile</code>
+</p>
+</li>
+<li> <p><code>ExternalInterface:FunctionalMockupUnitImport</code>
+</p>
+</li>
+<li> <p><code>ExternalInterface:FunctionalMockupUnitImport:From:Variable</code>
+</p>
+</li>
+<li> <p><code>ExternalInterface:FunctionalMockupUnitImport:To:Schedule</code>
+</p>
+</li>
+<li> <p><code>ExternalInterface:FunctionalMockupUnitImport:To:Actuator</code>
+</p>
+</li>
+<li> <p><code>ExternalInterface:FunctionalMockupUnitImport:To:Variable</code>
+</p>
+</li>
+<li> <p><code>Table:IndependentVariable</code>
+</p>
+</li>
+<li> <p><code>Table:Lookup</code>
+</p>
+</li>
+</ul>
+<p>Note that, for <code>ExternalInterface:FunctionalMockupUnitImport</code> and
+<code style="white-space: pre;">⁠ExternalInterface:FunctionalMockupUnitImport:*⁠</code>, resources of FMU
+will also be extracted.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>When <code>full</code> is <code>FALSE</code>, which is the default, a character vector.
+</p>
+<p>When <code>full</code> is <code>TRUE</code>, a data.table of 8
+columns:
+</p>
+
+<ul>
+<li> <p><code>id</code>: Integer type. Object IDs.
+</p>
+</li>
+<li> <p><code>name</code>: Character type. Object names.
+</p>
+</li>
+<li> <p><code>class</code>: Character type. Current class name.
+</p>
+</li>
+<li> <p><code>index</code>: Integer type. Field indexes.
+</p>
+</li>
+<li> <p><code>field</code>: Character type. Field names.
+</p>
+</li>
+<li> <p><code>value</code>: Character type. Field values.
+</p>
+</li>
+<li> <p><code>path</code>: Character type. Full file paths.
+</p>
+</li>
+<li> <p><code>exist</code>: Logical type. <code>TRUE</code> if file exists, <code>FALSE</code> otherwise.
+</p>
+</li>
+</ul>
+<p>If there are any FMUs using external file resources, the returned
+data.table will have an attribute named <code>extra</code> which is a list
+giving the FMU name and external file resources it use.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$external_deps()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-is_unsaved"></a>
+
+
+
+<h4>Method <code>is_unsaved()</code>
+</h4>
+
+<p>Check if there are unsaved changes in current <code>Idf</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$is_unsaved()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_unsaved()⁠</code> returns <code>TRUE</code> if there are modifications on the
+model since it was read or since last time it was saved, and returns
+<code>FALSE</code> otherwise.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single logical value of <code>TRUE</code> or <code>FALSE</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$is_unsaved()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-save"></a>
+
+
+
+<h4>Method <code>save()</code>
+</h4>
+
+<p>Save <code>Idf</code> object as an IDF file
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$save(
+  path = NULL,
+  format = eplusr_option("save_format"),
+  overwrite = FALSE,
+  copy_external = TRUE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>path</code></dt>
+<dd>
+<p>A path where to save the IDF file. If <code>NULL</code>, the path of
+the <code>Idf</code> itself, i.e.
+<a href="../../eplusr/html/Idf.html#method-path"><code>$path()</code></a>,
+will be used.</p>
+</dd>
+<dt><code>format</code></dt>
+<dd>
+<p>Specific format used when formatting. Should be one of
+<code>"asis"</code>, <code>"sorted"</code>, <code>"new_top"</code>, and <code>"new_bot"</code>.
+</p>
+
+<ul>
+<li>
+<p> If <code>"asis"</code>, <code>Idf</code> object will be formatted in the same way as it
+was when first read. If <code>Idf</code> object does not contain any format
+saving option, which is typically the case when the model was not
+saved using eplusr or IDFEditor, <code>"sorted"</code> will be used.
+</p>
+</li>
+<li> <p><code>"sorted"</code>, <code>"new_top"</code> and <code>"new_bot"</code> are the same as the save
+options <code>"Sorted"</code>, <code>"Original with New at Top"</code>, and <code>"Original with New at Bottom"</code> in IDFEditor. Default:
+<code>eplusr_option("save_format")</code>.
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>overwrite</code></dt>
+<dd>
+<p>Whether to overwrite the file if it already exists.
+Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>copy_external</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the external files extracted from
+<code style="white-space: pre;">⁠$external_deps()⁠</code> will also be copied into the same directory.
+The values of file paths in the <code>Idf</code> will be changed into
+relative path automatically. This makes it possible to create
+fully reproducible simulation conditions. If <code>FALSE</code>, the
+values of those fields that reference external file paths will
+be updated to absolute paths. Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$save()⁠</code> formats current <code>Idf</code> object, saves it as an IDF file and
+returns the path of saved file invisibly. After saving,
+<a href="../../eplusr/html/Idf.html#method-path"><code>$path()</code></a>
+will also be updated to return the path of saved file.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A length-one character vector, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# save Idf as a new file
+idf$save(tempfile(fileext = ".idf"))
+
+# save and overwrite current file
+idf$save(overwrite = TRUE)
+
+# save the model with newly created and modified objects at the top
+idf$save(overwrite = TRUE, format = "new_top")
+
+# save the model to a new file and copy all external csv files used in
+# "Schedule:File" class into the same folder
+idf$save(path = file.path(tempdir(), "test1.idf"), copy_external = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-run"></a>
+
+
+
+<h4>Method <code>run()</code>
+</h4>
+
+<p>Run simulation using EnergyPlus
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$run(
+  weather,
+  dir = NULL,
+  wait = TRUE,
+  force = FALSE,
+  copy_external = FALSE,
+  echo = wait
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>weather</code></dt>
+<dd>
+<p>A path to an <code>.epw</code> file or an Epw object. <code>weather</code>
+can also be <code>NULL</code> which will force design-day-only
+simulation. Note that this needs at least one
+<code>Sizing:DesignDay</code> object exists in the <code>Idf</code>.</p>
+</dd>
+<dt><code>dir</code></dt>
+<dd>
+<p>The directory to save the simulation results. If <code>NULL</code>,
+the folder of <code>Idf</code> path will be used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>wait</code></dt>
+<dd>
+<p>Whether to wait until the simulation completes and print
+the standard output and error of EnergyPlus. If <code>FALSE</code>, the
+simulation will run in the background. Default is <code>TRUE</code>.</p>
+</dd>
+<dt><code>force</code></dt>
+<dd>
+<p>Only applicable when the last simulation runs with
+<code>wait</code> equals to <code>FALSE</code> and is still running. If <code>TRUE</code>,
+current running job is forced to stop and a new one will
+start. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>copy_external</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the external files that current <code>Idf</code>
+object depends on will also be copied into the simulation
+output directory. The values of file paths in the Idf will be
+changed automatically. This ensures that the output directory
+will have all files needed for the model to run. Default is
+<code>FALSE</code>.</p>
+</dd>
+<dt><code>echo</code></dt>
+<dd>
+<p>Only applicable when <code>wait</code> is <code>TRUE</code>. Whether to show
+standard output and error from EnergyPlus. Default: same as
+<code>wait</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$run()⁠</code> calls corresponding version of EnergyPlus to run the current
+<code>Idf</code> object together with specified weather. The model and the
+weather used will be copied into the output directory. An EplusJob
+object is returned which provides detailed info of the simulation and
+methods to collect simulation results. Please see EplusJob for
+details.
+</p>
+<p>eplusr uses the EnergyPlus command line interface which was
+introduced since EnergyPlus 8.3.0. So <code style="white-space: pre;">⁠$run()⁠</code> only supports models
+with version no lower than 8.3.0.
+</p>
+<p>When calling <code style="white-space: pre;">⁠$run()⁠</code>, eplusr will do steps below to make sure the
+output collecting methods work as expected. Please note that this may
+result in an IDF file that may not be exactly same as your current
+<code>Idf</code> object.
+</p>
+
+<ul>
+<li>
+<p> eplusr uses EnergyPlus SQL output for extracting simulation
+results. In order to do so, an object in <code>Output:SQLite</code> class with
+<code style="white-space: pre;">⁠Option Type⁠</code> value being <code>SimpleAndTabular</code> will be automatically
+created if it does not exists.
+</p>
+</li>
+<li>
+<p> In order to make sure <code>.rdd</code> (Report Data Dictionary) and <code>.mdd</code>
+(Meter Data Dictionary) files are created during simulation, an
+object in <code>Output:VariableDictionary</code> class with <code style="white-space: pre;">⁠Key Field⁠</code> value
+being <code>IDF</code> will be automatically created if it does not exists.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>An EplusJob object of current simulation.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf &lt;- Idf$new(path_idf)
+# save the model to tempdir()
+idf$save(file.path(tempdir(), "test_run.idf"))
+
+# use the first epw file in "WeatherData" folder in EnergyPlus v8.8
+# installation path
+epw &lt;- list.files(file.path(eplus_config(8.8)$dir, "WeatherData"),
+    pattern = "\\.epw$", full.names = TRUE)[1]
+
+# if `dir` is NULL, the directory of IDF file will be used as simulation
+# output directory
+job &lt;- idf$run(epw, dir = NULL)
+
+# run simulation in the background
+idf$run(epw, dir = tempdir(), wait = FALSE)
+
+# copy all external files into the directory run simulation
+idf$run(epw, dir = tempdir(), copy_external = TRUE)
+
+# check for simulation errors
+job$errors()
+
+# get simulation status
+job$status()
+
+# get output directory
+job$output_dir()
+
+# re-run the simulation
+job$run()
+
+# get simulation results
+job$report_data()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-last_job"></a>
+
+
+
+<h4>Method <code>last_job()</code>
+</h4>
+
+<p>Get the last simulation job
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$last_job()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$last_job()⁠</code> returns the last EplusJob object that was created
+using
+<a href="../../eplusr/html/Idf.html#method-run"><code>$run()</code></a>. If the
+<code>Idf</code> hasn't been run yet, <code>NULL</code> is returned.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p><code>NULL</code> or an EplusJob object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$last_job()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-geometry"></a>
+
+
+
+<h4>Method <code>geometry()</code>
+</h4>
+
+<p>Extract <code>Idf</code> geometries
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$geometry()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$geometry()⁠</code> extracts all geometry objects into an IdfGeometry
+object. <code>IdfGeometry</code> is an abstraction of a collection of geometry
+in an Idf. It provides more detail methods to query geometry
+properties, update geometry vertices and visualize geometry in 3D
+using the <a href="https://cran.r-project.org/package=rgl">rgl</a> package.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An IdfGeometry object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$geometry()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-view"></a>
+
+
+
+<h4>Method <code>view()</code>
+</h4>
+
+<p>View 3D <code>Idf</code> geometry
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$view(
+  new = FALSE,
+  render_by = "surface_type",
+  wireframe = TRUE,
+  x_ray = FALSE,
+  axis = TRUE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>new</code></dt>
+<dd>
+<p>If <code>TRUE</code>, a new rgl window will be open using
+<code>rgl::open3d()</code>. If <code>FALSE</code>, existing rgl window will be
+reused if possible. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>render_by</code></dt>
+<dd>
+<p>A single string specifying the way of rendering the
+geometry. Possible values are:
+</p>
+
+<ul>
+<li> <p><code>"surface_type"</code>: Default. Render the model by surface type
+model. Walls, roofs, windows, doors, floors, and shading
+surfaces will have unique colors.
+</p>
+</li>
+<li> <p><code>"boundary"</code>: Render the model by outside boundary condition.
+Only surfaces that have boundary conditions will be rendered
+with a color. All other surfaces will be white.
+</p>
+</li>
+<li> <p><code>"construction"</code>: Render the model by surface constructions.
+</p>
+</li>
+<li> <p><code>"zone"</code>: Render the model by zones assigned.
+</p>
+</li>
+<li> <p><code>"normal"</code>: Render the model by surface normal. The outside
+face of a heat transfer face will be rendered as white and the
+inside face will be rendered as red.
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>wireframe</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the wireframe of each surface will be
+shown. Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>x_ray</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all surfaces will be rendered translucently.
+Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>axis</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the X, Y and Z axes will be drawn at the
+global origin. Default: <code>TRUE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$view()⁠</code> uses the <a href="https://cran.r-project.org/package=rgl">rgl</a>
+package to visualize the IDF geometry in 3D in a similar way as
+<a href="https://openstudio.net/">OpenStudio</a>.
+</p>
+<p><code style="white-space: pre;">⁠$view()⁠</code> returns an IdfViewer object which can be used to further
+tweak the viewer scene.
+</p>
+<p>In the rgl window, you can control the view using your mouse:
+</p>
+
+<ul>
+<li>
+<p> Left button: Trackball
+</p>
+</li>
+<li>
+<p> Right button: Pan
+</p>
+</li>
+<li>
+<p> Middle button: Field-of-view (FOV). '0' means orthographic
+projection.
+</p>
+</li>
+<li>
+<p> Wheel: Zoom
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>An IdfViewer object
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$view()
+idf$view(render_by = "zone")
+idf$view(render_by = "construction")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-print"></a>
+
+
+
+<h4>Method <code>print()</code>
+</h4>
+
+<p>Print <code>Idf</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$print(zoom = "class", order = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>zoom</code></dt>
+<dd>
+<p>Control how detailed of the Idf object should be printed.
+Should be one of <code>"group"</code>, <code>"class"</code>, <code>"object"</code> and
+<code>"field"</code>. Default: <code>"group"</code>.
+</p>
+
+<ul>
+<li> <p><code>"group"</code>: all group names current existing are shown with prevailing
+square bracket showing how many <strong>C</strong>lasses existing in that group.
+</p>
+</li>
+<li> <p><code>"class"</code>: all class names are shown with prevailing square bracket
+showing how many <strong>O</strong>bjects existing in that class, together with
+parent group name of each class.
+</p>
+</li>
+<li> <p><code>"object"</code>: all object IDs and names are shown, together with parent
+class name of each object.
+</p>
+</li>
+<li> <p><code>"field"</code>: all object IDs and names, field names and values are shown,
+together with parent class name of each object.
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>order</code></dt>
+<dd>
+<p>Only applicable when <code>zoom</code> is <code>"object"</code> or <code>"field"</code>.
+If <code>TRUE</code>, objects are shown as the same order in the IDF. If
+<code>FALSE</code>, objects are grouped and ordered by classes. Default:
+<code>TRUE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$print()⁠</code> prints the <code>Idf</code> object according to different detail
+level specified using the <code>zoom</code> argument.
+</p>
+<p>With the default <code>zoom</code> level <code>object</code>, contents of the <code>Idf</code> object
+is printed in a similar style as you see in IDF Editor, with
+additional heading lines showing <code>Path</code>, <code>Version</code> of the <code>Idf</code>
+object. Class names of objects are ordered by group and the number of
+objects in classes are shown in square bracket.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The <code>Idf</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+idf$print("group")
+idf$print("class")
+idf$print("object")
+idf$print("field")
+
+# order objects by there classes
+idf$print("object", order = FALSE)
+idf$print("field", order = FALSE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Idf-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Idf$clone(deep = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>Author(s)</h3>
+
+<p>Hongyuan Jia
+</p>
+
+
+<h3>See Also</h3>
+
+<p>IdfObject class for a single object in an IDF.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## ------------------------------------------------
+## Method `Idf$new`
+## ------------------------------------------------
+
+## Not run: 
+# example model shipped with eplusr from EnergyPlus v8.8
+path_idf &lt;- system.file("extdata/1ZoneUncontrolled.idf", package = "eplusr") # v8.8
+
+# If neither EnergyPlus v8.8 nor Idd v8.8 was found, error will
+# occur. If Idd v8.8 is found, it will be used automatically.
+idf &lt;- Idf$new(path_idf)
+
+# argument `idd` can be specified explicitly using `use_idd()`
+idf &lt;- Idf$new(path_idf, idd = use_idd(8.8))
+
+# you can set `download` arugment to "auto" in `use_idd()` if you
+# want to automatically download corresponding IDD file when
+# necessary
+idf &lt;- Idf$new(path_idf, use_idd(8.8, download = "auto"))
+
+# Besides use a path to an IDF file, you can also provide IDF in literal
+# string format
+string_idf &lt;-
+    "
+    Version, 8.8;
+    Building,
+        Building;                !- Name
+    "
+
+Idf$new(string_idf, use_idd(8.8, download = "auto"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$version`
+## ------------------------------------------------
+
+## Not run: 
+# get version
+idf$version()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$path`
+## ------------------------------------------------
+
+## Not run: 
+# get path
+idf$path()
+
+# return `NULL` if Idf is not created from a file
+Idf$new("Version, 8.8;\n")$path()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$group_name`
+## ------------------------------------------------
+
+## Not run: 
+# get names of all groups Idf contains
+idf$group_name()
+
+# get group name of each object in Idf
+idf$group_name(sorted = FALSE)
+
+# get names of all available groups in underlying Idd
+idf$group_name(all = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$class_name`
+## ------------------------------------------------
+
+## Not run: 
+# get names of all classes in Idf
+idf$class_name()
+
+# get names of all classes grouped by group names in Idf
+idf$class_name(by_group = TRUE)
+
+# get class name of each object in Idf
+idf$class_name(sorted = FALSE)
+
+# get names of all available classes in underlying Idd
+idf$class_name(all = TRUE)
+
+# get names of all available classes grouped by group names in
+# underlying Idd
+idf$class_name(all = TRUE, by_group = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$is_valid_group`
+## ------------------------------------------------
+
+## Not run: 
+# check if input is a valid group name in current Idf
+idf$is_valid_group(c("Schedules", "Compliance Objects"))
+
+# check if input is a valid group name in underlying Idd
+idf$is_valid_group(c("Schedules", "Compliance Objects"), all = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$is_valid_class`
+## ------------------------------------------------
+
+## Not run: 
+# check if input is a valid class name in current Idf
+idf$is_valid_class(c("Building", "ShadowCalculation"))
+
+# check if input is a valid class name in underlying Idd
+idf$is_valid_class(c("Building", "ShadowCalculation"), all = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$definition`
+## ------------------------------------------------
+
+## Not run: 
+# get the IddObject object for specified class
+idf$definition("Version")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$object_id`
+## ------------------------------------------------
+
+## Not run: 
+# get IDs of all objects in current Idf object
+idf$object_id()
+
+# get IDs of all objects in current Idf object, and merge them into a
+# single integer vector
+idf$object_id(simplify = TRUE)
+
+# get IDs of objects in class Version and Zone
+idf$object_id(c("Version", "Zone"))
+
+# get IDs of objects in class Version and Zone, and merge them into a
+# single integer vector
+idf$object_id(c("Version", "Zone"), simplify = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$object_name`
+## ------------------------------------------------
+
+## Not run: 
+# get names of all objects in current Idf object
+idf$object_name()
+
+# get names of all objects in current Idf object, and merge them into
+# a single character vector
+idf$object_name(simplify = TRUE)
+
+# get names of objects in class Version and Zone
+idf$object_name(c("Version", "Zone"))
+
+# get names of objects in class Version and Zone, and merge them into
+# a single character vector
+idf$object_name(c("Version", "Zone"), simplify = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$object_num`
+## ------------------------------------------------
+
+## Not run: 
+# get total number of objects
+idf$object_num()
+
+# get number of objects in class Zone and Schedule:Compact
+idf$object_num(c("Zone", "Schedule:Compact"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$is_valid_id`
+## ------------------------------------------------
+
+## Not run: 
+idf$is_valid_id(c(51, 1000))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$is_valid_name`
+## ------------------------------------------------
+
+## Not run: 
+idf$is_valid_name(c("Simple One Zone (Wireframe DXF)", "ZONE ONE", "a"))
+
+# name matching is case-insensitive
+idf$is_valid_name(c("simple one zone (wireframe dxf)", "zone one", "a"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$object`
+## ------------------------------------------------
+
+## Not run: 
+# get an object whose ID is 3
+idf$object(3)
+
+# get an object whose name is "simple one zone (wireframe dxf)"
+# NOTE: object name matching is case-insensitive
+idf$object("simple one zone (wireframe dxf)")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$objects`
+## ------------------------------------------------
+
+## Not run: 
+# get objects whose IDs are 3 and 10
+idf$objects(c(3,10))
+
+# get objects whose names are "Simple One Zone (Wireframe DXF)" and "ZONE ONE"
+# NOTE: object name matching is case-insensitive
+idf$objects(c("Simple One Zone (Wireframe DXF)", "zone one"))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$object_unique`
+## ------------------------------------------------
+
+## Not run: 
+# get the SimulationColtrol object
+idf$object_unique("SimulationControl")
+
+# S3 "[[" and "$" can also be used
+idf$SimulationControl
+idf[["SimulationControl"]]
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$objects_in_class`
+## ------------------------------------------------
+
+## Not run: 
+# get all objects in Zone class
+idf$objects_in_class("Zone")
+
+# S3 "[[" and "$" can also be used
+idf$Zone
+idf[["Zone"]]
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$objects_in_group`
+## ------------------------------------------------
+
+## Not run: 
+# get all objects in Schedules group
+idf$objects_in_group("Schedules")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$object_relation`
+## ------------------------------------------------
+
+## Not run: 
+# check each layer's reference of a construction named FLOOR
+idf$object_relation("floor", "ref_to")
+
+# check where is this construction being used
+idf$object_relation("floor", "ref_by")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$objects_in_relation`
+## ------------------------------------------------
+
+## Not run: 
+# get a construction named FLOOR and all materials it uses
+idf$objects_in_relation("floor", "ref_to")
+
+# get a construction named FLOOR and all surfaces that uses it
+idf$objects_in_relation("floor", "ref_by", class = "BuildingSurface:Detailed")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$search_object`
+## ------------------------------------------------
+
+## Not run: 
+# get all objects whose names contains "floor"
+idf$search_object("floor", ignore.case = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$dup`
+## ------------------------------------------------
+
+## Not run: 
+# duplicate an object named "FLOOR"
+idf$dup("floor") # New object name 'FLOOR_1' is auto-generated
+
+# duplicate that object again by specifing object ID
+idf$dup(16) # New object name 'FLOOR_2' is auto-generated
+
+# duplicate that object two times and giving new names
+idf$dup(new_floor = "floor", new_floor2 = 16)
+
+# duplicate that object multiple times using variable inputs
+floors_1 &lt;- c(new_floor3 = "floor", new_floor4 = "floor")
+floors_2 &lt;- setNames(rep(16, 5), paste0("flr", 1:5))
+idf$dup(floors_1, floors_2)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$add`
+## ------------------------------------------------
+
+## Not run: 
+# add a new Building object with all default values
+empty &lt;- empty_idf(8.8) # create an empty Idf
+empty$add(Building = .())
+
+# add a new Building object with all default values and comments
+empty &lt;- empty_idf(8.8) # create an empty Idf
+empty$add(Building = .(.comment = c("this is", "a new building")))
+
+# add a new RunPeriod object with all possible fields
+empty &lt;- empty_idf(8.8) # create an empty Idf
+empty$add(Building = list(), RunPeriod = list("rp", 1, 1, 1, 31), .all = TRUE)
+
+# add objects using variable inputs
+empty &lt;- empty_idf(8.8) # create an empty Idf
+objs1 &lt;- list(Schedule_Constant = list("const"), Building = list())
+rp &lt;- list(RunPeriod = list("rp", 2, 1, 2, 28))
+empty$add(objs1, rp)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$set`
+## ------------------------------------------------
+
+## Not run: 
+# modify an object by name (case-insensitive)
+idf$set(r13layer = list(roughness = "smooth"))
+
+# modify an object by ID
+idf$set(..12 = list(roughness = "rough"))
+
+# overwrite existing object comments
+idf$set(r13layer = list(.comment = c("New comment")))
+
+# assign default values to fields
+idf$set(r13layer = list(solar_absorptance = NULL), .default = TRUE)
+
+# set field values to blanks
+idf$set(r13layer = list(solar_absorptance = NULL), .default = FALSE)
+
+# set field values to blank and delete trailing fields
+idf$set(r13layer = list(visible_absorptance = NULL), .default = FALSE)
+
+# set field values to blank and keep blank fields
+idf$set(r13layer = list(visible_absorptance = NULL), .default = FALSE, .empty = TRUE)
+
+# set all fields in one class
+idf$set(Material_NoMass := list(visible_absorptance = 0.9))
+
+# set multiple objects in one class
+idf$set(.("r13layer", "r31layer") := list(solar_absorptance = 0.8))
+# above is equivalent to
+idf$set(r13layer = list(solar_absorptance = 0.8),
+        r31layer = list(solar_absorptance = 0.8)
+)
+
+# use variable input
+sets &lt;- list(r13layer = list(roughness = "smooth"))
+idf$set(sets)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$del`
+## ------------------------------------------------
+
+## Not run: 
+# delete objects using names
+idf$object("Fraction") # ScheduleTypeLimits
+idf$del("Fraction")
+
+# delete objects using IDs
+idf$objects(c(39, 40)) # Output:Variable
+idf$del(39, 40)
+
+# cannot delete objects that are referred by others
+level_checks()$reference # reference-checking is enable by default
+idf$del("r13layer") # error
+
+# force to delete objects even thay are referred by others
+idf$del("r13layer", .force = TRUE)
+
+# delete objects and also objects that refer to them
+idf$del("r31layer", .ref_by = TRUE) # Construction 'ROOF31' will be kept
+
+# delete objects and also objects that they refer to
+idf$del("extlights", .ref_to = TRUE) # Schedule 'AlwaysOn' will be kept
+
+# delete objects and also other objects that refer to them recursively
+idf$del("roof31", .ref_by = TRUE, .recursive = TRUE)
+
+# delete objects using variable inputs
+ids &lt;- idf$object_id("Output:Variable", simplify = TRUE)
+idf$del(ids)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$purge`
+## ------------------------------------------------
+
+## Not run: 
+# purge unused "Fraction" schedule type
+idf$purge("on/off") # ScheduleTypeLimits
+
+# purge all unused schedule types
+idf$purge(class = "ScheduleTypeLimits")
+
+# purge all unused schedule related objects
+idf$purge(group = "Schedules")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$duplicated`
+## ------------------------------------------------
+
+## Not run: 
+# check if there are any duplications in the Idf
+idf$duplicated(class = "ScheduleTypeLimits")
+
+# check if there are any duplications in the schedule types
+idf$duplicated(class = "ScheduleTypeLimits")
+
+# check if there are any duplications in the schedule groups and
+# material class
+idf$duplicated(class = "Material", group = "Schedules")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$unique`
+## ------------------------------------------------
+
+## Not run: 
+# remove duplications in the Idf
+idf$unique(class = "ScheduleTypeLimits")
+
+# remove duplications in the schedule types
+idf$unique(class = "ScheduleTypeLimits")
+
+# remove duplications in the schedule groups and material class
+idf$unique(class = "Material", group = "Schedules")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$rename`
+## ------------------------------------------------
+
+## Not run: 
+idf$objects(c("on/off", "test 352a"))
+idf$rename(on_off = "on/off", test_352a = 51)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$insert`
+## ------------------------------------------------
+
+## Not run: 
+# insert all material from another IDF
+path_idf2 &lt;- file.path(eplus_config(8.8)$dir, "ExampleFiles/5ZoneTDV.idf")
+idf2 &lt;- Idf$new(path_idf2)
+idf$insert(idf2$Material)
+
+# insert objects from same Idf is equivalent to using Idf$dup()
+idf$insert(idf$SizingPeriod_DesignDay)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$load`
+## ------------------------------------------------
+
+## Not run: 
+# load objects from character vectors
+idf$load(
+    c("Material,",
+      "    mat,                     !- Name",
+      "    MediumSmooth,            !- Roughness",
+      "    0.667,                   !- Thickness {m}",
+      "    0.115,                   !- Conductivity {W/m-K}",
+      "    513,                     !- Density {kg/m3}",
+      "    1381;                    !- Specific Heat {J/kg-K}"),
+
+    "Construction, const, mat;"
+)
+
+# load objects from data.frame definitions
+dt &lt;- idf$to_table(class = "Material")
+dt[field == "Name", value := paste(value, 1)]
+dt[field == "Thickness", value := "0.5"]
+idf$load(dt)
+
+# by default, duplications are removed
+idf$load(idf$to_table(class = "Material"))
+
+# keep empty fields as they are
+idf$load("Material, mat1, smooth, 0.5, 0.2, 500, 1000,,, 0.5;", .default = FALSE)
+
+# keep trailing empty fields
+idf$load("Material, mat2, smooth, 0.5, 0.2, 500, 1000,,,;",
+    .default = FALSE, .empty = TRUE
+)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$update`
+## ------------------------------------------------
+
+## Not run: 
+# update objects from string definitions:
+str &lt;- idf$to_string("zone one", header = FALSE, format = "new_top")
+str[8] &lt;- "2," # Multiplier
+idf$update(str)
+
+# update objects from data.frame definitions:
+dt &lt;- idf$to_table("zone one")
+dt[field == "Multiplier", value := "1"]
+idf$update(dt)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$search_value`
+## ------------------------------------------------
+
+## Not run: 
+# search values that contains "floor"
+idf$search_value("floor", ignore.case = TRUE)
+
+# search values that contains "floor" in class Construction
+idf$search_value("floor", "Construction", ignore.case = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$replace_value`
+## ------------------------------------------------
+
+## Not run: 
+# search values that contains "win" and replace them with "windows"
+idf$replace_value("win", "windows")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$validate`
+## ------------------------------------------------
+
+## Not run: 
+idf$validate()
+
+# check at predefined validate level
+idf$validate("none")
+idf$validate("draft")
+idf$validate("final")
+
+# custom validate checking components
+idf$validate(custom_validate(auto_field = TRUE, choice = TRUE))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$is_valid`
+## ------------------------------------------------
+
+## Not run: 
+idf$is_valid()
+
+# check at predefined validate level
+idf$is_valid("none")
+idf$is_valid("draft")
+idf$is_valid("final")
+
+# custom validate checking components
+idf$is_valid(custom_validate(auto_field = TRUE, choice = TRUE))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$to_string`
+## ------------------------------------------------
+
+## Not run: 
+# get text format of the whole Idf
+head(idf$to_string())
+
+# get text format of the whole Idf, excluding the header and all comments
+head(idf$to_string(comment = FALSE, header = FALSE))
+
+# get text format of all objects in class Material
+head(idf$to_string(class = "Material", comment = FALSE, header = FALSE))
+
+# get text format of some objects
+head(idf$to_string(c("floor", "zone one")))
+
+# tweak output formatting
+head(idf$to_string("floor", leading = 0, sep_at = 0))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$to_table`
+## ------------------------------------------------
+
+## Not run: 
+# extract whole Idf data
+idf$to_table()
+
+# extract all data from class Material
+idf$to_table(class = "Material")
+
+# extract multiple object data
+idf$to_table(c("FLOOR", "ZONE ONE"))
+
+# keep value types and put actual values into a list column
+idf$to_table(c("FLOOR", "ZONE ONE"), string_value = FALSE)$value
+
+# add the unit to each value
+idf$to_table(c("FLOOR", "ZONE ONE"), string_value = FALSE, unit = TRUE)
+
+# get all possible fields
+idf$to_table("ZONE ONE", all = TRUE)
+
+# make sure all objects in same class have the same number of fields
+idf$to_table(class = "Construction", align = TRUE)
+
+# get a wide table with string values
+idf$to_table(class = "Construction", wide = TRUE)
+
+# get a wide table with actual values
+idf$to_table(class = "OtherEquipment", wide = TRUE, string_value = FALSE)
+
+# group extensible by extensible group number
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "group")
+
+# group extensible by extensible group number and convert into a wide table
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "group", wide = TRUE)
+
+# group extensible by extensible field index
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "index")
+
+# group extensible by extensible field index and convert into a wide table
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "index", wide = TRUE)
+
+# when grouping extensible, 'string_value' and 'unit' still take effect
+idf$to_table(class = "BuildingSurface:Detailed", group_ext = "index",
+    wide = TRUE, string_value = FALSE, unit = TRUE
+)
+
+# create table for new object input
+idf$to_table(class = "BuildingSurface:Detailed", init = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$external_deps`
+## ------------------------------------------------
+
+## Not run: 
+idf$external_deps()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$is_unsaved`
+## ------------------------------------------------
+
+## Not run: 
+idf$is_unsaved()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$save`
+## ------------------------------------------------
+
+## Not run: 
+# save Idf as a new file
+idf$save(tempfile(fileext = ".idf"))
+
+# save and overwrite current file
+idf$save(overwrite = TRUE)
+
+# save the model with newly created and modified objects at the top
+idf$save(overwrite = TRUE, format = "new_top")
+
+# save the model to a new file and copy all external csv files used in
+# "Schedule:File" class into the same folder
+idf$save(path = file.path(tempdir(), "test1.idf"), copy_external = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$run`
+## ------------------------------------------------
+
+## Not run: 
+idf &lt;- Idf$new(path_idf)
+# save the model to tempdir()
+idf$save(file.path(tempdir(), "test_run.idf"))
+
+# use the first epw file in "WeatherData" folder in EnergyPlus v8.8
+# installation path
+epw &lt;- list.files(file.path(eplus_config(8.8)$dir, "WeatherData"),
+    pattern = "\\.epw$", full.names = TRUE)[1]
+
+# if `dir` is NULL, the directory of IDF file will be used as simulation
+# output directory
+job &lt;- idf$run(epw, dir = NULL)
+
+# run simulation in the background
+idf$run(epw, dir = tempdir(), wait = FALSE)
+
+# copy all external files into the directory run simulation
+idf$run(epw, dir = tempdir(), copy_external = TRUE)
+
+# check for simulation errors
+job$errors()
+
+# get simulation status
+job$status()
+
+# get output directory
+job$output_dir()
+
+# re-run the simulation
+job$run()
+
+# get simulation results
+job$report_data()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$last_job`
+## ------------------------------------------------
+
+## Not run: 
+idf$last_job()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$geometry`
+## ------------------------------------------------
+
+## Not run: 
+idf$geometry()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$view`
+## ------------------------------------------------
+
+## Not run: 
+idf$view()
+idf$view(render_by = "zone")
+idf$view(render_by = "construction")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Idf$print`
+## ------------------------------------------------
+
+## Not run: 
+idf$print("group")
+idf$print("class")
+idf$print("object")
+idf$print("field")
+
+# order objects by there classes
+idf$print("object", order = FALSE)
+idf$print("field", order = FALSE)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

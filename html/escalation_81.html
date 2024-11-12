@@ -1,0 +1,80 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>select_dose_by_cibp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Select dose by the CIBP selection criterion.</h2>
+
+<h3>Description</h3>
+
+<p>This method selects dose by the convex infinite bounds penalisation (CIBP)
+criterion of Mozgunov &amp; Jaki. Their method is mindful of the uncertainty in
+the estimates of the probability of toxicity and uses an asymmetry parameter
+to penalise escalation to risky doses.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">select_dose_by_cibp(parent_selector_factory, a, target = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>Object of type <code>selector_factory</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>Number between 0 and 2, the asymmetry parameter. See References.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>We seek a dose with this probability of toxicity. If not
+provided, the value will be sought from the parent dose-selector.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code> that can fit a
+dose-finding model to outcomes.
+</p>
+
+
+<h3>References</h3>
+
+<p>Mozgunov P, Jaki T. Improving safety of the continual reassessment method via
+a modified allocation rule. Statistics in Medicine.1-17. doi:10.1002/sim.8450
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">skeleton &lt;- c(0.05, 0.1, 0.25, 0.4, 0.6)
+target &lt;- 0.33
+
+# Let's compare escalation behaviour of a CRM model without CIBP criterion:
+model1 &lt;- get_dfcrm(skeleton = skeleton, target = target)
+# To one with the CIBP criterion:
+model2 &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  select_dose_by_cibp(a = 0.3)
+
+# Despite one-in-three tox at first dose, regular model is ready to escalate:
+model1 %&gt;% fit('1NTN') %&gt;% recommended_dose()
+# But the model using CIBP is more risk averse:
+model2 %&gt;% fit('1NTN') %&gt;% recommended_dose()
+
+</code></pre>
+
+
+</div>

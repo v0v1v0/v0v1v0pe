@@ -1,0 +1,633 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>egcm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simplified Engle-Granger Cointegration Model</h2>
+
+<h3>Description</h3>
+
+<p>Performs the two-step Engle Granger cointegration procedure on a pair of time
+series, and creates an object representing the results of the analysis.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">egcm(X, Y, na.action, log = FALSE, normalize = FALSE, 
+  debias = TRUE, robust=FALSE, include.const=TRUE,
+  i1test = egcm.default.i1test(), 
+  urtest = egcm.default.urtest(), 
+  p.value = egcm.default.pvalue())
+
+is.cointegrated(E)
+is.ar1(E)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+<p>the first time series to be considered in the cointegration test.
+A plain or <code>zoo</code> vector.  Alternatively, a two-column 
+matrix or data.frame, in which case <code>Y</code> should be omitted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+<p>the second time series to be considered in the cointegration test.
+A plain or <code>zoo</code> vector.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+
+<p>an object of class <code>"egcm"</code> returned from a previous call to <code>egcm</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+
+<p>a function that indicates what should happen when the data contain NAs.
+See <code>lm</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+
+<p>a boolean value which if <code>TRUE</code>, indicates that the model should be
+fit to the logs of the input vectors <code>X</code> and <code>Y</code>.  Default: FALSE.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+
+<p>a boolean value which if <code>TRUE</code>, indicates that each series should be 
+normalized to start at 1.  This is performed by dividing the series
+by its first element.  Default: FALSE.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debias</code></td>
+<td>
+
+<p>a boolean value which if <code>TRUE</code>, indicates that the value of <code class="reqn">rho</code>
+that is reported should be debiased.  Default: TRUE.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>robust</code></td>
+<td>
+
+<p>a boolean value which if <code>TRUE</code>, indicates that the two-step
+Engle-Granger procedure should be performed using a robust linear
+model rather than a standard linear model.  See <code>rlm</code>.
+Default: FALSE.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include.const</code></td>
+<td>
+
+<p>a boolean which if <code>TRUE</code>, indicates that the constant term <code class="reqn">alpha</code>
+should be included in the model.  Otherwise, sets <code class="reqn">alpha=0</code>.
+Default:  TRUE.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i1test</code></td>
+<td>
+
+<p>a mnemonic indicating the name of the test that should be used for
+checking if the input series <code>X</code> and <code>Y</code> are integrated.  
+If none is specified, then defaults to the value reported by
+<code>egcm.default.i1test()</code>.  The installation default is <code>"pp"</code>.
+The following tests are supported:
+</p>
+
+<ul>
+<li> <p><code>"adf"</code> Augmented Dickey-Fuller test (see <code>adf.test</code>)
+</p>
+</li>
+<li> <p><code>"pp"</code>  Phillips-Perron test (see <code>pp.test</code>)
+</p>
+</li>
+<li> <p><code>"pgff"</code> Pantula, Gonzales-Farias and Fuller weighted
+symmetric estimate (see <code>pgff.test</code>)
+</p>
+</li>
+<li> <p><code>"bvr"</code> Breitung's variance ratio (see <code>bvr.test</code>)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>urtest</code></td>
+<td>
+
+<p>a mnemonic indicating the name of the test that should be used for
+checking if the residual series contains a unit root.  If none is
+specified, then defaults to the value reported by 
+<code>egcm.default.urtest()</code>.  The installation default is <code>"pp"</code>.
+The following tests are supported:
+</p>
+
+<ul>
+<li> <p><code>"adf"</code> Augmented Dickey-Fuller test (see <code>adf.test</code>)
+</p>
+</li>
+<li> <p><code>"pp"</code>  Phillips-Perron test (see <code>pp.test</code>)
+</p>
+</li>
+<li> <p><code>"pgff"</code> Pantula, Gonzales-Farias and Fuller weighted
+symmetric estimate (see <code>pgff.test</code>)
+</p>
+</li>
+<li> <p><code>"bvr"</code> Breitung's variance ratio (see <code>bvr.test</code>)
+</p>
+</li>
+<li> <p><code>"jo-e"</code> Johansen's eigenvalue test (see <code>ca.jo</code>)
+</p>
+</li>
+<li> <p><code>"jo-t"</code> Johansen's trace test (see <code>ca.jo</code>)
+</p>
+</li>
+<li> <p><code>"ers-p"</code> Elliott, Rothenberg and Stock point optimal test
+(see <code>ur.ers</code>)
+</p>
+</li>
+<li> <p><code>"ers-d"</code> Elliott, Rothenberg and Stock DF-GLS test
+(see <code>ur.ers</code>)
+</p>
+</li>
+<li> <p><code>"sp-r"</code> Schmidt and Phillips rho statistic
+(see <code>ur.sp</code>)
+</p>
+</li>
+<li> <p><code>"hurst"</code> Hurst exponent calculated using the
+corrected empirical method (see <code>hurstexp</code>)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<table><tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>the p-value to be used in the above tests.
+If none is specified, then defaults to the value reported
+by <code>egcm.default.pvalue()</code>.  The installation default is 0.05.
+</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>The two-step Engle Granger procedure searches for parameters
+<code class="reqn">\alpha</code>, <code class="reqn">\beta</code>, and <code class="reqn">\rho</code> that yield the best
+fit to the following model:
+</p>
+<p style="text-align: center;"><code class="reqn">Y[i] = \alpha + \beta * X[i] + R[i]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">R[i] = \rho * R[i-1] + \epsilon[i]</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\epsilon[i] \sim N(0, \sigma^2)</code>
+</p>
+
+<p>In the first step, <code class="reqn">alpha</code> and <code class="reqn">beta</code> are found using
+a linear fit of <code>X[i]</code> with respect to <code>Y[i]</code>.  The 
+residual sequence <code>R[i]</code> is then determined.
+Then, in the second step, <code class="reqn">\rho</code> is determined, again using
+a linear fit.  
+</p>
+<p>Engle and Granger showed that if <code class="reqn">X</code> and <code class="reqn">Y</code> are cointegrated,
+then this procedure will yield consistent estimates of the parameters.
+However, there are several ways in which this estimation procedure
+can fail:
+</p>
+
+<ul>
+<li>
+<p> Either <code>X</code> or <code>Y</code> (or both) may already be
+mean-reverting.  In this case, there is no point in forming
+the difference <code class="reqn">Y - \beta X</code>.  If one series is mean-reverting
+and the other is not, then any non-trivial linear combination will
+not be mean-reverting.
+</p>
+</li>
+<li>
+<p> The residual series <code>R[i]</code> may not be mean-reverting.
+In the language of cointegration theory, it is then said to
+contain a unit root.  In this case, there is no benefit to
+forming the linear combination <code class="reqn">Y - \beta X</code>.
+</p>
+</li>
+<li>
+<p> The residual series <code>R[i]</code> may be mean-reverting, but
+the relation <code class="reqn">R[i] = \rho R[i-1] + \epsilon[i]</code> may not be
+the right model.  In other words, the residual series
+may not be adequately described by an auto-regressive
+series of order one.  In this case, the parameters <code class="reqn">\alpha</code>
+and <code class="reqn">\beta</code> will be correct, however the specification for
+the residuals <code>R[i]</code> will not be.  The user may wish to try
+fitting the residuals using another function, such as <code>arima</code>.
+</p>
+</li>
+</ul>
+<p>The <code>egcm</code> function checks for each of the above contingencies,
+using an appropriate statistical test.
+If one of the above conditions is found, then a warning message is
+displayed when the model is printed.
+</p>
+<p>The p-value used in the above tests is given by the
+parameter <code>p.value</code>.  This can be changed by setting the value
+of the parameter, or by changing the default value with
+<code>egcm.set.default.pvalue</code>.  For all of the unit root
+tests, the p-values of the corresponding test statistics have been
+recomputed through simulation and a table lookup is used.  The
+Ljung-Box test (see <code>Box.test</code>) is used to assess whether
+or not the residual series can be adequately fit with an autoregressive
+series of order one.
+</p>
+<p>The estimates of <code class="reqn">\alpha</code> and <code class="reqn">\beta</code> are not only
+consistent but also unbiased.  Unfortunately, the estimate obtained
+for <code class="reqn">\rho</code> may be biased.  Therefore, a bias correction has been
+implemented for <code class="reqn">\rho</code>.  A pre-computed table of biases has been
+determined through simulation, and a table lookup is performed to
+determine the appropriate bias correction.  To turn off this
+feature, set <code>debias = FALSE</code>.
+</p>
+<p>The helper function <code>is.cointegrated()</code> takes as input an <code>"egcm"</code>
+object <code>E</code>.  It returns TRUE if <code>E</code>
+appears to represent a valid pair of cointegrated series.  In other words, it checks that both <code>X</code> and <code>Y</code> are
+integrated and that the residual series <code>R</code> is free of unit roots.
+The helper function <code>is.ar1()</code> also takes as input an <code>"egcm"</code>
+object <code>E</code>.  It returns TRUE if the
+residual series <code>R</code> can be adequately fit by an autoregressive model
+of order one.  
+</p>
+<p>From the standpoint of securities trading, cointegration is thought
+to provide a useful model for pairs trading.  If the price series of
+two securities are cointegrated, then the corresponding residual
+series <code>R[i]</code> will be mean-reverting.  When the magnitude of the residual
+<code>R[N]</code> is large, a trader might establish a long position in the
+undervalued security and a short position in the overvalued security.
+With high probability, the positions will converge in value, and a
+profit can be collected.  Numerous scholarly articles and several
+books have been written on pairs trading.
+</p>
+<p>Data mining for cointegrated pairs is not recommended, though.
+As with any statistical test, the cointegration test will generate
+false positives.  Experience shows that at least in the case of the
+components of the S&amp;P 500, the number of false positives overwhelms
+the number of truly cointegrated series.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an S3 object of class <code>"egcm"</code>.  This can then be
+<code>print</code>ed or <code>plot</code>ted.  There is also a <code>summary</code> method.
+</p>
+<p>The following is a copy of the printed output that was obtained from 
+running the first example below:
+</p>
+<pre>
+VOO[i] =   0.9201 SPY[i] -   0.6845 + R[i], 
+          (0.0005)          (0.0845)     
+R[i] =  -0.0004 R[i-1] + eps[i], eps ~ N(0,  0.0779^2)
+        (0.0633)
+R[2013-12-31] = -0.0987 (t = -1.265)</pre>
+<p>The first line of the output shows the fit that was found.  
+The parameters were determined to be <code class="reqn">\beta = 0.9201</code>,
+<code class="reqn">\alpha = -0.6845</code> and <code class="reqn">\rho = -0.0004</code>.  The standard
+deviation of the sequence <code class="reqn">\epsilon</code> of innovations was
+found to be <code class="reqn">0.0779</code>.  The standard errors of <code class="reqn">\alpha</code>,
+<code class="reqn">\beta</code> and <code class="reqn">\rho</code> were found to be <code class="reqn">0.0845</code>,
+<code class="reqn">0.0005</code> and <code class="reqn">0.0633</code> respectively.
+</p>
+<p>The third line of output shows the value of the residual as
+of the last observation in the series.  The sign of the value
+<code class="reqn">-0.0987</code> indicates that <code>VOO</code> was relatively undervalued
+on this date and that the difference between the two series was
+<code class="reqn">-1.265</code> standard deviations from their historical mean.
+<br><br></p>
+<p>The fields of the <code>"egcm"</code> object are as follows:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>S1</code></td>
+<td>
+<p>the first data series (<code>X[i]</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S2</code></td>
+<td>
+<p>the second data series (<code>Y[i]</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>the residual series (<code>R[i]</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>innovations</code></td>
+<td>
+<p>the sequence of innovations (<code class="reqn">\epsilon</code><code>[i]</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>the index vector for the series</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i1test</code></td>
+<td>
+<p>the name of the test used for verifying
+that <code>X</code> and <code>Y</code> are integrated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>urtest</code></td>
+<td>
+<p>the name of the test used for
+verifying that the residual series does not contain
+a unit root</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvalue</code></td>
+<td>
+<p>the p-value that is used for the various tests used
+by this model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>Boolean, which if true indicates that S1 and S2 are logged</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>the computed value of <code class="reqn">\alpha</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha.se</code></td>
+<td>
+<p>standard error of the estimate of <code class="reqn">\alpha</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>the computed value of <code class="reqn">\beta</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta.se</code></td>
+<td>
+<p>standard error of the estimate of <code class="reqn">\beta</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p>the computed and debiased value of <code class="reqn">\rho</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho.raw</code></td>
+<td>
+<p>the value of <code class="reqn">\rho</code> determined prior to debiasing</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho.se</code></td>
+<td>
+<p>standard error of the estimate of <code class="reqn">\rho</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s1.i1.stat</code></td>
+<td>
+<p>test statistic found when checking that S1 is integrated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s1.i1.p</code></td>
+<td>
+<p>p-value associated to <code>s1.i1.stat</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s2.i1.stat</code></td>
+<td>
+<p>test statistic found when checking that S2 is integrated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s2.i1.p</code></td>
+<td>
+<p>p-value associated to <code>s2.i1.stat</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.stat</code></td>
+<td>
+<p>test statistic found when checking whether the residual series
+contains a unit root</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.p</code></td>
+<td>
+<p>p-value associated to <code>r.stat</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps.ljungbox.stat</code></td>
+<td>
+<p>test statistic found when checking whether an
+AR(1) model adequately fits the residual series</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps.ljungbox.p</code></td>
+<td>
+<p>p-value associated to <code>eps.ljungbox.stat</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s1.dsd</code></td>
+<td>
+<p>standard deviation of <code>diff(S1)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s2.dsd</code></td>
+<td>
+<p>standard deviation of <code>diff(S2)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.sd</code></td>
+<td>
+<p>standard deviation of <code>residuals</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps.sd</code></td>
+<td>
+<p>standard deviation of the innovations <code class="reqn">\epsilon[i]</code></p>
+</td>
+</tr>
+</table>
+<h3>Disclaimer</h3>
+
+<p>The software in this package is for general information purposes
+only. It is hoped that it will be useful, but it is provided WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. It is not intended to form the basis of any investment
+decision. USE AT YOUR OWN RISK!
+</p>
+
+
+<h3>Note</h3>
+
+<p>Cointegration is a more general concept than has been presented here.
+Users who wish to explore more general models for cointegration are
+referred to the <code>urca</code> package of Bernard Pfaff.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Matthew Clegg <a href="mailto:matthewcleggphd@gmail.com">matthewcleggphd@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Chan, E. (2013). 
+<em>Algorithmic trading: winning strategies and their rationale</em>.
+(Vol. 625). John Wiley &amp; Sons.
+</p>
+<p>Clegg, M. (2014). On the Persistence of Cointegration in Pairs Trading (January 28, 2014). 
+Available at SSRN:  http://ssrn.com/abstract=2491201
+</p>
+<p>Ehrman, D.S. (2006).
+<em>The handbook of pairs trading: strategies using equities, options, 
+and futures</em>. 
+(Vol. 240). John Wiley &amp; Sons.
+</p>
+<p>Engle, R. F. and C. W. Granger.  (1987)
+Co-integration and error correction: representation, estimation, and testing.
+<em>Econometrica</em>, 251-276.
+</p>
+<p>Pfaff, B. (2008) 
+<em>Analysis of Integrated and Cointegrated Time Series with R. Second Edition</em>. 
+Springer, New York. ISBN 0-387-27960-1
+</p>
+<p>Vidyamurthy, G.  (2004).
+<em>Pairs trading: quantitative methods and analysis</em>.
+(Vol 217).  Wiley.com.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>yegcm
+egcm.default.i1test
+egcm.default.urtest
+egcm.default.pvalue
+sim.egcm
+pgff.test
+bvr.test
+ca.jo 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(quantmod)
+
+# SPY and IVV are both ETF's that track the S&amp;P 500.
+# One would expect them to be cointegrated, and in 2013 they were.
+spy2013 &lt;- getSymbols("SPY", from = "2013-01-01",
+          to = "2013-12-31",auto.assign = FALSE)$SPY.Adjusted
+ivv2013 &lt;- getSymbols("IVV", from = "2013-01-01", 
+         to = "2013-12-31",auto.assign = FALSE)$IVV.Adjusted
+egcm(spy2013, ivv2013)
+
+# egcm has a plot method, which can be useful
+# In this plot, it appears that there is only one price series,
+# but that is because the two price series are so close to each
+# other that they are indistinguishable.
+plot(egcm(spy2013, ivv2013))
+
+# The yegcm method provides a convenient interface to the quantmod
+# package, which can fetch closing prices from Yahoo.  Thus, 
+# the above can be simplified as follows:
+
+e &lt;- yegcm("SPY", "VOO", start="2013-01-01", end="2014-01-01")
+print(e)
+plot(e)
+summary(e)
+
+# GLD and IAU both track the price of gold.  
+# They too tend to be very tightly cointegrated.
+gld.iau.2013 &lt;- yegcm("GLD", "IAU", start="2013-01-01", end="2013-12-31")
+gld.iau.2013
+plot(gld.iau.2013)
+
+# Coca-cola and Pepsi are often mentioned as an
+# example of a pair of securities for which pairs trading
+# may be fruitful.  However, at least in 2013, they were not
+# cointegrated.
+ko.pep.2013 &lt;- yegcm("KO", "PEP", start="2013-01-01", end="2013-12-31")
+ko.pep.2013
+plot(ko.pep.2013)
+
+# Ford and GM seemed to be even more tightly linked.
+# Yet, the degree of linkage was not high enough to pass the
+# cointegration test.
+f.gm.2013 &lt;- yegcm("F","GM", start="2013-01-01", end="2013-12-31")
+f.gm.2013
+plot(f.gm.2013)
+
+## End(Not run)</code></pre>
+
+
+</div>

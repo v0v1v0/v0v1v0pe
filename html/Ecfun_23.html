@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>getElement2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Extract a named element from an object with 
+a default
+</h2>
+
+<h3>Description</h3>
+
+<p>Get element <code>name</code> of <code>object</code>.  
+If <code>object</code> does not have an element 
+<code>name</code>, return <code>default</code>.
+</p>
+<p>If the <code>name</code> element of <code>object</code> 
+is <code>NULL</code> the result depends on 
+<code>warn.NULL</code>:  If <code>TRUE</code>, issue a 
+warning and return <code>default</code>.  Otherwise, 
+return <code>NULL</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">getElement2(object, name=1, default=NA, 
+      warn.NULL=TRUE, envir=list(), returnName)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>object from which to extract component 
+<code>name</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+
+<p>Name or index of the element to extract
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>default</code></td>
+<td>
+
+<p>default value if <code>name</code> is not part 
+of <code>object</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn.NULL</code></td>
+<td>
+
+<p>logical to decide how to treat cases where 
+<code>object</code> has a component <code>name</code>:  
+If <code>TRUE</code>, return <code>default</code> with 
+a warning.  Otherwise, return <code>NULL</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+
+<p>Supplemental list beyond <code>object</code> in 
+which to look for names in case 
+<code>object[[name]]</code> is a language object 
+that must be evaluated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnName</code></td>
+<td>
+
+<p>logical:  <code>TRUE</code> to return 
+<code>as.character</code> of any 
+<code>name</code> found as an element of 
+<code>object</code>.  
+</p>
+<p><code>FALSE</code> to <code>eval</code> any 
+<code>name</code> found in the environment 
+of  <code>object</code>.  
+</p>
+<p>Default = <code>TRUE</code> if <code>name</code> == 1 or 
+a character string matching the name of the 
+first element of <code>object</code>.  
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>1.  <code>If is.numeric(name) In &lt;- 
+  (1 &lt;= name &lt;= length(object))</code> 
+</p>
+<p>2.  <code>else In &lt;- if(name %in% names(object))</code>
+</p>
+<p>3.  <code>El &lt;- if(In) object[[name]] else default</code> 
+</p>
+<p>4.  <code>warn.NULL</code>? 
+</p>
+<p>5.  <code>if(returnName) return(as.character(El)) 
+  else return(eval(El, envir=object))</code>
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of the form of <code>object[[name]]</code>;  
+if <code>object</code> does not have an element or 
+slot <code>name</code>, return <code>default</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Spencer Graves with help from Marc Schwartz and 
+Hadley Wickham
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>getElement</code>, which also can return 
+slots from S4 objects.  
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##
+## 1.  name in object, return 
+##
+e1 &lt;- getElement2(list(ab=1), 'ab', 2) # 1
+# check 
+
+all.equal(e1, 1)
+
+
+##
+## 2.  name not in object, return default
+##
+eNA &lt;- getElement2(list(), 'ab') # default default = NA
+# check 
+
+all.equal(eNA, NA)
+
+
+e0 &lt;- getElement2(list(), 'ab', 2) # name not in object
+
+all.equal(e0, 2)
+
+
+e2 &lt;- getElement2(list(ab=1), 'a', 2) # partial matching not used 
+
+all.equal(e2, 2)
+
+
+##
+## 3.  name NULL in object, return default 
+##
+ed &lt;- getElement2(list(a=NULL), 'a',2) # 2 with a warning
+
+all.equal(ed, 2)
+
+
+e. &lt;- getElement2(list(a=NULL), 'a', 2, warn.NULL=FALSE) # NULL
+
+all.equal(e., NULL)
+
+
+eNULL &lt;- getElement2(list(a=NULL), 'a', NULL) # NULL
+
+all.equal(eNULL, NULL)
+
+
+##
+## 4.  Language:  find, eval, return 
+##
+Qte &lt;- quote(plot(1:4, y=x, col=c2))
+if(require(pryr)){ 
+  Qt &lt;- pryr::standardise_call(Qte) # add the name 'x' 
+  fn &lt;- getElement2(Qt)
+  eQuote &lt;- getElement2(Qt, 'y')
+  Col2 &lt;- getElement2(Qt, 'col', envir=list(c2=2))
+# check
+
+  all.equal(fn, 'plot')
+
+
+  all.equal(eQuote, 1:4)
+
+
+  all.equal(Col2, 2)
+
+}
+</code></pre>
+
+
+</div>

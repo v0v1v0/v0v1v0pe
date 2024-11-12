@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fitted.enetLTS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+the fitted values from the <code>"enetLTS"</code> object.
+</h2>
+
+<h3>Description</h3>
+
+<p>A numeric vector which extract fitted values from the current model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  ## S3 method for class 'enetLTS'
+fitted(object,vers=c("reweighted","raw","both"),type=c("response","class"),...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>the model fit from which to extract fitted values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vers</code></td>
+<td>
+<p>a character string specifying for which fit to make
+predictions. Possible values are <code>"reweighted"</code> (the default) for
+predicting values from the reweighted fit, <code>"raw"</code> for predicting
+values from the raw fit, or <code>"both"</code> for predicting values from both
+fits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>type of prediction required. <code>type="response"</code> gives the
+fitted probabilities for <code>"multinomial"</code> and <code>"binomial"</code> and gives the fitted values
+for <code>"gaussian"</code>. <code>type="class"</code> is available only for <code>"multinomial"</code> and
+<code>"binomial"</code> model, and produces the class label corresponding to the maximum probability.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments from the <code>enetLTS</code> object if needed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A numeric vector containing the requested fitted values.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Fatma Sevinc KURNAZ, Irene HOFFMANN, Peter FILZMOSER
+<br> Maintainer: Fatma Sevinc KURNAZ &lt;fskurnaz@gmail.com&gt;;&lt;fskurnaz@yildiz.edu.tr&gt;</p>
+
+
+<h3>See Also</h3>
+
+<p><code>enetLTS</code>,
+<code>predict.enetLTS</code>,
+<code>residuals.enetLTS</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## for gaussian
+
+set.seed(86)
+n &lt;- 100; p &lt;- 25                             # number of observations and variables
+beta &lt;- rep(0,p); beta[1:6] &lt;- 1              # 10% nonzero coefficients
+sigma &lt;- 0.5                                  # controls signal-to-noise ratio
+x &lt;- matrix(rnorm(n*p, sigma),nrow=n)
+e &lt;- rnorm(n,0,1)                             # error terms
+eps &lt;- 0.1                                    # contamination level
+m &lt;- ceiling(eps*n)                           # observations to be contaminated
+eout &lt;- e; eout[1:m] &lt;- eout[1:m] + 10        # vertical outliers
+yout &lt;- c(x %*% beta + sigma * eout)        # response
+xout &lt;- x; xout[1:m,] &lt;- xout[1:m,] + 10      # bad leverage points
+
+
+fit1 &lt;- enetLTS(xout,yout,crit.plot=FALSE)
+fitted(fit1)
+fitted(fit1,vers="raw")
+fitted(fit1,vers="both")
+fitted(fit1,vers="reweighted",type="response")
+
+
+## for binomial
+eps &lt;-0.05                                     # %10 contamination to only class 0
+m &lt;- ceiling(eps*n)
+y &lt;- sample(0:1,n,replace=TRUE)
+xout &lt;- x
+xout[y==0,][1:m,] &lt;- xout[1:m,] + 10;          # class 0
+yout &lt;- y                                      # wrong classification for vertical outliers
+
+
+
+fit2 &lt;- enetLTS(xout,yout,family="binomial")
+fitted(fit2)
+fitted(fit2,vers="raw")
+fitted(fit2,vers="both",type="class")
+fitted(fit2,vers="both")
+fitted(fit2,vers="reweighted",type="class")
+
+
+
+
+## for multinomial
+
+n &lt;- 120; p &lt;- 15
+NC &lt;- 3
+X &lt;- matrix(rnorm(n * p), n, p)
+betas &lt;- matrix(1:NC, ncol=NC, nrow=p, byrow=TRUE)
+betas[(p-5):p,]=0; betas &lt;- rbind(rep(0,NC),betas)
+lv &lt;- cbind(1,X) %*% betas
+probs &lt;- exp(lv)/apply(exp(lv),1,sum)
+y &lt;- apply(probs,1,function(prob){sample(1:NC, 1, TRUE, prob)})
+xout &lt;- X
+eps &lt;-0.05                          # %10 contamination to only class 0
+m &lt;- ceiling(eps*n)
+xout[1:m,] &lt;- xout[1:m,] + 10       # bad leverage points
+yout &lt;- y
+
+
+fit3 &lt;- enetLTS(xout,yout,family="multinomial")
+fitted(fit3)
+fitted(fit3,vers="raw")
+fitted(fit3,vers="both",type="class")
+fitted(fit3,vers="both")
+fitted(fit3,vers="reweighted",type="class")
+
+</code></pre>
+
+
+</div>

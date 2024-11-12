@@ -1,0 +1,343 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>expectreg.ls</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Expectile regression of additive models
+</h2>
+
+<h3>Description</h3>
+
+<p>Additive models are fitted with least asymmetrically weighted squares
+or quadratic programming to obtain expectiles
+for parametric, continuous, spatial and random effects.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">expectreg.ls(formula, data = NULL, estimate = c("laws", "restricted", "bundle", "sheets"),
+smooth = c("schall", "ocv", "gcv", "cvgrid", "aic", "bic", "lcurve", "fixed"), 
+lambda = 1, expectiles = NA, ci = FALSE, LAWSmaxCores = 1, ...)
+
+expectreg.qp(formula, data  = NULL, id = NA, smooth = c("schall", "acv", "fixed"), 
+             lambda = 1, expectiles = NA) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>An R formula object consisting of the response variable, '~'
+and the sum of all effects that should be taken into consideration.
+Each effect has to be given through the function <code>rb</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Optional data frame containing the variables used in the model, if the data is not explicitely given in the
+formula.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+
+<p>Potential additional variable identifying individuals in a longitudinal data set. Allows for a random intercept estimation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+
+<p>Character string defining the estimation method that is used to fit the expectiles. Further detail on all available methods is given below.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth</code></td>
+<td>
+
+<p>There are different smoothing algorithms that should prevent overfitting.
+The 'schall' algorithm iterates the smoothing penalty <code>lambda</code> until it converges (REML).
+The generalised cross-validation 'gcv',similar to the ordinary cross- validation 'ocv' minimizes a score-function using <code>nlminb</code> or with a grid search by 'cvgrid' or the function uses a fixed penalty. The numerical minimisatioin is also possible with AIC or BIC as score. The L-curve is a new experimental grid search by Frasso and Eilers.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+<p>The fixed penalty can be adjusted. Also serves as starting value for
+the smoothing algorithms.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expectiles</code></td>
+<td>
+
+<p>In default setting, the expectiles (0.01,0.02,0.05,0.1,0.2,0.5,0.8,0.9,0.95,0.98,0.99) are calculated.
+You may specify your own set of expectiles in a vector. The option may be set to 'density' for the calculation
+of a dense set of expectiles that enhances the use of <code>cdf.qp</code> and <code>cdf.bundle</code> afterwards.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+
+<p>Whether a covariance matrix for confidence intervals and a <code>summary</code> is calculated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LAWSmaxCores</code></td>
+<td>
+
+<p>How many cores should maximal be used by parallelization
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Optional value for re-weight the model with estimate weights and combine selected models to one model. 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In least asymmetrically weighted squares (LAWS) each expectile is fitted independently from the others.
+LAWS minimizes:
+</p>
+<p><code class="reqn"> S = \sum_{i=1}^{n}{ w_i(p)(y_i - \mu_i(p))^2} </code>
+</p>
+<p>with
+</p>
+<p><code class="reqn"> w_i(p) = p 1_{(y_i &gt; \mu_i(p))} + (1-p) 1_{(y_i &lt; \mu_i(p))} </code>.
+</p>
+<p>The restricted version fits the 0.5 expectile at first and then the residuals.
+Afterwards the other expectiles are fitted as deviation by a factor of the residuals from the mean expectile.
+This algorithm is based on He(1997). The advantage is that expectile crossing cannot occur,
+the disadvantage is a suboptimal fit in certain heteroscedastic settings.
+Also, since the number of fits is significantly decreased, the restricted version is much faster.
+</p>
+<p>The expectile bundle has a resemblence to the restricted regression. At first, a trend curve is fitted
+and then an iteration is performed between fitting the residuals and calculating the deviation factors
+for all the expectiles until the results are stable. Therefore this function shares the (dis)advantages
+of the restricted.
+</p>
+<p>The expectile sheets construct a p-spline basis for the expectiles and perform a continuous fit over all expectiles
+by fitting the tensor product of the expectile spline basis and the basis of the covariates.
+In consequence there will be most likely no crossing of expectiles but also a good fit in heteroscedastic scenarios.
+</p>
+<p>The function <code>expectreg.qp</code> also fits a sheet over all expectiles, but it uses quadratic programming with constraints,
+so crossing of expectiles will definitely not happen. So far the function is implemented for one nonlinear or spatial covariate
+and further parametric covariates. It works with all smoothing methods.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class 'expectreg', which is basically a list consisting of:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>lambda </code></td>
+<td>
+<p>The final smoothing parameters for all expectiles and for all effects in a list.
+For the restricted and the bundle regression there are only the mean and the residual lambda.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercepts </code></td>
+<td>
+<p>The intercept for each expectile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p> A matrix of all the coefficients, for each base element
+a row and for each expectile a column. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+<p> The fitted values for each observation and all expectiles,
+separately in a list for each effect in the model,
+sorted in order of ascending covariate values. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p> Vector of the response variable. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p> List with the values of the covariates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p> The formula object that was given to the function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asymmetries</code></td>
+<td>
+<p> Vector of fitted expectile asymmetries as given by argument <code>expectiles</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effects</code></td>
+<td>
+<p> List of characters giving the types of covariates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>helper</code></td>
+<td>
+<p> List of additional parameters like neighbourhood structure for spatial effects or 'phi' for kriging. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p> Complete design matrix. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bases</code></td>
+<td>
+<p> Bases components of each covariate. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted</code></td>
+<td>
+<p> Fitted values <code class="reqn"> \hat{y} </code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covmat</code></td>
+<td>
+<p> Covariance matrix, estimated when <code>ci = TRUE</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diag.hatma</code></td>
+<td>
+<p> Diagonal of the hat matrix. Used for model selection criteria. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p> Original data </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth_orig</code></td>
+<td>
+<p> Unchanged original type of smoothing. </p>
+</td>
+</tr>
+</table>
+<p><code>plot</code>, <code>predict</code>, <code>resid</code>,
+<code>fitted</code>, <code>effects</code>
+and further convenient methods are available for class 'expectreg'.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Fabian Otto-Sobotka <br>
+Carl von Ossietzky University Oldenburg <br><a href="https://uol.de">https://uol.de</a> <br></p>
+<p>Thomas Kneib <br>
+Georg August University Goettingen <br><a href="https://www.uni-goettingen.de">https://www.uni-goettingen.de</a> <br></p>
+<p>Sabine Schnabel <br>
+Wageningen University and Research Centre <br><a href="https://www.wur.nl">https://www.wur.nl</a>
+</p>
+<p>Paul Eilers <br>
+Erasmus Medical Center Rotterdam <br><a href="https://www.erasmusmc.nl">https://www.erasmusmc.nl</a>
+</p>
+<p>Linda Schulze Waltrup, Goeran Kauermann <br>
+Ludwig Maximilians University Muenchen <br><a href="https://www.lmu.de">https://www.lmu.de</a> <br></p>
+
+
+<h3>References</h3>
+
+<p>Schnabel S and Eilers P (2009)
+<em> Optimal expectile smoothing </em>
+Computational Statistics and Data Analysis, 53:4168-4177
+</p>
+<p>Sobotka F and Kneib T (2010)
+<em> Geoadditive Expectile Regression </em>
+Computational Statistics and Data Analysis,
+doi: 10.1016/j.csda.2010.11.015.
+</p>
+<p>Schnabel S and Eilers P (2011)
+<em> Expectile sheets for joint estimation of expectile curves </em>
+(under review at Statistical Modelling)
+</p>
+<p>Frasso G and Eilers P (2013)
+<em> Smoothing parameter selection using the L-curve</em>
+(under review)
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>rb</code>, <code>expectreg.boost</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(expectreg)
+ex = expectreg.ls(dist ~ rb(speed),data=cars,smooth="b",lambda=5,expectiles=c(0.01,0.2,0.8,0.99))
+ex = expectreg.ls(dist ~ rb(speed),data=cars,smooth="f",lambda=5,estimate="restricted")
+plot(ex)
+
+
+data("lidar", package = "SemiPar")
+
+explaws &lt;- expectreg.ls(logratio~rb(range,"pspline"),data=lidar,smooth="gcv",
+                        expectiles=c(0.05,0.5,0.95))
+print(explaws)
+plot(explaws)
+
+###expectile regression using a fixed penalty
+plot(expectreg.ls(logratio~rb(range,"pspline"),data=lidar,smooth="fixed",
+     lambda=1,expectiles=c(0.05,0.25,0.75,0.95)))
+plot(expectreg.ls(logratio~rb(range,"pspline"),data=lidar,smooth="fixed",
+     lambda=0.0000001,expectiles=c(0.05,0.25,0.75,0.95)))
+    #As can be seen in the plot, a too small penalty causes overfitting of the data.
+plot(expectreg.ls(logratio~rb(range,"pspline"),data=lidar,smooth="fixed",
+     lambda=50,expectiles=c(0.05,0.25,0.75,0.95)))
+    #If the penalty parameter is chosen too large, 
+    #the expectile curves are smooth but don't represent the data anymore.
+</code></pre>
+
+
+</div>

@@ -1,0 +1,315 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EGA.fit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+<code>EGA</code> Optimal Model Fit using the Total Entropy Fit Index  (<code>tefi</code>)</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the best fitting model using <code>EGA</code>.
+The number of steps in the <code>cluster_walktrap</code> detection
+algorithm is varied and unique community solutions are compared using
+<code>tefi</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EGA.fit(
+  data,
+  n = NULL,
+  corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
+  plot.EGA = TRUE,
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Matrix or data frame.
+Should consist only of variables to be used in the analysis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Numeric (length = 1).
+Sample size if <code>data</code> is a correlation matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Character (length = 1).
+Method to compute correlations.
+Defaults to <code>"auto"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"auto"</code> — Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use <code>ordinal.categories</code>
+(see <code>polychoric.matrix</code> for more details)
+</p>
+</li>
+<li> <p><code>"cor_auto"</code> — Uses <code>cor_auto</code> to compute correlations.
+Arguments can be passed along to the function
+</p>
+</li>
+<li> <p><code>"cosine"</code> — Uses <code>cosine</code> to compute cosine similarity
+</p>
+</li>
+<li> <p><code>"pearson"</code> — Pearson's correlation is computed for all
+variables regardless of categories
+</p>
+</li>
+<li> <p><code>"spearman"</code> — Spearman's rank-order correlation is computed
+for all variables regardless of categories
+</p>
+</li>
+</ul>
+<p>For other similarity measures, compute them first and input them
+into <code>data</code> with the sample size (<code>n</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.data</code></td>
+<td>
+<p>Character (length = 1).
+How should missing data be handled?
+Defaults to <code>"pairwise"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"pairwise"</code> — Computes correlation for all available cases between
+two variables
+</p>
+</li>
+<li> <p><code>"listwise"</code> — Computes correlation for all complete cases in the dataset
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Character (length = 1).
+Defaults to <code>"glasso"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"BGGM"</code> — Computes the Bayesian Gaussian Graphical Model.
+Set argument <code>ordinal.categories</code> to determine
+levels allowed for a variable to be considered ordinal.
+See <code>?BGGM::estimate</code> for more details
+</p>
+</li>
+<li> <p><code>"glasso"</code> — Computes the GLASSO with EBIC model selection.
+See <code>EBICglasso.qgraph</code> for more details
+</p>
+</li>
+<li> <p><code>"TMFG"</code> — Computes the TMFG method.
+See <code>TMFG</code> for more details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algorithm</code></td>
+<td>
+<p>Character or <code>igraph</code> <code>cluster_*</code> function.
+Three options are listed below but all are available
+(see <code>community.detection</code> for other options):
+</p>
+
+<ul>
+<li> <p><code>"leiden"</code> — See <code>cluster_leiden</code> for more details.
+<em>Note</em>: The Leiden algorithm will default to the
+Constant Potts Model objective function
+(<code>objective_function = "CPM"</code>). Set
+<code>objective_function = "modularity"</code> to use
+modularity instead (see examples). By default, searches along
+resolutions from 0 to <code>max(abs(network))</code> or the maximum
+absolute edge weight in the network in 0.01 increments
+(<code>resolution_parameter = seq.int(0, max(abs(network)), 0.01)</code>).
+For modularity, searches along resolutions from 0 to 2 in 0.05 increments
+(<code>resolution_parameter = seq.int(0, 2, 0.05)</code>) by default.
+Use the argument <code>resolution_parameter</code> to change the search parameters
+(see examples)
+</p>
+</li>
+<li> <p><code>"louvain"</code> — See <code>community.consensus</code> for more details.
+By default, searches along resolutions from 0 to 2 in 0.05 increments
+(<code>resolution_parameter = seq.int(0, 2, 0.05)</code>). Use the argument <code>resolution_parameter</code>
+to change the search parameters (see examples)
+</p>
+</li>
+<li> <p><code>"walktrap"</code> — This algorithm is the default. See <code>cluster_walktrap</code> for more details.
+By default, searches along 3 to 8 steps (<code>steps = 3:8</code>). Use the argument <code>steps</code>
+to change the search parameters (see examples)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.EGA</code></td>
+<td>
+<p>Boolean.
+If <code>TRUE</code>, returns a plot of the network and its estimated dimensions.
+Defaults to <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean.
+Whether messages and (insignificant) warnings should be output.
+Defaults to <code>FALSE</code> (silent calls).
+Set to <code>TRUE</code> to see all messages and warnings for every function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed on to
+<code>auto.correlate</code>, <code>network.estimation</code>,
+<code>community.detection</code>, <code>community.consensus</code>,
+and <code>EGA.estimate</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>EGA</code></td>
+<td>
+<p><code>EGA</code> results of the best fitting solution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EntropyFit</code></td>
+<td>
+<p><code>tefi</code> fit values for each solution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Lowest.EntropyFit</code></td>
+<td>
+<p>The best fitting solution based on <code>tefi</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameter.space</code></td>
+<td>
+<p>Parameter values used in search space</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Hudson Golino &lt;hfg9s at virginia.edu&gt; and Alexander P. Christensen &lt;alexpaulchristensen@gmail.com&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p><strong>Entropy fit measures</strong> <br>
+Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., &amp; Boker, S. M. (in press).
+Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
+<em>Multivariate Behavioral Research</em>.
+</p>
+<p><strong>Simulation for EGA.fit</strong> <br>
+Jamison, L., Christensen, A. P., &amp; Golino, H. (under review).
+Optimizing Walktrap's community detection in networks using the Total Entropy Fit Index.
+<em>PsyArXiv</em>.
+</p>
+<p><strong>Leiden algorithm</strong> <br>
+Traag, V. A., Waltman, L., &amp; Van Eck, N. J. (2019).
+From Louvain to Leiden: guaranteeing well-connected communities.
+<em>Scientific Reports</em>, <em>9</em>(1), 1-12.
+</p>
+<p><strong>Louvain algorithm</strong> <br>
+Blondel, V. D., Guillaume, J. L., Lambiotte, R., &amp; Lefebvre, E. (2008).
+Fast unfolding of communities in large networks.
+<em>Journal of Statistical Mechanics: Theory and Experiment</em>, <em>2008</em>(10), P10008.
+</p>
+<p><strong>Walktrap algorithm</strong> <br>
+Pons, P., &amp; Latapy, M. (2006).
+Computing communities in large networks using random walks.
+<em>Journal of Graph Algorithms and Applications</em>, <em>10</em>, 191-218.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.EGAnet</code> for plot usage in <code>EGAnet</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load data
+wmt &lt;- wmt2[,7:24]
+
+# Estimate optimal EGA with Walktrap
+fit.walktrap &lt;- EGA.fit(
+  data = wmt, algorithm = "walktrap",
+  steps = 3:8, # default
+  plot.EGA = FALSE # no plot for CRAN checks
+)
+
+# Estimate optimal EGA with Leiden and CPM
+fit.leiden &lt;- EGA.fit(
+  data = wmt, algorithm = "leiden",
+  objective_function = "CPM", # default
+  # resolution_parameter = seq.int(0, max(abs(network)), 0.01),
+  # For CPM, the default max resolution parameter
+  # is set to the largest absolute edge in the network
+  plot.EGA = FALSE # no plot for CRAN checks
+)
+
+# Estimate optimal EGA with Leiden and modularity
+fit.leiden &lt;- EGA.fit(
+  data = wmt, algorithm = "leiden",
+  objective_function = "modularity",
+  resolution_parameter = seq.int(0, 2, 0.05),
+  # default for modularity
+  plot.EGA = FALSE # no plot for CRAN checks
+)
+
+## Not run: 
+# Estimate optimal EGA with Louvain
+fit.louvain &lt;- EGA.fit(
+  data = wmt, algorithm = "louvain",
+  resolution_parameter = seq.int(0, 2, 0.05), # default
+  plot.EGA = FALSE # no plot for CRAN checks
+)
+## End(Not run)
+
+</code></pre>
+
+
+</div>

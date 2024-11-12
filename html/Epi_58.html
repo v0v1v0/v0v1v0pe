@@ -1,0 +1,145 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>crr.Lexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit a competing risks regression model (Fine-Gray model) using a
+Lexis object)
+</h2>
+
+<h3>Description</h3>
+
+<p>Fits a competing risks regression model using a <code>Lexis</code>
+object assuming that every person enters at time 0 and exits at time
+<code>lex.dur</code>. Thus is only meaningful for Lexis objects with one record
+per person, (so far).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">crr.Lexis( obj, mod, quiet=FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>A Lexis object; variables in <code>mod</code> are taken from this.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod</code></td>
+<td>
+<p>Formula, with the l.h.s. a character constant equal to a
+level of <code>obj$lex.Xst</code>, and the r.h.s. a model formula
+interpreted in <code>obj</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>Logical indicating whether a brief summary should be printed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed on to <code>crr</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is a simple wrapper for <code>crr</code>, allowing a
+formula-specification of the model (which allows specifications of
+covariates on the fly), and utilizing the structure of Lexis
+objects to simplify specification of the outcome. Prints a summary of
+the levels used as event, competing events and censoring.
+</p>
+<p>By the structure of the <code>Lexis</code> object it is not necessary
+to indicate what the censoring code or competing events are, that is
+automatically derived from the <code>Lexis</code> object.
+</p>
+<p>Currently only one state is allowed as l.h.s. (response) in <code>mod</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>crr</code> object (which is a list), with two extra
+elements in the list, <code>model.Lexis</code> - the model formula supplied,
+and <code>transitions</code> - a table of transitions and censorings showing
+which transition was analysed and which were taken as competing events.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a> </p>
+
+
+<h3>See Also</h3>
+
+<p><code>crr</code>, <code>Lexis</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Thorotrats patients, different histological types of liver cancer
+# Load thorotrast data, and restrict to exposed
+data(thoro)
+tht &lt;- thoro[thoro$contrast==1,]
+# Define exitdate as the date of livercancer
+tht$dox &lt;- pmin( tht$liverdat, tht$exitdat, na.rm=TRUE )
+tht &lt;- subset( tht, dox &gt; injecdat )
+# Convert to calendar years in dates
+tht &lt;- cal.yr( tht )
+
+# Set up a Lexis object with three subtypes of liver cancer and death
+tht.L &lt;- Lexis( entry = list( per = injecdat,
+                              tfi = 0 ),
+                 exit = list( per = dox ),
+          exit.status = factor( 1*hepcc+2*chola+3*hmang+
+                                4*(hepcc+chola+hmang==0 &amp; exitstat==1),
+                                labels=c("No cancer","hepcc","chola","hmang","Dead") ),
+                 data = tht )
+summary( tht.L )
+
+# Show the transitions
+boxes( tht.L, boxpos=list(x=c(20,rep(80,3),30),
+                          y=c(60,90,60,30,10) ),
+              show.BE="nz", scale.R=1000 )
+
+# Fit a model for the Hepatocellular Carcinoma as outcome
+# - note that you can create a variable on the fly:
+library( cmprsk )
+hepcc &lt;- crr.Lexis( tht.L, "hepcc" ~ volume + I(injecdat-1940) )
+hepcc$model.Lexis
+hepcc$transitions
+
+# Models for the three other outcomes:
+chola &lt;- crr.Lexis( tht.L, "chola" ~ volume + I(injecdat-1940) )
+hmang &lt;- crr.Lexis( tht.L, "hmang" ~ volume + I(injecdat-1940) )
+dead  &lt;- crr.Lexis( tht.L, "Dead"  ~ volume + I(injecdat-1940) )
+
+# Compare the effects
+# NOTE: This is not necessarily a joint model for all transitions.
+zz &lt;- rbind( ci.exp(hepcc),
+             ci.exp(chola),
+             ci.exp(hmang),
+             ci.exp(dead) )
+zz &lt;- cbind( zz[c(1,3,5,7)  ,],
+             zz[c(1,3,5,7)+1,] )
+rownames( zz ) &lt;- c("hepcc","chola","hmang","dead")
+colnames( zz )[c(1,4)] &lt;- rownames( ci.exp(chola) )
+round( zz, 3 )
+</code></pre>
+
+
+</div>

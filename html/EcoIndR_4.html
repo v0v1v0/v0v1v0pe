@@ -1,0 +1,601 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SINENVAP</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>SPATIAL INTERPOLATION OF VARIABLES WITHIN POLYGONS</h2>
+
+<h3>Description</h3>
+
+<p>An algorithm for finding an optimal spatial interpolation model for variables within polygons using kriging.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SINENVAP(data=NULL, var=NULL, dataLat=NULL, dataLon=NULL, polyLat=NULL,
+polyLon=NULL, zonedata=NULL, zonepoly=NULL, convex=FALSE, alpha=0.07, ASC=NULL,
+shape=NULL, shapenames=NULL, Area=NULL, validation=30, type.krige="OK",
+trend.d="cte", trend.l="cte", model="AUTO", minimisation="optim", weights="npairs",
+maxdist=NULL, nugget=NULL, sill=NULL, range=NULL, kappa=NULL, beta=NULL,
+jitter="jitter", maxjitter=0.00001, direction=c(0,45,90,135), inside=TRUE,
+error=FALSE, ResetPAR=TRUE, PAR=NULL, BOXPLOT=NULL, OUTLINE=FALSE, XLABP=NULL,
+YLABP=NULL, XLAB=NULL, YLAB=NULL, XLABB="Model", YLABB="Accuracy measures",
+MAIN="", XLIM=NULL, YLIM=NULL, ZLIM=NULL, COLOR="rev(heat.colors(100))",
+COLORC="black", COLORB=NULL, COLORM="transparent", NLEVELS=10, LABCEX=0.6,
+contour=TRUE, breaks=10, ndigits=0, xl=0, xr=0, pro=TRUE, cell=NULL,
+file1="Predictions data.csv", file2="Predictions polygon.csv",
+file3="Accuracy measures.csv", file4="Semivariogram.csv",
+file5="Standard errors.csv", file6="Model selected.txt", na="NA",
+dec=",", row.names=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data file (CSV, RData or Excel) with the latitudes and longitudes and the values of the environmental variables. This file may also include the latitudes and longitudes of the polygons. Each polygon must be separated by a blank row.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var</code></td>
+<td>
+<p>Variable with the values of the environmental variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataLat</code></td>
+<td>
+<p>Variable with the latitudes of the environmental variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataLon</code></td>
+<td>
+<p>Variable with the longitudes of the environmental variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>polyLat</code></td>
+<td>
+<p>If the geographic coordinates of the polygons are in the same file than the data of the variable, here it is indicated the variable with the latitudes of the polygons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>polyLon</code></td>
+<td>
+<p>If the geographic coordinates of the polygons are in the same file than the data of the variable, here it is indicated the variable with the latitudes of the polygons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zonedata</code></td>
+<td>
+<p>If the latitude and longitude of the data are in UTM, it is necessary to specify the variable with the zone of each pair of coordinates in this argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zonepoly</code></td>
+<td>
+<p>If the latitude and longitude of the polygons are in UTM, it is necessary to specify the variable with the zone of each pair of coordinates in this argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convex</code></td>
+<td>
+<p>If it is TRUE, it is considered as polygon the alpha shape of the distribution of the variable. This option is useful if the variable is for instance the abundance of a species, so the spatial interpolation is performed considering the limits of the distribution of the species.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Alpha value of the alpha shape.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ASC</code></td>
+<td>
+<p>ASC file with the values of the variable. It is not necessary to specify the latitude and longitude of the variable, but it is mandatory to specify the polygon (in the argument <em>data</em>, <em>shape</em> or <em>Area</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape</code></td>
+<td>
+<p>It is possible to use a shape file for importing the coordinates of the polygons. In this case, it is not necessary to specify the latitude and longitude of the polygons in the arguments <em>polyLat</em> and <em>polyLon</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shapenames</code></td>
+<td>
+<p>Variable in the shapefile with the names of the polygons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Area</code></td>
+<td>
+<p>Only if using RWizard. It is also possible to use the polygons available in RWizard of administrative areas and river basins. A character with the name of the administrative area or a vector with several administrative areas (countries, regions, etc.) or river basins. In this case, it is not necessary to specify the latitude and longitude of the polygons in the arguments <em>polyLat</em> and <em>polyLon</em>. If it is "World" the entire world is plotted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>validation</code></td>
+<td>
+<p>Percentage of cases used from original data for validation. These data are not used for the estimation of the model and they are just used for evaluating the accuracy of the model (see details). If it is zero, all data are used for estimating the accuracy measures. If there are many data, a way for shortening the running time is to increase the number of data for validation, so reducing the number of data used for estimating the models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type.krige</code></td>
+<td>
+<p>Type of kriging to be performed. Options are simple "SK" or ordinary kriging "OK". Kriging with external trend and universal kriging can be defined setting type.krige="OK" and specifying the trend model using the arguments <em>trend.d</em> and <em>trend.l</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend.d</code></td>
+<td>
+<p>It specifies the trend (covariate) values at the data locations (see function krige.conv of the package geoR).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend.l</code></td>
+<td>
+<p>It specifies the trend (covariate) values at prediction locations. It must be of the same type as for trend.d. Only used if prediction locations are provided in the
+argument locations (see function krige.conv of the package geoR).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>If it is "AUTO", the algorithm tries to find the model with the highest accuracy measures (see details). It is also possible to select one or several of the following models: "exponential", "matern", "gaussian", "spherical", "circular", "cubic", "wave", "power", "linear", "cauchy", "gneiting", "powered.exponential", and/or "pure.nugget".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minimisation</code></td>
+<td>
+<p>Minimization function used to estimate the parameters of the model fitted to the semivariogram. The options are "optim", "nlm" or "nls" (see function variofit of the package geoR).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Type weights used in the loss function when fitting the model to the semivariogram. The options are "npairs", "cressie" or "equal" (see the function variofit of the package geoR).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxdist</code></td>
+<td>
+<p>Maximum distance in the semivariogram. If it is NULL, it is half of the maximum distance of the semivariogram.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nugget,sill,range</code></td>
+<td>
+<p>The value of the nugget variance parameter <code class="reqn">\tau^2</code>, fixed value of the sill parameter (<code class="reqn">\sigma^2</code>) and fixed value of the range parameter (<code class="reqn">\phi</code>). If they are NULL (default) the algorithm tries to find the optimal values for each of the models specified in the argument <em>model</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kappa</code></td>
+<td>
+<p>One numerical value required for the following models: "matern", "cauchy", "gneiting.matern" and "powered.exponential", and two values for the model "gencauchy". If they are NULL (default) the algorithm tries to find the optimal values for each of the models specified in the argument <em>model</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>Numerical value of the mean (vector) parameter. Only used if type.krige="SK". If it is NULL, it is automatically estimated by the algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jitter</code></td>
+<td>
+<p>It may be one of these three options: "NO" means no action, "jitter" means that jitters duplicated coordinates of the environmental variable, and "mean" means that the mean of the environmental variable is estimated for those duplicated coordinates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxjitter</code></td>
+<td>
+<p>Maximum jittering distance in decimal degrees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direction</code></td>
+<td>
+<p>A vector with values of 4 angles, indicating the directions for which the variograms will be computed. Default corresponds to c(0,45,90,135 (degrees).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inside</code></td>
+<td>
+<p>If it is TRUE only those geographic coordinates of the environmental variables inside the polygons are considered for the estimation of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error</code></td>
+<td>
+<p>If it is TRUE, a contour map with the standard errors is depicted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ResetPAR</code></td>
+<td>
+<p>If it is FALSE, the default condition of the function PAR is not placed and maintained those defined by the user in previous graphics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PAR</code></td>
+<td>
+<p>It accesses the function PAR that allows to modify many different aspects of the graph.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BOXPLOT</code></td>
+<td>
+<p>It allows to specify the characteristics of the function boxplot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OUTLINE</code></td>
+<td>
+<p>If it is TRUE, the outliers are shown in the boxplot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>XLABP,YLABP</code></td>
+<td>
+<p>Legends of <em>X</em> and <em>Y</em> axes of the plot with the relationship between  observed and predicted values of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>XLAB,YLAB</code></td>
+<td>
+<p>Legends of <em>X</em> and <em>Y</em> axes of the contour plot with the spatial interpolation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>XLABB,YLABB</code></td>
+<td>
+<p>Legends of <em>X</em> and <em>Y</em> axes of the boxplot .</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MAIN</code></td>
+<td>
+<p>Main title of the contour plot with the spatial interpolation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>XLIM,YLIM,ZLIM</code></td>
+<td>
+<p>Limits of the contour plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>COLOR</code></td>
+<td>
+<p>Palette of colours or a vector with the colours of the contour plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>COLORC</code></td>
+<td>
+<p>Colour of the lines in the contour plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>COLORB</code></td>
+<td>
+<p>Vector with the colours of the models or just one colour for all models of the boxplot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>COLORM</code></td>
+<td>
+<p>Colour of the administrative areas and river basins, if any area has been specified in the argument <em>Area</em> and <em>convexhull=TRUE</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NLEVELS</code></td>
+<td>
+<p>Numeric vector of levels at which to draw contour lines.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LABCEX</code></td>
+<td>
+<p>Size of the text in the contour lines.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contour</code></td>
+<td>
+<p>If it is TRUE, the contour lines are depicted in the contour plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>Number of breakpoints of the colour legend in the contour plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ndigits</code></td>
+<td>
+<p>Number of decimals in the legend of the colour scale in the contour plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xl,xr</code></td>
+<td>
+<p>The left and right limits of the colour legend considering the <em>X</em> axis of the contour plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pro</code></td>
+<td>
+<p>If it is TRUE, an automatic calculation is made in order to correct the aspect ratio y/x along latitude.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cell</code></td>
+<td>
+<p>Cell size in decimal degrees of the grid inside the polygons with the predictions of the model. If it is NULL, it is automatically estimated according to the limits of the polygons. To select an appropriate cell size according to the polygon size is important for shortening the running time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file1</code></td>
+<td>
+<p>CSV FILES. Filename with the predictions of the models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file2</code></td>
+<td>
+<p>CSV FILES. Filename with the predictions inside the polygons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file3</code></td>
+<td>
+<p>CSV FILES. Filename with accuracy measures of the models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file4</code></td>
+<td>
+<p>CSV FILES. Filename with values of the semivariogram.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file5</code></td>
+<td>
+<p>CSV FILES. Filename with standard errors of the predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file6</code></td>
+<td>
+<p>TXT FILE. Model selected with indication of the accuracy measures.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na</code></td>
+<td>
+<p>CSV FILE. Text that is used in the cells without data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dec</code></td>
+<td>
+<p>CSV FILE. It defines if the comma "," is used as decimal separator or the dot ".".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row.names</code></td>
+<td>
+<p>CSV FILE. Logical value that defines if identifiers are put in rows or a vector with a text for each of the rows.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>SINENVAP algorithm</strong>
+</p>
+<p>The aim of this algorithm is to select a model, from a set of different models, with the nugget variance parameter <code class="reqn">\tau^2</code>, fixed value of the sill parameter (<code class="reqn">\sigma^2</code>) and fixed value of the range parameter (<code class="reqn">\phi</code>), as close as possible to those values that generates an optimal spatial interpolation, and to validate the predictions obtained. The model and parameters selected by the algorithm may be utilized by users as references, or to make modifications for spatial interpolation prediction improvement.
+</p>
+<p>The algorithm uses the package geoR (Ribeiro and Diggle, 2001; 2018) to estimate simple, ordinary, and universal kriging. The corresponding algorithm is detailed below.
+</p>
+<p><strong>1. Data with variable and polygon coordinates.</strong>
+</p>
+<p>The algorithm must be supplied with variable values (argument <em>var</em>), latitude and longitude for each datum (arguments <em>dataLat</em> and <em>dataLon</em>), and polygon coordinates (arguments <em>polyLat</em> and <em>polyLon</em>), for the estimation of spatial interpolation.
+</p>
+<p>Variable and polygon latitudes and longitudes may be in either decimal or UTM form. If they are in UTM form, a column with the zone of each coordinate in the <em>zonedata</em> and <em>zonepoly</em> arguments must be added for variable and polygon coordinates, respectively. Polygon variables and coordinates are not required to be in the same units. Therefore, variables may be in decimal form, and polygons in UTM form, vice versa, or both may be in the same units.
+</p>
+<p>Variable and polygon information data may be in CSV, EXCEL, or RData files. ASC files (argument ASC) may also be used for the variable, but in this case, it is not necessary to provide latitude or longitude information for each datum in the <em>dataLat</em> and <em>dataLon</em> arguments. Polygon coordinates may be in the same file as variable data in CSV, EXCEL, or RData files.
+</p>
+<p>If RWizard is used, any of the administrative areas available in RWizard may be chosen as polygons in the <em>Area</em> argument: countries, departments, provinces, etc. River basins may also be used as polygons, in the database available in RWizard (Gonzalez-Vilas et al., 2015). 
+</p>
+<p>Shape files may be used to import polygon coordinates with the <em>shape</em> argument. If a shape file or the polygons available in RWizard are used, coordinate specification is unnecessary in <em>polyLat</em> and <em>polyLon</em> arguments.
+</p>
+<p>Finally, if the argument <em>convex=TRUE</em>, the alpha shape distribution is considered to be a polygon. This last option is useful when the variable is, for instance, the abundance of a species, such that spatial interpolation is performed considering the limits of species distribution. If <em>convex=TRUE</em>, the specification of information in <em>polyLat</em> and <em>polyLon</em> arguments is unnecessary.
+</p>
+<p><strong>2. Algorithm design.</strong>
+</p>
+<p>Algorithm steps are described as follows:
+</p>
+<p>1. If the argument <em>inside=TRUE</em> (default option), based on all variable data available, only those data inside the polygons are used to estimate spatial interpolation. If the argument <em>inside=FALSE</em>, all available variable data are used.
+</p>
+<p>2. Duplicated coordinates may be treated in two ways: with the application of a jitter function (default) or with estimation of the mean value of the variable for duplicated coordinates.
+</p>
+<p>3. Spatial interpolation estimates the values on a grid. Therefore, it is necessary to first create a grid with a fixed cell size, in which the spatial interpolation will be estimated. If the argument <em>cell=NULL</em> (default), the algorithm estimates the optimal grid cell size, in accordance with polygon size. The output TXT provides information about the cell size chosen. The user may specify different cell sizes. Appropriate cell size selection, in accordance with polygon size, shortens running time. 
+</p>
+<p>4. Only those points in polygons are selected from the grid created, for the spatial interpolation prediction.
+</p>
+<p>5. By the default <em>validation=30</em>, which means that 30% of variable data are not used in the spatial interpolation model. However, they are employed to test the model. If <em>validation=0</em>, all data are used in the model, and model validation is performed with all data. If validation is higher than zero, because validation data are randomly selected, spatial interpolation values may vary each time the script is implemented.
+</p>
+<p>6. In order to test the model, the grid coordinates nearest to data coordinates are selected. Cross validation is performed by comparing variable data reserved for validation (see step 5) to spatial interpolation predictions on the grid, so as to verify which coordinates are nearest to the data reserved for validation.
+</p>
+<p>7.Next, the semivariogram is depicted (Fig. 1). If the argument <em>maxdist=NULL</em> (default), it is considered to be half of the maximum semivariogram distance for performing the models.
+</p>
+<p>8. Any of the following models may be implemented: cauchy, circular, cubic, exponential, gaussian, gneiting, linear, matern, power, powered.exponential, pure.nugget, spherical, or wave. If <em>model="AUTO"</em>, all models are tested, with the exception of matern. The <em>variofit</em> function in the geoR package is used to find the nugget, range, and sill for each model. The data reserved for validation are compared to model predictions, and seven accuracy measures, described in the following section, are used to decide which model made the best prediction. The model that made the best prediction is chosen by the algorithm to depict variable spatial interpolation in the selected polygons.
+</p>
+<p><strong>3. Accuracy measures.</strong>
+</p>
+<p>The following accuracy measures are used in the algorithm, so as to compare and evaluate model predictions, where <em>n</em> is the number of observations, and <em>P</em> and <em>O</em> are the predicted and observed values for each <em>i</em> datum, respectively.
+</p>
+<p>The measures catalogued as "normalized" are adapted to reflect values of 1 when the model is most efficient (i.e., predictions are the same as observed values). Thus, in all accuracy measures used in the algorithm, the maximum value is 1. This indicates a model with maximum predictive power. Various measures were utilized to obtain improved evaluation framework (i.e. consideration of a group of skill scores that show different result characteristics) (see Li and Head, 2011).
+</p>
+<p><em>3.1. r-squared (<code class="reqn">r^2</code>)</em>. This is the square of the Pearson correlation coefficient (<em>r</em>) between the predictions of the interpolation model and the observed values. It ranges from 0 to 1.
+</p>
+<p style="text-align: center;"><code class="reqn">r=\frac{\displaystyle\sum_{i=1}^{n}[(O_i-\bar{O})(P_i-\bar{P})]}{\sqrt{\displaystyle\sum_{i=1}^{n}{(O_i-\bar{O})}^2\displaystyle\sum_{i=1}^{n}{(P_i-\bar{P})}^2}}</code>
+</p>
+
+<p><em>3.2. Normalized mean absolute error (NMAE)</em>. This is a measure of the average error between predictions and observed values. It ranges from <code class="reqn">-\infty</code> to 1.
+</p>
+<p style="text-align: center;"><code class="reqn">NMAE=1-\frac{\displaystyle\sum_{i=1}^{n}|P_i-O_i|}{\displaystyle\sum_{i=1}^{n}O_i}</code>
+</p>
+
+<p><em>3.3. Normalized root mean square error (NRMSE)</em>. This measure shows the distribution error variability. It ranges from <code class="reqn">-\infty</code> to 1.
+</p>
+<p style="text-align: center;"><code class="reqn">NRMSE=1-\sqrt{\frac{\displaystyle\sum_{i=1}^{n}(P_i-O_i)^2}{\displaystyle\sum_{i=1}^{n}O_i}}</code>
+</p>
+
+<p><em>3.4. Nash-Sutcliffe coefficient (E)</em>. Nash-Sutcliffe efficiencies may range from <code class="reqn">-\infty</code> to 1 (Nash &amp; Sutcliffe, 1970). An efficiency of 1 (E = 1) corresponds to a perfect match between model and observations. An efficiency of 0 indicates that the model predictions are as accurate as the mean of the observed data, whereas an efficiency less than zero (<code class="reqn">-\infty</code> &lt; E &lt; 0) occurs when the observed mean is a better predictor than the model.
+</p>
+<p style="text-align: center;"><code class="reqn">E=1-\frac{\displaystyle\sum_{i=1}^{n}(O_i-P_i)^2}{\displaystyle\sum_{i=1}^{n}(O_i-\bar{O})^2}</code>
+</p>
+
+<p><em>3.5. Index of agreement (d)</em>. It was developed by Willmott (1981) as a standardized measure of the degree of model prediction error and varies between 0 and 1.
+</p>
+<p style="text-align: center;"><code class="reqn">d=1-\frac{\displaystyle\sum_{i=1}^{n}(O_i-P_i)^2}{\displaystyle\sum_{i=1}^{n}(|P_i-\bar{O}|+|O_i-\bar{O}|)^2}</code>
+</p>
+
+<p><em>3.6. Normalized relative mean absolute error (NRMAE)</em>. This is a modification of a measure developed by Li and Head (2011), whose maximum value is 1. According to the authors, this measure removes the effect of unit/scale and is not sensitive to changes in unit/scale. It ranges from <code class="reqn">-\infty</code> to 1.
+</p>
+<p style="text-align: center;"><code class="reqn">NRMAE=1-\frac{\displaystyle\sum_{i=1}^{n}\frac{|P_i-O_i|}{O_i}*100}{\displaystyle\sum_{i=1}^{n}O_i}</code>
+</p>
+
+<p><em>3.7. Normalized relative root mean square error (NRRMSE)</em>. This is a modification of a measure developed by Li and Head (2011), whose maximum value is 1. It ranges from 0 to 1.
+</p>
+<p style="text-align: center;"><code class="reqn">NRRMSE=1-\left[\frac{\displaystyle\sum_{i=1}^{n}\left(\frac{[P_i-O_i]}{O_i}\right)^2}{\displaystyle\sum_{i=1}^{n}O_i}\right]^\frac{1}{2}*100</code>
+</p>
+
+<p><strong>FUNCTIONS</strong>
+</p>
+<p>Spatial interpolation, using simple, ordinary, and universal kriging, is performed with as.geodata, variofit, krige.conv and krige.control functions, as well as the jitter of points with the jitterDupCoords function, all of which are from the geoR package (Ribeiro and Diggle, 2001; 2018).
+</p>
+<p>The ASC files are loaded with the raster function from the raster package (Hijmans et al., 2018).
+</p>
+<p>Points inside polygons are estimated with the in.out function from the mgcv package (Wood, 2018).
+</p>
+<p>The sp package (Pebesma and Bivand, 2005; Pebesma et al., 2018) is used to process shape files.
+</p>
+<p>The BreuschPagan test is performed with the bptest function from the lmtest package (Zeileis and Hothorn, 2002; Hothorn et al., 2018).
+</p>
+<p>The color scale is depicted with the color.legend function from the plotrix package (Lemon, 2006; Lemon et al., 2018).
+</p>
+<p><strong>EXAMPLE</strong>
+The figure shows the contour map of the spatial interpolation of the example 1, the rainfall in the Iberian Peninsula.
+</p>
+
+<table><tr>
+<td style="text-align: center;">
+<img src="../help/figures/EcoIndRF3.jpg" width="50" alt="EcoIndRF3.jpg">
+</td>
+</tr></table>
+<h3>Value</h3>
+
+<p>It is obtained:
+</p>
+<p>1. A CSV file, called "Predictions data.CSV" by default, contains model data and predictions. If <em>validation=0</em>, the observed data are from the original dataset. Predicted values are those points inside the polygon, which are, spatially, the nearest neighbors to the observed data.
+</p>
+<p>2. A CSV file, "Predictions polygon.CSV" by default, contains predictions for inside polygons.
+</p>
+<p>3. A CSV file, called "Accuracy measures.CSV" by default, contains the values of the seven accuracy measures shown above, for all models.
+</p>
+<p>4. A CSV file, called "Semivariogram.CSV" by default, contains semivariogram values.
+</p>
+<p>5. A CSV file, called "Standard errors.CSV" by default, contains the standard prediction errors.
+</p>
+<p>6. A TXT file called "Model selected.TXT" by default, contains the full details of the model selected by the algorithm.
+</p>
+<p>7. A plot of the semivariogram, with the values used in the models, is depicted in green. Application of the maximum distance specified in the <em>maxdist</em> argument, and the points in red, yield a semivariogram without distance limitations.
+</p>
+<p>8. The directional variogram in four directions.
+</p>
+<p>9. A plot with the relationship between observed and predicted values. As mentioned above, the observed values may be either randomly selected values or those from the original dataset. If <em>validation=0</em>, the observed data are from the original dataset. Predicted values are those points inside the polygon, which are, spatially, the nearest neighbors to the observed data.
+</p>
+<p>10. If the argument <em>model</em> is "AUTO", or there is more than one model, a boxplot is depicted with the median value of the seven accuracy measures from each model.
+</p>
+<p>11. The contour plot with the spatial interpolation predictions of the selected model, i.e., the model with the highest accuracy measures mean.
+</p>
+<p>12. If the argument <em>error=TRUE</em>, the contour plot is depicted with the selected model's standard errors.
+</p>
+
+
+<h3>References</h3>
+
+<p>Hijmans, R.J., van Etten, J., Cheng, J., Sumner, M., Mattiuzzi, M., Greenberg, J.A., Lamigueiro, O.P., Bevan, A., Bivand, R., Busetto, L., Canty, M., Forrest, D., Ghosh, A., Golicher, D., Gray, J., Hiemstra, P., Karney, C., Mosher, S., Nowosad, J., Pebesma, E., Racine, E.B., Rowlingson, B., Shortridge, A., Venables, B., Wueest, R. (2018) Geographic Data Analysis and Modeling. R package version 2.8-4. Available at: <a href="https://CRAN.R-project.org/package=raster">https://CRAN.R-project.org/package=raster</a>.
+</p>
+<p>Gonzalez-Vilas, L., Guisande, C., Vari, R. P., Pelayo-Villamil, P., Manjarres-Hernandez, A., Garcia-Rosello, E., Gonzalez-Dacosta, J., Heine, J., Perez-Costas, E., Granado-Lorencio, C., Palau-Ibars, A., Lobo, J. M. (2016) Geospatial data of freshwater habitats for macroecological studies: an example with freshwater fishes. <em>Journal of Geographical Information Science</em>, 30: 126-141.
+</p>
+<p>Lemon, J. (2006) Plotrix: a package in the red light district of R. <em>R-News</em>, 6: 8-12.
+</p>
+<p>Lemon, J., Bolker, B., Oom, S., Klein, E., Rowlingson, B.,Wickham, H., Tyagi, A., Eterradossi, O., Grothendieck, G., Toews, M., Kane, J., Turner, R., Witthoft, C., Stander, J., Petzoldt, T., Duursma, R., Biancotto, E., Levy, O., Dutang, C., Solymos, P., Engelmann, R., Hecker, M., Steinbeck, F., Borchers, H., Singmann, H., Toal, T. &amp; Ogle, D. (2018). Various plotting functions. R package version 3.7-4. Available at: <a href="https://CRAN.R-project.org/package=plotrix">https://CRAN.R-project.org/package=plotrix</a>.
+</p>
+<p>Li, J. &amp; Heap, A.D. (2011) A review of comparative studies of spatial interpolation methods in environmental sciences: Performance and impact factors. <em>Ecological Informatics</em>, 6: 248-251.
+</p>
+<p>Nash, J.E. &amp; Sutcliffe, J.V. (1970) River flow forecasting through conceptual models part I - A discussion of principles. <em>Journal of Hydrology</em>, 10, 282-290.
+</p>
+<p>Pebesma, E., Bivand, R.S., Rowlingson, B., Gomez-Rubio, V., Hijmans, R., Sumner, M., MacQueen, D., Lemon, J. &amp; O'Brien, J. (2018) Classes and Methods for Spatial Data. R package version 1.3-1. Available at: <a href="https://CRAN.R-project.org/package=sp">https://CRAN.R-project.org/package=sp</a>.
+</p>
+<p>Pebesma, E.J. &amp; Bivand, R.S. (2005) Classes and methods for spatial data in R. <em>R News</em>, 5: 9-13.
+</p>
+<p>Ribeiro, P.A. &amp; Diggle, P.J. (2001) geoR: a package for geostatistical analysis. R-News 1, 14-18.
+</p>
+<p>Ribeiro, P.J. &amp; Diggle, P.J. (2018) Analysis of Geostatistical Data. R package version 1.7-5.2.1. Available at: <a href="https://CRAN.R-project.org/package=geoR">https://CRAN.R-project.org/package=geoR</a>.
+</p>
+<p>Willmott, C.J. (1981) On the validation of models. <em>Physical Geography</em>, 2, 184-194.
+</p>
+<p>Wood, S. (2018) Mixed GAM Computation Vehicle with Automatic Smoothness. R package version 1.8-26. Available at: <a href="https://CRAN.R-project.org/package=mgcv">https://CRAN.R-project.org/package=mgcv</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+#Example 1.
+#An example with the geographic coordinates of the polygons
+#in the same file than the environmental variable
+
+data(EnVarIP)
+
+SINENVAP(data=EnVarIP, var="Rainfall", dataLat="dataLat",
+dataLon="dataLon", polyLat="polyLat", polyLon="polyLon",
+model=c("cubic", "spherical"), MAIN="Rainfall", dec=".")
+
+#Example 2. Only to be used with RWizard
+#An example using the administrative areas available in RWizard.
+
+data(EnVarIP)
+@_Build_AdWorld_
+SINENVAP(data=EnVarIP, var="Temperature", dataLat="dataLat", dataLon="dataLon",
+Area = c("Galicia&gt;A CoruÃ±a", "Galicia&gt;Lugo", "Galicia&gt;Ourense",
+"Galicia&gt;Pontevedra"), model=c("spherical"), MAIN="Temperature", ndigits=1, dec=".")
+
+#Example 3. Only to be used with RWizard
+#An example with a virtual species using as polygon the alpha
+#shape of the species (argument convex=TRUE).
+
+data(VirtualSpecies)
+@_Build_AdWorld_
+SINENVAP(data=VirtualSpecies, var="Probability", dataLat="Lat",
+dataLon="Lon", model=c("circular", "exponential"), convex=TRUE,
+Area=c("France"), validation=90, COLORM="#DEDEDE64", ndigits=2, dec=".")
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

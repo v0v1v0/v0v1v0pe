@@ -1,0 +1,446 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>KRDetect.outliers.EV</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Identification of outliers using extreme value theory</h2>
+
+<h3>Description</h3>
+
+<p>Identification of outliers in environmental data using semiparametric method based on kernel smoothing and extreme value theory (Holesovsky et al., 2018). The outliers are identified as observations whose values are exceeded on average once a given period that is specified by the user.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">KRDetect.outliers.EV(x, perform.smoothing = TRUE,
+  bandwidth.type = "local", bandwidth.value = NULL, kernel.order = 2,
+  gpd.fit.method = "mle", threshold.min = NULL, threshold.max = NULL,
+  k.min = round(length(na.omit(x)) * 0.1),
+  k.max = round(length(na.omit(x)) * 0.1), extremal.index.min = NULL,
+  extremal.index.max = NULL, extremal.index.type = "block.maxima",
+  block.length.min = round(sqrt(length(na.omit(x)))),
+  block.length.max = round(sqrt(length(na.omit(x)))), D.min = NULL,
+  D.max = NULL, K.min = NULL, K.max = NULL, r.min = NULL,
+  r.max = NULL, return.period = 120)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>data values.
+Supported data types
+</p>
+
+<ul>
+<li>
+<p>a numeric vector
+</p>
+</li>
+<li>
+<p>a time series object <code>ts</code>
+</p>
+</li>
+<li>
+<p>a time series object <code>xts</code>
+</p>
+</li>
+<li>
+<p>a time series object <code>zoo</code>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>perform.smoothing</code></td>
+<td>
+<p>a logical value specifying if data smoothing is performed. If <code>TRUE</code> (default), data are smoothed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bandwidth.type</code></td>
+<td>
+<p>a character string specifying the type of bandwidth.
+</p>
+<p>Possible options are
+</p>
+
+<ul>
+<li>
+<p><code>"local"</code> (default) to use local bandwidth
+</p>
+</li>
+<li>
+<p><code>"global"</code> to use global bandwidth
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bandwidth.value</code></td>
+<td>
+<p>a local bandwidth array (for <code>bandwidth.type = "local"</code>) or global bandwidth value (for <code>bandwidth.type = "global"</code>) for kernel regression estimation. If <code>bandwidth.type = "NULL"</code> (default) a data-adaptive local plug-in (Herrmann, 1997) (for <code>bandwidth.type = "local"</code>) or data-adaptive global plug-in (Gasser et al., 1991) (for <code>bandwidth.type = "global"</code>) bandwidth is used instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel.order</code></td>
+<td>
+<p>a nonnegative integer giving the order of the optimal kernel (Gasser et al., 1985) used for smoothing.
+</p>
+<p>Possible options are
+</p>
+
+<ul>
+<li>
+<p><code>kernel.order = 2</code> (default)
+</p>
+</li>
+<li>
+<p><code>kernel.order = 4</code>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gpd.fit.method</code></td>
+<td>
+<p>a character string specifying the method used for the estimate of the scale and shape parameters of GP distribution.
+</p>
+<p>Possible options are
+</p>
+
+<ul>
+<li>
+<p><code>"mle"</code> (default) for maximum likelihood estimates (Coles, 2001)
+</p>
+</li>
+<li>
+<p><code>"moment"</code> for moment estimates (de Haan and Ferreira2006)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold.min</code></td>
+<td>
+<p>a threshold value for residuals with low values, that is used to find the maximum likelihood estimates of shape and scale parameters of GP distribution and selected types of extremal index estimates (specifically: Intervals estimator (Ferro and Segers, 2003), censored estimator, (Holesovsky and Fusek, 2020), K-gaps estimator (Suveges and Davison, 2010), runs estimator (Smith and Weissman, 1994)). If <code>threshold.min = NULL</code> (default), threshold is estimated as 90% quantile of smoothing residuals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold.max</code></td>
+<td>
+<p>a threshold value for residuals with high values, that is used to find the maximum likelihood estimates of shape and scale parameters of GP distribution and selected types of extremal index estimates (specifically: Intervals estimator (Ferro and Segers, 2003), censored estimator, (Holesovsky and Fusek, 2020), K-gaps estimator (Suveges and Davison, 2010), runs estimator (Smith and Weissman, 1994)). If <code>threshold.max = NULL</code> (default), threshold is estimated as 90% quantile of smoothing residuals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k.min</code></td>
+<td>
+<p>a positive integer for residuals with low values giving the number of largest order statistics used to find the moment estimates (de Haan and Ferreira, 2006) of shape and scale parameters of GP distribution. Default is <code>k.min = round(length(x) * 0.1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k.max</code></td>
+<td>
+<p>a positive integer for residuals with high values giving the number of largest order statistics used to find the moment estimates (de Haan and Ferreira, 2006) of shape and scale parameters of GP distribution. Default is <code>k.max = round(length(x) * 0.1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extremal.index.min</code></td>
+<td>
+<p>a numeric value giving the extremal index for identification of outliers with extremely low value. If <code>extremal.index.min = NULL</code> (default), the extremal index is estimated using the method specified by the parameter <code>extremal.index.type</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extremal.index.max</code></td>
+<td>
+<p>a numeric value giving the extremal index for identification of outliers with extremely high value. If <code>extremal.index.max = NULL</code> (default), the extremal index is estimated using the method specified by the parameter <code>extremal.index.type</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extremal.index.type</code></td>
+<td>
+<p>a character string specifying the type of extremal index estimate.
+</p>
+<p>Possible options are
+</p>
+
+<ul>
+<li>
+<p><code>"block.maxima"</code> (default) for block maxima estimator (Gomes, 1993).
+</p>
+</li>
+<li>
+<p><code>"intervals"</code> for intervals estimator (Ferro and Segers, 2003).
+</p>
+</li>
+<li>
+<p><code>"censored"</code> for censored estimator (Holesovsky and Fusek, 2020).
+</p>
+</li>
+<li>
+<p><code>"Kgaps"</code> for K-gaps estimator (Suveges and Davison, 2010).
+</p>
+</li>
+<li>
+<p><code>"sliding.blocks"</code> for sliding blocks estimator (Northrop, 2015).
+</p>
+</li>
+<li>
+<p><code>"runs"</code> for runs estimator (Smith and Weissman, 1994).
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block.length.min</code></td>
+<td>
+<p>a numeric value for residuals with low values giving the length of blocks for estimation of extremal index. Only required for <code>extremal.index.type = "block.maxima"</code> and <code>extremal.index.type = "sliding.blocks"</code>. Default is <code>block.length.min = round(sqrt(length(x)))</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block.length.max</code></td>
+<td>
+<p>a numeric value for residuals with high values giving the length of blocks for estimation of extremal index. Only required for <code>extremal.index.type = "block.maxima"</code> and <code>extremal.index.type = "sliding.blocks"</code>. Default is <code>block.length.max = round(sqrt(length(x)))</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D.min</code></td>
+<td>
+<p>a nonnegative integer for residuals with low values giving the value of D parameter used for censored extremal index estimate (Holesovsky and Fusek, 2020). Only required for <code>extremal.index.type = "censored"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D.max</code></td>
+<td>
+<p>a nonnegative integer for residuals with high values giving the value of D parameter used for censored extremal index estimate (Holesovsky and Fusek, 2020). Only required for <code>extremal.index.type = "censored"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K.min</code></td>
+<td>
+<p>a nonnegative integer for residuals with low values giving the value of K parameter used for K-gaps extremal index estimate (Suveges and Davison, 2010). Only required for <code>extremal.index.type = "Kgaps"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K.max</code></td>
+<td>
+<p>a nonnegative integer for residuals with high values giving the value of K parameter used for K-gaps extremal index estimate (Suveges and Davison, 2010). Only required for <code>extremal.index.type = "Kgaps"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.min</code></td>
+<td>
+<p>a positive integer for residuals with low values giving the value of runs parameter of runs extremal index estimate (Smith and Weissman, 1994). Only required for <code>extremal.index.type = "runs"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.max</code></td>
+<td>
+<p>a positive integer for residuals with high values giving the value of runs parameter of runs extremal index estimate (Smith and Weissman, 1994). Only required for <code>extremal.index.type = "runs"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.period</code></td>
+<td>
+<p>a positive numeric value giving return period. Default is <code>r = 120</code>, which means that observations whose values are exceeded on average once every 120 observations are detected as outliers.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function identifies outliers in time series using two-step procedure (Holesovsky et al., 2018). The procedure consists of kernel smoothing and extreme value estimation of high threshold exceedances for smoothing residuals.
+Outliers with both extremely high and extremely low values are identified.
+Crucial for the method is the choice of return period - parameter defining the criterion for outliers detection.
+The outliers with extremely high values are detected as observations whose values are exceeded on average once a given return.period of observations. Analogous, the outliers with extremely low values are identified.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>"KRDetect"</code> object which contains a list with elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>method.type</code></td>
+<td>
+<p>a character string giving the type of method used for outlier idetification</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a numeric vector of observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>a numeric vector of index design points assigned to individual observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smoothed</code></td>
+<td>
+<p>a numeric vector of estimates of the kernel regression function (smoothed data)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GPD.fit.method</code></td>
+<td>
+<p>the method used for the estimate of the scale and shape parameters of GP distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extremal.index.type</code></td>
+<td>
+<p>the type of extremal index estimate used for the identification of outliers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma.min</code></td>
+<td>
+<p>a numeric value giving scale parameter of Generalised Pareto distribution used for identification of outliers with extremely low value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma.max</code></td>
+<td>
+<p>a numeric value giving scale parameter of Generalised Pareto distribution used for identification of outliers with extremely high value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi.min</code></td>
+<td>
+<p>a numeric value giving shape parameter of Generalised Pareto distribution used for identification of outliers with extremely low value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi.max</code></td>
+<td>
+<p>a numeric value giving shape parameter of Generalised Pareto distribution used for identification of outliers with extremely high value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda_u.min</code></td>
+<td>
+<p>a numeric value giving relative frequency of the number of threshold value exceedances and identification of outliers with extremely low value. The value of the parameter is returned only for <code>gpd.fit.method = "mle"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda_u.max</code></td>
+<td>
+<p>a numeric value giving relative frequency of the number of threshold value exceedances and identification of outliers with extremely high value. The value of the parameter is returned only for <code>gpd.fit.method = "mle"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extremal.index.min</code></td>
+<td>
+<p>a numeric value giving extremal index used for identification of outliers with extremely low value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extremal.index.max</code></td>
+<td>
+<p>a numeric value giving extremal index used for identification of outliers with extremely high value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold.min</code></td>
+<td>
+<p>a numeric value giving threshold value used for identification of outliers with extremely low value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold.max</code></td>
+<td>
+<p>a numeric value giving threshold value used for identification of outliers with extremely high value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.level.min</code></td>
+<td>
+<p>a numeric value giving return level used for identification of outliers with extremely low value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.level.max</code></td>
+<td>
+<p>a numeric value giving return level used for identification of outliers with extremely high value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outlier.min</code></td>
+<td>
+<p>a logical vector specyfing the identified outliers with extremely low value. <code>TRUE</code> means that corresponding observation from vector <code>x</code> is detected as outlier</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outlier.max</code></td>
+<td>
+<p>a logical vector specyfing the identified outliers with extremely high value. <code>TRUE</code> means that corresponding observation from vector <code>x</code> is detected as outlier</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outlier</code></td>
+<td>
+<p>a logical vector specyfing the identified outliers with both extremely low and extremely high value. <code>TRUE</code> means that corresponding observation from vector <code>x</code> is detected as outlier</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Holesovsky J, Campulova M, Michalek J (2018). Semiparametric Outlier Detection in Nonstationary Times Series: Case Study for Atmospheric Pollution in Brno, Czech Republic. Atmospheric Pollution Research, 9(1).
+</p>
+<p>Theo Gasser, Alois Kneip &amp; Walter Koehler (1991) A flexible and fast method for automatic smoothing. Journal of the American Statistical Association 86, 643-652. https://doi.org/10.2307/2290393
+</p>
+<p>E. Herrmann (1997) Local bandwidth choice in kernel regression estimation. Journal of Graphical and Computational Statistics 6, 35-54.
+</p>
+<p>Herrmann E, Maechler M (2013). lokern: Kernel Regression Smoothing with Local or Global Plug-in Bandwidth. R package version 1.1-5, URL http://CRAN.R-project.org/package=lokern.
+</p>
+<p>Gasser, T, Muller, H-G, Mammitzsch, V (1985). Kernels for nonparametric curve estimation. Journal of the Royal Statistical Society, B Met., 47(2), 238-252.
+</p>
+<p>Gomes M (1993). On the estimation of parameter of rare events in environmental time series. In Statistics for the Environment, volume 2 of Water Related Issues, pp. 225-241. Wiley.
+</p>
+<p>Ferro, CAT, Segers, J (2003). Inference for Cluster of Extreme Values. Journal of Royal Statistical Society, Series B, 65(2), 545-556.
+</p>
+<p>Holesovsky, J, Fusek, M (2020). Estimation of the Extremal Index Using Censored Distributions. Extremes, In Press.
+</p>
+<p>Suveges, M, Davison, AC (2010). Model Misspecification in Peaks Over Threshold Analysis. The Annals of Applied Statistics, 4(1), 203-221.
+</p>
+<p>Northrop, PJ (2015). An Efficient Semiparametric Maxima Estimator of the Extremal Index. Extremes, 18, 585-603.
+</p>
+<p>Smith, RL, Weissman, I (1994). Estimating the Extremal Index. Journal of the Royal Statistical Society, Series B, 56, 515-529.
+</p>
+<p>Heffernan JE, Stephenson AG (2016). ismev: An Introduction to Statistical Modeling of Extreme Values. R package version 1.41, URL http://CRAN.R-project.org/package=ismev.
+</p>
+<p>Coles S (2001). An Introduction to Statistical Modeling of Extreme Values. 3 edition. London: Springer. ISBN 1-85233-459-2.
+</p>
+<p>de Haan, L, Ferreira, A (2006). Extreme Value Theory: An Introduction. Springer.
+</p>
+<p>Pickands J (1975). Statistical inference using extreme order statistics. The Annals of Statistics, 3(1), 119-131.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("mydata", package = "openair")
+x = mydata$o3[format(mydata$date, "%m %Y") == "12 2002"]
+result = KRDetect.outliers.EV(x)
+summary(result)
+plot(result)
+plot(result, plot.type = "min")
+plot(result, plot.type = "max")
+</code></pre>
+
+
+</div>

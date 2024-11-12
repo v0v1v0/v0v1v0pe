@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fmgpd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>MGPD Estimation</h2>
+
+<h3>Description</h3>
+
+<p>Fit of the MGPD model using an MCMC algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fmgpd(x, it, k, start = NULL, var = NULL, prior = NULL, thin = 1, burn = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A vector of positive observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>it</code></td>
+<td>
+<p>Number of iterations of the algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>number of mixture components for the bulk. Must be either 2, 3, or 4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>A list of starting parameter values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var</code></td>
+<td>
+<p>A list of starting proposal variance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>A list of hyperparameters for the prior distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thin</code></td>
+<td>
+<p>Thinning interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burn</code></td>
+<td>
+<p>Burn-in.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Estimation of the MGPD is carried out using an adaptive block Metropolis-Hastings algorithm. As standard, the user needs to specify the data to use during estimation, the number of mixture components for the bulk, the number of iterations of the algorithm, the burn-in period (by default equal to zero) and the thinning interval (by default equal to one).
+To run the algorithm it is also needed the choice of the starting values, the starting values of the proposal variances, and the parameters of the prior distribution. If not provided, these are automatically set as follows:
+</p>
+
+<ul>
+<li> <p><em>starting values</em>: <code class="reqn">u</code> is chosen by the function <code>ithresh</code> of the <code>threshr</code> package; <code class="reqn">\xi</code> and <code class="reqn">\sigma</code> are chosen by the <code>fpot</code> function of <code>evd</code> for data over the threshold; <code class="reqn">\mu</code> and <code class="reqn">\eta</code> are chosen as estimates of the <code>gammamixEM</code> function from the <code>mixtools</code> package; <code class="reqn">w</code> is chosen as the vector with entries <code class="reqn">1/k</code>.
+</p>
+</li>
+<li> <p><em>variances</em>: variances for <code class="reqn">\sigma</code> and <code class="reqn">u</code> are chosen as the standard deviation of the normal distribution whose 0.01 quantile is equal to 0.9 times the starting value of the associated parameter. The parameters <code class="reqn">\mu_i</code> and <code class="reqn">\eta_i</code> are sampled jointly and the proposal variance is chosen using the same method as for <code class="reqn">\sigma</code> with respect to the parameter <code class="reqn">\mu</code>. The proposal variance for <code class="reqn">w</code> is 0.1 and the proposal variance for <code class="reqn">\xi</code> is 0.1 if negative and 0.25 if positive.
+</p>
+</li>
+<li> <p><em>prior distributions</em>: the prior distribution for <code class="reqn">\xi</code> and <code class="reqn">\sigma</code> is the objective prior </p>
+<p style="text-align: center;"><code class="reqn">p(\xi,\sigma) = \sigma^{-1}(1+\xi)^{-1}(1+2\xi)^{-1/2}.</code>
+</p>
+<p> The prior for the threshold <code class="reqn">u</code> is Normal with mean chosen as for the starting values and the standard deviation is chosen so that the 0.05 quantile of the prior is equal to the median of the data. The priors for the parameters <code class="reqn">\mu_i</code> and <code class="reqn">\eta_i</code> are Gammas with mean chosen as for the starting values and shapes equal to 0.001 so to give high prior variances. The prior for the weigths is the non-informative Dirichlet with parameter 1.
+</p>
+</li>
+</ul>
+<p>The user can also select any of the three inputs above. </p>
+
+<ul>
+<li>
+<p> The starting values <code>start</code> must be a list with entries <code>xi</code>, <code>sigma</code>, <code>u</code>, <code>mu</code>, <code>eta</code> and <code>w</code>. The length of  <code>mu</code>, <code>eta</code> and <code>w</code> must be <code>k</code>.
+</p>
+</li>
+<li>
+<p> The variances <code>var</code> must be a list with entries <code>xi</code>, <code>sigma</code>, <code>u</code>, <code>mu</code> and  <code>w</code>. The length of <code>mu</code> must be <code>k</code>.
+</p>
+</li>
+<li>
+<p> The prior <code>prior</code> must be a list with entries <code>u</code>, <code>mu_mu</code>, <code>mu_eta</code>, <code>eta_mu</code> and <code>eta_eta</code>.  <code>u</code> gives the mean and the standard deviation of the Normal prior for <code class="reqn">u</code>. The vectors of length <code>k</code>, <code>mu_mu</code> and <code>eta_mu</code> give the prior means of <code class="reqn">\mu</code> and <code class="reqn">\eta</code>, whilst <code>mu_eta</code> and <code>eta_eta</code> give their prior shapes.</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p><code>fmgpd</code> returns a list with three elements: </p>
+
+<ul>
+<li> <p><code>chain</code>: a matrix of size (<code>it</code> - <code>burn</code>)/<code>thin</code><code class="reqn">\times</code>5, reporting in each column the posterior sample for each parameter.
+</p>
+</li>
+<li> <p><code>var</code>: a matrix of size <code>it</code><code class="reqn">\times</code>5 reporting the variance of the proposal distribution for each parameter.
+</p>
+</li>
+<li> <p><code>data</code>: the dataset used for estimation.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Behrens, Cibele N., Hedibert F. Lopes, and Dani Gamerman. "Bayesian analysis of extreme events with threshold estimation." Statistical Modelling 4.3 (2004): 227-244.
+</p>
+<p>do Nascimento, Fernando Ferraz, Dani Gamerman, and Hedibert Freitas Lopes. "A semiparametric Bayesian approach to extreme value estimation." Statistics and Computing 22.2 (2012): 661-675.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fggpd</code>, <code>mgpd</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(rainfall)
+## Small number of iterations and burn-in for quick execution
+model1 &lt;- fmgpd(rainfall, k = 2, it = 250, burn = 50, thin = 25)
+start &lt;- list(xi = 0.2, sigma = 2, u = 10, mu = c(2,5), eta = c(2,2) , w = c(0.4,0.6))
+var &lt;- list(xi = 0.01, sigma = 1, u = 3, mu = c(3,3), w = 0.01)
+prior &lt;- list(u = c(22,5), mu_mu = c(2,5), mu_eta = c(0.01,0.01),
+         eta_mu = c(3,3),eta_eta = c(0.01,0.01))
+
+model2 &lt;- fmgpd(rainfall, k= 2, it = 250, start = start, var =var, prior = prior)
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,105 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calcAB</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Determination of optimal coefficients for computing weights of evidence in logistic regression</h2>
+
+<h3>Description</h3>
+
+<p><code>calcAB</code> computes optimal coefficients alpha and beta needed to transform coefficients
+from logistic regression (or connections weights between the last hidden layer and the output
+layer of multilayer neural networks) into weights of evidence. These weights of evidence
+can then be used to express the outputs of logistic regression or multilayer neural networks
+as "latent" mass functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calcAB(W, mu = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>W</code></td>
+<td>
+<p>Vector of coefficients of length (d+1), where d is the number of features, in the
+case of M=2 classes, or (d+1,M) matrix of coefficients (or connection weights) in the case
+of M&gt;2 classes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>Optional vector containing the means of the d features.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with two elements:
+</p>
+
+<dl>
+<dt>A</dt>
+<dd>
+<p>Vector of length d (M=2) or matrix of size (d,M) (for M&gt;2) of coefficients alpha.</p>
+</dd>
+<dt>B</dt>
+<dd>
+<p>Vector of length d (M=2) or matrix of size (d,M) (for M&gt;2) of coefficients beta.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Thierry Denoeux.
+</p>
+
+
+<h3>References</h3>
+
+<p>T. Denoeux. Logistic Regression, Neural Networks and Dempster-Shafer Theory: a New Perspective.
+Knowledge-Based Systems, Vol. 176, Pages 54–67, 2019.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>calcm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Example with 2 classes and logistic regression
+data(ionosphere)
+x&lt;-ionosphere$x[,-2]
+y&lt;-ionosphere$y-1
+fit&lt;-glm(y ~ x,family='binomial')
+AB&lt;-calcAB(fit$coefficients,colMeans(x))
+AB
+## Example with K&gt;2 classes and multilayer neural network
+library(nnet)
+data(glass)
+K&lt;-max(glass$y)
+d&lt;-ncol(glass$x)
+n&lt;-nrow(x)
+x&lt;-scale(glass$x)
+y&lt;-as.factor(glass$y)
+p&lt;-3 # number of hidden units
+fit&lt;-nnet(y~x,size=p)  # training a neural network with 3 hidden units
+W1&lt;-matrix(fit$wts[1:(p*(d+1))],d+1,p) # Input-to-hidden weights
+W2&lt;-matrix(fit$wts[(p*(d+1)+1):(p*(d+1) + K*(p+1))],p+1,K) # hidden-to-output weights
+a1&lt;-cbind(rep(1,n),x)%*%W1  # hidden unit activations
+o1&lt;-1/(1+exp(-a1)) # hidden unit outputs
+AB&lt;-calcAB(W2,colMeans(o1))
+AB
+</code></pre>
+
+
+</div>

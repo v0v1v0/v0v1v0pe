@@ -1,0 +1,117 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>disPairwise</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Computation of the dissimilarity matrix (pairwise beta-diversity) for a set of networks
+</h2>
+
+<h3>Description</h3>
+
+<p>Computation of the dissimilarity matrix for a set of networks. Each value of the matrix is the pairwise beta-diversity, computed using Hill numbers. It measures the dissimilarity in terms of groups, links, or probability of links.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">disPairwise(gList, groups=NULL, eta=1,
+            type=c('P','L','Pi'), abTable=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>gList</code></td>
+<td>
+<p>A <code>list</code> of graph objects of class
+<code>igraph</code>. The nodes must have a name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>A named vector of class <code>character</code>  indicating the group to
+which each node belongs to. The length of <code>groups</code> must correspond to the number of different nodes present in <code>gList</code>. The names <code>names(groups)</code> must
+correspond to the nodes names in <code>gList</code>. If NULL, the groups are the initial nodes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eta</code></td>
+<td>
+<p>A positive number that controls the weight given to abundant groups/links. Default value is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>The type of diversity used to measure dissimilarity. It can be groups diversity ('P'), links diversity ('L') or probability of links diversity ('Pi').</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>abTable</code></td>
+<td>
+<p>A matrix of size the number of nodes of the metanetwork times the number of networks. The rownames of this matrix must be the node names of metanetwork and the columns must
+be in an order corresponding to gList. The element (i,j) of this matrix is the abundance of species i in network j. Importantly, the non-nul elements in each column of <code>abTalbe</code> must 
+correspond to the nodes present in each element of <code>gList</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Return a <code>dist</code> object whose elements are the pairwise dissimilarities. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Authors: Stephane Dray, Vincent Miele, Marc Ohlmann, Wilfried Thuiller
+Maintainer: Wilfried Thuiller &lt;wilfried.thuiller@univ-grenoble-alpes.fr&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Marc Ohlmann, Vincent Miele, Stephane Dray, Loic Chalmandrier, Louise O'Connor &amp; Wilfried Thuiller, Diversity indices for ecological networks: a unifying framework using Hill numbers. Ecology Letters (2019) &lt;doi:10.1111/ele.13221&gt;
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Generating a set of Erdos-Renyi graphs and give node names.
+library(econetwork)
+library(igraph)
+nbGraph &lt;- 3
+gList &lt;- c()
+n &lt;- 57 # number of nodes of each graph
+C &lt;- 0.1  # connectance of each graph
+for(i in 1:nbGraph){
+  graphLocal &lt;- erdos.renyi.game(n, type='gnp', p.or.m=C, directed=TRUE)
+  V(graphLocal)$name &lt;- as.character(1:57)
+  gList = c(gList,list(graphLocal))
+}
+
+# vector that gives the group of each node
+groups &lt;- c(rep("a",23),rep("b",34))
+names(groups) &lt;- as.character(1:57)
+#generating random (non-nul) abundances data
+abTable &lt;- sapply(1:nbGraph,function(x) rpois(n,1)+1)
+rownames(abTable) = unlist(unique(lapply(gList,function(g) V(g)$name)))
+
+# Dissimilarity matrices based on links beta-diversity
+# at a node level
+disPairwise(gList, type = 'L')
+# at a node level while taking into account node abundances
+disPairwise(gList, type = 'L', abTable = abTable)
+# at a group level
+disPairwise(gList, groups, type = 'L')
+# at a group level while taking into account node abundances
+disPairwise(gList, groups, type = 'L', abTable = abTable) 
+
+</code></pre>
+
+
+</div>

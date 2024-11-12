@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>retentionBrd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Computes the Multiplicity Controlled Retention Set.
+</h2>
+
+<h3>Description</h3>
+
+<p>Computes the lower boundary of convex retention set of sensitivity analysis for evidence factors.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">retentionBrd(Plist, Gamlist, alpha = 0.05, method = c("Fisher", "TruncatedP"),
+ talpha = .2)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Plist</code></td>
+<td>
+
+<p>A list of numeric vectors. Each vector are maximum p-values for evidence factors for sensitivity analysis for increasing gamma values. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Gamlist</code></td>
+<td>
+
+<p>A list of numeric vectors. gamma values associated with evidence factors.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>Size of overall type-1 error in analysis.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>Combination method of evidence factors. Default choice is Fisher's combination.
+Another option is "TruncatedP" for the truncated product method.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>talpha</code></td>
+<td>
+
+<p>Level of truncation for truncated product ("TruncatedP") combination method.
+Default is 0.20.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Vectors in Plist and Gamlist are necessarily increasing. 
+</p>
+<p>The reporting of the sensitivity analysis also controlled for overall type-1 error. The retention set in a sensitivity analysis of evidence factors is a convex increasing region. The output of the algorithm is the lower boundary of the retention region. The complexity of the algorithm is linear in number of evidence factors and log-linear in the range of gamma. The pseudo-code for this function with discussion of the complexity of the algorithm is available in Karmakar et. al. (2016).
+</p>
+<p>Two methods of combing methods can be used, "Fisher" and "TruncatedP". For details on the two methods see Karmakar et. al. (2016). The truncated method of combing p-values was first introduced by Zaykin et al. (2002). In practice the truncated product method is recommended even though neither one uniformly dominates the other in terms of power.  
+</p>
+<p>Packages sensitivitymv, sensitivitymw and sensitivity2x2xk are various CRAN packages that can be used to compute Plist from dat and Gamlist. See example codes below.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix with number of columns same as the number of evidence factors. This matrix identifies the border of the retention region.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bikram Karmakar
+</p>
+
+
+<h3>References</h3>
+
+<p>Karmakar, B., French, B., Sadakane, A. and Small, D. S. (2016) Integrating the evidence from evidence factors in observational studies. 
+</p>
+<p>Rosenbaum, P. R. (2002) Observational Studies (2nd edition).  New York: Springer.
+</p>
+<p>Rosenbaum, P. R. (2010)  Evidence factors in observational studies. Biometrika, 97, 333-345.
+</p>
+<p>Rosenbaum, P. R. (2011) Some approximate evidence factors in observational studies.  Journal of the American Statistical Association, 106, 285-295.
+</p>
+<p>Zaykin, D., Zhivotovsky, L. A., Westfall, P. and Weir, B. (2002) Truncated product
+method for combining p-values. Genetic Epidemiology, 22, 170-1
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(Plist)
+data(Gamlist)
+retentionBrd(Plist, Gamlist)
+retentionBrd(Plist, Gamlist, method = "Truncated")
+
+## mean tail moment data example
+library(sensitivitymv)
+
+data(mtm)
+Gamseq &lt;- seq(1, 15, by = 0.2)
+Gamlist &lt;- list(Gamseq, Gamseq)
+Plist &lt;- list(c(), c())
+
+for(gam in Gamseq){
+	Plist[[1]] = c(Plist[[1]], senmv(-mtm,gamma=gam,trim=1)$pval)
+	Plist[[2]] = c(Plist[[2]], senmv(-mtm[,2:3],gamma=gam,trim=1)$pval)
+}	
+
+# Fisher's combination method
+rbrd &lt;- retentionBrd(Plist, Gamlist)
+
+# truncated product combination
+rbrd &lt;- retentionBrd(Plist, Gamlist, method = "Truncated", talpha = .5)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,323 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>meanEquivTest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Equivalence Test for Pre-trends based on the Mean Placebo Coefficient</h2>
+
+<h3>Description</h3>
+
+<p>This function performs an equivalence test for pre-trends based on the mean placebo coefficient from Dette &amp; Schumann (2024).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">meanEquivTest(
+  Y,
+  ID,
+  G,
+  period,
+  X = NULL,
+  data = NULL,
+  equiv_threshold = NULL,
+  pretreatment_period = NULL,
+  base_period = NULL,
+  vcov = NULL,
+  cluster = NULL,
+  alpha = 0.05
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>A numeric vector with the variable of interest. If <code>data</code> is supplied, <code>Y</code> should be a scalar indicating the column number or column-name character string that corresponds to the numeric dependent (outcome) variable in ’data’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ID</code></td>
+<td>
+<p>A numeric vector identifying the different cross-sectional units in the dataset. If <code>data</code> is supplied, <code>ID</code> should be a scalar indicating the column number or column-name character string that corresponds to the cross-sectional units identifier in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G</code></td>
+<td>
+<p>A binary or logic vector (of the same dimension as <code>Y</code> and <code>ID</code>) indicating if the individual (e.g. as indicated by <code>ID</code>) receives treatment (e.g. 1 or TRUE) or not (0 or FALSE). f 'data' is supplied, <code>G</code> should be a scalar identifying the column number or column-name character string associated to <code>G</code> in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>period</code></td>
+<td>
+<p>A numeric vector (of the same dimension as Y) indicating time. If <code>data</code> is supplied, <code>period</code> should be a scalar indicating the column number or column-name character string that corresponds to the time identifier in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>A vector, matrix, or data.frame containing the control variables. If <code>data</code> is supplied, <code>X</code> must be a vector of column numbers or column-name character strings that identifies the control variables’ columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An optional <code>data.frame</code> object containing the variables in Y, ID, G, T and, if supplied, X and cluster as its columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>equiv_threshold</code></td>
+<td>
+<p>The scalar equivalence threshold (must be positive). The default is NULL, implying that the function must look for the minimum value for which the null hypothesis of ”non-negligible differences” can still be rejected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pretreatment_period</code></td>
+<td>
+<p>A numeric vector identifying the pre-treatment periods that should be used for testing. <code>pretreatment_period</code> must be a subset of the periods included through <code>period</code>. The default is to use all periods that are included in <code>period</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base_period</code></td>
+<td>
+<p>The pre-treatment period to compare the post-treatment observation to. The default is to take the last period of the pre-treatment period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>The variance-covariance matrix that needs to be used. See <em>Details</em> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster</code></td>
+<td>
+<p>If <code>vcov = "CL"</code>, a vector indicating which observations belong to the same cluster. <code>cluster</code> must be of the same length as the panel. If <code>data</code> is supplied, <code>cluster</code> must be either the column index or column name of this vector in the data.frame/matrix. The default (<code>cluster=NULL</code>) assumes every unit in ID is its own cluster.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Significance level of the test. The default is 0.05. Only required if <code>equiv_threshold</code> is not specified.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>vcov</code> parameter specifies the variance-covariance matrix to be used in the function. 
+This parameter can take two types of inputs:
+</p>
+
+<ol>
+<li>
+<p> A character string specifying the type of variance-covariance matrix estimation. The options are:</p>
+
+<ul>
+<li> <p><code>NULL</code>: The default variance-covariance matrix estimated by the plm function is used.
+</p>
+</li>
+<li> <p><code>"HC"</code>: A heteroscedasticity-robust (HC) covariance matrix is estimated using the <code>vcovHC</code> function from the <code>plm</code> package, vcovHC, with type <code>"HC1"</code> and method <code>"white1"</code> (see White, 1980).
+</p>
+</li>
+<li> <p><code>"HAC"</code>: A heteroscedasticity and autocorrelation robust (HAC) covariance matrix is estimated using the <code>vcovHC</code> function from the <code>plm</code> package, vcovHC, with type <code>"HC3"</code> and method <code>"arellano"</code> (see Arellano, 1987).
+</p>
+</li>
+<li> <p><code>"CL"</code>: A cluster-robust covariance matrix is estimated using the <code>vcovCR</code> function from the <code>clubSandwich</code> package with type <code>"CR0"</code> (see Lian &amp; Zegers (1986)). The cluster variable is either <code>"ID"</code> or a custom cluster variable provided in the <code>data</code> dataframe.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> A function that takes an plm object as input and returns a variance-covariance matrix. 
+This allows for custom variance-covariance matrix estimation methods. For example, you could 
+use the <code>vcovHC</code> function from the <code>sandwich</code> package with a specific method and type:
+</p>
+<pre>function(x) {vcovHC(x, method = "white1", type = "HC2")}</pre>
+</li>
+</ol>
+<p>If no <code>vcov</code> parameter is provided, the function defaults to using the variance-covariance matrix 
+estimated by the plm::plm() function.
+</p>
+<p>One should note that rows containing <code>NA</code> values are removed from the panel before the testing procedure is performed.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class "meanEquivTest" containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>placebo_coefficients</code></td>
+<td>
+<p> a numeric vector of the estimated placebo coefficients,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>abs_mean_placebo_coefs</code></td>
+<td>
+<p> the absolute value of the mean of the placebo coefficients,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var_mean_placebo_coef</code></td>
+<td>
+<p> the estimated variance of the mean placebo coefficient,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>significance_level</code></td>
+<td>
+<p> the significance level of the test,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base_period</code></td>
+<td>
+<p> the base period used in the testing procedure,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_individuals</code></td>
+<td>
+<p> the number of cross-sectional individuals in the panel used for testing,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_periods</code></td>
+<td>
+<p> the number of periods in the panel used for testing (if the panel is unbalanced, <code>num_periods</code> represents the range in the number of time periods covered by different individuals),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_observations</code></td>
+<td>
+<p> the total number of observations in the panel used for testing,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>is_panel_balanced</code></td>
+<td>
+<p> a logical value indicating whether the panel is balanced,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>equiv_threshold_specified</code></td>
+<td>
+<p> a logical value indicating whether an equivalence threshold was specified.</p>
+</td>
+</tr>
+</table>
+<p>If <code>equiv_threshold_specified = FALSE</code>, then additionally <code>minimum_equiv_threshold</code>: the minimum equivalence threshold for which the null hypothesis of non-negligible (based on the equivalence threshold) trend-differences can be rejected. 
+</p>
+<p>If <code>equiv_threshold_specified = TRUE</code>, then additionally </p>
+
+<ul>
+<li> <p><code>mean_critical_value</code>: the critical value at the alpha level,
+</p>
+</li>
+<li> <p><code>p_value</code>: the p-value of the test,
+</p>
+</li>
+<li> <p><code>reject_null_hypothesis</code>: A logical value indicating whether to reject the null hypothesis,
+</p>
+</li>
+<li> <p><code>equiv_threshold</code>: the equivalence threshold specified.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Ties Bos
+</p>
+
+
+<h3>References</h3>
+
+<p>Arellano M (1987). “Computing Robust Standard Errors for Within-groups Estimators.” <em>Oxford bulletin of Economics and Statistics</em>, 49(4), 431–434.
+</p>
+<p>Dette, H., &amp; Schumann, M. (2024). "Testing for Equivalence of Pre-Trends in Difference-in-Differences Estimation." <em>Journal of Business &amp; Economic Statistics</em>, 1–13. DOI: <a href="https://doi.org/10.1080/07350015.2024.2308121">doi:10.1080/07350015.2024.2308121</a>
+</p>
+<p>Liang, K.-Y., &amp; Zeger, S. L. (1986). "Longitudinal data analysis using generalized linear models." <em>Biometrika</em>, 73(1), 13-22. DOI: <a href="https://doi.org/10.1093/biomet/73.1.13">doi:10.1093/biomet/73.1.13</a>
+</p>
+<p>White H (1980). “A heteroskedasticity-consistent covariance matrix estimator and a direct test for heteroskedasticity.” <em>Econometrica</em>, 48(4), 817–838.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>print.meanEquivTest</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Generate a balanced panel dataset with 500 cross-sectional units (individuals), 
+# 5 time periods (labeled 1-5), a binary variable indicating which individual 
+# receives treatment and 2 control variables ("X_1" and "X_2") 
+# The error-terms are generated without heteroscedasticity, autocorrelation, 
+# or any significant clusters. Furthermore, there are no fixed effects 
+# and no pre-trends present in the data (all values in beta are 0). 
+# See sim_paneldata() for more details.
+
+sim_data &lt;- sim_paneldata(N = 500, tt = 5, p = 2, beta = rep(0, 5), 
+                          gamma = rep(1, 2), het = 0, phi = 0, sd = 1, 
+                          burnins = 50)
+                          
+# Perform the test with equivalent threshold specified as 1 based on 
+# pre-treatment periods 1-4 and assuming homoscedastic error-terms:
+  # To select variables, one can use the column names / column numbers in the panel data:
+  meanEquivTest(Y = "Y", ID = "ID", G = "G", period = 2, X = c(5, 6),
+                data = sim_data, equiv_threshold = 1, pretreatment_period = 1:4,
+                base_period = 4)
+  # Alternatively, one can use separate variables:
+  data_Y &lt;- sim_data$Y
+  data_ID &lt;- sim_data$ID
+  data_G &lt;- sim_data$G
+  data_period &lt;- sim_data$period
+  data_X &lt;- sim_data[, c(5, 6)]
+  meanEquivTest(Y = data_Y, ID = data_ID, G = data_G, period = data_period, X = data_X,
+                equiv_threshold = 1, pretreatment_period = 1:4,
+                base_period = 4)
+   
+# Perform the test with a heteroscedastic and autocorrelation robust 
+# variance-covariance matrix estimator, and without specifying the equivalence threshold:
+meanEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", X = c(5, 6),
+              data = sim_data, equiv_threshold = NULL, pretreatment_period = 1:4,
+              base_period = 4, vcov = "HAC")
+
+# Perform the test with an equivalence threshold of 1 and a custom
+# variance-covariance matrix estimator:
+vcov_func &lt;- function(x) {plm::vcovHC(x, method = "white1", type = "HC2")}
+meanEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", 
+              data = sim_data, equiv_threshold = 1, pretreatment_period = 1:4,
+              base_period = 4, vcov = vcov_func)
+               
+# Perform the test using clustered standard errors based on a vector indicating 
+# the cluster. For instance, two clusters with the following rule: all
+# individuals with an ID below 250 are in the same cluster:
+cluster_ind &lt;- ifelse(sim_data$ID &lt; 250, 1, 2)
+meanEquivTest(Y = data_Y, ID = data_ID, G = data_G, period = data_period, X = data_X,
+               equiv_threshold = 1, pretreatment_period = 1:4,
+               base_period = 4, vcov = "CL", cluster = cluster_ind)
+
+# Note that the testing procedure can also handle unbalanced panels. 
+# Finally, one should note that the test procedure also works for unbalanced panels.
+# To illustrate this, we generate an unbalanced panel dataset by randomly selecting
+# 70% of the observations from the balanced panel dataset:
+random_indeces &lt;- sample(nrow(sim_data), 0.7*nrow(sim_data))
+unbalanced_sim_data &lt;- sim_data[random_indeces, ]
+meanEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", X = c(5, 6),
+              data = unbalanced_sim_data, equiv_threshold = 1, pretreatment_period = 1:4,
+              base_period = 4, vcov = "HAC")
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mask_pixels</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Creates a mask over the background or foreground (Cria uma mascara sobre o
+background ou foreground)</h2>
+
+<h3>Description</h3>
+
+<p>This function superimposes a mask over the pixels corresponding to
+the background or foreground.(Esta funcao permite criar mascara sobre os pixels
+correspondentes ao background ou foreground)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mask_pixels(im,TargetPixels,TargetPixels2=NULL,col.TargetPixels="rand",
+Contour=FALSE, r = 1, g = 2, b = 3, norma = 1,plot=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>im</code></td>
+<td>
+<p>:This object must contain an image in EBImage format (Este objeto deve conter uma imagem no formato do EBImage).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TargetPixels</code></td>
+<td>
+<p>: (Este objeto deve ser  uma matriz
+binaria ou uma lista com varias matrizes. Em cada matriz deve conter os valores 0 (pixels do background) ou 1 (pixels do
+foreground)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TargetPixels2</code></td>
+<td>
+<p>: Este objeto deve ser  uma matriz
+binaria ou uma lista com varias matrizes. Em cada matriz deve conter os valores 0 (pixels do background) ou 1 (pixels do
+foreground)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col.TargetPixels</code></td>
+<td>
+<p>: Se for a palavra "rand" serao valores escolhidos para cada matriz.
+Pode tambem ser um vetor contendo os nomes das cores. Neste caso, o tamanho de vetor deve ser igual
+ao numero de matrizes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Contour</code></td>
+<td>
+<p>: Valor logico. Se for FALSE (default) sera a parte de interesse sera preenchida.
+Se for TRUE a area de interesse sera contornada.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>: Camada correspondente a banda de vermelho.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g</code></td>
+<td>
+<p>: Camada correspondente a banda de verde</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>= Camada correspondente a banda de azul</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norma</code></td>
+<td>
+<p>= Valor a ser dividido em cada pixel para se ter valor entre 0 e 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>:Indica se sera apresentada (TRUE) ou nao (FALSE) (default) a
+imagem segmentada.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Retorna uma imagem com uma mascara sobre os  pixels selecionados.
+@seealso  <code>segmentation_logit</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+###########################################################################
+#Estimar a area atacada por doenca no tomateiro
+###########################################################################
+
+  im=read_image(example_image(ex=7))
+  plot_image(im)
+
+  #Selecionando o melhor indice para a segmentacao da folha
+  r=gray_scale(im,method = "r",plot=TRUE)
+  g=gray_scale(im,method = "g",plot=TRUE)
+  b=gray_scale(im,method = "b",plot=TRUE)
+
+  #O limiar pode ser um valor escolhido aleatoriamente
+  MatrizSegentada=segmentation(b,threshold = 0.5,fillHull = FALSE,plot=TRUE)
+
+  #O limiar tambem pode ser estabelecido pelo metodo de otsu
+  MatrizSegentada2=segmentation(b,threshold = "otsu",fillHull = TRUE
+  ,selectHigher= FALSE, plot=TRUE)
+
+
+  #Selecionar na imagem apenas os pixeis desejaveis (Folha)
+  im2=extract_pixels(im,target=MatrizSegentada2,valueTarget=TRUE,
+  valueSelect=c(r=1,g=1,b=1),plot=TRUE)
+
+  ################################################################
+  #Selecionando o melhor indice para a segmentacao da doenca
+  r=gray_scale(im2,method = "r",plot=TRUE)
+  g=gray_scale(im2,method = "g",plot=TRUE)
+  b=gray_scale(im2,method = "b",plot=TRUE)
+
+  MatrizSegmentada3=segmentation(g,threshold = 0.3,selectHigher = FALSE,
+  fillHull =TRUE,plot=TRUE)
+
+
+  #Como pode-se obsevar, a segmentacao por limiar nao e possivel. Entao vamos
+  #usar paletas de cores
+  folha=read_image(example_image(ex=8))
+  doenca=read_image(example_image(ex=9))
+
+  DoencaSeg=segmentation_logit(im,foreground = doenca,background =
+  folha,sample = 2000,fillHull = TRUE,TargetPixels =MatrizSegentada2==1
+  ,plot=TRUE)
+
+  im3=mask_pixels(im2,TargetPixels=DoencaSeg==1)
+   plot_image(im3)
+
+  ii=join_image(im,im3,plot=TRUE)
+
+
+  #Porcentagem da area lesionada.
+
+  100*(sum(DoencaSeg)/sum(MatrizSegentada2))
+
+</code></pre>
+
+
+</div>

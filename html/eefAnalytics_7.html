@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>crtFREQ</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Analysis of Cluster Randomised Education Trials using Multilevel Model under a Frequentist Setting.</h2>
+
+<h3>Description</h3>
+
+<p><code>crtFREQ</code> performs analysis of cluster randomised education trials using a multilevel model under a frequentist setting.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">crtFREQ(
+  formula,
+  random,
+  intervention,
+  baseln,
+  nPerm,
+  nBoot,
+  type,
+  ci,
+  seed,
+  data
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>the model to be analysed is of the form y ~ x1+x2+.... Where y is the outcome variable and Xs are the independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random</code></td>
+<td>
+<p>a string variable specifying the "clustering variable" as contained in the data. See example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervention</code></td>
+<td>
+<p>a string variable specifying the "intervention variable" as appearing in the formula and the data. See example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>baseln</code></td>
+<td>
+<p>A string variable allowing the user to specify the reference category for intervention variable. When not specified, the first level will be used as a reference.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nPerm</code></td>
+<td>
+<p>number of permutations required to generate a permutated p-value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nBoot</code></td>
+<td>
+<p>number of bootstraps required to generate bootstrap confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>method of bootstrapping including case re-sampling at student level "case(1)", case re-sampling at school level "case(2)", case re-sampling at both levels "case(1,2)" and residual bootstrapping using "residual". If not provided, default will be case re-sampling at student level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+<p>method for bootstrap confidence interval calculations; options are the Basic (Hall's) confidence interval "basic" or the simple percentile confidence interval "percentile". If not provided default will be percentile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>seed required for bootstrapping and permutation procedure, if not provided default seed will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame containing the data to be analysed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>S3 object; a list consisting of
+</p>
+
+<ul>
+<li> <p><code>Beta</code>: Estimates and confidence intervals for variables specified in the model.
+</p>
+</li>
+<li> <p><code>ES</code>: Conditional Hedges' g effect size and its 95% confidence intervals. If nBoot is not specified, 95% confidence intervals are based on standard errors. If nBoot is specified, they are non-parametric bootstrapped confidence intervals.
+</p>
+</li>
+<li> <p><code>covParm</code>: A vector of variance decomposition into between cluster variance (Schools) and within cluster variance (Pupils). It also contains intra-cluster correlation (ICC).
+</p>
+</li>
+<li> <p><code>SchEffects</code>: A vector of the estimated deviation of each school from the intercept.
+</p>
+</li>
+<li> <p><code>Perm</code>: A "nPerm x 2w" matrix containing permutated effect sizes using residual variance and total variance. "w" denotes number of intervention. "w=1" for two arm trial and "w=2" for three arm trial excluding the control group. It is produced only when <code>nPerm</code> is specified.
+</p>
+</li>
+<li> <p><code>Bootstrap</code>: A "nBoot x 2w" matrix containing the bootstrapped effect sizes using residual variance (Within) and total variance (Total). "w" denotes number of intervention. "w=1" for two arm trial and "w=2" for three arm trial excluding the control group. It is only produced when <code>nBoot</code> is specified.
+</p>
+</li>
+<li> <p><code>Unconditional</code>: A list of unconditional effect sizes, covParm, Perm and Bootstrap obtained based on variances from the unconditional model (model with only the intercept as a fixed effect).
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(interactive()){
+
+data(crtData)
+
+########################################################
+## MLM analysis of cluster randomised trials + 1.96SE ##
+########################################################
+
+output1 &lt;- crtFREQ(Posttest~ Intervention+Prettest,random="School",
+		intervention="Intervention",data=crtData)
+
+
+### Fixed effects
+beta &lt;- output1$Beta
+beta
+
+### Effect size
+ES1 &lt;- output1$ES
+ES1
+
+## Covariance matrix
+covParm &lt;- output1$covParm
+covParm
+
+### plot random effects for schools
+
+plot(output1)
+
+##################################################
+## MLM analysis of cluster randomised trials    ##
+## with residual bootstrap confidence intervals ##
+##################################################
+
+output2 &lt;- crtFREQ(Posttest~ Intervention+Prettest,random="School",
+		intervention="Intervention",nBoot=1000,type="residual",data=crtData)
+
+
+### Effect size
+
+ES2 &lt;- output2$ES
+ES2
+
+### plot bootstrapped values
+
+plot(output2, group=1)
+
+#######################################################################
+## MLM analysis of cluster randomised trials with permutation p-value##
+#######################################################################
+
+output3 &lt;- crtFREQ(Posttest~ Intervention+Prettest,random="School",
+		intervention="Intervention",nPerm=1000,data=crtData)
+
+### Effect size
+
+ES3 &lt;- output3$ES
+ES3
+
+
+### plot permutated values
+
+plot(output3, group=1)
+}
+</code></pre>
+
+
+</div>

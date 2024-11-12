@@ -1,0 +1,263 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm_MCMC_sample</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Internal Function to Sample Networks and Network Statistics</h2>
+
+<h3>Description</h3>
+
+<p>This is an internal function, not normally called directly by the
+user. The <code>ergm_MCMC_sample</code> function samples networks and
+network statistics using an MCMC algorithm via <code>MCMC_wrapper</code>
+and is capable of running in multiple threads using
+<code>ergm_MCMC_slave</code>.
+</p>
+<p>The <code>ergm_MCMC_slave</code> function calls the actual C
+routine and does minimal preprocessing.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm_MCMC_sample(
+  state,
+  control,
+  theta = NULL,
+  verbose = FALSE,
+  ...,
+  eta = ergm.eta(theta, (if (is.ergm_state(state)) as.ergm_model(state) else
+    as.ergm_model(state[[1]]))$etamap)
+)
+
+ergm_MCMC_slave(
+  state,
+  eta,
+  control,
+  verbose,
+  ...,
+  burnin = NULL,
+  samplesize = NULL,
+  interval = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>state</code></td>
+<td>
+<p>an <code>ergm_state</code> representing the sampler state, containing information about the network, the model, the proposal, and (optionally) initial statistics, or a list thereof.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters for algorithm tuning,
+typically constructed with <code>control.ergm()</code>, <code>control.simulate.ergm()</code>, etc., which have different
+defaults. Their documentation gives the the list of recognized
+control parameters and their meaning. The more generic utility
+<code>snctrl()</code> (StatNet ConTRoL) also provides argument completion
+for the available control functions and limited argument name
+checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>the (possibly curved) parameters of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arugments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eta</code></td>
+<td>
+<p>the natural parameters of the model; by default constructed from <code>theta</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin, samplesize, interval</code></td>
+<td>
+<p>MCMC paramters that can be used
+to temporarily override those in the <code>control</code> list.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>ergm_MCMC_sample</code> returns a list
+containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>stats</code></td>
+<td>
+<p>an <code>mcmc.list</code> with sampled statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>networks</code></td>
+<td>
+<p>a list of final sampled networks, one for each thread.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>status</code></td>
+<td>
+<p>status code, propagated from <code>ergm_MCMC_slave()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>final.interval</code></td>
+<td>
+<p>adaptively determined MCMC interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>final.effectiveSize</code></td>
+<td>
+<p>adaptively determined target ESS (non-trivial if <code>control$MCMC.effectiveSize</code> is specified via a matrix).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sampnetworks</code></td>
+<td>
+<p>If <code>control$MCMC.save_networks</code> is set and is
+<code>TRUE</code>, a list of lists of <code>ergm_state</code>s corresponding to the
+sampled networks.</p>
+</td>
+</tr>
+</table>
+<p><code>ergm_MCMC_slave</code> returns the MCMC sample as a list of
+the following: </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>the matrix of statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>state</code></td>
+<td>
+<p>an <code>ergm_state</code> object for the new network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>status</code></td>
+<td>
+<p>success or failure code: <code>0</code> is success, <code>1</code> for
+too many edges, and <code>2</code> for a Metropolis-Hastings proposal failing,
+<code>-1</code> for <code>ergm_model</code> or <code>ergm_proposal</code> not passed and
+missing from the cache.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p><code>ergm_MCMC_sample</code> and <code>ergm_MCMC_slave</code> replace
+<code>ergm.getMCMCsample</code> and <code>ergm.mcmcslave</code> respectively. They
+differ slightly in their argument names and in their return
+formats. For example, <code>ergm_MCMC_sample</code> expects <code>ergm_state</code>
+rather than network/model/proposal, and <code>theta</code> or <code>eta</code> rather than <code>eta0</code>;
+and it does not return <code>statsmatrix</code> or <code>newnetwork</code>
+elements. Rather, if parallel processing is not in effect,
+<code>stats</code> is an <code>mcmc.list</code> with one chain and <code>networks</code> is a
+list with one element.
+</p>
+<p>Note that unless <code>stats</code> is a part of the <code>ergm_state</code>, the
+returned stats will be relative to the original network, i.e.,
+the calling function must shift the statistics if required.
+</p>
+<p>At this time, repeated calls to <code>ergm_MCMC_sample</code> will not
+produce the same sequence of networks as a single long call, even
+with the same starting seeds. This is because the network
+sampling algorithms rely on the internal state of the network
+representation in C, which may not be reconstructed exactly the
+same way when "resuming". This behaviour may change in the
+future.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# This example illustrates constructing "ingredients" for calling
+# ergm_MCMC_sample() from calls to simulate.ergm(). One can also
+# construct an ergm_state object directly from ergm_model(),
+# ergm_proposal(), etc., but the approach shown here is likely to
+# be the least error-prone and the most robust to future API
+# changes.
+#
+# The regular simulate() call hierarchy is
+#
+# simulate_formula.network(formula) -&gt;
+#   simulate.ergm_model(ergm_model) -&gt;
+#     simulate.ergm_state_full(ergm_state)
+#
+# They take an argument, return.args=, that will interrupt the call
+# and have it return its arguments. We can use it to obtain
+# low-level inputs robustly.
+
+data(florentine)
+control &lt;- control.simulate(MCMC.burnin = 2, MCMC.interval = 1)
+
+
+# FYI: Obtain input for simulate.ergm_model():
+sim.mod &lt;- simulate(flomarriage~absdiff("wealth"), constraints=~edges,
+                    coef = NULL, nsim=3, control=control,
+                    return.args="ergm_model")
+names(sim.mod)
+str(sim.mod$object,1) # ergm_model
+
+# Obtain input for simulate.ergm_state_full():
+sim.state &lt;- simulate(flomarriage~absdiff("wealth"), constraints=~edges,
+                      coef = NULL, nsim=3, control=control,
+                      return.args="ergm_state")
+names(sim.state)
+str(sim.state$object, 1) # ergm_state
+
+# This control parameter would be set by nsim in the regular
+# simulate() call:
+control$MCMC.samplesize &lt;- 3
+
+# Capture intermediate networks; can also be left NULL for just the
+# statistics:
+control$MCMC.save_networks &lt;- TRUE
+
+# Simulate starting from this state:
+out &lt;- ergm_MCMC_sample(sim.state$object, control, theta = -1, verbose=6)
+names(out)
+out$stats # Sampled statistics
+str(out$networks, 1) # Updated ergm_state (one per thread)
+# List (an element per thread) of lists of captured ergm_states,
+# one for each sampled network:
+str(out$sampnetworks, 2)
+lapply(out$sampnetworks[[1]], as.network) # Converted to networks.
+
+# One more, picking up where the previous sampler left off, but see Note:
+control$MCMC.samplesize &lt;- 1
+str(ergm_MCMC_sample(out$networks, control, theta = -1, verbose=6), 2)
+
+</code></pre>
+
+
+</div>

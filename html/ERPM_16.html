@@ -1,0 +1,193 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>draw_Metropolis_single</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Draw Metropolis single</h2>
+
+<h3>Description</h3>
+
+<p>Function to sample the model with a Markov chain (single partition procedure).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">draw_Metropolis_single(
+  theta,
+  first.partition,
+  nodes,
+  effects,
+  objects,
+  burnin,
+  thining,
+  num.steps,
+  neighborhood = c(0.7, 0.3, 0),
+  numgroups.allowed = NULL,
+  numgroups.simulated = NULL,
+  sizes.allowed = NULL,
+  sizes.simulated = NULL,
+  return.all.partitions = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>model parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>first.partition, </code></td>
+<td>
+<p>starting partition for the Markov chain</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nodes</code></td>
+<td>
+<p>nodeset (data frame)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effects</code></td>
+<td>
+<p>effects/sufficient statistics (list with a vector "names", and a vector "objects")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>objects</code></td>
+<td>
+<p>objects used for statistics calculation (list with a vector "name", and a vector "object")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>integer for the number of burn-in steps before sampling</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thining</code></td>
+<td>
+<p>integer for the number of thining steps between sampling</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.steps</code></td>
+<td>
+<p>number of samples</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neighborhood</code></td>
+<td>
+<p>= c(0.7,0.3,0), way of choosing partitions: probability vector (2 actors swap, merge/division, single actor move, single pair move, 2 pairs swap, 2 groups reshuffle)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numgroups.allowed</code></td>
+<td>
+<p>= NULL, # vector containing the number of groups allowed in the partition (now, it only works with vectors like num_min:num_max)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numgroups.simulated</code></td>
+<td>
+<p>= NULL, # vector containing the number of groups simulated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sizes.allowed</code></td>
+<td>
+<p>= NULL,  vector of group sizes allowed in sampling (now, it only works for vectors like size_min:size_max)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sizes.simulated</code></td>
+<td>
+<p>= NULL, vector of group sizes allowed in the Markov chain but not necessraily sampled (now, it only works for vectors like size_min:size_max)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.all.partitions</code></td>
+<td>
+<p>= FALSE option to return the sampled partitions on top of their statistics (for GOF)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># define an arbitrary set of n = 6 nodes with attributes, and an arbitrary covariate matrix
+n &lt;- 6 
+nodes &lt;- data.frame(label = c("A","B","C","D","E","F"),
+                    gender = c(1,1,2,1,2,2),
+                    age = c(20,22,25,30,30,31)) 
+friendship &lt;- matrix(c(0, 1, 1, 1, 0, 0,
+                       1, 0, 0, 0, 1, 0,
+                       1, 0, 0, 0, 1, 0,
+                       1, 0, 0, 0, 0, 0,
+                       0, 1, 1, 0, 0, 1,
+                       0, 0, 0, 0, 1, 0), 6, 6, TRUE)
+
+# choose the effects to be included (see manual for all effect names)
+effects &lt;- list(names = c("num_groups","same","diff","tie"),
+objects = c("partition","gender","age","friendship"))
+objects &lt;- list()
+objects[[1]] &lt;- list(name = "friendship", object = friendship)
+
+# set parameter values for each of these effects
+parameters &lt;- c(-0.2, 0.2, -0.1, 0.5)
+
+
+# generate simulated sample, by setting the desired additional parameters for the 
+# Metropolis sampler and choosing a starting point for the chain (first.partition)
+nsteps &lt;- 100
+sample &lt;- draw_Metropolis_single(theta = parameters, 
+                                 first.partition = c(1,1,2,2,3,3), 
+                                 nodes = nodes, 
+                                 effects = effects, 
+                                 objects = objects, 
+                                 burnin = 100, 
+                                 thining = 10, 
+                                 num.steps = nsteps, 
+                                 neighborhood = c(0,1,0), 
+                                 numgroups.allowed = 1:n,
+                                 numgroups.simulated = 1:n,
+                                 sizes.allowed = 1:n,
+                                 sizes.simulated = 1:n,
+                                 return.all.partitions = TRUE)
+
+
+# or: simulate an estimated model
+partition &lt;- c(1,1,2,2,2,3) # the partition already defined for the (previous) estimation
+nsimulations &lt;- 1000
+simulations &lt;- draw_Metropolis_single(theta = estimation$results$est, 
+                                      first.partition = partition, 
+                                      nodes = nodes, 
+                                      effects = effects, 
+                                      objects = objects, 
+                                      burnin = 100, 
+                                      thining = 20, 
+                                      num.steps = nsimulations, 
+                                      neighborhood = c(0,1,0), 
+                                      sizes.allowed = 1:n,
+                                      sizes.simulated = 1:n,
+                                      return.all.partitions = TRUE)
+
+
+</code></pre>
+
+
+</div>

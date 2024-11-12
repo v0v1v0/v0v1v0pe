@@ -1,0 +1,272 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams_eval</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Auxiliary Tools for Evaluating Exams</h2>
+
+<h3>Description</h3>
+
+<p>Generation of various helper functions for evaluating exams.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">exams_eval(partial = TRUE, negative = FALSE,
+  rule = c("false2", "false", "true", "all", "none"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>partial</code></td>
+<td>
+<p>logical. Should multiple-choice (<code>mchoice</code>) answers be evaluated
+as a whole pattern (<code>partial = FALSE</code>) or should partial credits
+be assigned to each of the choices (<code>partial = TRUE</code>)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>negative</code></td>
+<td>
+<p>logical or numeric. Handling of negative points for an
+exercise, for details see below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+<p>character specifying which rule to use for negative
+partial credits (i.e., only relevant for multiple-choice answers
+when <code>partial = TRUE</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>exams_eval</code> is a convenience wrapper for specifying
+various types of evaluation policies. It returns a set of auxiliary
+functions that may be useful in the evaluation of exams.
+</p>
+<p>Exercises of types <code>num</code>, <code>string</code>, or <code>schoice</code> can
+essentially be just correct or wrong. In the former case they will give 100 percent of
+all points, in the latter either 0 percent or some negative percentage
+can be assigned. Setting <code>negative = TRUE</code> is equivalent to setting
+either <code>negative = 1</code> or equivalently <code>negative = -1</code>, which
+all signal that 100 percent of the points for the exercise should be subtracted.
+Other percentages are also possible, e.g., <code>negative = 0.25</code>,
+which would be a natural choice for <code>"schoice"</code> questions with five
+answer alternatives. Not that when using an evaluation strategy with
+negative points for wrong answers, the system that collects the participants'
+answers should distinguish between ‘solved incorrectly’ and
+‘not attempted’ (which should always yield 0 percent).
+</p>
+<p>Moreover, for <code>mchoice</code> (multiple-choice) answers the evaluation policy can either
+pertain to the answer pattern as a whole (which can be correct or wrong, see above)
+or it can employ a partial credit strategy. In the latter case, each
+selected correct choice will yield the fraction 1/ncorrect of points.
+When an incorrect choice is selected, it should lead to negative points.
+Five strategies are currently implemented: <code>"false"</code> uses
+1/nwrong while <code>"false2"</code> uses 1/max(nwrong, 2);
+<code>"true"</code> uses 1/ncorrect (so that each wrong selection cancels
+one correct selection); <code>"all"</code> uses 1 (so that a single wrong
+selection cancels all correct selections); and <code>"none"</code> uses 0
+(so that wrong selections have no effect at all). When aggregating the partial percentages,
+the overall points can become negative. By setting <code>negative</code>
+a lower bound can be set: <code>negative = TRUE</code> sets no bound while
+<code>negative = FALSE</code> sets the bound to zero. Any other numeric
+value could be set as well, e.g., <code>negative = 0.25</code>.
+</p>
+<p>The functions returned by <code>exams_eval</code> try to automatically infer
+the type of exercise based on the correct answer. However, this cannot
+always infer the type reliably (e.g., the number 10 vs. the string 10
+vs. a multiple-choice question with two elements, true and false). Specifically,
+multiple-choice vs. single-choice cannot be distinguished automatically.
+Hence, it is better to explicitly indicate the exercise type with the 
+<code>type</code> argument.
+</p>
+<p>Evaluations for <code>cloze</code> exercises have to be built by appropriately reusing the building
+blocks for <code>num</code>/<code>string</code>/<code>schoice</code>/<code>mchoice</code>. For example,
+the components of <code>cloze</code> exercises have to be evaluated individually
+and then aggregated as desired. Different evaluations for different item types may be
+set as in: <code>exams2qti12(..., eval = eval1, schoice = list(eval = eval2))</code>. 
+Then <code>eval = eval1</code> is used as the default for all exercise types except 
+<code>schoice</code> where <code>eval = eval2</code> is used.
+</p>
+<p>Thus, <code>exams_eval</code> might not give the complete finished evaluation
+policy for an entire exam but supplies the most important building blocks
+for setting this up ‘by hand’. Internally, <code>exams_eval</code> is also used by
+<code>exams2moodle</code>, <code>exams2qti12</code> and 
+<code>exams2blackboard</code> for writing the evaluation 
+specifications in the respective XML specifications.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>exams_eval</code> returns a list with the input parameters
+<code>partial</code>, <code>negative</code>, and <code>rule</code> along with
+the following functions:  
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>checkanswer</code></td>
+<td>
+<p>function with arguments
+<code>(correct</code>, <code>answer</code>, <code>tolerance = 0</code>, and <code>type = NULL</code>.
+It checks whether <code>answer</code> (sufficiently) matches
+<code>correct</code> or not. It returns <code>1</code> for correct, <code>-1</code>
+for wrong and <code>0</code> for not attempted. In case of <code>partial = TRUE</code>, the
+functions returns a vector for multiple-choice questions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pointvec</code></td>
+<td>
+<p>function with arguments <code>correct = NULL</code> and <code>type = NULL</code>.
+It computes the vector of points for correct and wrong answers,
+respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pointsum</code></td>
+<td>
+<p>function with arguments
+<code>(correct</code>, <code>answer</code>, <code>tolerance = 0</code>, and <code>type = NULL</code>.
+It computes the overall number of points.</p>
+</td>
+</tr>
+</table>
+<p>All of the functions require at least the <code>correct</code> answer and optionally
+the exercise <code>type</code> (num, mchoice/schoice, or string). By default, the
+<code>type</code> is inferred from <code>correct</code> which works automatically except
+in a few edge cases (e.g., to correctly autodetect a string exercise the correct
+answer must contain at least one character that is not 0 or 1).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>exams2moodle</code>,
+<code>exams2qti12</code>,
+<code>exams2blackboard</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## binary evaluation policy with solutions being either correct
+## or wrong: partial = FALSE, negative = FALSE
+ee &lt;- exams_eval(partial = FALSE, negative = FALSE)
+
+## points that can be achieved are 0/1
+ee$pointvec()
+
+## checkanswer() returns 1 for correct, -1 for incorrect and 0 for missing answer
+ee$checkanswer(1.23, 1.23)
+ee$checkanswer(1.23, "1.23")
+ee$checkanswer(1.23, "1,23")
+ee$checkanswer(1.23, 1.24)
+ee$checkanswer(1.23, 1.24, tolerance = 0.01)
+ee$checkanswer(1.23, NA)
+ee$checkanswer(1.23, NULL)
+ee$checkanswer(1.23, "")
+
+## similarly for logical (mchoice/schoice) answers
+## (which allows either string or logical specification)
+ee$checkanswer("10000", "10000")
+ee$checkanswer(c(TRUE, FALSE, FALSE, FALSE, FALSE), c(TRUE, FALSE, FALSE, FALSE, FALSE))
+ee$checkanswer(c(TRUE, FALSE, FALSE, FALSE, FALSE), "10000")
+ee$checkanswer("10000", "01000")
+ee$checkanswer("10000", "11000")
+
+## and analogously for strings
+ee$checkanswer("foo", "foo")
+ee$checkanswer("foo", "bar")
+ee$checkanswer("foo", "")
+
+## obtain points achieved
+ee$pointsum("10000", "10000")
+ee$pointsum("10000", "01000")
+ee$pointsum("10000", "00000")
+ee$pointsum("10000", NA)
+
+## ---------------------------------------------------------
+## evaluation policy with -25% penalty for wrong answers
+ee &lt;- exams_eval(partial = FALSE, negative = -0.25)
+
+## points that can be achieved are 1/-0.25 (or zero)
+ee$pointvec()
+
+## obtain points achieved
+ee$pointsum("10000", "10000")
+ee$pointsum("10000", "01000")
+ee$pointsum("10000", "00000")
+ee$pointsum("10000", NA)
+ee$pointsum(1.23, 1.23)
+ee$pointsum(1.23, 2.34)
+ee$pointsum(1.23, NA)
+ee$pointsum(1.23, 1.24)
+ee$pointsum(1.23, 1.24, tolerance = 0.1)
+
+## ---------------------------------------------------------
+## default evaluation policy with partial points
+## (but without negative points overall)
+ee &lt;- exams_eval()
+
+## points that can be achieved are 1/3 (1/#true)
+## or -1/2 (1/#false)
+ee$pointvec("10101")
+
+## obtain points achieved
+ee$pointsum("10101", "10101")
+ee$pointsum("10101", "10100")
+ee$pointsum("10101", "11100")
+ee$pointsum("10101", "01010")
+ee$pointsum("10101", "00000")
+
+## show individual answer check
+ee$checkanswer("10101", "10101")
+ee$checkanswer("10101", "10100")
+ee$checkanswer("10101", "11100")
+ee$checkanswer("10101", "01010")
+ee$checkanswer("10101", "00000")
+
+## numeric/string answers are not affected by partial=TRUE
+ee$checkanswer(1.23, 1.23)
+ee$pointsum(1.23, 1.23)
+ee$checkanswer(1.23, 2.34)
+ee$pointsum(1.23, 2.34)
+
+## ---------------------------------------------------------
+## evaluation policy with partial points
+## (and with up to -25% negative points overall)
+ee &lt;- exams_eval(partial = TRUE, negative = -0.25)
+
+## points that can be achieved are 1/3 (1/#true)
+## or -1/2 (1/#false)
+ee$pointvec("10101")
+
+## obtain points achieved
+ee$pointsum("10101", "10101")
+ee$pointsum("10101", "01010")
+ee$pointsum("10101", "00000")
+
+## show individual answer check
+ee$checkanswer("10101", "10101")
+ee$checkanswer("10101", "10100")
+ee$checkanswer("10101", "11100")
+ee$checkanswer("10101", "01010")
+ee$checkanswer("10101", "00000")
+
+## numeric/string answers are not affected by partial=TRUE
+ee$pointsum(1.23, 1.23)
+ee$pointsum(1.23, 2.34)
+</code></pre>
+
+
+</div>

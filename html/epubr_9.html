@@ -1,0 +1,86 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epub_reorder</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Reorder sections</h2>
+
+<h3>Description</h3>
+
+<p>Reorder text sections in an e-book based on a user-provided function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epub_reorder(data, .f, pattern)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame created by <code>epub</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.f</code></td>
+<td>
+<p>a scalar function to determine a single row index based on a matched regular expression. It must take two strings, the text and the pattern, and return a single number. See examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pattern</code></td>
+<td>
+<p>regular expression passed to <code>.f</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Many e-books have chronologically ordered sections based on quality metadata.
+This results in properly book sections in the nested data frame.
+However, some poorly formatted e-books have their internal sections occur in an arbitrary order.
+This can be frustrating to work with when doing text analysis on each section and where order matters.
+</p>
+<p>This function addresses this case by reordering the text sections in the nested data frame based on a user-provided function that re-indexes the data frame rows based on their content.
+In general, the approach is to find something in the content of each section that describes the section order.
+For example, <code>epub_recombine</code> can use a regular expression to identify chapters.
+Taking this a step further, <code>epub_reorder</code> can use a function that works with the same information to reorder the rows.
+</p>
+<p>It is enough in the former case to identify where in the text the pattern occurs. There is no need to extract numeric ordering from it.
+The latter takes more effort. In the example EPUB file included in <code>epubr</code>, chapters can be identified using a pattern of the word CHAPTER in capital letters followed by a space and then some Roman numerals.
+The user must provide a function that would parse the Roman numerals in this pattern so that the rows of the data frame can be reordered properly.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a data frame
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+file &lt;- system.file("dracula.epub", package = "epubr")
+x &lt;- epub(file) # parse entire e-book
+x &lt;- epub_recombine(x, "CHAPTER [IVX]+", sift = list(n = 1000)) # clean up
+
+library(dplyr)
+set.seed(1)
+x$data[[1]] &lt;- sample_frac(x$data[[1]]) # randomize rows for example
+x$data[[1]]
+
+f &lt;- function(x, pattern) as.numeric(as.roman(gsub(pattern, "\\1", x)))
+x &lt;- epub_reorder(x, f, "^CHAPTER ([IVX]+).*")
+x$data[[1]]
+
+</code></pre>
+
+
+</div>

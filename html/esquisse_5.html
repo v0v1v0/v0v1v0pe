@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ggplot-output</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Render <code>ggplot</code> module</h2>
+
+<h3>Description</h3>
+
+<p>Display a plot on the client and allow to download it.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ggplot_output(
+  id,
+  width = "100%",
+  height = "400px",
+  downloads = downloads_labels(),
+  ...
+)
+
+downloads_labels(
+  label = ph("download-simple"),
+  png = tagList(ph("image"), "PNG"),
+  pdf = tagList(ph("file-pdf"), "PDF"),
+  svg = tagList(ph("browsers"), "SVG"),
+  jpeg = tagList(ph("image"), "JPEG"),
+  pptx = tagList(ph("projector-screen"), "PPTX"),
+  more = tagList(ph("gear"), i18n("More options"))
+)
+
+render_ggplot(
+  id,
+  expr,
+  ...,
+  env = parent.frame(),
+  quoted = FALSE,
+  filename = "export-ggplot",
+  resizable = FALSE,
+  use_plotly = reactive(FALSE),
+  width = reactive(NULL),
+  height = reactive(NULL)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Module ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>width, height</code></td>
+<td>
+<p>Width / Height of the plot, in the server it has to be a <code>shiny::reactive()</code> function returning a new width/height for the plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>downloads</code></td>
+<td>
+<p>Labels for export options, use <code>downloads_labels()</code> or <code>NULL</code> to disable export options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Parameters passed to <code>shiny::plotOutput()</code> (<code>ggplot_output</code>) or <code>shiny::renderPlot()</code> (<code>render_ggplot</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>Main label for export button</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>png, pdf, svg, jpeg, pptx</code></td>
+<td>
+<p>Labels to display in
+export menu, use <code>NULL</code> to disable specific format.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>more</code></td>
+<td>
+<p>Label for "more" button, allowing to launch export modal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expr</code></td>
+<td>
+<p>An expression that generates a <code>ggplot</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>The environment in which to evaluate expression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quoted</code></td>
+<td>
+<p>Is <code>expr</code> a quoted expression (with <code>quote()</code>)? This
+is useful if you want to save an expression in a variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>A string of the filename to export WITHOUT extension,
+it will be added according to type of export.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resizable</code></td>
+<td>
+<p>Can the chart size be adjusted by the user?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_plotly</code></td>
+<td>
+<p>A <code>shiny::reactive()</code> function returning <code>TRUE</code> or <code>FALSE</code> to render
+the plot with <code>plotly::ggplotly()</code> or not.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Server-side, a <code>reactiveValues</code> with the plot.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(shiny)
+library(ggplot2)
+library(esquisse)
+
+
+ui &lt;- fluidPage(
+  tags$h2("ggplot output"),
+  selectInput("var", "Variable:", names(economics)[-1]),
+  ggplot_output("MYID", width = "600px")
+)
+
+server &lt;- function(input, output, session) {
+  
+  render_ggplot("MYID", {
+    ggplot(economics) + 
+      geom_line(aes(date, !!sym(input$var))) + 
+      theme_minimal() + 
+      labs(
+        title = "A cool chart made with ggplot2",
+        subtitle = "that you can export in various format"
+      )
+  })
+}
+
+if (interactive())
+  shinyApp(ui, server)
+</code></pre>
+
+
+</div>

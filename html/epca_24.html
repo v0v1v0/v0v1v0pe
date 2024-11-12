@@ -1,0 +1,231 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sparse Matrix Approximation</h2>
+
+<h3>Description</h3>
+
+<p>Perform the sparse matrix approximation (SMA) of a data matrix <code>x</code> as three multiplicative components: <code>z</code>, <code>b</code>, and <code>t(y)</code>,
+where <code>z</code> and <code>y</code> are sparse, and <code>b</code> is low-rank but not necessarily diagonal.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sma(
+  x,
+  k = min(5, dim(x)),
+  gamma = NULL,
+  rotate = c("varimax", "absmin"),
+  shrink = c("soft", "hard"),
+  center = FALSE,
+  scale = FALSE,
+  normalize = FALSE,
+  order = FALSE,
+  flip = FALSE,
+  max.iter = 1000,
+  epsilon = 1e-05,
+  quiet = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>matrix</code> or <code>Matrix</code> to be analyzed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p><code>integer</code>, rank of approximation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p><code>numeric(2)</code>, sparsity parameters. If <code>gamma</code> is <code>numeric(1)</code>, it is used for both left and right sparsity component (i.e, <code>z</code> and <code>y</code>). If absent, the two parameters are set as (default): <code>sqrt(nk)</code> and <code>sqrt(pk)</code> for <code>z</code> and <code>y</code> respectively, where n x p is the dimension of <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rotate</code></td>
+<td>
+<p><code>character(1)</code>, rotation method. Two options are currently available: "varimax" (default) or "absmin" (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shrink</code></td>
+<td>
+<p><code>character(1)</code>, shrinkage method, either "soft"- (default) or "hard"-thresholding (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p><code>logical</code>, whether to center columns of <code>x</code> (see <code>scale()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p><code>logical</code>, whether to scale columns of <code>x</code> (see <code>scale()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+<p><code>logical</code>, whether to rows normalization should be done before and undone afterward the rotation (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p><code>logical</code>, whether to re-order the columns of the estimates (see Details below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flip</code></td>
+<td>
+<p><code>logical</code>, whether to flip the signs of the columns of estimates such that all columns are positive-skewed (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.iter</code></td>
+<td>
+<p><code>integer</code>, maximum number of iteration (default to 1,000).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p><code>numeric</code>, tolerance of convergence precision (default to 0.00001).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p><code>logical</code>, whether to mute the process report (default to <code>TRUE</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong><code>rotate</code></strong>: The <code>rotate</code> option specifies the rotation technique to
+use. Currently, there are two build-in options—“varimax” and “absmin”.
+The “varimax” rotation maximizes the element-wise L4 norm of the rotated
+matrix. It is faster and computationally more stable. The “absmin”
+rotation minimizes the absolute sum of the rotated matrix. It is sharper
+(as it directly minimizes the L1 norm) but slower and computationally
+less stable.
+</p>
+<p><strong><code>shrink</code></strong>: The <code>shrink</code> option specifies the shrinkage operator to
+use. Currently, there are two build-in options—“soft”- and
+“hard”-thresholding. The “soft”-thresholding universally reduce all
+elements and sets the small elements to zeros. The “hard”-thresholding
+only sets the small elements to zeros.
+</p>
+<p><strong><code>normalize</code></strong>: The argument <code>normalize</code> gives an indication of if and
+how any normalization should be done before rotation, and then undone
+after rotation. If normalize is <code>FALSE</code> (the default) no normalization
+is done. If normalize is <code>TRUE</code> then Kaiser normalization is done. (So
+squared row entries of normalized <code>x</code> sum to 1.0. This is sometimes
+called Horst normalization.) For <code>rotate="absmin"</code>, if <code>normalize</code> is a
+vector of length equal to the number of indicators (i.e., the number of
+rows of <code>x</code>), then the columns are divided by <code>normalize</code> before
+rotation and multiplied by <code>normalize</code> after rotation. Also, If
+<code>normalize</code> is a function then it should take <code>x</code> as an argument and
+return a vector which is used like the vector above.
+</p>
+<p><strong><code>order</code></strong>: In PCA (and SVD), the principal components (and the
+singular vectors) are ordered. For this, we order the sparse components
+(i.e., the columns of <code>z</code> or <code>y</code>) by their explained variance in the
+data, which is defined as <code>sum((x %*% y)^2)</code>, where y is a column of the
+sparse component. Note: not to be confused with the cumulative
+proportion of variance explained by <code>y</code> (and <code>z</code>), particularly when <code>y</code>
+(and <code>z</code>) is may not be strictly orthogonal.
+</p>
+<p><strong><code>flip</code></strong>: The argument <code>flip</code> gives an indication of if and the
+columns of estimated sparse component should be flipped. Note that the
+estimated (sparse) loadings, i.e., the weights on original variables,
+are column-wise invariant to a sign flipping. This is because flipping
+of a principal direction does not influence the amount of the explained
+variance by the component. If <code>flip=TRUE</code>, then the columns of loadings
+will be flip accordingly, such that each column is positive-skewed. This
+means that for each column, the sum of cubic elements (i.e., <code>sum(x^3)</code>)
+are non-negative.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an <code>sma</code> object that contains:
+</p>
+<table><tr style="vertical-align: top;">
+<td>
+<code>z</code>, <code>b</code>, <code>t(y)</code>
+</td>
+<td>
+<p>the three parts in the SMA.
+<code>z</code> is a sparse n x k <code>matrix</code> that contains the row components (loadings).
+The row names of <code>z</code> inherit the row names of <code>x</code>.
+<code>b</code> is a k x k <code>matrix</code> that contains the scores of SMA;
+the Frobenius norm of <code>b</code> equals to the total variance explained by the SMA.
+<code>y</code> is a sparse n x k <code>matrix</code>that contains the column components (loadings).</p>
+</td>
+</tr></table>
+<p>The row names of <code>y</code> inherit the column names of <code>x</code>.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>score</code></td>
+<td>
+<p>the total variance explained by the SMA.
+This is the optimal objective value obtained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.iter</code></td>
+<td>
+<p><code>integer</code>, the number of iteration taken.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Chen, F. and Rohe, K. (2020) "A New Basis for Sparse Principal Component Analysis."
+</p>
+
+
+<h3>See Also</h3>
+
+<p>sca, prs
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## simulate a rank-5 data matrix with some additive Gaussian noise
+n &lt;- 300
+p &lt;- 50
+k &lt;- 5 ## rank
+z &lt;- shrinkage(polar(matrix(runif(n * k), n, k)), sqrt(n))
+b &lt;- diag(5) * 3
+y &lt;- shrinkage(polar(matrix(runif(p * k), p, k)), sqrt(p))
+e &lt;- matrix(rnorm(n * p, sd = .01), n, p)
+x &lt;- scale(z %*% b %*% t(y) + e)
+
+## perform sparse matrix approximation
+s.sma &lt;- sma(x, k)
+s.sma
+
+</code></pre>
+
+
+</div>

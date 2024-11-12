@@ -1,0 +1,152 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SEIR.simulator</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate an epidemic on a contact network</h2>
+
+<h3>Description</h3>
+
+<p>Simulate the spread of an epidemic across an
+(undirected) contact network.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SEIR.simulator(M, N, beta, ki, thetai, ke = ki, thetae = thetai, 
+    latencydist = "fixed", latencyperiod = 0) </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>an undirected network, given in edgelist matrix 
+format</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>the number of nodes in the contact network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>the transmission rate of the virus across an edge
+of the network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ki</code></td>
+<td>
+<p>the shape parameter for the removal process for
+the epidemic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thetai</code></td>
+<td>
+<p>the scale parameter for the removal process
+for the epidemic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ke</code></td>
+<td>
+<p>the shape parameter for the removal process for
+the epidemic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thetae</code></td>
+<td>
+<p>the scale parameter for the removal process
+for the epidemic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>latencydist</code></td>
+<td>
+<p>type of latency period; can be “fixed” 
+or “gamma”.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>latencyperiod</code></td>
+<td>
+<p>length of latency period, if using latencydist 
+== “fixed”.  Ignored if latencydist == “gamma”.  
+Set to 0 to get an SIR epidemic.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Takes as input an undirected network, given in
+edgelist matrix format, which is the same format returned by
+<code>SimulateDyadicLinearERGM</code>. Randomly chooses an initial infective
+individual. The infection spreads randomly across edges in the 
+network according to exponential infective periods with mean <code class="reqn">\frac{1}{beta}</code>.
+An infective individual remains in the exposed state for a either
+a fixed period of time given by latencyperiod or a time described by a 
+gamma RV with parameters ke and thetae (mean = <code class="reqn">ke \cdot thetae</code>, 
+var = <code class="reqn">ke \cdot thetae^2</code>).  After this exposed period, an infected person 
+moves to the Infected state, at which point they can infect susceptible individuals.  
+The infective individuals are removed after an infective period whose length is governed by 
+a gamma RV with parameters ki and thetai (mean = <code class="reqn">ki \cdot thetai</code>, 
+var = <code class="reqn">ki \cdot thetai^2</code>).  Once an individual is removed, they cannot be 
+re-infected and cannot infect others.</p>
+
+
+<h3>Value</h3>
+
+<p>matrix consisting of one row for each individual in the 
+population.  Each row contains (in columns 1 - 5, respectively):
+the node infected, the infecting node, the time of infection,
+the time of transition from exposed to infective, and the 
+time of removal.  The times are shifted so that the first removal
+occurs at time 0.  The rows corresponding to the susceptible 
+members of the population (i.e., the individuals that were not 
+infected during the course of the epidemic) are placed after 
+those for the infected individuals.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Chris Groendyke <a href="mailto:cgroendyke@gmail.com">cgroendyke@gmail.com</a>,
+David Welch <a href="mailto:david.welch@auckland.ac.nz">david.welch@auckland.ac.nz</a>, 
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>SimulateDyadicLinearERGM</code> for simulating an Erdos-Renyi
+contact network, <code>epinet</code> for performing
+inference on the network and epidemic model parameters,
+and <code>plot.epidemic</code> and <code>epi2newick</code> for plotting functions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simulate an epidemic through a network of 30
+set.seed(3)
+N &lt;- 30
+# Build dyadic covariate matrix (X)
+# Have a single covariate for overall edge density; this is the Erdos-Renyi model
+nodecov &lt;- matrix(1:N,nrow = N)
+dcm &lt;- BuildX(nodecov)
+# Simulate network and then simulate epidemic over network
+examplenet &lt;- SimulateDyadicLinearERGM(N, dyadiccovmat = dcm, eta = -1.8)
+exampleepidemic &lt;- SEIR.simulator(examplenet, N = 30, 
+    beta = 0.3, ki = 2, thetai = 5, latencydist = "gamma")
+</code></pre>
+
+
+</div>

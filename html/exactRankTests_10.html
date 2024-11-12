@@ -1,0 +1,336 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dperm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Distribution of One and Two Sample Permutation Tests </h2>
+
+<h3>Description</h3>
+
+<p>Density, distribution function and quantile function 
+for the distribution of one and two sample 
+permutation tests using the Shift-Algorithm by
+Streitberg &amp; R\"ohmel.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dperm(x, scores, m, paired=NULL, tol = 0.01, fact=NULL, density=FALSE,
+      simulate=FALSE, B=10000)
+pperm(q, scores, m, paired=NULL, tol = 0.01, fact=NULL,
+      alternative=c("less", "greater", "two.sided"), pprob=FALSE,
+      simulate=FALSE, B=10000)
+qperm(p, scores, m, paired=NULL, tol = 0.01, fact=NULL, 
+      simulate=FALSE, B=10000)
+rperm(n, scores, m)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, q</code></td>
+<td>
+<p> vector of quantiles.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>vector of probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scores</code></td>
+<td>
+<p>arbitrary scores of the observations 
+of the <code>x</code> (first <code>m</code> elements) and 
+<code>y</code> sample. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>sample size of the <code>x</code> sample. If <code>m = length(x)</code>
+scores of paired observations are assumed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired</code></td>
+<td>
+<p>logical. Indicates if paired observations are used. Needed
+to discriminate between a paired problem and the distribution 
+of the total sum of the scores (which has mass 1 at the 
+point <code>sum(scores)</code>).</p>
+</td>
+</tr>
+</table>
+<p>.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>real. Real valued scores are mapped into integers by rounding
+after multiplication with an appropriate factor.
+Make sure that the absolute difference between the 
+each possible test statistic for the original scores and the
+rounded scores is less than <code>tol</code>. This might not be 
+possible due to memory/time limitations, a warning is given in
+this case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fact</code></td>
+<td>
+<p>real. If <code>fact</code> is given, real valued scores are mapped 
+into integers using <code>fact</code> as factor. <code>tol</code> is 
+ignored in this case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>number of random observations to generate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>character indicating whether the probability 
+<code class="reqn">P(T \le q)</code> (<code>less</code>), 
+<code class="reqn">P(T \ge q)</code> (<code>greater</code>) or a two-sided 
+p-value (<code>two.sided</code>) should be computed in
+<code>pperm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pprob</code></td>
+<td>
+<p>logical. Indicates if the probability <code class="reqn">P(T = q)</code> should
+be computed additionally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>density</code></td>
+<td>
+<p>logical. When  <code>x</code> is a scalar and <code>density</code> is
+<code>TRUE</code>, <code>dperm</code> returns the density for all
+possible statistics less or equal <code>x</code> as a data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simulate</code></td>
+<td>
+<p>logical. Use conditional Monte-Carlo to 
+compute the distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>number of Monte-Carlo replications to be used.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The exact distribution of the sum of the first <code>m</code> scores is
+evaluated using the Shift-Algorithm by Streitberg &amp; R\"ohmel under the
+hypothesis of exchangeability (or, equivalent, the hypothesis that all
+permutations of the scores are equally likely). The algorithm is able
+to deal with tied scores, so the conditional distribution can be
+evaluated. 
+</p>
+<p>The algorithm is defined for positive integer valued scores only. 
+There are two ways dealing with real valued scores. 
+First, one can try to find integer valued scores that lead to statistics 
+which differ not more than <code>tol</code>
+from the statistics computed for the original scores. This can be done as
+follows.  
+</p>
+<p>Without loss of generality let <code class="reqn">a_i &gt; 0</code> denote real valued scores in
+reverse ordering and
+<code class="reqn">f</code> a positive factor (this is the <code>fact</code> argument). 
+Let <code class="reqn">R_i = f \cdot a_i - round(f \cdot a_i)</code>.  Then 
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_{i=1}^m f \cdot a_i = \sum_{i=1}^m round(f \cdot a_i) - R_i. </code>
+</p>
+
+<p>Clearly, the maximum difference between <code class="reqn">1/f \sum_{i=1}^m f \cdot a_i</code> and
+<code class="reqn">1/f \sum_{i=1}^n round(f \cdot a_i)</code> is given by 
+<code class="reqn">|\sum_{i=1}^m R_i|</code>. Therefore one searches for <code class="reqn">f</code> with 
+</p>
+<p style="text-align: center;"><code class="reqn"> |\sum_{i=1}^m R_i| \le \sum_{i=1}^m |R_i| \le tol.</code>
+</p>
+
+<p>If <code class="reqn">f</code> induces more that 100.000 columns in the Shift-Algorithm by 
+Streitberg  &amp; R\"ohmel, <code class="reqn">f</code> is restricted to the largest integer 
+that does not. 
+</p>
+<p>The second idea is to map the scores into integers by taking the
+integer part of <code class="reqn">a_i N / \max(a_i)</code> (Hothorn &amp; Lausen, 2002). 
+This induces additional ties, but the shape of the
+scores is very similar. That means we do not try to approximate something
+but use a different test (with integer valued scores), serving for the 
+same purpose
+(due to a similar shape of the scores). However, this has to be done prior
+to calling <code>pperm</code> (see the examples).
+</p>
+<p>Exact two-sided p-values are computed as suggested in the StatXact-5 
+manual, page 225, equation (9.31) and equation (8.18), p. 179 (paired case).
+In detail: For the paired case the two-sided p-value is just twice the
+one-sided one. For the independent sample case the two sided p-value is
+defined as
+</p>
+<p style="text-align: center;"><code class="reqn">p_2 = P( |T - E(T)| \ge | q - E(T) |)</code>
+</p>
+
+<p>where <code class="reqn">q</code> is the quantile passed to <code>pperm</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dperm</code> gives the density, <code>pperm</code> gives the distribution
+function and <code>qperm</code> gives the quantile function. If <code>pprob</code> is
+true, <code>pperm</code> returns a list with elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>PVALUE</code></td>
+<td>
+<p>the probability specified by <code>alternative</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PPROB</code></td>
+<td>
+<p>the probability <code class="reqn">P(T = q)</code>.</p>
+</td>
+</tr>
+</table>
+<p><code>rperm</code> is a wrapper to <code>sample</code>.
+</p>
+
+
+<h3>References</h3>
+
+ 
+<p>Bernd Streitberg &amp; Joachim R\"ohmel (1986),
+Exact distributions for permutations and rank tests: 
+An introduction to some recently published algorithms. 
+<em>Statistical Software Newsletter</em> <b>12</b>(1), 10–17.
+</p>
+<p>Bernd Streitberg &amp; Joachim R\"ohmel (1987),
+Exakte Verteilungen f\"ur Rang- und Randomisierungstests 
+im allgemeinen $c$-Stichprobenfall.
+<em>EDV in Medizin und Biologie</em> <b>18</b>(1), 12–19.
+</p>
+<p>Torsten Hothorn (2001),
+On exact rank tests in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.
+<em>R News</em> <b>1</b>(1), 11–12.
+</p>
+<p>Cyrus R. Mehta &amp; Nitin R. Patel (2001),
+<em>StatXact-5 for Windows.</em>
+Manual, Cytel Software Cooperation, Cambridge, USA
+</p>
+<p>Torsten Hothorn &amp; Berthold Lausen (2003),
+On the exact distribution of maximally selected rank statistics.
+<em>Computational Statistics &amp; Data Analysis</em>, <b>43</b>(2),
+121-137.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# exact one-sided p-value of the Wilcoxon test for a tied sample
+
+x &lt;- c(0.5, 0.5, 0.6, 0.6, 0.7, 0.8, 0.9)
+y &lt;- c(0.5, 1.0, 1.2, 1.2, 1.4, 1.5, 1.9, 2.0)
+r &lt;- cscores(c(x,y), type="Wilcoxon")
+pperm(sum(r[seq(along=x)]), r, 7)
+
+# Compare the exact algorithm as implemented in ctest and the
+# Shift-Algorithm by Streitberg &amp; Roehmel for untied samples
+ 
+# Wilcoxon:
+
+n &lt;- 10
+x &lt;- rnorm(n, 2)
+y &lt;- rnorm(n, 3)
+r &lt;- cscores(c(x,y), type="Wilcoxon")
+
+# exact distribution using the Shift-Algorithm
+
+dwexac &lt;- dperm((n*(n+1)/2):(n^2 + n*(n+1)/2), r, n)
+sum(dwexac)           # should be something near 1 :-)
+
+# exact distribution using dwilcox
+
+dw &lt;- dwilcox(0:(n^2), n, n)
+
+# compare the two distributions:
+
+plot(dw, dwexac, main="Wilcoxon", xlab="dwilcox", ylab="dperm")      
+# should give a "perfect" line
+
+# Wilcoxon signed rank test
+
+n &lt;- 10
+x &lt;- rnorm(n, 5)
+y &lt;- rnorm(n, 5)
+r &lt;- cscores(abs(x - y), type="Wilcoxon")
+pperm(sum(r[x - y &gt; 0]), r, length(r))
+wilcox.test(x,y, paired=TRUE, alternative="less")
+psignrank(sum(r[x - y &gt; 0]), length(r))
+
+# Ansari-Bradley
+
+n &lt;- 10
+x &lt;- rnorm(n, 2, 1)
+y &lt;- rnorm(n, 2, 2)
+
+# exact distribution using the Shift-Algorithm
+
+sc &lt;- cscores(c(x,y), type="Ansari")
+dabexac &lt;- dperm(0:(n*(2*n+1)/2), sc, n)
+sum(dabexac)
+
+# real scores are allowed (but only result in an approximation)
+# e.g. v.d. Waerden test
+
+n &lt;- 10
+x &lt;- rnorm(n)
+y &lt;- rnorm(n)
+scores &lt;- cscores(c(x,y), type="NormalQuantile")
+X &lt;- sum(scores[seq(along=x)])  # &lt;- v.d. Waerden normal quantile statistic
+
+# critical value, two-sided test
+
+abs(qperm(0.025, scores, length(x)))
+
+# p-values
+
+p1 &lt;- pperm(X, scores, length(x), alternative="two.sided")
+
+# generate integer valued scores with the same shape as normal quantile
+# scores, this no longer v.d.Waerden, but something very similar
+
+scores &lt;- cscores(c(x,y), type="NormalQuantile", int=TRUE)
+
+X &lt;- sum(scores[seq(along=x)])
+p2 &lt;- pperm(X, scores, length(x), alternative="two.sided")
+
+# compare p1 and p2
+
+p1 - p2
+
+</code></pre>
+
+
+</div>

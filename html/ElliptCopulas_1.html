@@ -1,0 +1,165 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compute_etahat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute <code class="reqn">\hat{\eta}_k</code>
+</h2>
+
+<h3>Description</h3>
+
+<p><code class="reqn">\hat{\eta}_k</code> is a quantity that is useful
+for estimating the <code class="reqn">k</code>-th derivative of the generator
+of an elliptical distribution.
+It is defined in Section 3 of (Ryan and Derumigny, 2024).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compute_etahat(
+  X,
+  mu = 0,
+  Sigma_m1 = diag(d),
+  grid,
+  h,
+  Kernel = "gaussian",
+  a = 1,
+  k,
+  mpfr = FALSE,
+  precBits = 100,
+  dopb = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a matrix of size <code class="reqn">n \times d</code>, assumed to be <code class="reqn">n</code> i.i.d. observations
+(rows) of a <code class="reqn">d</code>-dimensional elliptical distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>mean of X. This can be the true value or an estimate. It must be
+a vector of dimension <code class="reqn">d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Sigma_m1</code></td>
+<td>
+<p>inverse of the covariance matrix of X.
+This can be the true value or an estimate. It must be
+a matrix of dimension <code class="reqn">d \times d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>grid of values on which to estimate the density generator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>bandwidth of the kernel. Can be either a number or a vector of the
+size <code>length(grid)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Kernel</code></td>
+<td>
+<p>name of the kernel. Possible choices are
+<code>"gaussian"</code>, <code>"epanechnikov"</code>, <code>"triangular"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>tuning parameter to improve the performance at 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>order of the derivative</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mpfr</code></td>
+<td>
+<p>if <code>mpfr = TRUE</code>, multiple precision floating point is used
+via the package Rmpfr.
+This allows for a higher (numerical) accuracy, at the expense of computing time.
+It is recommended to use this option for higher dimensions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precBits</code></td>
+<td>
+<p>number of precBits used for floating point precision
+(only used if <code>mpfr = TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dopb</code></td>
+<td>
+<p>a Boolean value.
+If <code>dopb = TRUE</code>, a progress bar is displayed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a vector of size <code>n1 = length(grid)</code>.
+Each component of this vector is <code class="reqn">\hat{\eta}_k(x[i])</code>
+where <code>x[i]</code> is the <code class="reqn">i</code>-th element of the grid.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Victor Ryan, Alexis Derumigny
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+if (FALSE){
+# Comparison between the estimated and true generator of the Gaussian distribution
+n = 500000
+d = 3
+X = matrix(rnorm(n * d), ncol = d)
+grid = seq(0, 5, by = 0.1)
+a = 0.7
+
+etahat = compute_etahat(X = X, grid = grid, a = a, h = 0.04, k = 1)
+plot(grid, etahat, type = "l", ylim = c(-0.02, 0.02))
+
+# Computation of true values
+g = exp(-grid/2)/(2*pi)^{3/2}
+gprime = (-1/2) *exp(-grid/2)/(2*pi)^{3/2}
+A = a^(d/2)
+psia = -a + (A + grid^(d/2))^(2/d)
+psiaprime = grid^(d/2 - 1) * (A + grid^(d/2))^(2/d - 1)
+psiasecond = psiaprime * ( (d-2)/2 ) * grid^{-1} * A *
+  ( grid^(d/2) + A )^(-1)
+
+rhoprimexi = ((d-2) * grid^((d-4)/2) * psiaprime
+- 2 * grid^((d-2)/2) * psiasecond) / (2 * psiaprime^3) * g +
+grid^((d-2)/2) / (psiaprime^2) * gprime
+
+lines(grid, rhoprimexi, col = "red")
+}
+
+</code></pre>
+
+
+</div>

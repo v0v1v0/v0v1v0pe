@@ -1,0 +1,170 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>effectstars.default</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot effect stars.</h2>
+
+<h3>Description</h3>
+
+<p>Plots effect stars for grouped coefficients. Effect stars are applicable if the
+parameters of a model are grouped in some sense. For example, the parameters of a multinomial 
+logit models are grouped by the covariates, i.e. per covariate there is one estimate per response category.
+But also in many other models, the parameters can have a fixed grouping structure. All estimates have to be positive, 
+typically the exponentials of the estimates are plotted. Every effect star comes with a circle of radius 1.
+This circle represents the case of no effect, i.e. <code>exp(0)=1</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## Default S3 method:
+effectstars(x, names = NULL, subs = NULL,
+  labels = NULL, control = star.ctrl(), cols = NULL, fixed = FALSE,
+  scale = 1, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A matrix containing all coefficients to plot, one column per group/covariate, 
+one row per category. If the arguments <code>names</code> and <code>labels</code> are not specified, 
+the <code>colnames</code> and <code>rownames</code> of <code>x</code> are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+<p>A vector containing all group/covariate names, will be used as titles of single 
+effect stars. If NULL, <code>colnames</code> of <code>x</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subs</code></td>
+<td>
+<p>A vector containing all subtitles, one per group/covariate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>A vector or a matrix containing labels of the categories. If labels is a matrix, 
+it needs to have the same dimensions as <code>x</code>. Otherwise, <code>labels</code> is a vector with 
+length equal to the number of categories, i.e. number rows of <code>x</code>. If NULL, <code>rownames</code>
+of <code>x</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>Control argument (to set graphical parameters) for method <code>effectstars</code>, see <code>star.ctrl</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols</code></td>
+<td>
+<p>Number of columns for arranging effect stars</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>If <code>TRUE</code>, all circles have the same radius. If <code>FALSE</code>, every star is scaled so that 
+the length of the longest ray is equal for all stars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>Global factor to increase (<code>scale</code>&gt;1) or decrease (<code>scale</code>&lt;1) the size of the stars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>possible further arguments</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Gunther Schauberger <br><a href="mailto:gunther.schauberger@tum.de">gunther.schauberger@tum.de</a> <br><br><a href="https://www.sg.tum.de/epidemiologie/team/schauberger/">https://www.sg.tum.de/epidemiologie/team/schauberger/</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz, G. and Schauberger, G. (2013): <em>Visualization of Categorical Response Models -
+from Data Glyphs to Parameter Glyphs</em>, Journal of Computational and Graphical Statistics 22(1), 156–177.
+<br><br>  Gerhard Tutz (2012): <em>Regression for Categorical Data</em>, Cambridge University Press
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>star.ctrl</code>, <code>effectstars.vglm</code>, <code>effectstars.DIFlasso</code>, <code>effectstars.DIFboost</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+#####################
+### Simple example for basic effectstars function
+p &lt;- 4; k &lt;- 5
+coefs &lt;- matrix(exp(rnorm(p*k,sd=0.5)),ncol=k)
+rownames(coefs) &lt;- paste("Variable",1:p)
+colnames(coefs) &lt;- paste("Cat",1:k)
+effectstars(coefs)
+
+#####################
+### Example for effect stars for a multivariate logit model
+data(xs.nz, package = "VGAMdata")
+xs.nz$age &lt;- scale(xs.nz$age)
+library(VGAM)
+
+cats_dogs &lt;- vglm(cbind(cat, dog) ~ age +  sex + marital, 
+                  data = xs.nz, family = binom2.or(zero = NULL))
+
+summary(cats_dogs)
+
+## quick and dirty
+effectstars(exp(coef(cats_dogs, matrix = TRUE)))
+
+
+## make it pretty
+# create the effects matrix you want to plot, name rows and columns
+effects &lt;- exp(coef(cats_dogs, matrix = TRUE))
+colnames(effects) &lt;- c("cat", "dog", "OR")
+rownames(effects) &lt;- c("Intercept", "Age", "Gender", rep("Marital", 3))
+
+# create subtitles containing category labels of predictors
+subs &lt;- c(rep("",2), "(male)", "(married)", "(separated/divorced)", "(widowed)")
+
+# create labels containing the response categories and all p-values
+p_values &lt;- formatC(summary(cats_dogs)@coef3[,4], format="f", digits=3)
+labels &lt;- matrix(paste0(rep(c("cat", "dog", "OR"), nrow(effects)), "\n(", p_values, ")"),
+byrow = TRUE, ncol = 3)
+
+# plot effectstars
+effectstars(effects, labels = labels, subs = subs)
+
+
+#####################
+## Example for method effectstars.vglm for a multinomial logit model calculated in VGAM
+data(election) 
+library(VGAM)
+m_elect &lt;- vglm(Partychoice ~ Gender + West + Age + Union + Highschool + Unemployment
++ Pol.Interest + Democracy + Religion, family = multinomial(), data = election)
+effectstars(m_elect)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

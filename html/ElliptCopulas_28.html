@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>TEllDistrEst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimation of trans-elliptical distributions</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the parameters of a trans-elliptical
+distribution which is a distribution whose copula is
+(meta-)elliptical, with arbitrary margins, using the procedure
+proposed in (Derumigny &amp; Fermanian, 2022).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">TEllDistrEst(
+  X, estimatorCDF = function(x){
+    force(x)
+    return( function(y){(stats::ecdf(x)(y) - 1/(2*length(x))) }) },
+  h, verbose = 1, grid, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>the matrix of observations of the variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimatorCDF</code></td>
+<td>
+<p>the way of estimating the marginal cumulative distribution functions.
+It should be either a function that takes in parameter a vector of observations
+and returns an estimated cdf (i.e. a function) or a list of such functions
+to be applied on the data.
+In this case, it is required that the length of the list should be the same
+as the number of columns of <code>X</code>.
+It is required that the functions returned by <code>estimatorCDF</code>
+should have values in the <em>open</em> interval <code class="reqn">(0,1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>bandwidth for the non-parametric estimation of the density generator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>if 1, prints the progress of the iterations.
+If 2, prints the normalizations constants used at each iteration,
+as computed by <code>DensityGenerator.normalize</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>grid of values on which to estimate the density generator</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters to be passed to <code>EllCopEst</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>This function returns a list with three components:
+</p>
+
+<ul>
+<li> <p><code>listEstCDF</code>: a list of estimated marginal CDF given by <code>estimatorCDF</code>;
+</p>
+</li>
+<li> <p><code>corMatrix</code>: the estimated correlation matrix:
+</p>
+</li>
+<li> <p><code>estEllCopGen</code>: the estimated generator of the meta-elliptical copula.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Derumigny, A., &amp; Fermanian, J. D. (2022).
+Identifiability and estimation of meta-elliptical copula generators.
+Journal of Multivariate Analysis, article 104962.
+<a href="https://doi.org/10.1016/j.jmva.2022.104962">doi:10.1016/j.jmva.2022.104962</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+cor = matrix(c(1, 0.5, 0.2,
+               0.5, 1, 0.8,
+               0.2, 0.8, 1), byrow = TRUE, nrow = 3)
+
+grid = seq(0,10,by = 0.01)
+g_d = DensityGenerator.normalize(grid, grid_g = exp(-grid), d = 3)
+n = 10
+# To have a nice estimation, we suggest to use rather n=200
+# (around 20s of computation time)
+U = EllCopSim(n = n, d = 3, grid = grid, g_d = g_d, A = chol(cor))
+X = matrix(nrow = n, ncol = 3)
+X[,1] = stats::qnorm(U[,1], mean = 2)
+X[,2] = stats::qt(U[,2], df = 5)
+X[,3] = stats::qt(U[,3], df = 8)
+
+result = TEllDistrEst(X, h = 0.1, grid = grid)
+plot(grid, g_d, type = "l", xlim = c(0,2))
+lines(grid, result$estiEllCop$g_d_norm, col = "red")
+print(result$corMatrix)
+
+# Adding missing observations
+n_NA = 2
+X_NA = X
+for (i in 1:n_NA){
+  X_NA[sample.int(n,1), sample.int(3,1)] = NA
+}
+resultNA = TEllDistrEst(X_NA, h = 0.1, grid = grid, verbose = 1)
+lines(grid, resultNA$estiEllCopGen, col = "blue")
+
+
+</code></pre>
+
+
+</div>

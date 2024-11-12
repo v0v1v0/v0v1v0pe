@@ -1,0 +1,323 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimate_R_cl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the effective reproduction from clinical report data</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the effective reproduction from clinical report data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimate_R_cl(
+  cl.data,
+  dist.repdelay,
+  dist.repfrac,
+  dist.incub,
+  dist.gi,
+  prm.daily = list(method = "linear", popsize = NULL, burn = 500, iter = 2000, chains =
+    3, prior_R0_shape = 2, prior_R0_rate = 0.6, prior_alpha_shape = 1, prior_alpha_rate =
+    1, first.agg.period = NULL),
+  prm.daily.check = list(agg.reldiff.tol = 10),
+  prm.smooth = list(method = "rollmean", align = "right", window = 7),
+  prm.R = list(iter = 10, CI = 0.95, window = 7, config.EpiEstim = NULL),
+  RL.max.iter = 10,
+  silent = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cl.data</code></td>
+<td>
+<p>Data frame. Must have variables:
+</p>
+
+<ul>
+<li> <p><code>date</code>: calendar date of report
+</p>
+</li>
+<li> <p><code>value</code>: count of reported cases
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.repdelay</code></td>
+<td>
+<p>List. Parameters for the reporting delay distribution in the same format as returned by <code>def_dist()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.repfrac</code></td>
+<td>
+<p>List. Parameters for the reporting fraction distribution in the same format as returned by <code>def_dist()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.incub</code></td>
+<td>
+<p>List. Parameters for the incubation period distribution in the same format as returned by <code>def_dist()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.gi</code></td>
+<td>
+<p>List. Parameters for the generation interval distribution in the same format as returned by <code>def_dist()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prm.daily</code></td>
+<td>
+<p>List. Parameters for daily report inference via MCMC. Elements include:
+</p>
+
+<ul>
+<li> <p><code>method</code>: String. Method name to infer the daily incidence reports from aggregated ones.
+Either <code>linear</code> or <code>renewal</code> is currently implemented.
+The <code>linear</code> method simply performs a linear interpolation that matches the aggregated values.
+The <code>renewal</code> method fits a SIR-like model using a renewal equation to infer the daily incidence.
+In this case, the fitting algorithm is a Markov Chain Monte Carlo (MCMC) implemented in JAGS
+and needs the parameters below (e.g., <code>burn,iter,chains,...</code>).
+The <code>renewal</code> method is more adapted for short single wave epidemics as this models
+i) naturally fits a single wave and ii) has longer computing time.
+For longer time series, user may perfer the <code>linear</code> method.
+</p>
+</li>
+<li> <p><code>popsize</code>: Integer. Population size to use in MCMC simulation to infer daily observations from aggregated input data.
+</p>
+</li>
+<li> <p><code>burn</code>: Numeric. Length of burn-in period (number of days).
+</p>
+</li>
+<li> <p><code>iter</code>: Numeric. Number of iterations after burn-in period (number of days).
+</p>
+</li>
+<li> <p><code>chains</code>: Numeric. Number of chains to simulate.
+</p>
+</li>
+<li> <p><code>prior_R0_shape</code>: Shape of the (hyper-)parameter for the prior Gamma distribution for R0.
+</p>
+</li>
+<li> <p><code>prior_R0_rate</code>: Rate of the (hyper-)parameter for the prior Gamma distribution for R0.
+</p>
+</li>
+<li> <p><code>prior_alpha_shape</code>: Shape of the (hyper-)parameter for the prior Gamma distribution for alpha.
+</p>
+</li>
+<li> <p><code>prior_alpha_rate</code>: Rate of the (hyper-)parameter for the prior Gamma distribution for alpha.
+</p>
+</li>
+<li> <p><code>first.agg.period</code>: length of aggregation period for first aggregated observation (number of days); if NULL, assume same aggregation period as observed for second observation (gap between first and second observations)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prm.daily.check</code></td>
+<td>
+<p>List. Parameters for checking aggregated to daily report inference. Elements include:
+</p>
+
+<ul><li> <p><code>agg.reldiff.tol</code>: numerical tolerance (%) for relative error between aggregated inferred daily reports and original aggregated reports; chronological observations are dropped until this tolerance is first acheived (convergence at the start of the timeseries is often the worst, need to maintain uninterrupted daily timeseries for input into Rt calculation).
+</p>
+</li></ul>
+<p>Set this entire argument to <code>NULL</code> to use inferred daily reports as is.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prm.smooth</code></td>
+<td>
+<p>List. list of smoothing parameters. Parameters should be
+specified as followed:
+</p>
+
+<ul>
+<li> <p><code>method</code>: smoothing method, either <code>'rollmean'</code> (rolling mean) or <code>'loess'</code> (LOESS smoothing via <code>stats::loess()</code>)
+</p>
+</li>
+<li> <p><code>window</code>: for <code style="white-space: pre;">⁠method = 'rollmean⁠</code> only; width of smoothing window in days
+</p>
+</li>
+<li> <p><code>align</code>: for <code style="white-space: pre;">⁠method = 'rollmean⁠</code> only; smoothing alignment, either <code>'center'</code>, <code>'left'</code>, <code>'right'</code>
+</p>
+</li>
+<li> <p><code>span</code>: for <code>method = 'loess'</code> only; smoothing span (see the documentation for <code>stats::loess()</code> for details)
+</p>
+</li>
+<li> <p><code>floor</code>: optional call for wastewater concentration smoothing with <code>method = 'loess'</code> only; user defined minimum smoothing concentration
+</p>
+</li>
+</ul>
+<p>Set this entire list to <code>NULL</code> to turn off smoothing</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prm.R</code></td>
+<td>
+<p>List. Settings for the ensemble when calculating Rt.
+Elements include:
+</p>
+
+<ul>
+<li> <p><code>iter</code>: Integer. Number of iterations for the Rt ensemble
+</p>
+</li>
+<li> <p><code>CI</code>: Numeric between 0 and 1. Confidence interval width for Rt
+estimates after sampling uncertain distributions.
+</p>
+</li>
+<li> <p><code>window</code>: Integer. Number of days defining the window of data used by
+<code>EpiEstim</code> to estimate Rt. If <code>NULL</code>, will default to 7.
+</p>
+</li>
+<li> <p><code>config.EpiEstim</code>: (optional) configuration for <code>EpiEstim</code> defined via
+<code>EpiEstim::make_config()</code>. If <code>NULL</code>, will use default config from
+<code>EpiEstim</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RL.max.iter</code></td>
+<td>
+<p>Integer. Maximum of iterations for the Richardson-Lucy deconvolution algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>Logical. Flag to suppress all output messages, warnings, and progress bars.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List. Elements include:
+</p>
+
+<ul>
+<li> <p><code>cl.data</code>: original aggregated reports signal
+</p>
+</li>
+<li> <p><code>cl.daily</code>: reports as input for Rt calculation (inferred daily counts, smoothed)
+</p>
+</li>
+<li> <p><code>inferred.agg</code>: inferred daily reports aggregated on the reporting schedule as input in <code>cl.data</code>
+</p>
+</li>
+<li> <p><code>R</code>: the effective R estimate (summary from ensemble)
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>plot_diagnostic_cl()</code> <code>estimate_R_ww()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# -- THIS EXAMPLE TAKES ABOUT 30 SECONDS TO RUN --
+# Estimate Rt
+
+## Not run: 
+# Load SARS-CoV-2 reported cases in Quebec
+# during the Summer 2021
+dat &lt;- (ern::cl.data
+    |&gt; dplyr::filter(
+      pt == "qc", 
+      dplyr::between(date, as.Date("2021-06-01"), as.Date("2021-09-01"))
+    )
+)
+# distributions
+dist.repdelay = ern::def_dist(
+    dist = 'gamma',
+    mean = 5, 
+    mean_sd = 1,
+    sd = 1,
+    sd_sd = 0.1,
+    max = 10
+)
+dist.repfrac = ern::def_dist(
+    dist = "unif",
+    min = 0.1,
+    max = 0.3
+)
+dist.incub = ern::def_dist(
+    dist = "gamma",
+    mean = 3.49,
+    mean_sd = 0.1477,
+    shape = 8.5,
+    shape_sd = 1.8945,
+    max = 8
+)
+dist.gi = ern::def_dist(
+    dist = "gamma",
+    mean = 6,
+    mean_sd = 0.75,
+    shape = 2.4,
+    shape_sd = 0.3,
+    max = 10
+)
+
+# settings
+prm.daily &lt;- list(
+    method = "renewal",
+    popsize = 8.5e6, # Q3 (July 1) 2022 estimate for Quebec
+    burn = 500,
+    iter = 500,
+    chains = 2,
+    prior_R0_shape = 1.1, prior_R0_rate = 0.6, 
+    prior_alpha_shape = 1, prior_alpha_rate = 1
+)
+prm.daily.check &lt;- list(
+    agg.reldiff.tol = 10
+)
+prm.smooth &lt;- list(
+    method = "rollmean",
+    align = "center",
+    window = 7
+)
+prm.R &lt;- list(
+    iter = 20, 
+    CI = 0.95, 
+    window = 7, 
+    config.EpiEstim = NULL
+)
+
+x &lt;- estimate_R_cl(
+  dat,
+  dist.repdelay,
+  dist.repfrac,
+  dist.incub,
+  dist.gi,
+  prm.daily,
+  prm.daily.check,
+  prm.smooth,
+  prm.R
+)
+
+# Rt estimates
+print(x$R)
+
+## End(Not run)
+
+ 
+
+</code></pre>
+
+
+</div>

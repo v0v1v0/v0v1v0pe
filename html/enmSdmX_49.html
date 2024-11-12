@@ -1,0 +1,320 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predictEnmSdm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generic predict function for SDMs/ENMs</h2>
+
+<h3>Description</h3>
+
+<p>This is a generic predict function that automatically uses the model common arguments for predicting models of the following types: linear models, generalized linear models (GLMs), generalized additive models (GAMs), random forests, boosted regression trees (BRTs)/gradient boosting machines (GBMs), conditional random forests, MaxEnt, and more.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predictEnmSdm(
+  model,
+  newdata,
+  maxentFun = "terra",
+  scale = TRUE,
+  cores = 1,
+  nrows = nrow(newdata),
+  paths = .libPaths(),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Object of class <code>lm</code>, <code>glm</code>, <code>gam</code>, <code>randomForest</code>, <code>MaxEnt</code>, <code>maxnet</code>, <code>prcomp</code>, <code>kde</code>, <code>gbm</code>, and possibly others (worth a try!).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>Data frame or matrix, or <code>SpatRaster</code> with data to which to predict.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxentFun</code></td>
+<td>
+<p>This argument is only used if the <code>model</code> object is a MaxEnt model; otherwise, it is ignored. It takes a value of either <code>'terra'</code>, in which case a MaxEnt model is predicted using the default <code>predict</code> function from the <span class="pkg">terra</span> package, or <code>'enmSdmX'</code> in which case the function <code>predictMaxEnt</code> function from the <span class="pkg">enmSdmX</span> package (this package) is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>Logical. If the model is a GLM trained with <code>trainGLM</code>, you can use the <code>scale</code> argument in that function to center and scale the predictors. In the <code>predictEnmSdm</code> function, you can set <code>scale</code> to <code>TRUE</code> to scale the rasters or data frame to which you are training using the centers (means) and scales (standard deviations) used in the mode. Otherwise, it is up to you to ensure variables are properly centered and scaled. This argument only has effect if the model is a GLM trained using <code>trainGLM</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>Integer &gt;= 1. Number of cores to use when calculating multiple models. Default is 1. This is forced to 1 if <code>newdata</code> is a <code>SpatRaster</code> (i.e., as of now, there is no parallelization when predicting to a raster... sorry!).  If you have issues when <code>cores</code> &gt; 1, please see the <code>troubleshooting_parallel_operations</code> guide.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrows</code></td>
+<td>
+<p>Number of rows of <code>newdata</code> to predict at a time. This is only used if <code>newdata</code> is a <code>data.frame</code> or <code>matrix</code>. The default is to predict all rows at once, but for very large data frames/matrices this can lead to memory issues in some cases. By setting the number of rows, <code>newdata</code> is divided into chunks, and predictions made to each chunk, which may ease memory limitations. This can be combined with multi-coring (which will increase memory requirements). In this case, all cores combined will get <code>nrows</code> of data. How many rows are too many? You will have to decide depending on the capabilities of your system. For example, predicting the outcome of a GLM on data with 10E6 rows may be fine, but predicting a PCA (with multiple axes) to the data data may require too much memory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paths</code></td>
+<td>
+<p>Locations where packages are stored. This is typically not useful to the general user, and is only supplied for when the function is called as a functional.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to pass to the algorithm-specific <code>predict</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Numeric or <code>SpatRaster</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict</code> from the <span class="pkg">stats</span> package, <code>predict</code> from the <span class="pkg">terra</span> package, <code>predictMaxEnt</code>, <code>predictMaxNet</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# NB: The examples below show a very basic modeling workflow. They have been 
+# designed to work fast, not produce accurate, defensible models. They can
+# take a few minutes to run.
+
+library(mgcv)
+library(sf)
+library(terra)
+set.seed(123)
+
+### setup data
+##############
+
+# environmental rasters
+rastFile &lt;- system.file('extdata/madClim.tif', package='enmSdmX')
+madClim &lt;- rast(rastFile)
+
+# coordinate reference system
+wgs84 &lt;- getCRS('WGS84')
+
+# lemur occurrence data
+data(lemurs)
+occs &lt;- lemurs[lemurs$species == 'Eulemur fulvus', ]
+occs &lt;- vect(occs, geom=c('longitude', 'latitude'), crs=wgs84)
+
+occs &lt;- elimCellDuplicates(occs, madClim)
+
+occEnv &lt;- extract(madClim, occs, ID = FALSE)
+occEnv &lt;- occEnv[complete.cases(occEnv), ]
+	
+# create 10000 background sites (or as many as raster can support)
+bgEnv &lt;- terra::spatSample(madClim, 20000)
+bgEnv &lt;- bgEnv[complete.cases(bgEnv), ]
+bgEnv &lt;- bgEnv[1:min(10000, nrow(bgEnv)), ]
+
+# collate occurrences and background sites
+presBg &lt;- data.frame(
+  presBg = c(
+    rep(1, nrow(occEnv)),
+    rep(0, nrow(bgEnv))
+  )
+)
+
+env &lt;- rbind(occEnv, bgEnv)
+env &lt;- cbind(presBg, env)
+
+predictors &lt;- c('bio1', 'bio12')
+
+### calibrate models
+####################
+
+# Note that all of the trainXYZ functions can made to go faster using the
+# "cores" argument (set to just 1, by default). The examples below will not
+# go too much faster using more cores because they are simplified, but
+# you can try!
+cores &lt;- 1
+
+# MaxEnt
+mx &lt;- trainMaxEnt(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# MaxNet
+mn &lt;- trainMaxNet(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized linear model (GLM)
+gl &lt;- trainGLM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized additive model (GAM)
+ga &lt;- trainGAM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	verbose = TRUE,
+	cores = cores
+)
+
+# natural splines
+ns &lt;- trainNS(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	df = 1:2, # too few values for reliable model(?)
+	verbose = TRUE,
+	cores = cores
+)
+
+# boosted regression trees
+envSub &lt;- env[1:1049, ] # subsetting data to run faster
+brt &lt;- trainBRT(
+	data = envSub,
+	resp = 'presBg',
+	preds = predictors,
+	learningRate = 0.001, # too few values for reliable model(?)
+	treeComplexity = c(2, 3), # too few values for reliable model, but fast
+	minTrees = 1200, # minimum trees for reliable model(?), but fast
+	maxTrees = 1200, # too small for reliable model(?), but fast
+	tryBy = 'treeComplexity',
+	anyway = TRUE, # return models that did not converge
+	verbose = TRUE,
+	cores = cores
+)
+
+# random forests
+rf &lt;- trainRF(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	numTrees = c(100, 500), # using at least 500 recommended, but fast!
+	verbose = TRUE,
+	cores = cores
+)
+
+### make maps of models
+#######################
+
+# NB We do not have to scale rasters before predicting GLMs and NSs because we
+# used the `scale = TRUE` argument in trainGLM() and trainNS().
+
+mxMap &lt;- predictEnmSdm(mx, madClim)
+mnMap &lt;- predictEnmSdm(mn, madClim) 
+glMap &lt;- predictEnmSdm(gl, madClim)
+gaMap &lt;- predictEnmSdm(ga, madClim)
+nsMap &lt;- predictEnmSdm(ns, madClim)
+brtMap &lt;- predictEnmSdm(brt, madClim)
+rfMap &lt;- predictEnmSdm(rf, madClim)
+
+maps &lt;- c(
+	mxMap,
+	mnMap,
+	glMap,
+	gaMap,
+	nsMap,
+	brtMap,
+	rfMap
+)
+
+names(maps) &lt;- c('MaxEnt', 'MaxNet', 'GLM', 'GAM', 'NSs', 'BRTs', 'RFs')
+fun &lt;- function() plot(occs, col='black', pch=3, add=TRUE)
+plot(maps, fun = fun, nc = 4)
+
+### compare model responses to BIO12 (mean annual precipitation)
+################################################################
+
+# make a data frame holding all other variables at mean across occurrences,
+# varying only BIO12
+occEnvMeans &lt;- colMeans(occEnv, na.rm=TRUE)
+occEnvMeans &lt;- rbind(occEnvMeans)
+occEnvMeans &lt;- as.data.frame(occEnvMeans)
+climFrame &lt;- occEnvMeans[rep(1, 100), ]
+rownames(climFrame) &lt;- NULL
+
+minBio12 &lt;- min(env$bio12)
+maxBio12 &lt;- max(env$bio12)
+climFrame$bio12 &lt;- seq(minBio12, maxBio12, length.out=100)
+
+predMx &lt;- predictEnmSdm(mx, climFrame)
+predMn &lt;- predictEnmSdm(mn, climFrame)
+predGl &lt;- predictEnmSdm(gl, climFrame)
+predGa &lt;- predictEnmSdm(ga, climFrame)
+predNat &lt;- predictEnmSdm(ns, climFrame)
+predBrt &lt;- predictEnmSdm(brt, climFrame)
+predRf &lt;- predictEnmSdm(rf, climFrame)
+
+
+plot(climFrame$bio12, predMx,
+xlab='BIO12', ylab='Prediction', type='l', ylim=c(0, 1))
+
+lines(climFrame$bio12, predMn, lty='solid', col='red')
+lines(climFrame$bio12, predGl, lty='dotted', col='blue')
+lines(climFrame$bio12, predGa, lty='dashed', col='green')
+lines(climFrame$bio12, predNat, lty=4, col='purple')
+lines(climFrame$bio12, predBrt, lty=5, col='orange')
+lines(climFrame$bio12, predRf, lty=6, col='cyan')
+
+legend(
+   'topleft',
+   inset = 0.01,
+   legend = c(
+	'MaxEnt',
+	'MaxNet',
+	'GLM',
+	'GAM',
+	'NS',
+	'BRT',
+	'RF'
+   ),
+   lty = c(1, 1:6),
+   col = c(
+	'black',
+	'red',
+	'blue',
+	'green',
+	'purple',
+	'orange',
+	'cyan'
+   ),
+   bg = 'white'
+)
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,283 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>erl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute survival functions from rates and expected residual
+lifetime in an illness-death model as well as years of life lost to disease.
+</h2>
+
+<h3>Description</h3>
+
+<p>These functions compute survival functions from a set of mortality and
+disease incidence rates in an illness-death model. Expected residual
+life time can be computed under various scenarios by the <code>erl</code>
+function, and areas between survival functions can be computed under
+various scenarios by the <code>yll</code> function. Rates are assumed
+supplied for equidistant intervals of length <code>int</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  surv1( int, mu ,                age.in = 0, A = NULL )
+   erl1( int, mu ,                age.in = 0 ) 
+  surv2( int, muW, muD, lam,      age.in = 0, A = NULL )
+    erl( int, muW, muD, lam=NULL, age.in = 0, A = NULL,
+         immune = is.null(lam), yll=TRUE, note=TRUE )
+    yll( int, muW, muD, lam=NULL, age.in = 0, A = NULL,
+         immune = is.null(lam), note=TRUE )
+  </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>int</code></td>
+<td>
+
+<p>Scalar. Length of intervals that rates refer to.    
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+
+<p>Numeric vector of mortality rates at midpoints of intervals of length <code>int</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>muW</code></td>
+<td>
+
+<p>Numeric vector of mortality rates among persons in the "Well" state  at
+midpoints of intervals of length <code>int</code>. Left endpoint of first
+interval is <code>age.in</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>muD</code></td>
+<td>
+
+<p>Numeric vector of mortality rates among persons in the "Diseased" state
+at midpoints of intervals of length <code>int</code>.  Left endpoint of first
+interval is <code>age.in</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lam</code></td>
+<td>
+
+<p>Numeric vector of disease incidence rates among persons in the "Well" state
+at midpoints of intervals of length <code>int</code>. Left endpoint of first
+interval is <code>age.in</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>age.in</code></td>
+<td>
+
+<p>Scalar indicating the age at the left endpoint of the first interval. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+
+<p>Numeric vector of conditioning ages for calculation of survival
+functions.   
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>immune</code></td>
+<td>
+
+<p>Logical. Should the years of life lost to the disease be computed
+using assumptions that non-diseased individuals are immune to the
+disease (<code>lam</code>=0) and that their mortality is yet still <code>muW</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>note</code></td>
+<td>
+
+<p>Logical. Should a warning of silly assumptions be printed?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yll</code></td>
+<td>
+
+<p>Logical. Should years of life lost be included in the result?
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The mortality rates given are supposed to refer to the ages
+<code>age.in+(i-1/2)*int</code>, <code>i=1,2,3,...</code>.
+</p>
+<p>The units in which <code>int</code> is given must correspond to the units in
+which the rates <code>mu</code>, <code>muW</code>, <code>muD</code> and <code>lam</code> are
+given. Thus if <code>int</code> is given in years, the rates must be given
+in the unit of events per year.
+</p>
+<p>The ages in which the survival curves are computed are from
+<code>age.in</code> and then at the end of <code>length(muW)</code>
+(<code>length(mu)</code>) intervals each of length <code>int</code>.
+</p>
+<p>The <code>age.in</code> argument is merely a device to account for rates
+only available from a given age. It has two effects, one is that
+labeling of the interval endpoint is offset by this quantity, thus
+starting at <code>age.in</code>, and the other that the conditioning ages
+given in the argument <code>A</code> will refer to the ages defined by this.
+</p>
+<p>The <code>immune</code> argument is <code>FALSE</code> whenever the disease
+incidence rates are supplied. If set to <code>TRUE</code>, the years of life
+lost is computed under the assumption that individuals without the
+disease at a given age are immune to the disease in the sense that the
+disease incidence rate is 0, so transitions to the diseased state
+(with presumably higher mortality rates) are assumed not to
+occur. This is a slightly peculiar assumption (but presumably the most
+used in the epidemiological literature) and the resulting object is
+therefore given an attribute, <code>NOTE</code>, that point this out.
+</p>
+<p>If however <code>muW</code> is the total mortality in the population
+(including the diseased) the result is a good approximation to the
+correct YLL.
+</p>
+<p>The default of the <code>surv2</code> function is to take the possibility of
+disease into account.</p>
+
+
+<h3>Value</h3>
+
+<p><code>surv1</code> and <code>surv2</code> return a matrix whose first column
+is the ages at the ends of the 
+intervals, thus with <code>length(mu)+1</code> rows. The following columns
+are the survival functions (since <code>age.in</code>), and conditional on
+survival till ages as indicated in <code>A</code>, thus a matrix with
+<code>length(A)+2</code> columns. Columns are labeled with the actual
+conditioning ages; if <code>A</code> contains values that are not among the
+endpoints of the intervals used, the nearest smaller interval border
+is used as conditioning age, and columns are named accordingly.
+</p>
+<p><code>surv1</code> returns the survival function for a simple model with one
+type of death, occurring at intensity <code>mu</code>.
+</p>
+<p><code>surv2</code> returns the survival function for a person in the "Well"
+state of an illness-death model, taking into account that the person
+may move to the "Diseased" state, thus requiring all three transition
+rates to be specified. The conditional survival functions are
+conditional on being in the "Well" state at ages given in <code>A</code>.
+</p>
+<p><code>erl1</code> returns a three column matrix with columns <code>age</code>,
+<code>surv</code> (survival function) and <code>erl</code> (expected residual life
+time) with <code>length(mu)+1</code> rows. 
+</p>
+<p><code>erl</code> returns a two column matrix, columns labeled "Well" and
+"Dis", and with row-labels <code>A</code>. The entries are the expected
+residual life times given survival to <code>A</code>. If <code>yll=TRUE</code> the
+difference between the columns is added as a
+third column, labeled "YLL".
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="mailto:b@bxc.dk">b@bxc.dk</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ci.cum</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library( Epi )
+data( DMlate )
+# Naive Lexis object
+Lx &lt;- Lexis( entry = list( age = dodm-dobth ),
+              exit = list( age = dox -dobth ),
+       exit.status = factor( !is.na(dodth), labels=c("DM","Dead") ),
+              data = DMlate )
+# Cut follow-up at insulin inception
+Lc &lt;- cutLexis( Lx, cut = Lx$doins-Lx$dob,
+              new.state = "DM/ins",
+       precursor.states = "DM" )
+summary( Lc )
+# Split in small age intervals
+Sc &lt;- splitLexis( Lc, breaks=seq(0,120,2) )
+summary( Sc )
+
+# Overview of object
+boxes( Sc, boxpos=TRUE, show.BE=TRUE, scale.R=100 )
+
+# Knots for splines
+a.kn &lt;- 2:9*10
+
+# Mortality among DM
+mW &lt;- glm( lex.Xst=="Dead" ~ Ns( age, knots=a.kn ),
+           offset = log(lex.dur),
+           family = poisson,
+             data = subset(Sc,lex.Cst=="DM") )
+
+# Mortality among insulin treated
+mI &lt;- update( mW, data = subset(Sc,lex.Cst=="DM/ins") )
+
+# Total motality
+mT &lt;- update( mW, data = Sc )
+
+# Incidence of insulin inception
+lI &lt;- update( mW, lex.Xst=="DM/ins" ~ . )
+
+# From these we can now derive the fitted rates in intervals of 1 year's
+# length. In real applications you would use much smaller interval like
+# 1 month:
+# int &lt;- 1/12 
+int &lt;- 1
+
+# Prediction frame to return rates in units of cases per 1 year
+# - we start at age 40 since rates of insulin inception are largely
+# indeterminate before age 40
+nd &lt;- data.frame( age = seq( 40+int, 110, int ) - int/2,
+              lex.dur = 1 )
+muW &lt;- predict( mW, newdata = nd, type = "response" )
+muD &lt;- predict( mI, newdata = nd, type = "response" )
+lam &lt;- predict( lI, newdata = nd, type = "response" )
+
+# Compute the survival function, and the conditional from ages 50 resp. 70
+s1 &lt;- surv1( int, muD, age.in=40, A=c(50,70) )
+round( s1, 3 )
+
+s2 &lt;- surv2( int, muW, muD, lam, age.in=40, A=c(50,70) )
+round( s2, 3 )
+
+# How much is YLL overrated by ignoring insulin incidence?
+round( YLL &lt;- cbind(
+yll( int, muW, muD, lam, A = 41:90, age.in = 40 ),
+yll( int, muW, muD, lam, A = 41:90, age.in = 40, immune=TRUE ) ), 2 )[seq(1,51,10),]
+
+par( mar=c(3,3,1,1), mgp=c(3,1,0)/1.6, bty="n", las=1 )
+matplot( 40:90, YLL,
+         type="l", lty=1, lwd=3,
+         ylim=c(0,10), yaxs="i", xlab="Age" )
+</code></pre>
+
+
+</div>

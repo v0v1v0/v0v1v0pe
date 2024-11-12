@@ -1,0 +1,177 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ROC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>ROC curve</h2>
+
+<h3>Description</h3>
+
+<p>Receiver Operating Characteristic curve of a logistic regression 
+model and a diagnostic table</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lroc(logistic.model, graph = TRUE, add = FALSE, title = FALSE, 
+    line.col = "red", auc.coords = NULL, grid = TRUE, grid.col = "blue", ...)
+roc.from.table(table, graph = TRUE, add = FALSE, title = FALSE, 
+	line.col = "red", auc.coords = NULL, grid = TRUE, grid.col = "blue", ...) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>logistic.model</code></td>
+<td>
+<p>A model from logistic regression</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>table</code></td>
+<td>
+<p>A cross tabulation of the levels of a test (rows) vs a gold 
+standard positive and negative (columns)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>graph</code></td>
+<td>
+<p>Draw ROC curve</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add</code></td>
+<td>
+<p>Whether the line is drawn on the existing ROC curve</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>If true, the model will be displayed as main title</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>line.col</code></td>
+<td>
+<p>Color of the line</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>auc.coords</code></td>
+<td>
+<p>Coordinates for label of 'auc' (area under curve)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>Whether the grid should be drawn</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid.col</code></td>
+<td>
+<p>Grid colour, if drawn</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional graphic parameters</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>'lroc' graphs the ROC curve of a logistic regression model. If ‘table=TRUE’, 
+the diagnostic table based on the regression will be printed out.
+</p>
+<p>'roc.from.table' computes the change of sensitivity and specificity of each cut 
+point and uses these for drawing the ROC curve.
+</p>
+<p>In both cases, the area under the curve is computed.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Virasakdi Chongsuvivatwong
+<a href="mailto:cvirasak@gmail.com">cvirasak@gmail.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>'glm'</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Single ROC curve from logistic regression
+# Note that 'induced' and 'spontaneous' are both originally continuous variables
+model1 &lt;- glm(case ~ induced + spontaneous, data=infert, family=binomial)
+logistic.display(model1)
+# Having two spontaneous abortions is quite close to being infertile!
+# This is actually not a causal relationship
+
+lroc(model1, title=TRUE, auc.coords=c(.5,.1))
+# For PowerPoint presentation, the graphic elements should be enhanced as followed 
+lroc(model1, title=TRUE, cex.main=2, cex.lab=1.5, col.lab="blue", cex.axis=1.3, 
+lwd=3)
+lroc1 &lt;- lroc(model1) # The main title and auc text have disappeared
+model2 &lt;- glm(case ~ spontaneous, data=infert, family=binomial)
+logistic.display(model2)
+lroc2 &lt;- lroc(model2, add=TRUE, line.col="brown", lty=2)
+legend("bottomright",legend=c(lroc1$model.description, lroc2$model.description),
+        lty=1:2, col=c("red","brown"), bg="white")
+title(main="Comparison of two logistic regression models")
+lrtest(model1, model2) 
+# Number of induced abortions is associated with increased risk for infertility
+
+# Various form of logistic regression
+# Case by case data
+data(ANCdata)
+.data &lt;- ANCdata
+glm1 &lt;- glm(death ~ anc + clinic, binomial, data=.data) # Note 'calc'
+lroc(glm1)
+
+# Frequency format
+data(ANCtable)
+ANCtable
+.data &lt;- ANCtable
+attach(.data)
+death &lt;- factor (death)
+levels (death) &lt;- c("no","yes")
+anc &lt;- with(.data, factor (anc))
+levels (anc) &lt;- c("old","new")
+clinic &lt;- with(.data, factor (clinic))
+levels (clinic) &lt;- c("A","B")
+.data &lt;- data.frame(death, anc, clinic)
+.data
+glm2 &lt;- glm(death ~ anc + clinic, binomial, weights=Freq, data=.data)
+lroc(glm2)
+detach(.data)
+
+# ROC from a diagnostic table
+table1 &lt;- as.table(cbind(c(1,27,56,15,1),c(0,0,10,69,21)))
+colnames(table1) &lt;- c("Non-diseased", "Diseased")
+rownames(table1) &lt;- c("15-29","30-44","45-59","60-89","90+")
+table1
+roc.from.table(table1)
+roc.from.table(table1, title=TRUE, auc.coords=c(.4,.1), cex=1.2)
+
+# Application of the returned list
+roc1 &lt;- roc.from.table(table1, graph=FALSE)
+cut.points &lt;- rownames(roc1$diagnostic.table)
+text(x=roc1$diagnostic.table[,1], y=roc1$diagnostic.table[,2], 
+	labels=cut.points, cex=1.2, col="brown")
+rm(list=ls())
+</code></pre>
+
+
+</div>

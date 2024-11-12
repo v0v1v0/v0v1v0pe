@@ -1,0 +1,218 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SABC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulated Annealing approach to Approximate Bayesian Computation (SABC)</h2>
+
+<h3>Description</h3>
+
+<p>Algorithms for the Simulated Annealing approach to Approximate Bayesian Computation (SABC).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SABC(r.model, r.prior, d.prior, n.sample, eps.init, iter.max,
+     v=ifelse(method=="informative",0.4,1.2), beta=0.8,
+     delta=0.1, resample=5*n.sample, verbose=n.sample,
+     method="noninformative", adaptjump=TRUE,
+     summarystats=FALSE, y=NULL, f.summarystats=NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>r.model</code></td>
+<td>
+<p>Function that returns either a random sample from the likelihood or a scalar distance between such a sample and the data. The first argument must be the parameter vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.prior</code></td>
+<td>
+<p>Function that returns a random sample from the prior.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d.prior</code></td>
+<td>
+<p>Function that returns the density of the prior distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.sample</code></td>
+<td>
+<p>Size of the ensemble.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps.init</code></td>
+<td>
+<p>Initial tolerance or temperature.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter.max</code></td>
+<td>
+<p>Total number of simulations from the likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p>Tuning parameter that governs the annealing speed. Defaults to 1.2, for the <code>noninformative</code> algorithm and 0.4, for the <code>informative</code> algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>Tuning parameter that governs the mixing in parameter space. Defaults to 0.8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>Tuning parameter for the resampling steps. Defaults to 0.1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample</code></td>
+<td>
+<p>Number of accepted particle updates after which a resampling step is performed. Defaults to 5*<code>n.sample</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Shows the iteration progress each <code>verbose</code> simulations from the likelihood. NULL for no output. Defaults to <code>verbose = n.sample</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adaptjump</code></td>
+<td>
+<p>Whether to adapt covariance of jump distribution. Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Argument to select algorithm. Accepts <code>noninformative</code> or <code>informative</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summarystats</code></td>
+<td>
+<p>Whether summary statistics shall be calculated (semi-) automatically. Defaults to FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Data vector. Needs to be provided if either <code>summarystats = TRUE</code> or if <code>r.model</code> returns a sample from the likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f.summarystats</code></td>
+<td>
+<p>If <code>summarystats = TRUE</code> this function is needed for the calculation of the summary statistics. Defaults to <code>f.summarystats(x)=(x,x^2,x^3)</code>, where the powers are to be understood element-wise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to <code>r.model</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>SABC defines a class of algorithms for particle ABC that are inspired by Simulated Annealing. Unlike other algorithms, this class is not based on importance sampling, and hence does not suffer from a loss of effective sample size due to re-sampling. The approach is presented in detail in Albert, Kuensch, and Scheidegger (2014; see references).
+</p>
+<p>This package implements two versions of SABC algorithms, for the cases of a non-informative or an informative prior. These are described in detail in the paper. The algorithms can be selected using the <code>method</code> argument: <code>method=noninformative</code> or <code>method=informative</code>.
+In the informative case, the algorithm corrects for the bias caused by an over- or under-representation of the prior.
+</p>
+<p>The argument <code>adaptjump</code> allows a choice of whether to adapt the covariance of the jump distribution. Default is TRUE.
+</p>
+<p>Furthermore, the package allows for three different ways of using the data.
+If <code>y</code> is not provided, the algorithm expects <code>r.model</code> to return a scalar measuring the distance between a random sample from the likelihood and the data.
+If <code>y</code> is provided and <code>summarystats = FALSE</code>, the algorithm expects <code>r.model</code> to return a random sample from the likelihood and uses the relative sum of squares to measure the distances between <code>y</code> and random likelihood samples.
+If <code>summarystats = TRUE</code> the algorithm calculates summary statistics semi-automatically, as described in detail in the paper by Fearnhead et al. (2012; see references).
+The summary statistics are calculated by means of a linear regression applied to a sample from the prior and the image of <code>f.summarystats</code> of an associated sample from the likelihood.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>Matrix with ensemble of samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p>Matrix with prior ensemble of samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>Value of tolerance (temperature) at final iteration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ESS</code></td>
+<td>
+<p>Effective sample size, due to final bias correction (<code>informative</code> algorithm only).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Carlo Albert &lt;carlo.albert@eawag.ch&gt;, Andreas Scheidegger, Tobia Fasciati. Package initially compiled by Lukas M. Weber.
+</p>
+
+
+<h3>References</h3>
+
+<p>C. Albert, H. R. Kuensch and A. Scheidegger, Statistics and Computing 0960-3174 (2014),  arXiv:1208.2157, <em>A Simulated Annealing Approach to Approximate Bayes Computations</em>.
+</p>
+<p>P. Fearnhead and D. Prangle, J. R. Statist. Soc. B  74 (2012), <em>Constructing summary statistics for approximate Bayesian computation: semi-automatic approximate Bayesian computation</em>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> ## Not run:  
+## Example for "noninformative" case
+# Prior is uniform on [-10,10]
+d.prior &lt;- function(par)
+    dunif(par,-10,10)
+r.prior &lt;- function()
+    runif(1,-10,10)
+
+# Model is the sum of two normal distributions. Return distance to observation 0:
+f.dist &lt;- function(par)
+    return( abs(rnorm( 1 , par , ifelse(runif(1)&lt;0.5,1,0.1 ) )))
+
+# Run algorithm ("noninformative" case)
+res &lt;- SABC(f.dist,r.prior,d.prior,n.sample=500,eps.init=2,iter.max=50000)
+ 
+## End(Not run)
+
+ ## Not run: 
+# Histogram of results
+hist(res$E[,1],breaks=200)
+ 
+## End(Not run)
+</code></pre>
+
+
+</div>

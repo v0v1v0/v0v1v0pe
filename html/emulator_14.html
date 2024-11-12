@@ -1,0 +1,438 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>interpolant</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Interpolates between known points using Bayesian estimation</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the posterior distribution of results at a point using the
+techniques outlined by Oakley.  Function <code>interpolant()</code> is the
+primary function of the package.  Function <code>interpolant.quick()</code>
+gives the expectation of the emulator at a set of points, and function
+<code>interpolant()</code> gives the expectation and other information (such
+as the variance) at a single point.  Function <code>int.qq()</code> gives a
+quick-quick vectorized interpolant using certain timesaving
+assumptions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">interpolant(x, d, xold, Ainv=NULL, A=NULL, use.Ainv=TRUE,
+      scales=NULL, pos.def.matrix=NULL, func=regressor.basis,
+      give.full.list = FALSE, distance.function=corr, ...)
+interpolant.quick(x, d, xold, Ainv=NULL, scales=NULL,
+pos.def.matrix=NULL, func=regressor.basis, give.Z = FALSE,
+distance.function=corr, ...)
+int.qq(x, d, xold, Ainv, pos.def.matrix, func=regressor.basis)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Point(s) at which estimation is desired.  For
+<code>interpolant.quick()</code>, argument <code>x</code> is a matrix
+and an expectation is given for each row</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>vector of observations, one for each row of <code>xold</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xold</code></td>
+<td>
+<p>Matrix with rows corresponding to points at which the
+function is known</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>Correlation matrix <code>A</code>.  If not given, it is calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ainv</code></td>
+<td>
+<p>Inverse of correlation matrix <code>A</code>.  Required by
+<code>int.qq()</code>.  In <code>interpolant()</code> and <code>interpolant.quick()</code>
+using the default value of <code>NULL</code> results in <code>Ainv</code> being
+calculated explicitly (which may be slow: see next argument for more
+details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.Ainv</code></td>
+<td>
+<p>Boolean, with default <code>TRUE</code> meaning to use the
+inverse matrix <code>Ainv</code> (and, if necessary, calculate it using
+<code>solve(.)</code>).  This requires the not inconsiderable overhead of
+inverting a matrix.   If, however, <code>Ainv</code> is available, using
+the default option is <em>much</em> faster than setting
+<code>use.Ainv=FALSE</code>; see below.
+</p>
+<p>If <code>FALSE</code>, function <code>interpolant()</code> does not use
+<code>Ainv</code>, but makes extensive use of <code>solve(A,x)</code>, mostly in
+the form of <code>quad.form.inv()</code> calls.  This option avoids the
+overhead of inverting a matrix, but has non-negligible marginal
+costs.
+</p>
+<p>If <code>Ainv</code> is not available, there is little to choose, in terms
+of execution time, between calculating it explicitly (that is,
+setting <code>use.Ainv=TRUE</code>), and using <code>solve(A,x)</code> (ie
+<code>use.Ainv=TRUE</code>).
+</p>
+<p><strong>Note:</strong> if <code>Ainv</code> is given to the function, but
+<code>use.Ainv</code> is <code>FALSE</code>, the code will do as requested and use
+the slow <code>solve(A,x)</code>, which is probably not what you want</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>func</code></td>
+<td>
+<p>Function used to determine basis vectors, defaulting
+to <code>regressor.basis</code> if not given</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>give.full.list</code></td>
+<td>
+<p>In <code>interpolant()</code>, Boolean variable with
+<code>TRUE</code> meaning to return the whole list of posterior
+parameters as detailed on pp12-15 of Oakley, and default <code>FALSE</code>
+meaning to return just the best estimate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scales</code></td>
+<td>
+<p>Vector of “roughness” lengths used to calculate
+<code>t(x)</code>, the correlations between <code>x</code> and the points in the
+design matrix <code>xold</code>.
+</p>
+<p>Note that <code>scales</code> is needed twice overall: once to calculate
+<code>Ainv</code>, and once to calculate <code>t(x)</code> inside
+<code>interpolant()</code> (<code>t(x)</code> is determined by calling
+<code>corr()</code> inside an <code>apply()</code> loop).  A good place to start
+might be <code>scales=rep(1,ncol(xold))</code>.
+</p>
+<p>It's probably worth restating here that the elements of
+<code>scales</code> correspond to the diagonal elements of the <code class="reqn">B</code>
+matrix (see <code>?corr</code>) and so have the dimensions of
+<code class="reqn">[D]^{-2}</code> where <code class="reqn">D</code> is the dimensions of
+<code>xold</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos.def.matrix</code></td>
+<td>
+<p>A positive definite matrix that is used if
+<code>scales</code> is not supplied.  Note that precisely one of
+<code>scales</code> and <code>pos.def.matrix</code> must be supplied</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>give.Z</code></td>
+<td>
+<p>In function <code>interpolant.quick()</code>, Boolean variable
+with <code>TRUE</code> meaning to return the best estimate and the error,
+and default <code>FALSE</code> meaning to return just the best estimate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance.function</code></td>
+<td>
+<p>Function to compute distances between
+points, defaulting to <code>corr()</code>.  See <code>corr.Rd</code> for
+details. Note that <code>method=2</code> or <code>method=3</code> is required
+if a non-standard distance function is used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to the distance function,
+usually <code>corr()</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>In function <code>interpolant()</code>, if <code>give.full.list</code> is
+<code>TRUE</code>, a list is returned with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>betahat</code></td>
+<td>
+<p>Standard MLE of the (linear) fit, given the
+observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>Estimate for the prior</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigmahat.square</code></td>
+<td>
+<p>Posterior estimate for variance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mstar.star</code></td>
+<td>
+<p>Posterior expectation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cstar</code></td>
+<td>
+<p>Prior correlation of a point with itself</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cstar.star</code></td>
+<td>
+<p>Posterior correlation of a point with itself</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>Standard deviation (although the distribution is actually a
+t-distribution with <code class="reqn">n-q</code> degrees of freedom)</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p>J. Oakley 2004. “Estimating percentiles of uncertain
+computer code outputs”.  Applied Statistics, 53(1), pp89-93.
+</p>
+</li>
+<li>
+<p>J. Oakley 1999. “Bayesian uncertainty analysis for complex
+computer codes”, PhD thesis, University of Sheffield.
+</p>
+</li>
+<li>
+<p>J. Oakley and A. O'Hagan, 2002. “Bayesian Inference for the
+Uncertainty Distribution of Computer Model Outputs”, Biometrika
+89(4), pp769-784
+</p>
+</li>
+<li>
+<p>R. K. S. Hankin 2005. “Introducing BACCO, an R bundle for
+Bayesian analysis of computer code output”, Journal of Statistical
+Software, 14(16)
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>makeinputfiles</code>,<code>corr</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># example has 10 observations on 6 dimensions.
+# function is just sum( (1:6)*x) where x=c(x_1, ... , x_2)
+
+data(toy)
+val &lt;- toy
+real.relation &lt;- function(x){sum( (0:6)*x )}
+H &lt;- regressor.multi(val)
+d &lt;- apply(H,1,real.relation)
+d &lt;- jitter(d,amount=1e-5)    # to prevent numerical problems
+
+fish &lt;- rep(1,6)
+fish[6] &lt;- 4
+
+A &lt;- corr.matrix(val,scales=fish)
+Ainv &lt;- solve(A)
+
+# now add some suitably correlated noise to d:
+d.noisy &lt;-  as.vector(rmvnorm(n=1, mean=d, 0.1*A))
+names(d.noisy) &lt;- names(d)
+
+# First try a value at which we know the answer (the first row of val):
+x.known &lt;- as.vector(val[1,])
+bayes.known &lt;- interpolant(x.known, d, val, Ainv=Ainv, scales=fish, g=FALSE)
+print("error:")
+print(d[1]-bayes.known)
+
+
+# Now try the same value, but with noisy data:
+print("error:")
+print(d.noisy[1]-interpolant(x.known, d.noisy, val, Ainv=Ainv, scales=fish, g=FALSE))
+
+#And now one we don't know:
+x.unknown &lt;- rep(0.5 , 6)
+bayes.unknown &lt;- interpolant(x.unknown, d.noisy, val, scales=fish, Ainv=Ainv,g=TRUE)
+
+## [   compare with the "true" value of sum(0.5*0:6) = 10.5   ]
+
+
+
+# Just a quickie for int.qq():
+int.qq(x=rbind(x.unknown,x.unknown+0.1),d.noisy,val,Ainv,pos.def.matrix=diag(fish))
+
+
+## (To find the best correlation lengths, use optimal.scales())
+
+ # Now we use the SAME dataset but a different set of basis functions.
+ # Here, we use the functional dependence of
+ # "A+B*(x[1]&gt;0.5)+C*(x[2]&gt;0.5)+...+F*(x[6]&gt;0.5)".
+ # Thus the basis functions will be c(1,x&gt;0.5).
+ # The coefficients will again be 1:6.
+
+       # Basis functions:
+f &lt;- function(x){c(1,x&gt;0.5)}
+       # (other examples might be
+       # something like  "f &lt;- function(x){c(1,x&gt;0.5,x[1]^2)}"
+
+       # now create the data
+real.relation2 &lt;- function(x){sum( (0:6)*f(x) )}
+d2 &lt;- apply(val,1,real.relation2)
+
+       # Define a point at which the function's behaviour is not known:
+x.unknown2 &lt;- rep(1,6)
+       # Thus real.relation2(x.unknown2) is sum(1:6)=21
+
+       # Now try the emulator:
+interpolant(x.unknown2, d2, val, Ainv=Ainv, scales=fish, g=TRUE)$mstar.star
+       # Heh, it got it wrong!  (we know that it should be 21)
+
+
+       # Now try it with the correct basis functions:
+interpolant(x.unknown2, d2, val, Ainv=Ainv,scales=fish, func=f,g=TRUE)$mstar.star
+       # That's more like it.
+
+       # We can tell that the coefficients are right by:
+betahat.fun(val,Ainv,d2,func=f)
+       # Giving c(0:6), as expected.
+
+       # It's interesting to note that using the *wrong* basis functions
+       # gives the *correct* answer when evaluated at a known point:
+interpolant(val[1,], d2, val, Ainv=Ainv,scales=fish, g=TRUE)$mstar.star
+real.relation2(val[1,])
+       # Which should agree.
+
+
+       # Now look at Z.  Define a function Z() which determines the
+       # standard deviation at a point near a known point.
+Z &lt;- function(o) {
+    x &lt;- x.known 
+    x[1] &lt;- x[1]+ o
+    interpolant(x, d.noisy, val, Ainv=Ainv, scales=fish, g=TRUE)$Z
+  } 
+
+Z(0)       #should be zero because we know the answer (this is just Z at x.known)
+Z(0.1)     #nonzero error.
+
+
+  ## interpolant.quick() should  give the same results faster, but one
+  ##   needs a matrix:
+u &lt;- rbind(x.known,x.unknown)
+interpolant.quick(u, d.noisy, val, scales=fish, Ainv=Ainv,g=TRUE)
+
+
+
+
+# Now an example from climate science.  "results.table" is a dataframe
+# of goldstein (a climate model) results.  Each of its 100 rows shows a
+# point in parameter space together with certain key outputs from the
+# goldstein program.  The following R code shows how we can set up an
+# emulator based on the first 27 goldstein runs, and use the emulator to
+# predict the output for the remaining 73 goldstein runs.  The results
+# of the emulator are then plotted on a scattergraph showing that the
+# emulator is producing estimates that are close to the "real" goldstein
+# runs.
+
+
+data(results.table)
+data(expert.estimates)
+
+       # Decide which column we are interested in:
+output.col &lt;- 26
+
+       # extract the "important" columns:
+wanted.cols &lt;- c(2:9,12:19)
+
+       # Decide how many to keep;
+       # 30-40 is about the most we can handle:
+wanted.row &lt;- 1:27
+
+       # Values to use are the ones that appear in goin.test2.comments:
+val &lt;- results.table[wanted.row , wanted.cols]
+
+       # Now normalize val so that 0&lt;results.table[,i]&lt;1 is 
+       # approximately true for all i:
+
+normalize &lt;- function(x){(x-mins)/(maxes-mins)}
+unnormalize &lt;- function(x){mins + (maxes-mins)*x}
+
+mins  &lt;- expert.estimates$low 
+maxes &lt;- expert.estimates$high
+jj &lt;- t(apply(val,1,normalize))
+
+jj &lt;- as.data.frame(jj) 
+names(jj) &lt;- names(val)
+val &lt;- jj
+
+
+       ## The value we are interested in  is the 19th (or 20th or ... or 26th) column.
+d  &lt;- results.table[wanted.row ,  output.col]
+
+       ##  Now some scales, estimated earlier from the data using
+       ##   optimal.scales():
+
+scales.optim &lt;- exp(c( -2.917, -4.954, -3.354, 2.377, -2.457, -1.934, -3.395,
+-0.444, -1.448, -3.075, -0.052, -2.890, -2.832, -2.322, -3.092, -1.786))
+
+A &lt;- corr.matrix(val,scales=scales.optim, method=2)
+Ainv &lt;-  solve(A)
+
+print("and plot points used in optimization:")
+d.observed &lt;- results.table[ , output.col]
+
+A &lt;- corr.matrix(val,scales=scales.optim, method=2)
+Ainv &lt;- solve(A)
+
+print("now plot all points:")
+design.normalized &lt;- as.matrix(t(apply(results.table[,wanted.cols],1,normalize)))
+d.predicted &lt;- interpolant.quick(design.normalized , d , val , Ainv=Ainv,
+scales=scales.optim)
+jj &lt;- range(c(d.observed,d.predicted))
+par(pty="s")
+plot(d.observed, d.predicted, pch=16, asp=1,
+xlim=jj,ylim=jj,
+xlab=expression(paste(temperature," (",{}^o,C,"), model"   )),
+ylab=expression(paste(temperature," (",{}^o,C,"), emulator"))
+)
+abline(0,1)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,80 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidyst_kdcde</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tidy and geospatial kernel deconvolved density estimates</h2>
+
+<h3>Description</h3>
+
+<p>Tidy and geospatial versions of kernel deconvolved density estimates for 1- and 2-dimensional data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_kdcde(data, ...)
+st_kdcde(x,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame/tibble of data values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>sf object with point geometry</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters in <code>ks::kdcde</code> function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A deconvolved kernel density estimate is a modification of the standard density estimate for data observed with error. This version is based on a weighted kernel density estimate. For details of the computation of the kernel deconvolved density estimate and the bandwidth selector procedure, see <code>?ks::kdcde</code>. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>The output from <code>*_kdcde</code> have the same structure as the standard kernel density estimate from <code>*_kde</code>. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## tidy 2-d deconvolved density estimate
+library(ggplot2)
+data(air, package="ks")
+air &lt;- na.omit(air[, c("time","co2","pm10")])
+air &lt;- dplyr::filter(air, time=="20:00")
+air &lt;- dplyr::select(air, co2, pm10)
+## for details on computation of Sigma.air, see ?ks::kdcde
+Sigma.air &lt;- diag(c(6705.765, 957.664)) 
+
+t1 &lt;- tidy_kde(air)
+t2 &lt;- tidy_kdcde(air, Sigma=Sigma.air, reg=0.00021)
+t3 &lt;- dplyr::bind_rows(dplyr::mutate(t1, group=1L), dplyr::mutate(t2, group=2L))
+t3$group &lt;- factor(t3$group, label=c("Standard KDE","Deconvolved KDE"))
+t3 &lt;- as_tidy_ks(t3)
+
+## deconvolved estimate is more clearly bimodal than standard KDE 
+gt &lt;- ggplot(t3, aes(x=co2, y=pm10)) 
+gt + geom_contour_filled_ks(colour=1) + 
+    colorspace::scale_fill_discrete_sequential() + facet_wrap(~group) 
+</code></pre>
+
+
+</div>

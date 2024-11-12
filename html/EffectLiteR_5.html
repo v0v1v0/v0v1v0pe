@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>effectLite</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate average and conditional effects</h2>
+
+<h3>Description</h3>
+
+<p>This function is the main function of the package and can be used to estimate
+average and conditional effects of a treatment variable on an outcome variable,
+taking into account any number of continuous and categorical covariates.
+It automatically generates lavaan syntax for a multi-group structural equation
+model, runs the model using lavaan, and extracts various average and conditional
+effects of interest.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">effectLite(
+  y,
+  x,
+  k = NULL,
+  z = NULL,
+  data,
+  method = "sem",
+  control = "default",
+  measurement = character(),
+  fixed.cell = "default",
+  fixed.z = "default",
+  missing = "default",
+  se = "default",
+  syntax.only = FALSE,
+  interactions = "all",
+  homoscedasticity = "default",
+  test.stat = "default",
+  propscore = NULL,
+  ids = ~0,
+  weights = NULL,
+  add = character(),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Dependent variable (character string). Can be the name of a manifest variable or of a latent variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Treatment variable (character string) treated as categorical variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Vector of manifest variables treated as categorical covariates (character vector).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>Vector of continuous covariates (character vector). Names of both manifest and latent variables are allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Can be one of <code>c("sem","lm")</code> and indicates which function is used to fit the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>Value of <code>x</code> that is used as control group. If "default", takes the first entry of <code>as.factor(x)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>measurement</code></td>
+<td>
+<p>Measurement model. The measurement model is lavaan syntax (character string), that will be appended before the automatically generated lavaan input. It can be used to specify a measurement for a latent outcome variable and/or latent covariates. See also the example and <code>generateMeasurementModel</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.cell</code></td>
+<td>
+<p>logical. If <code>FALSE</code>, the group sizes are treated as stochastic rather than fixed. The default setting for <code>method="sem"</code> is <code>FALSE</code> and the default setting for <code>method="lm"</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.z</code></td>
+<td>
+<p>logical. If <code>FALSE</code>, the continuous covariates are treated as stochastic rather than fixed. The default setting for <code>method="sem"</code> is <code>FALSE</code> and the default setting for <code>method="lm"</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missing</code></td>
+<td>
+<p>Missing data handling. Will be passed on to <code>sem</code> or ignored for <code>method="lm"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>Type of standard errors. Will be 
+passed on to <code>sem</code> or ignored for <code>method="lm"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>syntax.only</code></td>
+<td>
+<p>logical. If <code>TRUE</code>, only syntax is returned and the model 
+will not be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interactions</code></td>
+<td>
+<p>character. Indicates the type of interaction. Can be one of <code>"all"</code> (all interactions), <code>"2-way"</code> (only two-way interactions), <code>"X:K,X:Z"</code> (only X:K and X:Z interactions), <code>"X:K"</code> (only X:K interactions), <code>"X:Z"</code> (only X:Z interactions), <code>"none"</code> (no treatment by covariate interactions, but potentially interactions between categorical and continuous covariates), or <code>"no"</code> (no interactions at all).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>homoscedasticity</code></td>
+<td>
+<p>logical. If <code>TRUE</code>, residual variances of the dependent variable are assumed to be homogeneous across cells. The default setting for <code>method="sem"</code> is <code>FALSE</code> and the default setting for <code>method="lm"</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test.stat</code></td>
+<td>
+<p>character. Can be one of <code>c("default","Chisq","Ftest")</code> and indicates the statistic used for the hypothesis tests. The tests are either based on the large sample Chi-Squared statistic (Wald tests) or the finite sample F statistic with approximate F distribution.  The default setting for <code>method="sem"</code> is <code>"Chisq"</code> and the default setting for <code>method="lm"</code> is <code>"Ftest"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>propscore</code></td>
+<td>
+<p>Vector of covariates (character vector) that will be used to compute (multiple) propensity scores based on a multinomial regression without interactions. Alternatively, the user can specify a formula with the treatment variable as dependent variable for more control over the propensity score model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ids</code></td>
+<td>
+<p>Formula specifying cluster ID variable. Because <code>lavaan.survey</code> that used this argument is no longer on CRAN, the <code>cluster</code> argument in <code>sem</code> will now be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Formula to specify sampling weights. Because <code>lavaan.survey</code> that used this argument is no longer on CRAN, the <code>sampling.weights</code> argument in <code>sem</code> will now be used. Note: Only use weights if you know what you are doing. For example, some conditional treatment effects may require different weights than average effects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add</code></td>
+<td>
+<p>Character string that will be pasted at the end of the generated lavaan syntax. Can for example be used to add additional (in-) equality constraints or to compute user-defined conditional effects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to <code>sem</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Object of class effectlite.
+</p>
+
+
+<h3>References</h3>
+
+<p>Mayer, A., Dietzfelbinger, L., Rosseel, Y. &amp; Steyer, R. (2016). The EffectLiteR approach for analyzing average and conditional effects. Multivariate Behavioral Research, 51, 374-391.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Example with one categorical covariate
+m1 &lt;- effectLite(y="y", x="x", k="z", control="0", data=nonortho)
+print(m1) 
+
+## Example with one categorical and one continuous covariate
+m1 &lt;- effectLite(y="dv", x="x", k=c("k1"), z=c("z1"), control="control", data=example01)
+print(m1)
+
+## Example with latent outcome and latent covariate
+measurement &lt;- '
+eta2 =~ 1*CPM12 + 1*CPM22
+eta1 =~ 1*CPM11 + 1*CPM21
+CPM11 + CPM12 ~ 0*1
+CPM21 ~ c(m,m)*1
+CPM22 ~ c(p,p)*1'
+
+m1 &lt;- effectLite(y="eta2", x="x", z=c("eta1"), control="0", 
+                 measurement=measurement, data=example02lv)
+print(m1)
+
+## Example with cluster variable and sampling weights
+m1 &lt;- effectLite(y="y", x="x", z="z", fixed.cell=TRUE, control="0", 
+                    syntax.only=FALSE, data=example_multilevel, 
+                    cluster="cid", sampling.weights="weights")
+print(m1)
+
+</code></pre>
+
+
+</div>

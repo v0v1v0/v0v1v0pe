@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>requery_seq</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Requery sequential context of segment list in an emuDB</h2>
+
+<h3>Description</h3>
+
+<p>Function to requery sequential context of a segment list queried 
+from an emuDB
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">requery_seq(
+  emuDBhandle,
+  seglist,
+  offset = 0,
+  offsetRef = "START",
+  length = 1,
+  ignoreOutOfBounds = FALSE,
+  resultType = "tibble",
+  calcTimes = TRUE,
+  timeRefSegmentLevel = NULL,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>emuDBhandle</code></td>
+<td>
+<p>emuDB handle as returned by <code>load_emuDB</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seglist</code></td>
+<td>
+<p>segment list to requery on (type: 'tibble' or 'emuRsegs')</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+<p>start item offset in sequence (default is 0, meaning the start 
+or end item of the input segment)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offsetRef</code></td>
+<td>
+<p>reference item for offset: 'START' for first and 'END' 
+for last item of segment</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>length</code></td>
+<td>
+<p>item length of segments in the returned segment list</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignoreOutOfBounds</code></td>
+<td>
+<p>ignore result segments that are out of bundle bounds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resultType</code></td>
+<td>
+<p>type of result (either 'tibble' == default, 'emuRsegs')</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>calcTimes</code></td>
+<td>
+<p>calculate times for resulting segments (results in <code>NA</code> 
+values for start and end times in emuseg/emuRsegs). As it can be very 
+computationally expensive to calculate the times for large nested hierarchies, 
+it can be turned off via this boolean parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeRefSegmentLevel</code></td>
+<td>
+<p>set time segment level from which to derive time 
+information. It is only necessary to set this parameter if more than one 
+child level contains time information and the queried parent level is of type ITEM.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>be verbose. Set this to <code>TRUE</code> if you wish to choose which 
+path to traverse on intersecting hierarchies. If set to <code>FALSE</code> (the 
+default) all paths will be traversed (= legacy EMU behaviour).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Builds a new segment list on the same hierarchical level 
+and the same length as the segment list given in <code>seglist</code>. The 
+resulting segments usually have different start position and length (in 
+terms of items of the respective level) controlled by the <code>offset</code>,
+<code>offsetRef</code> and <code>length</code> parameters.
+A segment here is defined as a single item or a chain of items from the 
+respective level, e.g. if a level in a bundle instance has labels 'a', 'b' 
+and 'c' in that order, 'a' or 'a-&gt;b' oder 'a-&gt;b-&gt;c' are all valid segments, 
+but not 'a-&gt;c'.
+<code>offsetRef</code> determines if the position offset is referenced to the 
+start or the end item of the segments in the input list <code>seglist</code>; 
+parameter <code>offset</code> determines the offset of the resulting item start 
+position to this reference item; parameter <code>length</code> sets the item 
+length of the result segments. If the requested segments are out of bundle 
+item boundaries and parameter <code>ignoreOutOfBounds</code> is <code>FALSE</code> 
+(the default), an error is generated. To get residual resulting segments 
+that lie within the bounds the <code>ignoreOutOfBounds</code> parameter can be 
+set to <code>TRUE</code>. The returned segment list is usually of the same 
+length and order as the input <code>seglist</code>; if <code>ignoreOutOfBounds=FALSE</code>, 
+the resulting segment list may be out of sync.
+</p>
+
+
+<h3>Value</h3>
+
+<p>result set object of class emuRsegs or tibble
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>query</code> <code>requery_hier</code> <code>emuRsegs</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+##################################
+# prerequisite: loaded ae emuDB 
+# (see ?load_emuDB for more information)
+
+## Requery previous item of 'p' on level 'Phonetic'
+sl1 = query(ae, "Phonetic == p")
+
+requery_seq(ae, sl1, offset = -1)
+
+## Requery context (adding previuos and following elements) 
+## of 'p' on phonetic level
+
+requery_seq(ae, sl1, offset = -1, length = 3)
+
+## Requery previous item of n-&gt;t sequence
+sl2 = query(ae, "[Phoneme == n -&gt; Phoneme == t]")
+
+requery_seq(ae, sl2, offset = -1)
+
+## Requery last item within n-&gt;t sequence
+
+requery_seq(ae, sl2, offsetRef = 'END')
+
+## Requery following item after n-&gt;t sequence
+
+requery_seq(ae, sl2, offset = 1, offsetRef = 'END')
+
+## Requery context (previous and following items) of n-&gt;t sequence
+
+requery_seq(ae, sl2, offset = -1, length = 4)
+
+## Requery next word contexts (sequence includes target word)
+
+sl3 = query(ae, "Text == to")
+requery_seq(ae, sl3, length = 2)
+
+## Requery following two word contexts, ignoring segment 
+## sequences that are out of bundle end bounds 
+requery_seq(ae, sl3, length = 3, ignoreOutOfBounds = TRUE)
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

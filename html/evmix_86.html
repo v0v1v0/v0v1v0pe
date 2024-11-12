@@ -1,0 +1,348 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fhpd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>MLE Fitting of Hybrid Pareto Extreme Value Mixture Model</h2>
+
+<h3>Description</h3>
+
+<p>Maximum likelihood estimation for fitting the hybrid Pareto extreme
+value mixture model
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fhpd(x, pvector = NULL, std.err = TRUE, method = "BFGS",
+  control = list(maxit = 10000), finitelik = TRUE, ...)
+
+lhpd(x, nmean = 0, nsd = 1, xi = 0, log = TRUE)
+
+nlhpd(pvector, x, finitelik = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector of sample data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvector</code></td>
+<td>
+<p>vector of initial values of parameters
+(<code>nmean</code>, <code>nsd</code>, <code>xi</code>) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>logical, should standard errors be calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>optimisation method (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optimisation control list (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>finitelik</code></td>
+<td>
+<p>logical, should log-likelihood return finite value for invalid parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional inputs passed to <code>optim</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmean</code></td>
+<td>
+<p>scalar normal mean</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsd</code></td>
+<td>
+<p>scalar normal standard deviation (positive)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>scalar shape parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if <code>TRUE</code> then log-likelihood rather than likelihood is output</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The hybrid Pareto model is fitted to the entire dataset using maximum likelihood
+estimation. The estimated parameters, variance-covariance matrix and their standard errors
+are automatically output.
+</p>
+<p>The log-likelihood and negative log-likelihood are also provided for wider
+usage, e.g. constructing profile likelihood functions. The parameter vector
+<code>pvector</code> must be specified in the negative log-likelihood
+<code>nlhpd</code>.
+</p>
+<p>Log-likelihood calculations are carried out in
+<code>lhpd</code>, which takes parameters as inputs in
+the same form as distribution functions. The negative log-likelihood is a
+wrapper for <code>lhpd</code>, designed towards making
+it useable for optimisation (e.g. parameters are given a vector as first
+input).
+</p>
+<p>Missing values (<code>NA</code> and <code>NaN</code>) are assumed to be invalid data so are ignored,
+which is inconsistent with the <code>evd</code> library which assumes the 
+missing values are below the threshold.
+</p>
+<p>The function <code>lhpd</code> carries out the calculations
+for the log-likelihood directly, which can be exponentiated to give actual
+likelihood using (<code>log=FALSE</code>).
+</p>
+<p>The default optimisation algorithm is "BFGS", which requires a finite negative 
+log-likelihood function evaluation <code>finitelik=TRUE</code>. For invalid 
+parameters, a zero likelihood is replaced with <code>exp(-1e6)</code>. The "BFGS" 
+optimisation algorithms require finite values for likelihood, so any user 
+input for <code>finitelik</code> will be overridden and set to <code>finitelik=TRUE</code> 
+if either of these optimisation methods is chosen.
+</p>
+<p>It will display a warning for non-zero convergence result comes from 
+<code>optim</code> function call.
+</p>
+<p>If the hessian is of reduced rank then the variance covariance (from inverse hessian)
+and standard error of parameters cannot be calculated, then by default 
+<code>std.err=TRUE</code> and the function will stop. If you want the parameter estimates
+even if the hessian is of reduced rank (e.g. in a simulation study) then
+set <code>std.err=FALSE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>lhpd</code> gives (log-)likelihood and 
+<code>nlhpd</code> gives the negative log-likelihood. 
+<code>fhpd</code> returns a simple list with the following elements
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>call</code>:   </td>
+<td style="text-align: left;"> <code>optim</code> call</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>x</code>:      </td>
+<td style="text-align: left;"> data vector <code>x</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>init</code>:   </td>
+<td style="text-align: left;"> <code>pvector</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>optim</code>:  </td>
+<td style="text-align: left;"> complete <code>optim</code> output</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>mle</code>:    </td>
+<td style="text-align: left;"> vector of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>cov</code>:    </td>
+<td style="text-align: left;"> variance-covariance matrix of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>se</code>:     </td>
+<td style="text-align: left;"> vector of standard errors of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>rate</code>:   </td>
+<td style="text-align: left;"> <code>phiu</code> to be consistent with <code>evd</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>nllh</code>:   </td>
+<td style="text-align: left;"> minimum negative log-likelihood</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>n</code>:      </td>
+<td style="text-align: left;"> total sample size</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>nmean</code>:  </td>
+<td style="text-align: left;"> MLE of normal mean</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>nsd</code>:    </td>
+<td style="text-align: left;"> MLE of normal standard deviation</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>u</code>:      </td>
+<td style="text-align: left;"> threshold (implicit from other parameters)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>sigmau</code>: </td>
+<td style="text-align: left;"> MLE of GPD scale</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>xi</code>:     </td>
+<td style="text-align: left;"> MLE of GPD shape</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>phiu</code>:    </td>
+<td style="text-align: left;"> MLE of tail fraction (implied by <code>1/(1+pnorm(u,nmean,nsd))</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>The output list has some duplicate entries and repeats some of the inputs to both 
+provide similar items to those from <code>fpot</code> and to make it 
+as useable as possible.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Unlike most of the distribution functions for the extreme value mixture models,
+the MLE fitting only permits single scalar values for each parameter. Only the data is a vector.
+</p>
+<p>When <code>pvector=NULL</code> then the initial values are calculated, type 
+<code>fhpd</code> to see the default formulae used. The mixture model fitting can be
+***extremely*** sensitive to the initial values, so you if you get a poor fit then
+try some alternatives. Avoid setting the starting value for the shape parameter to
+<code>xi=0</code> as depending on the optimisation method it may be get stuck.
+</p>
+<p>A default value for the tail fraction <code>phiu=TRUE</code> is given. 
+The <code>lhpd</code> also has the usual defaults for
+the other parameters, but <code>nlhpd</code> has no defaults.
+</p>
+<p>Invalid parameter ranges will give <code>0</code> for likelihood, <code>log(0)=-Inf</code> for
+log-likelihood and <code>-log(0)=Inf</code> for negative log-likelihood. 
+</p>
+<p>Infinite and missing sample values are dropped.
+</p>
+<p>Error checking of the inputs is carried out and will either stop or give warning message
+as appropriate.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Yang Hu and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/Normal_distribution">http://en.wikipedia.org/wiki/Normal_distribution</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Generalized_Pareto_distribution">http://en.wikipedia.org/wiki/Generalized_Pareto_distribution</a>
+</p>
+<p>Scarrott, C.J. and MacDonald, A. (2012). A review of extreme value
+threshold estimation and uncertainty quantification. REVSTAT - Statistical
+Journal 10(1), 33-59. Available from <a href="http://www.ine.pt/revstat/pdf/rs120102.pdf">http://www.ine.pt/revstat/pdf/rs120102.pdf</a>
+</p>
+<p>Carreau, J. and Y. Bengio (2008). A hybrid Pareto model for asymmetric fat-tailed data:
+the univariate case. Extremes 12 (1), 53-76.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fgpd</code> and <code>gpd</code>
+</p>
+<p>The condmixt package written by one of the
+original authors of the hybrid Pareto model (Carreau and Bengio, 2008) also has 
+similar functions for the likelihood of the hybrid Pareto 
+(hpareto.negloglike) and fitting (hpareto.fit).
+</p>
+<p>Other hpd: <code>fhpdcon</code>, <code>hpdcon</code>,
+<code>hpd</code>
+</p>
+<p>Other hpdcon: <code>fhpdcon</code>, <code>hpdcon</code>,
+<code>hpd</code>
+</p>
+<p>Other normgpd: <code>fgng</code>,
+<code>fitmnormgpd</code>, <code>flognormgpd</code>,
+<code>fnormgpdcon</code>, <code>fnormgpd</code>,
+<code>gngcon</code>, <code>gng</code>,
+<code>hpdcon</code>, <code>hpd</code>,
+<code>itmnormgpd</code>, <code>lognormgpdcon</code>,
+<code>lognormgpd</code>, <code>normgpdcon</code>,
+<code>normgpd</code>
+</p>
+<p>Other fhpd: <code>hpd</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(1, 1))
+
+x = rnorm(1000)
+xx = seq(-4, 4, 0.01)
+y = dnorm(xx)
+
+# Hybrid Pareto provides reasonable fit for some asymmetric heavy upper tailed distributions
+# but not for cases such as the normal distribution
+fit = fhpd(x, std.err = FALSE)
+hist(x, breaks = 100, freq = FALSE, xlim = c(-4, 4))
+lines(xx, y)
+with(fit, lines(xx, dhpd(xx, nmean, nsd, xi), col="red"))
+abline(v = fit$u)
+
+# Notice that if tail fraction is included a better fit is obtained
+fit2 = fnormgpdcon(x, std.err = FALSE)
+with(fit2, lines(xx, dnormgpdcon(xx, nmean, nsd, u, xi), col="blue"))
+abline(v = fit2$u)
+legend("topright", c("Standard Normal", "Hybrid Pareto", "Normal+GPD Continuous"),
+  col=c("black", "red", "blue"), lty = 1)
+
+## End(Not run)
+ 
+</code></pre>
+
+
+</div>

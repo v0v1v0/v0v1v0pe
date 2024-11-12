@@ -1,0 +1,261 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sca</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sparse Component Analysis</h2>
+
+<h3>Description</h3>
+
+<p><code>sca</code> performs sparse principal components analysis on the given numeric data matrix.
+Choices of rotation techniques and shrinkage operators are available.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sca(
+  x,
+  k = min(5, dim(x)),
+  gamma = NULL,
+  is.cov = FALSE,
+  rotate = c("varimax", "absmin"),
+  shrink = c("soft", "hard"),
+  center = TRUE,
+  scale = FALSE,
+  normalize = FALSE,
+  order = TRUE,
+  flip = TRUE,
+  max.iter = 1000,
+  epsilon = 1e-05,
+  quiet = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>matrix</code> or <code>Matrix</code> to be analyzed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p><code>integer</code>, rank of approximation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p><code>numeric(1)</code>, sparsity parameter, default to <code>sqrt(pk)</code>, where n x p is the dimension of <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>is.cov</code></td>
+<td>
+<p><code>logical</code>, default to <code>FALSE</code>, whether the <code>x</code> is a covariance matrix (or Gram matrix, i.e., <code>crossprod()</code> of some design matrix). If <code>TRUE</code>, both <code>center</code> and <code>scale</code> will be ignored/skipped.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rotate</code></td>
+<td>
+<p><code>character(1)</code>, rotation method. Two options are currently available: "varimax" (default) or "absmin" (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shrink</code></td>
+<td>
+<p><code>character(1)</code>, shrinkage method, either "soft"- (default) or "hard"-thresholding (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p><code>logical</code>, whether to center columns of <code>x</code> (see <code>scale()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p><code>logical</code>, whether to scale columns of <code>x</code> (see <code>scale()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+<p><code>logical</code>, whether to rows normalization should be done before and undone afterward the rotation (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p><code>logical</code>, whether to re-order the columns of the estimates (see Details below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flip</code></td>
+<td>
+<p><code>logical</code>, whether to flip the signs of the columns of estimates such that all columns are positive-skewed (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.iter</code></td>
+<td>
+<p><code>integer</code>, maximum number of iteration (default to 1,000).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p><code>numeric</code>, tolerance of convergence precision (default to 0.00001).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p><code>logical</code>, whether to mute the process report (default to <code>TRUE</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong><code>rotate</code></strong>: The <code>rotate</code> option specifies the rotation technique to
+use. Currently, there are two build-in options—“varimax” and “absmin”.
+The “varimax” rotation maximizes the element-wise L4 norm of the rotated
+matrix. It is faster and computationally more stable. The “absmin”
+rotation minimizes the absolute sum of the rotated matrix. It is sharper
+(as it directly minimizes the L1 norm) but slower and computationally
+less stable.
+</p>
+<p><strong><code>shrink</code></strong>: The <code>shrink</code> option specifies the shrinkage operator to
+use. Currently, there are two build-in options—“soft”- and
+“hard”-thresholding. The “soft”-thresholding universally reduce all
+elements and sets the small elements to zeros. The “hard”-thresholding
+only sets the small elements to zeros.
+</p>
+<p><strong><code>normalize</code></strong>: The argument <code>normalize</code> gives an indication of if and
+how any normalization should be done before rotation, and then undone
+after rotation. If normalize is <code>FALSE</code> (the default) no normalization
+is done. If normalize is <code>TRUE</code> then Kaiser normalization is done. (So
+squared row entries of normalized <code>x</code> sum to 1.0. This is sometimes
+called Horst normalization.) For <code>rotate="absmin"</code>, if <code>normalize</code> is a
+vector of length equal to the number of indicators (i.e., the number of
+rows of <code>x</code>), then the columns are divided by <code>normalize</code> before
+rotation and multiplied by <code>normalize</code> after rotation. Also, If
+<code>normalize</code> is a function then it should take <code>x</code> as an argument and
+return a vector which is used like the vector above.
+</p>
+<p><strong><code>order</code></strong>: In PCA (and SVD), the principal components (and the
+singular vectors) are ordered. For this, we order the sparse components
+(i.e., the columns of <code>z</code> or <code>y</code>) by their explained variance in the
+data, which is defined as <code>sum((x %*% y)^2)</code>, where y is a column of the
+sparse component. Note: not to be confused with the cumulative
+proportion of variance explained by <code>y</code> (and <code>z</code>), particularly when <code>y</code>
+(and <code>z</code>) is may not be strictly orthogonal.
+</p>
+<p><strong><code>flip</code></strong>: The argument <code>flip</code> gives an indication of if and the
+columns of estimated sparse component should be flipped. Note that the
+estimated (sparse) loadings, i.e., the weights on original variables,
+are column-wise invariant to a sign flipping. This is because flipping
+of a principal direction does not influence the amount of the explained
+variance by the component. If <code>flip=TRUE</code>, then the columns of loadings
+will be flip accordingly, such that each column is positive-skewed. This
+means that for each column, the sum of cubic elements (i.e., <code>sum(x^3)</code>)
+are non-negative.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an <code>sca</code> object that contains:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>loadings</code></td>
+<td>
+<p><code>matrix</code>, sparse loadings of PCs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scores</code></td>
+<td>
+<p>an n x k <code>matrix</code>, the component scores, calculated using centered (and/or scaled) <code>x</code>. This will only be available when <code>is.cov = FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cpve</code></td>
+<td>
+<p>a <code>numeric</code> vector of length <code>k</code>, cumulative proportion of variance in <code>x</code> explained by the top PCs (after center and/or scale).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p><code>logical</code>, this records the <code>center</code> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p><code>logical</code>, this records the <code>scale</code> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.iter</code></td>
+<td>
+<p><code>integer</code>, number of iteration taken.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.obs</code></td>
+<td>
+<p><code>integer</code>, sample size, that is, <code>nrow(x)</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Chen, F. and Rohe, K. (2020) "A New Basis for Sparse Principal Component Analysis."
+</p>
+
+
+<h3>See Also</h3>
+
+<p>sma, prs
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## ------ example 1 ------
+## simulate a low-rank data matrix with some additive Gaussian noise
+n &lt;- 300
+p &lt;- 50
+k &lt;- 5 ## rank
+z &lt;- shrinkage(polar(matrix(runif(n * k), n, k)), sqrt(n))
+b &lt;- diag(5) * 3
+y &lt;- shrinkage(polar(matrix(runif(p * k), p, k)), sqrt(p))
+e &lt;- matrix(rnorm(n * p, sd = .01), n, p)
+x &lt;- scale(z %*% b %*% t(y) + e)
+
+## perform sparse PCA
+s.sca &lt;- sca(x, k)
+s.sca
+
+## ------ example 2 ------
+## use the `pitprops` data from the `elasticnet` package
+data(pitprops)
+
+## find 6 sparse PCs
+s.sca &lt;- sca(pitprops, 6, gamma = 6, is.cov = TRUE)
+print(s.sca, verbose = TRUE)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,439 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_eurostat_json</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get Data from Eurostat API in JSON</h2>
+
+<h3>Description</h3>
+
+<p>Retrieve data from Eurostat API in JSON format.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_eurostat_json(
+  id,
+  filters = NULL,
+  type = "code",
+  lang = "en",
+  stringsAsFactors = FALSE,
+  proxy = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A unique identifier / code for the dataset of interest. If code is not
+known <code>search_eurostat()</code> function can be used to search Eurostat table
+of contents.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filters</code></td>
+<td>
+<p>A named list of filters. Names of list objects are Eurostat
+variable codes and values are vectors of observation codes. If <code>NULL</code>
+(default) the whole dataset is returned. See details for more information
+on filters and limitations per query.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>A type of variables, "<code>code</code>" (default), "<code>label</code>" or "<code>both</code>".
+The parameter "<code>both</code>" will return a data_frame with named vectors,
+labels as values and codes as names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lang</code></td>
+<td>
+<p>2-letter language code, default is "<code>en</code>" (English), other
+options are "<code>fr</code>" (French) and "<code>de</code>" (German). Used for labeling datasets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stringsAsFactors</code></td>
+<td>
+<p>if <code>TRUE</code> (the default) variables are converted to factors in the original
+Eurostat order. If <code>FALSE</code> they are returned as strings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proxy</code></td>
+<td>
+<p>Use proxy, TRUE or FALSE (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Arguments passed on to <code>httr2::req_proxy</code>
+</p>
+
+<dl>
+<dt><code>req</code></dt>
+<dd>
+<p>A request.</p>
+</dd>
+<dt><code>url,port</code></dt>
+<dd>
+<p>Location of proxy.</p>
+</dd>
+<dt><code>username,password</code></dt>
+<dd>
+<p>Login details for proxy, if needed.</p>
+</dd>
+<dt><code>auth</code></dt>
+<dd>
+<p>Type of HTTP authentication to use. Should be one of the
+following: <code>basic</code>, digest, digest_ie, gssnegotiate, ntlm, any.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Data to retrieve from
+<a href="https://ec.europa.eu/eurostat/web/main/data/web-services">The Eurostat Web Services</a>
+can be specified with filters. Normally, it is
+better to use JSON query through <code>get_eurostat()</code>, than to use
+<code>get_eurostat_json()</code> directly.
+</p>
+<p>Queries are limited to 50 sub-indicators at a time. A time can be
+filtered with fixed "time" filter or with "sinceTimePeriod" and
+"lastTimePeriod" filters. A <code>sinceTimePeriod = 2000</code> returns
+observations from 2000 to a last available. A <code>lastTimePeriod = 10</code>
+returns a 10 last observations. See "Filtering datasets" section below
+for more detailed information about filters.
+</p>
+<p>To use a proxy to connect, proxy arguments can be
+passed to <code>httr2::req_perform()</code> via <code>httr2::req_proxy()</code> - see latter
+function documentation for parameter names that can be passed with <code>...</code>.
+A non-functional example:
+<code>get_eurostat_json(id, filters, proxy = TRUE, url = "127.0.0.1", port = 80)</code>.
+</p>
+<p>When retrieving data from Eurostat JSON API the user may encounter errors.
+For end user convenience, we have provided a ready-made internal dataset
+<code>sdmx_http_errors</code> that contains descriptive labels and descriptions about
+the possible interpretation or cause of each error. These messages are
+returned if the API returns a status indicating a HTTP error
+(400 or greater).
+</p>
+<p>The Eurostat implementation seems to be based on SDMX 2.1, which is the
+reason we've used SDMX Standards guidelines as a supplementary source
+that we have included in the dataset. What this means in practice is that
+the dataset contains error codes and their mappings that are not mentioned
+in the Eurostat website. We hope you never encounter them.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A dataset as an object of <code>data.frame</code> class.
+</p>
+
+
+<h3>Data source: Eurostat API Statistics (JSON API)</h3>
+
+<p>Data is downloaded from Eurostat API Statistics. See Eurostat documentation
+for more information about data queries in API Statistics
+<a href="https://wikis.ec.europa.eu/display/EUROSTATHELP/API+Statistics+-+data+query">https://wikis.ec.europa.eu/display/EUROSTATHELP/API+Statistics+-+data+query</a>
+</p>
+<p>This replaces the old JSON Web Services that was used by Eurostat before
+February 2023 and by the eurostat R package versions before 3.7.13.
+See Eurostat documentation about the migration from JSON web service to API
+Statistics for more information about the differences between the old and
+the new service:
+<a href="https://wikis.ec.europa.eu/display/EUROSTATHELP/API+Statistics+-+migrating+from+JSON+web+service+to+API+Statistics">https://wikis.ec.europa.eu/display/EUROSTATHELP/API+Statistics+-+migrating+from+JSON+web+service+to+API+Statistics</a>
+</p>
+<p>For easily viewing which filtering options are available -  in addition to
+the default ones, time and language - Eurostat Web services Query builder
+tool may be useful:
+<a href="https://ec.europa.eu/eurostat/web/query-builder">https://ec.europa.eu/eurostat/web/query-builder</a>
+</p>
+
+
+<h3>Filtering datasets</h3>
+
+<p>When using Eurostat API Statistics (JSON API), datasets can be filtered
+before they are downloaded and saved in local memory. The general format
+for filter parameters is <code style="white-space: pre;">⁠&lt;DIMENSION_CODE&gt;=&lt;VALUE&gt;⁠</code>.
+</p>
+<p>Filter parameters are optional but the used dimension codes must be present
+in the data product that is being queried. Dimension codes can
+vary between different data products so it may be useful to examine new
+datasets in Eurostat data browser beforehand. However, most if not all
+Eurostat datasets concern European countries and contain information that
+was gathered at some point in time, so <code>geo</code> and <code>time</code> dimension codes
+can usually be used.
+</p>
+<p><code style="white-space: pre;">⁠&lt;DIMENSION_CODE&gt;⁠</code> and <code style="white-space: pre;">⁠&lt;VALUE&gt;⁠</code> are case-insensitive and they can be written
+in lowercase or uppercase in the query.
+</p>
+<p>Parameters are passed onto the <code>eurostat</code> package functions <code>get_eurostat()</code>
+and <code>get_eurostat_json()</code> as a list item. If an individual item contains
+multiple items, as it often can be in the case of <code>geo</code> parameters and
+other optional items, they must be in the form of a vector: <code>c("FI", "SE")</code>.
+For examples on how to use these parameters, see function examples below.
+</p>
+
+
+<h4>Time parameters</h4>
+
+<p><code>time</code> and <code>time_period</code> address the same <code>TIME_PERIOD</code> dimension in the
+dataset and can be used interchangeably. In the Eurostat documentation
+it is stated that "Using more than one Time parameter in the same query
+is not accepted", but practice has shown that actually Eurostat API allows
+multiple <code>time</code> parameters in the same query. This makes it possible to
+use R colon operator when writing queries, so <code>time = c(2015:2018)</code>
+translates to <code style="white-space: pre;">⁠&amp;time=2015&amp;time=2016&amp;time=2017&amp;time=2018⁠</code>.
+</p>
+<p>The only exception
+to this is when the queried dataset contains e.g. quarterly data and
+<code>TIME_PERIOD</code> is saved as <code>2015-Q1</code>, <code>2015-Q2</code> etc. Then it is possible
+to use <code>time=2015-Q1&amp;time=2015-Q2</code> style in the query URL, but this makes it
+unfeasible to use the colon operator and requires a lot of manual typing.
+</p>
+<p>Because of this, it is useful to know about other time parameters as well:
+</p>
+
+<ul>
+<li> <p><code>untilTimePeriod</code>: return dataset items from the oldest record up until the
+set time, for example "all data until 2000": <code>untilTimePeriod = 2000</code>
+</p>
+</li>
+<li> <p><code>sinceTimePeriod</code>: return dataset items starting from set time, for example
+"all datastarting from 2008": <code>sinceTimePeriod = 2008</code>
+</p>
+</li>
+<li> <p><code>lastTimePeriod</code>: starting from the most recent time period, how many
+preceding time periods should be returned? For example 10 most
+recent observations: <code>lastTimePeriod = 10</code>
+</p>
+</li>
+</ul>
+<p>Using both <code>untilTimePeriod</code> and <code>sinceTimePeriod</code> parameters in the same
+query is allowed, making the usage of the R colon operator unnecessary.
+In the case of quarterly data, using <code>untilTimePeriod</code> and <code>sinceTimePeriod</code>
+parameters also works, as opposed to the colon operator, so it is generally
+safer to use them as well.
+</p>
+
+
+
+<h4>Other dimensions</h4>
+
+<p>In <code>get_eurostat_json()</code> examples <code>nama_10_gdp</code> dataset is filtered with
+two additional filter parameters:
+</p>
+
+<ul>
+<li> <p><code>na_item = "B1GQ"</code>
+</p>
+</li>
+<li> <p><code>unit = "CLV_I10"</code>
+</p>
+</li>
+</ul>
+<p>Filters like these are most likely unique to the <code>nama_10_gdp</code> dataset
+(or other datasets within the same domain) and should
+not be used with others dataset without user discretion.
+By using <code>label_eurostat()</code> we know that <code>"B1GQ"</code> stands for
+"Gross domestic product at market prices" and
+<code>"CLV_I10"</code> means "Chain linked volumes, index 2010=100".
+</p>
+<p>Different dimension codes can be translated to a natural language by using
+the <code>get_eurostat_dic()</code> function, which returns labels for individual
+dimension items such as <code>na_item</code> and <code>unit</code>, as opposed to
+<code>label_eurostat()</code> which does it for whole datasets. For example, the
+parameter <code>na_item</code> stands for "National accounts indicator (ESA 2010)" and
+<code>unit</code> stands for "Unit of measure".
+</p>
+
+
+
+<h4>Language</h4>
+
+<p>All datasets have metadata available in English, French and German. If no
+parameter is given, the labels are returned in English.
+</p>
+<p>Example:
+</p>
+
+<ul><li> <p><code>lang = "fr"</code>
+</p>
+</li></ul>
+<h4>More information</h4>
+
+<p>For more information about data filtering see Eurostat documentation
+on API Statistics:
+<a href="https://wikis.ec.europa.eu/display/EUROSTATHELP/API+Statistics+-+data+query#APIStatisticsdataquery-TheparametersdefinedintheRESTrequest">https://wikis.ec.europa.eu/display/EUROSTATHELP/API+Statistics+-+data+query#APIStatisticsdataquery-TheparametersdefinedintheRESTrequest</a>
+</p>
+
+
+
+<h3>Eurostat: Copyright notice and free re-use of data</h3>
+
+<p>The following copyright notice is provided for end user convenience.
+Please check up-to-date copyright information from the eurostat website:
+<a href="https://ec.europa.eu/eurostat/about-us/policies/copyright">https://ec.europa.eu/eurostat/about-us/policies/copyright</a>
+</p>
+<p>"(c) European Union, 1995 - today
+</p>
+<p>Eurostat has a policy of encouraging free re-use of its data, both for
+non-commercial and commercial purposes. All statistical data, metadata,
+content of web pages or other dissemination tools, official publications
+and other documents published on its website, with the exceptions listed
+below, can be reused without any payment or written licence provided that:
+</p>
+
+<ul>
+<li>
+<p> the source is indicated as Eurostat;
+</p>
+</li>
+<li>
+<p> when re-use involves modifications to the data or text, this must be
+stated clearly to the end user of the information."
+</p>
+</li>
+</ul>
+<p>For exceptions to the abovementioned principles see
+<a href="https://ec.europa.eu/eurostat/about-us/policies/copyright">Eurostat website</a>
+</p>
+
+
+<h3>Citing Eurostat data</h3>
+
+<p>For citing datasets, use <code>get_bibentry()</code> to build a bibliography that
+is suitable for your reference manager of choice.
+</p>
+<p>When using Eurostat data in other contexts than academic publications that
+in-text citations or footnotes/endnotes, the following guidelines may be
+helpful:
+</p>
+
+<ul>
+<li>
+<p> The origin of the data should always be mentioned as "Source: Eurostat".
+</p>
+</li>
+<li>
+<p> The online dataset codes(s) should also be provided in order to ensure
+transparency and facilitate access to the Eurostat data and related
+methodological information. For example:
+"Source: Eurostat (online data code: namq_10_gdp)"
+</p>
+</li>
+<li>
+<p> Online publications (e.g. web pages, PDF) should include a clickable
+link to the dataset using the bookmark functionality available in the
+Eurostat data browser.
+</p>
+</li>
+</ul>
+<p>It should be avoided to associate different entities (e.g. Eurostat,
+National Statistical Offices, other data providers) to the same dataset or
+indicator without specifying the role of each of them in the treatment of
+data.
+</p>
+<p>See also section "Eurostat: Copyright notice and free re-use of data"
+in <code>get_eurostat()</code> documentation.
+</p>
+
+
+<h3>Disclaimer: Availability of filtering functionalities</h3>
+
+<p>Currently it only possible to download filtered data through API Statistics
+(JSON API) when using <code>eurostat</code> package, although technically filtering
+datasets downloaded through the SDMX Dissemination API is also supported by
+Eurostat. We may support this feature in the future. In the meantime, if you
+are interested in filtering Dissemination API data queries manually, please
+consult the following Eurostat documentation:
+<a href="https://wikis.ec.europa.eu/display/EUROSTATHELP/API+SDMX+2.1+-+data+filtering">https://wikis.ec.europa.eu/display/EUROSTATHELP/API+SDMX+2.1+-+data+filtering</a>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Przemyslaw Biecek, Leo Lahti, Janne Huovari Markus Kainu and Pyry Kantanen
+</p>
+
+
+<h3>References</h3>
+
+<p>See <code>citation("eurostat")</code>:
+</p>
+<div class="sourceCode"><pre>Kindly cite the eurostat R package as follows:
+
+  Lahti L., Huovari J., Kainu M., and Biecek P. (2017). Retrieval and
+  analysis of Eurostat open data with the eurostat package. The R
+  Journal 9(1), pp. 385-392. doi: 10.32614/RJ-2017-019
+
+  Lahti, L., Huovari J., Kainu M., Biecek P., Hernangomez D., Antal D.,
+  and Kantanen P. (2023). eurostat: Tools for Eurostat Open Data
+  [Computer software]. R package version 4.0.0.
+  https://github.com/rOpenGov/eurostat
+
+To see these entries in BibTeX format, use 'print(&lt;citation&gt;,
+bibtex=TRUE)', 'toBibtex(.)', or set
+'options(citation.bibtex.max=999)'.
+</pre></div>
+<p>When citing data downloaded from Eurostat, see section "Citing Eurostat data"
+in <code>get_eurostat()</code> documentation.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>httr2::req_proxy()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Generally speaking these queries would be done through get_eurostat
+tmp &lt;- get_eurostat_json("nama_10_gdp")
+yy &lt;- get_eurostat_json("nama_10_gdp", filters = list(
+  geo = c("FI", "SE", "EU28"),
+  time = c(2015:2023),
+  lang = "FR",
+  na_item = "B1GQ",
+  unit = "CLV_I10"
+))
+
+# TIME_PERIOD filter works also with the new JSON API
+yy2 &lt;- get_eurostat_json("nama_10_gdp", filters = list(
+   geo = c("FI", "SE", "EU28"),
+   TIME_PERIOD = c(2015:2023),
+   lang = "FR",
+   na_item = "B1GQ",
+   unit = "CLV_I10"
+))
+
+# An example from get_eurostat
+dd &lt;- get_eurostat("nama_10_gdp",
+  filters = list(
+  geo = "FI",
+  na_item = "B1GQ",
+  unit = "CLV_I10"
+))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

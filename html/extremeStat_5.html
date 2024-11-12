@@ -1,0 +1,210 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>distLfit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit distributions via L-moments</h2>
+
+<h3>Description</h3>
+
+<p>Fit several distributions via L-moments with <code>lmomco::lmom2par</code>
+and compute goodness of fit measures.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">distLfit(
+  dat,
+  datname = deparse(substitute(dat)),
+  selection = NULL,
+  speed = TRUE,
+  ks = FALSE,
+  truncate = 0,
+  threshold = berryFunctions::quantileMean(dat, truncate),
+  progbars = length(dat) &gt; 200,
+  time = TRUE,
+  quiet = FALSE,
+  ssquiet = quiet,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>Vector with values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>datname</code></td>
+<td>
+<p>Character string for main, xlab etc.
+DEFAULT: <code>deparse(substitute(dat))</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selection</code></td>
+<td>
+<p>Selection of distributions. Character vector with types
+as in <code>lmom2par</code>. Overrides speed. DEFAULT: NULL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>speed</code></td>
+<td>
+<p>If TRUE, several distributions are omitted, for the reasons
+shown in <code>lmomco::dist.list()</code>. DEFAULT: TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ks</code></td>
+<td>
+<p>Include ks.test results and CDF R^2 in <code>dlf$gof</code>?
+Computing is much faster when FALSE. DEFAULT: FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncate</code></td>
+<td>
+<p>Number between 0 and 1. POT Censored <code>distLquantile</code>:
+fit to highest values only (truncate lower proportion of x).
+Probabilities are adjusted accordingly. DEFAULT: 0</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>POT cutoff value. If you want correct percentiles,
+set this only via truncate, see Details of <code>q_gpd</code>.
+DEFAULT: <code>quantileMean(x, truncate)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progbars</code></td>
+<td>
+<p>Show progress bars for each loop? DEFAULT: TRUE if n &gt; 200</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p><code>message</code> execution time? DEFAULT: TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>Suppress notes? DEFAULT: FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ssquiet</code></td>
+<td>
+<p>Suppress sample size notes? DEFAULT: quiet</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to <code>distLweights</code>
+like weightc, order=FALSE</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>invisible dlf object, see <code>printL</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Berry Boessenkool, <a href="mailto:berry-b@gmx.de">berry-b@gmx.de</a>, Sept 2014, July 2015, Dec 2016
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plotLfit</code>, <code>distLweights</code>, <code>plotLweights</code>,
+<code>extRemes::fevd</code>, <code>MASS::fitdistr</code>.<br>
+More complex estimates of quality of fits:
+Fard, M.N.P. and Holmquist, B. (2013, Chilean Journal of Statistics):
+Powerful goodness-of-fit tests for the extreme value distribution.
+https://chjs.mat.utfsm.cl/volumes/04/01/Fard_Holmquist(2013).pdf
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(annMax)
+# basic usage on real data (annual discharge maxima in Austria)
+dlf &lt;- distLfit(annMax)
+str(dlf, max.lev=2)
+printL(dlf)
+plotLfit(dlf)
+
+# arguments that can be passed to plotting function:
+plotLfit(dlf, lty=2, col=3, nbest=17, legargs=list(lwd=3), main="booh!")
+set.seed(42)
+dlf_b &lt;- distLfit(rbeta(100, 5, 2))
+plotLfit(dlf_b, nbest=10, legargs=c(x="left"))
+plotLfit(dlf_b, selection=c("gpa", "glo", "gev", "wak"))
+plotLfit(dlf_b, selection=c("gpa", "glo", "gev", "wak"), order=TRUE)
+plotLfit(dlf_b, distcols=c("orange",3:6), lty=1:3) # lty is recycled
+plotLfit(dlf_b, cdf=TRUE)
+plotLfit(dlf_b, cdf=TRUE, histargs=list(do.points=FALSE), sel="nor")
+
+
+# logarithmic axes:
+set.seed(1)
+y &lt;- 10^rnorm(300, mean=2, sd=0.3) # if you use 1e4, distLfit will be much slower
+hist(y, breaks=20)
+berryFunctions::logHist(y, col=8)
+dlf &lt;- distLfit(log10(y))
+plotLfit(dlf, breaks=50)
+plotLfit(dlf, breaks=50, log=TRUE)
+
+
+# Goodness of fit: how well do the distributions fit the original data?
+# measured by RMSE of cumulated distribution function and ?ecdf
+# RMSE: root of average of ( errors squared )  ,   errors = line distances
+dlf &lt;- distLfit(annMax, ks=TRUE)
+plotLfit(dlf, cdf=TRUE, sel=c("wak", "revgum"))
+x &lt;- sort(annMax)
+segments(x0=x, y0=lmomco::plmomco(x, dlf$parameter$revgum), y1=ecdf(annMax)(x), col=2)
+segments(x0=x, y0=lmomco::plmomco(x, dlf$parameter$wak), y1=ecdf(annMax)(x), col=4, lwd=2)
+# weights by three different weighting schemes, see distLweights:
+plotLweights(dlf)
+plotLfit(distLfit(annMax              ), cdf=TRUE, nbest=17)$gof
+plotLfit(distLfit(annMax, truncate=0.7), cdf=TRUE, nbest=17)$gof
+pairs(dlf$gof[,-(2:5)]) # measures of goodness of fit are correlated quite well here.
+dlf$gof
+
+# Kolmogorov-Smirnov Tests for normal distribution return slightly different values:
+library(lmomco)
+ks.test(annMax, "pnorm", mean(annMax), sd(annMax) )$p.value
+ks.test(annMax, "cdfnor", parnor(lmoms(annMax)))$p.value
+
+
+# Fit all available distributions (30):
+## Not run: # this takes a while...
+d_all &lt;- distLfit(annMax, speed=FALSE, progbars=TRUE) # 20 sec
+printL(d_all)
+plotLfit(d_all, nbest=30, distcols=grey(1:22/29), xlim=c(20,140))
+plotLfit(d_all, nbest=30, ylim=c(0,0.04), xlim=c(20,140))
+plotLweights(d_all)
+d_all$gof
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

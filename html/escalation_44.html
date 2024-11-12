@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_trialr_nbg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get an object to fit the NBG dose-finding model using the trialr package.</h2>
+
+<h3>Description</h3>
+
+<p>This function returns an object that can be used to fit a Neuenschwander,
+Branson and Gsponer (NBG) model for dose-finding using methods provided by
+the trialr package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_trialr_nbg(
+  parent_selector_factory = NULL,
+  real_doses,
+  d_star,
+  target,
+  alpha_mean,
+  alpha_sd,
+  beta_mean,
+  beta_sd,
+  tite = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>optional object of type
+<code>selector_factory</code> that is in charge of dose selection before
+this class gets involved. Leave as NULL to just use this model from the start.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>real_doses</code></td>
+<td>
+<p>Doses under investigation, a non-decreasing vector of
+numbers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_star</code></td>
+<td>
+<p>Numeric, reference dose for calculating the covariate
+<code>log(dose / d_star)</code> when fitting the model. Sometimes (but not always)
+taken to be the max dose in real_doses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>We seek a dose with this probability of toxicity.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha_mean</code></td>
+<td>
+<p>Prior mean of intercept variable for normal prior.
+See Details. Also see documentation for trialr package for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha_sd</code></td>
+<td>
+<p>Prior standard deviation of intercept variable for normal prior.
+See Details. Also see documentation for trialr package for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta_mean</code></td>
+<td>
+<p>Prior mean of gradient variable for normal prior.
+See Details. Also see documentation for trialr package for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta_sd</code></td>
+<td>
+<p>Prior standard deviation of slope variable for normal prior.
+See Details. Also see documentation for trialr package for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tite</code></td>
+<td>
+<p>FALSE to use regular model; TRUE to use TITE version See
+Description.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra args are passed to <code>stan_nbg</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The model form implemented in trialr is:
+</p>
+<p><code class="reqn">F(x_{i}, \alpha, \beta) = 1 / (1 + \exp{-(\alpha + \exp{(\beta)} log(x_i / d_*))}) </code>
+</p>
+<p>with normal priors on alpha and beta.
+</p>
+<p>Dose selectors are designed to be daisy-chained together to achieve different
+behaviours. This class is a **resumptive** selector, meaning it carries on
+when the previous dose selector, where present, has elected not to continue.
+For example, this allows instances of this class to be preceded by a selector
+that follows a fixed path in an initial escalation plan, such as that
+provided by <code>follow_path</code>. In this example, when the observed
+trial outcomes deviate from that initial plan, the selector following the
+fixed path elects not to continue and responsibility passes to this class.
+See examples under <code>get_dfcrm</code>.
+</p>
+<p>A time-to-event variant, like TITE-CRM, is used when you specify
+<code>tite = TRUE</code>. This weights the observations to allow dose-selections
+based on partially observed outcomes.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code> that can fit the
+NBG model to outcomes.
+</p>
+
+
+<h3>References</h3>
+
+<p>Neuenschwander, B., Branson, M., &amp; Gsponer, T. (2008).
+Critical aspects of the Bayesian approach to phase I cancer trials.
+Statistics in Medicine, 27, 2420–2439. https://doi.org/10.1002/sim.3230
+</p>
+<p>Brock, K. (2020). trialr: Clinical Trial Designs in 'rstan'.
+R package version 0.1.5. https://github.com/brockk/trialr
+</p>
+<p>Brock, K. (2019). trialr: Bayesian Clinical Trial Designs in R and Stan.
+arXiv preprint arXiv:1907.00161.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">real_doses &lt;- c(5, 10, 25, 40, 60)
+d_star &lt;- 60
+target &lt;- 0.25
+
+model &lt;- get_trialr_nbg(real_doses = real_doses, d_star = d_star,
+                        target = target,
+                        alpha_mean = 2, alpha_sd = 1,
+                        beta_mean = 0.5, beta_sd = 1)
+# Refer to the trialr documentation for more details on model &amp; priors.
+outcomes &lt;- '1NNN 2NTN'
+fit &lt;- model %&gt;% fit(outcomes)
+fit %&gt;% recommended_dose()
+fit %&gt;% mean_prob_tox()
+
+</code></pre>
+
+
+</div>

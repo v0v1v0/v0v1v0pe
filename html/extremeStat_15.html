@@ -1,0 +1,123 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>quantGPD</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fast GPD quantile estimate</h2>
+
+<h3>Description</h3>
+
+<p>Fast GPD quantile estimate through L-moments
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">quantGPD(
+  x,
+  probs = c(0.8, 0.9, 0.99),
+  truncate = 0,
+  threshold = berryFunctions::quantileMean(x, truncate),
+  addn = TRUE,
+  quiet = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Vector with numeric values. NAs are silently ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>Probabilities. DEFAULT: c(0.8,0.9,0.99)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncate, threshold</code></td>
+<td>
+<p>Truncation proportion or threshold. DEFAULT: 0, computed
+See <code>q_gpd</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addn</code></td>
+<td>
+<p>Logical: add element with sample size (after truncation). DEFAULT: TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>Should messages from this function be suppressed? DEFAULT: FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to <code>lmomco::pargpa</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Vector with quantiles
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Berry Boessenkool, <a href="mailto:berry-b@gmx.de">berry-b@gmx.de</a>, Jun 2017
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>q_gpd</code> for a comparison across R packages and methods, <code>distLquantile</code> to compare distributions
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(annMax)
+quantile(annMax, 0.99)
+quantGPD(annMax, 0.99)
+
+## Not run:  # Excluded from CRAN checks to reduce checking time
+data(rain, package="ismev") ;  rain &lt;- rain[rain&gt;0]
+hist(rain, breaks=50, col=7)
+tr &lt;- seq(0,0.999, len=50)
+qu &lt;- pbapply::pbsapply(tr, quantGPD, x=rain, probs=c(0.9,0.99,0.999) ) # 30 s
+plot(tr, qu[3,], ylim=range(rain), las=1, type="l")
+lines(tr, qu[2,], col=2); lines(tr, qu[1,], col=4)
+
+tr &lt;- seq(0.88,0.999, len=50)
+qu &lt;- pbapply::pbsapply(tr, quantGPD, x=rain, probs=c(0.9,0.99,0.999) ) # 5 s
+plot(tr, qu[3,], ylim=range(rain), las=1, type="l")
+lines(tr, qu[2,], col=2); lines(tr, qu[1,], col=4);
+tail(qu["n",])
+
+library(microbenchmark)
+data(rain, package="ismev"); rain &lt;- rain[rain&gt;0]
+mb &lt;- microbenchmark(quantGPD(rain[1:200], truncate=0.8, probs=0.99, addn=F),
+distLquantile(rain[1:200], sel="gpa", emp=F, truncate=0.8, quiet=T, probs=0.99)[1,1]
+)
+boxplot(mb)
+# since computing the lmoments takes most of the computational time,
+# there's not much to optimize in large samples like n=2000
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

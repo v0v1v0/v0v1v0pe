@@ -1,0 +1,81 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bootstrapRegCoefs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bootstrapped testing of regression coefficients in a penalized model</h2>
+
+<h3>Description</h3>
+
+<p>The purpose of this function is to evaluate a p-value-like statistic for penalized regression coefficients. A fixed number of bootstrapped datasets are generated, and the model coefficients are fitted to these bootstrapped datasets using the pre-determined lambda.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bootstrapRegCoefs(fit, lambda, boot = 1000, epsilon = 10^-6)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>A regularized regression model fit as provided by the glmnet-package</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>The pre-fixed corresponding optimal lambda value, typically determined using cross-validation (e.g. cv.glmnet$lambda.1se or cv.glmnet$lambda.min in glmnet)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot</code></td>
+<td>
+<p>The number of bootstrapped datasets to generate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>The tolerance around beta = 0 to still count estimates as zero</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Significance values for regression coefficients, defined as the proportion of bootstrapped model fits where coefficient did not shrink within epsilon of zero or where it did not flip sign.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Notice that this is a highly experimental function, and that many statisticians argue that computing p-values does not make sense for penalized models. The null hypothesis is not well defined, as the bias (regularization) pushes the regression coefficients towards zero. Therefore the null hypothesis is not known and the interpretation is not the conventional regression coefficient p-value.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Computationally too intensive to run bootstrapped fits &lt;5s
+data(TYKSSIMU)
+library(survival)
+x &lt;- as.matrix(xMEDISIMU)
+y &lt;- yMEDISIMU[,"surv"]
+nlambda &lt;- 30
+psp1 &lt;- new("PSP", alphaseq=c(0, 0.5, 1), nlambda = nlambda, folds = 3, x = x, y = y, seeds = 1)
+.Object &lt;- psp1
+alphaopt &lt;- psp1@optimum["Alpha"]
+bs &lt;- bootstrapRegCoefs(fit = psp1@fit, lambda = psp1@optimum["Lambda"], boot = 100)
+# Histogram of bootstrapped ps
+hist(bs$ps, breaks=100)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

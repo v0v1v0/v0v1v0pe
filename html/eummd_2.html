@@ -1,0 +1,207 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eummd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>euMMD: Efficient Univariate Maximum Mean Discrepancy</h2>
+
+<h3>Description</h3>
+
+<p>Computes the maximum mean discrepancy statistic with the Laplacian kernel.
+Suitable only for univariate data. Computing the statistic alone
+for <code class="reqn">n</code> observations is <code class="reqn">O(n \log n)</code>, and computing the
+p-value for <code class="reqn">L</code> permutations is <code class="reqn">O(n \log n + Ln)</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eummd(
+  x,
+  y,
+  beta = -0.1,
+  pval = TRUE,
+  numperm = 200,
+  seednum = 0,
+  alternative = c("greater", "two.sided"),
+  allowzeropval = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Univariate vector of observations in first sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Univariate vector of observations in second sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>kernel parameter. Must be positive; if not, computes
+median heuristic in quadratic time. Default value
+is <code>-0.1</code>, which will force median heuristic to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval</code></td>
+<td>
+<p>Boolean for whether to compute p-value or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numperm</code></td>
+<td>
+<p>Number of permutations. Default is <code>200</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seednum</code></td>
+<td>
+<p>Seed number for generating permutations. Default is <code>0</code>,
+which means seed is set randomly. For values larger than
+<code>0</code>, results will be reproducible.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>A character string specifying the alternative hypothesis,
+which must be either <code>"greater"</code> (default) or
+<code>"two.sided"</code>. In Gretton et al., the
+MMD test statistic is specified so that if it is
+significantly larger than zero, then the null hypothesis
+that the two samples come from the same distribution
+should be rejected. For this reason, <code>"greater"</code>
+is recommended. The test will still work
+in many cases with <code>"two.sided"</code> specified, but this
+could lead to problems in certain cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allowzeropval</code></td>
+<td>
+<p>A boolean, specifying whether we will allow zero
+p-values or not. Default is <code>FALSE</code>; then
+a threshold of <code>0.5 / (numperm+1)</code> is used,
+and if the computed p-value is less than this
+threshold, it is then set to be this value.
+this avoids the possibility of zero p-values.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the total number of observations in both samples is <code>n</code>,
+first sort combined sample in <code class="reqn">O(n \log n)</code> before remaining
+steps are linear in <code>n</code>.
+</p>
+<p>If <code>beta</code> is not a positive value,
+median difference is computed as follows:
+</p>
+<p style="text-align: center;"><code class="reqn"> m = \textnormal{median} \{ || x_i - x_j ||_1; \,\, i&gt;j, \,\, 
+          i=1, 2,\dots, n+m,\,\,\textnormal{ and } j=1, 2,\dots, i-1 \}, </code>
+</p>
+
+<p>where <code class="reqn"> || x_i - x_j ||_1</code> is the 1-norm, and
+so if the data are univariate then
+</p>
+<p style="text-align: center;"><code class="reqn"> || x_i - x_j ||_1 = |x_{i} - x_{j}|. </code>
+</p>
+
+<p>and finally median heuristic is <code>beta = 1/m</code>.
+This can be computed in <code class="reqn">O(n \log n )</code> time
+using the algorithms of Johnson and Mizoguchi (1978)
+and Croux and Rousseuw (1992); see <code>mediandiff</code>
+for references.
+</p>
+<p>The Laplacian kernel <code class="reqn">k</code> is defined as
+</p>
+<p style="text-align: center;"><code class="reqn"> k(x,y) = \exp [ -\beta ||x - y||_1  ]. </code>
+</p>
+
+<p>The random seed is set for <code>std::mt19937</code> and <code>std::shuffle</code>
+in C++.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following elements:
+</p>
+
+<dl>
+<dt><code>pval</code></dt>
+<dd>
+<p>The p-value of the test, if it is
+computed (<code>pval=TRUE</code>). Otherwise,
+it is set to <code>NA</code>.</p>
+</dd>
+<dt><code>stat</code></dt>
+<dd>
+<p>The statistic of the test, which
+is always computed. </p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>The kernel parameter used in the test.
+If <code>beta</code> was not initialised or
+negative, this will be the median heuristic
+value.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Bodenham, D. A., and Kawahara, Y. (2023)
+"euMMD: efficiently computing the MMD two-sample test statistic for
+univariate data." Statistics and Computing 33.5 (2023): 110.
+</p>
+<p>Croux, C. and Rousseeuw, P. J. (1992),
+"Time-Efficient Algorithms for Two Highly Robust Estimators of Scale"
+In Computational Statistics: Volume 1: Proceedings of the 10th
+Symposium on Computational Statistics (pp. 411-428).
+</p>
+<p>Johnson, D.B., and Mizoguchi, T. (1978),
+"Selecting the Kth Element in X + Y and X_1 + X_2 + ... + X_m",
+SIAM Journal of Computing, 7, 147-153.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mediandiff</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- c(7.1, 1.2, 4.3, 0.4)
+y &lt;- c(5.5, 2.6, 8.7)
+#setting the kernel parameter to be 0.1; setting seed=1 for reproducibility
+mmd_list &lt;- eummd(x, y, beta=0.1, seednum=1)
+
+#now using median heuristic (default)
+mmd_list &lt;- eummd(x, y, seednum=1)
+
+#now not computing the p-value, only the statistic
+mmd_list &lt;- eummd(x, y, pval=FALSE, seednum=1)
+
+#now using a larger number of permutations 
+mmd_list &lt;- eummd(x, y, numperm=1000, seednum=1)
+
+
+
+</code></pre>
+
+
+</div>

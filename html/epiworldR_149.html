@@ -1,0 +1,169 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_multiple</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run multiple simulations at once</h2>
+
+<h3>Description</h3>
+
+<p>The <code>run_multiple</code> function allows running multiple simulations at once.
+When available, users can take advantage of parallel computing to speed up
+the process.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_multiple(
+  m,
+  ndays,
+  nsims,
+  seed = sample.int(10000, 1),
+  saver = make_saver(),
+  reset = TRUE,
+  verbose = TRUE,
+  nthreads = 1L
+)
+
+run_multiple_get_results(m)
+
+make_saver(..., fn = "")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m, ndays, seed</code></td>
+<td>
+<p>See run.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsims</code></td>
+<td>
+<p>Integer. Number of replicats</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>saver</code></td>
+<td>
+<p>An object of class epiworld_saver.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reset</code></td>
+<td>
+<p>When <code>TRUE</code> (default,) resets the simulation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>When <code>TRUE</code> (default,) prints a progress bar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nthreads</code></td>
+<td>
+<p>Integer. Number of threads (parallel computing.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>List of strings (characters) specifying what to save (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fn</code></td>
+<td>
+<p>A file name pattern.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Currently, the following elements can be saved:
+</p>
+
+<ul>
+<li> <p><code>total_hist</code> History of the model (total numbers per time).
+</p>
+</li>
+<li> <p><code>virus_info</code> Information about <code>viruses</code>.
+</p>
+</li>
+<li> <p><code>virus_hist</code> Changes in <code>viruses</code>.
+</p>
+</li>
+<li> <p><code>tool_info</code> Information about <code>tools</code>.
+</p>
+</li>
+<li> <p><code>tool_hist</code> Changes in <code>tools</code>.
+</p>
+</li>
+<li> <p><code>transmission</code> Transmission events.
+</p>
+</li>
+<li> <p><code>transition</code> Transition matrices.
+</p>
+</li>
+<li> <p><code>reproductive</code> Reproductive number.
+</p>
+</li>
+<li> <p><code>generation</code> Estimation of generation time.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+
+<ul><li>
+<p> In the case of <code>make_saver</code>, an list of class <code>epiworld_saver</code>.
+</p>
+</li></ul>
+<ul><li>
+<p> The <code>run_multiple</code> function runs a specified number of simulations and
+returns a model object of class epiworld_model.
+</p>
+</li></ul>
+<ul><li>
+<p> The <code>run_multiple_get_results</code> function returns a named list with the
+data specified by <code>make_saver</code>.
+</p>
+</li></ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">model_sir &lt;- ModelSIRCONN(
+  name = "COVID-19",
+  prevalence = 0.01,
+  n = 1000,
+  contact_rate = 2,
+  transmission_rate = 0.9, recovery_rate = 0.1
+  )
+
+# Generating a saver
+saver &lt;- make_saver("total_hist", "reproductive")
+
+# Running and printing
+run_multiple(model_sir, ndays = 100, nsims = 50, saver = saver, nthreads = 2)
+
+# Retrieving the results
+ans &lt;- run_multiple_get_results(model_sir)
+
+head(ans$total_hist)
+head(ans$reproductive)
+
+# Plotting
+multi_sir &lt;- run_multiple_get_results(model_sir)$total_hist
+multi_sir &lt;- multi_sir[multi_sir$date &lt;= 20,]
+plot(multi_sir)
+
+</code></pre>
+
+
+</div>

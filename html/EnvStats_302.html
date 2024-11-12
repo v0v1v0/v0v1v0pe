@@ -1,0 +1,312 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gpqCiNormCensored</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Generalized Pivotal Quantity for Confidence Interval for the Mean of a Normal Distribution Based on Censored Data
+</h2>
+
+<h3>Description</h3>
+
+<p>Generate a generalized pivotal quantity (GPQ) for a confidence interval for the 
+mean of a Normal distribution based on singly or multiply 
+censored data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  gpqCiNormSinglyCensored(n, n.cen, probs, nmc, method = "mle", 
+    censoring.side = "left", seed = NULL, names = TRUE)
+
+  gpqCiNormMultiplyCensored(n, cen.index, probs, nmc, method = "mle", 
+    censoring.side = "left", seed = NULL, names = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>positive integer <code class="reqn">\ge 3</code> indicating the sample size.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.cen</code></td>
+<td>
+
+<p>for the case of singly censored data, a positive integer indicating the number of 
+censored observations.  The value of <code>n.cen</code> must be between <code>1</code> and 
+<code>n-2</code>, inclusive.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cen.index</code></td>
+<td>
+
+<p>for the case of multiply censored data, a sorted vector of unique integers 
+indicating the indices of the censored observations when the observations are 
+“ordered”.  The length of <code>cen.index</code> must be between <code>1</code> and 
+<code>n-2</code>, inclusive, and the values of <code>cen.index</code> must be between 
+<code>1</code> and <code>n</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+
+<p>numeric vector of values between 0 and 1 indicating the confidence level(s) 
+associated with the GPQ(s).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmc</code></td>
+<td>
+
+<p>positive integer <code class="reqn">\ge 10</code> indicating the number of Monte Carlo trials to run 
+in order to compute the GPQ(s). 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>character string indicating the method to use for parameter estimation.  <br><br>
+For singly censored data, possible values are <code>"mle"</code> (the default), 
+<code>"bcmle"</code>, <code>"qq.reg"</code>, <code>"qq.reg.w.cen.level"</code>, 
+<code>"impute.w.qq.reg"</code>, <br><code>"impute.w.qq.reg.w.cen.level"</code>, 
+<code>"impute.w.mle"</code>, <br><code>"iterative.impute.w.qq.reg"</code>, 
+<code>"m.est"</code>, and <code>"half.cen.level"</code>.  See the help file for 
+<code>enormCensored</code> for details. <br><br>
+For multiply censored data, possible values are <code>"mle"</code> (the default), 
+<code>"qq.reg"</code>, <code>"impute.w.qq.reg"</code>, and <code>"half.cen.level"</code>.  
+See the help file for <code>enormCensored</code> for details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censoring.side</code></td>
+<td>
+
+<p>character string indicating on which side the censoring occurs.  The possible 
+values are <code>"left"</code> (the default) and <code>"right"</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>positive integer to pass to the function <code>set.seed</code>.  This argument is 
+ignored if <code>seed=NULL</code> (the default).  Using the <code>seed</code> argument lets you 
+reproduce the exact same result if all other arguments stay the same.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+
+<p>a logical scalar passed to <code>quantile</code> indicating whether to add a 
+names attribute to the resulting GPQ(s).  The default value is <code>names=TRUE</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The functions <code>gpqCiNormSinglyCensored</code> and <code>gpqCiNormMultiplyCensored</code> 
+are called by <br><code>enormCensored</code> when <code>ci.method="gpq"</code>.  They are 
+used to construct generalized pivotal quantities to create confidence intervals 
+for the mean <code class="reqn">\mu</code> of an assumed normal distribution.
+</p>
+<p>This idea was introduced by Schmee et al. (1985) in the context of Type II singly 
+censored data.  The function 
+<code>gpqCiNormSinglyCensored</code> generates GPQs using a modification of 
+Algorithm 12.1 of Krishnamoorthy and Mathew (2009, p. 329).  Algorithm 12.1 is 
+used to generate GPQs for a tolerance interval.  The modified algorithm for 
+generating GPQs for confidence intervals for the mean <code class="reqn">\mu</code> is as follows:
+</p>
+
+<ol>
+<li>
+<p> Generate a random sample of <code class="reqn">n</code> observations from a standard normal 
+(i.e., N(0,1)) distribution and let <code class="reqn">z_{(1)}, z_{(2)}, \ldots, z_{(n)}</code> 
+denote the ordered (sorted) observations.
+</p>
+</li>
+<li>
+<p> Set the smallest <code>n.cen</code> observations as censored.
+</p>
+</li>
+<li>
+<p> Compute the estimates of <code class="reqn">\mu</code> and <code class="reqn">\sigma</code> by calling 
+<code>enormCensored</code> using the method 
+specified by the <code>method</code> argument, and denote these estimates as 
+<code class="reqn">\hat{\mu}^*, \; \hat{\sigma}^*</code>.
+</p>
+</li>
+<li>
+<p> Compute the t-like pivotal quantity 
+<code class="reqn">\hat{t} = \hat{\mu}^*/\hat{\sigma}^*</code>.
+</p>
+</li>
+<li>
+<p> Repeat steps 1-4 <code>nmc</code> times to produce an empirical distribution of 
+the t-like pivotal quantity.
+</p>
+</li>
+</ol>
+<p>A two-sided <code class="reqn">(1-\alpha)100\%</code> confidence interval for <code class="reqn">\mu</code> is then 
+computed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[\hat{\mu} - \hat{t}_{1-(\alpha/2)} \hat{\sigma}, \; \hat{\mu} - \hat{t}_{\alpha/2} \hat{\sigma}]</code>
+</p>
+
+<p>where <code class="reqn">\hat{t}_p</code> denotes the <code class="reqn">p</code>'th empirical quantile of the 
+<code>nmc</code> generated <code class="reqn">\hat{t}</code> values.
+</p>
+<p>Schmee at al. (1985) derived this method in the context of Type II singly censored 
+data (for which these limits are exact within Monte Carlo error), but state that 
+according to Regal (1982) this method produces confidence intervals that are 
+close apporximations to the correct limits for Type I censored data.
+</p>
+<p>The function 
+<code>gpqCiNormMultiplyCensored</code> is an extension of this idea to multiply censored 
+data.  The algorithm is the same as for singly censored data, except 
+Step 2 changes to: <br></p>
+<p>2. Set observations as censored for elements of the argument <code>cen.index</code> 
+that have the value <code>TRUE</code>.
+</p>
+<p>The functions <code>gpqCiNormSinglyCensored</code> and <code>gpqCiNormMultiplyCensored</code> are 
+computationally intensive and provided to the user to allow you to create your own 
+tables.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric vector containing the GPQ(s).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Krishnamoorthy K., and T. Mathew. (2009). 
+<em>Statistical Tolerance Regions: Theory, Applications, and Computation</em>. 
+John Wiley and Sons, Hoboken.
+</p>
+<p>Regal, R. (1982).  Applying Order Statistic Censored Normal Confidence Intervals 
+to Time Censored Data.  Unpublished manuscript, University of Minnesota, Duluth, 
+Department of Mathematical Sciences.
+</p>
+<p>Schmee, J., D.Gladstein, and W. Nelson. (1985).  Confidence Limits for Parameters 
+of a Normal Distribution from Singly Censored Samples, Using Maximum Likelihood.  
+<em>Technometrics</em> <b>27</b>(2) 119–128.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>enormCensored</code>, <code>estimateCensored.object</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Reproduce the entries for n=10 observations with n.cen=6 in Table 4 
+  # of Schmee et al. (1985, p.122).
+  #
+  # Notes: 
+  # 1. This table applies to right-censored data, and the 
+  #    quantity "r" in this table refers to the number of 
+  #    uncensored observations.
+  #
+  # 2. Passing a value for the argument "seed" simply allows 
+  #    you to reproduce this example.  
+
+  # NOTE:  Here to save computing time for the sake of example, we will specify 
+  #        just 100 Monte Carlos, whereas Krishnamoorthy and Mathew (2009) 
+  #        suggest *10,000* Monte Carlos.
+
+  # Here are the values given in Schmee et al. (1985):
+  Schmee.values &lt;- c(-3.59, -2.60, -1.73, -0.24, 0.43, 0.58, 0.73)
+  probs &lt;- c(0.025, 0.05, 0.1, 0.5, 0.9, 0.95, 0.975)
+  names(Schmee.values) &lt;- paste(probs * 100, "%", sep = "")
+
+  Schmee.values
+  # 2.5%    5%   10%   50%   90%   95% 97.5% 
+  #-3.59 -2.60 -1.73 -0.24  0.43  0.58  0.73
+
+  gpqs &lt;- gpqCiNormSinglyCensored(n = 10, n.cen = 6, probs = probs, 
+    nmc = 100, censoring.side = "right", seed = 529)
+
+  round(gpqs, 2)
+  # 2.5%    5%   10%   50%   90%   95% 97.5% 
+  #-2.46 -2.03 -1.38 -0.14  0.54  0.65  0.84 
+
+  # This is what you get if you specify nmc = 1000 with the 
+  # same value for seed:
+  #-----------------------------------------------
+  # 2.5%    5%   10%   50%   90%   95% 97.5% 
+  #-3.50 -2.49 -1.67 -0.25  0.41  0.57  0.71
+
+
+  # Clean up
+  #---------
+  rm(Schmee.values, probs, gpqs)
+
+  #==========
+
+  # Example of using gpqCiNormMultiplyCensored
+  #-------------------------------------------
+
+  # Consider the following set of multiply left-censored data:
+  dat &lt;- 12:16
+  censored &lt;- c(TRUE, FALSE, TRUE, FALSE, FALSE)
+
+  # Since the data are "ordered" we can identify the indices of the 
+  # censored observations in the ordered data as follow:
+
+  cen.index &lt;- (1:length(dat))[censored]
+  cen.index
+  #[1] 1 3
+
+  # Now we can generate a GPQ using gpqCiNormMultiplyCensored.
+  # Here we'll generate a GPQs to use to create a  
+  # 95% confidence interval for left-censored data.
+
+  # NOTE:  Here to save computing time for the sake of example, we will specify 
+  #        just 100 Monte Carlos, whereas Krishnamoorthy and Mathew (2009) 
+  #        suggest *10,000* Monte Carlos.
+
+  gpqCiNormMultiplyCensored(n = 5, cen.index = cen.index,  
+    probs = c(0.025, 0.975), nmc = 100, seed = 237)
+  #     2.5%     97.5% 
+  #-1.315592  1.848513 
+
+  #----------
+
+  # Clean up
+  #---------
+  rm(dat, censored, cen.index)
+</code></pre>
+
+
+</div>

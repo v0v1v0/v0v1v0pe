@@ -1,0 +1,197 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>HatchingSuccess.fit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit a hatching success model to data using maximum likelihood</h2>
+
+<h3>Description</h3>
+
+<p>Set of functions to study the hatching success.<br>
+The first version of the model was published in:<br>
+Laloë, J.-O., Monsinjon, J., Gaspar, C., Touron, M., Genet, Q., Stubbs, J., Girondot, M.
+&amp; Hays, G.C. (2020) Production of male hatchlings at a remote South Pacific green sea turtle
+rookery: conservation implications in a female-dominated world. Marine Biology, 167, 70.<br>
+The version available here is enhanced by using a double flexit model rather than a double
+logistic model. The flexit model is described here:<br>
+Abreu-Grobois, F.A., Morales-Mérida, B.A., Hart, C.E., Guillon, J.-M., Godfrey, M.H.,
+Navarro, E. &amp; Girondot, M. (2020) Recent advances on the estimation of the thermal
+reaction norm for sex ratios. PeerJ, 8, e8451.<br></p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">HatchingSuccess.fit(
+  par = NULL,
+  data = stop("data must be provided"),
+  fixed.parameters = NULL,
+  column.Incubation.temperature = "Incubation.temperature",
+  column.Hatched = "Hatched",
+  column.NotHatched = "NotHatched",
+  hessian = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>A set of parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A dataset in a data.frame with a least three columns: Incubation.temperature, Hatched and NotHatched</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.parameters</code></td>
+<td>
+<p>A set of parameters that must not be fitted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>column.Incubation.temperature</code></td>
+<td>
+<p>Name of the column with incubation temperatures</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>column.Hatched</code></td>
+<td>
+<p>Name of the column with hatched number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>column.NotHatched</code></td>
+<td>
+<p>Name of the column with not hatched number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hessian</code></td>
+<td>
+<p>Should Hessian matrix be estimated?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>HatchingSuccess.fit fits a hatching success model to data
+</p>
+
+
+<h3>Value</h3>
+
+<p>Return a object of class HatchingSuccess
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Marc Girondot
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other Hatching success: 
+<code>HatchingSuccess.MHmcmc()</code>,
+<code>HatchingSuccess.MHmcmc_p()</code>,
+<code>HatchingSuccess.lnL()</code>,
+<code>HatchingSuccess.model()</code>,
+<code>logLik.HatchingSuccess()</code>,
+<code>nobs.HatchingSuccess()</code>,
+<code>predict.HatchingSuccess()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(embryogrowth)
+totalIncubation_Cc &lt;- subset(DatabaseTSD, 
+                             Species=="Caretta caretta" &amp; 
+                               Note != "Sinusoidal pattern" &amp; 
+                               !is.na(Total) &amp; Total != 0)
+
+par &lt;- c(S.low=0.5, S.high=0.3, 
+         P.low=25, deltaP=10, MaxHS=0.8)
+         
+g.logistic &lt;- HatchingSuccess.fit(par=par, data=totalIncubation_Cc)
+         
+HatchingSuccess.lnL(par=g.logistic$par, data=totalIncubation_Cc)
+
+plot(g.logistic)
+
+par &lt;- c(S.low=0.5, S.high=0.3, 
+         P.low=25, deltaP=10, 
+         K1.low=1, K2.low=-1, K1.high=1, K2.high=-1, 
+         MaxHS=0.8)
+
+g.flexit &lt;- HatchingSuccess.fit(par=par, data=totalIncubation_Cc)
+
+HatchingSuccess.lnL(par=g.flexit$par, data=totalIncubation_Cc)
+
+compare_AICc(logistic=g.logistic, flexit=g.flexit)
+plot(x=g.logistic, what = c("observations", "ML", "CI"), replicates=10000)
+
+pMCMC &lt;- HatchingSuccess.MHmcmc_p(result = g.logistic, accept = TRUE)
+MCMC &lt;- HatchingSuccess.MHmcmc(result = g.logistic, parametersMCMC = pMCMC,
+                            n.iter = 100000, 
+                           adaptive = TRUE)
+
+plot(MCMC, parameters = "S.low")
+plot(MCMC, parameters = "S.high")
+plot(MCMC, parameters = "P.low")
+plot(MCMC, parameters = "deltaP")
+plot(MCMC, parameters = "MaxHS")
+
+plot(x=g.logistic, what = c("observations", "ML", "CI"), 
+        replicates=10000, resultmcmc=MCMC)
+
+####### Exemple with Chelonia mydas
+totalIncubation_Cm &lt;- subset(DatabaseTSD, 
+Species=="Chelonia mydas" &amp; 
+  Note != "Sinusoidal pattern" &amp; 
+  !is.na(Total) &amp; Total != 0 &amp; 
+  !is.na(NotHatched) &amp; !is.na(Hatched))
+  
+  totalIncubation_Cm$NotHatched &lt;- totalIncubation_Cm$NotHatched + 
+  ifelse(!is.na(totalIncubation_Cm$Undeveloped), totalIncubation_Cm$Undeveloped, 0)
+  
+  
+  plot(x=totalIncubation_Cm$Incubation.temperature, 
+  y=totalIncubation_Cm$Hatched/totalIncubation_Cm$Total, bty="n", las=1, 
+  xlab="Constant incubation temperature", ylab="Proportion of hatching")
+
+par &lt;- c(S.low=0.5, S.high=0.3, 
+         P.low=25, deltaP=10, MaxHS=0.8)
+
+g.logistic &lt;- HatchingSuccess.fit(par=par, data=totalIncubation_Cm)
+plot(g.logistic)
+
+pMCMC &lt;- HatchingSuccess.MHmcmc_p(g.logistic, accept=TRUE)
+mcmc &lt;- HatchingSuccess.MHmcmc(result=g.logistic, parameters = pMCMC, 
+                  adaptive=TRUE, n.iter=100000, trace=1000)
+par &lt;- as.parameters(mcmc)
+par &lt;- as.parameters(mcmc, index="median")
+
+plot(mcmc, parameters=c("P.low"))
+plot(mcmc, parameters=c("deltaP"))
+plot(mcmc, parameters=c("S.low"))
+plot(mcmc, parameters=c("S.high"))
+plot(mcmc, parameters=c("MaxHS"))
+
+plot(g.logistic, resultmcmc=mcmc, what = c("observations", "CI"))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

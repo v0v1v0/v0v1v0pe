@@ -1,0 +1,233 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>locate_errors</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Find errors in data</h2>
+
+<h3>Description</h3>
+
+<p>Find out which fields in a data.frame are "faulty" using validation rules
+This method returns found errors, according to the specified method <code>x</code>.
+Use method <code>replace_errors()</code>, to automatically remove these errors.
+'
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">locate_errors(
+  data,
+  x,
+  ...,
+  cl = NULL,
+  Ncpus = getOption("Ncpus", 1),
+  timeout = 60
+)
+
+## S4 method for signature 'data.frame,validator'
+locate_errors(
+  data,
+  x,
+  weight = NULL,
+  ref = NULL,
+  ...,
+  cl = NULL,
+  Ncpus = getOption("Ncpus", 1),
+  timeout = 60
+)
+
+## S4 method for signature 'data.frame,ErrorLocalizer'
+locate_errors(
+  data,
+  x,
+  weight = NULL,
+  ref = NULL,
+  ...,
+  cl = NULL,
+  Ncpus = getOption("Ncpus", 1),
+  timeout = 60
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data to be checked</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>validation rules or errorlocalizer object to be used for finding
+possible errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional parameters that are passed to <code>lpSolveAPI::lp.control()</code> (see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cl</code></td>
+<td>
+<p>optional parallel / cluster.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ncpus</code></td>
+<td>
+<p>number of nodes to use. See details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeout</code></td>
+<td>
+<p>maximum number of seconds that the localizer should use per record.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p><code>numeric</code> optional weight specification to be used in the
+error localization (see <code>expand_weights()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref</code></td>
+<td>
+<p><code>data.frame</code> optional reference data to be used in the rules checking</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Use an <code>Inf</code> <code>weight</code> specification to fixate variables that can not be changed.
+See <code>expand_weights()</code> for more details.
+</p>
+<p><code>locate_errors</code> uses lpSolveAPI to formulate and solves a mixed integer problem.
+For details see the vignettes.
+This solver has many options:  lpSolveAPI::lp.control.options. Noteworthy
+options to be used are:
+</p>
+
+<ul>
+<li> <p><code>timeout</code>: restricts the time the solver spends on a record (seconds)
+</p>
+</li>
+<li> <p><code>break.at.value</code>: set this to minimum weight + 1 to improve speed.
+</p>
+</li>
+<li> <p><code>presolve</code>: default for errorlocate is "rows". Set to "none" when you have
+solutions where all variables are deemed wrong.
+</p>
+</li>
+</ul>
+<p><code>locate_errors</code> can be run on multiple cores using R package <code>parallel</code>.
+</p>
+
+<ul>
+<li>
+<p> The easiest way to use the parallel option is to set <code>Ncpus</code> to the number of
+desired cores, @seealso <code>parallel::detectCores()</code>.
+</p>
+</li>
+<li>
+<p> Alternatively one can create a cluster object (<code>parallel::makeCluster()</code>)
+and use <code>cl</code> to pass the cluster object.
+</p>
+</li>
+<li>
+<p> Or set <code>cl</code> to an integer which results in <code>parallel::mclapply()</code>, which only works
+on non-windows.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p><code>errorlocation-class()</code> object describing the errors found.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other error finding: 
+<code>errorlocation-class</code>,
+<code>errors_removed()</code>,
+<code>expand_weights()</code>,
+<code>replace_errors()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">rules &lt;- validator( profit + cost == turnover
+                  , cost &gt;= 0.6 * turnover # cost should be at least 60% of turnover
+                  , turnover &gt;= 0 # can not be negative.
+                  )
+data &lt;- data.frame( profit   = 755
+                  , cost     = 125
+                  , turnover = 200
+                  )
+le &lt;- locate_errors(data, rules)
+
+print(le)
+summary(le)
+
+v_categorical &lt;- validator( branch %in% c("government", "industry")
+                          , tax %in% c("none", "VAT")
+                          , if (tax == "VAT") branch == "industry"
+)
+
+data &lt;- read.csv(text=
+"   branch, tax
+government, VAT
+industry  , VAT
+", strip.white = TRUE)
+locate_errors(data, v_categorical)$errors
+
+v_logical &lt;- validator( citizen %in% c(TRUE, FALSE)
+                      , voted %in% c(TRUE, FALSE)
+                      ,  if (voted == TRUE) citizen == TRUE
+                      )
+
+data &lt;- data.frame(voted = TRUE, citizen = FALSE)
+locate_errors(data, v_logical, weight=c(2,1))$errors
+
+# try a condinational rule
+v &lt;- validator( married %in% c(TRUE, FALSE)
+              , if (married==TRUE) age &gt;= 17
+              )
+data &lt;- data.frame( married = TRUE, age = 16)
+locate_errors(data, v, weight=c(married=1, age=2))$errors
+
+
+# different weights per row
+data &lt;- read.csv(text=
+"married, age
+    TRUE,  16
+    TRUE,  14
+", strip.white = TRUE)
+
+weight &lt;- read.csv(text=
+"married, age
+       1,   2
+       2,   1
+", strip.white = TRUE)
+
+locate_errors(data, v, weight = weight)$errors
+
+# fixate / exclude a variable from error localiziation
+# using an Inf weight
+weight &lt;- c(age = Inf)
+locate_errors(data, v, weight = weight)$errors
+</code></pre>
+
+
+</div>

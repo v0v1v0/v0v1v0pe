@@ -1,0 +1,296 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>model_amplitude</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Model source amplitude by amplitude-distance model fitting</h2>
+
+<h3>Description</h3>
+
+<p>The function fits one of several models of signal amplitude attenuation and
+returns a set of model parameters, including the source amplitude (a_0).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">model_amplitude(
+  data,
+  model = "SurfSpreadAtten",
+  distance,
+  source,
+  d_map,
+  coupling,
+  v,
+  q,
+  f,
+  k,
+  a_0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>Numeric</code> matrix or <code>eseis</code> object, seismic signals
+to work with. Since the function will calculate the maxima of the data it
+is usually the envolopes of the data that should be used here. In an 
+extreme case, a vector with just the maximum amplitudes recorded at each 
+station can be provided, as well.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p><code>Character</code> value, model to fit the data. One out of the 
+list in the details section. Default is <code>"SurfSpreadAtten"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance</code></td>
+<td>
+<p><code>Numeric</code> vector with distance of station locations
+to source. Alternatively, the distance can be calculated by providing the 
+source coordinates (<code>xy</code>) and distance maps (<code>d_map</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>source</code></td>
+<td>
+<p><code>Numeric</code> vector of length two, location of the seismic 
+source to model (x and y coordinates).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_map</code></td>
+<td>
+<p><code>List</code> object, distance maps for each station (i.e.,
+<code>SpatialGridDataFrame</code> objects). Output of <code>distance_map</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coupling</code></td>
+<td>
+<p><code>Numeric</code> vector, coupling efficiency factors for each
+seismic station. The best coupled station (or the one with the highest
+amplification) must receive <code>1</code>, the others must be scaled relatively
+to this one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p><code>Numeric</code> value, mean velocity of seismic waves (m/s). 
+Only relevant for models accounting for unelastic attenuation (see 
+details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p><code>Numeric</code> value, quality factor of the ground.
+Only relevant for models accounting for unelastic attenuation (see 
+details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p><code>Numeric</code> value, frequency for which to model the
+attenuation. Only relevant for models accounting for unelastic attenuation 
+(see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p><code>Numeric</code> value, fraction of surface wave contribution to 
+signals. Only relevant for models that include mixture of surface and 
+body waves (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a_0</code></td>
+<td>
+<p><code>Logical</code> value, start parameter of the source amplitude,
+if not provided, a best guess is made as 100 times the maximum amplitude
+value of the data set.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Depending on the choice of the model to fit, several parameters can 
+(or should) be provided, e.g. <code>f</code>,<code>q</code>, <code>v</code>, <code>k</code>, 
+and most importantly, <code>a_0</code>. 
+If more signals than free parameters are available, the missing 
+parameters may be estimated during the fit, but without any checks 
+of quality and meaningfulness. The parameter <code>a_0</code> will be 
+defined as 100 times the maximum input amplitude, by default. The 
+parameters <code>f</code> will be set to 10 Hz, <code>q</code> to 50, <code>v</code> 
+to 1000 m/s and <code>k</code> to 0.5.
+</p>
+<p>ISSUES: account for non-fixed parameters, especially k
+</p>
+<p>The following amplitude-distance models are available:
+</p>
+
+<ul>
+<li> <p><code>"SurfSpreadAtten"</code>, Surface waves including geometric 
+spreading and unelastic attenuation
+</p>
+</li>
+<li> <p><code>"BodySpreadAtten"</code>, Body waves including geometric 
+spreading and unelastic attenuation
+</p>
+</li>
+<li> <p><code>"SurfBodySpreadAtten"</code>, Surface and body waves including  
+geometric spreading and unelastic attenuation
+</p>
+</li>
+<li> <p><code>"SurfSpread"</code>, Surface waves including geometric 
+spreading, only
+</p>
+</li>
+<li> <p><code>"BodySpread"</code>, Body waves including geometric 
+spreading, only
+</p>
+</li>
+<li> <p><code>"SurfBodySpread"</code>, Surface and body waves including  
+geometric spreading, only
+</p>
+</li>
+</ul>
+<p>**SurfSpreadAtten**
+The model is based on Eq. 17 from Burtin et al. (2016):
+</p>
+<p style="text-align: center;"><code class="reqn">a_d = a_0 / sqrt(d) * exp(-(pi * f * d) / (q * v))</code>
+</p>
+
+<p>where a_0 is the source amplitude, a_d the amplitude as recorded by a sensor 
+at distance d, f is the center frequency of the signal, q the ground quality 
+factor and v the seismic wave velocity.
+</p>
+<p>**BodySpreadAtten**
+The model is based on Eq. 16 from Burtin et al. (2016):
+</p>
+<p style="text-align: center;"><code class="reqn">a_d = a_0 / d * exp(-(pi * f * d) / (q * v))</code>
+</p>
+
+<p>where a_0 is the source amplitude, a_d the amplitude as recorded by a sensor 
+at distance d, f is the center frequency of the signal, q the ground quality 
+factor and v the seismic wave velocity.
+</p>
+<p>**SurfBodySpreadAtten**
+The model based on Eqs. 16 and 17 from Burtin et al. (2016):
+</p>
+<p style="text-align: center;"><code class="reqn">a_d = k * a_0 / sqrt(d) * exp(-(pi * f * d) / (q * v)) + (1 - k) * a_0 / d * exp(-(pi * f * d) / (q * v))</code>
+</p>
+
+<p>where a_0 is the source amplitude, a_d the amplitude as recorded by a sensor 
+at distance d, f is the center frequency of the signal, q the ground quality 
+factor, v the seismic wave velocity, and n and m two factors determining the 
+relative contributions of the two wave types, thus summing to 1.
+</p>
+<p>**BodySpread**
+The model is simply accounting for geometric spreading
+</p>
+<p style="text-align: center;"><code class="reqn">a_d = a_0 / d</code>
+</p>
+
+<p>where a_0 is the source amplitude, a_d the amplitude as recorded by a sensor 
+at distance d.
+</p>
+<p>**SurfSpread**
+The model is simply accounting for geometric spreading
+</p>
+<p style="text-align: center;"><code class="reqn">a_d = a_0 / sqrt(d)</code>
+</p>
+
+<p>where a_0 is the source amplitude, a_d the amplitude as recorded by a sensor 
+at distance d.
+</p>
+<p>**SurfBodySpread**
+The model is simply accounting for geometric spreading
+</p>
+<p style="text-align: center;"><code class="reqn">a_d = k * (a_0 / d) + (1 - k) * a_d / sqrt(d)</code>
+</p>
+
+<p>where a_0 is the source amplitude, a_d the amplitude as recorded by a sensor 
+at distance d, and n and m two factors determining the relative 
+contributions of the two wave types, thus summing to 1.
+</p>
+<p>**References**
+- Burtin, A., Hovius, N., and Turowski, J. M.: Seismic monitoring of 
+torrential and fluvial processes, Earth Surf. Dynam., 4, 285–307, 
+https://doi.org/10.5194/esurf-4-285-2016, 2016.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>List</code> with model results, including <code>a_0</code> (source 
+amplitude), <code>residuals</code> (model residuals), <code>coefficients</code> 
+model coefficients.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+
+ ## create synthetic DEM
+dem &lt;- terra::rast(nrows = 20, ncols = 20, 
+                   xmin = 0, xmax = 10000, 
+                   ymin= 0, ymax = 10000, 
+                   vals = rep(0, 400))
+
+## define station coordinates
+sta &lt;- data.frame(x = c(1000, 9000, 5000, 9000),
+                  y = c(1000, 1000, 9000, 9000),
+                  ID = c("A", "B", "C", "D"))
+ 
+## create synthetic signal (source in towards lower left corner of the DEM)
+s &lt;- rbind(dnorm(x = 1:1000, mean = 500, sd = 50) * 50,
+           dnorm(x = 1:1000, mean = 500, sd = 50) * 2,
+           dnorm(x = 1:1000, mean = 500, sd = 50) * 1,
+           dnorm(x = 1:1000, mean = 500, sd = 50) * 0.5)
+
+## calculate spatial distance maps and inter-station distances
+D &lt;- eseis::spatial_distance(stations = sta[,1:2],
+                             dem = dem)
+
+model_amplitude(data = s, 
+                source = c(500, 600), 
+                d_map = D$maps, 
+                v = 500, 
+                q = 50, 
+                f = 10)
+
+model_amplitude(data = s, 
+                distance = c(254, 8254, 9280, 11667),
+                model = "SurfBodySpreadAtten", 
+                v = 500, 
+                q = 50, 
+                f = 10, 
+                k = 0.5)
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

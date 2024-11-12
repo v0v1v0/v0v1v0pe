@@ -1,0 +1,184 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simconf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simultaneous confidence regions for Gaussian models</h2>
+
+<h3>Description</h3>
+
+<p><code>simconf</code> is used for calculating simultaneous confidence regions for
+Gaussian models <code class="reqn">x</code>. The function returns upper and lower bounds <code class="reqn">a</code>
+and <code class="reqn">b</code> such that <code class="reqn">P(a&lt;x&lt;b) = 1-\alpha</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simconf(
+  alpha,
+  mu,
+  Q,
+  n.iter = 10000,
+  Q.chol,
+  vars,
+  ind = NULL,
+  verbose = 0,
+  max.threads = 0,
+  seed = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Error probability for the region.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>Expectation vector for the Gaussian distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q</code></td>
+<td>
+<p>Precision matrix for the Gaussian distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.iter</code></td>
+<td>
+<p>Number or iterations in the MC sampler that is used for
+approximating probabilities. The default value is 10000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q.chol</code></td>
+<td>
+<p>The Cholesky factor of the precision matrix (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars</code></td>
+<td>
+<p>Precomputed marginal variances (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ind</code></td>
+<td>
+<p>Indices of the nodes that should be analyzed (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Set to TRUE for verbose mode (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.threads</code></td>
+<td>
+<p>Decides the number of threads the program can use.
+Set to 0 for using the maximum number of threads allowed by the system (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Random seed (optional).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The pointwise confidence bands are based on the marginal quantiles,
+meaning that <code>a.marignal</code> is a vector where the ith element equals 
+<code class="reqn">\mu_i + q_{\alpha,i}</code>  and <code>b.marginal</code> is a vector where the ith element
+equals  <code class="reqn">\mu_i + q_{1-\alpha,i}</code>, where <code class="reqn">\mu_i</code> is the expected value 
+of the <code class="reqn">x_i</code> and <code class="reqn">q_{\alpha,i}</code> is the <code class="reqn">\alpha</code>-quantile of <code class="reqn">x_i-\mu_i</code>.
+</p>
+<p>The simultaneous confidence band is defined by the lower limit vector <code>a</code> and 
+the upper limit vector <code>b</code>, where <code class="reqn">a_i = \mu_i +c q_{\alpha}</code> and 
+<code class="reqn">b_i = \mu_i + c q_{1-\alpha}</code>, where <code class="reqn">c</code> is a constant computed such 
+that <code class="reqn">P(a &lt; x &lt; b) = 1-\alpha</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class "excurobj" with elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>a </code></td>
+<td>
+<p>The lower bound.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b </code></td>
+<td>
+<p>The upper bound.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a.marginal </code></td>
+<td>
+<p>The lower bound for pointwise confidence bands.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b.marginal </code></td>
+<td>
+<p>The upper bound for pointwise confidence bands.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>David Bolin <a href="mailto:davidbolin@gmail.com">davidbolin@gmail.com</a> and Finn Lindgren <a href="mailto:finn.lindgren@gmail.com">finn.lindgren@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Bolin et al. (2015) <em>Statistical prediction of global sea level
+from global temperature</em>, Statistica Sinica, vol 25, pp 351-367.
+</p>
+<p>Bolin, D. and Lindgren, F. (2018), <em>Calculating Probabilistic Excursion Sets and Related Quantities Using excursions</em>, Journal of Statistical Software, vol 86, no 1, pp 1-20.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>simconf.inla</code>, <code>simconf.mc</code>, <code>simconf.mixture</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Create mean and a tridiagonal precision matrix
+n &lt;- 11
+mu.x &lt;- seq(-5, 5, length = n)
+Q.x &lt;- Matrix(toeplitz(c(1, -0.1, rep(0, n - 2))))
+## calculate the confidence region
+conf &lt;- simconf(0.05, mu.x, Q.x, max.threads = 2)
+## Plot the region
+plot(mu.x,
+  type = "l", ylim = c(-10, 10),
+  main = "Mean (black) and confidence region (red)"
+)
+lines(conf$a, col = 2)
+lines(conf$b, col = 2)
+</code></pre>
+
+
+</div>

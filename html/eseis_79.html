@@ -1,0 +1,268 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spatial_track</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Track a spatially mobile seismic source</h2>
+
+<h3>Description</h3>
+
+<p>This function allows tracking a spatially mobile seismic source and 
+thereby estimating the source amplitude and the model's variance 
+reduction as a measure of quality or robustness of the time-resolved 
+estimates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spatial_track(
+  data,
+  coupling,
+  window,
+  overlap = 0,
+  d_map,
+  aoi,
+  v,
+  q,
+  f,
+  k,
+  qt = 1,
+  dt,
+  model = "SurfSpreadAtten",
+  cpu,
+  verbose = FALSE,
+  plot = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>Numeric</code> matrix or <code>eseis</code> object, seismic signals 
+used for source tracking. Note that the function will start tracking 
+within a smaller time window, narrows be the maximum signal arrival time 
+differences as defined by the maximum inter station distance and the 
+seismic velocity. The signals should be the envelopes of waveforms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coupling</code></td>
+<td>
+<p><code>Numeric</code>  vector, coupling efficiency factors for 
+each seismic station. The best coupled station (or the one with the 
+highest amplification) must receive 1, the others must be scaled 
+relatively to this one.Numeric vector, coupling efficiency factors for 
+each seismic station. The best coupled station (or the one with the 
+highest amplification) must receive 1, the others must be scaled 
+relatively to this one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window</code></td>
+<td>
+<p><code>Numeric</code> value, time window for which the source is 
+tracked. If omitted, ten time steps are generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overlap</code></td>
+<td>
+<p><code>Numeric</code> value between 0 and 1, fraction of overlap 
+of time windows used for source tracking. Default is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_map</code></td>
+<td>
+<p><code>List</code> object, distance maps for each station (i.e., 
+<code>SpatialGridDataFrame</code> objects). Output of <code>spatial_distance</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aoi</code></td>
+<td>
+<p><code>Raster</code> object (optional) that defines which pixels are 
+used to locate the source. If omitted, the entire distance map extent is  
+used. <code>aoi</code> and <code>d_map</code> objects must have the same extents, 
+projections and pixel sizes. The aoi map must be of logical values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p><code>Numeric</code> value, mean velocity of seismic waves (m/s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p><code>Numeric</code> value, quality factor of the ground.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p><code>Numeric</code> value, frequency for which to model the 
+attenuation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p><code>Numeric</code> value, fraction of surface wave contribution to 
+signals. Only relevant for models that include mixture of surface and 
+body waves (see <code>model_amplitude</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qt</code></td>
+<td>
+<p><code>Numeric</code> value, quantile threshold that defines acceptable
+location estimates. Default is <code>1</code> (only single best estimate is 
+kept).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p><code>Numeric</code> value, sampling frequency. Only required if 
+input signals are no eseis objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p><code>Character</code> value,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cpu</code></td>
+<td>
+<p><code>Numeric</code> value, fraction of CPUs to use for parallel 
+processing. If omitted, one CPU is used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p><code>Logical</code> value, optional screen output of processing
+progress. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p><code>Logical</code> value, enable graphical output of key results. 
+Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The method is based on ideas published by Burtin et al. (2016), 
+Walter et al. 82017) and Perez-Guillen et al. (2019) and implemented 
+in the R package eseis by Dietze (2018). It is related to the function
+<code>spatial_amplitude</code>, which can be used to locate spatially 
+stable seismic sources by the same technique, and it resuires 
+prepared input data as delivered by the function 
+<code>spatial_distance</code>.
+</p>
+<p>The input data (<code>data</code>) should ideally be a list of eseis 
+objects (alternatively a matrix with seismic signal traces) containing 
+the envelopes of the seismic event to track (i.e., describe by its 
+location and amplitude as a function of propagation time). The temporal 
+resolution of the track is defined by the arguments <code>window</code> and 
+<code>overlap</code> (as a fraction between 0 and 1). The approach is based on 
+fitting known amplitude-distance functions (for an overview of available 
+functions see <code>model_amplitude</code>) to the envelope time snippets 
+for each pixel of a grid, which provides the distance from a pixel to 
+each seismic station, i.e., the distance map set <code>d_map</code>. To avoid 
+fitting each of the pixels of the distance map, one can provide an area
+of interest, AOI (<code>aoi</code>), which has the same extent and resolution 
+as the distance map set and pixel values are either <code>TRUE</code> or 
+<code>FALSE</code>. Depending on which amplitude-distance function is chosen, 
+further arguments need to be provided (ground quality factor <code>q</code>,
+center frequency of the signal <code>f</code>). The apparent seismic wave 
+velocity <code>v</code> is required regardless, either as fit model parameter 
+or to correct the amplitude time snippets for the travel time delay from 
+the source to the respective pixel of the distance map set. The output 
+of the function can be provided with uncertainty estimates on all output 
+values. The uncertainty is based on the size of accepted location 
+estimates per time step, as defined by the variance reduction quantile 
+threshold <code>qt</code> (i.e., all locations above this quantile will be 
+assumed to be valid location estimates, whose parameters will be used 
+to estimate the uncertainty). Note that usually, <code>qt</code> should be 
+set to around 0.99, a value that depends on the number of pixels in 
+the distance map set and that affects the location uncertainty, which 
+in many cases is about 10 
+Note however, that this value is purely arbitrary and should be based 
+on field-based control data. It is possible to run the function in a 
+multi-CPU mode, to speed up computational time, using the argument 
+<code>cpu</code>. Also, the function can generate generic plot output of 
+the results, a panel of three plots: source trajectory, source 
+amplitude and variance reduction.
+</p>
+<p>Note that depending on the resolution of the distance map set, number 
+of included seismic stations, and number of time windows, the 
+function can take significant processing time. 50 time steps for 5 
+stations and 5000 pixels per distance map requires about 10 minutes 
+time on a normal grade computer using a single CPU.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>List</code> object with summarising statistics of the fits.
+</p>
+
+
+<h3>References</h3>
+
+<p>Burtin, A., Hovius, N., and Turowski, J. M.: Seismic monitoring of 
+torrential and fluvial processes, Earth Surf. Dynam., 4, 285–307, 
+https://doi.org/10.5194/esurf-4-285-2016, 2016. 
+</p>
+<p>Dietze, M.: The R package 'eseis' – a software toolbox for environmental
+seismology, Earth Surf. Dynam., 6, 669–686, 
+https://doi.org/10.5194/esurf-6-669-2018, 2018. 
+</p>
+<p>Perez-Guillen, C., Tsunematsu, K., Nishimura, K., and Issler, D.: Seismic 
+location and tracking of snow avalanches and slush flows on Mt. Fuji, 
+Japan, Earth Surf. Dynam., 7, 989–1007, 
+https://doi.org/10.5194/esurf-7-989-2019, 2019. 
+</p>
+<p>Walter, F., Burtin, A., McArdell, B. W., Hovius, N., Weder, B., and 
+Turowski, J. M.: Testing seismic amplitude source location for fast
+debris-flow detection at Illgraben, Switzerland, Nat. Hazards Earth 
+Syst. Sci., 17, 939–955, https://doi.org/10.5194/nhess-17-939-2017, 2017.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+
+x &lt;- spatial_track(data = data, 
+                   window = 5, 
+                   overlap = 0.5,
+                   d_map = D$maps, 
+                   aoi = aoi, 
+                   v = 800, 
+                   q = 40, 
+                   f = 12, 
+                   qt = 0.99)
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

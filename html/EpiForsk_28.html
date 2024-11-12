@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>logasympBF</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Asymptotic Bayes factors</h2>
+
+<h3>Description</h3>
+
+<p>The Bayesian equivalent of a significance test for H1: an
+unrestricted parameter value versus H0: of a specific parameter value based
+only on data D can be obtained from Bayes factor (BF). Then <code>BF = Probability(H1|D) / Probability(H0|D)</code> and is a Bayesian equivalent of a
+likelihood ratio. It is based on the same asymptotics as the ubiqutous
+chi-square tests. This BF only depends on the difference in deviance
+between the models corresponding to H0 and H1 (chisquare) and the dimension
+d of H1. This BF is monotone in chisquare (and hence the p-value p) for
+fixed d. It is thus a tool to turn p-values into evidence, also
+retrospectively. The expression for BF depends on a parameter lambda which
+expresses the ratio between the information in the prior and the data
+(likelihood). By default <code>lambda = min(d / chisquare, lambdamax = 0.255)</code>.
+Thus, as chisquare goes to infinity we effectively maximize BF and hence
+the evidence favoring H1, and opposite for small chisquare has a
+well-defined watershed where we have equal preferences for H1 and H0. The
+value 0.255 corresponds to a watershed of 2, that is we prefer H1 when
+<code>chisquare &gt; d * 2</code> and prefer H0 when <code>chisquare &lt; d * 2</code>, similar to
+having a BF that is a continuous version of the Akaike Information
+Criterion for model selection. For derivations and details, see Rostgaard
+(2023).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">logasympBF(chisq = NA, p = NA, d = 1, lambda = NA, lambdamax = 0.255)
+
+asympBF(chisq = NA, p = NA, d = 1, lambda = NA, lambdamax = 0.255)
+
+invlogasympBF(logasympBF = NA, d = 1, lambda = NA, lambdamax = 0.255)
+
+invasympBF(bf, d = 1, lambda = NA, lambdamax = 0.255)
+
+watershed(chisq)
+
+invwatershed(lambda)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>chisq</code></td>
+<td>
+<p>a non-negative number denoting the difference in deviance
+between the statistical models corresponding to H0 and H1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>the p value corresponding to the test statistic chisq on d degrees
+of freedom</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>the dimension of H1, <code style="white-space: pre;">⁠d =&gt; 1⁠</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>a strictly positive number corresponding to the ratio between
+the information in the prior and the data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdamax</code></td>
+<td>
+<p>an upper limit on lambda</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logasympBF</code></td>
+<td>
+<p>log(bf)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bf</code></td>
+<td>
+<p>Bayes factor, a strictly positive number</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For fixed dimension d of the alternative hypothesis H1 <code>asympBF(.) = exp(logasympBF(.))</code> maps a test statistic (chisquare) or a p-value p into a
+Bayes factor (the ratio between the probabilities of the models
+corresponding to each hypothesis). <code>asympBF(.)</code> is monotonely increasing in
+chisquare, attaining the value 1 when <code>chisquare = d * watershed</code>. The
+watershed is thus a device to specify what the user considers a practical
+null result by choosing <code>lambdamax = watershed(watershed)</code>.
+</p>
+<p>For sufficiently large values of chisquare, lambda is estimated as
+d/chisquare. This behavior can be overruled by specifying lambda. Using
+<code>invasympBF(.) = exp(invlogasympBF(.))</code> we can map a Bayes factor, bf to a
+value of chisquare.
+</p>
+<p>Likewise, we can obtain the watershed corresponding to a given lambdamax as
+<code>invwatershed(lambdamax)</code>.
+</p>
+<p>Generally in these functions we recode or ignore illegal values of
+parameters, rather than returning an error code. <code>chisquare</code> is always
+recoded as <code>abs(chisquare)</code>. <code>d</code> is set to <code>1</code> as default, and missing or
+entered values of <code>d &lt; 1</code> are recoded as <code>d = 1</code>. Entered values of
+<code>lambdamax &lt;= 0</code> or missing are ignored. Entered values of <code>lambda &lt;= 0</code> or
+missing are ignored in <code>invwatershed(.)</code>. we use <code>abs(lambda)</code> as argument,
+<code>lambda = 0</code> results in an error.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>KLP &amp; KIJA
+</p>
+
+
+<h3>References</h3>
+
+<p>Klaus Rostgaard (2023): Simple nested Bayesian hypothesis testing
+for meta-analysis, Cox, Poisson and logistic regression models. Scientific
+Reports. https://doi.org/10.1038/s41598-023-31838-8
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># example code
+
+# 1. the example(s) from Rostgaard (2023)
+asympBF(p = 0.19, d = 8) # 0.148411
+asympBF(p = 0.19, d = 8, lambdamax = 100) # 0.7922743
+asympBF(p = 0.19, d = 8, lambda = 100 / 4442) # 5.648856e-05
+# a maximal value of a parameter considered practically null
+deltalogHR &lt;- -0.2 * log(0.80)
+sigma &lt;- (log(1.19) - log(0.89)) / 3.92
+chisq &lt;- (deltalogHR / sigma) ** 2
+chisq # 0.3626996
+watershed(chisq)
+# leads nowhere useful chisq=0.36&lt;2
+
+# 2. tests for interaction/heterogeneity - real world examples
+asympBF(p = 0.26, d = 24) # 0.00034645
+asympBF(p = 0.06, d = 11) # 0.3101306
+asympBF(p = 0.59, d = 7) # 0.034872
+
+# 3. other examples
+asympBF(p = 0.05) # 2.082664
+asympBF(p = 0.05, d = 8) # 0.8217683
+chisq &lt;- invasympBF(19)
+chisq # 9.102697
+pchisq(chisq, df = 1, lower.tail = FALSE) # 0.002552328
+chisq &lt;- invasympBF(19, d = 8)
+chisq # 23.39056
+pchisq(chisq, df = 8, lower.tail = FALSE) # 0.002897385
+</code></pre>
+
+
+</div>

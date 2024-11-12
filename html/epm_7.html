@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>betadiv_taxonomic</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Map turnover in species communities</h2>
+
+<h3>Description</h3>
+
+<p>Multisite taxonomic community dissimilarity is calculated for
+each cell within a circular moving window of neighboring cells. To implement 
+a custom function, see <code>customBetaDiv</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">betadiv_taxonomic(
+  x,
+  radius,
+  component = "full",
+  focalCoord = NULL,
+  slow = FALSE,
+  nThreads = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>object of class <code>epmGrid</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>radius</code></td>
+<td>
+<p>Radius of the moving window in map units.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>component</code></td>
+<td>
+<p>which component of beta diversity to use, can be
+<code>"turnover"</code>, <code>"nestedness"</code> or <code>"full"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focalCoord</code></td>
+<td>
+<p>vector of x and y coordinate, see details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slow</code></td>
+<td>
+<p>if TRUE, use an alternate implementation that has a smaller
+memory footprint but that is likely to be much slower. Most useful for high
+spatial resolution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nThreads</code></td>
+<td>
+<p>number of threads for parallelization</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each cell, multisite dissimilarity is calculated from the focal
+cell and its neighbors. If <code>focalCoord</code> is specified, then instead of
+multisite dissimilarity within a moving window of gridcells, pairwise
+dissimilarity is calculated from the cell at the focal coordinates, to all
+other cells.
+</p>
+<p>All metrics are based on Sorensen dissimilarity and range from 0 to 1. <br>
+For each metric, the following components can be specified. These components
+are additive, such that the full metric = turnover + nestedness. 
+</p>
+
+<ul>
+<li>
+<p>turnover: species turnover without the influence of richness
+differences 
+</p>
+</li>
+<li>
+<p>nestedness: species turnover due to differences in
+richness 
+richness and pure turnover 
+</p>
+</li>
+</ul>
+<p>If the R package spdep is installed, this function should run more quickly.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a grid with multi-site community dissimilarity for each cell.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Pascal Title
+</p>
+
+
+<h3>References</h3>
+
+<p>Baselga, A. The relationship between species replacement, dissimilarity
+derived from nestedness, and nestedness. Global Ecology and Biogeography 21
+(2012): 1223–1232.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+tamiasEPM
+
+tamiasEPM &lt;- addPhylo(tamiasEPM, tamiasTree)
+tamiasEPM &lt;- addTraits(tamiasEPM, tamiasTraits)
+
+# taxonomic turnover
+beta_taxonomic_turnover &lt;- betadiv_taxonomic(tamiasEPM, radius = 70000,
+		component = 'turnover')
+beta_taxonomic_nestedness &lt;- betadiv_taxonomic(tamiasEPM, radius = 70000,
+		component = 'nestedness')
+beta_taxonomic_full &lt;- betadiv_taxonomic(tamiasEPM, radius = 70000,
+		component = 'full')
+
+
+
+oldpar &lt;- par(mfrow = c(1, 3))
+plot(beta_taxonomic_turnover, reset = FALSE, key.pos = NULL)
+plot(beta_taxonomic_nestedness, reset = FALSE, key.pos = NULL)
+plot(beta_taxonomic_full, reset = FALSE, key.pos = NULL)
+
+
+
+# using square grid epmGrid
+tamiasEPM2 &lt;- createEPMgrid(tamiasPolyList, resolution = 50000,
+	cellType = 'square', method = 'centroid')
+
+beta_taxonomic_full &lt;- betadiv_taxonomic(tamiasEPM2, radius = 70000,
+		component = 'full')
+beta_taxonomic_full_slow &lt;- betadiv_taxonomic(tamiasEPM2, radius = 70000,
+		component = 'full', slow = TRUE)
+
+par(mfrow=c(1,2))
+terra::plot(beta_taxonomic_full, col = sf::sf.colors(100))
+terra::plot(beta_taxonomic_full_slow, col = sf::sf.colors(100))
+
+# dissimilarity from a focal cell
+focalBeta &lt;- betadiv_taxonomic(tamiasEPM, radius = 70000,
+		component = 'full', focalCoord = c(-1413764, 573610.8))
+plot(focalBeta, reset = FALSE)
+points(-1413764, 573610.8, pch = 3, col = 'white')
+
+par(oldpar)
+
+</code></pre>
+
+
+</div>

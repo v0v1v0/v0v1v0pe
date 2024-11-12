@@ -1,0 +1,206 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SL</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Schmid-Leiman Transformation</h2>
+
+<h3>Description</h3>
+
+<p>This function implements the Schmid-Leiman (SL) transformation
+(Schmid &amp; Leiman, 1957). It takes the pattern coefficients and factor
+intercorrelations from an oblique factor solution as
+input and can reproduce the results from <code>psych::schmid</code>
+and from the SPSS implementation from Wolff &amp; Preising (2005). Other arguments
+from <code>EFA</code> can be used to control the procedure to find the
+second-order loadings more flexibly. The function can also be used on a
+second-order confirmatory factor analysis (CFA) solution from lavaan.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SL(
+  x,
+  Phi = NULL,
+  type = c("EFAtools", "psych", "SPSS", "none"),
+  method = c("PAF", "ML", "ULS"),
+  g_name = "g",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>object of class <code>EFA</code>, class <code>psych::fa</code>,
+class <code>lavaan</code> or matrix. If class <code>EFA</code> or
+class <code>psych::fa</code>, pattern coefficients and factor
+intercorrelations are taken from this object. If class <code>lavaan</code>,
+it must be a second-order CFA solution. In this case first-order and second-order
+factor loadings are taken from this object and the <code>g_name</code> argument has
+to be specified.
+x can also be a pattern matrix from an oblique factor solution (see <code>Phi</code>)
+or a matrix of first-order factor loadings from a higher-order confirmatory factor
+analysis (see <code>L2</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Phi</code></td>
+<td>
+<p>matrix. A matrix of factor intercorrelations from an oblique factor
+solution. Only needs to be specified if a pattern matrix is entered directly
+into <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character. One of "EFAtools" (default), "psych", "SPSS", or "none".
+This is used to control the procedure of the second-order factor analysis. See
+<code>EFA</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character. One of "PAF", "ML", or "ULS" to use
+principal axis factoring, maximum likelihood, or unweighted least squares
+(also called minres), respectively, used in <code>EFA</code> to find the second-order
+loadings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g_name</code></td>
+<td>
+<p>character. The name of the general factor. This needs only be
+specified if <code>x</code> is a <code>lavaan</code> second-order solution. Default is "g".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to be passed to <code>EFA</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The SL transformation (also called SL orthogonalization) is a procedure with
+which an oblique factor solution is transformed into a hierarchical,
+orthogonalized solution. As a first step, the factor intercorrelations are
+again factor analyzed to find second-order factor loadings. If there is only
+one higher-order factor, this step of the procedure stops there, resulting in
+a second-order factor structure. The first-order factor and the second-order
+factor are then orthogonalized, resulting in an orthogonalized factor solution
+with proportionality constraints. The procedure thus makes a suggested
+hierarchical data structure based on factor intercorrelations explicit. One
+major advantage of SL transformation is that it enables variance
+partitioning between higher-order and first-order factors, including the
+calculation of McDonald's omegas (see <code>OMEGA</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class SL containing the following
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>orig_R</code></td>
+<td>
+<p>Original correlation matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sl</code></td>
+<td>
+<p>A matrix with general factor loadings, group factor loadings, communalities,
+and uniquenesses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L2</code></td>
+<td>
+<p>Second-order factor loadings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars_accounted</code></td>
+<td>
+<p>A matrix of explained variances and sums of squared loadings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>The number of iterations needed for convergence in EFA.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>settings</code></td>
+<td>
+<p>list. The settings (arguments) used in EFA to get the
+second-order loadings.</p>
+</td>
+</tr>
+</table>
+<h3>Source</h3>
+
+<p>Schmid, J. &amp; Leiman, J. M. (1957). The development of hierarchical
+factor solutions. Psychometrika, 22(1), 53–61. doi:10.1007/BF02289209
+</p>
+<p>Wolff, H.-G., &amp; Preising, K. (2005). Exploring item and higher order
+factor structure with the Schmid-Leiman solution: Syntax codes for SPSS and
+SAS. Behavior Research Methods, 37 , 48–58. doi:10.3758/BF03206397
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Use with an output from the EFAtools::EFA function, both with type EFAtools
+EFA_mod &lt;- EFA(test_models$baseline$cormat, N = 500, n_factors = 3,
+               type = "EFAtools", method = "PAF", rotation = "promax")
+SL_EFAtools &lt;- SL(EFA_mod, type = "EFAtools", method = "PAF")
+
+
+## Use with an output from the psych::fa function with type psych in SL
+fa_mod &lt;- psych::fa(test_models$baseline$cormat, nfactors = 3, n.obs = 500,
+                    fm = "pa", rotate = "Promax")
+SL_psych &lt;- SL(fa_mod, type = "psych", method = "PAF")
+
+
+## Use more flexibly by entering a pattern matrix and phi directly (useful if
+## a factor solution found with another program should be subjected to SL
+## transformation)
+
+## For demonstration, take pattern matrix and phi from an EFA output
+## This gives the same solution as the first example
+EFA_mod &lt;- EFA(test_models$baseline$cormat, N = 500, n_factors = 3,
+               type = "EFAtools", method = "PAF", rotation = "promax")
+SL_flex &lt;- SL(EFA_mod$rot_loadings, Phi = EFA_mod$Phi, type = "EFAtools",
+              method = "PAF")
+
+
+## Use with a lavaan second-order CFA output
+
+# Create and fit model in lavaan (assume all variables have SDs of 1)
+mod &lt;- 'F1 =~ V1 + V2 + V3 + V4 + V5 + V6
+        F2 =~ V7 + V8 + V9 + V10 + V11 + V12
+        F3 =~ V13 + V14 + V15 + V16 + V17 + V18
+        g =~ F1 + F2 + F3'
+fit &lt;- lavaan::cfa(mod, sample.cov = test_models$baseline$cormat,
+                   sample.nobs = 500, estimator = "ml")
+
+SL_lav &lt;- SL(fit, g_name = "g")
+
+
+</code></pre>
+
+
+</div>

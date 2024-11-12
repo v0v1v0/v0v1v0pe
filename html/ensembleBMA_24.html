@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>controlBMAgamma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Control parameters for BMA wind speed modeling
+</h2>
+
+<h3>Description</h3>
+
+<p>Specifies a list of values controling the Bayesian Model Averaging fit 
+of a mixture of gammas to ensemble forecasts for wind speed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">controlBMAgamma(maxIter, tol, power = 1, startupSpeed = NULL, init, 
+           optim.control = list(ndeps = rep( sqrt(.Machine$double.eps), 2)))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>maxIter</code></td>
+<td>
+
+<p>An integer specifying an upper limit on the number of iterations'
+for fitting  the BMA mixture via EM. The default is 
+<code>Inf</code>, which sets no upper limit on the number of iterations, 
+so that the convergence criterion based on <code>eps</code> is used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+
+<p>A numeric convergence tolerance. The EM fit for the mixture of
+gammas is terminated when the relative error in successive 
+objective values in the M-step falls below <code>tol</code>.
+The default is <code>sqrt(.Machine$double.eps)</code>, 
+which is approximately <code>1.e-8</code> on IEEE compliant machines.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>power</code></td>
+<td>
+
+<p>A scalar value giving the power by which the data will be
+transformed to fit the model for mean of the observations.
+The default is not to transform the data.
+The untransformed forecast is used to fit the variance model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startupSpeed</code></td>
+<td>
+
+<p>A scalar value giving a global value for the anemometer startup speed,
+or the threshold below which a value of 0 is recorded. As this can
+vary from station to station and network to network, it may be
+preferable to include <code>startupSpeed</code> as part of the 
+<code>ensembleData</code> object.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+
+<p>An optional list of initial values for variance coefficients
+and weights. The default is to start with the variance coefficients
+equal to 1, and with equal weights for each member of the ensemble.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.control</code></td>
+<td>
+
+<p>Control parameters for the optim function used in the M-step of EM.
+The default here is list(ndeps = rep( sqrt(.Machine$double.eps), 2)),
+which assigns a smaller finite-difference step size than the
+<code>optim</code> default of 1.e-3. To use the default control parameters for 
+<code>optim</code>, set <code>optim.control=NULL</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list whose components are the input arguments and their assigned values. 
+</p>
+
+
+<h3>References</h3>
+
+<p>J. M. Sloughter, T. Gneiting and A. E. Raftery, 
+Probabilistic wind speed forecasting 
+using ensembles and Bayesian model averaging,
+<em>Journal of the American Statistical Association, 105:25–35, 2010</em>.
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting and J. M. Sloughter,
+<code>ensembleBMA</code>: An <code>R</code> Package for Probabilistic Ensemble Forecasting
+using Bayesian Model Averaging,
+Technical Report No. 516R, Department of Statistics, University of
+Washington, 2007 (revised 2010).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleBMAgamma</code>, 
+<code>fitBMAgamma</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(ensBMAtest)
+
+  ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+  
+  obs &lt;- paste("MAXWSP10","obs", sep = ".")
+  ens &lt;- paste("MAXWSP10", ensMemNames, sep = ".")
+
+  winsTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"], 
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+## Not run:  # R check
+   winsTestFit1 &lt;- ensembleBMAgamma(winsTestData, trainingDays = 30,
+       control = controlBMAgamma(maxIter = 100, tol = 1.e-6,
+   startupSpeed =1))
+
+## End(Not run)
+
+# for quick run only; use more training days for forecasting
+   winsTestFit1 &lt;- ensembleBMAgamma(winsTestData[1:14,], trainingDays = 5,
+      control = controlBMAgamma(maxIter = 100, tol = 1.e-6, startupSpeed = 1))
+</code></pre>
+
+
+</div>

@@ -1,0 +1,236 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emplikH.disc2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Two sample empirical likelihood ratio for discrete hazards
+with right censored, left truncated data, one parameter.</h2>
+
+<h3>Description</h3>
+
+<p>Use empirical likelihood ratio and Wilks theorem to test 
+the null hypothesis that
+</p>
+<p style="text-align: center;"><code class="reqn"> 
+\int{f_1(t) I_{[dH_1 &lt;1]} \log(1-dH_1(t))} -
+\int{f_2(t) I_{[dH_2 &lt;1]} \log(1-dH_2(t))} = \theta 
+</code>
+</p>
+
+<p>where <code class="reqn">H_*(t)</code> is the (unknown) discrete cumulative
+hazard function; <code class="reqn">f_*(t)</code> can be any predictable  
+functions of <code class="reqn">t</code>. 
+<code class="reqn">\theta</code> is the parameter. The given value of <code class="reqn">\theta</code>
+in these computation is the value to be tested.
+The data can be right censored and left truncated.
+</p>
+<p>When the given constants <code class="reqn">\theta</code> is too far
+away from the NPMLE, there will be no hazard function satisfy this 
+constraint and the -2 Log empirical likelihood ratio
+will be infinite. In this case the computation will stop.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emplikH.disc2(x1, d1, y1= -Inf, x2, d2, y2 = -Inf,
+              theta, fun1, fun2, tola = 1e-6, maxi, mini)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x1</code></td>
+<td>
+<p>a vector, the observed survival times, sample 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d1</code></td>
+<td>
+<p>a vector, the censoring indicators, 1-uncensor; 0-censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y1</code></td>
+<td>
+<p>optional vector, the left truncation times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x2</code></td>
+<td>
+<p>a vector, the observed survival times, sample 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d2</code></td>
+<td>
+<p>a vector, the censoring indicators, 1-uncensor; 0-censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y2</code></td>
+<td>
+<p>optional vector, the left truncation times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun1</code></td>
+<td>
+<p>a predictable function used to calculate
+the weighted discrete hazard in <code class="reqn">H_0</code>. 
+<code>fun1(x)</code> must be able to take a vector input <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun2</code></td>
+<td>
+<p> similar to fun1, but for sample 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tola</code></td>
+<td>
+<p>an optional positive real number, the tolerance of
+iteration error in solve the non-linear equation needed in constrained 
+maximization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>a given real number. for Ho constraint. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxi</code></td>
+<td>
+<p> upper bound for lambda, usually positive. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mini</code></td>
+<td>
+<p> lower bound for lambda, usually negative. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The log likelihood been maximized is the ‘binomial’ empirical likelihood:
+</p>
+<p style="text-align: center;"><code class="reqn"> 
+\sum D_{1i} \log w_i  + (R_{1i}-D_{1i}) \log [1-w_i] + 
+\sum D_{2j} \log v_j  + (R_{2j}-D_{2j}) \log [1-v_j] 
+</code>
+</p>
+
+<p>where <code class="reqn">w_i = \Delta H_1(t_i)</code> is the jump 
+of the cumulative hazard function at <code class="reqn">t_i</code>, 
+<code class="reqn">D_{1i}</code> is the number of failures
+observed at <code class="reqn">t_i</code>, <code class="reqn">R_{1i}</code> is 
+the number of subjects at risk at
+time <code class="reqn">t_i</code>.
+</p>
+<p>For discrete distributions, the jump size of the cumulative hazard at
+the last jump is always 1. We have to exclude this jump from the 
+summation in the constraint calculation
+since <code class="reqn"> \log( 1- dH(\cdot))</code> do not make sense.
+</p>
+<p>The constants <code>theta</code> must be inside the so called
+feasible region for the computation to continue. This is similar to the
+requirement that in ELR testing the value of the mean, the value must be
+inside the convex hull of the observations.
+It is always true that the NPMLE values are feasible. So when the
+computation stops, try move the <code>theta</code> closer
+to the NPMLE.  When the computation stops, the -2LLR should have value
+infinite.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>the location of the hazard jumps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wts</code></td>
+<td>
+<p>the jump size of hazard function at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>the final value of the Lagrange multiplier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>The -2Log Likelihood ratio.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pval</code></td>
+<td>
+<p>P-value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>niters</code></td>
+<td>
+<p>number of iterations used</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Zhou and Fang (2001). 
+“Empirical likelihood ratio for 2 sample problems for censored data”. 
+<em>Tech Report, Univ. of Kentucky, Dept of Statistics</em>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(require("boot", quietly = TRUE)) {
+####library(boot)
+data(channing)
+ymale &lt;- channing[1:97,2]
+dmale &lt;- channing[1:97,5]
+xmale &lt;- channing[1:97,3]
+yfemale &lt;- channing[98:462,2]
+dfemale &lt;- channing[98:462,5]
+xfemale &lt;- channing[98:462,3]
+fun1 &lt;- function(x) { as.numeric(x &lt;= 960) }
+emplikH.disc2(x1=xfemale, d1=dfemale, y1=yfemale, 
+ x2=xmale, d2=dmale, y2=ymale, theta=0.2, fun1=fun1, fun2=fun1, maxi=4, mini=-10)
+######################################################
+### You should get "-2LLR" = 1.511239 and a lot more other outputs.
+########################################################
+emplikH.disc2(x1=xfemale, d1=dfemale, y1=yfemale, 
+ x2=xmale, d2=dmale, y2=ymale, theta=0.25, fun1=fun1, fun2=fun1, maxi=4, mini=-5)
+########################################################
+### This time you get "-2LLR" = 1.150098 etc. etc.
+##############################################################
+}
+</code></pre>
+
+
+</div>

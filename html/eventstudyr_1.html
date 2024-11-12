@@ -1,0 +1,273 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EventStudy</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimates Equation (2) in Freyaldenhoven et al. (2021)</h2>
+
+<h3>Description</h3>
+
+<p><code>EventStudy</code> uses regression methods to estimate the effect of a policy on a given outcome.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EventStudy(
+  estimator,
+  data,
+  outcomevar,
+  policyvar,
+  idvar,
+  timevar,
+  controls = NULL,
+  proxy = NULL,
+  proxyIV = NULL,
+  FE = TRUE,
+  TFE = TRUE,
+  post,
+  overidpost = 1,
+  pre,
+  overidpre = post + pre,
+  normalize = -1 * (pre + 1),
+  cluster = TRUE,
+  anticipation_effects_normalization = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>estimator</code></td>
+<td>
+<p>Accepts one of "OLS" or "FHS". If "OLS" is specified, implements Ordinary Least Squares. If "FHS" is specified, implements Instrumental Variables (IV) estimator proposed in <a href="https://www.aeaweb.org/articles?id=10.1257/aer.20180609">Freyaldenhoven Hansen Shapiro (FHS, 2019)</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame containing the variables of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcomevar</code></td>
+<td>
+<p>Character indicating column of outcome variable y.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>policyvar</code></td>
+<td>
+<p>Character indicating column of policy variable z.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idvar</code></td>
+<td>
+<p>Character indicating column of units.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timevar</code></td>
+<td>
+<p>Character indicating column of time periods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>controls</code></td>
+<td>
+<p>Optional character vector indicating a set of control variables q.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proxy</code></td>
+<td>
+<p>Character indicating column of variable that is thought to be affected by the confound but not by the policy.
+Should be specified if and only if estimator is specified as "FHS".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proxyIV</code></td>
+<td>
+<p>Character of column to be used as an instrument. Should be specified if and only if estimator is specified as "FHS".
+If NULL, defaults to the strongest lead of the policy variable based on the first stage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FE</code></td>
+<td>
+<p>Logical indicating whether unit fixed-effects should be included. Defaults to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TFE</code></td>
+<td>
+<p>Logical indicating whether time fixed-effects should be included. Defaults to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>post</code></td>
+<td>
+<p>Whole number indicating the number of periods in the past before which the past values of the policy
+are not supposed to affect the value of the outcome. Corresponds to M in equation (2) of
+<a href="https://www.nber.org/papers/w29170">Freyaldenhoven et al. (2021)</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overidpost</code></td>
+<td>
+<p>Optional whole number indicating the number of event times after "post" to be included in estimation.
+Defaults to 1.
+Corresponds to L_M in equation (2) of <a href="https://www.nber.org/papers/w29170">Freyaldenhoven et al. (2021)</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pre</code></td>
+<td>
+<p>Whole number indicating the number of periods in the future after which the future values of the policy are
+not supposed to affect the value of the outcome today. Corresponds to G in equation (2) of
+<a href="https://www.nber.org/papers/w29170">Freyaldenhoven et al. (2021)</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overidpre</code></td>
+<td>
+<p>Optional whole number indicating the number of event times earlier than -"pre" to be included in estimation.
+Defaults to "post" + "pre".
+Corresponds to L_G in equation (2) of <a href="https://www.nber.org/papers/w29170">Freyaldenhoven et al. (2021)</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+<p>Specifies the event-time coefficient to be normalized. Defaults to - pre - 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster</code></td>
+<td>
+<p>Logical indicating whether to use clustered errors by units. If FALSE, will use unclustered heteroskedasticity-robust standard errors.
+Defaults to TRUE. Must be TRUE if FE is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anticipation_effects_normalization</code></td>
+<td>
+<p>If set to TRUE, runs the default process and switches coefficient to be normalized to 0
+when there are anticipation effects. If set to FALSE, does not make the switch. Defaults to TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list that contains, under "output", the estimation output as an lm_robust object, and under "arguments", the arguments passed to the function.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# A minimal example
+eventstudy_model &lt;-
+  EventStudy(
+    estimator = "OLS",
+    data = example_data,
+    outcomevar = "y_base",
+    policyvar = "z",
+    idvar = "id",
+    timevar = "t",
+    pre = 0, post = 3,
+    normalize = -1
+  )
+
+### Access estimated model
+eventstudy_model$output
+
+summary(eventstudy_model$output)
+
+### data.frame of estimates
+estimatr::tidy(eventstudy_model$output)
+
+### Access arguments
+eventstudy_model$arguments
+
+# A dynamic OLS model with anticipation effects and controls
+eventstudy_model_dyn &lt;-
+  EventStudy(
+    estimator = "OLS",
+    data = example_data,
+    outcomevar = "y_base",
+    policyvar = "z",
+    idvar = "id",
+    timevar = "t",
+    controls = "x_r",
+    FE = TRUE, TFE = TRUE,
+    post = 3, overidpost = 5,
+    pre  = 2, overidpre  = 4,
+    normalize = - 3,
+    cluster = TRUE,
+    anticipation_effects_normalization = TRUE
+  )
+
+summary(eventstudy_model_dyn$output)
+
+# A static model
+eventstudy_model_static &lt;-
+  EventStudy(
+    estimator = "OLS",
+    data = example_data,
+    outcomevar = "y_jump_m",
+    policyvar = "z",
+    idvar = "id",
+    timevar = "t",
+    FE = TRUE, TFE = TRUE,
+    post = 0, overidpost = 0,
+    pre  = 0, overidpre  = 0,
+    cluster = TRUE
+  )
+
+summary(eventstudy_model_static$output)
+
+# A dynamic model with an unbalanced panel
+data_unbal &lt;- example_data[1:(nrow(example_data)-1),]  # drop last row to make unbalanced
+
+eventstudy_model_unbal &lt;-
+ EventStudy(
+    estimator = "OLS",
+    data = data_unbal,
+    outcomevar = "y_base",
+    policyvar = "z",
+    idvar = "id",
+    timevar = "t",
+    pre = 0, post = 3,
+    normalize = -1
+  )
+
+summary(eventstudy_model_unbal$output)
+
+# A dynamic model estimated using IV
+eventstudy_model_iv &lt;-
+  EventStudy(
+    estimator = "FHS",
+    data = example_data,
+    outcomevar = "y_base",
+    policyvar = "z",
+    idvar = "id",
+    timevar = "t",
+    proxy = "x_r",
+    FE = TRUE, TFE = TRUE,
+    post = 2, overidpost = 1,
+    pre  = 0, overidpre  = 3,
+    normalize = -1,
+    cluster = TRUE
+  )
+
+summary(eventstudy_model_iv$output)
+
+</code></pre>
+
+
+</div>

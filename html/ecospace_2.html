@@ -1,0 +1,511 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calc_metrics</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate Ecological Disparity (Functional Diversity) Dynamics as Function of
+Sample Size.</h2>
+
+<h3>Description</h3>
+
+<p>Wrapper to <code>FD::dbFD</code> that calculates common ecological
+disparity and functional diversity statistics. When used with species-wise
+simulations of community assembly or ecological diversification (and default
+<code>increm = 'TRUE'</code>), calculates statistical dynamics incrementally as a
+function of species richness. Avoids file-sharing errors so that can be used
+in 'embarrasingly parallel' implementations in a high-performance computing
+environment.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calc_metrics(
+  nreps = 1,
+  samples = NA,
+  Smax = NA,
+  Model = "",
+  Param = "",
+  m = 3,
+  corr = "lingoes",
+  method = "Euclidean",
+  increm = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nreps</code></td>
+<td>
+<p>Sample number to calculate statistics for. Default is the first
+sample <code>nreps = 1</code>, but statistics can be calculated for other samples
+(i.e., second sample if <code>nreps = 2</code>), or multiple samples if assigned a
+vector (sequence) of integers and function is applied within <code>lapply</code>
+or related function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samples</code></td>
+<td>
+<p>Data frame (if <code>nreps = 1</code>) or list of data frames (if
+<code>nreps = seq()</code> or <code>nreps! = 1</code>), with each data frame a
+species-by-trait matrix with species as rows and traits as columns. Traits
+can be binary, numeric, ordered numeric, factor, or ordered factor types.
+Each sample is converted to a distance metric (see <code>method</code> below)
+before calculating statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Smax</code></td>
+<td>
+<p>Maximum number of <code>samples</code> rows (species) to include in
+calculations, incremented starting with first row. Default (<code>NA</code>) is to
+increment to the maximum number of <code>samples</code> rows (calculated
+separately for each data frame sample, if a list of data frames). If
+<code>Smax</code> is greater than the size of a sample, then calculation stops
+after calculating the sample statistics and issues a warning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Model</code></td>
+<td>
+<p>Optional character string or numeric value naming simulation
+model. A warning issues if left blank.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Param</code></td>
+<td>
+<p>Optional numeric value or character string naming strength
+parameter used in simulation. A warning issues if left blank.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>The number of PCoA axes to keep as 'traits' for calculating FRic and
+FDiv in <code>FD::dbFD</code>. Default <code>m = 3</code> is justified below,
+but any integer value greater than 1 is possible. See 'details' for more
+information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Character string specifying the correction method to use in
+<code>FD::dbFD</code> when the species-by-species distance matrix
+cannot be represented in a Euclidean space. Default <code>corr = 'lingoes'</code> is
+justified below, but see <code>FD::dbFD</code> for other possible
+values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Distance measure to use when calculating functional distances
+between species. Default is <code>method = 'Euclidean'</code> using
+<code>stats::dist</code>. <code>method = 'Gower'</code> or any other value
+uses Gower distance (using <code>FD::gowdis</code>). Presence of factor
+or ordered factor character types forces use of Gower distance, triggering a
+warning to notify user when changed internally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>increm</code></td>
+<td>
+<p>Default <code>increm = 'TRUE'</code> calculates statistics incrementally
+as a function of species richness. <code>increm = 'FALSE'</code> only calculates a
+single set of statistics for the entire sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters for controlling <code>FD::dbFD</code>.
+Common uses include setting <code>calc.FRic = FALSE</code> or <code>calc.FDiv = FALSE</code>
+to exclude calculation of FRic and FDiv. Note that the arguments <code>m</code>,
+<code>corr</code>, and <code>method</code> above have different defaults than used in
+<code>FD::dbFD</code>, and <code>w.abun = FALSE</code> and
+<code>messages = FALSE</code> are also internally changed to different defaults.
+These and others can be controlled here.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The primary goal of this function is to describe the statistical
+dynamics of common ecological disparity (functional diversity) metrics as a
+function of species richness (sample size). Statistics are calculated
+incrementally within samples, first for the first row (species), second for
+the first and second rows, ..., ending with the entire sample (by default,
+or terminating with <code>Smax</code> total species). The function assumes that
+supplied samples are ecologically or evolutionary cohesive assemblages in
+which there is a logical order to the rows (such that the sixth row is the
+sixth species added to the assemblage) and that such incremental
+calculations are sensible. See Novack-Gottshall (2016a,b) for additional
+context. Samples must have species as rows and traits as columns (of many
+allowed character types), and have <code>class(data.frame)</code> or a list of
+such data frames, with each data frame a separate sample.
+</p>
+<p>Statistics calculated include four widely used in ecological disparity
+studies (adapted from studies of morphological disparity) and four used in
+functional diversity studies. See Foote (1993), Ciampaglio et al. (2001),
+and Wills (2001) for definitions and details on morphological disparity
+measures and Novack-Gottshall (2007; 2016a,b) for implementation as measures
+of ecological disparity. See Mason et al. (2005), Anderson et al. (2006),
+Villeger et al. (2008), Laliberte and Legendre (2010), Mouchet et al.
+(2010), Mouillot et al. (2013) for definitions and details on functional
+diversity statistics. For computation details of functional diversity
+metrics, see Laliberte and Shipley (2014) package FD, and especially
+<code>FD::dbFD</code>, which this function wraps around to calculate
+the functional diversity statistics.
+</p>
+<p>Statistic (<code>S</code>) is species (taxonomic) richness, or sample size.
+</p>
+<p>When <code>increm = 'FALSE'</code>, the function calculates statistics for the
+entire sample(s) instead of doing so incrementally. In this case, the
+implementation is essentially the same as <code>FD::dbFD</code> with
+default arguments (e.g., <code>m, corr</code>) that reduce common calculation
+errors, plus inclusion of common morphological disparity statistics.
+</p>
+<p><strong>Statistics that measure diversity (unique number of life habits /
+trait combinations within ecospace / functional-trait space):</strong> </p>
+
+<dl>
+<dt>H</dt>
+<dd>
+<p>Life habit richness, the number of functionally unique trait
+combinations.</p>
+</dd>
+</dl>
+<p><strong>Statistics that measure disparity (or dispersion of species within
+ecospace / functional-trait space) (Note these statistics are sensitive to
+outliers and sample size):</strong> </p>
+<dl>
+<dt>M</dt>
+<dd>
+<p>Maximum pairwise distance between
+species in functional-trait space, measured using the distance <code>method</code>
+specified above.</p>
+</dd> <dt>FRic</dt>
+<dd>
+<p>Functional richness, the minimal convex-hull
+volume in multidimensional principal coordinates analysis (PCoA) trait-space
+ordination.</p>
+</dd>
+<dt>FDiv</dt>
+<dd>
+<p>Functional divergence, the mean distance of species
+from the PCoA trait-space centroid.</p>
+</dd>  </dl>
+<p><strong>Statistics that measure internal structure (i.e., clumping or
+inhomogeneities within the trait-space):</strong> </p>
+ <dl>
+<dt>D</dt>
+<dd>
+<p>Mean pairwise
+distance between species in functional-trait space, measured using the
+distance <code>method</code> specified above.</p>
+</dd> <dt>V</dt>
+<dd>
+<p>Total variance, the sum of
+variances for each functional trait across species; when using factor or
+ordered factor character types, this statistic cannot be measured and is
+left blank, with a warning.</p>
+</dd> <dt>FDis</dt>
+<dd>
+<p>Functional dispersion, the total
+deviance of species from the circle with radius equal to mean distance from
+PCoA trait-space centroid.</p>
+</dd> </dl>
+<p><strong>Statistics that measure spacing among species within the
+trait-space:</strong> </p>
+ <dl>
+<dt>FEve</dt>
+<dd>
+<p>Functional evenness, the evenness of
+minimum-spanning-tree lengths between species in PCoA trait-space.</p>
+</dd> </dl>
+<p>The default number of PCoA axes used in calculating of FRic and FDiv equals
+<code>m = 3</code>. Because their calculation requires more species than traits
+(here the <code>m = 3</code> PCoA axes), the four functional diversity statistics
+are only calculated when a calculated sample contains a minimum of <code>m</code>
+species (S) or unique life habits (H). <code>qual.FRic</code> is appended to the
+output to record the proportion ('quality') of PCoA space retained by this
+loss of dimensionality. Although including more PCoA axes allows greater
+statistical power (Villeger et al. 2011, Maire et al. 2015), the use of
+<code>m = 3</code> here is computationally manageable, ecologically meaningful, and
+allows standardized measurement of statistical dynamics across the wide
+range of sample sizes typically involved in simulations of
+ecological/evolutionary assemblages, especially when functionally redundant
+data occur. Other integers greater than 1 can also be specified. See the
+help file for <code>FD::dbFD</code> for additional information.
+</p>
+<p>Lingoes correction <code>corr = 'lingoes'</code>, as recommended by Legendre and
+Anderson (1999), is called when the species-by-species distance matrix
+cannot be represented in a Euclidean space. See the help file for
+<code>FD::dbFD</code> for additional information.
+</p>
+<p>Note that the ecological disparity statistics are calculated on the raw
+(unstandardized) distance matrix. The functional diversity statistics are
+calculated on standardized data using standardizations in
+<code>FD::dbFD</code>. If all traits are numeric, they by default are
+standardized to mean 0 and unit variance. If not all traits are numeric,
+Gower's (1971) standardization by the range is automatically used.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a data frame (if <code>nreps</code> is a single integer or
+<code>samples</code> is a single data frame) or a list of data frames. Each
+returned data frame has <code>Smax</code> rows corresponding to incremental
+species richness (sample size) and 12 columns, corresponding to:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Model</code></td>
+<td>
+<p>(optional) <code>Model</code> name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Param</code></td>
+<td>
+<p>(optional) strength
+parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+<p>Species richness (sample size)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>Number of
+functionally unique life habits</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>Mean pairwise distance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>Maximum pairwise distance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>V</code></td>
+<td>
+<p>Total variance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FRic</code></td>
+<td>
+<p>Functional richness</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FEve</code></td>
+<td>
+<p>Functional evenness</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FDiv</code></td>
+<td>
+<p>Functional divergence</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FDis</code></td>
+<td>
+<p>Functional dispersion</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qual.FRic</code></td>
+<td>
+<p>proportion ('quality') of total PCoA trait-space used when
+calculating FRic and FDiv</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>A bug exists within <code>FD::gowdis</code> where nearest-neighbor
+distances can not be calculated when certain characters (especially numeric
+characters with values other than 0 and 1) share identical traits across
+species. The nature of the bug is under investigation, but the current
+implementation is reliable under most uses. If you run into problems because
+of this bug, a work-around is to manually change the function to call
+<code>cluster::daisy</code> using <code>metric = "gower"</code> instead.
+</p>
+<p>If calculating statistics for more than several hundred samples, it is
+recommended to use a parallel-computing environment. The function has been
+written to allow usage (using <code>lapply</code> or some other list-apply
+function) in 'embarrassingly parallel' implementations in such HPC
+environments. Most importantly, overwriting errors during calculation of
+convex hull volume in FRic are avoided by creating CPU-specific temporarily
+stored vertices files.
+</p>
+<p>See Novack-Gottshall (2016b) for recommendations for using random forest
+classification trees to conduct multi-model inference.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Phil Novack-Gottshall <a href="mailto:pnovack-gottshall@ben.edu">pnovack-gottshall@ben.edu</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Anderson, M. J., K. E. Ellingsen, and B. H. McArdle. 2006.
+Multivariate dispersion as a measure of beta diversity. <em>Ecology
+Letters</em> 9(6):683-693.
+</p>
+<p>Ciampaglio, C. N., M. Kemp, and D. W. McShea. 2001. Detecting
+changes in morphospace occupation patterns in the fossil record:
+characterization and analysis of measures of disparity. <em>Paleobiology</em>
+27(4):695-715.
+</p>
+<p>Foote, M. 1993. Discordance and concordance between morphological
+and taxonomic diversity. <em>Paleobiology</em> 19:185-204.
+</p>
+<p>Gower, J. C. 1971. A general coefficient of similarity and some of
+its properties. <em>Biometrics</em> 27:857-871.
+</p>
+<p>Laliberte, E., and P. Legendre. 2010. A distance-based framework
+for measuring functional diversity from multiple traits. <em>Ecology</em>
+91(1):299-305.
+</p>
+<p>Legendre, P., and M. J. Anderson. 1999. Distance-based redundancy
+analysis: testing multispecies responses in multifactorial ecological
+experiments. <em>Ecological Monographs</em> 69(1):1-24.
+</p>
+<p>Maire, E., G. Grenouillet, S. Brosse, and S. Villeger. 2015. How
+many dimensions are needed to accurately assess functional diversity? A
+pragmatic approach for assessing the quality of functional spaces.
+<em>Global Ecology and Biogeography</em> 24(6):728-740.
+</p>
+<p>Mason, N. W. H., D. Mouillot, W. G. Lee, and J. B. Wilson. 2005.
+Functional richness, functional evenness and functional divergence: the
+primary components of functional diversity. <em>Oikos</em> 111(1):112-118.
+</p>
+<p>Mouchet, M. A., S. Villeger, N. W. H. Mason, and D. Mouillot.
+2010. Functional diversity measures: an overview of their redundancy and
+their ability to discriminate community assembly rules. <em>Functional
+Ecology</em> 24(4):867-876.
+</p>
+<p>Mouillot, D., N. A. J. Graham, S. Villeger, N. W. H. Mason, and D.
+R. Bellwood. 2013. A functional approach reveals community responses to
+disturbances. <em>Trends in Ecology and Evolution</em> 28(3):167-177.
+</p>
+<p>Novack-Gottshall, P.M. 2007. Using a theoretical ecospace to
+quantify the ecological diversity of Paleozoic and modern marine biotas.
+<em>Paleobiology</em> 33: 274-295.
+</p>
+<p>Novack-Gottshall, P.M. 2016a. General models of ecological
+diversification. I. Conceptual synthesis. <em>Paleobiology</em> 42: 185-208.
+</p>
+<p>Novack-Gottshall, P.M. 2016b. General models of ecological
+diversification. II. Simulations and empirical applications.
+<em>Paleobiology</em> 42: 209-239.
+</p>
+<p>Villeger, S., N. W. H. Mason, and D. Mouillot. 2008. New
+multidimensional functional diversity indices for a multifaceted framework
+in functional ecology. <em>Ecology</em> 89(8):2290-2301.
+</p>
+<p>Villeger, S., P. M. Novack-Gottshall, and D. Mouillot. 2011. The
+multidimensionality of the niche reveals functional diversity changes in
+benthic marine biotas across geological time. <em>Ecology Letters</em>
+14(6):561-568.
+</p>
+<p>Wills, M. A. 2001. Morphological disparity: a primer. Pp. 55-143.
+<em>In</em> J. M. Adrain, G. D. Edgecombe, and B. S. Lieberman, eds.
+<em>Fossils, phylogeny, and form: an analytical approach.</em> Kluwer
+Academic/Plenum Publishers, New York.
+</p>
+<p>Laliberte, E., and B. Shipley. 2014. <em>FD: Measuring
+functional diversity from multiple traits, and other tools for functional
+ecology</em>, Version 1.0-12.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>FD::dbFD</code> for details on the core function wrapped
+here for calculating functional diversity statistics. <code>neutral</code>,
+<code>redundancy</code>, <code>partitioning</code>,
+<code>expansion</code> for building samples using simulations.
+<code>rbind_listdf</code> for efficient way to combine lists of data frames
+for subsequent analyses.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Build ecospace framework and a random 50-species sample using neutral rule:
+ecospace &lt;- create_ecospace(nchar = 15, char.state = rep(3, 15), char.type = rep("numeric", 15))
+sample &lt;- neutral(Sseed = 5, Smax = 50, ecospace = ecospace)
+# Using Smax = 10 here for fast example
+metrics &lt;- calc_metrics(samples = sample, Smax = 10, Model = "Neutral", Param = "NA")
+metrics
+
+# Plot statistical dynamics as function of species richness
+op &lt;- par()
+par(mfrow = c(2,4), mar = c(4, 4, 1, .3))
+attach(metrics)
+plot(S, H, type = "l", cex = .5)
+plot(S, D, type = "l", cex = .5)
+plot(S, M, type = "l", cex = .5)
+plot(S, V, type = "l", cex = .5)
+plot(S, FRic, type = "l", cex = .5)
+plot(S, FEve, type = "l", cex = .5)
+plot(S, FDiv, type = "l", cex = .5)
+plot(S, FDis, type = "l", cex = .5)
+
+par(op)
+
+# Argument 'increm' switches between incremental and entire-sample calculation
+metrics2 &lt;- calc_metrics(samples = sample, Smax = 10, Model = "Neutral",
+                         Param = "NA", increm = FALSE)
+metrics2
+identical(tail(metrics, 1), metrics2) # These are identical
+
+# ... can further control 'FD::dbFD', here turning off calculation of FRic and FDiv
+metrics3 &lt;- calc_metrics(samples = sample, Smax = 10, Model = "Neutral",
+                         Param = "NA", calc.FRic = FALSE, calc.FDiv = FALSE)
+metrics3
+rbind(metrics[10, ], metrics3[10, ])
+
+## Not run: 
+# Can take a few minutes to run to completion
+# Calculate for 5 samples
+nreps &lt;- 1:5
+samples &lt;- lapply(X = nreps, FUN = neutral, Sseed = 5, Smax = 50, ecospace)
+metrics &lt;- lapply(X = nreps, FUN = calc_metrics, samples = samples,
+                  Model = "Neutral", Param = "NA")
+alarm()
+str(metrics)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,436 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hierEGA</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Hierarchical <code>EGA</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimates EGA using the lower-order solution of the Louvain
+algorithm (<code>cluster_louvain</code>)to identify the lower-order
+dimensions and then uses factor or network loadings to estimate factor
+or network scores, which are used to estimate the higher-order dimensions
+(for more details, see Jiménez et al., 2023)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">hierEGA(
+  data,
+  loading.method = c("original", "revised"),
+  rotation = NULL,
+  scores = c("factor", "network"),
+  loading.structure = c("simple", "full"),
+  impute = c("mean", "median", "none"),
+  corr = c("auto", "cor_auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  lower.algorithm = "louvain",
+  higher.algorithm = c("leiden", "louvain", "walktrap"),
+  uni.method = c("expand", "LE", "louvain"),
+  plot.EGA = TRUE,
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Matrix or data frame.
+Should consist only of variables to be used in the analysis
+(does not accept correlation matrices)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loading.method</code></td>
+<td>
+<p>Character (length = 1).
+Sets network loading calculation based on implementation
+described in <code>"original"</code> (Christensen &amp; Golino, 2021) or
+the <code>"revised"</code> (Christensen et al., 2024) implementation.
+Defaults to <code>"revised"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rotation</code></td>
+<td>
+<p>Character.
+A rotation to use to obtain a simpler structure.
+For a list of rotations, see <code>rotations</code> for options.
+Defaults to <code>NULL</code> or no rotation.
+By setting a rotation, <code>scores</code> estimation will be
+based on the rotated loadings rather than unrotated loadings</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scores</code></td>
+<td>
+<p>Character (length = 1).
+How should scores for the higher-order structure be estimated?
+Defaults to <code>"network"</code> for network scores computed using
+the <code>net.scores</code> function.
+Set to <code>"factor"</code> for factor scores computed using
+<code>fa</code>. Factors scores will be based on
+<strong>EFA</strong> (as in Jiménez et al., 2023)
+</p>
+<p><em>Factor scores use the number of communities from
+<code>EGA</code>. Estimated factor loadings may
+not align with these communities. The plots using factor scores
+will have higher order factors that may not completely map on to
+the lower order communities. Look at
+<code>$hierarchical$higher_order$lower_loadings</code> to determine the
+composition of the lower order factors.</em></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loading.structure</code></td>
+<td>
+<p>Character (length = 1).
+Whether simple structure or the saturated loading matrix
+should be used when computing scores (<code>scores = "network"</code> only).
+Defaults to <code>"simple"</code>
+</p>
+<p><code>"simple"</code> structure more closely mirrors traditional
+hierarchical factor analytic methods such as CFA; <code>"full"</code>
+structure more closely mirrors EFA methods
+</p>
+<p>Simple structure is the more conservative (established) approach
+and is therefore the default. Treat <code>"full"</code> as experimental
+as proper vetting and validation has not been established</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>impute</code></td>
+<td>
+<p>Character (length = 1).
+If there are any missing data, then imputation can be implemented.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"none"</code> — Default. No imputation is performed
+</p>
+</li>
+<li> <p><code>"mean"</code> — The mean value of each variable is used to replace missing data
+for that variable
+</p>
+</li>
+<li> <p><code>"median"</code> — The median value of each variable is used to replace missing data
+for that variable
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Character (length = 1).
+Method to compute correlations.
+Defaults to <code>"auto"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"auto"</code> — Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use <code>ordinal.categories</code>
+(see <code>polychoric.matrix</code> for more details)
+</p>
+</li>
+<li> <p><code>"cor_auto"</code> — Uses <code>cor_auto</code> to compute correlations.
+Arguments can be passed along to the function
+</p>
+</li>
+<li> <p><code>"pearson"</code> — Pearson's correlation is computed for all
+variables regardless of categories
+</p>
+</li>
+<li> <p><code>"spearman"</code> — Spearman's rank-order correlation is computed
+for all variables regardless of categories
+</p>
+</li>
+</ul>
+<p>For other similarity measures, compute them first and input them
+into <code>data</code> with the sample size (<code>n</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.data</code></td>
+<td>
+<p>Character (length = 1).
+How should missing data be handled?
+Defaults to <code>"pairwise"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"pairwise"</code> — Computes correlation for all available cases between
+two variables
+</p>
+</li>
+<li> <p><code>"listwise"</code> — Computes correlation for all complete cases in the dataset
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Character (length = 1).
+Defaults to <code>"glasso"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"BGGM"</code> — Computes the Bayesian Gaussian Graphical Model.
+Set argument <code>ordinal.categories</code> to determine
+levels allowed for a variable to be considered ordinal.
+See <code>?BGGM::estimate</code> for more details
+</p>
+</li>
+<li> <p><code>"glasso"</code> — Computes the GLASSO with EBIC model selection.
+See <code>EBICglasso.qgraph</code> for more details
+</p>
+</li>
+<li> <p><code>"TMFG"</code> — Computes the TMFG method.
+See <code>TMFG</code> for more details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.algorithm</code></td>
+<td>
+<p>Character or
+ <code>cluster_*</code> function (length = 1).
+Defaults to the lower order <code>"louvain"</code> with most common
+consensus clustering (1000 iterations; see
+<code>community.consensus</code> for more details)
+</p>
+<p>Louvain with consensus clustering is <em>strongly</em>
+recommended. Using any other algorithm is considered
+<em>experimental</em> as they have not been designed to
+capture lower order communities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>higher.algorithm</code></td>
+<td>
+<p>Character or
+ <code>cluster_*</code> function (length = 1).
+Defaults to <code>"louvain"</code>.
+Three options are listed below but all are available
+(see <code>community.detection</code> for other options):
+</p>
+
+<ul>
+<li> <p><code>"leiden"</code> — See <code>cluster_leiden</code> for more details
+</p>
+</li>
+<li> <p><code>"louvain"</code> — By default, <code>"louvain"</code> will implement the higher-order
+(<code>order = "higher"</code>) Louvain algorithm using the consensus clustering method
+(see <code>community.consensus</code> for more information).
+This function will implement <code>consensus.method = "most_common"</code> and
+<code>consensus.iter = 1000</code> unless specified otherwise
+</p>
+</li>
+<li> <p><code>"walktrap"</code> — See <code>cluster_walktrap</code> for more details
+</p>
+</li>
+</ul>
+<p>Using <code>algorithm</code> will set only <code>higher.algorithm</code> and
+<code>lower.algorithm</code> will default to Louvain with most common
+consensus clustering (1000 iterations)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uni.method</code></td>
+<td>
+<p>Character (length = 1).
+What unidimensionality method should be used?
+Defaults to <code>"louvain"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"expand"</code> — Expands the correlation matrix with four variables correlated 0.50.
+If number of dimension returns 2 or less in check, then the data
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This method was used in the Golino et al.'s (2020)
+<em>Psychological Methods</em> simulation
+</p>
+</li>
+<li> <p><code>"LE"</code> — Applies the Leading Eigenvector algorithm
+(<code>cluster_leading_eigen</code>)
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvector solution is used; otherwise, regular EGA
+is used. This method was used in the Christensen et al.'s (2023)
+<em>Behavior Research Methods</em> simulation
+</p>
+</li>
+<li> <p><code>"louvain"</code> — Applies the Louvain algorithm (<code>cluster_louvain</code>)
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
+This method was validated Christensen's (2022) <em>PsyArXiv</em> simulation.
+Consensus clustering can be used by specifying either
+<code>"consensus.method"</code> or <code>"consensus.iter"</code>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.EGA</code></td>
+<td>
+<p>Boolean.
+If <code>TRUE</code>, returns a plot of the network and its estimated dimensions.
+Defaults to <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to <code>FALSE</code> (silent calls).
+Set to <code>TRUE</code> to see all messages and warnings for every function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed on to
+<code>auto.correlate</code>,
+<code>network.estimation</code>,
+<code>community.detection</code>,
+<code>community.consensus</code>,
+<code>EGA</code>, and
+<code>rotations</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list of lists containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>lower_order</code></td>
+<td>
+<p><code>EGA</code> results for the lower order structure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>higher_order</code></td>
+<td>
+<p><code>EGA</code> results for the higher order structure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>A list containing <code>lower_loadings</code> and <code>lower_scores</code>
+that were used to estimate scores and the higher order <code>EGA</code>
+results, respectively</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dim.variables</code></td>
+<td>
+<p>A data frame with variable names and their lower and higher
+order assignments</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TEFI</code></td>
+<td>
+<p>Generalized TEFI using <code>tefi</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.hierEGA</code></td>
+<td>
+<p>Plot output if <code>plot.EGA = TRUE</code></p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Marcos Jiménez &lt;marcosjnezhquez@gmailcom&gt;,
+Francisco J. Abad &lt;fjose.abad@uam.es&gt;,
+Eduardo Garcia-Garzon &lt;egarcia@ucjc.edu&gt;,
+Hudson Golino &lt;hfg9s@virginia.edu&gt;,
+Alexander P. Christensen &lt;alexpaulchristensen@gmail.com&gt;, and
+Luis Eduardo Garrido &lt;luisgarrido@pucmm.edu.do&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p><strong>Hierarchical EGA simulation</strong> <br>
+Jiménez, M., Abad, F. J., Garcia-Garzon, E., Golino, H., Christensen, A. P., &amp; Garrido, L. E. (2023).
+Dimensionality assessment in bifactor structures with multiple general factors: A network psychometrics approach.
+<em>Psychological Methods</em>.
+</p>
+<p><strong>3+ level hierarchical EGA</strong> <br>
+Samo, A., Christensen, A. P., Abad, F. J., Garrido, L. E., Garcia-Garzon, E., Golino, H. &amp; McAbee, S. T. (2023). Building the structure of personality from the bottom-up using Hierarchical Exploratory Graph Analysis.
+<em>PsyArXiv</em>.
+</p>
+<p><strong>Conceptual implementation</strong> <br>
+Golino, H., Thiyagarajan, J. A., Sadana, R., Teles, M., Christensen, A. P., &amp; Boker, S. M. (2020).
+Investigating the broad domains of intrinsic capacity, functional ability and
+environment: An exploratory graph analysis approach for improving analytical
+methodologies for measuring healthy aging.
+<em>PsyArXiv</em>.
+</p>
+<p><strong>Revised network loadings</strong> <br>
+Christensen, A. P., Golino, H., Abad, F. J., &amp; Garrido, L. E. (2024).
+Revised network loadings.
+<em>PsyArXiv</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.EGAnet</code> for plot usage in 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example using network scores
+opt.hier &lt;- hierEGA(
+  data = optimism, scores = "network",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
+
+
+# Plot multilevel plot
+plot(opt.hier, plot.type = "multilevel")
+
+# Plot multilevel plot with higher order
+# border color matching the corresponding
+# lower order color
+plot(opt.hier, color.match = TRUE)
+
+# Plot levels separately
+plot(opt.hier, plot.type = "separate")
+
+</code></pre>
+
+
+</div>

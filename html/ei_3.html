@@ -1,0 +1,235 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ei</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Ecological Inference Estimation
+</h2>
+
+<h3>Description</h3>
+
+<p><code>ei</code> is the main command in the package <code>EI</code>.  It gives observation-level estimates (and various related statistics) of <code class="reqn">\beta_i^b</code> and <code class="reqn">\beta_i^w</code> given variables <code class="reqn">T_i</code> and <code class="reqn">X_i</code> (<code class="reqn">i=1,...,n</code>) in this accounting identity: <code class="reqn">T_i=\beta_i^b*X_i + \beta_i^w*(1-X_i)</code>.  Results are stored in an <code>ei</code> object, that can be read with <code>summary()</code> or <code>eiread()</code> and graphed in <code>plot()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ei(formula, total = NULL, Zb = 1, Zw = 1, id = NA, data =NA, erho = 0.5, 
+esigma = 0.5, ebeta = 0.5, ealphab = NA, ealphaw = NA, truth = NA, 
+simulate = TRUE, covariate = NULL, lambda1 = 4, lambda2 = 2, 
+covariate.prior.list = NULL, tune.list = NULL, start.list = NULL, 
+sample = 1000, thin = 1, burnin = 1000, verbose = 0, ret.beta = "r", 
+ret.mcmc = TRUE, usrfun = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula of the form <code class="reqn">t ~x</code> in the <code class="reqn">2x2</code>
+case and <code class="reqn">cbind(col1,col2,...) ~ cbind(row1,row2,...)</code> in
+the RxC case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total</code></td>
+<td>
+<p>‘total’ is the name of the variable in the dataset that
+contains the number of individuals in each unit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Zb</code></td>
+<td>
+
+<p><code class="reqn">p</code> x <code class="reqn">k^b</code> matrix of covariates or the name of covariates in
+the dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Zw</code></td>
+<td>
+
+<p><code class="reqn">p</code> x <code class="reqn">k^w</code> matrix of covariates or the name of covariates in
+the dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>‘id’ is the nae of the variable in the dataset that
+identifies the precinct. Used for ‘movie’ and ‘movieD’ plot functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p> data frame that contains the variables that
+correspond to formula.  If using covariates and data is specified, data should also contain <code>Zb</code> and <code>Zw</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>erho</code></td>
+<td>
+<p>The standard deviation of the normal prior on <code class="reqn">\phi_5</code> for the correlation. Default <code class="reqn">=0.5</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>esigma</code></td>
+<td>
+<p>The standard deviation of an underlying normal distribution, from which a half normal is constructed as a prior for both <code class="reqn">\breve{\sigma}_b</code> and <code class="reqn">\breve{\sigma}_w</code>. Default <code class="reqn">= 0.5</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ebeta</code></td>
+<td>
+<p>Standard deviation of the "flat normal" prior on <code class="reqn">\breve{B}^b</code> and <code class="reqn">\breve{B}^w</code>.  The flat normal prior is uniform within the unit square and dropping outside the square according to the normal distribution.  Set to zero for no prior. Setting to positive values probabilistically keeps the estimated mode within the unit square. Default<code class="reqn">=0.5</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ealphab</code></td>
+<td>
+<p>cols(Zb) x 2 matrix of means (in the first column) and standard deviations (in the second) of an independent normal prior distribution on elements of <code class="reqn">\alpha^b</code>.  If you specify Zb, you should probably specify a prior, at least with mean zero and some variance (default is no prior).  (See Equation 9.2, page 170, to interpret <code class="reqn">\alpha^b</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ealphaw</code></td>
+<td>
+<p>cols(Zw) x 2 matrix of means (in the first column) and standard deviations (in the second) of an independent normal prior distribution on elements of <code class="reqn">\alpha^w</code>.  If you specify Zw, you should probably specify a prior, at least with mean zero and some variance (default is no prior).  (See Equation 9.2, page 170, to interpret <code class="reqn">\alpha^w</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truth</code></td>
+<td>
+<p>A length(t) x 2 matrix of the true values of the quantities of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simulate</code></td>
+<td>
+<p>default = TRUE:see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariate</code></td>
+<td>
+<p>see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda1</code></td>
+<td>
+<p>default = 4:see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda2</code></td>
+<td>
+<p>default = 2:see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariate.prior.list</code></td>
+<td>
+<p>see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune.list</code></td>
+<td>
+<p>see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start.list</code></td>
+<td>
+<p>see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample</code></td>
+<td>
+<p>default = 1000</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thin</code></td>
+<td>
+<p>default = 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>default = 1000</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>default = 0:see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ret.beta</code></td>
+<td>
+<p>default = "r": see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ret.mcmc</code></td>
+<td>
+<p>default = TRUE: see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>usrfun</code></td>
+<td>
+<p>see documentation in <code>eiPack</code> for options for
+RxC ei.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>EI</code> algorithm is run using the <code>ei</code> command.  A summary of the results can be seen graphically using <code>plot(ei.object)</code> or numerically using <code>summary(ei.object)</code>.  Quantities of interest can be calculated using <code>eiread(ei.object)</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Gary King &lt;&lt;email: king@harvard.edu&gt;&gt; and Molly Roberts &lt;&lt;email: molly.e.roberts@gmail.com&gt;&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Gary King (1997). A Solution to the Ecological Inference Problem.  Princeton: Princeton University Press.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(sample)
+form &lt;- t ~ x
+dbuf &lt;- ei(form,total="n",data=sample)
+summary(dbuf)
+</code></pre>
+
+
+</div>

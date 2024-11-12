@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>CoxRFX</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical Bayes, multi-state Cox model</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates a multi-state Cox model with one or more Gaussian priors
+imposed on the regression coefficients (see Therneau et al., 2003).
+Multiple groups of coefficients can be defined: coefficients within a group share 
+the same (possibly unknown) mean and variance. The parameters and hyperparameters are
+efficiently estimated by an EM-type algorithm built around the function
+<code>survival::coxph</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">CoxRFX(
+  Z,
+  surv,
+  groups = rep(1, ncol(Z)),
+  which.mu = unique(groups),
+  tol = 0.001,
+  max.iter = 50,
+  sigma0 = 0.1,
+  sigma.hat = c("df", "MLE", "REML", "BLUP"),
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>A data frame consisting of the covariate columns of a data set in 'long format',
+and two extra columns: one named 'trans', with
+the transition that each row refers to, and 
+another named 'strata', with the stratum
+of each transition (transitions belonging to the same 
+stratum are assumed to have the same baseline hazard
+function).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>surv</code></td>
+<td>
+<p>A ‘survival’ object created with <code>survival::Surv</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>A character or numeric vector whose <code class="reqn">i</code>th element gives the group of the regression
+coefficient associated with the <code class="reqn">i</code>th covariate column of Z (coefficients belonging to the same group 
+share the same Gaussian prior).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.mu</code></td>
+<td>
+<p>A vector with names or numbers of coefficient groups (see 
+argument <code>groups</code>). If the name or number of a group of coefficients is
+given in this argument, <code>CoxRFX</code> will estimate the mean of its Gaussian distribution;
+otherwise the mean will be fixed at zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>Convergence criterium of the EM algorithm. The algorithm stops unless
+there is at least one parameter (or hyperparameter) for which it holds that the
+current estimate differs in absolute terms by more than <code>tol</code> from the
+previous estimate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.iter</code></td>
+<td>
+<p>The maximum number of iterations in the EM algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma0</code></td>
+<td>
+<p>A vector with the initial value of the variance hyperparameter for each group of coefficients.
+Or a single value, in case the initial value of the variance hyperparameter is meant to be the same for all groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma.hat</code></td>
+<td>
+<p>Which estimator to use for the variance hyperparameters (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Gives more output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to the function <code>survival::coxph</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Different estimators exist for the variance hyperparameters: the default is "df", as used by Perperoglou (2014) and introduced by Schall (1991). 
+Alternatives are MLE, REML, and BLUP, as defined by Therneau et al. (2003). 
+Simulations suggest that the 'df' method is the most accurate.
+</p>
+<p>The model can also be fitted using package <code>coxme</code>; the <code>coxme</code>
+routine numerically optimises the integrated partial likelihood, which may
+be more accurate, but is computationally expensive.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>c(coxrfx,coxph.penal,coxph)</code>,
+which is essentially a <code>coxph</code> object with a few extra 
+fields [the inputs $groups, $Z and $surv,
+and the hyperparameters $sigma2 (variances) and $mu (means)].
+See <code>survival::coxph.object</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Moritz Gerstung &amp; Rui Costa, extending the work of 
+Terry Therneau et al. in the package <code>survival</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Terry M Therneau, Patricia M Grambsch &amp; V. Shane Pankratz (2003) Penalized Survival Models and Frailty, Journal of Computational and Graphical Statistics, 12:1, 156-175, http://dx.doi.org/10.1198/1061860031365
+</p>
+<p>A. Perperoglou (2014). Cox models with dynamic ridge penalties on time-varying effects of the covariates. Stat Med, 33:170-80. http://dx.doi.org/10.1002/sim.5921
+</p>
+<p>R. Schall (1991). Estimation in generalized linear models with random effects. Biometrika, 78:719-727. http://dx.doi.org/10.1093/biomet/78.4.719
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Package <code>survival</code>
+<code>survival::coxph.object</code>;
+<code>survival::Surv</code>; package <code>coxme</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Fit an empirical Bayes Cox model using
+# simulated, illness-death data from 250
+# patients ('mstate_data_sample').
+
+#load simulated data
+data("mstate_data_sample")
+
+# Set class of ‘mstate_data_sample’
+class(mstate_data_sample)&lt;-c("data.frame","msdata")
+
+# add transition matrix as attribute
+tmat&lt;-mstate::transMat(x=list(c(2,3),c(4),c(),c()),
+      names=c("health","illness","death",
+     "death_after_illness"))
+attr(mstate_data_sample,"trans")&lt;-tmat 
+
+# expand covariates by transition:
+covariates.expanded&lt;-mstate::expand.covs(
+      mstate_data_sample,
+      covs=names(mstate_data_sample)
+      [!names(mstate_data_sample)%in%c("id","from",
+      "to","trans","Tstart","Tstop","time","status",
+      "strata")],append=FALSE)
+
+
+# argument ‘Z’ of coxrfx
+Z&lt;-data.frame(covariates.expanded,
+   trans=mstate_data_sample$trans,
+   strata=mstate_data_sample$trans)
+
+# argument ‘surv’ for a non-homogeneous 
+# Markov model
+surv&lt;-survival::Surv(mstate_data_sample$Tstart,
+           mstate_data_sample$Tstop,
+           mstate_data_sample$status)
+
+# argument ‘groups’ of coxrfx
+groups&lt;-paste0(rep("group", ncol(Z)-2),c("_1","_2","_3"))
+
+#fit random effects model
+coxrfx_object&lt;-CoxRFX(Z,surv,groups)
+
+#show point estimates
+summary(coxrfx_object)
+
+
+</code></pre>
+
+
+</div>

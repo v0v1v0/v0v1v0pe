@@ -1,0 +1,118 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidyst_kquiver</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tidy and geospatial kernel density quiver estimate</h2>
+
+<h3>Description</h3>
+
+<p>Tidy and geospatial versions of a kernel density quiver estimate for 2-dimensional data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_kquiver(data, thin=5, transf=1/4, neg.grad=FALSE)
+st_kquiver(x, thin=5, transf=1/4, neg.grad=FALSE, scale=1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>tidy kernel density gradient estimate (output from <code>tidy_kdde(deriv_order=1)</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>geospatial kernel density gradient estimate (output from <code>st_kdde(deriv_order=1)</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thin</code></td>
+<td>
+<p>number to thin out estimation grid. Default is 5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transf</code></td>
+<td>
+<p>power index in transformation. Default is 1/4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neg.grad</code></td>
+<td>
+<p>flag to compute arrows in negative gradient direction. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>scale factor to normalise length of arrows. Default is 1.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A kernel quiver estimate is a modification of the standard kernel density gradient estimate in <code>*_kdde</code> where the density derivatives are not given in the separate groups as indexed in <code>deriv_group</code>, but as extra columns <code>u</code> (for <code>deriv_group=(1,0)</code>) and <code>v</code> (for <code>deriv_group=(0,1)</code>). 
+</p>
+<p>The bandwidth matrix of smoothing parameters is computed as in <code>ks::kdde(deriv_order=1)</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The output from <code>tidy_kquiver</code> has the same structure as the input kernel density gradient estimate, with the added columns <code>u,v</code> for the density gradient value in the <code class="reqn">x</code>-, <code class="reqn">y</code>-axis. This structure is compatible with the <code>ggquiver::geom_quiver</code> layer function for quiver plots. 
+</p>
+<p>Since <code>ggquiver::geom_quiver</code> is not compatible with <code>geom_sf</code> layers, the output from <code>st_kquiver</code> has added columns <code>lon</code>, <code>lat</code>, <code>lon_end</code>, <code>lat_end</code>, <code>len</code> which are required in <code>geom_segment</code>. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## tidy kernel quiver estimate
+library(ggplot2)
+data(crabs, package="MASS")
+crabs2 &lt;- dplyr::select(crabs, FL, CW)
+t1 &lt;- tidy_kde(crabs2)
+t2 &lt;- tidy_kdde(crabs2, deriv_order=1)
+t3 &lt;- tidy_kquiver(t2, thin=5) 
+gt &lt;- ggplot(t1, aes(x=FL, y=CW)) 
+gt + geom_contour_filled_ks(colour="grey50", cont=seq(10,90,by=10)) +
+    colorspace::scale_fill_discrete_sequential(alpha=0.5) + 
+    ggquiver::geom_quiver(data=t3, aes(u=u, v=v), colour=6)
+
+## geospatial kernel `quiver' estimate
+data(wa)
+data(grevilleasf)
+hakeoides &lt;- dplyr::filter(grevilleasf, species=="hakeoides")
+hakeoides_coord &lt;- st_add_coordinates(hakeoides)
+s1 &lt;- st_kde(hakeoides)
+s2 &lt;- st_kdde(hakeoides, deriv_order=1)
+s3 &lt;- st_kquiver(s2, thin=9) 
+
+## base R plot
+xlim &lt;- c(1.2e5, 1.1e6); ylim &lt;- c(6.1e6, 7.2e6)
+plot(wa, xlim=xlim, ylim=ylim)
+plot(s1, add=TRUE, alpha=0.5, border="grey50")
+plot(s3$tidy_ks$ks[[1]], add=TRUE, display="quiver")
+
+## geom_sf plot - ggquiver::geom_quiver not compatible with ggplot2::geom_sf layers
+## use instead geom_segment 
+gs &lt;- ggplot(s1) + geom_sf(data=wa, fill=NA) + ggthemes::theme_map()
+gs + geom_sf(data=st_get_contour(s1), aes(fill=label_percent(contlabel)), alpha=0.5) +
+    geom_segment(data=s3$sf, aes(x=lon, xend=lon_end, y=lat, yend=lat_end), 
+    arrow=grid::arrow(length=0.05*s3$sf$len)) + 
+    colorspace::scale_fill_discrete_sequential("Heat2") + 
+    coord_sf(xlim=xlim, ylim=ylim)
+</code></pre>
+
+
+</div>

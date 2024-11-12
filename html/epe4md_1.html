@@ -1,0 +1,364 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epe4md_calcula</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Roda o modelo 4MD</h2>
+
+<h3>Description</h3>
+
+<p>O resultado do modelo 4MD são projeções de capacidade instalada, número de
+adotantes e geração de energia em base mensal.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epe4md_calcula(
+  premissas_reg,
+  ano_base,
+  sequencial = FALSE,
+  filtro_de_uf = "N",
+  filtro_nome4md = "N",
+  filtro_de_segmento = "N",
+  filtro_de_custo_unitario_max = NULL,
+  ano_max_resultado = 2050,
+  altera_sistemas_existentes = FALSE,
+  ano_decisao_alteracao = 2023,
+  inflacao = 0.0375,
+  taxa_desconto_nominal = 0.13,
+  custo_reforco_rede = 200,
+  ano_troca_inversor = 11,
+  pagamento_disponibilidade = 0.3,
+  disponibilidade_kwh_mes = 100,
+  filtro_renda_domicilio = "maior_3sm",
+  desconto_capex_local = 0,
+  anos_desconto = 0,
+  tx_cresc_grupo_a = 0.016,
+  spb = 0.3,
+  p_max = 0.01,
+  q_max = 1,
+  filtro_comercial = NA_real_,
+  ajuste_ano_corrente = FALSE,
+  ultimo_mes_ajuste = NA_integer_,
+  metodo_ajuste = NA_character_,
+  dir_dados_premissas = NA_character_
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>premissas_reg</code></td>
+<td>
+<p>data.frame. Input de premissas regulatórias para serem
+consideradas nos cálculos. O dataframe deve ter as seguintes colunas
+</p>
+
+<ul>
+<li>
+<p> ano, numérico
+</p>
+</li>
+<li>
+<p> alternativa, numérico. Uma das seguintes opções:
+</p>
+
+<ul>
+<li>
+<p> 0: Consumidor compensa todas as componentes tarifárias;
+</p>
+</li>
+<li>
+<p> 1: Paga TUSD Distribuição;
+</p>
+</li>
+<li>
+<p> 2: Anterior + TUSD Transmissão.
+</p>
+</li>
+<li>
+<p> 3: Anterior + TUSD Encargos.
+</p>
+</li>
+<li>
+<p> 4: Anterior + TUSD Perdas.
+</p>
+</li>
+<li>
+<p> 5: Anterior + TE Encargos. Ou seja, compensa somente a TE Energia.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> p_transicao, numérico. Parcela do custo da alternativa escolhida no parâmetro alternativa
+a ser pago pelo consumidor
+</p>
+</li>
+<li>
+<p> binomia e, binário. Define se há cobrança de uma
+tarifa binômia na baixa tensão, em que as
+componentes TUSD Distribuição e TUSD Transmissão passariam a ser cobradas de forma fixa, não sendo passíveis de compensação
+</p>
+</li>
+<li>
+<p> demanda_g, binário. Define se há cobrança de TUSDg para a demanda de consumidores do
+grupo A. Caso seja <code>FALSE</code>, é considerada a cobrança da TUSD consumo.
+</p>
+</li>
+</ul>
+<p>Um arquivo excel
+instalado com este pacote, acessível via
+<code>system.file("dados_premissas/2021/premissas_reg.xlsx", package = "epe4md")</code>,
+contém um exemplo de premissas de entrada.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ano_base</code></td>
+<td>
+<p>numeric. Ano base da projeção. Define o ano em que a função
+irá buscar a base de dados. Último ano completo realizado.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sequencial</code></td>
+<td>
+<p>logic. Parâmetro que define se a projeção deve ser
+realizada de forma sequencial ou paralela. Para executar a projeção de forma
+sequencial defina o parâmetro como TRUE. Default FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filtro_de_uf</code></td>
+<td>
+<p>string. Parâmetro que define uma unidade federativa (UF) a
+ser filtrada. Caso uma UF não seja indicada ou seja informado um valor inválido,
+o resultado será apresentado sem filtros.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filtro_nome4md</code></td>
+<td>
+<p>string. Parâmetro que define o nome de uma concessionária
+de energia a ser filtrado. Caso não seja informado um valor ou seja informado um
+valor inválido o resultado será apresentado sem filtro.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filtro_de_segmento</code></td>
+<td>
+<p>string. Parâmetro que define um segmento a ser
+filtrado. Pode se escolher entre "comercial_at", "comercial_at_remoto",
+"comercial_bt", "residencial" e "residencial_remoto".  Caso não seja
+informado um valor ou seja informado um valor inválido o resultado será
+apresentado sem filtro.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filtro_de_custo_unitario_max</code></td>
+<td>
+<p>numeric. Parâmetro que define o valor
+máximo do custo unitário para ser utilizado no cálculo do payback. Default
+igual a NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ano_max_resultado</code></td>
+<td>
+<p>numeric. Ano final para apresentação dos resultados.
+Máximo igual a 2050. Default igual a 2050.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>altera_sistemas_existentes</code></td>
+<td>
+<p>logic. TRUE se alterações regulatórias
+afetam investimentos realizados em anos anteriores à revisão da regulação.
+Default igual a FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ano_decisao_alteracao</code></td>
+<td>
+<p>numeric. Ano em que são definidas novas regras e
+se tornam de conhecimento público. Esse parâmetro só tem efeito caso o
+anterior seja igual a TRUE. Default igual a 2023.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inflacao</code></td>
+<td>
+<p>mumeric. Taxa anual de inflacao considerada no reajuste das
+tarifas e para calcular o retorno real de projetos. Default igual a 0.0375.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>taxa_desconto_nominal</code></td>
+<td>
+<p>numeric. Taxa de desconto nominal considerada
+nos cálculos de payback descontado. Default igual a 0.13.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custo_reforco_rede</code></td>
+<td>
+<p>numeric. Custo em R$/kW aplicado a projetos de
+geracao remota em Alta Tensão. Representa um custo pago pelo empreendedor
+para reforços na rede. Default igual a 200.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ano_troca_inversor</code></td>
+<td>
+<p>numeric. Ano, a partir do ano de instalação, em que
+é realizada a troca do inversor fotovoltaico. Default igual a 11.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pagamento_disponibilidade</code></td>
+<td>
+<p>numeric. Percentual de meses em que o
+consumidor residencial paga custo de disponbilidade em função da
+variabilidade da geração FV. Default igual a 0.3.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>disponibilidade_kwh_mes</code></td>
+<td>
+<p>numeric. Consumo de disponbilidade do
+consumidor em kWh/mês. Default igual a 100, equivalente a um consumidor
+trifásico.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filtro_renda_domicilio</code></td>
+<td>
+<p>string. Define o filtro aplicado a consumidores
+residenciais, de acordo com a renda mensal do responsável, em salários
+mínimos. Permite: "total", "maior_1sm", maior_2sm", "maior_3sm" ou
+"maior_5sm". Default igual a "maior_3sm".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>desconto_capex_local</code></td>
+<td>
+<p>numeric. Percentual de desconto a ser aplicado no
+CAPEX de sistemas de geração local(ex: 0.1) para simulação de incentivos.
+Default igual a 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anos_desconto</code></td>
+<td>
+<p>vector. Anos em que há a incidência do desconto no
+CAPEX. Default igual a 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tx_cresc_grupo_a</code></td>
+<td>
+<p>numeric. Taxa de crescimento anual dos consumidores
+cativos do Grupo A. Default igual a 0.016 representa crescimento entre
+2006 e 2019.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spb</code></td>
+<td>
+<p>numeric. Fator de Sensibilidade ao Payback (SPB).
+Default igual a 0.3.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_max</code></td>
+<td>
+<p>numeric. Fator de inovação (p) máximo. Default igual a 0.01.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_max</code></td>
+<td>
+<p>numeric. Fator de imitação (q) máximo. Default igual a 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filtro_comercial</code></td>
+<td>
+<p>numeric. Fator percentual para definir o nicho do
+segmento comercial. Default é calculado pelo modelo com base no nicho
+residencial.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ajuste_ano_corrente</code></td>
+<td>
+<p>logic. Se TRUE indica que a projeção deverá
+incorporar o histórico mensal recente, verificado em parte do primeiro ano
+após o ano base. Default igual a FALSE. O arquivo base_mmgd.xlsx deve
+incorporar esse histórico.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ultimo_mes_ajuste</code></td>
+<td>
+<p>numeric. Último mês com dados completos na
+base_ano_corrente. Default igual a NA. Só tem efeito caso ajuste_ano_corrente
+seja igual a TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metodo_ajuste</code></td>
+<td>
+<p>string. Se igual a "extrapola" o modelo irá extrapolar a
+potência e o número de adotantes até o final do ano base + 1 com base no
+verificado até o ultimo_mes_ajuste. Default igual a NA. Só tem efeito caso
+ajuste_ano_corrente seja igual a TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir_dados_premissas</code></td>
+<td>
+<p>Diretório onde se encontram as premissas. Se esse
+parâmetro não for passado, a função usa os dados default que são instalados
+com o pacote. É importante que os nomes dos arquivos sejam os mesmos da
+pasta default.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>data.frame com os resultados da projeção de capacidade instalada
+de micro e minigeração distribuída, número de adotantes e geração
+mensal de energia.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  
+    premissas_regulatorias &lt;- structure(
+    list(ano = 2021,
+         alternativa = 0,
+         p_transicao = 1,
+         binomia = FALSE,
+         demanda_g = FALSE),
+    class = c("tbl_df", "tbl", "data.frame"),
+    row.names = c(NA, -1L)
+    )
+
+    resultado &lt;- epe4md_calcula(premissas_reg = premissas_regulatorias,
+                                ano_base = 2021,
+                                sequencial = FALSE,
+                                filtro_de_uf = "RR",
+                                filtro_de_segmento = "comercial_at",
+                                filtro_de_custo_unitario_max = 6,
+                                ano_max_resultado = 2021)
+  
+</code></pre>
+
+
+</div>

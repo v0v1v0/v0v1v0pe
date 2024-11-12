@@ -1,0 +1,348 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>miscellaneous</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Miscellaneous functions for data editing</h2>
+
+<h3>Description</h3>
+
+<p>Collection of functions for data editing, usually used as lower levels for other functions.
+</p>
+<p><code>f.num</code> is a wrapper to format numeric variables that are stored as character or factor, simultaneously it will try to detect comma spearated and replace it by dots before formating the variable as numeric. Any non-numeric encoding will be coerced to NA.
+</p>
+<p><code>f.date</code> is a wrapper either to <code>as.Date</code> or <code>strptime</code> to format character or factor variables into dates. In Epimed Solutions database there are a few pre-specified formats that <code>f.date</code> will try to detect and return a formated date. <code>f.date</code> will try to dected if more than half of the elements in a vector have a pre-specified format. If so, the remaining will be coerced to NA if they have different format from the detected. See example.
+</p>
+<p><code>remove.na</code> identifies all the empty spaces, i.e. the " " cells, of character or factor variables in a data.frame and returns the same data.frame with these empty cells replaced, by default, by NAs. It does not matter the length of the empty spaces. Also, <code>remove.na</code> trims the leading and trailing empty spaces from all character and factor variables. It does not format the numeric variables. It may also return at the console a few information about the " " fields.
+</p>
+<p><code>tab2tex</code> removes the empty rows, and also tunrs the rownames of a table epiDisplay::tableStack into the first column, to make it easier to paste the table into a rtf or latex document without empty rows or rownames conflicts.
+</p>
+<p><code>trunc_num</code> truncates a numeric vector by replacing the values below the min value or above the max values by the min and max values respectively or optionall to NA. See example.
+</p>
+<p><code>dummy.columns</code> takes a <code>data.frame</code> with one column with concatatenated levels of a factor (or character) variable and return a <code>data.frame</code> with additional columns with zeros and ones (dummy values), which names are the factor levels of the original column. See example below. <code>rm.dummy.columns</code> is an internal function of <code>dummy.columns</code> that deletes the new dummy columns which have less then a specified minimum events.
+</p>
+<p><code>funnelEstimate</code>  estimates funnel confidence intervals (CI) for binomial, poisson or normal distribution. Used inside <code>funnel</code>.
+</p>
+<p><code>winsorising</code> is an internal function that estimates a phi parameter after shirinking extreme z-scores. This parameter is used to inflate funnel CIs due overdispersion presence.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">f.num(num.var)
+
+f.date(date)
+
+remove.na(data, replace = NA, console.output = TRUE)
+
+tab2tex(x, nc = ncol(x))
+
+trunc_num(x, min, max, toNA = FALSE)
+
+dummy.columns(
+  data,
+  original.column,
+  factors,
+  scan.oc = FALSE,
+  sep = ",",
+  colnames.add = "Dummy.",
+  min.events = NULL,
+  rm.oc = FALSE,
+  warn = FALSE,
+  return.factor = TRUE
+)
+
+rm.dummy.columns(data, colnames, event = "1", min.events = 50, warn = FALSE)
+
+funnelEstimate(
+  y,
+  range,
+  u,
+  totalAdmissions,
+  totalObserved,
+  p = 0.95,
+  theta = 1,
+  overdispersion = TRUE,
+  dist = c("binomial", "normal", "poisson"),
+  rho,
+  gdetheta
+)
+
+winsorising(z_score, u)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>num.var</code></td>
+<td>
+<p>A character, or factor variable to be formated as numeric.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date</code></td>
+<td>
+<p>A character or factor variable to be formated as date.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>By default, NA. But could be any vector of length 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>console.output</code></td>
+<td>
+<p>Logical. Print at the console a few informations about the " " fields?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x, nc</code></td>
+<td>
+<p>For <code>tab2tex</code> x is a object from epiDisplay::tableStack. nc is the number of the last column to keep in the table. If the table has 5 columns and nc = 3, then columns 4 and 5 are removed. For <code>trunc_num</code>, x is a numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min, max</code></td>
+<td>
+<p>For <code>trunc_num</code>, min and max are the minimal and maximal numeric values where the numeric vector will be truncated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>toNA</code></td>
+<td>
+<p>For <code>trunc_num</code>, if FALSE any min and max are the minimal and maximal numeric values where the numeric vector will be truncated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>original.column</code></td>
+<td>
+<p>A character vector representing the name of the column the be transformed in dummy variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factors</code></td>
+<td>
+<p>A character vector to make new dummy columns and to match values in <code>original.column</code>. This is interesting if the user desires to make dummy only from a few factors in the originlal column. Ignored if scan.oc = TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scan.oc</code></td>
+<td>
+<p>Default = FALSE, if TRUE, <code>dummy.columns</code> scans the specified <code>original.column</code> and uses all factors to generate dummy variables. It overrides the <code>factor</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+<p>A character of legth one that systematically split the factors in the original columns. It wil be passed to the <code>sep</code> argument in the <code>scan</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colnames.add</code></td>
+<td>
+<p>The default is '= "Dummy_"'. This is a character vector of length one to stick in the <code>colnames</code> of the dummy variables. For example, if the orginal column has A;B;C factor levels, the new dummy variables <code>colnames</code> would be "Dummy_A", "Dummy_B", and "Dummy_C"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.events</code></td>
+<td>
+<p>Either <code>NULL</code> (default), or a numeric scalar. If any of the new variables have less events then specified in <code>min.events</code>, they will be deleted before returning the output data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rm.oc</code></td>
+<td>
+<p>Default is <code>FALSE</code>. If <code>TRUE</code>, <code>dummy.columns</code> will delete the original column before returnig the final <code>data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn</code></td>
+<td>
+<p>Default is <code>FALSE</code>. If <code>TRUE</code>, <code>dummy.columns</code> will print at the console the deleted columns names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.factor</code></td>
+<td>
+<p>Default is <code>TRUE</code>. If <code>TRUE</code>, <code>dummy.columns</code> return factor columns with "0" and "1" levels, or numeric otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colnames</code></td>
+<td>
+<p>For <code>rm.dummy.columns</code> this is the names of the columns to be tested and deleted inside <code>dummy.columns</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>event</code></td>
+<td>
+<p>A character string to be detected as a event. In <code>rm.dummy.columns</code>, if the columns are coded as '0' and '1', the event is '1', if it is coded as logical, the events is 'TRUE'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A numeric vector representing the "Standardized rate" for each unit, usually the SMR or possibly the SRU , accordind to <code>y.type</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>range</code></td>
+<td>
+<p>A numeric range representing for which values the funnel will be estimated. Usually the same variable in x axis (the precision parameter).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>A number indicating the total amount of ICUs in the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>totalAdmissions</code></td>
+<td>
+<p>The quantity of admissions in all units.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>totalObserved</code></td>
+<td>
+<p>The quantity of observed death in all units.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>A number between 0 and 1 indicating the confidence interval level for the funnel.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>Target value which specifies the desired expectation for institutions considered "in control".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overdispersion</code></td>
+<td>
+<p>Logical (default = FALSE); If TRUE, introduces an multiplicative over-dispersion factor phi that will inflate the CI null variance. See <code>funnel</code> details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>A character specifying the distribution about the funnel control limits will be estimated. It can be "binomial" (default), "normal" or "poisson".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p>A numeric vector representing the funnel precision parameter. It is calculated inside <code>funnel</code> and used to calculer <code>z_score</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gdetheta</code></td>
+<td>
+<p>A numeric auxiliary numeric vector used to calculate <code>z_score</code> to be used to calculate estimate funnel control limits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z_score</code></td>
+<td>
+<p>A numeric vector indicating the standardized Pearson residual or the "naive" Z-Score for each unit.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Lunna Borges &amp; Pedro Brasil
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dataquality</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Formating character or factor variable that should be numeric variables
+f.num(c("2,4000","10,0000","5.0400"))
+
+# Simulating a dataset
+y &lt;- data.frame(v1 = sample(c(" F","M  ","   "), 10, replace = TRUE),
+                v2 = sample(c(1:3,"     "), 10, replace = TRUE),
+                v3 = sample(c("Alive","Dead",""), 10, replace = TRUE))
+y
+
+# Replacing the "" cells by NA
+y &lt;- remove.na(y)
+y
+
+rm(y)
+
+# Formating dates
+x &lt;- f.date(c("28/02/2013","16/07/1998","31/03/2010"))
+x
+class(x)
+
+# The first element (i.e., the different one) is coerced to NA
+x &lt;- f.date(c("2013-02-28 12:40","16/07/1998","31/03/2010"))
+x
+class(x)
+
+# The last element (i.e. the different one) is coerced to NA
+x &lt;- f.date(c("2013-02-28 12:40","1998-07-16 18:50","31/03/2010"))
+x
+class(x)
+
+# Truncating numeric vectors
+trunc_num(1:12, min = 3, max = 10)
+
+# Truncating numeric vectors but returning NAs instead
+trunc_num(1:12, min = 3, max = 10, toNA = TRUE)
+
+# Simulating a dataset for dummy.columns example
+
+y &lt;- data.frame(v1 = 1:20,
+               v2 = sapply(1:20, function(i) toString(sample(c("Code1","Code2","Code3","Code4"),
+                     size = sample(2:4, 1), replace = FALSE))))
+y
+
+
+# For a few of the codes in the original column
+y &lt;- dummy.columns(y, original.column = "v2", factor = c("Code2","Code3"))
+y
+
+# For all codes in the original column
+y &lt;- dummy.columns(y[, 1:2], original.column = "v2", scan.oc = TRUE)
+y
+
+# Funnel Estimate
+data(icu)
+icu
+
+funnelEstimate(y = icu$Saps3DeathProbabilityStandardEquation,
+               range = 1, u = length(unique(icu$Unit)),
+               totalAdmissions = nrow(icu),
+               totalObserved = sum(icu$UnitDischargeName),
+               theta = mean(icu$Saps3DeathProbabilityStandardEquation),
+               dist = 'normal', rho = 1, gdetheta = 1)
+
+rm(y, icu)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,76 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>follow_path</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Follow a pre-determined dose administration path.</h2>
+
+<h3>Description</h3>
+
+<p>This method creates a dose selector that will follow a pre-specified trial
+path. Whilst the trial path is matched by realised outcomes, the selector
+will recommend the next dose in the desired sequence. As soon as the observed
+outcomes diverge from the desired path, the selector stops giving dose
+recommendations. This makes it possible, for instance, to specify a fixed
+escalation plan that should be followed until the first toxicity is seen.
+This tactic is used by some model-based designs to get rapidly to the doses
+where the action is. See, for example, the dfcrm package and Cheung (2011).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">follow_path(path)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>Follow this outcome path. See <code>parse_phase1_outcomes</code>.</p>
+</td>
+</tr></table>
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code> that can fit a
+dose-finding model to outcomes.
+</p>
+
+
+<h3>References</h3>
+
+<p>Cheung. Dose Finding by the Continual Reassessment Method. 2011.
+Chapman and Hall/CRC. ISBN 9781420091519
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">model1 &lt;- follow_path(path = '1NNN 2NNN 3NNN 4NNN')
+
+fit1 &lt;- model1 %&gt;% fit('1NNN 2N')
+fit1 %&gt;% recommended_dose()
+fit1 %&gt;% continue()
+# The model recommends continuing at dose 2 because the observed outcomes
+# perfectly match the desired escalation path.
+
+fit2 &lt;- model1 %&gt;% fit('1NNN 2NT')
+fit2 %&gt;% recommended_dose()
+fit2 %&gt;% continue()
+# Uh oh. Toxicity has now been seen, the outcomes diverge from the sought
+# path, hence this class recommends no dose now.
+# At this point, we can hand over dose selection decisions to another class
+# by chaining them together, like:
+model2 &lt;- follow_path(path = '1NNN 2NNN 3NNN 4NNN') %&gt;%
+  get_dfcrm(skeleton = c(0.05, 0.1, 0.25, 0.4, 0.6), target = 0.25)
+fit3 &lt;- model2 %&gt;% fit('1NNN 2NT')
+# Now the CRM model is using all of the outcomes to calculate the next dose:
+fit3 %&gt;% recommended_dose()
+fit3 %&gt;% continue()
+</code></pre>
+
+
+</div>

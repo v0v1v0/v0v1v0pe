@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>effectstars.vglm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot effect stars for vglm objects.</h2>
+
+<h3>Description</h3>
+
+<p>Plots effect stars for <code>vglm</code>-objects. In particular, the method
+works for multinomial logit models created by family <code>multinomial</code> and for 
+models with ordinal response like <code>sratio</code>, <code>cratio</code>,
+<code>cumulative</code> or <code>acat</code>. <br></p>
+<p>For more details on plotting effect stars see <code>effectstars</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'vglm'
+effectstars(x, p.values = FALSE, symmetric = TRUE,
+  plot.parallel = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>vglm</code>-object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.values</code></td>
+<td>
+<p>Should the p-values of the single coefficients be included in the labels? Default 
+is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>symmetric</code></td>
+<td>
+<p>Should the parameters be transformed to parameters with symmetric (sum-to-zero) 
+side constraints instead of using reference levels. Default is <code>TRUE</code> for 
+<code>multinomial</code>-models. If the <code>multinomial</code>-model 
+contains object-specific covariates (<code>xij</code> argument from <code>vglm.control</code>) symmetric side 
+constraints are not possible. In ordinal response models, 
+no side constraints are needed and the option is obsolete.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.parallel</code></td>
+<td>
+<p>Should parallel parameters (equal over all response categories) be 
+represented by effect stars. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments for generic function <code>effectstars</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Gunther Schauberger <br><a href="mailto:gunther.schauberger@tum.de">gunther.schauberger@tum.de</a> <br><br><a href="https://www.sg.tum.de/epidemiologie/team/schauberger/">https://www.sg.tum.de/epidemiologie/team/schauberger/</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz, G. and Schauberger, G. (2013): <em>Visualization of Categorical Response Models -
+from Data Glyphs to Parameter Glyphs</em>, Journal of Computational and Graphical Statistics 22(1), 156–177.
+<br><br>  Gerhard Tutz (2012): <em>Regression for Categorical Data</em>, Cambridge University Press
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>effectstars</code> <code>effectstars.DIFlasso</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+############################################
+### Examples for multinomial logit model
+############################################
+
+### German election data
+data(election) 
+library(VGAM)
+m_elect &lt;- vglm(Partychoice ~ Gender + West + Age + Union + Highschool + Unemployment
++ Pol.Interest + Democracy + Religion, family = multinomial(), data = election)
+
+effectstars(m_elect)
+
+# include p.values
+effectstars(m_elect, p.values = TRUE)
+
+### German election data with category-specific covariates
+
+data(election)
+election[,13:16] &lt;- election[,13:16] - election[,12]
+election[,18:21] &lt;- election[,18:21] - election[,17]
+election[,23:26] &lt;- election[,23:26] - election[,22]
+election[,28:31] &lt;- election[,28:31] - election[,27]
+
+election$Social &lt;- election$Social_SPD
+election$Immigration &lt;- election$Immigration_SPD
+election$Nuclear &lt;- election$Nuclear_SPD
+election$Left_Right &lt;- election$Left_Right_SPD
+
+m.all &lt;- vglm(Partychoice ~ Social + Immigration + Nuclear + Left_Right + Age + 
+                Religion + Democracy + Pol.Interest + Unemployment + Highschool + Union + West + 
+                Gender, data = election, 
+                family = multinomial(parallel = TRUE~-1 + Social + Immigration + 
+                Nuclear + Left_Right, refLevel = 1),
+              xij = list(Social ~ Social_SPD + Social_FDP + Social_Greens + Social_Left,
+                         Immigration ~ Immigration_SPD + Immigration_FDP + 
+                         Immigration_Greens + Immigration_Left,
+                         Nuclear ~ Nuclear_SPD + Nuclear_FDP + 
+                         Nuclear_Greens + Nuclear_Left,
+                         Left_Right ~ Left_Right_SPD + Left_Right_FDP + 
+                         Left_Right_Greens + Left_Right_Left),
+              form2 = ~Social + Immigration + Nuclear + Left_Right + Age + 
+                Religion + Democracy + Pol.Interest + Unemployment + Highschool + Union + West + 
+                Gender + Social_SPD + Social_FDP + Social_Greens + Social_Left +
+                Immigration_SPD + Immigration_FDP + Immigration_Greens + Immigration_Left +
+                Nuclear_SPD + Nuclear_FDP + Nuclear_Greens + Nuclear_Left +
+                Left_Right_SPD + Left_Right_FDP + Left_Right_Greens + Left_Right_Left
+)
+
+effectstars(m.all, symmetric = FALSE, p.values = TRUE)
+summary(m.all)
+
+
+### Chilean plebiscite data
+data(plebiscite)
+m_chile &lt;- vglm(Vote ~ ., family = multinomial(), data = plebiscite)
+effectstars(m_chile)
+
+# choose fixed circle sizes and use reference category instead of symmetric side constraints
+effectstars(m_chile, symmetric = FALSE, fixed = TRUE)
+
+############################################
+### Examples for ordinal data
+############################################
+
+### Munich insolvency data
+data(insolvency)
+insolvency$Age &lt;- scale(insolvency$Age)
+
+my_formula &lt;- Insolvency ~ Age + Gender
+
+m_acat &lt;- vglm(my_formula, data = insolvency,family = acat())
+m_cratio &lt;- vglm(my_formula, data = insolvency,family = cratio())
+m_sratio &lt;- vglm(my_formula, data = insolvency,family = sratio())
+m_cumulative &lt;- vglm(my_formula, data = insolvency,family = cumulative())
+
+summary(m_acat)
+effectstars(m_acat, p.values = TRUE)
+
+summary(m_cratio)
+effectstars(m_cratio, p.values = TRUE)
+
+summary(m_sratio)
+effectstars(m_sratio, p.values = TRUE)
+
+summary(m_cumulative)
+effectstars(m_cumulative, p.values = TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,108 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>s.chi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Variance estimator</h2>
+
+<h3>Description</h3>
+
+<p>Returns estimator for a priori <code class="reqn">\sigma^2</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">s.chi(H, Ainv, d, s0 = 0, fast.but.opaque = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>Regression basis function (eg that returned by <code>regressor.multi()</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ainv</code></td>
+<td>
+<p><code class="reqn">A^{-1}</code> where <code class="reqn">A</code> is a correlation matrix  (eg that
+returned by <code>corr.matrix()</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Vector of data points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s0</code></td>
+<td>
+<p>Optional offset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fast.but.opaque</code></td>
+<td>
+<p>Boolean, with default <code>TRUE</code> meaning to
+use <code>quad.form()</code>, and <code>FALSE</code> meaning to use straightforward
+<code>%*%</code>.  The first form should be faster, but the code is less
+intelligible than the second form.  Comparing the returned value
+with this argument on or off should indicate the likely accuracy attained.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See O'Hagan's paper (ref below), equation 12 for details and context.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>References</h3>
+
+<p>A. O'Hagan 1992. “Some Bayesian Numerical Analysis”, pp345-363 of
+<em>Bayesian Statistics 4</em> (ed J. M. Bernardo et al), Oxford University
+Press
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# example has 10 observations on 6 dimensions.
+# function is just sum( (1:6)*x) where x=c(x_1, ... , x_2)
+data(toy)
+val &lt;- toy
+colnames(val) &lt;- letters[1:6]
+H &lt;- regressor.multi(val)
+d &lt;- apply(H,1,function(x){sum((0:6)*x)})
+
+
+# create A matrix and its inverse:
+A &lt;- corr.matrix(val,scales=rep(1,ncol(val)))
+Ainv &lt;- solve(A)
+
+# add some suitably correlated noise:
+d &lt;- as.vector(rmvnorm(n=1, mean=d, 0.1*A))
+
+# now evaluate s.chi():
+s.chi(H, Ainv, d)
+
+
+# assess accuracy:
+s.chi(H, Ainv, d, fast=TRUE) - s.chi(H, Ainv, d, fast=FALSE)
+
+</code></pre>
+
+
+</div>

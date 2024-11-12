@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bisectorec</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Bisector Equating Coefficients
+</h2>
+
+<h3>Description</h3>
+
+<p>Calculates average equating coefficients using the bisector method 
+and standard errors
+given a set of direct and chain equating coefficients.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bisectorec(ecall, mods = NULL, weighted = TRUE, unweighted = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ecall</code></td>
+<td>
+
+<p>list of objects of class <code>eqc</code> or <code>ceqc</code> 
+returned by functions
+<code>direc</code> and <code>chainec</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mods</code></td>
+<td>
+
+<p>an object of class <code>modIRT</code> containing 
+item parameter coefficients and their covariance matrix
+of the forms to be equated. From version 2.0 it can be <code>NULL</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weighted</code></td>
+<td>
+
+<p>logical; if TRUE weighted bisector coefficients are computed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unweighted</code></td>
+<td>
+
+<p>logical; if TRUE unweighted bisector coefficients are computed.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>meqc</code> with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>data frame containing <code>link</code>, <code>path</code>,
+coefficient <code>A</code>, coefficient <code>B</code>, 
+standard error of coefficient A (<code>seA</code>), standard error of 
+coefficient B (<code>seB</code>) and <code>weights</code> of direct, chain and bisector 
+equating coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the equating method used.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Michela Battauz
+</p>
+
+
+<h3>References</h3>
+
+<p>Battauz, M. (2013). IRT Test Equating in Complex Linkage Plans. 
+<em>Psychometrika</em>, <b>78</b>, 464–480.
+</p>
+<p>Battauz, M. (2015). equateIRT: An R Package for IRT Test Equating.
+<em>Journal of Statistical Software</em>, <b>68</b>, 1–22.
+</p>
+<p>Holland, P.W. and Strawderman, W.E. (2011). How to average equating 
+functions if you must. In A.A. von Davier (Ed.), <em>Statistical models for 
+test equating, scaling, and linking</em> (pp. 89–107). New York: Springer.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>chainec</code>, <code>convert</code>, <code>direc</code>, <code>eqc</code>, <code>summary.meqc</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# the following code can be used to start from item response data
+
+## Not run: 
+library("mirt")
+data("data2pl")
+
+m1 &lt;- mirt(data2pl[[1]], SE = TRUE)
+m2 &lt;- mirt(data2pl[[2]], SE = TRUE)
+m3 &lt;- mirt(data2pl[[3]], SE = TRUE)
+m4 &lt;- mirt(data2pl[[4]], SE = TRUE)
+m5 &lt;- mirt(data2pl[[5]], SE = TRUE)
+
+mlist&lt;- list(m1,m2,m3,m4,m5)
+test &lt;- paste("test", 1:5, sep = "")
+mod2pl &lt;- modIRT(est.mods = mlist, names = test, display = FALSE)
+
+direclist2pl &lt;- alldirec(mods = mod2pl, method = "Haebara")
+
+# compute chain equating coefficients for path 1,2,3,4
+pth1 &lt;- paste("test", 1:4, sep = "")
+chainec1 &lt;- chainec(direclist = direclist2pl, pths = pth1)
+# compute chain equating coefficients for path 1,5,4
+pth2 &lt;- c(paste("test", c(1,5,4), sep = ""))
+chainec2 &lt;- chainec(direclist = direclist2pl, pths = pth2)
+# create a list of objects of class ceqc
+ecall &lt;- c(chainec1, chainec2)
+# compute bisector and weighted bisector coefficients
+allec &lt;- bisectorec(ecall = ecall, weighted = TRUE, unweighted = TRUE)
+summary(allec)
+
+## End(Not run)
+
+# ===========================================================================
+# the following code uses item parameter estimates previously obtained
+
+# three-parameter logistic model
+# direct equating coefficients using the "Stocking-Lord" method
+data(est3pl)
+test &lt;- paste("test", 1:5, sep = "")
+mod3pl &lt;- modIRT(coef = est3pl$coef, var = est3pl$var, names = test, display = FALSE)
+direclist3pl &lt;- alldirec(mods = mod3pl, method = "Stocking-Lord")
+# compute chain equating coefficients for path 1,2,3,4,5
+pth3 &lt;- paste("test", 1:5, sep = "")
+chainec3 &lt;- chainec(direclist = direclist3pl, pths = pth3)
+# create a list of objects of class eqc or ceqc
+ecall &lt;- c(chainec3, direclist3pl["test1.test5"])
+# compute bisector and weighted bisector coefficients
+allec &lt;- bisectorec(ecall = ecall, weighted = TRUE, unweighted = TRUE)
+summary(allec)
+
+# two-parameter logistic model
+# direct equating coefficients using the "Haebara" method
+data(est2pl)
+test &lt;- paste("test", 1:5, sep = "")
+mod2pl &lt;- modIRT(coef = est2pl$coef, var = est2pl$var, names = test, display = FALSE)
+direclist2pl &lt;- alldirec(mods = mod2pl, method = "Haebara")
+# compute chain equating coefficients for path 1,2,3,4
+pth1 &lt;- paste("test", 1:4, sep = "")
+chainec1 &lt;- chainec(direclist = direclist2pl, pths = pth1)
+# compute chain equating coefficients for path 1,5,4
+pth2 &lt;- c(paste("test", c(1,5,4), sep = ""))
+chainec2 &lt;- chainec(direclist = direclist2pl, pths = pth2)
+# compute chain equating coefficients for path 1,2,3,4,5
+pth3 &lt;- paste("test", 1:5, sep = "")
+chainec3 &lt;- chainec(direclist = direclist2pl, pths = pth3)
+# create a list of objects of class eqc or ceqc
+ecall &lt;- c(chainec1, chainec2, chainec3, direclist2pl["test1.test5"])
+# compute bisector and weighted bisector coefficients
+allec &lt;- bisectorec(ecall = ecall, weighted = TRUE, unweighted = TRUE)
+summary(allec)
+
+# Rasch model
+# direct equating coefficients using the "mean-mean" method
+data(estrasch)
+test &lt;- paste("test", 1:5, sep = "")
+modrasch &lt;- modIRT(coef = estrasch$coef, var = estrasch$var, names = test, 
+	display = FALSE)
+direclistrasch &lt;- alldirec(mods = modrasch, method = "mean-mean", all = TRUE)
+# compute chain equating coefficients for path 1,2,3,4
+pth1 &lt;- paste("test", 1:4, sep = "")
+chainec1 &lt;- chainec(direclist = direclistrasch, pths = pth1)
+# compute chain equating coefficients for path 1,5,4
+pth2 &lt;- c(paste("test", c(1,5,4), sep = ""))
+chainec2 &lt;- chainec(direclist = direclistrasch, pths = pth2)
+# create a list of objects of class eqc or ceqc
+ecall &lt;- c(chainec1, chainec2)
+# compute bisector and weighted bisector coefficients
+allec &lt;- bisectorec(ecall = ecall, weighted = TRUE, unweighted = TRUE)
+summary(allec)
+</code></pre>
+
+
+</div>

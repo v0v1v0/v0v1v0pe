@@ -1,0 +1,212 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>symdynN</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate time series for N species or patches</h2>
+
+<h3>Description</h3>
+
+<p>Function for simulating dynamics from Eq.2-3 in the main text.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">symdynN(
+  r,
+  amu,
+  asd,
+  f,
+  d,
+  d_sd,
+  d_cov,
+  N,
+  sf,
+  tmax,
+  stochd = TRUE,
+  stocht = TRUE,
+  as.matrix = FALSE,
+  amax = 0,
+  amin = -Inf,
+  Ifrac = NULL,
+  Iloss = NULL,
+  dffun = df0,
+  fullout = FALSE,
+  xstart = NULL,
+  Ksim = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>per-capita growth rate (r in Eq.2-3)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amu</code></td>
+<td>
+<p>the mean interaction strength</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asd</code></td>
+<td>
+<p>standard deviation used to generate interaction strengths</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>the waiting time (or average waiting time) between disturbance events (equal to 1/lambda in Eq.2-3)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>mean size of disturbance function (mu in Eq.2-3)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_sd</code></td>
+<td>
+<p>standard deviation of disturbance function (sigma in Eq.5)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_cov</code></td>
+<td>
+<p>the covariance for generating disturbances</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>number of species or patches</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sf</code></td>
+<td>
+<p>waiting time between sampling events</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tmax</code></td>
+<td>
+<p>the time series length to be simulated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stochd</code></td>
+<td>
+<p>a logical variable, indicating whether disturbance size should be stochastic - otherwise, all disturbances are of magnitude d - defaults to TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stocht</code></td>
+<td>
+<p>a logical variable, indicating whether waiting time between disturbance events should be stochastic - otherwise, waiting time is always f - defaults to TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as.matrix</code></td>
+<td>
+<p>indicates whether results should be returned as matrix (potentially faster for some applications) - defaults to FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amax</code></td>
+<td>
+<p>the maximum value allowed for interaction coefficients - defaults to zero</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amin</code></td>
+<td>
+<p>the minimum value allowed for interaction coefficients - defaults to -Inf</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ifrac</code></td>
+<td>
+<p>dispersal rate (D in Eq. 2) - defaults to NULL (i.e. no dispersal)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Iloss</code></td>
+<td>
+<p>loss rate from dispersal that falls outside of the patch - defaults to NULL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dffun</code></td>
+<td>
+<p>the function handed to the ODE solver - should be df_col for spatial simulations, and df0 for multi-species simulations - defaults to df0</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fullout</code></td>
+<td>
+<p>a logical, determining whether the full output or just a summary is returned - defaults to fullout</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xstart</code></td>
+<td>
+<p>optional vector of starting abundances - defaults to NULL (i.e. no values)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ksim</code></td>
+<td>
+<p>carrying capacities - defaults to 1</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a matrix or data.frame with columns for sampling times, abundances, and number of disturbances for each time interval
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### Example 1: 10 patches
+r&lt;-1 #rate of recovery
+d&lt;-(0) #mean size of disturbance (mu in text)
+d_sd&lt;-sqrt(0.1) #SD of disturbances (sigma in text)
+f&lt;-1 #average time between disturbances (1/lambda in text)
+sf&lt;-0.1 #sampling interval
+tmax&lt;-120 #maximum time for simulation
+d_cov&lt;-d_cov0&lt;-(d_sd)^2/2 #covariance in disturbance size among patches
+
+xtNpatches&lt;-symdynN(r = r, amu=0, asd=0, f=f, d=d,
+              d_sd=d_sd, d_cov=d_cov, N=10,
+              sf=sf, tmax=tmax, Ifrac=0, dffun = df_col)
+
+
+### Example 2: 30 species
+r&lt;-1 #rate of recovery
+d&lt;-(0) #mean size of disturbance (mu in text)
+d_sd&lt;-sqrt(0.1) #SD of disturbances (sigma in text)
+f&lt;-1 #average time between disturbances (1/lambda in text)
+sf&lt;-0.1 #sampling interval
+tmax&lt;-120 #maximum time for simulation
+d_cov&lt;-0 #covariance in disturbances among species
+amu&lt;-(-r/2) #average interaction coefficient
+asd&lt;-0.1 #standard deviation of interaction coefficient
+
+xtNsp&lt;-symdynN(r = r, amu=amu, asd=asd, f=f, d=d,
+             d_sd=d_sd, d_cov=d_cov, N=30,
+             sf=sf, tmax=tmax)
+</code></pre>
+
+
+</div>

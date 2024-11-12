@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>waldTest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Wald Tests</h2>
+
+<h3>Description</h3>
+
+<p>Tests on coefficient(s) of <code>edsurveyGlm</code>
+and <code>edsurveyLm</code> models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">waldTest(model, coefficients, H0 = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an <code>edsurveyGlm</code> and <code>edsurveyLm</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>coefficients to be tested, by name or position in
+<code>coef</code> vector. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H0</code></td>
+<td>
+<p>reference values to test coefficients against, default = 0</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When plausible values are present, likelihood ratio tests cannot be used.
+However, the Wald test can be used to test estimated parameters in a model,
+with the null hypothesis being that a parameter(s) is equal to some value(s).
+In the default case where the null hypothesis value of the parameters is 0,
+if the test fails to reject the null hypothesis, removing the variables from
+the model will not substantially harm the fit of that model. Alternative null
+hypothesis values also can be specified with the <code>H0</code> argument.
+See Examples.
+</p>
+<p>Coefficients to test can be specified by an integer (or integer vector)
+corresponding to the order of coefficients in the summary output. Coefficients
+also can be specified using a character vector, to specify coefficient names
+to test. The name of a factor variable can be used to test all levels of that
+variable.
+</p>
+<p>This test produces both chi-square and <em>F</em>-tests; their calculation is described
+in the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-WaldTest.pdf"><em>Methods and Overview of Using EdSurvey for Running Wald Tests</em></a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>edsurveyWaldTest</code> object with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Sigma</code></td>
+<td>
+<p>coefficient covariance matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>indices of the coefficients tested</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H0</code></td>
+<td>
+<p>null hypothesis values of coefficients tested</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>result</code></td>
+<td>
+<p>result object containing the values of the chi-square and <em>F</em>-tests</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hypoMatrix</code></td>
+<td>
+<p>hypothesis matrix used for the Wald Test</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Alex Lishinski and Paul Bailey
+</p>
+
+
+<h3>References</h3>
+
+<p>Diggle, P. J., Liang, K.-Y., &amp; Zeger, S. L. (1994). <em>Analysis of longitudinal data</em>. Oxford, UK: Clarendon Press.
+</p>
+<p>Draper, N. R., &amp; Smith, H. (1998). <em>Applied regression analysis</em>. New York, NY: Wiley.
+</p>
+<p>Fox, J. (1997). <em>Applied regression analysis, linear models, and related methods</em>. Thousand Oaks, CA: SAGE.
+</p>
+<p>[Institute for Digital Research and Education. (n.d.). FAQ: How are the likelihood ratio, Wald, and LaGrange multiplier (score) tests different and/or similar?](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faqhow-are-the-likelihood-ratio-wald-and-lagrange-multiplier-score-tests-different-andor-similar/). Los Angeles: University of California at Los Angeles. Retrieved from [https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faqhow-are-the-likelihood-ratio-wald-and-lagrange-multiplier-score-tests-different-andor-similar/](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faqhow-are-the-likelihood-ratio-wald-and-lagrange-multiplier-score-tests-different-andor-similar/)
+</p>
+<p>Korn, E., &amp; Graubard, B. (1990). Simultaneous testing of regression coefficients with complex survey data: Use of Bonferroni t statistics. <em>The American Statistician</em>, <em>44</em>(4), 270–276.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# read in the example data (generated, not real student data)
+sdf &lt;- readNAEP(path=system.file("extdata/data", "M36NT2PM.dat", package = "NAEPprimer"))
+
+# example with glm model
+myLogit &lt;- logit.sdf(formula=dsex ~ b017451 + b003501, data = sdf, returnVarEstInputs = T)
+
+# single coefficient integer
+waldTest(model = myLogit, coefficients = 2)
+
+# set of coefficients integer vector
+waldTest(model = myLogit, coefficients = 2:5)
+
+# specify levels of factor variable to test
+waldTest(myLogit, c("b017451Every day", "b017451About once a week"))
+
+# specify all levels of factor variable to test
+waldTest(myLogit, "b017451")
+
+# example with lm model
+fit &lt;- lm.sdf(formula=composite ~ dsex + b017451, data = sdf, returnVarEstInputs = T)
+
+waldTest(model = fit, coefficients = "b017451")
+
+# examples with alternative (nonzero) null hypothesis values
+waldTest(model = myLogit, coefficients = 2, H0 = 0.5)
+
+waldTest(model = myLogit, coefficients = 2:5, H0 = c(0.5, 0.6, 0.7, 0.8))
+
+waldTest(model = myLogit, coefficients = "b017451", H0 = c(0.5, 0.6, 0.7, 0.8))
+
+waldTest(model = myLogit, coefficients = c("b017451Every day", "b017451About once a week"),
+         H0 = c(0.1, 0.2))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

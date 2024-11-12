@@ -1,0 +1,253 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>network.compare</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compares Network Structures Using Permutation</h2>
+
+<h3>Description</h3>
+
+<p>A permutation implementation to determine statistical
+significance of whether the network structures are different from one another
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">network.compare(
+  base,
+  comparison,
+  corr = c("auto", "cor_auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  iter = 1000,
+  ncores,
+  verbose = TRUE,
+  seed = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>base</code></td>
+<td>
+<p>Matrix or data frame.
+Should consist only of variables to be used in the analysis.
+First dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>comparison</code></td>
+<td>
+<p>Matrix or data frame.
+Should consist only of variables to be used in the analysis.
+Second dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Character (length = 1).
+Method to compute correlations.
+Defaults to <code>"auto"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"auto"</code> — Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use <code>ordinal.categories</code>
+(see <code>polychoric.matrix</code> for more details)
+</p>
+</li>
+<li> <p><code>"cor_auto"</code> — Uses <code>cor_auto</code> to compute correlations.
+Arguments can be passed along to the function
+</p>
+</li>
+<li> <p><code>"pearson"</code> — Pearson's correlation is computed for all
+variables regardless of categories
+</p>
+</li>
+<li> <p><code>"spearman"</code> — Spearman's rank-order correlation is computed
+for all variables regardless of categories
+</p>
+</li>
+</ul>
+<p>For other similarity measures, compute them first and input them
+into <code>data</code> with the sample size (<code>n</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.data</code></td>
+<td>
+<p>Character (length = 1).
+How should missing data be handled?
+Defaults to <code>"pairwise"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"pairwise"</code> — Computes correlation for all available cases between
+two variables
+</p>
+</li>
+<li> <p><code>"listwise"</code> — Computes correlation for all complete cases in the dataset
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Character (length = 1).
+Defaults to <code>"glasso"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"BGGM"</code> — Computes the Bayesian Gaussian Graphical Model.
+Set argument <code>ordinal.categories</code> to determine
+levels allowed for a variable to be considered ordinal.
+See <code>?BGGM::estimate</code> for more details
+</p>
+</li>
+<li> <p><code>"glasso"</code> — Computes the GLASSO with EBIC model selection.
+See <code>EBICglasso.qgraph</code> for more details
+</p>
+</li>
+<li> <p><code>"TMFG"</code> — Computes the TMFG method.
+See <code>TMFG</code> for more details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>Numeric (length = 1).
+Number of permutations to perform.
+Defaults to <code>1000</code> (recommended)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+<p>Numeric (length = 1).
+Number of cores to use in computing results.
+Defaults to <code>ceiling(parallel::detectCores() / 2)</code> or half of your
+computer's processing power.
+Set to <code>1</code> to not use parallel computing</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean (length = 1).
+Should progress be displayed?
+Defaults to <code>TRUE</code>.
+Set to <code>FALSE</code> to not display progress</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Numeric (length = 1).
+Defaults to <code>NULL</code> or random results.
+Set for reproducible results.
+See <a href="https://r-ega.net/articles/reproducibility-prng.html">Reproducibility and PRNG</a>
+for more details on random number generation in <code>EGAnet</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments that can be passed on to
+<code>auto.correlate</code>,
+<code>network.estimation</code>,
+<code>community.detection</code>,
+<code>community.consensus</code>,
+<code>EGA</code>, and
+<code>jsd</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p>Data frame with row names of each measure, empirical value (<code>statistic</code>), and
+<em>p</em>-value based on the permutation test (<code>p.value</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edges</code></td>
+<td>
+<p>List containing matrices of values for empirical values (<code>statistic</code>),
+<em>p</em>-values (<code>p.value</code>), and Benjamini-Hochberg corrected <em>p</em>-values (<code>p.adjusted</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Hudson Golino &lt;hfg9s at virginia.edu&gt; and Alexander P. Christensen &lt;alexpaulchristensen@gmail.com&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p><strong>Frobenius Norm</strong> <br>
+Ulitzsch, E., Khanna, S., Rhemtulla, M., &amp; Domingue, B. W. (2023).
+A graph theory based similarity metric enables comparison of subpopulation psychometric networks.
+<em>Psychological Methods</em>.
+</p>
+<p><strong>Jensen-Shannon Similarity (1 - Distance)</strong> <br>
+De Domenico, M., Nicosia, V., Arenas, A., &amp; Latora, V. (2015).
+Structural reducibility of multilayer networks.
+<em>Nature Communications</em>, <em>6</em>(1), 1–9.
+</p>
+<p><strong>Total Network Strength</strong> <br>
+van Borkulo, C. D., van Bork, R., Boschloo, L., Kossakowski, J. J., Tio, P., Schoevers, R. A., Borsboom, D., &amp; Waldorp, L. J. (2023).
+Comparing network structures on three aspects: A permutation test.
+<em>Psychological Methods</em>, <em>28</em>(6), 1273–1285.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load data
+wmt &lt;- wmt2[,7:24]
+
+# Set groups (if necessary)
+groups &lt;- rep(1:2, each = nrow(wmt) / 2)
+
+# Groups
+group1 &lt;- wmt[groups == 1,]
+group2 &lt;- wmt[groups == 2,]
+
+## Not run: # Perform comparison
+results &lt;- network.compare(group1, group2)
+
+# Print results
+print(results)
+
+# Plot edge differences
+plot(results)
+## End(Not run)
+
+</code></pre>
+
+
+</div>

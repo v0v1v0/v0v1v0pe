@@ -1,0 +1,241 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>TMFG</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Triangulated Maximally Filtered Graph</h2>
+
+<h3>Description</h3>
+
+<p>Applies the Triangulated Maximally Filtered Graph (TMFG) filtering method
+(see Massara et al., 2016). The TMFG method uses a structural
+constraint that limits the number of zero-order correlations included in the network
+(3<em>n</em> - 6; where <em>n</em> is the number of variables). The TMFG algorithm begins by
+identifying four variables which have the largest sum of correlations to all other
+variables. Then, it iteratively adds each variable with the largest sum of three
+correlations to nodes already in the network until all variables have been added to
+the network. This structure can be associated with the inverse correlation matrix
+(i.e., precision matrix) to be turned into a GGM (i.e., partial correlation network)
+by using Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details).
+See <strong>Details</strong> for more information
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">TMFG(
+  data,
+  n = NULL,
+  corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  partial = FALSE,
+  returnAllResults = FALSE,
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Matrix or data frame.
+Should consist only of variables to be used in the analysis.
+Can be raw data or correlation matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Numeric (length = 1).
+Sample size for when a correlation matrix is input into <code>data</code>.
+Defaults to <code>NULL</code>.
+<code>n</code> is not necessary and is provided for better functionality in
+<code>EGAnet</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Character (length = 1).
+Method to compute correlations.
+Defaults to <code>"auto"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"auto"</code> — Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use <code>ordinal.categories</code>
+(see <code>polychoric.matrix</code> for more details)
+</p>
+</li>
+<li> <p><code>"cor_auto"</code> — Uses <code>cor_auto</code> to compute correlations.
+Arguments can be passed along to the function
+</p>
+</li>
+<li> <p><code>"cosine"</code> — Uses <code>cosine</code> to compute cosine similarity
+</p>
+</li>
+<li> <p><code>"pearson"</code> — Pearson's correlation is computed for all
+variables regardless of categories
+</p>
+</li>
+<li> <p><code>"spearman"</code> — Spearman's rank-order correlation is computed
+for all variables regardless of categories
+</p>
+</li>
+</ul>
+<p>For other similarity measures, compute them first and input them
+into <code>data</code> with the sample size (<code>n</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.data</code></td>
+<td>
+<p>Character (length = 1).
+How should missing data be handled?
+Defaults to <code>"pairwise"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"pairwise"</code> — Computes correlation for all available cases between
+two variables
+</p>
+</li>
+<li> <p><code>"listwise"</code> — Computes correlation for all complete cases in the dataset
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partial</code></td>
+<td>
+<p>Boolean (length = 1).
+Whether partial correlations should be output.
+Defaults to <code>FALSE</code>.
+The TMFG method is based on the zero-order correlations;
+the Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details)
+uses the decomposability of the TMFG network to obtain the inverse covariance
+structure of the network (which is then converted to partial correlations).
+Set to <code>TRUE</code> to obtain the partial correlations from the LoGo method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnAllResults</code></td>
+<td>
+<p>Boolean (length = 1).
+Whether all results should be returned.
+Defaults to <code>FALSE</code> (network only).
+Set to <code>TRUE</code> to access separators and cliques</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to <code>FALSE</code> (silent calls).
+Set to <code>TRUE</code> to see all messages and warnings for every function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed on to
+<code>auto.correlate</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The TMFG method applies a structural constraint on the network,
+which restrains the network to retain a certain number of edges (3<em>n</em>-6, where <em>n</em>
+is the number of nodes; Massara et al., 2016). The network is also composed of 3- and 4-node
+cliques (i.e., sets of connected nodes; a triangle and tetrahedron, respectively). The
+TMFG method constructs a network using zero-order correlations and the resulting network
+can be associated with the inverse covariance matrix
+(yielding a GGM; Barfuss, Massara, Di Matteo, &amp; Aste, 2016).
+Notably, the TMFG can use any association measure and thus does not assume the data is multivariate normal.
+</p>
+<p>Construction begins by forming a tetrahedron of the four nodes that have
+the highest sum of correlations that are greater than the average correlation in the
+correlation matrix. Next, the algorithm iteratively identifies the node that maximizes
+its sum of correlations to a connected set of three nodes (triangles) already included
+in the network and then adds that node to the network. The process is completed once
+every node is connected in the network. In this process, the network automatically
+generates what's called a planar network. A planar network is a network that could be
+drawn on a sphere with no edges crossing (often, however, the networks are depicted
+with edges crossing; Tumminello, Aste, Di Matteo, &amp; Mantegna, 2005).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a network or list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p>The filtered adjacency matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>separators</code></td>
+<td>
+<p>The separators (3-cliques) in the network</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cliques</code></td>
+<td>
+<p>The cliques (4-cliques) in the network</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Alexander Christensen &lt;alexpaulchristensen@gmail.com&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p><strong>Local-Global Inversion Method</strong> <br>
+Barfuss, W., Massara, G. P., Di Matteo, T., &amp; Aste, T. (2016).
+Parsimonious modeling with information filtering networks.
+<em>Physical Review E</em>, <em>94</em>, 062306.
+</p>
+<p><strong>Psychometric network introduction to TMFG</strong> <br>
+Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., &amp; Kwapil, T. R. (2018).
+Network structure of the Wisconsin Schizotypy Scales-Short Forms: Examining psychometric network filtering approaches.
+<em>Behavior Research Methods</em>, <em>50</em>, 2531-2550.
+</p>
+<p><strong>Triangulated Maximally Filtered Graph</strong> <br>
+Massara, G. P., Di Matteo, T., &amp; Aste, T. (2016).
+Network filtering for big data: Triangulated maximally filtered graph.
+<em>Journal of Complex Networks</em>, <em>5</em>, 161-178.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># TMFG filtered network
+TMFG(wmt2[,7:24])
+
+# Partial correlations using the LoGo method
+TMFG(wmt2[,7:24], partial = TRUE)
+
+</code></pre>
+
+
+</div>

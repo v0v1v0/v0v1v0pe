@@ -1,0 +1,140 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bootLexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Create a bootstrap sample of persons (as identified by <code>lex.id</code>) from a Lexis object 
+</h2>
+
+<h3>Description</h3>
+
+<p><code>lex.id</code> is the person identifier in a <code>Lexis</code>
+object. This is used to sample persons from a Lexis object. If a person
+is sampled, all records from this persons is transported to the
+bootstrap sample. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nid( Lx, ... )
+## S3 method for class 'Lexis'
+nid( Lx, by=NULL, ... )
+bootLexis( Lx, size = NULL, by = NULL, replace=TRUE )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Lx</code></td>
+<td>
+<p>A <code>Lexis</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Parameters passed on to other methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+<p>Numeric. How many persons should be sampled from the
+<code>Lexis</code> object. Defaults to the number of persons in the
+<code>Lx</code>, or, if <code>by</code> is given, to the number of persons in
+each level of <code>by</code>. If <code>by</code> is given, <code>size</code> can have length
+<code>length(unique(by))</code>, to indicate how many are sampled from
+each level of <code>by</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>Character. Name of a variable (converted to factor) in the
+<code>Lexis</code> object.
+</p>
+<p>Bootstrap sampling is done within each level of by.
+</p>
+<p>Calculation of the number of persons (<code>lex.id</code>) is done within
+each level of <code>by</code>, and a vector returned.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>Should persons be sampled by replacement? Default is
+<code>TRUE</code>. Setting <code>replace</code> to <code>FALSE</code> enables
+selecting a random subset of persons from the Lexis object.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+  
+<p><code>bootLexis</code> returns a Lexis object of the same structure as the
+input, with <em>persons</em> bootstrapped. The variable <code>lex.id</code>
+in the resulting <code>Lexis</code> object has values 1,2,... The original
+values of <code>lex.id</code> from <code>Lx</code> are stored in the variable
+<code>old.id</code>.
+</p>
+<p><code>nid</code> counts the number of persons in a Lexis object, possibly by
+<code>by</code>. If <code>by</code> is given, a named vector is returned.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>.</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Relevel.Lexis</code>,<code>subset.Lexis</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># A small bogus cohort
+xcoh &lt;- data.frame( id = c("A", "B", "C"),
+                 birth = c("1952-07-14", "1954-04-01", "1987-06-10"),
+                 entry = c("1965-08-04", "1972-09-08", "1991-12-23"),
+                  exit = c("1997-06-27", "1995-05-23", "1998-07-24"),
+                  fail = c(1, 0, 1),
+                   sex = c("M","F","M") )
+
+# Convert to calendar years
+for( i in 2:4 ) xcoh[,i] &lt;- cal.yr(xcoh[,i])
+xcoh &lt;- xcoh[sample(1:3, 10, replace = TRUE),]
+xcoh$entry &lt;- xcoh$entry + runif(10, 0, 10)
+xcoh$exit  &lt;- xcoh$entry + runif(10, 0, 10)
+
+Lcoh &lt;- Lexis(entry = list(per = entry),
+               exit = list(per = exit,
+                           age = exit - birth),
+        exit.status = fail,
+               data = xcoh)
+Lcoh
+
+Lx &lt;- splitLexis(Lcoh, breaks = 0:10 * 10, "age")
+Lx
+nid(Lx)
+nid(Lx, by="sex")
+Lb &lt;- bootLexis(Lx)
+head(Lb)
+nid(bootLexis(Lx, size = 7))
+Li &lt;- bootLexis(Lx, by = "id") # superfluous
+summary(Lx)
+summary(Li)
+L2 &lt;- bootLexis(Lx, by = "sex", size = c(2, 5))
+nid(L2, by = "sex")
+summary(L2, by = "sex")
+</code></pre>
+
+
+</div>

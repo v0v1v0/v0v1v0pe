@@ -1,0 +1,401 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fpsden</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>MLE Fitting of P-splines Density Estimator</h2>
+
+<h3>Description</h3>
+
+<p>Maximum likelihood estimation for P-splines density estimation. Histogram binning
+produces frequency counts, which are modelled by constrained B-splines in a Poisson regression. A penalty
+based on differences in the sequences B-spline coefficients is used to smooth/interpolate the counts.
+Iterated weighted least squares (IWLS) for a mixed model representation of the P-splines regression,
+conditional on a particular penalty coefficient, is used for estimating the B-spline coefficients.
+Leave-one-out cross-validation deviances are available for estimation of the penalty coefficient.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fpsden(x, lambdaseq = NULL, breaks = NULL, xrange = NULL,
+  nseg = 10, degree = 3, design.knots = NULL, ord = 2)
+
+lpsden(x, beta = NULL, bsplines = NULL, nbinwidth = 1, log = TRUE)
+
+nlpsden(pvector, x, bsplines = NULL, nbinwidth = 1,
+  finitelik = FALSE)
+
+cvpsden(lambda = 1, counts, bsplines, ord = 2)
+
+iwlspsden(counts, bsplines, ord = 2, lambda = 10)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>quantiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdaseq</code></td>
+<td>
+<p>vector of <code class="reqn">\lambda</code>'s (or scalar) to be considered in profile likelihood. Required.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>histogram breaks (as in <code>hist</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xrange</code></td>
+<td>
+<p>vector of minimum and maximum of B-spline (support of density)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nseg</code></td>
+<td>
+<p>number of segments between knots</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree</code></td>
+<td>
+<p>degree of B-splines (0 is constant, 1 is linear, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design.knots</code></td>
+<td>
+<p>spline knots for splineDesign function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ord</code></td>
+<td>
+<p>order of difference used in the penalty term</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>vector of B-spline coefficients (required)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bsplines</code></td>
+<td>
+<p>matrix of B-splines</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbinwidth</code></td>
+<td>
+<p>scaling to convert count frequency into proper density</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if TRUE then log density</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvector</code></td>
+<td>
+<p>vector of initial values of GPD parameters (<code>sigmau</code>, <code>xi</code>) or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>finitelik</code></td>
+<td>
+<p>logical, should log-likelihood return finite value for invalid parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>penalty coefficient</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>counts</code></td>
+<td>
+<p>counts from histogram binning</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The P-splines density estimator is fitted using maximum likelihood estimation, following
+the approach of Eilers and Marx (1996). Histogram binning produces frequency counts, which are
+modelled by constrained B-splines in a Poisson regression. A penalty
+based on differences in the sequences B-spline coefficients is used to smooth/interpolate the counts.
+</p>
+<p>The B-splines are defined as in Eiler and Marx (1996), so that those are meet the boundary are simply
+shifted and truncated version of the internal B-splines. No renormalisation is carried out. They are not
+"natural" B-spline which are also commonly in use. Note that atural B-splines can be obtained by suitable
+linear combinations of these B-splines. Hence, in practice there is little difference in the fit obtained
+from either B-spline definition, even with the penalty constraining the coefficients. If the user desires
+they can force the use of natural B-splines, by prior specification of the <code>design.knots</code>
+with appropriate replication of the boundaries, see <code>dpsden</code>.
+</p>
+<p>Iterated weighted least squares (IWLS) for a mixed model representation of the P-splines regression,
+conditional on a particular penalty coefficient, is used for estimating the B-spline coefficients which
+is equivalent to maximum likelihood estimation. Leave-one-out cross-validation deviances are available
+for estimation of the penalty coefficient.
+</p>
+<p>The parameter vector is the B-spline coefficients <code>beta</code>, no matter whether the penalty coefficient is
+fixed or estimated. The penalty coefficient <code>lambda</code> is treated separately.
+</p>
+<p>The log-likelihood functions <code>lpsden</code> and <code>nlpsden</code>
+evaluate the likelihood for the original dataset, using the fitted P-splines density estimator. The
+log-likelihood is output as <code>nllh</code> from the fitting function <code>fpsden</code>.
+They do not provide the likelihood for the Poisson regression of the histogram counts, which is usually
+evaluated using the deviance. The deviance (via CVMSE for Poisson counts) is also output as <code>cvlambda</code>
+from the fitting function <code>fpsden</code>.
+</p>
+<p>The <code>iwlspsden</code> function performs the IWLS. The 
+<code>cvpsden</code> function calculates the leave-one-out cross-validation 
+sum of the squared errors. They are not designed to be used directly by users. No checks of the
+inputs are carried out.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Log-likelihood for original data is given by <code>lpsden</code> and it's
+wrappers for negative log-likelihood from <code>nlpsden</code>. Cross-validation 
+sum of square of errors is provided by <code>cvpsden</code>. Poisson regression
+fitting by IWLS is carried out in <code>iwlspsden</code>. Fitting function
+<code>fpsden</code> returns a simple list with the
+following elements
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+ <code>call</code>:                </td>
+<td style="text-align: left;"> <code>optim</code> call</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>x</code>:                   </td>
+<td style="text-align: left;"> data vector <code>x</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>xrange</code>:              </td>
+<td style="text-align: left;"> range of support of B-splines</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>degree</code>:              </td>
+<td style="text-align: left;"> degree of B-splines</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nseg</code>:                </td>
+<td style="text-align: left;"> number of internal segments</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>design.knots</code>:        </td>
+<td style="text-align: left;"> knots used in <code>splineDesign</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>ord</code>:                 </td>
+<td style="text-align: left;"> order of penalty term</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>binned</code>:              </td>
+<td style="text-align: left;"> histogram results</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>breaks</code>:              </td>
+<td style="text-align: left;"> histogram breaks</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>mids</code>:                </td>
+<td style="text-align: left;"> histogram mid-bins</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>counts</code>:              </td>
+<td style="text-align: left;"> histogram counts</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nbinwidth</code>:           </td>
+<td style="text-align: left;"> scaling factor to convert counts to density</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>bsplines</code>:            </td>
+<td style="text-align: left;"> B-splines matrix used for binned counts</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>databsplines</code>:        </td>
+<td style="text-align: left;"> B-splines matrix used for data</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>counts</code>:              </td>
+<td style="text-align: left;"> histogram counts</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>lambdaseq</code>:           </td>
+<td style="text-align: left;"> <code class="reqn">\lambda</code> vector for profile likelihood or scalar for fixed <code class="reqn">\lambda</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>cvlambda</code>:            </td>
+<td style="text-align: left;"> CV MSE for each <code class="reqn">\lambda</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>mle</code> and <code>beta</code>: </td>
+<td style="text-align: left;"> vector of MLE of coefficients</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nllh</code>:                </td>
+<td style="text-align: left;"> negative log-likelihood for original data</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>n</code>:                   </td>
+<td style="text-align: left;"> total original sample size</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>lambda</code>:              </td>
+<td style="text-align: left;"> Estimated or fixed <code class="reqn">\lambda</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Acknowledgments</h3>
+
+<p>The Poisson regression and leave-one-out cross-validation functions
+are based on the code of Eilers and Marx (1996) available from Brian Marx's website 
+<a href="http://statweb.lsu.edu/faculty/marx/">http://statweb.lsu.edu/faculty/marx/</a>, which is gratefully acknowledged.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The data are both vectors. Infinite and missing sample values are dropped.
+</p>
+<p>No initial values for the coefficients are needed.
+</p>
+<p>It is advised to specify the range of support <code>xrange</code>, using finite end-points. This is 
+especially important when the support is bounded. By default <code>xrange</code> is simply the range of the
+input data <code>range(x)</code>.
+</p>
+<p>Further, it is advised to always set the histogram bin <code>breaks</code>, expecially if the support is bounded.
+By default <code>10*ln(n)</code> equi-spaced bins are defined between <code>xrange</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alfadino Akbar and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://www.math.canterbury.ac.nz/~c.scarrott/evmix">http://www.math.canterbury.ac.nz/~c.scarrott/evmix</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Cross-validation_(statistics)">http://en.wikipedia.org/wiki/Cross-validation_(statistics)</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/B-spline">http://en.wikipedia.org/wiki/B-spline</a>
+</p>
+<p><a href="http://statweb.lsu.edu/faculty/marx/">http://statweb.lsu.edu/faculty/marx/</a>
+</p>
+<p>Eilers, P.H.C. and Marx, B.D. (1996). Flexible smoothing with B-splines and penalties.
+Statistical Science 11(2), 89-121.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>kden</code>.
+</p>
+<p>Other psden: <code>fpsdengpd</code>,
+<code>psdengpd</code>, <code>psden</code>
+</p>
+<p>Other fpsden: <code>psden</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(1, 1))
+
+x = rnorm(1000)
+xx = seq(-4, 4, 0.01)
+y = dnorm(xx)
+
+# Plenty of histogram bins (100)
+breaks = seq(-4, 4, length.out=101)
+
+# P-spline fitting with cubic B-splines, 2nd order penalty and 10 internal segments
+# CV search for penalty coefficient. 
+fit = fpsden(x, lambdaseq = 10^seq(-5, 5, 0.25), breaks = breaks,
+             xrange = c(-4, 4), nseg = 10, degree = 3, ord = 2)
+psdensity = exp(fit$bsplines %*% fit$mle)
+
+hist(x, freq = FALSE, breaks = seq(-4, 4, length.out=101), xlim = c(-6, 6))
+lines(xx, y, col = "black") # true density
+
+lines(fit$mids, psdensity/fit$nbinwidth, lwd = 2, col = "blue") # P-splines density
+
+# check density against dpsden function
+with(fit, lines(xx, dpsden(xx, beta, nbinwidth, design = design.knots),
+                lwd = 2, col = "red", lty = 2))
+
+# vertical lines for all knots
+with(fit, abline(v = design.knots, col = "red"))
+
+# internal knots
+with(fit, abline(v = design.knots[(degree + 2):(length(design.knots) - degree - 1)], col = "blue"))
+  
+# boundary knots (support of B-splines)
+with(fit, abline(v = design.knots[c(degree + 1, length(design.knots) - degree)], col = "green"))
+
+legend("topright", c("True Density","P-spline density","Using dpsdens function"),
+  col=c("black", "blue", "red"), lty = c(1, 1, 2))
+legend("topleft", c("Internal Knots", "Boundaries", "Extra Knots"),
+  col=c("blue", "green", "red"), lty = 1)
+
+## End(Not run)
+  
+</code></pre>
+
+
+</div>

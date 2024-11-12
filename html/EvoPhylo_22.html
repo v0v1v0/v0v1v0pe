@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make_clusters</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Estimate and plot character partitions
+</h2>
+
+<h3>Description</h3>
+
+<p>Determines cluster (partition) membership for phylogenetic morphological characters from the supplied Gower distance matrix and requested number of clusters using partitioning around medoids (PAM, or K-medoids). For further and independently testing the quality of the chosen partitioning scheme, users may also poduce graphic clustering (tSNEs), coloring data points according to PAM clusters, to verify PAM clustering results.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">make_clusters(dist_mat, k, tsne = FALSE,
+              tsne_dim = 2, tsne_theta = 0,
+              ...)
+
+## S3 method for class 'cluster_df'
+plot(x, seed = NA, nrow = 1,
+              ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dist_mat</code></td>
+<td>
+
+<p>A Gower distance matrix, the output of a call to <code>get_gower_dist</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>The desired number of clusters (or character partitions), the output from <code>get_sil_widths</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tsne</code></td>
+<td>
+
+<p>Whether to perform Barnes-Hut t-distributed stochastic neighbor embedding (tSNE) to produce a multi-dimensional representation of the distance matrix using <code>Rtsne::Rtsne</code>. The number of dimensions is controlled by the <code>tsne_dim</code> argument. See Details. Default is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tsne_dim</code></td>
+<td>
+
+<p>When <code>tsne = TRUE</code>, the number of dimensions for the tSNE multidimensional scaling plots. This is passed to the <code>dims</code> argument of <code>Rtsne::Rtsne</code>. Default is 2.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tsne_theta</code></td>
+<td>
+
+<p>When <code>tsne = TRUE</code>, a parameter controlling the speed/accuracy trade-off (increase for faster but less accurate results). This is passed to the <code>theta</code> argument of <code>Rtsne::Rtsne</code>. Default is 0 for exact tSNE.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>For <code>make_clusters()</code>, other arguments passed to <code>Rtsne::Rtsne</code> when <code>tsne = TRUE</code>.
+</p>
+<p>For <code>plot()</code>, when plotting a <code>cluster_df</code> object, other arguments passed to <code>ggrepel::geom_text_repel</code> to control display of the observation labels.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>For <code>plot()</code>, a <code>cluster_df</code> object; the output of a call to <code>make_clusters()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>For <code>plot()</code>, the seed used to control the placement of the labels and the jittering of the points. Jittering only occurs when <code>tsne = FALSE</code> in the call to <code>make_clusters()</code>. Using a non-<code>NA</code> seed ensure replicability across uses.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrow</code></td>
+<td>
+
+<p>For <code>plot()</code>, when <code>tsne = TRUE</code> in the call to <code>make_clusters()</code> and <code>tsne_dim</code> is greater than 2, the number of rows used to display the resulting 2-dimensional plots. Default is 1 for side-by-side plots.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>make_clusters</code> calls <code>cluster::pam</code> on the supplied Gower distance matrix with the specified number of clusters to determine cluster membership for each character. PAM is analogous to K-means, but it has its clusters centered around medoids instead of centered around centroids, which are less prone to the impact from outliers and heterogeneous cluster sizes. PAM also has the advantage over k-means of utilizing Gower distance matrices instead of Euclidean distance matrices only.
+</p>
+<p>When <code>tsne = TRUE</code>, a Barnes-Hut t-distributed stochastic neighbor embedding is used to compute a multi-dimensional embedding of the distance matrix, coloring data points according to the PAM-defined clusters, as estimated by the function <code>make_clusters</code>. This graphic clustering allows users to independently test the quality of the chosen partitioning scheme from PAM, and can help in visualizing the resulting clusters. <code>Rtsne::Rtsne</code> is used to do this. The resulting dimensions will be included in the output; see Value below.
+</p>
+<p><code>plot()</code> plots all morphological characters in a scatterplot with points colored based on cluster membership. When <code>tsne = TRUE</code> in the call to <code>make_clusters()</code>, the x- and y-axes will correspond to requested tSNE dimensions. With more than 2 dimensions, several plots will be produced, one for each pair of tSNE dimensions. These are displayed together using <code>patchwork::plot_layout</code>. When <code>tsne = FALSE</code>, the points will be arrange horizontally by cluster membership and randomly placed vertically.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame, inheriting from class <code>"cluster_df"</code>, with a row for each character with its number (<code>character_number</code>) and cluster membership (<code>cluster</code>). When <code>tsne = TRUE</code>, additional columns  will be included, one for each requested tSNE dimension, labeled <code>tSNE_Dim1</code>, <code>tSNE_Dim2</code>, etc., containing the values on the dimensions computed using <code>Rtsne()</code>.
+</p>
+<p>The <code>pam</code> fit resulting from <code>cluster::pam</code> is returned in the <code>"pam.fit"</code> attribute of the outut object.
+</p>
+
+
+<h3>Note</h3>
+
+<p>When using <code>plot()</code> on a <code>cluster_df</code> object, warnings may appear from <code>ggrepel</code> saying something along the lines of "unlabeled data points (too many overlaps). Consider increasing max.overlaps". See <code>ggrepel::geom_text_repel</code> for details; the <code>max.overlaps</code> argument can be supplied to <code>plot()</code> to increase the maximum number of element overlap in the plot. Alternatively, users can increase the size of the plot when exporting it, as it will increase the plot area and reduce the number of elements overlap. This warning can generally be ignored, though.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>vignette("char-part")</code> for the use of this function as part of an analysis pipeline.
+</p>
+<p><code>get_gower_dist</code>, <code>get_sil_widths</code>, <code>cluster_to_nexus</code>
+</p>
+<p><code>cluster::pam</code>, <code>Rtsne::Rtsne</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># See vignette("char-part") for how to use this
+# function as part of an analysis pipeline
+
+data("characters")
+
+# Reading example file as categorical data
+Dmatrix &lt;- get_gower_dist(characters)
+
+sil_widths &lt;- get_sil_widths(Dmatrix, max.k = 7)
+
+sil_widths
+# 3 clusters yields the highest silhouette width
+
+# Create clusters with PAM under k=3 partitions
+cluster_df &lt;- make_clusters(Dmatrix, k = 3)
+
+# Simple plot of clusters
+plot(cluster_df, seed = 12345)
+
+# Create clusters with PAM under k=3 partitions and perform
+# tSNE (3 dimensions; default is 2)
+cluster_df_tsne &lt;- make_clusters(Dmatrix, k = 3, tsne = TRUE,
+                                 tsne_dim = 2)
+
+# Plot clusters, plots divided into 2 rows, and increasing
+# overlap of text labels (default = 10)
+plot(cluster_df_tsne, nrow = 2, max.overlaps = 20)
+</code></pre>
+
+
+</div>

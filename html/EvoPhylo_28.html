@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_treerates_sgn</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Plot Bayesian evolutionary tree with rate thresholds for selection mode
+</h2>
+
+<h3>Description</h3>
+
+<p>Plots the summary Bayesian evolutionary tree with branches, according to user-defined thresholds (in units of standard deviations) used to infer the strength and mode of selection.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_treerates_sgn(type = c("MrBayes", "BEAST2"),
+                  tree, posterior,
+                  trans = c("none", "log", "log10"),
+                  summary = "mean", drop.dummyextant = TRUE,
+                  clock = 1, threshold = c("1 SD", "2 SD"),
+                  low = "blue", mid = "gray90", high = "red",
+                  branch_size = 2, tip_size = 2,
+                  xlim = NULL, nbreaks = 10, geo_size = list(2, 3),
+                  geo_skip = c("Quaternary", "Holocene", "Late Pleistocene"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>Whether to use data output from "Mr.Bayes" or "BEAST2".
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tree</code></td>
+<td>
+
+<p>A <code>tidytree</code> object; the output of a call to <code>treeio::read.beast</code>. Summary trees from Mr. Bayes will include branch specific rates for all clock partitions, and the partition to be plotted will be specified using the "clock" argument. On the other hand, BEAST2 will output one separate summary tree file for each clock partition. For the latter, the tree file for the partition of interest should be provided for plotting.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>posterior</code></td>
+<td>
+
+<p>A data frame of posterior parameter estimates (log file). From Mr.Bayes, it includes a "clockrate" column indicating the mean (background) clock rate estimate for each generation that will be used for pairwise t-tests. Such data frame can be imported using <code>combine_log</code> (no need to reshape from wide to long). See the <code>posterior1p</code> or <code>posterior3p</code> datasets for an examples of how the input file should look.
+From BEAST2, it will include at least one "rate&lt;filename&gt;.mean" column indicating the mean (background) clock rate estimate for each generation. If there are "P" unlinked clock partitions in BEAST2, there will be P x "rate&lt;filename&gt;.mean" columns (one for each partition) in the posterior log file.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trans</code></td>
+<td>
+
+<p>Type of data transformation to perform on background rates extracted from the posterior log file from Mr. Bayes or BEAST2. Options include "none" (if rates are normally distributed), natural log transformation "log", and log of base 10 transformation "log10". The necessity of using data transformation can be tested using the function <code>plot_back_rates</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summary</code></td>
+<td>
+
+<p>Only when using Mr. Bayes trees. The rate summary stats chosen to calculate selection mode. Only rates "mean" and "median" are allowed. Default is "mean".
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop.dummyextant</code></td>
+<td>
+
+<p><code>logical</code>; Only when using Mr. Bayes trees. Whether to drop the "Dummyextant" tip (if present) from the tree before plotting the tree. Default is <code>TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clock</code></td>
+<td>
+
+<p>The clock partition number to calculate selection mode. Ignored if only one clock is available.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+
+<p>A vector of threshold values. Default is to display thresholds of ±1 relative standard deviation (SD) of the relative posterior clock rates. Should be specified as a number of standard deviations (e.g., <code>"1 SD"</code>) or the confidence level for a confidence interal around the mean relative posterior clockrate (e.g., <code>"95%"</code>). Multiple values are allowed to produce a plot with multiple thresholds. Set to <code>NULL</code> to omit thresholds.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>low, mid, high</code></td>
+<td>
+
+<p>Colors passed to <code>scale_color_steps2</code> to control the colors of the branches based on which thresholds are exceeded. When no thresholds are supplied, use <code>mid</code> to control the color of the tree.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>branch_size</code></td>
+<td>
+
+<p>The thickness of the lines that form the tree.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tip_size</code></td>
+<td>
+
+<p>The font size for the tips of the tree.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlim</code></td>
+<td>
+
+<p>The x-axis limits. Should be two negative numbers (though the axis labels will be in absolute value, i.e., Ma).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbreaks</code></td>
+<td>
+
+<p>The number of interval breaks in the geological timescale.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geo_size</code></td>
+<td>
+
+<p>The font size for the labels in the geological scale. The first value in <code>list()</code> is the font size for geological epochs and the second value is for geological periods. Passed directly to the <code>size</code> argument of <code>deeptime::coord_geo</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geo_skip</code></td>
+<td>
+
+<p>A vector of interval names indicating which intervals should not be labeled. Passed directly to the <code>skip</code> argument of <code>deeptime::coord_geo</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Plots the phylogentic tree contained in <code>tree</code> using <code>ggtree::ggtree</code>. Branches undergoing accelerating evolutionary rates (e.g., &gt;<code>"1 SD"</code>, <code>"3 SD"</code>, or <code>"5 SD"</code> relative to the background rate) for each morphological clock partition suggest directional (or positive) selection for that morphological partition in that branch of the tree. Branches undergoing decelerating evolutionary rates (e.g., &lt;<code>"1 SD"</code>, <code>"3 SD"</code>, or <code>"5 SD"</code> relative to the background rate) for each morphological clock partition suggest stabilizing selection for that morphological partition in that branch of the tree. For details on rationale, see Simões &amp; Pierce (2021).
+</p>
+<p>Please double check that the distribution of background rates (mean rates for the tree) sampled from the posterior follow the assumptions of a normal distribution (e.g., check for normality of distribution in Tracer). Otherwise, displayed results may not have a valid interpretation.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>ggtree</code> object, which inherits from <code>ggplot</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Simões, T. R. and S. E. Pierce (2021). Sustained High Rates of Morphological Evolution During the Rise of Tetrapods. <em>Nature Ecology &amp; Evolution</em> 5: 1403–1414.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>vignette("rates-selection")</code> for the use of this function as part of an analysis pipeline.
+<code>ggtree::ggtree</code>, <code>deeptime::coord_geo</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># See vignette("rates-selection") for how to use this
+# function as part of an analysis pipeline
+
+## MrBayes example
+# Load example tree and posterior
+data("tree3p")
+data("posterior3p")
+
+plot_treerates_sgn(
+  type = "MrBayes",
+  tree3p, posterior3p,          #MrBayes tree file with data for all partitions
+  trans = "none",
+  summary = "mean",             #MrBayes specific argument
+  drop.dummyextant = TRUE,      #MrBayes specific argument
+  clock = 1,                           #Show rates for clock partition 1
+  threshold = c("1 SD", "3 SD"),       #sets background rate threshold for selection mode
+  branch_size = 1.5, tip_size = 3,                          #sets size for tree elements
+  xlim = c(-450, -260), nbreaks = 8, geo_size = list(3, 3)) #sets limits and breaks for geoscale
+
+## Not run: 
+## BEAST2 example
+tree_clock1 &lt;- system.file("extdata", "Penguins_MCC_morpho_part1", package = "EvoPhylo")
+tree_clock1 &lt;- treeio::read.beast(tree_clock1)
+posterior &lt;- system.file("extdata", "Penguins_log.log", package = "EvoPhylo")
+posterior &lt;- read.table(posterior, header = TRUE)
+
+plot_treerates_sgn(
+  type = "BEAST2",
+  tree_clock1, posterior,                 #BEAST2 tree file with data for partition 1
+  trans = "log10",
+  clock = 1,                              #Show rates for clock partition 1
+  threshold = c("1 SD", "3 SD"),          #sets background rate threshold for selection mode
+  branch_size = 1.5, tip_size = 3,                        #sets size for tree elements
+  xlim = c(-70, 30), nbreaks = 8, geo_size = list(3, 3))  #sets limits and breaks for geoscale
+
+## End(Not run)</code></pre>
+
+
+</div>

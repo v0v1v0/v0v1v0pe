@@ -1,0 +1,462 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>repGlm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Replication methods (JK1, JK2 and BRR) for linear regression models and trend estimation.</h2>
+
+<h3>Description</h3>
+
+<p>Compute generalized linear models for complex cluster designs with multiple imputed variables based 
+on the Jackknife (JK1, JK2) or balanced repeated replicates (BRR) procedure. Conceptually, the function combines replication 
+methods and methods for multiple imputed data. Technically, this is a wrapper for the <code>svyglm</code> function
+of the <code>survey</code> package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">repGlm(datL, ID, wgt = NULL, type = c("none", "JK2", "JK1", "BRR", "Fay"), PSU = NULL,
+        repInd = NULL, repWgt = NULL, nest=NULL, imp=NULL, groups = NULL,
+        group.splits = length(groups), group.delimiter = "_",
+        cross.differences = FALSE, trend = NULL, linkErr = NULL, formula,
+        family=gaussian, forceSingularityTreatment = FALSE,
+        glmTransformation = c("none", "sdY"), doCheck = TRUE, na.rm = FALSE,
+        poolMethod = c("mice", "scalar"), useWec = FALSE,
+        scale = 1, rscales = 1, mse=TRUE, rho=NULL, hetero=TRUE,
+        se_type = c("HC3", "HC0", "HC1", "HC2", "CR0", "CR2"),
+        clusters = NULL, crossDiffSE.engine= c("lavaan", "lm"),
+        stochasticGroupSizes = FALSE, verbose = TRUE, progress = TRUE)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>datL</code></td>
+<td>
+
+
+<p>Data frame in the long format (i.e. each line represents one ID unit in one imputation of one nest) containing all 
+variables for analysis.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ID</code></td>
+<td>
+
+
+<p>Variable name or column number of student identifier (ID) variable. ID variable must not contain any missing values. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wgt</code></td>
+<td>
+
+
+<p>Optional: Variable name or column number of weighting variable. If no weighting variable is specified,
+all cases will be equally weighted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+
+<p>Defines the replication method for cluster replicates which is to be applied. Depending on <code>type</code>, additional
+arguments must be specified (e.g., <code>PSU</code> and/or <code>repInd</code> or <code>repWgt</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PSU</code></td>
+<td>
+
+
+<p>Variable name or column number of variable indicating the primary sampling unit (PSU). When a jackknife procedure is applied, 
+the PSU is the jackknife zone variable. If <code>NULL</code>, no cluster structure is assumed and
+standard errors are computed according to a random sample.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repInd</code></td>
+<td>
+
+
+<p>Variable name or column number of variable indicating replicate ID. In a jackknife procedure, this is the jackknife replicate 
+variable. If <code>NULL</code>, no cluster structure is assumed and standard errors are computed according to a random sample.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repWgt</code></td>
+<td>
+
+
+<p>Normally, replicate weights are created by <code>repGlm</code> directly from <code>PSU</code> and <code>repInd</code> variables. Alternatively,
+if replicate weights are included in the data.frame, specify the variable names or column number in the <code>repWgt</code> argument.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nest</code></td>
+<td>
+<p>Optional: name or column number of the nesting variable. Only applies in nested multiple imputed data sets.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>imp</code></td>
+<td>
+<p>Optional: name or column number of the imputation variable. Only applies in multiple imputed data sets.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+
+
+<p>Optional: vector of names or column numbers of one or more grouping variables. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.splits</code></td>
+<td>
+
+
+<p>Optional: If groups are defined, <code>group.splits</code> optionally specifies whether analysis should be done also
+in the whole group or overlying groups. See examples for more details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.delimiter</code></td>
+<td>
+
+
+<p>Character string which separates the group names in the output frame.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cross.differences</code></td>
+<td>
+
+
+<p>Either a list of vectors, specifying the pairs of levels for which cross-level differences should be computed.
+Alternatively, if <code>TRUE</code>, cross-level differences for all pairs of levels are computed. If <code>FALSE</code>, no cross-level
+differences are computed. (see examples 2a, 3, and 4 in the help file of the <code>repMean</code> function)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend</code></td>
+<td>
+
+
+<p>Optional: name or column number of the trend variable. Note: Trend variable must have exact two levels. Levels for 
+grouping variables must be equal in both 'sub populations' partitioned by the trend variable. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linkErr</code></td>
+<td>
+
+
+<p>Optional: name or column number of the linking error variable. If <code>NULL</code>, a linking error of 0 will be assumed in trend estimation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+
+<p>Model formula, see help page of <code>glm</code> for details. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+
+
+<p>A description of the error distribution and link function to be used in the model. See help page of <code>glm</code> for details. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forceSingularityTreatment</code></td>
+<td>
+
+
+<p>Logical: Forces the function to use the workaround to handle singularities in regression models.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glmTransformation</code></td>
+<td>
+
+<p>Optional: Allows for transformation of parameters from linear regression and logistic regression before pooling.
+Useful to compare parameters from different glm models, see Mood (2010). Note: This argument applies only if 
+<code>forceSingularityTreatment</code> is set to 'TRUE'.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doCheck</code></td>
+<td>
+
+<p>Logical: Check the data for consistency before analysis? If <code>TRUE</code> groups with insufficient data are excluded from
+analysis to prevent subsequent functions from crashing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+
+<p>Logical: Should cases with missing values be dropped?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>poolMethod</code></td>
+<td>
+
+<p>Which pooling method should be used? The “mice” method is recommended.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useWec</code></td>
+<td>
+
+<p>Logical: use weighted effect coding? 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+
+<p>scaling constant for variance, for details, see help page of <code>svrepdesign</code> from the <code>survey</code> package
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rscales</code></td>
+<td>
+
+<p>scaling constant for variance, for details, see help page of <code>svrepdesign</code> from the <code>survey</code> package
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mse</code></td>
+<td>
+
+<p>Logical: If <code>TRUE</code>, compute variances based on sum of squares around the point estimate, rather than the mean of the replicates.
+See help page of <code>svrepdesign</code> from the <code>survey</code> package for further details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+
+<p>Shrinkage factor for weights in Fay's method. See help page of <code>svrepdesign</code> from the <code>survey</code> package for further details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hetero</code></td>
+<td>
+
+<p>Logical: Assume heteroscedastic variance for weighted effect coding? Only applies for random samples, i.e. if no replication analyses are executed. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_type</code></td>
+<td>
+
+<p>The sort of standard error sought for cross level differences. Only applies if <code>crossDiffSE == "wec"</code> and <code>hetero == TRUE</code>
+and <code>crossDiffSE.engine == "lm"</code>. See the help page of <code>lm_robust</code> from the <code>estimatr</code> package for further details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+
+<p>Optional: Variable name or column number of cluster variable. Only necessary if weighted effecting coding
+should be performed using heteroscedastic variances. See the help page of <code>lm_robust</code>
+from the <code>estimatr</code> package for further details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crossDiffSE.engine</code></td>
+<td>
+
+<p>Optional: Sort of estimator which should be used for standard error estimation in weighted effect coding regression.
+Only applies if <code>useWec == TRUE</code>. To date, only lavaan allows for stochastic group sizes.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stochasticGroupSizes</code></td>
+<td>
+
+<p>Logical: Assume stochastic group sizes for using weighted effect coding regression with categorical predictors? Note: To date,
+only lavaan allows for stochastic group sizes. Stochastic group sizes cannot be assumed if any replication method
+(jackknife, BRR) is applied.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>Logical: Show analysis information on console?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+
+<p>Logical: Show progress bar on console?
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Function first creates replicate weights based on <code>PSU</code> and <code>repInd</code> variables according to JK2 or
+BRR procedure. According to multiple imputed data sets, a workbook with several analyses is created.
+The function afterwards serves as a wrapper for <code>svyglm</code> implemented in the <code>survey</code> package.
+The results of the several analyses are then pooled according to Rubin's rule, which is adapted for nested 
+imputations if the <code>nest</code> argument implies a nested structure.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of data frames in the long format. The output can be summarized using the <code>report</code> function.
+The first element of the list is a list with either one (no trend analyses) or two (trend analyses)
+data frames with at least six columns each. For each subpopulation denoted by the <code>groups</code>
+statement, each dependent variable, each parameter and each coefficient the corresponding value is given. 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>Denotes the group an analysis belongs to. If no groups were specified and/or analysis for the 
+whole sample were requested, the value of ‘group’ is ‘wholeGroup’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depVar</code></td>
+<td>
+<p>Denotes the name of the dependent variable in the analysis. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modus</code></td>
+<td>
+<p>Denotes the mode of the analysis. For example, if a JK2 analysis without sampling weights was 
+conducted, ‘modus’ takes the value ‘jk2.unweighted’. If a analysis without any replicates but with sampling
+weights was conducted, ‘modus’ takes the value ‘weighted’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameter</code></td>
+<td>
+<p>Denotes the parameter of the regression model for which the corresponding value is given
+further. Amongst others, the ‘parameter’ column takes the values ‘(Intercept)’ and ‘gendermale’ if ‘gender’ 
+was the dependent variable, for instance. See example 1 for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficient</code></td>
+<td>
+<p>Denotes the coefficient for which the corresponding value is given further. Takes the 
+values ‘est’ (estimate) and ‘se’ (standard error of the estimate).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>The value of the parameter estimate in the corresponding group.</p>
+</td>
+</tr>
+</table>
+<p>If groups were specified, further columns which are denoted by the group names are added to the data frame. 
+</p>
+
+
+<h3>References</h3>
+
+<p>te Grotenhuis, M., Pelzer, B., Eisinga, R., Nieuwenhuis, R., Schmidt-Catran, A., &amp; Konig, R. (2017).
+When size matters: advantages of weighted effect coding in observational studies. <em>International Journal of Public Health.</em> <b>62</b>, 163–167.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### load example data (long format)
+data(lsa)
+### use only the first nest
+bt         &lt;- lsa[which(lsa[,"nest"] == 1),]
+### use only data from 2010
+bt2010     &lt;- bt[which(bt[,"year"] == 2010),]
+## use only reading data
+bt2010read &lt;- bt2010[which(bt2010[,"domain"] == "reading"),]
+
+### Example 1: Computes linear regression from reading score on gender separately
+### for each country. Assume no nested structure.
+mod1 &lt;- repGlm(datL = bt2010read, ID = "idstud", wgt = "wgt", type = "jk2",
+        PSU = "jkzone", repInd = "jkrep", imp = "imp", groups = "country",
+        formula = score~sex, family ="gaussian")
+res1 &lt;- report(mod1, printGlm = TRUE)
+
+
+### Example 2: Computes log linear regression from pass/fail on ses and gender
+### separately for each country in a nested structure. Assuming equally weighted
+### cases by omitting "wgt" argument
+dat  &lt;- lsa[intersect(which(lsa[,"year"] == 2010), which(lsa[,"domain"] == "reading")),]
+mod2 &lt;- repGlm(datL = dat, ID = "idstud", type = "JK2",  PSU = "jkzone",
+        repInd = "jkrep", imp = "imp", nest="nest", groups = "country",
+        formula = passReg~sex*ses, family = quasibinomial(link="logit"))
+res2 &lt;- report(mod2, printGlm = TRUE)
+
+### Example 3: Like example 1, but without any replication methods
+### trend estimation (without linking error) and nested imputation
+dat  &lt;- lsa[which(lsa[,"domain"] == "reading"),]
+mod3 &lt;- repGlm(datL = dat, ID = "idstud", wgt = "wgt", imp = "imp", nest = "nest",
+        groups = "country",  formula = score~sex, trend = "year")
+res3 &lt;- report(mod3, printGlm = TRUE)
+
+### Example 4: weighted effect coding to estimate whether a specific country's mean
+### differs from the overall mean (whereas the overall population is a composite of 
+### all countries). The procedure adapts the weighted effect coding procedures 
+### described in te Grotenhuis (2017) for multiple imputation and replication methods. 
+mod4 &lt;- repGlm(datL = bt2010read, ID = "idstud", wgt = "wgt", type = "jk2",
+        PSU = "jkzone", repInd = "jkrep", imp = "imp", formula = score~country,
+        useWec=TRUE)
+res4 &lt;- report(mod4, printGlm = FALSE)
+</code></pre>
+
+
+</div>

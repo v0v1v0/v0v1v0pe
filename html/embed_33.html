@@ -1,0 +1,269 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>step_pca_sparse_bayes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sparse Bayesian PCA Signal Extraction</h2>
+
+<h3>Description</h3>
+
+<p><code>step_pca_sparse_bayes()</code> creates a <em>specification</em> of a recipe step that
+will convert numeric data into one or more principal components that can have
+some zero coefficients.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">step_pca_sparse_bayes(
+  recipe,
+  ...,
+  role = "predictor",
+  trained = FALSE,
+  num_comp = 5,
+  prior_slab_dispersion = 1,
+  prior_mixture_threshold = 0.1,
+  options = list(),
+  res = NULL,
+  prefix = "PC",
+  keep_original_cols = FALSE,
+  skip = FALSE,
+  id = rand_id("pca_sparse_bayes")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>recipe</code></td>
+<td>
+<p>A recipe object. The step will be added to the sequence of
+operations for this recipe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more selector functions to choose which variables will be
+used to compute the components. See <code>selections()</code> for more details. For
+the <code>tidy</code> method, these are not currently used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>role</code></td>
+<td>
+<p>For model terms created by this step, what analysis role should
+they be assigned? By default, the function assumes that the new principal
+component columns created by the original variables will be used as
+predictors in a model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained</code></td>
+<td>
+<p>A logical to indicate if the quantities for preprocessing have
+been estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_comp</code></td>
+<td>
+<p>The number of components to retain as new predictors.
+If <code>num_comp</code> is greater than the number of columns or the number of
+possible components, a smaller value will be used. If <code>num_comp = 0</code>
+is set then no transformation is done and selected variables will
+stay unchanged, regardless of the value of <code>keep_original_cols</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_slab_dispersion</code></td>
+<td>
+<p>This value is proportional to the dispersion (or
+scale) parameter for the slab portion of the prior. Smaller values result
+in an increase in zero coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_mixture_threshold</code></td>
+<td>
+<p>The parameter that defines the trade-off
+between the spike and slab components of the prior. Increasing this
+parameter increases the number of zero coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>options</code></td>
+<td>
+<p>A list of options to the default method for
+<code>VBsparsePCA::VBsparsePCA()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res</code></td>
+<td>
+<p>The rotation matrix once this preprocessing step has been trained
+by <code>prep()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prefix</code></td>
+<td>
+<p>A character string that will be the prefix to the resulting new
+variables. See notes below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_original_cols</code></td>
+<td>
+<p>A logical to keep the original variables in the
+output. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip</code></td>
+<td>
+<p>A logical. Should the step be skipped when the recipe is baked by
+<code>recipes::bake()</code>? While all operations are baked when <code>recipes::prep()</code> is
+run, some operations may not be able to be conducted on new data (e.g.
+processing the outcome variable(s)). Care should be taken when using <code>skip = TRUE</code> as it may affect the computations for subsequent operations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A character string that is unique to this step to identify it.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>VBsparsePCA</code> package is required for this step. If it is not installed,
+the user will be prompted to do so when the step is defined.
+</p>
+<p>A spike-and-slab prior is a mixture of two priors. One (the "spike") has all
+of its mass at zero and represents a variable that has no contribution to the
+PCA coefficients. The other prior is a broader distribution that reflects the
+coefficient distribution of variables that do affect the PCA analysis. This
+is the "slab". The narrower the slab, the more likely that a coefficient will
+be zero (or are regularized to be closer to zero). The mixture of these two
+priors is governed by a mixing parameter, which itself has a prior
+distribution and a hyper-parameter prior.
+</p>
+<p>PCA coefficients and their resulting scores are unique only up to the sign.
+This step will attempt to make the sign of the components more consistent
+from run-to-run. However, the sparsity constraint may interfere with this
+goal.
+</p>
+<p>The argument <code>num_comp</code> controls the number of components that will be retained
+(the original variables that are used to derive the components are removed from
+the data). The new components will have names that begin with <code>prefix</code> and a
+sequence of numbers. The variable names are padded with zeros. For example, if
+<code>num_comp &lt; 10</code>, their names will be <code>PC1</code> - <code>PC9</code>. If <code>num_comp = 101</code>,
+the names would be <code>PC1</code> - <code>PC101</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated version of <code>recipe</code> with the new step added to the
+sequence of existing steps (if any). For the <code>tidy</code> method, a tibble with
+columns <code>terms</code> (the selectors or variables selected), <code>value</code> (the
+loading), and <code>component</code>.
+</p>
+
+
+<h3>Tidying</h3>
+
+<p>When you <code>tidy()</code> this step, a tibble is retruned with
+columns <code>terms</code>, <code>value</code>, <code>component</code>, and <code>id</code>:
+</p>
+
+<dl>
+<dt>terms</dt>
+<dd>
+<p>character, the selectors or variables selected</p>
+</dd>
+<dt>value</dt>
+<dd>
+<p>numeric, variable loading</p>
+</dd>
+<dt>component</dt>
+<dd>
+<p>character, principle component</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>character, id of this step</p>
+</dd>
+</dl>
+<h3>Tuning Parameters</h3>
+
+<p>This step has 3 tuning parameters:
+</p>
+
+<ul>
+<li> <p><code>num_comp</code>: # Components (type: integer, default: 5)
+</p>
+</li>
+<li> <p><code>prior_slab_dispersion</code>: Dispersion of Slab Prior (type: double, default: 1)
+</p>
+</li>
+<li> <p><code>prior_mixture_threshold</code>: Threshold for Mixture Prior (type: double, default: 0.1)
+</p>
+</li>
+</ul>
+<h3>Case weights</h3>
+
+<p>The underlying operation does not allow for case weights.
+</p>
+
+
+<h3>References</h3>
+
+<p>Ning, B. (2021). Spike and slab Bayesian sparse principal
+component analysis. arXiv:2102.00305.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>step_pca_sparse()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(recipes)
+library(ggplot2)
+
+data(ad_data, package = "modeldata")
+
+ad_rec &lt;-
+  recipe(Class ~ ., data = ad_data) %&gt;%
+  step_zv(all_predictors()) %&gt;%
+  step_YeoJohnson(all_numeric_predictors()) %&gt;%
+  step_normalize(all_numeric_predictors()) %&gt;%
+  step_pca_sparse_bayes(
+    all_numeric_predictors(),
+    prior_mixture_threshold = 0.95,
+    prior_slab_dispersion = 0.05,
+    num_comp = 3,
+    id = "sparse bayesian pca"
+  ) %&gt;%
+  prep()
+
+tidy(ad_rec, id = "sparse bayesian pca") %&gt;%
+  mutate(value = ifelse(value == 0, NA, value)) %&gt;%
+  ggplot(aes(x = component, y = terms, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2() +
+  theme(axis.text.y = element_blank())
+
+</code></pre>
+
+
+</div>

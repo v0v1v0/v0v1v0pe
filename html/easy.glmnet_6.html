@@ -1,0 +1,91 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>glmnet_get.items.relevance</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get the relevance of the model items</h2>
+
+<h3>Description</h3>
+
+<p>Function to calculate the relevance of the items of a model or of a list of models.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">glmnet_get.items.relevance(x, childname = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of class <code>"glmnet_fit"</code>, a list of objects of class <code>"glmnet_fit"</code>, or a list of objects that have a child of class <code>"glmnet_fit"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>childname</code></td>
+<td>
+<p>name of the child of class <code>"glmnet_fit"</code> (if <code>x</code>) is a list of objects that have a child of class <code>"glmnet_fit"</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The relevance is calculated as <code>abs( standardized_coefficient ) / sum(abs( standardized_coefficients ))</code>, as in the function <code>lasso_vars</code>.</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric vector representing the relevance of the items of the model.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Joaquim Radua, based on the previous work of others (see Details)</p>
+
+
+<h3>References</h3>
+
+<p>Palau, P., Solanes, A., Madre, M., Saez-Francas, N., Sarro, S., Moro, N., Verdolini, N., Sanchez, M., Alonso-Lana, S., Amann, B.L., Romaguera, A., Martin-Subero, M., Fortea, L., Fuentes-Claramonte, P., Garcia-Leon, M.A., Munuera, J., Canales-Rodriguez, E.J., Fernandez-Corcuera, P., Brambilla, P., Vieta, E., Pomarol-Clotet, E., Radua, J. (2023)
+Improved estimation of the risk of manic relapse by combining clinical and brain scan data.
+<em>Spanish Journal of Psychiatry and Mental Health</em>, <b>16</b>, 235–243, doi:10.1016/j.rpsm.2023.01.001.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>glmnet_predict</code> for obtaining predictions,
+<code>cv</code> for conducting a cross-validation.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create random x (predictors) and y (binary)
+x = matrix(rnorm(25000), ncol = 50)
+y = 1 * (plogis(apply(x[,1:5], 1, sum) + rnorm(500, 0, 0.1)) &gt; 0.5)
+
+# Predict y via cross-validation
+fit_fun = function (x_training, y_training) {
+  list(
+    lasso = glmnet_fit(x_training, y_training, family = "binomial")
+  )
+}
+predict_fun = function (m, x_test) {
+  glmnet_predict(m$lasso, x_test)
+}
+# Only 2 folds to ensure the example runs quickly
+res = cv(x, y, family = "binomial", fit_fun = fit_fun, predict_fun = predict_fun, nfolds = 2)
+
+# Show the relevance of the predictors
+relevance = glmnet_get.items.relevance(res$models, "lasso")
+relevance = relevance[which(relevance &gt;= 0.01)] # Select items with &gt;=1% relevance
+round(relevance, 2)
+</code></pre>
+
+
+</div>

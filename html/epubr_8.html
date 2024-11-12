@@ -1,0 +1,91 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epub_recombine</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Recombine text sections</h2>
+
+<h3>Description</h3>
+
+<p>Split and recombine EPUB text sections based on regular expression pattern matching.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epub_recombine(data, pattern, sift = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame created by <code>epub</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pattern</code></td>
+<td>
+<p>character, a regular expression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sift</code></td>
+<td>
+<p><code>NULL</code> or a named list of parameters passed to <code>epub_sift</code>. See details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function takes a regular expression and uses it to determine new break points for the full e-book text.
+This is particularly useful when sections pulled from EPUB metadata have arbitrary breaks and the text contains meaningful breaks at random locations in various sections.
+<code>epub_recombine</code> collapses the text and then creates a new nested data frame containing new chapter/section labels, word counts and character counts,
+associated with the text based on the new break points.
+</p>
+<p>Usefulness depends on the quality of the e-book. While this function exists to improve the data structure of e-book content parsed from e-books with poor metadata formatting,
+it still requires original formatting that will at least allow such an operation to be successful, specifically a consistent, non-ambiguous regular expression pattern.
+See examples below using the built in e-book dataset.
+</p>
+<p>When used in conjunction with <code>epub_sift</code> via the <code>sift</code> argument, recombining and resifting is done recursively.
+This is because it is possible that sifting can create a need to rerun the recombine step in order to regenerate proper chapter indexing for the section column.
+However, recombining a second time does not lead to a need to resift, so recursion ends after one round regardless.
+</p>
+<p>This is a convenient way to avoid the syntax:
+</p>
+<p><code>epub_recombine([args]) %&gt;% epub_sift([args]) %&gt;% epub_recombine([args])</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a data frame
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>epub_sift</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+file &lt;- system.file("dracula.epub", package = "epubr")
+x &lt;- epub(file) # parse entire e-book
+x$data[[1]] # note arbitrary section breaks (not between chapters)
+
+pat &lt;- "CHAPTER [IVX]+" # but a reliable pattern exists for new breaks
+epub_recombine(x, pat) # not as expected; pattern also in table of contents
+
+epub_recombine(x, pat, sift = list(n = 1000)) # sift low word-count sections
+
+</code></pre>
+
+
+</div>

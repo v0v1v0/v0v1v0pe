@@ -1,0 +1,221 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EMbootstrap</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Bootstrap Method
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the value of parameters several times by bootstrap method where the parameters are estimated by EM algorithm. In this way, we can observe the distribution of parameter.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EMbootstrap(X, Y, Z, samplesize, boots_samplesize, boots_expriments, classsize = 2,
+            learning_rate = 0.1, regular_parameter_eta = 0.001, max_iteration = 10000, 
+            max_iteration_eta = 10000, compact_flag = FALSE, C0 = 5, C1 = 2, C2 = 9)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+<p>the co-variables of the mean of each subgroup
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+<p>the respond variable
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+
+<p>the co-variables determining subgroup
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samplesize</code></td>
+<td>
+
+<p>the size of this sample.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boots_samplesize</code></td>
+<td>
+
+<p>the size of chosen sample in one step of bootstrap
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boots_expriments</code></td>
+<td>
+
+<p>the steps of bootstrap
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>classsize</code></td>
+<td>
+
+<p>the number of subgroup types in your model assumption
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>learning_rate</code></td>
+<td>
+
+<p>learning rate of updating eta
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>regular_parameter_eta</code></td>
+<td>
+
+<p>regular value of updating eta by gradient descending method.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_iteration</code></td>
+<td>
+
+<p>maximum steps of iteration to avoid unlimited looping. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_iteration_eta</code></td>
+<td>
+
+<p>maximal steps of eta iteration to avoid unlimited looping. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compact_flag</code></td>
+<td>
+
+<p>if the value of eta is limited in a compact set, set it TRUE
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C0</code></td>
+<td>
+
+<p>the maximum of intercept of eta.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C1</code></td>
+<td>
+
+<p>the minimum of the norm of slope of eta
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C2</code></td>
+<td>
+
+<p>the maximum of the norm of slope of eta
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Actually, the method can be extended to other parameter estimation where the standard error of parameter can't be calculated in a simple way.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>alpha estimated by bootstrap method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eta</code></td>
+<td>
+<p>eta estimated by bootstrap method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>sigma estimated by bootstrap method.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Linsui Deng
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#parameter initialization
+etasize &lt;- 2
+classsize &lt;- 2
+alphasize &lt;- 3
+samplesize &lt;- 1000
+  
+etatest &lt;- matrix(c(1,1,
+                    0,0),etasize,classsize)
+
+alphatest &lt;- matrix(c(1,0,2,
+                      4,3,5),alphasize,classsize)
+sigmatest &lt;- 0.5
+
+#test of EMbootstrap
+X &lt;- matrix(c(matrix(1,samplesize),
+                  rnorm(samplesize*(etasize-1))+1),samplesize,etasize)
+Z &lt;- matrix(c(matrix(1,samplesize),rbinom(prob=1/2,size=1,n=samplesize),
+                 rnorm(samplesize*(alphasize-2))+1),samplesize,alphasize)
+                 
+Wtest &lt;- Wgenerate(alpha=alphatest,eta=etatest,sigma=sigmatest,X=X,Z=Z)
+
+boots_samplesize &lt;- 100
+boots_expriments &lt;- 30
+samplesize &lt;- dim(Wtest$X)[1]
+EMbootstrap_theta &lt;- EMbootstrap(Wtest$X,Wtest$Y,Wtest$Z,samplesize,
+                                 boots_samplesize,boots_expriments,
+                                 classsize=2,compact_flag=TRUE,C0=5,C1=0.2,C2=5)
+index &lt;- which(EMbootstrap_theta$sigma&lt;0.8)
+EMsimulation_result_sort &lt;- EM_result_sort(EMbootstrap_theta$alpha[index,,],
+                                             EMbootstrap_theta$eta[index,,])
+EM_parameter &lt;- EM_parameter_sd(EMsimulation_result_sort$alpha,
+                                EMsimulation_result_sort$eta,
+                                 EMbootstrap_theta$sigma[index]) 
+</code></pre>
+
+
+</div>

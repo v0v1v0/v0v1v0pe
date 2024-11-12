@@ -1,0 +1,230 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>quad.form</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Evaluate a quadratic form efficiently</h2>
+
+<h3>Description</h3>
+
+<p>Given a square matrix <code class="reqn">M</code> of size <code class="reqn">n\times n</code>, and a
+matrix <code class="reqn">x</code> of size <code class="reqn">n\times p</code> (or a vector of length
+<code class="reqn">n</code>), evaluate various quadratic forms.
+</p>
+<p>(in the following, <code class="reqn">x^T</code> denotes the complex conjugate of
+the transpose, also known as the Hermitian transpose.  This only
+matters when considering complex numbers).
+</p>
+
+<ul>
+<li>
+<p> Function <code>quad.form(M,x)</code> evaluates <code class="reqn">x^TMx</code> in an efficient manner
+</p>
+</li>
+<li>
+<p> Function <code>quad.form.inv(M,x)</code> returns <code class="reqn">x^TM^{-1}x</code> using an efficient method that avoids
+inverting <code class="reqn">M</code>
+</p>
+</li>
+<li>
+<p> Function <code>quad.tform(M,x)</code> returns <code class="reqn">xMx^T</code> using <code>tcrossprod()</code> without taking
+a transpose
+</p>
+</li>
+<li>
+<p> Function <code>quad.tform.inv(M,x)</code> returns <code class="reqn">xM^{-1}x^T</code>, although a single transpose is needed
+</p>
+</li>
+<li>
+<p> Function <code>quad.3form(M,l,r)</code> returns <code class="reqn">l^TMr</code> using nested calls to <code>crossprod()</code>.  It's
+no faster than calling <code>crossprod()</code> directly, but makes code
+neater and less error-prone (IMHO)
+</p>
+</li>
+<li>
+<p> Function <code>quad.3form.inv(M,l,r)</code> returns
+<code class="reqn">l^TM^{-1}r</code>
+</p>
+</li>
+<li>
+<p> Function <code>quad.3tform(M,l,r)</code> returns <code class="reqn">lMr^T</code> using nested calls to <code>tcrossprod()</code>.  Again,
+this is to make for neater code
+</p>
+</li>
+<li>
+<p> Function <code>quad.diag(M,x)</code> returns the <em>diagonal</em> of
+the (potentially very large) square matrix <code>quad.form(M,x)</code>
+without calculating the off diagonal elements
+</p>
+</li>
+<li>
+<p> Function <code>quad.tdiag(M,x)</code> similarly returns the diagonal of
+<code>quad.tform(M,x)</code>
+</p>
+</li>
+<li>
+<p> Function <code>quad.3diag(M,l,r)</code> returns the diagonal of
+<code>quad.3form(M,l,r)</code> 
+</p>
+</li>
+<li>
+<p> Function <code>quad.3tdiag(M,l,r)</code> returns the diagonal of
+<code>quad.3tform(M,l,r)</code> 
+</p>
+</li>
+</ul>
+<p>These functions invoke the following lower-level calls:
+</p>
+
+<ul>
+<li>
+<p> Function <code>ht(x)</code> returns the Hermitian transpose, that is,
+the complex conjugate of the transpose, sometimes written <code class="reqn">x^*</code>
+</p>
+</li>
+<li>
+<p> Function <code>cprod(x,y)</code> returns <code class="reqn">x^T y</code>,
+equivalent to <code>crossprod(Conj(x),y)</code>
+</p>
+</li>
+<li>
+<p> Function <code>tcprod(x,y)</code> returns <code class="reqn">x y^T</code>,
+equivalent to <code>crossprod(x,Conj(y))</code> </p>
+</li>
+</ul>
+<p>Note again that in the calls above, “transpose” [that is,
+<code class="reqn">x^T</code>] means “Conjugate transpose”, or the Hermitian
+transpose.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">quad.form(M, x, chol=FALSE)
+quad.form.inv(M, x)
+quad.tform(M, x)
+quad.3form(M,left,right)
+quad.3tform(M,left,right)
+quad.tform.inv(M,x)
+quad.diag(M,x)
+quad.tdiag(M,x)
+quad.3diag(M,left,right)
+quad.3tdiag(M,left,right)
+cprod(x,y)
+tcprod(x,y)
+ht(x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>Square matrix of size <code class="reqn">n\times n</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x,y</code></td>
+<td>
+<p>Matrix of size <code class="reqn">n\times p</code>, or vector of length <code class="reqn">n</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chol</code></td>
+<td>
+<p>Boolean, with <code>TRUE</code> meaning to interpret
+argument <code>M</code> as the lower triangular Cholesky decomposition
+of the quadratic form.  Remember that 
+<code>M.lower %*% M.upper == M</code>,  and <code>chol()</code> returns the
+upper triangular matrix, so one needs to use the transpose
+<code>t(chol(M))</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>left,right</code></td>
+<td>
+<p>In function <code>quad.3form()</code>, matrices with
+<code class="reqn">n</code> rows and arbitrary number of columns</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The “meat” of <code>quad.form()</code> for <code>chol=FALSE</code> is just
+<code>crossprod(crossprod(M, x), x)</code>, and that of
+<code>quad.form.inv()</code> is <code>crossprod(x, solve(M, x))</code>.
+</p>
+<p>If the Cholesky decomposition of <code>M</code> is available, then calling
+with <code>chol=TRUE</code> and supplying <code>M.upper</code> should generally be
+faster (for large matrices) than calling with <code>chol=FALSE</code> and
+using <code>M</code> directly.  The time saving is negligible for matrices
+smaller than about <code class="reqn">50\times 50</code>, even if the overhead of
+computing <code>M.upper</code> is ignored.
+</p>
+
+
+<h3>Note</h3>
+
+<p>These functions are used extensively in the emulator and
+calibrator packages' R code, primarily in the interests of elegant
+code, but also speed.  For the problems I usually consider, the
+speedup (of <code>quad.form(M,x)</code> over <code>t(x) %*% M %*% x</code>,
+say) is marginal at best.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>See Also</h3>
+
+<p><code>optimize</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">jj &lt;- matrix(rnorm(80),20,4)
+M &lt;- crossprod(jj,jj)
+M.lower &lt;- t(chol(M))
+x &lt;- matrix(rnorm(8),4,2)
+
+jj.1 &lt;- t(x) %*% M %*% x
+jj.2 &lt;- quad.form(M,x)
+jj.3 &lt;- quad.form(M.lower,x,chol=TRUE)
+print(jj.1)
+print(jj.2)
+print(jj.3)
+
+
+
+
+## Make two Hermitian positive-definite matrices:
+L &lt;- matrix(c(1,0.1i,-0.1i,1),2,2)
+LL &lt;- diag(11)
+LL[2,1] &lt;- -(LL[1,2] &lt;- 0.1i)
+
+
+z &lt;- t(latin.hypercube(11,2,complex=TRUE))
+
+
+quad.diag(L,z)     # elements real because L is HPD
+quad.tdiag(LL,z)   # ditto
+
+
+
+
+## Now consider accuracy:
+quad.form(solve(M),x) - quad.form.inv(M,x)  # should be zero
+quad.form(M,x) - quad.tform(M,t(x))         # should be zero
+quad.diag(M,x) - diag(quad.form(M,x))       # should be zero
+diag(quad.form(L,z))   - quad.diag(L,z)     # should be zero
+diag(quad.tform(LL,z)) - quad.tdiag(LL,z)   # should be zero
+</code></pre>
+
+
+</div>

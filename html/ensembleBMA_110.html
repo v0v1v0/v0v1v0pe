@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Probability Integral Transform for ensemble forcasting models
+</h2>
+
+<h3>Description</h3>
+
+<p>Computes the probabilty integral transform (PIT)
+of a BMA ensemble forecasting model at observation locations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pit( fit, ensembleData, dates = NULL, randomizeATzero=FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+
+<p>A model fit to ensemble forecasting data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ensembleData</code></td>
+<td>
+
+<p>An <code>ensembleData</code> object that includes ensemble forecasts,
+verification observations and possibly dates. 
+Missing values (indicated by <code>NA</code>) are allowed. \
+This need not be the data used for the model <code>fit</code>, 
+although it must include the same ensemble members. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+
+<p>The dates for which the CDF will be computed.
+These dates must be consistent with <code>fit</code> and 
+<code>ensembleData</code>.
+The default is to use all of the dates in <code>fit</code>.
+The dates are ignored if <code>fit</code> originates from <code>fitBMA</code>, 
+which also ignores date information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomizeATzero</code></td>
+<td>
+
+<p>For the <code>gamma0</code> model for precipitation, observations should be
+randomized at 0 for assessing the calibration. Has no effect for the
+other models.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Included for generic function compatibility.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Most often used for computing PIT histograms to assess calibration of
+forecasts, in which case the observations in <code>ensembleData</code> would
+be those used in modeling <code>fit</code>. <br>
+Instances in <code>ensembleData</code> without verifying observations 
+are ignored. <br>
+Note the model may have been applied to a power transformation of the data,
+but that information is included in the input <code>fit</code>, and
+the output is transformed appropriately. <br>
+The PIT is a continuous analog of the verification rank.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The value of the BMA cumulative distribution function CDF
+corresponding to the fit at the observed values in <code>ensembleData</code>. 
+</p>
+
+
+<h3>References</h3>
+
+<p>A. E. Raftery, T. Gneiting, F. Balabdaoui and M. Polakowski,
+Using Bayesian model averaging to calibrate forecast ensembles,
+<em>Monthly Weather Review 133:1155–1174, 2005</em>.
+</p>
+<p>T. Gneiting, F. Balabdaoui and A. Raftery,
+Probabilistic forecasts, calibration and sharpness.
+<em>Journal of the Royal Statistical Society, Series B 69:243–268, 2007</em>.
+</p>
+<p>J. M. Sloughter, A. E. Raftery, T Gneiting and C. Fraley, 
+Probabilistic quantitative precipitation forecasting 
+using Bayesian model averaging,
+<em>Monthly Weather Review 135:3209–3220, 2007</em>.
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting and J. M. Sloughter,
+<code>ensembleBMA</code>: An <code>R</code> Package for Probabilistic Forecasting
+using Ensemble and Bayesian Model Averaging,
+Technical Report No. 516R, Department of Statistics, University of
+Washington, 2007 (revised 2010).
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting,
+Calibrating Multi-Model Forecast Ensembles
+with Exchangeable and Missing Members using Bayesian Model Averaging,
+<em>Monthly Weather Review 138:190–202, 2010</em>.
+</p>
+<p>J. M. Sloughter, T. Gneiting and A. E. Raftery, 
+Probabilistic wind speed forecasting 
+using ensembles and Bayesian model averaging,
+<em>Journal of the American Statistical Association, 105:25–35, 2010</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pitHist</code>,
+<code>verifRankHist</code>,
+<code>ensembleBMA</code>, 
+<code>fitBMA</code>, 
+<code>quantileForecast</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(ensBMAtest)
+
+  ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+  obs &lt;- paste("T2","obs", sep = ".")
+  ens &lt;- paste("T2", ensMemNames, sep = ".")
+
+  tempTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"],
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+## Not run:  # R check
+  tempTestFit &lt;- ensembleBMAnormal( tempTestData, trainingDays = 30)
+
+## End(Not run)
+
+  tempTestForc &lt;- quantileForecast( tempTestFit, tempTestData)
+  range(tempTestForc)
+
+  tempTestPIT &lt;- pit( tempTestFit, tempTestData) 
+
+</code></pre>
+
+
+</div>

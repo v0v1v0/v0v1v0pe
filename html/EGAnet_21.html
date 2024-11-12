@@ -1,0 +1,343 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynEGA.ind.pop</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Intra- and Inter-individual <code>dynEGA</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>A wrapper function to estimate both intraindividiual
+(<code>level = "individual"</code>) and interindividual (<code>level = "population"</code>)
+structures using <code>dynEGA</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dynEGA.ind.pop(
+  data,
+  id = NULL,
+  n.embed = 5,
+  tau = 1,
+  delta = 1,
+  use.derivatives = 1,
+  corr = c("auto", "cor_auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
+  uni.method = c("expand", "LE", "louvain"),
+  ncores,
+  verbose = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Matrix or data frame.
+Participants and variable should be in long format such that
+row <em>t</em> represents observations for all variables at time point
+<em>t</em> for a participant. The next row, <em>t + 1</em>, represents
+the next measurement occasion for that same participant. The next
+participant's data should immediately follow, in the same pattern,
+after the previous participant
+</p>
+<p><code>data</code> should have an ID variable labeled <code>"ID"</code>; otherwise, it is
+assumed that the data represent the population
+</p>
+<p>For groups, <code>data</code> should have a Group variable labeled <code>"Group"</code>;
+otherwise, it is assumed that there are no groups in <code>data</code>
+</p>
+<p>Arguments <code>id</code> and <code>group</code> can be specified to tell the function
+which column in <code>data</code> it should use as the ID and Group variable, respectively
+</p>
+<p>A measurement occasion variable is not necessary and should be <em>removed</em>
+from the data before proceeding with the analysis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Numeric or character (length = 1).
+Number or name of the column identifying each individual.
+Defaults to <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.embed</code></td>
+<td>
+<p>Numeric (length = 1).
+Defaults to <code>5</code>.
+Number of embedded dimensions (the number of observations to
+be used in the <code>Embed</code> function). For example,
+an <code>"n.embed = 5"</code> will use five consecutive observations
+to estimate a single derivative</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>Numeric (length = 1).
+Defaults to <code>1</code>.
+Number of observations to offset successive embeddings in
+the <code>Embed</code> function.
+Generally recommended to leave "as is"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>Numeric (length = 1).
+Defaults to <code>1</code>.
+The time between successive observations in the time series (i.e, lag).
+Generally recommended to leave "as is"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.derivatives</code></td>
+<td>
+<p>Numeric (length = 1).
+Defaults to <code>1</code>.
+The order of the derivative to be used in the analysis.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>0</code> — No derivatives; consistent with moving average
+</p>
+</li>
+<li> <p><code>1</code> — First-order derivatives; interpreted as "velocity" or
+rate of change over time
+</p>
+</li>
+<li> <p><code>2</code> — Second-order derivatives; interpreted as "acceleration" or
+rate of the rate of change over time
+</p>
+</li>
+</ul>
+<p>Generally recommended to leave "as is"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Character (length = 1).
+Method to compute correlations.
+Defaults to <code>"auto"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"auto"</code> — Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use <code>ordinal.categories</code>
+(see <code>polychoric.matrix</code> for more details)
+</p>
+</li>
+<li> <p><code>"cor_auto"</code> — Uses <code>cor_auto</code> to compute correlations.
+Arguments can be passed along to the function
+</p>
+</li>
+<li> <p><code>"pearson"</code> — Pearson's correlation is computed for all
+variables regardless of categories
+</p>
+</li>
+<li> <p><code>"spearman"</code> — Spearman's rank-order correlation is computed
+for all variables regardless of categories
+</p>
+</li>
+</ul>
+<p>For other similarity measures, compute them first and input them
+into <code>data</code> with the sample size (<code>n</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.data</code></td>
+<td>
+<p>Character (length = 1).
+How should missing data be handled?
+Defaults to <code>"pairwise"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"pairwise"</code> — Computes correlation for all available cases between
+two variables
+</p>
+</li>
+<li> <p><code>"listwise"</code> — Computes correlation for all complete cases in the dataset
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Character (length = 1).
+Defaults to <code>"glasso"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"BGGM"</code> — Computes the Bayesian Gaussian Graphical Model.
+Set argument <code>ordinal.categories</code> to determine
+levels allowed for a variable to be considered ordinal.
+See <code>?BGGM::estimate</code> for more details
+</p>
+</li>
+<li> <p><code>"glasso"</code> — Computes the GLASSO with EBIC model selection.
+See <code>EBICglasso.qgraph</code> for more details
+</p>
+</li>
+<li> <p><code>"TMFG"</code> — Computes the TMFG method.
+See <code>TMFG</code> for more details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algorithm</code></td>
+<td>
+<p>Character or
+<code>igraph</code> <code>cluster_*</code> function (length = 1).
+Defaults to <code>"walktrap"</code>.
+Three options are listed below but all are available
+(see <code>community.detection</code> for other options):
+</p>
+
+<ul>
+<li> <p><code>"leiden"</code> — See <code>cluster_leiden</code> for more details
+</p>
+</li>
+<li> <p><code>"louvain"</code> — By default, <code>"louvain"</code> will implement the Louvain algorithm using
+the consensus clustering method (see <code>community.consensus</code>
+for more information). This function will implement
+<code>consensus.method = "most_common"</code> and <code>consensus.iter = 1000</code>
+unless specified otherwise
+</p>
+</li>
+<li> <p><code>"walktrap"</code> — See <code>cluster_walktrap</code> for more details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uni.method</code></td>
+<td>
+<p>Character (length = 1).
+What unidimensionality method should be used?
+Defaults to <code>"louvain"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"expand"</code> — Expands the correlation matrix with four variables correlated 0.50.
+If number of dimension returns 2 or less in check, then the data
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This method was used in the Golino et al.'s (2020)
+<em>Psychological Methods</em> simulation
+</p>
+</li>
+<li> <p><code>"LE"</code> — Applies the Leading Eigenvector algorithm
+(<code>cluster_leading_eigen</code>)
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvector solution is used; otherwise, regular EGA
+is used. This method was used in the Christensen et al.'s (2023)
+<em>Behavior Research Methods</em> simulation
+</p>
+</li>
+<li> <p><code>"louvain"</code> — Applies the Louvain algorithm (<code>cluster_louvain</code>)
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
+This method was validated Christensen's (2022) <em>PsyArXiv</em> simulation.
+Consensus clustering can be used by specifying either
+<code>"consensus.method"</code> or <code>"consensus.iter"</code>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+<p>Numeric (length = 1).
+Number of cores to use in computing results.
+Defaults to <code>ceiling(parallel::detectCores() / 2)</code> or half of your
+computer's processing power.
+Set to <code>1</code> to not use parallel computing
+</p>
+<p>If you're unsure how many cores your computer has,
+then type: <code>parallel::detectCores()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean (length = 1).
+Should progress be displayed?
+Defaults to <code>TRUE</code>.
+Set to <code>FALSE</code> to not display progress</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed on to
+<code>auto.correlate</code>,
+<code>network.estimation</code>,
+<code>community.detection</code>,
+<code>community.consensus</code>, and
+<code>EGA</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Same output as <code>EGAnet{dynEGA}</code> returning list
+objects for <code>level = "individual"</code> and <code>level = "population"</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Hudson Golino &lt;hfg9s at virginia.edu&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.EGAnet</code> for plot usage in <code>EGAnet</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Obtain data
+sim.dynEGA &lt;- sim.dynEGA # bypasses CRAN checks
+
+## Not run: 
+# Dynamic EGA individual and population structure
+dyn.ega1 &lt;- dynEGA.ind.pop(
+  data = sim.dynEGA, n.embed = 5, tau = 1,
+  delta = 1, id = 25, use.derivatives = 1,
+  ncores = 2, corr = "pearson"
+)
+## End(Not run)
+
+</code></pre>
+
+
+</div>

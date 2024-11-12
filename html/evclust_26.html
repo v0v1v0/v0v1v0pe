@@ -1,0 +1,299 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nnevclus</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>NN-EVCLUS algorithm</h2>
+
+<h3>Description</h3>
+
+<p><code>nnevclus</code> computes a credal partition from a dissimilarity matrix using the NN-EVCLUS
+algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nnevclus(
+  x,
+  k = n - 1,
+  D = NULL,
+  J = NULL,
+  c,
+  type = "simple",
+  n_H,
+  ntrials = 1,
+  d0 = quantile(D, 0.9),
+  fhat = NULL,
+  lambda = 0,
+  y = NULL,
+  Is = NULL,
+  nu = 0,
+  ML = NULL,
+  CL = NULL,
+  xi = 0,
+  tr = FALSE,
+  options = c(1, 1000, 1e-04, 10),
+  param0 = list(U0 = NULL, V0 = NULL, W0 = NULL, beta0 = NULL)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>nxp matrix of p attributes observed for n objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Number of distances to compute for each object (default: n-1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>nxn or nxk dissimilarity matrix (optional). If absent, the Euclidean distance 
+is computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>J</code></td>
+<td>
+<p>nxk matrix of indices. D[i,j] is the distance between objects i and
+J[i,j]. (Used only if D is supplied and ncol(D)&lt;n.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c</code></td>
+<td>
+<p>Number of clusters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Type of focal sets ("simple": empty set, singletons and Omega;
+"full": all <code class="reqn">2^c</code> subsets of <code class="reqn">\Omega</code>; "pairs": <code class="reqn">\emptyset</code>, singletons,
+<code class="reqn">\Omega</code>, and all or selected pairs).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_H</code></td>
+<td>
+<p>Number of hidden units (if one hidden layer), or a two-dimensional vector
+of numbers of hidden units (if two hidden layers).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntrials</code></td>
+<td>
+<p>Number of runs of the optimization algorithm (set to 1 if param0 is 
+supplied).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d0</code></td>
+<td>
+<p>Parameter used for matrix normalization. The normalized distance corresponding
+to d0 is 0.95.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fhat</code></td>
+<td>
+<p>Vector of outputs from a one-class SVM for novelty detection (optional)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>Regularization coefficient (default: 0)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Optional vector of class labels for a subset of the training set 
+(for semi-supervised learning).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Is</code></td>
+<td>
+<p>Vector of indices corresponding to y (for semi-supervised learning).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nu</code></td>
+<td>
+<p>Coefficient of the supervised error term (default: 0).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ML</code></td>
+<td>
+<p>Optional nbML*2 matrix of must-link constraints (for constrained clustering). 
+Each row of ML contains the indices of objects that belong to the same class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CL</code></td>
+<td>
+<p>Optional nbCL*2 matrix of cannot-link constraints (for constrained clustering). 
+Each row of CL contains the indices of objects that belong to different classes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>Coefficient of the constrained clustering loss (default: 0).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tr</code></td>
+<td>
+<p>If TRUE, a trace of the stress function is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>options</code></td>
+<td>
+<p>Parameters of the optimization algorithm (see <code>harris</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param0</code></td>
+<td>
+<p>Optional list of initial network parameters (see details).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This is a neural network version of <code>kevclus</code>. The neural net has one or two layers
+of ReLU units and a softmax output layer (see Denoeux, 2020). The weight matrices are 
+denoted by U, V and W for a two-hidden-layer network, or V and W for a one-hidden-layer 
+network. The inputs are a feature vector x, an optional distance matrix D, and an 
+optional vector of one-class SVM outputs fhat, which is used for novelty detection. 
+Part of the output belief mass is transfered to the empty set based on beta[1]+beta[2]*fhat,
+where beta is an additional parameter vector. The network can be trained in fully
+unsupervised mode, in semi-supervised mode (with class labels for a subset of the
+learning instances), or with pairwise constraints. The output is a credal partition 
+(a "credpart" object), with a specific field containing the network parameters (U, V, W,
+beta).
+</p>
+
+
+<h3>Value</h3>
+
+<p>The output credal partition (an object of class <code>"credpart"</code>). In 
+addition to the usual attributes, the output credal partition has the following 
+attributes:
+</p>
+
+<dl>
+<dt>Kmat</dt>
+<dd>
+<p>The matrix of degrees of conflict. Same size as D.</p>
+</dd>
+<dt>D</dt>
+<dd>
+<p>The normalized dissimilarity matrix.</p>
+</dd>
+<dt>trace</dt>
+<dd>
+<p>Trace of the algorithm (Stress function vs iterations).</p>
+</dd>
+<dt>J</dt>
+<dd>
+<p>The matrix of indices.</p>
+</dd>
+<dt>param</dt>
+<dd>
+<p>The network parameters as a list with components U, V, W and beta.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Thierry Denoeux.
+</p>
+
+
+<h3>References</h3>
+
+<p>T. Denoeux. NN-EVCLUS: Neural Network-based Evidential Clustering. 
+Information Sciences, Vol. 572, Pages 297-330, 2021.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>nnevclus_mb</code>, <code>predict.credpart</code>, 
+<code>kevclus</code>, <code>kcevclus</code>, <code>harris</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## Example with one hidden layer and no novelty detection
+data(fourclass)
+x&lt;-scale(fourclass[,1:2])
+y&lt;-fourclass[,3]
+clus&lt;-nnevclus(x,c=4,n_H=c(5,5),type='pairs') # One hidden layer
+plot(clus,x,mfrow=c(2,2))
+
+## Example with two hidden layers and novelty detection
+library(kernlab)
+data(fourclass)
+x&lt;-scale(fourclass[,1:2])
+y&lt;-fourclass[,3]
+x&lt;-data.frame(x)
+svmfit&lt;-ksvm(~.,data=x,type="one-svc",kernel="rbfdot",nu=0.2,kpar=list(sigma=0.2))
+fhat&lt;-predict(svmfit,newdata=x,type="decision")
+clus&lt;-nnevclus(x,k=200,c=4,n_H=c(5,5),type='pairs',fhat=fhat)
+plot(clus,x,mfrow=c(2,2))
+
+## Example with semi-supervised learning
+data&lt;-bananas(400)
+x&lt;-scale(data$x)
+y&lt;-data$y
+Is&lt;-sample(400, 50)  # Indices of labeled instances
+plot(x,col=y,pch=y)
+points(x[Is,],pch=16)
+svmfit&lt;-ksvm(~.,data=x,type="one-svc",kernel="rbfdot",nu=0.2,kpar=list(sigma=0.2))
+fhat&lt;-predict(svmfit,newdata=x,type="decision")
+clus&lt;-nnevclus(x,k=100,c=2,n_H=10,type='full',fhat=fhat,Is=Is,y=y[Is],nu=0.5)
+plot(clus,x)
+
+## Example with pairwise constraints
+data&lt;-bananas(400)
+x&lt;-scale(data$x)
+y&lt;-data$y
+const&lt;-create_MLCL(y,500)
+clus&lt;-nnevclus(x,k=100,c=2,n_H=10,type='full',fhat=fhat,ML=const$ML,CL=const$CL,
+rho=0.5)
+plot(clus,x)
+
+## Example with pairwise constraints and PCCA
+data(iris)
+x&lt;-scale(as.matrix(iris[,1:4]))
+y&lt;-as.integer(iris[,5])
+const&lt;-create_MLCL(y,100)
+res.pcca&lt;-pcca(x,3,const$ML,const$CL,beta=1)
+plot(res.pcca$z,pch=y,col=y)
+clus&lt;-nnevclus(x=x,D=res.pcca$D,c=3,n_H=10,type='full',ML=const$ML,CL=const$CL,rho=0.5)
+plot(clus,x[,3:4])
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

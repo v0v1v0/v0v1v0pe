@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>split_precinct_analysis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Split precinct analysis - VAP Adjusted Election Data</h2>
+
+<h3>Description</h3>
+
+<p>Run Split Precinct Analysis using precinct-level geometries and 
+election data, a district shape, and block-level vap data. This function 
+calculates the percent vap of a precinct contained in the district boundary
+of interest. Then, if specified, multiplies election vote counts by percent
+vap.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">split_precinct_analysis(
+  vtd,
+  planShp,
+  block_pop_data,
+  vote_col_names = NULL,
+  lower_thresh = 0.02,
+  upper_thresh = 0.98,
+  keepOrigElection = TRUE,
+  generatePlots = FALSE,
+  ggmap_object = NULL,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>vtd</code></td>
+<td>
+<p>A sf dataframe with precinct-level geometries potentially in the 
+district from <code>planShp</code>. For election adjustments, it should also 
+contain election results in columns defined in <code>vote_col_names</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>planShp</code></td>
+<td>
+<p>A sf dataframe with one row containing district plan shape
+boundary (one district).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block_pop_data</code></td>
+<td>
+<p>A sf object of blocks covering the region, with vap 
+column</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vote_col_names</code></td>
+<td>
+<p>Character vector containing the name of the columns to 
+be adjusted based on percent vap. This should include election results 
+columns names in <code>vtd</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower_thresh</code></td>
+<td>
+<p>A decimal. If the percent area of a precinct
+inside the <code>planShp</code> is equal to or below this threshold, the precinct
+will be removed. Defaults to .02.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper_thresh</code></td>
+<td>
+<p>A decimal. If the percent area of a precinct
+inside the <code>planShp</code> is equal to or above this threshold, the precinct
+will be considered to be fully contained in the district. Defaults to .98.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keepOrigElection</code></td>
+<td>
+<p>A boolean indicating if original election vote counts
+should be preserved in the output dataset for comparison purposes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>generatePlots</code></td>
+<td>
+<p>Boolean indicating if function should generate
+a list of map checking plots. If TRUE, the function output will include a list 
+of plots that show split precincts and intersecting blocks within and outside 
+of the district.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ggmap_object</code></td>
+<td>
+<p>A ggmap object of the area on interest to be the background
+of plots if <code>generatePlots = TRUE</code>. If this argument is not specified, 
+plots will be generated without a map background.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A boolean indicating whether to print out status messages.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>If <code>generatePlots = FALSE</code>, returns a split precinct results
+data.frame with vap percentages and adjusted election data. If 
+<code>generatePlots = TRUE</code>, returns a list with the result data.frame in the 
+first element and the list of plots in the second.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rachel Carroll &lt;rachelcarroll4@gmail.com&gt;
+</p>
+<p>Loren Collingwood &lt;lcollingwood@unm.edu&gt;
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(eiExpand)
+library(sf)
+
+# load data and shps
+data(planShp); data(vtd); data(mt_block_data)
+
+# filter to a few vtds for this example
+vtd &lt;- vtd %&gt;% 
+  dplyr::filter(
+    GEOID20 %in% c("30091000002", "30085000012", "30085000018", "30085000010")
+  )
+
+# run split precinct analysis without plots
+spa_results &lt;- split_precinct_analysis(
+  vtd = vtd, 
+  planShp = planShp, 
+  block_pop_data = mt_block_data,
+  vote_col_names = c('G16HALRZIN', 'G16HALDJUN', 'G16HALLBRE', 
+                     'G16GOVRGIA', 'G16GOVDBUL', "G16GOVLDUN"),
+  keepOrigElection = TRUE,
+  generatePlots = FALSE) 
+
+# run with plots
+spa_list &lt;- split_precinct_analysis(
+  vtd = vtd, 
+  planShp = planShp, 
+  block_pop_data = mt_block_data,
+  vote_col_names = c('G16HALRZIN', 'G16HALDJUN', 'G16HALLBRE', 
+                     'G16GOVRGIA', 'G16GOVDBUL', "G16GOVLDUN"),
+  lower_thresh = 0,
+  keepOrigElection = TRUE,
+  generatePlots = TRUE) 
+
+# View results
+spa_list[["results"]]
+
+# View plots
+#library(gridExtra)
+#do.call("grid.arrange", c(spa_list[["plots"]], ncol=1))
+
+</code></pre>
+
+
+</div>

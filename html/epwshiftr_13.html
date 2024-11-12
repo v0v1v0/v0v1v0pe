@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>match_coord</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Match coordinates of input EPW in the CMIP6 output file database</h2>
+
+<h3>Description</h3>
+
+<p><code>match_coord()</code> takes an EPW and uses its longitude and latitude to calculate
+the distance between the EPW location and the global grid points in NetCDF
+files.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">match_coord(epw, threshold = list(lon = 1, lat = 1), max_num = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>epw</code></td>
+<td>
+<p>Possible values:
+</p>
+
+<ul>
+<li>
+<p> A file path of EPW file
+</p>
+</li>
+<li>
+<p> An eplusr::Epw object
+</p>
+</li>
+<li>
+<p> A regular expression used to search locations in EnergyPlus Weather
+Database, e.g. "los angeles.*tmy3". You will be asked to select a matched
+EPW to download and read. It will be saved into <code>tempdir()</code>. Note that the
+search is case-insensitive
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>A list of 2 elements <code>lon</code> and <code>lat</code> specifying the
+absolute distance threshold used for subsetting longitude and
+latitude value for calculating distances. If <code>NULL</code>, no subsetting is
+performed and the distances between the target location and all grid
+points are calculated. This is useful set the <code>threshold</code> value to
+exclude some points that are absolute too far away from the target
+location. Default: <code>list(lon = 1.0, lat = 1.0)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_num</code></td>
+<td>
+<p>The maximum number of grid points to be matched. Default is
+<code>NULL</code>, which means no number limit and the total matched grid points
+are determined by the <code>threshold</code> input.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>match_coord()</code> uses future.apply
+underneath. You can use your preferable future backend to
+speed up data extraction in parallel. By default, <code>match_coord()</code> uses
+<code>future::sequential</code> backend, which runs things in sequential.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>epw_cmip6_coord</code> object, which is basically a list of 3 elements:
+</p>
+
+<ul>
+<li> <p><code>epw</code>: An eplusr::Epw object parsed from input <code>epw</code> argument
+</p>
+</li>
+<li> <p><code>meta</code>: A list containing basic meta data of input EPW, including <code>city</code>,
+<code>state_province</code>, <code>country</code>, <code>latitute</code> and <code>longitude</code>.
+</p>
+</li>
+<li> <p><code>coord</code>: A <code>data.table::data.table()</code> which is basically CMIP6 index
+database with an appending new list column <code>coord</code> that contains
+matched latitudes and longitudes in each NetCDF file. Each element
+in <code>coord</code> is a <code>data.table::data.table()</code> of 6 columns describing
+the matched coordinates.
+</p>
+
+<ul>
+<li> <p><code>index</code>: the indices of matched coordinates
+</p>
+</li>
+<li> <p><code>ind_lon</code>, <code>ind_lat</code>: The value indices of longitude or latitude in the
+NetCDF coordinate grids. These values are used to extract the
+corresponding variable values
+</p>
+</li>
+<li> <p><code>lon</code>, <code>lat</code>: the actual longitude or latitude in the NetCDF coordinate
+grids
+</p>
+</li>
+<li> <p><code>dist</code>: the distance in km between the coordinate values in NetCDF and
+input EPW
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Geographical distance calculation</h3>
+
+<p><code>match_coord()</code> calculates the geographical distances based formulas of
+spherical trigonometry:
+</p>
+<p style="text-align: center;"><code class="reqn">
+\Delta{X}=\cos(\phi_2)\cos(\lambda_2) - \cos(\phi_1)\cos(\lambda_1)
+</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">
+\Delta{Y}=\cos(\phi_2)\sin(\lambda_2) - \cos(\phi_1)\sin(\lambda_1)
+</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">
+\Delta{Z}=\sin(\phi_2) - \sin(\phi_1)
+</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">
+C_h=\sqrt{(\Delta{X})^2 + (\Delta{Y})^2 + (\Delta{Z})^2}
+</code>
+</p>
+
+<p>where <code class="reqn">phi</code> is the latitude and <code class="reqn">lambda</code> is the longitude.  This
+formula treats the Earth as a sphere. The geographical distance between
+points on the surface of a spherical Earth is <code class="reqn">D = RC_h</code>.
+</p>
+<p>For more details, please see this <a href="https://en.wikipedia.org/wiki/Geographical_distance#Tunnel_distance">Wikipedia</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# download an EPW from EnergyPlus website
+epw &lt;- eplusr::download_weather("los angeles.*TMY3", dir = tempdir(),
+    type = "EPW", ask = FALSE)
+
+match_coord(epw, threshold = list(lon = 1.0, lat = 1.0))
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,354 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predictMaxEnt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict a MaxEnt model object (with optional feature-level permutation)</h2>
+
+<h3>Description</h3>
+
+<p>Takes a MaxEnt <code>lambda</code> object or a MaxEnt object and returns raw or logistic predictions.  Its output is the same as the <code>predict</code> function from the <span class="pkg">terra</span> package, and in fact, is slower than the function from <span class="pkg">terra</span>. However, this function does allow custom manipulations that those functions do not allow (e.g., permuting product features while leaving other features with the same variables intact).  This function does <em>not</em> clamp predictions–beyond the range of the training data, it extends the prediction in the direction it was going (up/down/no change). The function is based on Peter D. Wilson's document "Guidelines for computing MaxEnt model output values from a lambdas file". The function has a special feature in that it allows you to permute single variables or combinations of variables in specific features before making predictions. This is potentially useful, for example, if you wanted to determine the relative importance of a quadratic feature for a particular variable in a Maxent model relative to the other features in the model.  You can also permute values of a variable regardless of which features they appear in. For product features, you can implement the permutation before or after the values are multiplied together (before often makes for bigger differences in predictions).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predictMaxEnt(
+  x,
+  data,
+  type = "cloglog",
+  perm = NULL,
+  permLinear = NULL,
+  permQuad = NULL,
+  permHinge = NULL,
+  permThresh = NULL,
+  permProd = NULL,
+  permProdRule = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Either a Maxent lambda object or a Maxent model object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame. Data to which to make predictions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Character.  One of:
+</p>
+
+<ul>
+<li> <p><code>'raw'</code>: Maxent "raw" values
+</p>
+</li>
+<li> <p><code>'logistic'</code>: Maxent logistic values
+</p>
+</li>
+<li> <p><code>'cloglog'</code> Complementary log-log output (as per version 3.4.0+ of maxent–called "<code>maxnet()</code>" in the package of the same name)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>perm</code></td>
+<td>
+<p>Character vector. Name(s) of variable to permute before calculating predictions. This permutes the variables for <em>all</em> features in which they occur.  If a variable is named here, it overrides permutation settings for each feature featType.  Note that for product features the variable is permuted before the product is taken. This permutation is performed before any subsequent permutations (i.e., so if both variables in a product feature are included in <code>perms</code>, then this is equivalent to using the <code>'before'</code> rule for <code>permProdRule</code>). Ignored if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permLinear</code></td>
+<td>
+<p>Character list. Names(s) of variables to permute in linear features before calculating predictions.  Ignored if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permQuad</code></td>
+<td>
+<p>Names(s) of variables to permute in quadratic features before calculating predictions.  Ignored if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permHinge</code></td>
+<td>
+<p>Character vector. Names(s) of variables to permute in forward/reverse hinge features before calculating predictions.  Ignored if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permThresh</code></td>
+<td>
+<p>Character list. Names(s) of variables to permute in threshold features before calculating predictions.  Ignored if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permProd</code></td>
+<td>
+<p>Character list. A list object of <code>n</code> elements, each of which has two character elements naming the variables to permute if they occur in a product feature.  Depending on the value of <code>permProdRule</code>, the function will either permute the individual variables then calculate their product or calculate their product, then permute the product across observations.  Any other features containing the variables will produce values as normal.  Example: <code>permProd=list(c('precipWinter', 'tempWinter'), c('tempSummer', 'precipFall'))</code>.  The order of the variables in each element of <code>permProd</code> doesn't matter, so <code>permProd=list(c('temp', 'precip'))</code> is the same as <code>permProd=list(c('precip', 'temp'))</code>.  Ignored if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permProdRule</code></td>
+<td>
+<p>Character. Rule for how permutation of product features is applied: <code>'before'</code> ==&gt; Permute individual variable values then calculate product; <code>'after'</code> ==&gt; calculate product then permute across these values. Ignored if <code>permProd</code> is <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra arguments (not used).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Numeric.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>MaxEnt</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# NB: The examples below show a very basic modeling workflow. They have been 
+# designed to work fast, not produce accurate, defensible models. They can
+# take a few minutes to run.
+
+library(mgcv)
+library(sf)
+library(terra)
+set.seed(123)
+
+### setup data
+##############
+
+# environmental rasters
+rastFile &lt;- system.file('extdata/madClim.tif', package='enmSdmX')
+madClim &lt;- rast(rastFile)
+
+# coordinate reference system
+wgs84 &lt;- getCRS('WGS84')
+
+# lemur occurrence data
+data(lemurs)
+occs &lt;- lemurs[lemurs$species == 'Eulemur fulvus', ]
+occs &lt;- vect(occs, geom=c('longitude', 'latitude'), crs=wgs84)
+
+occs &lt;- elimCellDuplicates(occs, madClim)
+
+occEnv &lt;- extract(madClim, occs, ID = FALSE)
+occEnv &lt;- occEnv[complete.cases(occEnv), ]
+	
+# create 10000 background sites (or as many as raster can support)
+bgEnv &lt;- terra::spatSample(madClim, 20000)
+bgEnv &lt;- bgEnv[complete.cases(bgEnv), ]
+bgEnv &lt;- bgEnv[1:min(10000, nrow(bgEnv)), ]
+
+# collate occurrences and background sites
+presBg &lt;- data.frame(
+  presBg = c(
+    rep(1, nrow(occEnv)),
+    rep(0, nrow(bgEnv))
+  )
+)
+
+env &lt;- rbind(occEnv, bgEnv)
+env &lt;- cbind(presBg, env)
+
+predictors &lt;- c('bio1', 'bio12')
+
+### calibrate models
+####################
+
+# Note that all of the trainXYZ functions can made to go faster using the
+# "cores" argument (set to just 1, by default). The examples below will not
+# go too much faster using more cores because they are simplified, but
+# you can try!
+cores &lt;- 1
+
+# MaxEnt
+mx &lt;- trainMaxEnt(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# MaxNet
+mn &lt;- trainMaxNet(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized linear model (GLM)
+gl &lt;- trainGLM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized additive model (GAM)
+ga &lt;- trainGAM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	verbose = TRUE,
+	cores = cores
+)
+
+# natural splines
+ns &lt;- trainNS(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	df = 1:2, # too few values for reliable model(?)
+	verbose = TRUE,
+	cores = cores
+)
+
+# boosted regression trees
+envSub &lt;- env[1:1049, ] # subsetting data to run faster
+brt &lt;- trainBRT(
+	data = envSub,
+	resp = 'presBg',
+	preds = predictors,
+	learningRate = 0.001, # too few values for reliable model(?)
+	treeComplexity = c(2, 3), # too few values for reliable model, but fast
+	minTrees = 1200, # minimum trees for reliable model(?), but fast
+	maxTrees = 1200, # too small for reliable model(?), but fast
+	tryBy = 'treeComplexity',
+	anyway = TRUE, # return models that did not converge
+	verbose = TRUE,
+	cores = cores
+)
+
+# random forests
+rf &lt;- trainRF(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	numTrees = c(100, 500), # using at least 500 recommended, but fast!
+	verbose = TRUE,
+	cores = cores
+)
+
+### make maps of models
+#######################
+
+# NB We do not have to scale rasters before predicting GLMs and NSs because we
+# used the `scale = TRUE` argument in trainGLM() and trainNS().
+
+mxMap &lt;- predictEnmSdm(mx, madClim)
+mnMap &lt;- predictEnmSdm(mn, madClim) 
+glMap &lt;- predictEnmSdm(gl, madClim)
+gaMap &lt;- predictEnmSdm(ga, madClim)
+nsMap &lt;- predictEnmSdm(ns, madClim)
+brtMap &lt;- predictEnmSdm(brt, madClim)
+rfMap &lt;- predictEnmSdm(rf, madClim)
+
+maps &lt;- c(
+	mxMap,
+	mnMap,
+	glMap,
+	gaMap,
+	nsMap,
+	brtMap,
+	rfMap
+)
+
+names(maps) &lt;- c('MaxEnt', 'MaxNet', 'GLM', 'GAM', 'NSs', 'BRTs', 'RFs')
+fun &lt;- function() plot(occs, col='black', pch=3, add=TRUE)
+plot(maps, fun = fun, nc = 4)
+
+### compare model responses to BIO12 (mean annual precipitation)
+################################################################
+
+# make a data frame holding all other variables at mean across occurrences,
+# varying only BIO12
+occEnvMeans &lt;- colMeans(occEnv, na.rm=TRUE)
+occEnvMeans &lt;- rbind(occEnvMeans)
+occEnvMeans &lt;- as.data.frame(occEnvMeans)
+climFrame &lt;- occEnvMeans[rep(1, 100), ]
+rownames(climFrame) &lt;- NULL
+
+minBio12 &lt;- min(env$bio12)
+maxBio12 &lt;- max(env$bio12)
+climFrame$bio12 &lt;- seq(minBio12, maxBio12, length.out=100)
+
+predMx &lt;- predictEnmSdm(mx, climFrame)
+predMn &lt;- predictEnmSdm(mn, climFrame)
+predGl &lt;- predictEnmSdm(gl, climFrame)
+predGa &lt;- predictEnmSdm(ga, climFrame)
+predNat &lt;- predictEnmSdm(ns, climFrame)
+predBrt &lt;- predictEnmSdm(brt, climFrame)
+predRf &lt;- predictEnmSdm(rf, climFrame)
+
+
+plot(climFrame$bio12, predMx,
+xlab='BIO12', ylab='Prediction', type='l', ylim=c(0, 1))
+
+lines(climFrame$bio12, predMn, lty='solid', col='red')
+lines(climFrame$bio12, predGl, lty='dotted', col='blue')
+lines(climFrame$bio12, predGa, lty='dashed', col='green')
+lines(climFrame$bio12, predNat, lty=4, col='purple')
+lines(climFrame$bio12, predBrt, lty=5, col='orange')
+lines(climFrame$bio12, predRf, lty=6, col='cyan')
+
+legend(
+   'topleft',
+   inset = 0.01,
+   legend = c(
+	'MaxEnt',
+	'MaxNet',
+	'GLM',
+	'GAM',
+	'NS',
+	'BRT',
+	'RF'
+   ),
+   lty = c(1, 1:6),
+   col = c(
+	'black',
+	'red',
+	'blue',
+	'green',
+	'purple',
+	'orange',
+	'cyan'
+   ),
+   bg = 'white'
+)
+
+
+</code></pre>
+
+
+</div>

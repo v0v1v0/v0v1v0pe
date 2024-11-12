@@ -1,0 +1,268 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecospat.ESM.Modeling</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Ensemble of Small Models: Calibration of Simple Bivariate Models
+</h2>
+
+<h3>Description</h3>
+
+<p>This function calibrates simple bivariate models as in Lomba et al. 2010 and Breiner et al. 2015.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">    ecospat.ESM.Modeling( data, 
+                          NbRunEval, 
+                          DataSplit, 
+                          DataSplitTable, 
+                          Prevalence,
+                          weighting.score, 
+                          models, 
+                          tune,
+                          modeling.id, 
+                          models.options, 
+                          which.biva, 
+                          parallel, 
+                          cleanup,
+                          Yweights)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>BIOMOD.formated.data</code> object returned by <code>BIOMOD_FormatingData</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NbRunEval</code></td>
+<td>
+
+<p>number of dataset splitting replicates for the model evaluation (same as in <code>biomod2</code>)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DataSplit</code></td>
+<td>
+
+<p>percentage of dataset observations retained for the model training (same as in <code>biomod2</code>)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DataSplitTable</code></td>
+<td>
+
+<p>a matrix or data.frame filled with TRUE/FALSE to specify which part of data must be used for models calibration (TRUE) and for models validation (FALSE). Each column corresponds to a 'RUN'. For a presence-absence dataset, column names must be formatted as: _allData_RUNx with x an integer. For a presence-only dataset, column names must be formatted as: _PA1_RUNx with x an integer. If filled, arguments NbRunEval and DataSplit  will be ignored.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Prevalence</code></td>
+<td>
+
+<p>either NULL or a 0-1 numeric used to build 'weighted response weights'. In contrast to Biomod the default is 0.5 (weighting presences equally to the absences). If NULL each observation (presence or absence) has the same weight (independent of the number of presences and absences).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weighting.score</code></td>
+<td>
+
+<p>evaluation score used to weight single models to build ensembles: 'AUC', 'SomersD' (2xAUC-1), 'Kappa', 'TSS' or 'Boyce'
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+
+<p>vector of models names choosen among 'GLM', 'GBM', 'GAM', 'CTA', 'ANN', 'SRE', 'FDA', 'MARS', 'RF','MAXENT', 'MAXNET' (same as in <code>biomod2</code>)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune</code></td>
+<td>
+
+<p>logical. if true model tuning will be used to estimate optimal parameters for the models (Default: False).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modeling.id</code></td>
+<td>
+
+<p>character, the ID (=name) of modeling procedure. A random number by default.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models.options</code></td>
+<td>
+
+<p>BIOMOD.models.options object returned by bm_ModelingOptions (same as in <code>biomod2</code>)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Yweights</code></td>
+<td>
+
+<p>response points weights. This argument will only affect models that allow case weights. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.biva</code></td>
+<td>
+
+<p>integer. which bivariate combinations should be used for modeling? Default: all
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+
+<p>logical. If TRUE, the parallel computing is enabled (highly recommended)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cleanup</code></td>
+<td>
+
+<p><b>No more available</b>. Please use terra::TmpFiles instead 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The basic idea of ensemble of small models (ESMs) is to model a species distribution based on small, simple models, for example all possible bivariate models (i.e. models that contain only two predictors at a time out of a larger set of predictors), and then combine all possible bivariate models into an ensemble (Lomba et al. 2010; Breiner et al. 2015).
+</p>
+<p>The ESM set of functions could be used to build ESMs using simple bivariate models which are averaged using weights based on model performances (e.g. AUC) according to Breiner et al. (2015). They provide full functionality of the approach described in Breiner et al. (2015).
+</p>
+<p>The argument <code>which.biva</code> allows to split model runs, e.g. if <code>which.biva</code> is 1:3, only the three first bivariate variable combinations will be modeled. This allows to run different biva splits on different computers. However, it is better not to use this option if all models are run on a single computer.
+Default: running all biva models. 
+NOTE: Make sure to give each of your biva runs a unique <code>modeling.id</code>. Please avoid space characters in your working directory path if you are using MAXENT because this can cause an error.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A BIOMOD.models.out object (same as in <code>biomod2</code>)
+See <code>BIOMOD.models.out-class</code> for details.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Frank Breiner <a href="mailto:frank.breiner@wsl.ch">frank.breiner@wsl.ch</a> and Mirko Di Febbraro <a href="mailto:mirkodifebbraro@gmail.com">mirkodifebbraro@gmail.com</a> with contributions of Olivier Broennimann <a href="mailto:olivier.broennimann@unil.ch">olivier.broennimann@unil.ch</a> and Flavien Collart
+</p>
+
+
+<h3>References</h3>
+
+<p>Lomba, A., L. Pellissier, C.F. Randin, J. Vicente, F. Moreira, J. Honrado and A. Guisan. 2010. Overcoming the rare species modelling paradox: A novel hierarchical framework applied to an Iberian endemic plant. 
+<em>Biological Conservation</em>, <b>143</b>,2647-2657.
+</p>
+<p>Breiner F.T., A. Guisan, A. Bergamini and M.P. Nobis. 2015. Overcoming limitations of modelling rare species by using ensembles of small models. <em>Methods in Ecology and Evolution</em>, <b>6</b>,1210-1218.
+</p>
+<p>Breiner F.T., Nobis M.P., Bergamini A., Guisan A. 2018. Optimizing ensembles of small models for predicting the distribution of species with few occurrences. <em>Methods in Ecology and Evolution</em>. <a href="https://doi.org/10.1111/2041-210X.12957">doi:10.1111/2041-210X.12957</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ecospat.ESM.Projection</code>, <code>ecospat.ESM.EnsembleModeling</code>,   <code>ecospat.ESM.EnsembleProjection</code>, <code>ecospat.ESM.EnsembleEvaluation</code>,
+<code>ecospat.ESM.threshold</code>,<code>ecospat.ESM.VarContrib</code>,
+<code>ecospat.ESM.responsePlot</code>
+</p>
+<p><code>BIOMOD_FormatingData</code>, <code>bm_ModelingOptions</code>, <code>BIOMOD_Modeling</code>,<code>BIOMOD_Projection</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+   
+library(biomod2)
+
+# Loading test data
+data(ecospat.testNiche.inv)
+inv &lt;- ecospat.testNiche.inv
+
+# species occurrences
+xy &lt;- inv[,1:2]
+sp_occ &lt;- inv[11]
+
+# env data
+current &lt;- inv[3:8]
+
+### Formating the data with the BIOMOD_FormatingData() function from the package biomod2
+sp &lt;- 1
+myBiomodData &lt;- biomod2::BIOMOD_FormatingData( resp.var = as.numeric(sp_occ[,sp]),
+                                      expl.var = current,
+                                      resp.xy = xy,
+                                      resp.name = colnames(sp_occ)[sp])
+
+### Calibration of simple bivariate models
+my.ESM &lt;- ecospat.ESM.Modeling( data=myBiomodData,
+                                models=c('GLM'),
+                                NbRunEval=2,
+                                DataSplit=70,
+                                weighting.score=c("AUC"),
+                                parallel=FALSE)  
+
+### Ensemble models
+my.ESM_EF &lt;- ecospat.ESM.EnsembleModeling(my.ESM,weighting.score=c("SomersD"),threshold=0)
+
+### thresholds to produce binary maps
+my.ESM_thresholds &lt;- ecospat.ESM.threshold(my.ESM_EF)
+
+### Evaluation of bivariate and ensemble models based on standard cross-validation
+my.ESM_EF$ESM.evaluations
+my.ESM_thresholds
+
+### Evaluation of the ensemble models based on the pooling procedure 
+my.ESM_evaluations &lt;- ecospat.ESM.EnsembleEvaluation(ESM.modeling.output= my.ESM,
+                                                     ESM.EnsembleModeling.output = my.ESM_EF,
+                                                     metrics= c("AUC","MaxTSS"),
+                                                     EachSmallModels = FALSE)
+my.ESM_evaluations$ESM.evaluations
+
+### Projection of simple bivariate models into new space 
+my.ESM_proj_current&lt;-ecospat.ESM.Projection(ESM.modeling.output=my.ESM,
+                                            new.env=current)
+### Projection of calibrated ESMs into new space 
+my.ESM_EFproj_current &lt;- ecospat.ESM.EnsembleProjection(ESM.prediction.output=my.ESM_proj_current,
+                                                        ESM.EnsembleModeling.output=my.ESM_EF)
+### Binary Projection based on max TSS of calibrated ESMs into new space                                                
+my.ESM_EFproj_current_binary &lt;- (my.ESM_EFproj_current &gt; (my.ESM_thresholds$TSS.th*1000))*1
+
+## get the variable contributions of ESMs
+ecospat.ESM.VarContrib(my.ESM,my.ESM_EF)                                                      
+
+## get the response plots of ESMs
+my.ESM_responsePlot&lt;-ecospat.ESM.responsePlot(my.ESM_EF,my.ESM,fixed.var.metric = 'mean')
+
+
+#removing files on disk
+  unlink("ESM.BIOMOD.output_species.occ",recursive=TRUE)
+
+</code></pre>
+
+
+</div>

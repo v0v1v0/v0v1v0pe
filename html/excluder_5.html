@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>check_ip</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Check for IP addresses from outside of a specified country.</h2>
+
+<h3>Description</h3>
+
+<p>The <code>check_ip()</code> function subsets rows of data, retaining rows
+that have IP addresses from outside the specified country.
+The function is written to work with data from
+<a href="https://www.qualtrics.com/">Qualtrics</a> surveys.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">check_ip(
+  x,
+  id_col = "ResponseId",
+  ip_col = "IPAddress",
+  rename = TRUE,
+  country = "US",
+  include_na = FALSE,
+  keep = FALSE,
+  quiet = FALSE,
+  print = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Data frame or tibble (preferably imported from Qualtrics using
+{qualtRics}).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id_col</code></td>
+<td>
+<p>Column name for unique row ID (e.g., participant).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ip_col</code></td>
+<td>
+<p>Column name for IP addresses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rename</code></td>
+<td>
+<p>Logical indicating whether to rename columns (using <code>rename_columns()</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>country</code></td>
+<td>
+<p>Two-letter abbreviation of country to check (default is "US").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_na</code></td>
+<td>
+<p>Logical indicating whether to include rows with NA in
+IP address column in the output list of potentially excluded data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+<p>Logical indicating whether to keep or remove exclusion column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>Logical indicating whether to print message to console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print</code></td>
+<td>
+<p>Logical indicating whether to print returned tibble to
+console.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To record this information in your Qualtrics survey, you must ensure that
+<a href="https://www.qualtrics.com/support/survey-platform/survey-module/survey-options/survey-protection/#AnonymizingResponses">Anonymize responses is disabled</a>.
+</p>
+<p>Default column names are set based on output from the
+<a href="https://docs.ropensci.org/qualtRics/reference/fetch_survey.html"><code>qualtRics::fetch_survey()</code></a>.
+The function uses <code>ipaddress::country_networks()</code> to assign IP addresses to
+specific countries using
+<a href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">ISO 3166-1 alpha-2 country codes</a>.
+</p>
+<p>The function outputs to console a message about the number of rows
+with IP addresses outside of the specified country. If there are <code>NA</code>s for IP
+addresses (likely due to including preview data—see <code>check_preview()</code>), it
+will print a message alerting to the number of rows with <code>NA</code>s.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of the same type as <code>x</code> that includes the rows with
+IP addresses outside of the specified country.
+For a function that marks these rows, use <code>mark_ip()</code>.
+For a function that excludes these rows, use <code>exclude_ip()</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>This function <strong>requires internet connectivity</strong> as it uses the
+<code>ipaddress::country_networks()</code> function, which pulls daily updated data
+from <a href="https://www.iwik.org/ipcountry/">https://www.iwik.org/ipcountry/</a>. It only updates the data once
+per session, as it caches the results for future work during the session.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other ip functions: 
+<code>exclude_ip()</code>,
+<code>mark_ip()</code>
+</p>
+<p>Other check functions: 
+<code>check_duplicates()</code>,
+<code>check_duration()</code>,
+<code>check_location()</code>,
+<code>check_preview()</code>,
+<code>check_progress()</code>,
+<code>check_resolution()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Check for IP addresses outside of the US
+data(qualtrics_text)
+check_ip(qualtrics_text)
+
+# Remove preview data first
+qualtrics_text %&gt;%
+  exclude_preview() %&gt;%
+  check_ip()
+
+# Check for IP addresses outside of Germany
+qualtrics_text %&gt;%
+  exclude_preview() %&gt;%
+  check_ip(country = "DE")
+
+# Do not print rows to console
+qualtrics_text %&gt;%
+  exclude_preview() %&gt;%
+  check_ip(print = FALSE)
+
+# Do not print message to console
+qualtrics_text %&gt;%
+  exclude_preview() %&gt;%
+  check_ip(quiet = TRUE)
+</code></pre>
+
+
+</div>

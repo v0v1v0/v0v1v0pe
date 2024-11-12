@@ -1,0 +1,516 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>NoncompLI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bayesian Analysis of Randomized Experiments with Noncompliance and Missing
+Outcomes Under the Assumption of Latent Ignorability</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the average causal effects for randomized
+experiments with noncompliance and missing outcomes under the assumption of
+latent ignorability (Frangakis and Rubin, 1999). The models are based on
+Bayesian generalized linear models and are fitted using the Markov chain
+Monte Carlo algorithms. Various types of the outcome variables can be
+analyzed to estimate the Intention-to-Treat effect and Complier Average
+Causal Effect.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">NoncompLI(
+  formulae,
+  Z,
+  D,
+  data = parent.frame(),
+  n.draws = 5000,
+  param = TRUE,
+  in.sample = FALSE,
+  model.c = "probit",
+  model.o = "probit",
+  model.r = "probit",
+  tune.c = 0.01,
+  tune.o = 0.01,
+  tune.r = 0.01,
+  tune.v = 0.01,
+  p.mean.c = 0,
+  p.mean.o = 0,
+  p.mean.r = 0,
+  p.prec.c = 0.001,
+  p.prec.o = 0.001,
+  p.prec.r = 0.001,
+  p.df.o = 10,
+  p.scale.o = 1,
+  p.shape.o = 1,
+  mda.probit = TRUE,
+  coef.start.c = 0,
+  coef.start.o = 0,
+  tau.start.o = NULL,
+  coef.start.r = 0,
+  var.start.o = 1,
+  burnin = 0,
+  thin = 0,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formulae</code></td>
+<td>
+<p>A list of formulae where the first formula specifies the
+(pre-treatment) covariates in the outcome model (the latent compliance
+covariate will be added automatically), the second formula specifies the
+compliance model, and the third formula defines the covariate specification
+for the model for missing-data mechanism (the latent compliance covariate
+will be added automatically). For the outcome model, the formula should take
+the two-sided standard R <code>formula</code> where the outcome variable is
+specified in the left hand side of the formula which is then separated by
+<code>~</code> from the covariate equation in the right hand side, e.g., <code>y ~
+x1 + x2</code>. For the compliance and missing-data mechanism models, the
+one-sided <code>formula</code> should be used where the left hand side is left
+unspecified, e.g., <code>~ x1 + x2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>A randomized encouragement variable, which should be a binary
+variable in the specified data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>A treatment variable, which should be a binary variable in the
+specified data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame which contains the variables that appear in the
+model formulae (<code>formulae</code>), the encouragement variable (<code>Z</code>), and
+the treatment variable (<code>D</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.draws</code></td>
+<td>
+<p>The number of MCMC draws. The default is <code>5000</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>A logical variable indicating whether the Monte Carlo draws of
+the model parameters should be saved in the output object. The default is
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>in.sample</code></td>
+<td>
+<p>A logical variable indicating whether or not the sample
+average causal effect should be calculated using the observed potential
+outcome for each unit. If it is set to <code>FALSE</code>, then the population
+average causal effect will be calculated. The default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.c</code></td>
+<td>
+<p>The model for compliance. Either <code>logit</code> or
+<code>probit</code> model is allowed. The default is <code>probit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.o</code></td>
+<td>
+<p>The model for outcome. The following five models are allowed:
+<code>logit</code>, <code>probit</code>, <code>oprobit</code> (ordered probit regression),
+<code>gaussian</code> (gaussian regression), <code>negbin</code> (negative binomial
+regression), and <code>twopart</code> (two part model where the first part is the
+probit regression for <code class="reqn">Pr(Y&gt;0|X)</code> and the second part models
+<code class="reqn">p(log(Y)|X, Y&gt;0)</code> using the gaussian regression). The default is
+<code>probit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.r</code></td>
+<td>
+<p>The model for (non)response. Either <code>logit</code> or
+<code>probit</code> model is allowed. The default is <code>probit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune.c</code></td>
+<td>
+<p>Tuning constants for fitting the compliance model. These
+positive constants are used to tune the (random-walk) Metropolis-Hastings
+algorithm to fit the logit model. Use either a scalar or a vector of
+constants whose length equals that of the coefficient vector. The default is
+<code>0.01</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune.o</code></td>
+<td>
+<p>Tuning constants for fitting the outcome model. These positive
+constants are used to tune the (random-walk) Metropolis-Hastings algorithm
+to fit logit, ordered probit, and negative binomial models. Use either a
+scalar or a vector of constants whose length equals that of the coefficient
+vector for logit and negative binomial models. For the ordered probit model,
+use either a scalar or a vector of constants whose length equals that of
+cut-point parameters to be estimated. The default is <code>0.01</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune.r</code></td>
+<td>
+<p>Tuning constants for fitting the (non)response model. These
+positive constants are used to tune the (random-walk) Metropolis-Hastings
+algorithm to fit the logit model. Use either a scalar or a vector of
+constants whose length equals that of the coefficient vector. The default is
+<code>0.01</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune.v</code></td>
+<td>
+<p>A scalar tuning constant for fitting the variance component of
+the negative binomial (outcome) model. The default is <code>0.01</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.mean.c</code></td>
+<td>
+<p>Prior mean for the compliance model. It should be either a
+scalar or a vector of appropriate length. The default is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.mean.o</code></td>
+<td>
+<p>Prior mean for the outcome model. It should be either a
+scalar or a vector of appropriate length. The default is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.mean.r</code></td>
+<td>
+<p>Prior mean for the (non)response model. It should be either
+a scalar or a vector of appropriate length. The default is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.prec.c</code></td>
+<td>
+<p>Prior precision for the compliance model. It should be
+either a positive scalar or a positive semi-definite matrix of appropriate
+size. The default is <code>0.001</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.prec.o</code></td>
+<td>
+<p>Prior precision for the outcome model. It should be either a
+positive scalar or a positive semi-definite matrix of appropriate size. The
+default is <code>0.001</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.prec.r</code></td>
+<td>
+<p>Prior precision for the (non)response model. It should be
+either a positive scalar or a positive semi-definite matrix of appropriate
+size. The default is <code>0.001</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.df.o</code></td>
+<td>
+<p>A positive integer. Prior degrees of freedom parameter for the
+inverse chisquare distribution in the gaussian and twopart (outcome) models.
+The default is <code>10</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.scale.o</code></td>
+<td>
+<p>A positive scalar. Prior scale parameter for the inverse
+chisquare distribution (for the variance) in the gaussian and twopart
+(outcome) models. For the negative binomial (outcome) model, this is used
+for the scale parameter of the inverse gamma distribution. The default is
+<code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.shape.o</code></td>
+<td>
+<p>A positive scalar. Prior shape for the inverse chisquare
+distribution in the negative binomial (outcome) model. The default is
+<code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mda.probit</code></td>
+<td>
+<p>A logical variable indicating whether to use marginal data
+augmentation for probit models. The default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.start.c</code></td>
+<td>
+<p>Starting values for coefficients of the compliance
+model.  It should be either a scalar or a vector of appropriate length. The
+default is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.start.o</code></td>
+<td>
+<p>Starting values for coefficients of the outcome model.
+It should be either a scalar or a vector of appropriate length. The default
+is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau.start.o</code></td>
+<td>
+<p>Starting values for thresholds of the ordered probit
+(outcome) model.  If it is set to <code>NULL</code>, then the starting values will
+be a sequence starting from 0 and then incrementing by 0.1. The default is
+<code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.start.r</code></td>
+<td>
+<p>Starting values for coefficients of the (non)response
+model.  It should be either a scalar or a vector of appropriate length. The
+default is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.start.o</code></td>
+<td>
+<p>A positive scalar starting value for the variance of the
+gaussian, negative binomial, and twopart (outcome) models. The default is
+<code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>The number of initial burnins for the Markov chain. The
+default is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thin</code></td>
+<td>
+<p>The size of thinning interval for the Markov chain. The default
+is <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical variable indicating whether additional progress
+reports should be prited while running the code. The default is <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For the details of the model being fitted, see the references. Note that
+when always-takers exist we fit either two logistic or two probit models by
+first modeling whether a unit is a complier or a noncomplier, and then
+modeling whether a unit is an always-taker or a never-taker for those who
+are classified as non-compliers.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>NoncompLI</code> which contains the following
+elements as a list: </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>The outcome
+variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>The treatment variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>The (randomized)
+encouragement variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>The response indicator variable for
+<code>Y</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>The indicator variable for (known) always-takers, i.e.,
+the control units who received the treatment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p>The indicator
+variable for (known) compliers, i.e., the encouraged units who received the
+treatment when there is no always-takers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xo</code></td>
+<td>
+<p>The matrix of
+covariates used for the outcome model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xc</code></td>
+<td>
+<p>The matrix of covariates
+used for the compliance model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xr</code></td>
+<td>
+<p>The matrix of covariates used for
+the (non)response model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.draws</code></td>
+<td>
+<p>The number of MCMC draws.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>QoI</code></td>
+<td>
+<p>The Monte carlo draws of quantities of interest from their
+posterior distributions. Quantities of interest include <code>ITT</code>
+(intention-to-treat) effect, <code>CACE</code> (complier average causal effect),
+<code>Y1barC</code> (The mean outcome value under the treatment for compliers),
+<code>Y0barC</code> (The mean outcome value under the control for compliers),
+<code>YbarN</code> (The mean outcome value for never-takers), <code>YbarA</code> (The
+mean outcome value for always-takers), <code>pC</code> (The proportion of
+compliers), <code>pN</code> (The proportion of never-takers), <code>pA</code> (The
+proportion of always-takers) </p>
+</td>
+</tr>
+</table>
+<p> If <code>param</code> is set to <code>TRUE</code>, the
+following elments are also included: </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefO</code></td>
+<td>
+<p>The Monte carlo draws of
+coefficients of the outcome model from their posterior distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefO1</code></td>
+<td>
+<p>If <code>model = "twopart"</code>, this element contains the Monte
+carlo draws of coefficients of the outcome model for <code class="reqn">p(log(Y)|X, Y &gt;
+0)</code> from their posterior distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefC</code></td>
+<td>
+<p>The Monte carlo draws
+of coefficients of the compliance model from their posterior distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefA</code></td>
+<td>
+<p>If always-takers exist, then this element contains the Monte
+carlo draws of coefficients of the compliance model for always-takers from
+their posterior distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefR</code></td>
+<td>
+<p>The Monte carlo draws of
+coefficients of the (non)response model from their posterior distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sig2</code></td>
+<td>
+<p>The Monte carlo draws of the variance parameter for the
+gaussian, negative binomial, and twopart (outcome) models.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Kosuke Imai, Department of Government and Department of Statistics, Harvard University
+<a href="mailto:imai@Harvard.Edu">imai@Harvard.Edu</a>, <a href="https://imai.fas.harvard.edu">https://imai.fas.harvard.edu</a>;
+</p>
+
+
+<h3>References</h3>
+
+<p>Frangakis, Constantine E. and Donald B. Rubin. (1999).
+“Addressing Complications of Intention-to-Treat Analysis in the
+Combined Presence of All-or-None Treatment Noncompliance and Subsequent
+Missing Outcomes.” <em>Biometrika</em>, Vol. 86, No. 2, pp. 365-379.
+</p>
+<p>Hirano, Keisuke, Guido W. Imbens, Donald B. Rubin, and Xiao-Hua Zhou.
+(2000).  “Assessing the Effect of an Influenza Vaccine in an
+Encouragement Design.” <em>Biostatistics</em>, Vol. 1, No. 1, pp. 69-88.
+</p>
+<p>Barnard, John, Constantine E. Frangakis, Jennifer L. Hill, and Donald B.
+Rubin. (2003).  “Principal Stratification Approach to Broken
+Randomized Experiments: A Case Study of School Choice Vouchers in New York
+(with Discussion)”, <em>Journal of the American Statistical Association</em>,
+Vol. 98, No. 462, pp299–311.
+</p>
+<p>Horiuchi, Yusaku, Kosuke Imai, and Naoko Taniguchi (2007). “Designing
+and Analyzing Randomized Experiments: Application to a Japanese Election
+Survey Experiment.” <em>American Journal of Political Science</em>, Vol. 51,
+No. 3 (July), pp. 669-687.
+</p>
+
+
+</div>

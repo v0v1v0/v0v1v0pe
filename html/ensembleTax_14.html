@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>taxmapper</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maps an input taxonomy table onto a different taxonomic nomenclature.</h2>
+
+<h3>Description</h3>
+
+<p>Maps an input taxonomy table onto a different taxonomic nomenclature.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">taxmapper(
+  tt,
+  tt.ranks = colnames(tt),
+  tax2map2 = "pr2",
+  exceptions = c("Archaea", "Bacteria"),
+  ignore.format = FALSE,
+  synonym.file = "default",
+  streamline = TRUE,
+  outfilez = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>tt</code></td>
+<td>
+<p>The input taxonomy table you would like to map onto a new
+taxonomic nomenclature. Should be a dataframe of type char or list (no
+factors).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tt.ranks</code></td>
+<td>
+<p>A character vector of the column names where taxonomic
+names are found in tt. Supply them heirarchically (e.g. kingdom –&gt; species)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tax2map2</code></td>
+<td>
+<p>The taxonomic nomenclature you would like to map onto. pr2
+v4.12.0, Silva SSU v138 nr, GreenGenes v13.8 clustered at 97% similarity, and
+the RDP train set v16 are included in the ensembleTax package. You can map to
+these by specifying "pr2", "Silva", "gg", or "rdp". Otherwise should be a
+dataframe of type character or list (no factors) with each column
+corresponding to a taxonomic rank.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exceptions</code></td>
+<td>
+<p>A character vector of taxonomic names at the basal/root
+rank of tt that will be propagated onto the mapped taxonomy. ASVs assigned
+to these names will retain these names at their basal/root rank in the mapped
+taxonomy. All other ranks are assigned NA.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignore.format</code></td>
+<td>
+<p>If TRUE, the algorithm modifies taxonomic names in tt to
+account for common variations in taxonomic name syntax and/or formatting
+commonly encountered in reference databases (e.g. Pseudo-nitzschia will map
+to Pseudonitzschia). If FALSE, formatting issues may preclude mapping of
+synonymous taxonomic names (e.g. Pseudo-nitzschia will NOT map to
+Pseudonitzschia). An exhaustive list of formatting details is included in
+Details. Note that formatting variants are only generated for the names in
+tt. This can cause some issues for mapping in the other direction (e.g.
+Pseudonitzschia in tt will NOT map to Pseudo-nitzschia in tax2map2 whether or
+not ignore.format is TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>synonym.file</code></td>
+<td>
+<p>If "default", taxmapper uses taxonomic synonyms included
+with the ensembleTax package. If a custom taxonomic synonym file is
+preferred, a string corresponding to the name of the csv file should be
+supplied. Taxonomic synonyms are searched when exact name matches are not
+found in tax2map2. ignore.format applies to synonyms if TRUE. Specify NULL if
+you wish to forego synonym searches.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>streamline</code></td>
+<td>
+<p>If TRUE, only the mapped version of tt is returned as a
+dataframe. If FALSE, a 3-element list is returned where element 1 is the
+mapping key returned as a dataframe, element 2 is a character vector of all
+names that could not be mapped (no exact matches found in tax2map2), and
+element 3 is the mapped version of tt (a dataframe).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outfilez</code></td>
+<td>
+<p>If NULL, mapping files are not saved to the current working
+directory. Otherwise should be a 3-element character vector including, in
+this order, the name of the file to store the taxonomic mapping key, the name
+of the file to store the names that could not be mapped, and the name of the
+file to store the ASVs supplied with tt with their mapped taxonomic
+assignments. Each element of the vector should end in csv (only csv files
+may be saved)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Exceptions should be used when the user knows a particular taxonomic
+group is not found in tax2map2. The user is responsible for supplying valid
+taxonomic names as these must be found in tt and will be propagated as
+given to all ASVs that are assigned this name in tt. This should only be
+used for high-level taxonomic groups that are not found in a database (e.g.
+for retaining Eukaryota when mapping onto a prokaryote-only taxonomic
+nomenclature).
+</p>
+<p>When ignore.format = TRUE, names for which taxmapper cannot find exact
+matches in tax2map2 are altered in case an exact match was not found due to
+formatting issues. To do this taxmapper first removes square brackets ("[]").
+It then checks for hyphens "-", underscores "_", and single spaces " ". If
+these are found, variants of the name with the hyphen/underscore/spaces
+replaced by each of the other two, as well as all subnames spearated by these
+characters, and all subnames pasted together with none of these special
+characters, are searched against tax2map2 for exact matches. It also creates
+all-lower and all-upper case versions of these elements and again searches
+for exact name matches in tax2map2. Words generated by this process that are
+2 characters or less are not searched for matches in tax2map2. All
+alternative names created when ignore.format = TRUE are also searched for
+synonyms in synonym.file if specified.
+</p>
+<p>To prevent matching of arbitrary names often used in reference databases (eg,
+"Clade_X"), and after creating all of the above alternative names if
+ignore.format = TRUE, those that BEGIN with any of the words below are
+are not use in exact name matching. Instead, the lowest assigned
+non-ambiguous name is determined (any name that begins with a word NOT
+included in the list below) and is appended to the ambiguous name separated
+by a hyphen. The words taxmapper flags as ambiguous are: "Clade", "CLADE",
+"clade", "Group", "GROUP", "group", "Class", "CLASS", "class",
+"Subclass", "SubClass", "SUBCLASS", "subclass", "Subclade", "SubClade",
+"SUBCLADE", "subclade", "Subgroup", "SubGroup", "SUBGROUP", "subgroup",
+"Sub group", "Sub Group", "SUB GROUP", "sub group", "Sub clade", "Sub Clade",
+"SUB CLADE", "sub clade", "Sub class", "Sub Class", "SUB CLASS", "sub class",
+"Sub_group", "Sub_Group", "SUB_GROUP", "sub_group", "Sub_clade", "Sub_Clade",
+"SUB_CLADE", "sub_clade", "Sub_class", "Sub_Class", "SUB_CLASS", "sub_class",
+"Sub-group", "Sub-Group", "SUB-GROUP", "sub-group", "Sub-clade", "Sub-Clade",
+"SUB-CLADE", "sub-clade", "Sub-class", "Sub-Class", "SUB-CLASS", "sub-class",
+"incertae sedis", "INCERTAE SEDIS", "Incertae sedis", "Incertae Sedis",
+"incertae-sedis", "INCERTAE-SEDIS", "Incertae-sedis", "Incertae-Sedis",
+"incertae_sedis", "INCERTAE_-SEDIS", "Incertae_sedis", "Incertae_Sedis",
+"incertaesedis", "INCERTAESEDIS", "Incertaesedis", "IncertaeSedis",
+"unclassified", "UNCLASSIFIED", "Unclassified", "Novel", "novel", "NOVEL",
+"sp", "sp.", "spp", "spp.", "lineage", "Lineage", "LINEAGE"
+</p>
+<p>For high-throughput implementation of taxmapper, it's recommended to set
+streamline = TRUE.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If streamline = TRUE, a dataframe formatted for use with ensembleTax
+that contains mapped taxonomic assignments for each ASV/OTU in the data set.
+</p>
+<p>If streamline = FALSE, a 3-element list where the first element is a
+dataframe that contains all unique input taxonomic assignments and their
+corresponding mapped outputs, the second element is a character vector that
+contains all taxonomic names that could not be mapped, and the third element
+contains mapped taxonomic assignments for each ASV in the data set.
+</p>
+<p>If is.null(outfilez) = FALSE, three csv files are saved in the current
+working directory containing each of the three list elements above.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Dylan Catlett
+</p>
+<p>Kevin Son
+</p>
+
+
+<h3>See Also</h3>
+
+<p>idtax2df, bayestax2df, ensembleTax
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">fake.silva &lt;- data.frame(ASV = c("AAAA", "ATCG", "GCGC", "TATA", "TCGA"),
+domain = c("Bacteria", "Eukaryota", "Eukaryota", "Eukaryota", "Eukaryota"),
+phylum = c("Firmicutes", "Diatomea", "Retaria", "MAST-12", "Diatomea"),
+class = c(NA, "Coscinodiscophytina_cl", "Polycystinea", "MAST-12A",
+"Mediophyceae"),
+order = c(NA, "Fragilariales", "Collodaria", NA, NA),
+family = c(NA, "Fragilariales_fa", "Collodaria_fa", NA, NA),
+genus = c(NA, "Podocystis", "Collophidium", NA, NA),
+stringsAsFactors = FALSE)
+head(fake.silva)
+mapped.silva &lt;- taxmapper(fake.silva,
+                          tt.ranks = colnames(fake.silva)[2:ncol(fake.silva)],
+                          tax2map2 = "pr2",
+                          exceptions = c("Archaea", "Bacteria"),
+                          ignore.format = FALSE,
+                          synonym.file = "default",
+                          streamline = TRUE,
+                          outfilez = NULL)
+
+</code></pre>
+
+
+</div>

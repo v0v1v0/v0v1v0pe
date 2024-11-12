@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_Build_PK_Oral</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build-PK-Oral Module</h2>
+
+<h3>Description</h3>
+
+<p>This module builds PK data for orally administered medications.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_Build_PK_Oral(
+  x,
+  idCol = "id",
+  dtCol = "dt",
+  doseCol = "dose",
+  concCol = "conc",
+  ldCol = NULL,
+  first_interval_hours = 336,
+  imputeClosest = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data.frame or file saved as either CSV, RData, or RDS</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idCol</code></td>
+<td>
+<p>data.frame id column name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dtCol</code></td>
+<td>
+<p>data.frame date column name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doseCol</code></td>
+<td>
+<p>dose column name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>concCol</code></td>
+<td>
+<p>concentration column name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ldCol</code></td>
+<td>
+<p>last-dose time column name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>first_interval_hours</code></td>
+<td>
+<p>number of hours before the first concentration to start time=0; the default is 336 hours = 14 days</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>imputeClosest</code></td>
+<td>
+<p>columns to impute missing data with next observation propagated backward; this is in addition to
+all covariates receving imputation using last observation carried forward</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See EHR Vignette for Build-PK-Oral.
+</p>
+
+
+<h3>Value</h3>
+
+<p>data.frame
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Data Generating Function
+mkdat &lt;- function() {
+  npat &lt;- 3
+  visits &lt;- floor(runif(npat, min=2, max=6))
+  id &lt;- rep(1:npat, visits)
+  dt_samp &lt;- as.Date(sort(sample(700, sum(visits))), origin = '2019-01-01')
+  tm_samp &lt;- as.POSIXct(paste(dt_samp, '10:00:00'), tz = 'UTC')
+  dt &lt;- tm_samp + rnorm(sum(visits), 0, 1*60*60)
+  dose_morn &lt;- sample(c(2.5,5,7.5,10), sum(visits), replace = TRUE)
+  conc &lt;- round(rnorm(sum(visits), 1.5*dose_morn, 1),1)
+  ld &lt;- dt - sample(10:16, sum(visits), replace = TRUE) * 3600
+  ld[rnorm(sum(visits)) &lt; .3] &lt;- NA
+  age &lt;- rep(sample(40:75, npat), visits)
+  gender &lt;- rep(sample(0:1, npat, replace=TRUE), visits)
+  weight &lt;- rep(round(rnorm(npat, 180, 20)),visits)
+  hgb &lt;- rep(rnorm(npat, 10, 2), visits)
+  data.frame(id, dt, dose_morn, conc, ld, age, gender, weight, hgb)
+}
+
+# Make raw data
+set.seed(30)
+dat &lt;- mkdat()
+
+#Process data without last-dose times
+run_Build_PK_Oral(x = dat,
+                  idCol = "id",
+                  dtCol = "dt",
+                  doseCol = "dose_morn",
+                  concCol = "conc",
+                  ldCol = NULL,
+                  first_interval_hours = 336,
+                  imputeClosest = NULL)
+
+#Process data with last-dose times
+run_Build_PK_Oral(x = dat, doseCol = "dose_morn", ldCol = "ld")
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,141 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>BBBClub</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bookbinder's Book Club</h2>
+
+<h3>Description</h3>
+
+<p>Marketing case study about a (fictitious) American book club to whose
+customers a book about “The Art History of Florence” was advertised.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("BBBClub")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame containing 1,300 observations on 11 variables.
+</p>
+
+<dl>
+<dt>choice</dt>
+<dd>
+<p>factor. Did the customer buy the advertised book?</p>
+</dd>
+<dt>gender</dt>
+<dd>
+<p>factor indicating gender.</p>
+</dd>  
+<dt>amount</dt>
+<dd>
+<p>total amount of money spent at the BBB Club.</p>
+</dd>  
+<dt>freq</dt>
+<dd>
+<p>number of books purchased at the BBB Club.</p>
+</dd>  
+<dt>last</dt>
+<dd>
+<p>number of months since the last purchase.</p>
+</dd>  
+<dt>first</dt>
+<dd>
+<p>number of months since the first purchase.</p>
+</dd>  
+<dt>child</dt>
+<dd>
+<p>number of children's books purchased.</p>
+</dd>  
+<dt>youth</dt>
+<dd>
+<p>number of youth books purchased.</p>
+</dd>  
+<dt>cook</dt>
+<dd>
+<p>number of cookbooks purchased.</p>
+</dd>  
+<dt>diy</dt>
+<dd>
+<p>number of do-it-yourself books purchased.</p>
+</dd>  
+<dt>art</dt>
+<dd>
+<p>number of art books purchased.</p>
+</dd>  
+</dl>
+<h3>Details</h3>
+
+<p>The data is a marketing case study about a (fictitious) American book club. 
+taken from the <em>Marketing Engineering</em> textbook of Lilien and Rangaswamy (2004).  
+In this case study, a brochure of the book “The Art History of Florence” was
+sent to 20,000 customers and 1,806 of which bought the book. A subsample of 1,300
+customers is provided in <code>BBBClub</code> for building a predictive model for <code>choice</code>.
+</p>
+<p>The use of a cost matrix is suggested for this dataset.	
+Classifying a customer that purchased the book as a non-buyer is worse (cost = 5),
+than it is to classify a custumer that did not purchase the book as a buyer (cost = 1). 
+</p>
+
+
+<h3>Source</h3>
+
+<p>Complements to Lilien and Rangaswamy (2004).
+</p>
+
+
+<h3>References</h3>
+
+<p>Lilien GL, Rangaswamy A (2004).
+<em>Marketing Engineering: Computer-Assisted Marketing Analysis and Planning</em>,
+2nd edition. Victoria, BC: Trafford Publishing. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## data, packages, random seed
+data("BBBClub", package = "evtree")
+library("rpart")
+suppressWarnings(RNGversion("3.5.0"))
+set.seed(1090)
+
+## learn trees
+ev &lt;- evtree(choice ~ ., data = BBBClub, minbucket = 10, maxdepth = 2)
+rp &lt;- as.party(rpart(choice ~ ., data = BBBClub, minbucket = 10, model = TRUE))
+ct &lt;- ctree(choice ~ ., data = BBBClub, minbucket = 10, mincrit = 0.99)
+
+## visualization
+plot(ev)
+plot(rp)
+plot(ct)
+
+## accuracy: misclassification rate
+mc &lt;- function(obj) 1 - mean(predict(obj) == BBBClub$choice)
+c("evtree" = mc(ev), "rpart" = mc(rp), "ctree" = mc(ct))
+
+## complexity: number of terminal nodes
+c("evtree" = width(ev), "rpart" = width(rp), "ctree" = width(ct))
+
+## compare structure of predictions
+ftable(tab &lt;- table(evtree = predict(ev), rpart  = predict(rp),
+  ctree  = predict(ct), observed = BBBClub$choice))
+
+## compare customer predictions only (absolute, proportion correct)
+sapply(c("evtree", "rpart", "ctree"), function(nam) {
+  mt &lt;- margin.table(tab, c(match(nam, names(dimnames(tab))), 4))
+  c(abs = as.vector(rowSums(mt))[2],
+    rel = round(100 * prop.table(mt, 1)[2, 2], digits = 3))
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>update_dissolution</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Adjust Dissolution Component of Network Model Fit</h2>
+
+<h3>Description</h3>
+
+<p>Adjusts the dissolution component of a dynamic ERGM fit using
+the <code>netest</code> function with the edges dissolution
+approximation method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">update_dissolution(old.netest, new.coef.diss, nested.edapprox = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>old.netest</code></td>
+<td>
+<p>An object of class <code>netest</code>, from the
+<code>netest</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new.coef.diss</code></td>
+<td>
+<p>An object of class <code>disscoef</code>, from the
+<code>dissolution_coefs</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nested.edapprox</code></td>
+<td>
+<p>Logical. If <code>edapprox = TRUE</code> the dissolution
+model is an initial segment of the formation model (see details in
+<code>netest</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Fitting an ERGM is a computationally intensive process when the model
+includes dyad dependent terms. With the edges dissolution approximation
+method of Carnegie et al, the coefficients for a temporal ERGM are
+approximated by fitting a static ERGM and adjusting the formation
+coefficients to account for edge dissolution. This function provides a very
+efficient method to adjust the coefficients of that model when one wants to
+use a different dissolution model; a typical use case may be to fit several
+different models with different average edge durations as targets. The
+example below exhibits that case.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated network model object of class <code>netest</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+nw &lt;- network_initialize(n = 1000)
+
+# Two dissolutions: an average duration of 300 versus 200
+diss.300 &lt;- dissolution_coefs(~offset(edges), 300, 0.001)
+diss.200 &lt;- dissolution_coefs(~offset(edges), 200, 0.001)
+
+# Fit the two reference models
+est300 &lt;- netest(nw = nw,
+                formation = ~edges,
+                target.stats = c(500),
+                coef.diss = diss.300)
+
+est200 &lt;- netest(nw = nw,
+                formation = ~edges,
+                target.stats = c(500),
+                coef.diss = diss.200)
+
+# Alternatively, update the 300 model with the 200 coefficients
+est200.compare &lt;- update_dissolution(est300, diss.200)
+
+identical(est200$coef.form, est200.compare$coef.form)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

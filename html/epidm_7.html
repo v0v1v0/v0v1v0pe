@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lookup_recode</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Lookup table switch handler</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+A function to call an epidm lookup table and
+recode  where we are aware of a new value.
+</p>
+<p>Built in are  the organism re-classifications and specimen_type groupings
+and a manual mode.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lookup_recode(src, type = c("species", "specimen", "manual"), .import = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>src</code></td>
+<td>
+<p>a character, vector or column containing the value(s) to be referenced</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>a character value to denote the lookup table used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.import</code></td>
+<td>
+<p>a list  in the order list(new,old) containing the
+values for another lookup table existing in the environment</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list object of the recoded field
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">df &lt;- data.frame(
+  spec = c(
+    sample(grep(")",
+                respeciate_organism$previous_organism_name,
+                value=TRUE,
+                invert = TRUE),
+           9),
+    "ESCHERICHIA COLI","SARS-COV-2","CANDIDA AUREUS"),
+  type = sample(specimen_type_grouping$specimen_type,12),
+  date = sample(seq.Date(from = Sys.Date()-365,
+                         to = Sys.Date(),
+                         by = "day"),12)
+)
+df &lt;- df[order(df$date),]
+
+# show the data before the changes
+df
+
+# check the lookup tables
+# observe the changes
+head(respeciate_organism[1:2])
+df$species &lt;- lookup_recode(df$spec,'species')
+df[,c('spec','species','date')]
+
+head(specimen_type_grouping)
+df$grp &lt;- lookup_recode(df$type,'specimen')
+df[,c('species','type','grp','date')]
+
+# for a tidyverse use
+# df %&gt;% mutate(spec=lookup_recode(spec,'species))
+
+# manual input of your own lookup
+# .import=list(new,old)
+lookup_recode(
+  "ALCALIGENES DENITRIFICANS",
+  type = 'manual',
+  .import=list(respeciate_organism$organism_species_name,
+               respeciate_organism$previous_organism_name)
+  )
+</code></pre>
+
+
+</div>

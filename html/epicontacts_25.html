@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>[.epicontacts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Subset epicontacts objects based on case identifiers</h2>
+
+<h3>Description</h3>
+
+<p>The "[" operator can be used to subset <code>epicontacts</code> objects,
+retaining a specified set of case identifiers (<code>i</code> for the linelist,
+<code>j</code> for contacts). Note that unlike most classical R objects, there is
+no replacement method for <code>epicontacts</code> objects, i.e. no
+operations such as <code>foo[i] &lt;- bar</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'epicontacts'
+
+  x[
+  i,
+  j,
+  k = TRUE,
+  l = TRUE,
+  contacts = c("both", "either", "from", "to"),
+  ...
+]
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An <code>epicontacts</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>A character vector containing case ID to be retained in the
+linelist; alternatively, an integer or logical vector used to subset the
+rows of the <code>$linelist</code> component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>j</code></td>
+<td>
+<p>A character vector containing case ID to be retained in the
+contacts; alternatively, an integer or logical vector used to subset
+the rows of the <code>$contacts</code> component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>An integer, logical, or character vector subsetting the
+supplementary columns of <code>x$linelist</code>, i.e. the columns after 'id';
+i.e. <code>k=1</code> refers to the column immediately after 'id'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l</code></td>
+<td>
+<p>An integer, logical, or character vector subsetting the
+supplementary columns of <code>x$contacts</code>, i.e. the columns after 'from'
+and 'to'; i.e. <code>l=1</code> refers to the column immediately after 'to'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contacts</code></td>
+<td>
+<p>A character string indicating the rules for retaining
+contacts when <code>j</code> indicates case IDs (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Not used (there for compatibility with generic).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Details on the 'contacts' argument; possible values are:
+</p>
+
+<ul>
+<li>
+<p> 'both': contacts are retained only if both cases are in <code>j</code>
+</p>
+</li>
+<li>
+<p> 'either': contacts are retained if at least one of the cases is in
+<code>j</code>
+</p>
+</li>
+<li>
+<p> 'from': contacts are retained only if the source ('from') is in
+<code>j</code>
+</p>
+</li>
+<li>
+<p> 'to': contacts are retained only if the recipient ('to') is in <code>j</code>
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Thibaut Jombart (<a href="mailto:thibautjombart@gmail.com">thibautjombart@gmail.com</a>)
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>thin</code> to retain matching cases in linelist or contacts.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if (require(outbreaks)) {
+## build data
+x &lt;- make_epicontacts(ebola_sim$linelist, ebola_sim$contacts,
+                       id = "case_id", to = "case_id", from = "infector",
+                       directed = TRUE)
+
+## subset first 10 linelist cases
+x[1:10]
+
+## same, remove contacts
+x[1:10, j = FALSE]
+
+## subset first 10 contacts
+x[j = 1:10]
+
+## remove the metadata
+x[k = FALSE, j = FALSE]
+
+## keep contacts where both cases are in linelist
+x[j = get_id(x, "linelist"), contacts = "both"]
+
+## keep contacts from a specific case '916d0a'
+x[j = "916d0a", contacts = "from"]
+
+## more complex: keep all cases and contacts with &gt; 4 secondary contacts
+## i) find cases to keep
+temp &lt;- table(x$contacts$from)
+temp[temp &gt; 4]
+to.keep &lt;- names(temp)[temp &gt; 4]
+to.keep
+
+## subset the contacts
+y &lt;- x[j = to.keep, contacts = "either"]
+y
+
+## keep only relevant entries in the linelist
+y &lt;- thin(y)
+
+## visualise result
+plot(y)
+}
+</code></pre>
+
+
+</div>

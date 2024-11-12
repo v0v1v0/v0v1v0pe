@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hierarchicalLasso</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+
+Fit hierarchical lasso using LOG penalty
+</h2>
+
+<h3>Description</h3>
+
+
+<p>Fits a linear regression model penalised with a hierarchical lasso penalty, using a latent overlapping group (LOG) lasso penalty.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">hierarchicalLasso(X, Y, groupset, lambda=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+
+<p>nxp matrix with observed data
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+
+<p>nx1 vector with response data
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groupset</code></td>
+<td>
+
+
+<p>list with hierarchical group indices
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+
+<p>Scalar. Penalty parameter for the latent overlapping group penalty.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<p>The LOG penalty can be used to impose hierarchical constraints in the estimation of regression coefficients (Yan, Bien et al. 2007), e.g. a group of covariates (child node in the hierarchical tree) may be selected only if another group is selected (parent node in the hierarchical tree).
+This function uses the simple implementation for the LOG penalty described in (Jacob, Obozinski and Vert, 2009). Faster and more scalable algorithms may be available but not yet used in this pacakage.
+</p>
+
+
+<h3>Value</h3>
+
+
+
+
+
+
+<p>A list with the following elements;
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>betas</code></td>
+<td>
+<p>Estimated regression coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a0</code></td>
+<td>
+<p>Estimated intercept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdarange</code></td>
+<td>
+<p>Range of penalty parameter used for CV (if lambda was not given).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>Estimated penalty parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.weights</code></td>
+<td>
+<p>Fixed group weights used in the LOG-penalty.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+
+<p>Yan, X., Bien, J. et al. (2017). Hierarchical sparse modeling: A choice of two group lasso formulations. Statistical Science 32 531-560.
+</p>
+<p>Jacob, L., Obozinski, G. and Vert, J.-P. (2009). Group lasso with overlap and graph lasso. In: Proceedings of the 26th annual international conference on machine learning 433-440. ACM.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simulate toy data 
+p&lt;-60 #number of covariates
+n&lt;-30 #sample size training data set
+n2&lt;-100 #sample size test data set
+
+#simulate all betas i.i.d. from beta_k~N(mean=0,sd=sqrt(0.1)):
+muBeta&lt;-c(0,0) #prior mean
+varBeta&lt;-c(0.0001,0.1) #prior variance
+#vector with group numbers all 1 (all simulated from same normal distribution)
+indT1&lt;-rep(c(1,2),each=p/2)
+
+#simulate test and training data sets:
+Dat&lt;-simDat(n,p,n2,muBeta,varBeta,indT1,sigma=1,model='linear')
+str(Dat) #Dat contains centered observed data, response data and regression coefficients
+
+#hierarchical grouping: e.g. covariates (p/4+1):(p/2) can only be selected when
+#covariates 1:(p/4) are selected
+groupset &lt;- list(1:(p/2),(p/2+1):p,1:(p/4),(3*p/4+1):p)
+
+#Fit hierarchical lasso, perform CV to find optimal lambda penalty
+res &lt;- hierarchicalLasso(X=Dat$Xctd,Y=Dat$Y,groupset = groupset )
+res$lambdarange
+plot(res$betas)
+
+#Fit hierarchical lasso for fixed lambda
+res2 &lt;- hierarchicalLasso(X=Dat$Xctd,Y=Dat$Y,groupset = groupset,lambda=res$lambdarange[2] )
+plot(res2$betas)
+</code></pre>
+
+
+</div>

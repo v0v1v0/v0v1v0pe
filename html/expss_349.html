@@ -1,0 +1,614 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tables</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Functions for custom tables construction</h2>
+
+<h3>Description</h3>
+
+<p>Table construction consists of at least of three functions chained with 
+<code>magrittr</code> pipe operator. At first we need to 
+specify variables for which statistics will be computed with 
+<code>tab_cells</code>. Secondary, we calculate statistics with one of 
+<code>tab_stat_*</code> functions. And last, we finalize table creation with 
+<code>tab_pivot</code>: <code>dataset %&gt;% tab_cells(variable) %&gt;%
+tab_stat_cases() %&gt;% tab_pivot()</code>. After that we can optionally sort table
+with tab_sort_asc, drop empty rows/columns with drop_rc and 
+transpose with <code>tab_transpose</code>. Generally, table is just a data.frame so
+we can use arbitrary operations on it. Statistic is always calculated with 
+the last cell, column/row variables, weight, missing values and subgroup. To 
+define new cell/column/row variables we can call appropriate function one more time. 
+<code>tab_pivot</code> defines how we combine different statistics and where 
+statistic labels will appear - inside/outside rows/columns. See examples.
+For significance testing see significance.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tab_cols(data, ...)
+
+tab_cells(data, ...)
+
+tab_rows(data, ...)
+
+tab_weight(data, weight = NULL)
+
+tab_mis_val(data, ...)
+
+tab_total_label(data, ...)
+
+tab_total_statistic(data, ...)
+
+tab_total_row_position(data, total_row_position = c("below", "above", "none"))
+
+tab_subgroup(data, subgroup = NULL)
+
+tab_row_label(data, ..., label = NULL)
+
+tab_stat_fun(data, ..., label = NULL, unsafe = FALSE)
+
+tab_stat_mean_sd_n(
+  data,
+  weighted_valid_n = FALSE,
+  labels = c("Mean", "Std. dev.", ifelse(weighted_valid_n, "Valid N", "Unw. valid N")),
+  label = NULL
+)
+
+tab_stat_mean(data, label = "Mean")
+
+tab_stat_median(data, label = "Median")
+
+tab_stat_se(data, label = "S. E.")
+
+tab_stat_sum(data, label = "Sum")
+
+tab_stat_min(data, label = "Min.")
+
+tab_stat_max(data, label = "Max.")
+
+tab_stat_sd(data, label = "Std. dev.")
+
+tab_stat_valid_n(data, label = "Valid N")
+
+tab_stat_unweighted_valid_n(data, label = "Unw. valid N")
+
+tab_stat_fun_df(data, ..., label = NULL, unsafe = FALSE)
+
+tab_stat_cases(
+  data,
+  total_label = NULL,
+  total_statistic = "u_cases",
+  total_row_position = c("below", "above", "none"),
+  label = NULL
+)
+
+tab_stat_cpct(
+  data,
+  total_label = NULL,
+  total_statistic = "u_cases",
+  total_row_position = c("below", "above", "none"),
+  label = NULL
+)
+
+tab_stat_cpct_responses(
+  data,
+  total_label = NULL,
+  total_statistic = "u_responses",
+  total_row_position = c("below", "above", "none"),
+  label = NULL
+)
+
+tab_stat_tpct(
+  data,
+  total_label = NULL,
+  total_statistic = "u_cases",
+  total_row_position = c("below", "above", "none"),
+  label = NULL
+)
+
+tab_stat_rpct(
+  data,
+  total_label = NULL,
+  total_statistic = "u_cases",
+  total_row_position = c("below", "above", "none"),
+  label = NULL
+)
+
+tab_last_vstack(
+  data,
+  stat_position = c("outside_rows", "inside_rows"),
+  stat_label = c("inside", "outside"),
+  label = NULL
+)
+
+tab_last_hstack(
+  data,
+  stat_position = c("outside_columns", "inside_columns"),
+  stat_label = c("inside", "outside"),
+  label = NULL
+)
+
+tab_pivot(
+  data,
+  stat_position = c("outside_rows", "inside_rows", "outside_columns", "inside_columns"),
+  stat_label = c("inside", "outside")
+)
+
+tab_transpose(data)
+
+tab_caption(data, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame/intermediate_table</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>vector/data.frame/list. Variables for tables. Use
+mrset/mdset for multiple-response variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>numeric vector in <code>tab_weight</code>. Cases with NA's, negative
+and zero weights are removed before calculations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total_row_position</code></td>
+<td>
+<p>Position of total row in the resulting table. Can
+be one of "below", "above", "none".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subgroup</code></td>
+<td>
+<p>logical vector in <code>tab_subgroup</code>. You can specify
+subgroup on which table will be computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>character. Label for the statistic in the <code>tab_stat_*</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unsafe</code></td>
+<td>
+<p>logical If TRUE than <code>fun</code> will be evaluated as is. It can
+lead to significant increase in the performance. But there are some 
+limitations. For <code>tab_stat_fun</code> it means that your function <code>fun</code> 
+should return vector of length one. Also there will be no attempts to make
+labels for statistic.  For <code>tab_stat_fun_df</code> your function should return
+vector of length one or list/data.frame (optionally with 'row_labels'
+element - statistic labels). If <code>unsafe</code> is TRUE then further
+arguments (<code>...</code>) for <code>fun</code> will be ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weighted_valid_n</code></td>
+<td>
+<p>logical. Sould we show weighted valid N in
+<code>tab_stat_mean_sd_n</code>? By default it is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>character vector of length 3. Labels for mean, standard
+deviation and valid N in <code>tab_stat_mean_sd_n</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total_label</code></td>
+<td>
+<p>By default "#Total". You can provide several names - each
+name for each total statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total_statistic</code></td>
+<td>
+<p>By default it is "u_cases" (unweighted cases). 
+Possible values are "u_cases", "u_responses", "u_cpct", "u_rpct", "u_tpct",
+"w_cases", "w_responses", "w_cpct", "w_rpct", "w_tpct". "u_" means
+unweighted statistics and "w_" means weighted statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat_position</code></td>
+<td>
+<p>character one of the values <code>"outside_rows"</code>, 
+<code>"inside_rows"</code>, <code>"outside_columns"</code> or <code>"inside_columns"</code>.
+It defines how we will combine statistics in the table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat_label</code></td>
+<td>
+<p>character one of the values <code>"inside"</code> or 
+<code>"outside"</code>. Where will be placed labels for the statistics relative
+to column names/row labels? See examples.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<ul>
+<li>
+<p><code>tab_cells</code> variables on which percentage/cases/summary
+functions will be computed. Use mrset/mdset for
+multiple-response variables.
+</p>
+</li>
+<li>
+<p><code>tab_cols</code> optional variables which breaks table by
+columns. Use mrset/mdset for
+multiple-response variables.
+</p>
+</li>
+<li>
+<p><code>tab_rows</code> optional variables which breaks table by rows. Use
+mrset/mdset for multiple-response variables.
+</p>
+</li>
+<li>
+<p><code>tab_weight</code> optional weight for the statistic.
+</p>
+</li>
+<li>
+<p><code>tab_mis_val</code> optional missing values for the statistic. It will
+be applied on variables specified by <code>tab_cells</code>. It works in the same
+manner as na_if.
+</p>
+</li>
+<li>
+<p><code>tab_subgroup</code> optional logical vector/expression which specify
+subset of data for table.
+</p>
+</li>
+<li>
+<p><code>tab_row_label</code> Add to table empty row with specified row
+labels. It is usefull for making section headings and etc.
+</p>
+</li>
+<li>
+<p><code>tab_total_row_position</code> Default value for
+<code>total_row_position</code> argument in <code>tab_stat_cases</code> and etc. Can be
+one of "below", "above", "none".
+</p>
+</li>
+<li>
+<p><code>tab_total_label</code> Default value for <code>total_label</code> argument
+in <code>tab_stat_cases</code> and etc. You can provide several names - each name
+for each total statistics.
+</p>
+</li>
+<li>
+<p><code>tab_total_statistic</code> Default value for <code>total_statistic</code>
+argument in <code>tab_stat_cases</code> and etc. You can provide several values.
+Possible values are "u_cases", "u_responses", "u_cpct", "u_rpct", "u_tpct", 
+"w_cases", "w_responses", "w_cpct", "w_rpct", "w_tpct". "u_" means unweighted
+statistics and "w_" means weighted statistics.
+</p>
+</li>
+<li>
+<p><code>tab_stat_fun</code>, <code>tab_stat_fun_df</code> <code>tab_stat_fun</code> 
+applies function on each variable in cells separately, <code>tab_stat_fun_df</code>
+gives to function each data.frame in cells as a whole 
+data.table with all names converted to variable labels (if
+labels exists). So it is not recommended to rely on original variables names 
+in your <code>fun</code>. For details see cross_fun. You can provide several
+functions as arguments. They will be combined as with
+combine_functions. So you can use <code>method</code> argument. For details
+see documentation for combine_functions. 
+</p>
+</li>
+<li>
+<p><code>tab_stat_cases</code> calculate counts.
+</p>
+</li>
+<li>
+<p><code>tab_stat_cpct</code>, <code>tab_stat_cpct_responses</code> calculate column
+percent. These functions give different results only for multiple response
+variables. For <code>tab_stat_cpct</code> base of percent is number of valid cases.
+Case is considered as valid if it has at least one non-NA value. So for
+multiple response variables sum of percent may be greater than 100. For 
+<code>tab_stat_cpct_responses</code> base of percent is number of valid responses. 
+Multiple response variables can have several responses for single case. Sum 
+of percent of <code>tab_stat_cpct_responses</code> always equals to 100%.
+</p>
+</li>
+<li>
+<p><code>tab_stat_rpct</code> calculate row percent. Base
+for percent is number of valid cases.
+</p>
+</li>
+<li>
+<p><code>tab_stat_tpct</code> calculate table percent. Base
+for percent is number of valid cases.
+</p>
+</li>
+<li>
+<p><code>tab_stat_mean</code>, <code>tab_stat_median</code>, <code>tab_stat_se</code>,
+<code>tab_stat_sum</code>, <code>tab_stat_min</code>, <code>tab_stat_max</code>,
+<code>tab_stat_sd</code>, <code>tab_stat_valid_n</code>, 
+<code>tab_stat_unweighted_valid_n</code> different summary statistics. NA's are
+always omitted.
+</p>
+</li>
+<li>
+<p><code>tab_pivot</code> finalize table creation and define how different
+<code>tab_stat_*</code> will be combined
+</p>
+</li>
+<li>
+<p><code>tab_caption</code> set caption on the table. Should be used after the <code>tab_pivot</code>.
+</p>
+</li>
+<li>
+<p><code>tab_transpose</code> transpose final table after <code>tab_pivot</code> or last
+statistic.</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>All of these functions return object of class 
+<code>intermediate_table</code> except <code>tab_pivot</code> which returns final
+result - object of class <code>etable</code>. Basically it's a data.frame but
+class is needed for custom methods.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>fre, cross_cases, cross_fun, tab_sort_asc,
+drop_empty_rows, significance.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+data(mtcars)
+mtcars = apply_labels(mtcars,
+                      mpg = "Miles/(US) gallon",
+                      cyl = "Number of cylinders",
+                      disp = "Displacement (cu.in.)",
+                      hp = "Gross horsepower",
+                      drat = "Rear axle ratio",
+                      wt = "Weight (1000 lbs)",
+                      qsec = "1/4 mile time",
+                      vs = "Engine",
+                      vs = c("V-engine" = 0,
+                             "Straight engine" = 1),
+                      am = "Transmission",
+                      am = c("Automatic" = 0,
+                             "Manual"=1),
+                      gear = "Number of forward gears",
+                      carb = "Number of carburetors"
+)
+# some examples from 'cro'
+# simple example - generally with 'cro' it can be made with less typing
+mtcars %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(vs) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_pivot()
+
+# split rows
+mtcars %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(vs) %&gt;% 
+    tab_rows(am) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_pivot()
+
+# multiple banners
+mtcars %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(total(), vs, am) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_pivot()
+
+# nested banners
+mtcars %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(total(), vs %nest% am) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_pivot()
+
+# summary statistics
+mtcars %&gt;% 
+    tab_cells(mpg, disp, hp, wt, qsec) %&gt;%
+    tab_cols(am) %&gt;% 
+    tab_stat_fun(Mean = w_mean, "Std. dev." = w_sd, "Valid N" = w_n) %&gt;%
+    tab_pivot()
+
+# summary statistics - labels in columns
+mtcars %&gt;% 
+    tab_cells(mpg, disp, hp, wt, qsec) %&gt;%
+    tab_cols(am) %&gt;% 
+    tab_stat_fun(Mean = w_mean, "Std. dev." = w_sd, "Valid N" = w_n, method = list) %&gt;%
+    tab_pivot()
+
+# subgroup with droping empty columns
+mtcars %&gt;% 
+    tab_subgroup(am == 0) %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(total(), vs %nest% am) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_pivot() %&gt;% 
+    drop_empty_columns()
+
+# total position at the top of the table
+mtcars %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(total(), vs) %&gt;% 
+    tab_rows(am) %&gt;% 
+    tab_stat_cpct(total_row_position = "above",
+                  total_label = c("number of cases", "row %"),
+                  total_statistic = c("u_cases", "u_rpct")) %&gt;% 
+    tab_pivot()
+
+# this example cannot be made easily with 'cro'             
+mtcars %&gt;%
+    tab_cells(am) %&gt;%
+    tab_cols(total(), vs) %&gt;%
+    tab_total_row_position("none") %&gt;% 
+    tab_stat_cpct(label = "col %") %&gt;%
+    tab_stat_rpct(label = "row %") %&gt;%
+    tab_stat_tpct(label = "table %") %&gt;%
+    tab_pivot(stat_position = "inside_rows")
+
+# statistic labels inside columns             
+mtcars %&gt;%
+    tab_cells(am) %&gt;%
+    tab_cols(total(), vs) %&gt;%
+    tab_total_row_position("none") %&gt;% 
+    tab_stat_cpct(label = "col %") %&gt;%
+    tab_stat_rpct(label = "row %") %&gt;%
+    tab_stat_tpct(label = "table %") %&gt;%
+    tab_pivot(stat_position = "inside_columns")
+
+# stacked statistics
+mtcars %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(total(), am) %&gt;% 
+    tab_stat_mean() %&gt;%
+    tab_stat_se() %&gt;% 
+    tab_stat_valid_n() %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_pivot()
+    
+# stacked statistics with section headings
+mtcars %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(total(), am) %&gt;% 
+    tab_row_label("#Summary statistics") %&gt;% 
+    tab_stat_mean() %&gt;%
+    tab_stat_se() %&gt;% 
+    tab_stat_valid_n() %&gt;% 
+    tab_row_label("#Column percent") %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_pivot()
+
+# stacked statistics with different variables
+mtcars %&gt;% 
+    tab_cols(total(), am) %&gt;% 
+    tab_cells(mpg, hp, qsec) %&gt;% 
+    tab_stat_mean() %&gt;%
+    tab_cells(cyl, carb) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_pivot()
+
+# stacked statistics - label position outside row labels
+mtcars %&gt;% 
+    tab_cells(cyl) %&gt;% 
+    tab_cols(total(), am) %&gt;% 
+    tab_stat_mean() %&gt;%
+    tab_stat_se %&gt;% 
+    tab_stat_valid_n() %&gt;% 
+    tab_stat_cpct(label = "Col %") %&gt;% 
+    tab_pivot(stat_label = "outside")
+    
+# example from 'cross_fun_df' - linear regression by groups with sorting 
+mtcars %&gt;% 
+    tab_cells(sheet(mpg, disp, hp, wt, qsec)) %&gt;% 
+    tab_cols(total(), am) %&gt;% 
+    tab_stat_fun_df(
+        function(x){
+            frm = reformulate(".", response = as.name(names(x)[1]))
+            model = lm(frm, data = x)
+            sheet('Coef.' = coef(model), 
+                  confint(model)
+            )
+        }    
+    ) %&gt;% 
+    tab_pivot() %&gt;% 
+    tab_sort_desc()
+
+# multiple-response variables and weight
+data(product_test)
+codeframe_likes = num_lab("
+                          1 Liked everything
+                          2 Disliked everything
+                          3 Chocolate
+                          4 Appearance
+                          5 Taste
+                          6 Stuffing
+                          7 Nuts
+                          8 Consistency
+                          98 Other
+                          99 Hard to answer
+                          ")
+
+set.seed(1)
+product_test = product_test %&gt;% 
+    let(
+        # recode age by groups
+        age_cat = recode(s2a, lo %thru% 25 ~ 1, lo %thru% hi ~ 2),
+        wgt = runif(.N, 0.25, 4),
+        wgt = wgt/sum(wgt)*.N
+    ) %&gt;% 
+    apply_labels(
+        age_cat = "Age",
+        age_cat = c("18 - 25" = 1, "26 - 35" = 2),
+        
+        a1_1 = "Likes. VSX123",
+        b1_1 = "Likes. SDF456",
+        a1_1 = codeframe_likes,
+        b1_1 = codeframe_likes
+    )
+
+product_test %&gt;% 
+    tab_cells(mrset(a1_1 %to% a1_6), mrset(b1_1 %to% b1_6)) %&gt;% 
+    tab_cols(total(), age_cat) %&gt;% 
+    tab_weight(wgt) %&gt;% 
+    tab_stat_cpct() %&gt;% 
+    tab_sort_desc() %&gt;% 
+    tab_pivot()
+    
+# trick to place cell variables labels inside columns
+# useful to compare two variables
+# '|' is needed to prevent automatic labels creation from argument
+# alternatively we can use list(...) to avoid this
+product_test %&gt;% 
+    tab_cols(total(), age_cat) %&gt;% 
+    tab_weight(wgt) %&gt;% 
+    tab_cells("|" = unvr(mrset(a1_1 %to% a1_6))) %&gt;% 
+    tab_stat_cpct(label = var_lab(a1_1)) %&gt;% 
+    tab_cells("|" = unvr(mrset(b1_1 %to% b1_6))) %&gt;% 
+    tab_stat_cpct(label = var_lab(b1_1)) %&gt;% 
+    tab_pivot(stat_position = "inside_columns")
+
+# if you need standard evaluation, use 'vars'
+tables = mtcars %&gt;%
+      tab_cols(total(), am %nest% vs)
+
+for(each in c("mpg", "disp", "hp", "qsec")){
+    tables = tables %&gt;% tab_cells(vars(each)) %&gt;%
+        tab_stat_fun(Mean = w_mean, "Std. dev." = w_sd, "Valid N" = w_n) 
+}
+tables %&gt;% tab_pivot()
+
+## End(Not run) 
+</code></pre>
+
+
+</div>

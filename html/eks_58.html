@@ -1,0 +1,188 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidyst_kda</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tidy and geospatial kernel discrimination analysis (classification)</h2>
+
+<h3>Description</h3>
+
+<p>Tidy and geospatial versions of kernel discrimination analysis (classification) for 1- and 2-dimensional data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_kda(data, ...)
+st_kda(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>grouped tibble of data values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>sf object with grouping attribute and with point geometry</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters in <code>ks::kda</code> function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A kernel discriminant analysis (aka classification or supervised learning) assigns each grid point to the group with the highest density value, weighted by the prior probabilities. 
+</p>
+<p>The output from <code>*_kda</code> have the same structure as the kernel density estimate from <code>*_kde</code>, except that <code>estimate</code> is the weighted kernel density values at the grid points (weighted by <code>prior_prob</code>), and <code>label</code> becomes the KDA grouping variable that indicates to which of the groups the grid points belong. The output is a grouped tibble, grouped by the input grouping variable.
+</p>
+<p>For details of the computation of the kernel discriminant analysis and the bandwidth selector procedure, see <code>?ks::kda</code>. The bandwidth matrix of smoothing parameters is computed as in <code>ks::kde</code> per group. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>–For <code>tidy_kda</code>, the output is an object of class <code>tidy_ks</code>, which is a tibble with columns: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>evaluation points in x-axis (name is taken from 1st input variable in <code>data</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>evaluation points in y-axis (2-d) (name is taken from 2nd input variable in <code>data</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>weighted kernel density estimate values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_prob</code></td>
+<td>
+<p>prior probabilities for each group</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ks</code></td>
+<td>
+<p>first row (within each <code>group</code>) contains the untidy kernel estimate from <code>ks::kda</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tks</code></td>
+<td>
+<p>short object class label derived from the <code>ks</code> object class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>estimated KDA group label at <code>(x,y)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>grouping variable (same as input).</p>
+</td>
+</tr>
+</table>
+<p>–For <code>st_kda</code>, the output is an object of class <code>st_ks</code>, which is a list with fields:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>tidy_ks</code></td>
+<td>
+<p>tibble of simplified output (<code>ks</code>, <code>tks</code>, <code>label</code>, <code>group</code>) from <code>tidy_kda</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>sf object of grid of weighted kernel density estimate values, as polygons, with attributes <code>estimate</code>, <code>label</code>, <code>group</code> copied from the <code>tidy_ks</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sf</code></td>
+<td>
+<p>sf object of 1% to 99% contour regions of weighted kernel density estimate, as multipolygons, with attributes <code>contlabel</code> derived from the contour level; and <code>estimate</code>, <code>group</code> copied from the <code>tidy_ks</code> object.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## tidy discriminant analysis (classification)
+library(ggplot2)
+data(cardio, package="ks")
+cardio &lt;- dplyr::as_tibble(cardio[,c("ASTV","Mean","NSP")])
+cardio &lt;- dplyr::mutate(cardio, NSP=ordered(NSP))
+cardio &lt;- dplyr::group_by(cardio, NSP)
+set.seed(8192)
+cardio.train.ind &lt;- sample(1:nrow(cardio), round(nrow(cardio)/4,0))
+cardio.train &lt;- cardio[cardio.train.ind,]
+cardio.train1 &lt;- dplyr::select(cardio.train, ASTV, NSP)
+cardio.train2 &lt;- dplyr::select(cardio.train, ASTV, Mean, NSP)
+
+## tidy 1-d classification
+t1 &lt;- tidy_kda(cardio.train1) 
+gt1 &lt;- ggplot(t1, aes(x=ASTV)) 
+gt1 + geom_line(aes(colour=NSP)) + 
+    geom_rug(aes(colour=label), sides="b", linewidth=1.5) +
+    scale_colour_brewer(palette="Dark2", na.translate=FALSE) 
+
+## tidy 2-d classification
+t2 &lt;- tidy_kda(cardio.train2)
+gt2 &lt;- ggplot(t2, aes(x=ASTV, y=Mean)) + theme_bw()
+gt2 + geom_contour_ks(aes(colour=NSP)) + 
+    geom_tile(aes(fill=label), alpha=0.2) +
+    scale_fill_brewer(palette="Dark2", na.translate=FALSE) +
+    scale_colour_brewer(palette="Dark2")
+
+## geospatial classification
+data(wa)
+data(grevilleasf)
+grevillea_gr &lt;- dplyr::filter(grevilleasf, species=="hakeoides" |
+    species=="paradoxa")
+grevillea_gr &lt;- dplyr::mutate(grevillea_gr, species=factor(species))  
+grevillea_gr &lt;- dplyr::group_by(grevillea_gr, species)
+s1 &lt;- st_kda(grevillea_gr)
+s2 &lt;- st_ksupp(st_kde(grevillea_gr))
+s1$grid &lt;- sf::st_filter(s1$grid, sf::st_convex_hull(sf::st_union(s2$sf)))
+
+## base R plot
+xlim &lt;- c(1.2e5, 1.1e6); ylim &lt;- c(6.1e6, 7.2e6)
+plot(wa, xlim=xlim, ylim=ylim)
+plot(s1, which_geometry="grid", add=TRUE, border=NA, legend=FALSE)
+plot(s1, add=TRUE, lwd=2, border=rep(colorspace::qualitative_hcl(
+    palette="Dark2", n=2, alpha=0.5), each=3))
+
+## geom_sf plot
+gs1 &lt;- ggplot(s1) + geom_sf(data=wa, fill=NA) + 
+    geom_sf(data=dplyr::mutate(s1$grid, species=label), aes(fill=species), 
+    alpha=0.1, colour=NA) + ggthemes::theme_map()
+gs1 + geom_sf(data=st_get_contour(s1), aes(colour=species), fill=NA) +
+    colorspace::scale_colour_discrete_qualitative(palette="Dark2") +
+    colorspace::scale_fill_discrete_qualitative(palette="Dark2") +
+    facet_wrap(~species) + coord_sf(xlim=xlim, ylim=ylim)
+</code></pre>
+
+
+</div>

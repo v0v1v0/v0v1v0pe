@@ -1,0 +1,184 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_obj_address</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Return the memory address of an object</h2>
+
+<h3>Description</h3>
+
+<p>Return the memory address of an object after recursively searching for the object in all the environments defined
+in a specified environment or in all the environments defined in the whole workspace.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_obj_address(
+  obj,
+  envir = NULL,
+  envmap = NULL,
+  n = 0,
+  include_functions = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>object whose memory address is requested. It can be given as a variable name or an expression.
+Strings representing object names are not interpreted and return <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>environment where the object should be searched for. All parent environments of
+<code>envir</code> are searched as well. It defaults to <code>NULL</code> which means that it should be searched in the
+whole workspace (including packages, namespaces, and user-defined environments).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envmap</code></td>
+<td>
+<p>data frame containing a lookup table with name-address pairs of environment names and
+addresses to be used when searching for environment <code>env</code>. It defaults to <code>NULL</code> which means that the
+lookup table is constructed on the fly with the environments defined in the <code>envir</code> environment
+–if not <code>NULL</code>–, or in the whole workspace if <code>envir=sNULL</code>.
+See the details section for more information on its structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>number of levels to go up from the calling function environment to resolve the name
+of <code>obj</code>. It defaults to 0 which implies the calling environment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_functions</code></td>
+<td>
+<p>whether to include funtion execution environments as environments where the object
+is searched for. Set this flag to <code>TRUE</code> with caution because there may be several functions where the
+same object is defined, for instance functions that are called as part of the object searching process!</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The object is first searched recursively in all environments defined in the specified environment (if any),
+by calling <code>obj_find</code>.
+If no environment is specified, the object is searched recursively in the whole workspace.
+</p>
+<p>The memory address is then retrieved for every object found in those environments having the same name
+as the given object <code>obj</code>.
+</p>
+<p>Strings return <code>NULL</code> but strings can be the result of an expression passed as argument to this function.
+In that case, the string is interpreted as an object and its memory address is returned as long as
+the object exists.
+</p>
+<p>If <code>envmap</code> is passed it should be a data frame providing an address-name pair lookup table
+of environments and should contain at least the following columns:
+</p>
+
+<ul>
+<li>
+<p><code>location</code> for user-defined environments, the name of the environment where the environment
+is located; otherwise <code>NA</code>.
+</p>
+</li>
+<li>
+<p><code>pathname</code> the full <em>environment path</em> to reach the environment separated by <code>$</code>
+(e.g. <code>"env1$env$envx"</code>)
+</p>
+</li>
+<li>
+<p><code>address</code> an 8-digit (32-bit architectures) thru 16-digit (64-bit architectures) memory address
+of the environment given in <code>pathname</code> enclosed in &lt; &gt; (e.g. <code>"&lt;0000000007DCFB38&gt;"</code>
+(64-bit architectures))
+Be ware that Linux Debian distributions may have a 12-digit memory address representation.
+So the best way to know is to check a memory address by calling e.g. 'address("x")'.
+</p>
+</li>
+</ul>
+<p>Passing an <code>envmap</code> lookup table is useful for speedup purposes, in case several calls to this
+function will be performed in the context of an unchanged set of defined environments.
+Such <code>envmap</code> data frame can be created by calling get_env_names.
+Use this parameter with care, as the matrix passed may not correspond to the actual mapping of existing
+environments to their addresses and in that case results may be different from those expected.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The 8-digit (32-bit architectures) thru 16-digit (64-bit architectures) memory address of
+the input object given as a string enclosed in &lt;&gt;  (e.g. <code>"&lt;0000000005E90988&gt;"</code>)
+(note that Ubuntu Debian may use 12-digit memory addresses),
+or <code>NULL</code> under any of the following situations:
+</p>
+
+<ul>
+<li>
+<p> the object is <code>NULL</code>, <code>NA</code>, or a string, or any other object whose memory address changes every
+time the object is referred to (for instance for <code>alist[1]</code> –as opposed to <code>alist[[1]]</code>–
+where <code>alist</code> is a list.
+</p>
+</li>
+<li>
+<p> the object is a constant (e.g. <code>TRUE</code>, <code>3</code>, etc.)
+</p>
+</li>
+<li>
+<p> the object does not exist in the given environment.
+</p>
+</li>
+<li>
+<p> the object is an expression that cannot be evaluated in the given environment.
+</p>
+</li>
+</ul>
+<p>Note that for the last case, although constants have a memory address, this address is meaningless as
+it changes with every invocation of the function. For instance, running
+<code>address(3)</code> several times will show a different memory address each time, and that is why
+<code>get_obj_address</code> returns <code>NULL</code> in those cases.
+</p>
+<p>When <code>envir=NULL</code> (the default) or when an object exists in several environments,
+the memory address is returned for all of the environments where the object is found. In that case, the addresses are
+stored in an array whose names attribute shows the environments where the object is found.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">env1 = new.env()
+env1$x = 3                       # x defined in environment 'env1'
+x = 4                            # x defined in the Global Environment
+get_obj_address(env1$x)          # returns the memory address of the object 'x'
+                                 # defined in the 'env1' environment
+get_obj_address(x, envir=env1)   # same as above
+get_obj_address(x)               # Searches for object 'x' everywhere in the workspace and
+                                 # returns a named array with the memory address of all its
+                                 # occurrences, where the names are the names of the
+                                 # environments where x was found.
+
+# Memory addresses of objects whose names are stored in an array and retrieved using sapply()
+env1$y &lt;- 2;
+objects &lt;- c("x", "y")
+sapply(objects, FUN=get_obj_address, envir=env1)	# Note that the address of object "x"
+                                                 # is the same as the one returned above
+                                                 # by get_obj_address(x, envir=env1)
+
+# Memory address of elements of a list
+alist &lt;- list("x")
+get_obj_address(alist[[1]])      # memory address of object 'x'
+get_obj_address(alist[1])        # NULL because alist[1] has a memory address
+                                 # that changes every time alist[1] is referred to.
+</code></pre>
+
+
+</div>

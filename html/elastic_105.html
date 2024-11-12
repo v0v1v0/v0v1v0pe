@@ -1,0 +1,278 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mtermvectors</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Multi Termvectors</h2>
+
+<h3>Description</h3>
+
+<p>Multi Termvectors
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mtermvectors(
+  conn,
+  index = NULL,
+  type = NULL,
+  ids = NULL,
+  body = list(),
+  pretty = TRUE,
+  field_statistics = TRUE,
+  fields = NULL,
+  offsets = TRUE,
+  parent = NULL,
+  payloads = TRUE,
+  positions = TRUE,
+  preference = "random",
+  realtime = TRUE,
+  routing = NULL,
+  term_statistics = FALSE,
+  version = NULL,
+  version_type = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>an Elasticsearch connection object, see <code>connect()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>(character) The index in which the document resides.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>(character) The type of the document.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ids</code></td>
+<td>
+<p>(character) One or more document ids</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>body</code></td>
+<td>
+<p>(character) Define parameters and or supply a document to get
+termvectors for</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pretty</code></td>
+<td>
+<p>(logical) pretty print. Default: <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>field_statistics</code></td>
+<td>
+<p>(character) Specifies if document count, sum of
+document frequencies and sum of total term frequencies should be returned.
+Default: <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fields</code></td>
+<td>
+<p>(character) A comma-separated list of fields to return.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offsets</code></td>
+<td>
+<p>(character) Specifies if term offsets should be returned.
+Default: <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parent</code></td>
+<td>
+<p>(character) Parent id of documents.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>payloads</code></td>
+<td>
+<p>(character) Specifies if term payloads should be returned.
+Default: <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>positions</code></td>
+<td>
+<p>(character) Specifies if term positions should be returned.
+Default: <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preference</code></td>
+<td>
+<p>(character) Specify the node or shard the operation
+should be performed on (Default: <code>random</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>realtime</code></td>
+<td>
+<p>(character) Specifies if request is real-time as opposed to
+near-real-time (Default: <code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>routing</code></td>
+<td>
+<p>(character) Specific routing value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term_statistics</code></td>
+<td>
+<p>(character) Specifies if total term frequency and
+document frequency should be returned. Default: <code>FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>version</code></td>
+<td>
+<p>(character) Explicit version number for concurrency control</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>version_type</code></td>
+<td>
+<p>(character) Specific version type, valid choices are:
+'internal', 'external', 'external_gte', 'force'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Curl args passed on to crul::verb-POST</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Multi termvectors API allows to get multiple termvectors based on an
+index, type and id.
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-multi-termvectors.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-multi-termvectors.html</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>termvectors()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+x &lt;- connect()
+
+if (index_exists(x, 'omdb')) index_delete(x, "omdb")
+omdb &lt;- system.file("examples", "omdb.json", package = "elastic")
+omdb &lt;- type_remover(omdb)
+invisible(docs_bulk(x, omdb))
+out &lt;- Search(x, "omdb", size = 2)$hits$hits
+ids &lt;- vapply(out, "[[", "", "_id")
+
+# no index
+body &lt;- '{
+   "docs": [
+      {
+         "_index": "omdb",
+         "_id": "%s",
+         "term_statistics": true
+      },
+      {
+         "_index": "omdb",
+         "_id": "%s",
+         "fields": [
+            "Plot"
+         ]
+      }
+   ]
+}'
+mtermvectors(x, body = sprintf(body, ids[1], ids[2]))
+
+# index given
+body &lt;- '{
+   "docs": [
+      {
+         "_id": "%s",
+         "fields": [
+            "Plot"
+         ],
+         "term_statistics": true
+      },
+      {
+         "_id": "%s",
+         "fields": [
+            "Title"
+         ]
+      }
+   ]
+}'
+mtermvectors(x, 'omdb', body = sprintf(body, ids[1], ids[2]))
+
+# parameters same for both documents, so can simplify
+body &lt;- '{
+    "ids" : ["%s", "%s"],
+    "parameters": {
+        "fields": [
+            "Plot"
+        ],
+        "term_statistics": true
+    }
+}'
+mtermvectors(x, 'omdb', body = sprintf(body, ids[1], ids[2]))
+
+# you can give user provided documents via the 'docs' parameter
+## though you have to give index and type that exist in your Elasticsearch 
+## instance
+body &lt;- '{
+   "docs": [
+      {
+         "_index": "omdb",
+         "doc" : {
+            "Director" : "John Doe",
+            "Plot" : "twitter test test test"
+         }
+      },
+      {
+         "_index": "omdb",
+         "doc" : {
+           "Director" : "Jane Doe",
+           "Plot" : "Another twitter test ..."
+         }
+      }
+   ]
+}'
+mtermvectors(x, body = body)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

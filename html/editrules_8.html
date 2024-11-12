@@ -1,0 +1,224 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>editarray</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parse textual, categorical edit rules to an editarray</h2>
+
+<h3>Description</h3>
+
+<p>An <code>editarray</code> is a boolean array (with some extra attributes) 
+where each row contains an edit restriction on purely categorical data. 
+The function <code>editarray</code> converts (a vector of) edit(s)
+in <code>character</code> or <code>expression</code> from to an <code>editarray</code> object. 
+Edits may also be read from a <code>data.frame</code>, in which case it must have at least
+a <code>character</code> column  with the name <code>edit</code>. It is not 
+strictly necessary, but hightly recommended that the datamodel (i.e. the possible levels
+for a variable) is included explicitly in the edits using an <code>%in%</code> statement, as shown
+in the examples below. The function <code>editfile</code> can read categorical edits from a 
+free-form text file.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">editarray(editrules, sep = ":", env = parent.frame())
+
+## S3 method for class 'editarray'
+as.character(x, useIf = TRUE, datamodel = TRUE, ...)
+
+## S3 method for class 'editarray'
+as.data.frame(x, ...)
+
+## S3 method for class 'editarray'
+as.expression(x, ...)
+
+## S3 method for class 'editarray'
+as.matrix(x, ...)
+
+## S3 method for class 'editarray'
+c(...)
+
+## S3 method for class 'editarray'
+summary(object, useBlocks = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>editrules</code></td>
+<td>
+<p><code>character</code> or <code>expression</code> vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+<p>textual separator, to be used internally for separating variable from category names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>environment to evaluate the rhs of '==' or '%in%' in.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>editarray object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useIf</code></td>
+<td>
+<p><code>logical</code>. Use if( &lt;condition&gt; ) &lt;statement&gt; or !&lt;condition&gt; | &lt;statement&gt; ?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>datamodel</code></td>
+<td>
+<p><code>logical</code>. Include datamodel explicitly?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to or from other methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an R object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useBlocks</code></td>
+<td>
+<p><code>logical</code> Summarize each block?</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>editarray</code> : An object of class <code>editarray</code>
+</p>
+<p><code>as.data.frame</code>: <code>data.frame</code> with columns 'name', 'edit' and 'description'.
+</p>
+<p><code>as.matrix</code>: The boolean matrix part of the <code>editarray</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>editrules.plotting</code>, <code>violatedEdits</code>, <code>localizeErrors</code>,
+<code>editfile</code>, <code>editset</code>, <code>editmatrix</code>, <code>getVars</code>,
+<code>blocks</code>, <code>eliminate</code>, <code>substValue</code>, <code>isFeasible</code> 
+<code>generateEdits</code>, <code>contains</code>, <code>is.editarray</code>, <code>isSubset</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Here is the prototypical categorical edit: men cannot be pregnant.
+E &lt;- editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c('yes','no'),
+    if( gender == 'male' ) pregnant == 'no'
+    )
+)
+E
+
+# an editarray has a summary method:
+summary(E)
+
+# A yes/no variable may also be modeled as a logical:
+editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c(TRUE, FALSE),
+    if( gender == 'male' ) pregnant == FALSE
+    )
+)
+
+# or, shorter (and using a character vector as input): 
+editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c(TRUE, FALSE),
+    if( gender == 'male' ) !pregnant
+    )
+)
+
+# the \%in\% statement may be used at will
+editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c(TRUE, FALSE),
+    positionInHousehold %in% c('marriage partner', 'child', 'other'),
+    maritalStatus %in% c('unmarried','married','widowed','divorced'),
+    if( gender == 'male' ) !pregnant,
+    if( maritalStatus %in% c(
+          'unmarried',
+          'widowed',
+          'divorced')
+      ) !positionInHousehold %in% c('marriage partner','child')
+    )
+)
+
+
+
+
+
+# Here is the prototypical categorical edit: men cannot be pregnant.
+E &lt;- editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c('yes','no'),
+    if( gender == 'male' ) pregnant == 'no'
+    )
+)
+E
+
+# an editarray has a summary method:
+summary(E)
+
+# A yes/no variable may also be modeled as a logical:
+editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c(TRUE, FALSE),
+    if( gender == 'male' ) pregnant == FALSE
+    )
+)
+
+# or, shorter (and using a character vector as input): 
+editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c(TRUE, FALSE),
+    if( gender == 'male' ) !pregnant
+    )
+)
+
+# the \%in\% statement may be used at will
+editarray(expression(
+    gender %in% c('male','female'),
+    pregnant %in% c(TRUE, FALSE),
+    positionInHousehold %in% c('marriage partner', 'child', 'other'),
+    maritalStatus %in% c('unmarried','married','widowed','divorced'),
+    if( gender == 'male' ) !pregnant,
+    if( maritalStatus %in% c(
+          'unmarried',
+          'widowed',
+          'divorced')
+      ) !positionInHousehold %in% c('marriage partner','child')
+    )
+)
+
+
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,199 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emplikH2.test</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical likelihood for weighted hazard with 
+right censored, left truncated data</h2>
+
+<h3>Description</h3>
+
+<p>Use empirical likelihood ratio and Wilks theorem to test 
+the null hypothesis that 
+</p>
+<p style="text-align: center;"><code class="reqn"> \int f(t, ... ) dH(t) = K </code>
+</p>
+
+<p>with right censored, left truncated data, where <code class="reqn"> H(t) </code> is the (unknown)
+cumulative hazard function;
+<code class="reqn"> f(t, ... )</code> can be any given left continuous function in <code class="reqn">t</code>;
+(of course the integral must be finite). 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emplikH2.test(x, d, y= -Inf, K, fun, tola=.Machine$double.eps^.5,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector containing the censored survival times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>a vector of the censoring indicators, 1-uncensor; 0-censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>a vector containing the left truncation times. If left as default
+value, -Inf, it means no truncation. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>a real number used in the constraint, i.e. to set the
+weighted integral of hazard to this value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a left continuous (in <code>t</code>) weight function
+used to calculate
+the weighted hazard in <code class="reqn">H_0</code>. <code>fun(t, ... )</code> must be
+able to take a vector input <code>t</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tola</code></td>
+<td>
+<p>an optional positive real number specifying the tolerance of
+iteration error in solve the non-linear equation needed in constrained
+maximization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameter(s), if any, passing along to <code>fun</code>. 
+This allows an implicit function of <code>fun</code>.  </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This version works for implicit function <code> f(t, ...)</code>.
+</p>
+<p>This function is designed for continuous distributions.
+Thus we do not expect tie in the observation <code>x</code>. If you believe
+the true underlying distribution is continuous but the
+sample observations have tie due to rounding, then you might want
+to add a small number to the observations to break tie.
+</p>
+<p>The likelihood used here is the ‘Poisson’ version of the empirical likelihood
+</p>
+<p style="text-align: center;"><code class="reqn">
+\prod_{i=1}^n ( dH(x_i) )^{\delta_i} \exp [-H(x_i)+H(y_i)] . 
+</code>
+</p>
+
+<p>For discrete distributions we recommend
+use <code>emplikdisc.test()</code>.
+</p>
+<p>Please note here the largest observed time is NOT automatically defined to be
+uncensored. In the el.cen.EM( ), it is (to make F a proper distribution always).
+</p>
+<p>The constant <code>K</code> must be inside the so called
+feasible region for the computation to continue. This is similar to the
+requirement that when testing the value of the mean, the value must be
+inside the convex hull of the observations for the computation to continue.
+It is always true that the NPMLE value is feasible. So when the
+computation cannot continue, that means there is no hazard function 
+dominated by the Nelson-Aalen estimator satisfy 
+the constraint. You may try to move the <code>theta</code> and <code>K</code> closer
+to the NPMLE.  When the computation cannot continue, 
+the -2LLR should have value
+infinite.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>the location of the hazard jumps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wts</code></td>
+<td>
+<p>the jump size of hazard function at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>the Lagrange multiplier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>the -2Log Likelihood ratio.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pval</code></td>
+<td>
+<p>P-value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>niters</code></td>
+<td>
+<p>number of iterations used</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Pan, XR and Zhou, M. (2002),
+“Empirical likelihood in terms of cumulative
+hazard for censored data”. 
+<em>Journal of Multivariate Analysis</em> <b>80</b>, 166-188.
+</p>
+
+
+<h3>See Also</h3>
+
+<p> emplikHs.test2 </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">z1&lt;-c(1,2,3,4,5)
+d1&lt;-c(1,1,0,1,1)
+fun4 &lt;- function(x, theta) { as.numeric(x &lt;= theta) }
+emplikH2.test(x=z1,d=d1, K=0.5, fun=fun4, theta=3.5)
+#Next, test if H(3.5) = log(2) .
+emplikH2.test(x=z1,d=d1, K=log(2), fun=fun4, theta=3.5)
+#Next, try one sample log rank test
+indi &lt;- function(x,y){ as.numeric(x &gt;= y) }
+fun3 &lt;- function(t,z){rowsum(outer(z,t,FUN="indi"),group=rep(1,length(z)))} 
+emplikH2.test(x=z1, d=d1, K=sum(0.25*z1), fun=fun3, z=z1) 
+##this is testing if the data is from an exp(0.25) population.
+</code></pre>
+
+
+</div>

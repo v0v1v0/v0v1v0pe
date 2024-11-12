@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>choose_eafdiffplot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Interactively choose according to empirical attainment function differences</h2>
+
+<h3>Description</h3>
+
+<p>Creates the same plot as <code>eafdiffplot()</code> but waits for the user to click in
+one of the sides. Then it returns the rectangles the give the differences in
+favour of the chosen side. These rectangles may be used for interactive
+decision-making as shown in Diaz and López-Ibáñez (2021). The function
+<code>choose_eafdiff()</code> may be used in a non-interactive context.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">choose_eafdiffplot(
+  data.left,
+  data.right,
+  intervals = 5,
+  maximise = c(FALSE, FALSE),
+  title.left = deparse(substitute(data.left)),
+  title.right = deparse(substitute(data.right)),
+  ...
+)
+
+choose_eafdiff(x, left = stop("'left' must be either TRUE or FALSE"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data.left, data.right</code></td>
+<td>
+<p>Data frames corresponding to the input data of
+left and right sides, respectively. Each data frame has at least three
+columns, the third one being the set of each point. See also
+<code>read_datasets()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervals</code></td>
+<td>
+<p>(<code>integer(1)</code>|<code>character()</code>) <br> The absolute range of the
+differences <code class="reqn">[0, 1]</code> is partitioned into the number of intervals
+provided. If an integer is provided, then labels for each interval are
+computed automatically. If a character vector is provided, its length is
+taken as the number of intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maximise</code></td>
+<td>
+<p>(<code>logical()</code> | <code>logical(1)</code>) <br> Whether the objectives must be
+maximised instead of minimised. Either a single logical value that applies
+to all objectives or a vector of logical values, with one value per
+objective.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title.left, title.right</code></td>
+<td>
+<p>Title for left and right panels, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other graphical parameters are passed down to
+<code>eafdiffplot()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>(<code>matrix()</code>) Matrix of rectangles representing EAF differences
+(returned by <code>eafdiff()</code> with <code>rectangles=TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>left</code></td>
+<td>
+<p>(<code>logical(1)</code>) With <code>left=TRUE</code> return the rectangles with
+positive differences, otherwise return those with negative differences but
+differences are converted to positive.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>matrix</code> where the first 4 columns give the coordinates of two
+corners of each rectangle and the last column. In both cases, the last
+column gives the positive differences in favor of the chosen side.
+</p>
+
+
+<h3>References</h3>
+
+<p>Juan
+Esteban Diaz, Manuel López-Ibáñez (2021).
+“Incorporating Decision-Maker's Preferences into the Automatic Configuration of Bi-Objective Optimisation Algorithms.”
+<em>European Journal of Operational Research</em>, <b>289</b>(3), 1209–1222.
+doi: <a href="https://doi.org/10.1016/j.ejor.2020.07.059">10.1016/j.ejor.2020.07.059</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>read_datasets()</code>, <code>eafdiffplot()</code>, <code>whv_rect()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+extdata_dir &lt;- system.file(package="eaf", "extdata") 
+A1 &lt;- read_datasets(file.path(extdata_dir, "wrots_l100w10_dat"))
+A2 &lt;- read_datasets(file.path(extdata_dir, "wrots_l10w100_dat"))
+if (interactive()) {
+  rectangles &lt;- choose_eafdiffplot(A1, A2, intervals = 5)
+} else { # Choose A1
+  rectangles &lt;- eafdiff(A1, A2, intervals = 5, rectangles = TRUE)
+  rectangles &lt;- choose_eafdiff(rectangles, left = TRUE)
+}
+reference &lt;- c(max(A1[, 1], A2[, 1]), max(A1[, 2], A2[, 2]))
+x &lt;- split.data.frame(A1[,1:2], A1[,3])
+hv_A1 &lt;- sapply(split.data.frame(A1[, 1:2], A1[, 3]),
+                 hypervolume, reference=reference)
+hv_A2 &lt;- sapply(split.data.frame(A2[, 1:2], A2[, 3]),
+                 hypervolume, reference=reference)
+boxplot(list(A1=hv_A1, A2=hv_A2), main = "Hypervolume")
+
+whv_A1 &lt;- sapply(split.data.frame(A1[, 1:2], A1[, 3]),
+                 whv_rect, rectangles=rectangles, reference=reference)
+whv_A2 &lt;- sapply(split.data.frame(A2[, 1:2], A2[, 3]),
+                 whv_rect, rectangles=rectangles, reference=reference)
+boxplot(list(A1=whv_A1, A2=whv_A2), main = "Weighted hypervolume")
+
+
+</code></pre>
+
+
+</div>

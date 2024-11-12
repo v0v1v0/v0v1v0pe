@@ -1,0 +1,334 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fgev</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximum-likelihood Fitting of the Generalized Extreme Value
+Distribution</h2>
+
+<h3>Description</h3>
+
+<p>Maximum-likelihood fitting for the generalized extreme value distribution,
+including linear modelling of the location parameter, and allowing any
+of the parameters to be held fixed if desired.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fgev(x, start, ..., nsloc = NULL, prob = NULL, std.err = TRUE,
+    corr = FALSE, method = "BFGS", warn.inf = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A numeric vector, which may contain missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>A named list giving the initial values for the
+parameters over which the likelihood is to be maximized.
+If <code>start</code> is omitted the routine attempts to find good
+starting values using moment estimators.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters, either for the GEV model
+or for the optimization function <code>optim</code>. If parameters
+of the model are included they will be held fixed at the
+values given (see <b>Examples</b>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsloc</code></td>
+<td>
+<p>A data frame with the same number of rows as the
+length of <code>x</code>, for linear modelling of the location
+parameter.
+The data frame is treated as a covariate matrix (excluding the
+intercept).
+A numeric vector can be given as an alternative to a single column
+data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>Controls the parameterization of the model (see
+<b>Details</b>). Should be either <code>NULL</code> (the default),
+or a probability in the closed interval [0,1].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>Logical; if <code>TRUE</code> (the default), the standard
+errors are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Logical; if <code>TRUE</code>, the correlation matrix is
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The optimization method (see <code>optim</code> for
+details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn.inf</code></td>
+<td>
+<p>Logical; if <code>TRUE</code> (the default), a warning is
+given if the negative log-likelihood is infinite when evaluated at
+the starting values.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>prob</code> is <code>NULL</code> (the default):
+</p>
+<p>For stationary models the parameter names are <code>loc</code>, <code>scale</code>
+and <code>shape</code>, for the location, scale and shape parameters
+respectively.
+For non-stationary models, the parameter names are <code>loc</code>,
+<code>loc</code><em>x1</em>, ..., <code>loc</code><em>xn</em>, <code>scale</code> and
+<code>shape</code>, where <em>x1</em>, ..., <em>xn</em> are the column names
+of <code>nsloc</code>, so that <code>loc</code> is the intercept of the
+linear model, and <code>loc</code><em>x1</em>, ..., <code>loc</code><em>xn</em>
+are the <code>ncol(nsloc)</code> coefficients.
+If <code>nsloc</code> is a vector it is converted into a single column
+data frame with column name <code>trend</code>, and hence the associated
+trend parameter is named <code>loctrend</code>.
+</p>
+<p>If <code class="reqn">\code{prob} = p</code> is a probability:
+</p>
+<p>The fit is performed using a different parameterization.
+Let <code class="reqn">a</code>, <code class="reqn">b</code> and <code class="reqn">s</code> denote the location, scale
+and shape parameters of the GEV distribution.
+For stationary models, the distribution is parameterized
+using <code class="reqn">(z_p,b,s)</code>, where
+</p>
+<p style="text-align: center;"><code class="reqn">z_p = a - b/s (1 - (-\log(1 - p))^s)</code>
+</p>
+
+<p>is such that <code class="reqn">G(z_p) = 1 - p</code>, where <code class="reqn">G</code> is the
+GEV distribution function.
+<code class="reqn">\code{prob} = p</code> is therefore the probability in the upper
+tail corresponding to the quantile <code class="reqn">z_p</code>.
+If <code>prob</code> is zero, then <code class="reqn">z_p</code> is the upper end point
+<code class="reqn">a - b/s</code>, and <code class="reqn">s</code> is restricted to the negative
+(Weibull) axis.
+If <code>prob</code> is one, then <code class="reqn">z_p</code> is the lower end point
+<code class="reqn">a - b/s</code>, and <code class="reqn">s</code> is restricted to the positive
+(Frechet) axis.
+The parameter names are <code>quantile</code>, <code>scale</code>
+and <code>shape</code>, for <code class="reqn">z_p</code>, <code class="reqn">b</code> and <code class="reqn">s</code>
+respectively.
+</p>
+<p>For non-stationary models the parameter <code class="reqn">z_p</code> is again given by
+the equation above, but <code class="reqn">a</code> becomes the intercept of the linear
+model for the location parameter, so that <code>quantile</code> replaces
+(the intercept) <code>loc</code>, and hence the parameter names are
+<code>quantile</code>, <code>loc</code><em>x1</em>, ..., <code>loc</code><em>xn</em>,
+<code>scale</code> and <code>shape</code>, where <em>x1</em>, ..., <em>xn</em> are
+the column names of <code>nsloc</code>.
+</p>
+<p>In either case:
+</p>
+<p>For non-stationary fitting it is recommended that the covariates
+within the linear model for the location parameter are (at least
+approximately) centered and scaled (i.e.\ that the columns of
+<code>nsloc</code> are centered and scaled), particularly if automatic
+starting values are used, since the starting values for the
+associated parameters are then zero.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of class <code>c("gev","uvevd","evd")</code>.
+</p>
+<p>The generic accessor functions <code>fitted</code> (or
+<code>fitted.values</code>), <code>std.errors</code>,
+<code>deviance</code>, <code>logLik</code> and
+<code>AIC</code> extract various features of the
+returned object.
+</p>
+<p>The functions <code>profile</code> and <code>profile2d</code> are
+used to obtain deviance profiles for the model parameters.
+In particular, profiles of the quantile <code class="reqn">z_p</code> can be
+calculated and plotted when <code class="reqn">\code{prob} = p</code>.
+The function <code>anova</code> compares nested models.
+The function <code>plot</code> produces diagnostic plots.
+</p>
+<p>An object of class <code>c("gev","uvevd","evd")</code> is a list
+containing at most the following components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>A vector containing the maximum likelihood estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>A vector containing the standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>A vector containing the parameters of the model that
+have been held fixed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>A vector containing all parameters (optimized and fixed).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deviance</code></td>
+<td>
+<p>The deviance at the maximum likelihood estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>The correlation matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.cov</code></td>
+<td>
+<p>The variance covariance matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence, counts, message</code></td>
+<td>
+<p>Components taken from the
+list returned by <code>optim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The data passed to the argument <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdata</code></td>
+<td>
+<p>The data, transformed to stationarity (for non-stationary
+models).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsloc</code></td>
+<td>
+<p>The argument <code>nsloc</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>The length of <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>The argument <code>prob</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loc</code></td>
+<td>
+<p>The location parameter. If <code>prob</code> is <code>NULL</code>
+(the default), this will also be an element of <code>param</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call of the current function.</p>
+</td>
+</tr>
+</table>
+<h3>Warning</h3>
+
+<p>The standard errors and the correlation matrix in the returned
+object are taken from the observed information, calculated by a
+numerical approximation.
+They must be interpreted with caution when the shape parameter
+is less than <code class="reqn">-0.5</code>, because the usual asymptotic
+properties of maximum likelihood estimators do not then
+hold (Smith, 1985).
+</p>
+
+
+<h3>References</h3>
+
+<p>Smith, R. L. (1985)
+Maximum likelihood estimation in a class of non-regular cases.
+<em>Biometrika</em>, <b>72</b>, 67–90.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>anova.evd</code>, <code>optim</code>,
+<code>plot.uvevd</code>, <code>profile.evd</code>,
+<code>profile2d.evd</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">uvdata &lt;- rgev(100, loc = 0.13, scale = 1.1, shape = 0.2)
+trend &lt;- (-49:50)/100
+M1 &lt;- fgev(uvdata, nsloc = trend, control = list(trace = 1))
+M2 &lt;- fgev(uvdata)
+M3 &lt;- fgev(uvdata, shape = 0)
+M4 &lt;- fgev(uvdata, scale = 1, shape = 0)
+anova(M1, M2, M3, M4)
+par(mfrow = c(2,2))
+plot(M2)
+## Not run: M2P &lt;- profile(M2)
+## Not run: plot(M2P)
+
+rnd &lt;- runif(100, min = -.5, max = .5)
+fgev(uvdata, nsloc = data.frame(trend = trend, random = rnd))
+fgev(uvdata, nsloc = data.frame(trend = trend, random = rnd), locrandom = 0)
+
+uvdata &lt;- rgev(100, loc = 0.13, scale = 1.1, shape = 0.2)
+M1 &lt;- fgev(uvdata, prob = 0.1)
+M2 &lt;- fgev(uvdata, prob = 0.01)
+## Not run: M1P &lt;- profile(M1, which = "quantile")
+## Not run: M2P &lt;- profile(M2, which = "quantile")
+## Not run: plot(M1P)
+## Not run: plot(M2P)
+</code></pre>
+
+
+</div>

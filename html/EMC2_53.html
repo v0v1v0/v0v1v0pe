@@ -1,0 +1,144 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>RDM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Racing Diffusion Model</h2>
+
+<h3>Description</h3>
+
+<p>Model file to estimate the Racing Diffusion Model (RDM), also known as the Racing Wald Model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">RDM()
+</code></pre>
+
+
+<h3>Details</h3>
+
+<p>Model files are almost exclusively used in <code>design()</code>.
+</p>
+<p>Default values are used for all parameters that are not explicitly listed in the <code>formula</code>
+argument of <code>design()</code>.They can also be accessed with <code>RDM()$p_types</code>.</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+   <strong>Parameter</strong> </td>
+<td style="text-align: left;"> <strong>Transform</strong> </td>
+<td style="text-align: left;"> <strong>Natural scale</strong> </td>
+<td style="text-align: left;"> <strong>Default</strong> </td>
+<td style="text-align: left;"> <strong>Mapping</strong> </td>
+<td style="text-align: left;"> <strong>Interpretation</strong> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>v</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(1) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Evidence-accumulation rate (drift rate) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>A</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(0) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Between-trial variation (range) in start point </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>B</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(1) </td>
+<td style="text-align: left;"> <em>b</em> = <em>B</em> + <em>A</em> </td>
+<td style="text-align: left;"> Distance from <em>A</em> to <em>b</em> (response threshold) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>t0</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(0) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Non-decision time </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <em>sv</em> </td>
+<td style="text-align: left;"> log </td>
+<td style="text-align: left;"> [0, Inf] </td>
+<td style="text-align: left;"> log(1) </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Within-trial standard deviation of drift rate </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>All parameters are estimated on the log scale.
+</p>
+<p>The parameterization <em>b</em> = <em>B</em> + <em>A</em> ensures that the response threshold is
+always higher than the between trial variation in start point.
+</p>
+<p>Conventionally, <code>s</code> is fixed to 1 to satisfy scaling constraints.
+</p>
+<p>Because the RDM is a race model, it has one accumulator per response option.
+EMC2 automatically constructs a factor representing the accumulators <code>lR</code> (i.e., the
+latent response) with level names taken from the <code>R</code> column in the data.
+</p>
+<p>The <code>lR</code> factor is mainly used to allow for response bias, analogous to <em>Z</em> in the
+DDM. For example, in the RDM, response thresholds are determined by the <em>B</em>
+parameters, so <code>B~lR</code> allows for different thresholds for the accumulator
+corresponding to "left" and "right" stimuli, for example, (e.g., a bias to respond left occurs
+if the left threshold is less than the right threshold).
+</p>
+<p>For race models in general, the argument <code>matchfun</code> can be provided in <code>design()</code>.
+One needs to supply a function that takes the <code>lR</code> factor (defined in the augmented data (d)
+in the following function) and returns a logical defining the correct
+response. In the example below, this is simply whether the <code>S</code> factor equals the
+latent response factor: <code>matchfun=function(d)d$S==d$lR</code>. Using <code>matchfun</code> a latent match factor (<code>lM</code>) with
+levels <code>FALSE</code> (i.e., the stimulus does not match the accumulator) and <code>TRUE</code>
+(i.e., the stimulus does match the accumulator). This is added internally
+and can also be used in model formula, typically for parameters related to
+the rate of accumulation.
+</p>
+<p>Tillman, G., Van Zandt, T., &amp; Logan, G. D. (2020). Sequential sampling models
+without random between-trial variability: The racing diffusion model of speeded
+decision making. <em>Psychonomic Bulletin &amp; Review, 27</em>(5), 911-936.
+https://doi.org/10.3758/s13423-020-01719-6
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list defining the cognitive model
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># When working with lM it is useful to design  an "average and difference"
+# contrast matrix, which for binary responses has a simple canonical from:
+ADmat &lt;- matrix(c(-1/2,1/2),ncol=1,dimnames=list(NULL,"d"))
+# We also define a match function for lM
+matchfun=function(d)d$S==d$lR
+# We now construct our design, with v ~ lM and the contrast for lM the ADmat.
+design_RDMBE &lt;- design(data = forstmann,model=RDM,matchfun=matchfun,
+                       formula=list(v~lM,s~lM,B~E+lR,A~1,t0~1),
+                       contrasts=list(v=list(lM=ADmat)),constants=c(s=log(1)))
+# For all parameters that are not defined in the formula, default values are assumed
+# (see Table above).
+</code></pre>
+
+
+</div>

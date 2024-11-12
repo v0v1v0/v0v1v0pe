@@ -1,0 +1,86 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mutate_epi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Add New Epidemiology Variables</h2>
+
+<h3>Description</h3>
+
+<p>Inspired by <code>dplyr::mutate</code>, <code>mutate_epi</code> adds new
+variables to the epidemiological and related variables within
+simulated model objects of any class in <code>EpiModel</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mutate_epi(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An <code>EpiModel</code> object of class <code>dcm</code>, <code>icm</code>, or
+<code>netsim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Name-value pairs of expressions (see examples below).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The updated <code>EpiModel</code> object of class <code>dcm</code>, <code>icm</code>,
+or <code>netsim</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># DCM example
+param &lt;- param.dcm(inf.prob = 0.2, act.rate = 0.25)
+init &lt;- init.dcm(s.num = 500, i.num = 1)
+control &lt;- control.dcm(type = "SI", nsteps = 500)
+mod1 &lt;- dcm(param, init, control)
+mod1 &lt;- mutate_epi(mod1, prev = i.num/num)
+plot(mod1, y = "prev")
+
+# Network model example
+nw &lt;- network_initialize(n = 100)
+nw &lt;- set_vertex_attribute(nw, "group", rep(1:2, each = 50))
+formation &lt;- ~edges
+target.stats &lt;- 50
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 20)
+est1 &lt;- netest(nw, formation, target.stats, coef.diss, verbose = FALSE)
+
+param &lt;- param.net(inf.prob = 0.3, inf.prob.g2 = 0.15)
+init &lt;- init.net(i.num = 1, i.num.g2 = 0)
+control &lt;- control.net(type = "SI", nsteps = 10, nsims = 3,
+                       verbose = FALSE)
+mod1 &lt;- netsim(est1, param, init, control)
+mod1
+
+# Add the prevalences to the dataset
+mod1 &lt;- mutate_epi(mod1, i.prev = i.num / num,
+                         i.prev.g2 = i.num.g2 / num.g2)
+plot(mod1, y = c("i.prev", "i.prev.g2"), qnts = 0.5, legend = TRUE)
+
+# Add incidence rate per 100 person years (assume time step = 1 week)
+mod1 &lt;- mutate_epi(mod1, ir100 = 5200*(si.flow + si.flow.g2) /
+                                      (s.num + s.num.g2))
+as.data.frame(mod1)
+as.data.frame(mod1, out = "mean")
+
+</code></pre>
+
+
+</div>

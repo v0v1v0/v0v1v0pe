@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gbtest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Guthrie-Buchwald procedure for significance analysis of ERP data</h2>
+
+<h3>Description</h3>
+
+<p>Monte-Carlo implementation of the Guthrie-Buchwald procedure (see Guthrie and Buchwald, 1991) which accounts for the
+auto-correlation among test statistics to control erroneous detections of short intervals.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gbtest(dta, design, design0 = NULL, graphthresh = 0.05, nsamples = 1000)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dta</code></td>
+<td>
+<p>Data frame containing the ERP curves: each column corresponds to a time frame and each row to a curve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>Design matrix of the nonnull model for the relationship between the ERP and the experimental variables. Typically the output of the function
+model.matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design0</code></td>
+<td>
+<p>Design matrix of the null model. Typically a submodel of the nonnull model, obtained by removing columns from design. Default is 
+NULL, corresponding to the model with no covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>graphthresh</code></td>
+<td>
+<p>Graphical threshold (see Guthrie and Buchwald, 1991). Default is 0.05. As the FDR control level, the smaller is the graphical threshold, the more conservative is the
+procedure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamples</code></td>
+<td>
+<p>Number of samples in the Monte-Carlo method to estimate the residual covariance. Default is 1000.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The Guthrie-Buchwald method starts from a preliminary estimation of r, the lag-1 autocorrelation, among test statistics.
+Then, the null distribution of the lengths of the intervals I_alpha = t : pvalue_t &lt;= alpha , where alpha is the
+so-called graphical threshold parameter of the method, is obtained using simulations of p-values p_t associated to
+auto-regressive t-test process of order 1 with mean 0 and auto-correlation r. Such an interval I_alpha is declared
+significant if its length exceeds the (1-alpha)-quantile of the null distribution. Note that the former method is
+designed to control erroneous detections of short significant intervals but not to control any type-I error rate.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nbsignifintervals</code></td>
+<td>
+<p>Number of significant intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervals</code></td>
+<td>
+<p>List of length nbsignifintervals which components give the indices of each significant intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>significant</code></td>
+<td>
+<p>Indices of the time points for which the test is positive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>signal</code></td>
+<td>
+<p>Estimated signal: a pxT matrix, where p is the difference between the numbers of parameters in the nonnull and null models and T the number of frames.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p>Estimated lag-1 auto-correlation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r2</code></td>
+<td>
+<p>R-squared values for each of the T linear models.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>David Causeur - david.causeur@agrocampus-ouest.fr and Mei-Chen Chu (National Cheng-Kung University, Tainan, Taiwan)
+</p>
+
+
+<h3>References</h3>
+
+<p>Guthrie, D. and Buchwald, J.S. (1991). Significance testing of difference potentials. Psychophysiology, 28, 240-244.
+</p>
+<p>Sheu, C.-F., Perthame, E., Lee Y.-S. and Causeur, D. (2016). Accounting for time dependence in large-scale multiple testing of event-related potentials data. Annals of Applied Statistics. 10(1), 219-245.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>erpavetest</code>, <code>erpfatest</code>, <code>erptest</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(impulsivity)
+
+# Paired t-tests for the comparison of the ERP curves in the two conditions, 
+# within experimental group High, at channel CPZ
+
+erpdta.highCPZ = impulsivity[(impulsivity$Group=="High")&amp;(impulsivity$Channel=="CPZ"),5:505] 
+   # ERP curves for subjects in group 'High'
+covariates.highCPZ = impulsivity[(impulsivity$Group=="High")&amp;(impulsivity$Channel=="CPZ"),1:4]
+covariates.highCPZ = droplevels(covariates.highCPZ)
+   # Experimental covariates for subjects in group 'High'
+
+design = model.matrix(~C(Subject,sum)+Condition,data=covariates.highCPZ)
+   # Design matrix to compare ERP curves in the two conditions
+design0 = model.matrix(~C(Subject,sum),data=covariates.highCPZ)
+   # Design matrix for the null model (no condition effect)
+
+tests = gbtest(erpdta.highCPZ,design,design0)
+
+time_pt = seq(0,1000,2)     # sequence of time points (1 time point every 2ms in [0,1000])
+nbs = 20                    # Number of B-splines for the plot of the effect curve
+effect=which(colnames(design)=="ConditionSuccess")
+erpplot(erpdta.highCPZ,design=design,frames=time_pt,effect=effect,xlab="Time (ms)",
+        ylab=expression(Effect~curve~(mu~V)),bty="l",ylim=c(-3,3),nbs=nbs,
+        cex.axis=1.25,cex.lab=1.25,interval="simultaneous")
+   # with interval="simultaneous", both the pointwise and the simultaneous confidence bands
+   # are plotted
+points(time_pt[tests$significant],rep(0,length(tests$significant)),pch=16,col="blue")
+   # Identifies significant time points by blue dots
+title("Success-Failure effect curve with 95 percent C.I.",cex.main=1.25)
+mtext(paste("12 subjects - Group 'High' - ",nbs," B-splines",sep=""),cex=1.25)
+</code></pre>
+
+
+</div>

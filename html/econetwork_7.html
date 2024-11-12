@@ -1,0 +1,184 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>embedding</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Graph embeddings for comparing trophic network architectures
+</h2>
+
+<h3>Description</h3>
+
+<p>Computation of different embeddings from a list of directed graphs
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">embedding(gList, method="metric2vec", groups=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>gList</code></td>
+<td>
+<p>A <code>list</code> of directed graph objects of class <code>igraph</code>. An edge must go from the predator to the prey.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Embedding method. This should be (an unambiguous
+abbreviation of) one of <code>"metric2vec"</code>, <code>"motif2vec"</code>,
+<code>"group2vec"</code> or <code>"shortestpath2vec"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>A named vector of class <code>character</code> or
+<code>integer</code> indicating the group to
+which each node belongs to. The length of <code>groups</code> must correspond to the number of different nodes present in <code>gList</code>. The names <code>names(groups)</code> must
+correspond to the nodes names in <code>gList</code>. If <code>NULL</code>, the groups
+are not considered.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function computes a graph embedding from a list of graph.
+</p>
+<p>Comparing the architecture of interaction networks in space or time is
+essential for understanding the assembly, trajectory, functioning and
+persistence of species communities. Graph embedding methods, which
+position networks into a vector space where nearby networks have
+similar architectures, could be ideal tools for this purposes.
+</p>
+<p>Here, the proposed embedding methods are:
+</p>
+<p>-<code>"metric2vec"</code>: each column is a network
+metric. <code>connectance</code>: network connectance,
+<code>modularity</code>: network modularity (undirected graph),
+<code>rangeTL</code>: trophic level range, (trophic level is computed as in Williams &amp; Martinez, 2004), 
+<code>meanTL</code>: mean trophic level,
+<code>SWTL</code>: shortest weighted trophic level,
+<code>meanOmni</code>: mean level of omnivory (standard deviation of the
+trophic levels of the prey),
+<code>propOmni</code>: proportion of omnivorous species,
+<code>propCanib</code>: proportion of cannibal species,
+<code>meanNbPrey</code>: mean number of prey,
+<code>sdNbPrey</code>: standard deviation of the number of prey,
+<code>skewNbPrey</code>: skewness of the number of prey,
+<code>meanNbPred</code>: mean number of predators,
+<code>sdNbPred</code>: standard deviation of the number of predators,
+<code>skewNbPred</code>: skewness of the number of predators,
+<code>propBasal</code>: proportion of basal species (which have no prey),
+<code>propTop</code>: proportion of top species (which have no predator),
+<code>propInter</code>: proportion of intermediate species (which have prey and predator),
+<code>sdVulnerability</code>: standard deviation of the vulnerability (i.e. in-degree),
+<code>sdGeneralism</code>: standard deviation of the generalism (i.e. out-degree),
+<code>transitivity</code>: network transitivity,
+<code>diameter</code>: network diameter,
+<code>meanSP</code>: mean shortest path,
+<code>assortativity</code>: network assortativity.
+</p>
+<p>-<code>"motif2vec"</code>:  Graph motifs are small connected subgraphs with a well-defined
+structure. Each column is the proportion of each of the 13
+connected motifs as enumerated by the 'motifs' function. 
+</p>
+<p>-<code>"group2vec"</code>: Groups proportion, where the groups are defined
+previously (e.g. taxonmic groups).
+</p>
+<p>-<code>"shortestpath2vec"</code>: Computing the proportion of shortest path
+lengths. Can use the groups as well, path length proportion is decomposed
+per source and target group in this case.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>embedding</code> returns an object of class <code>matrix</code> where rows
+corresponds to the differents graphs and columns to the different
+dimensions in the embedding space.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Authors: Christophe Botella, Stephane Dray, Catherine Matias, Vincent
+Miele, Wilfried Thuiller
+</p>
+<p>Maintainer: Vincent Miele &lt;vincent.miele@univ-lyon1.fr&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Christophe Botella, Stephane Dray, Catherine Matias, Vincent Miele &amp;
+Wilfried Thuiller, An appraisal of graph embeddings for comparing
+trophic network architectures. Methods in Ecology and evolution (2021) &lt;doi:10.1111/2041-210X.13738&gt;
+</p>
+<p>Williams, Richard J., and Neo D. Martinez. "Limits to trophic levels and omnivory in complex food webs: theory and data." The American Naturalist 163.3 (2004)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(igraph)
+# Generating a set of graphs with 3 groups
+groups = rep(-1,60)
+groups[1:20] = 1
+groups[21:40] = 2
+groups[41:60] = 3
+names(groups) = as.character(1:60)
+
+# A first set with a few links between groups 1 and 3
+gList = c()
+for(i in 1:5){
+    pm &lt;- rbind( c(0, .5, 0.05), c(0, 0, 0.5), c(0,0,0) )
+    graphLoc &lt;- sample_sbm(60, pref.matrix=pm, block.sizes=c(20,20,20), directed=TRUE)
+    V(graphLoc)$name = as.character(1:60)
+    gList = c(gList,list(graphLoc))
+}
+# A second set with many links between groups 1 and 3
+for(i in (6:10)){
+    pm &lt;- rbind( c(0, .5, .5), c(0, 0, 0.5), c(0,0,0) )
+    graphLoc &lt;- sample_sbm(60, pref.matrix=pm, block.sizes=c(20,20,20), directed=TRUE)
+    V(graphLoc)$name = as.character(1:60)
+    gList = c(gList,list(graphLoc))
+}
+names(gList) = LETTERS[1:10]
+
+# Computing different embeddings and
+usermfrow &lt;- par()$mfrow
+par(mfrow=c(2,2))
+
+embd &lt;- embedding(gList, method="metric2vec")
+pca &lt;- prcomp(embd, rank=2)$x
+plot(pca, main="metric2vec")
+text(x=pca[,1], y=pca[,2], labels=rownames(embd), pos=2, col=c(rep("blue",5),rep("red",5)))
+
+embd &lt;- embedding(gList,  method="motif2vec")
+pca &lt;- prcomp(embd, rank=2)$x
+plot(pca, main="motif2vec")
+text(x=pca[,1], y=pca[,2], labels=rownames(embd), pos=2, col=c(rep("blue",5),rep("red",5)))
+
+embd &lt;- embedding(gList, method="shortestpath2vec")
+pca &lt;- prcomp(embd, rank=2)$x
+plot(pca, main="shortestpath2vec")
+text(x=pca[,1], y=pca[,2], labels=rownames(embd), pos=2, col=c(rep("blue",5),rep("red",5)))
+
+embd &lt;- embedding(gList, method="shortestpath2vec", groups)
+pca &lt;- prcomp(embd, rank=2)$x
+plot(pca, main="shortestpath2vec_group")
+text(x=pca[,1], y=pca[,2], labels=rownames(embd), pos=2, col=c(rep("blue",5),rep("red",5)))
+
+par(mfrow=usermfrow)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,102 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eDTOutput</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>UI part of <code>eDT</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>UI part of <code>eDT</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eDTOutput(id, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p><code>character(1)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed to <code>DTOutput</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Works exactly like <code>DTOutput</code> apart from the fact that instead of the <code>outputId</code>
+argument, <code>id</code> is requested. Reason being that this function is a UI to a shiny module.
+This means that the datatable can be found under the id <code>'{namespace}-{id}-DT'</code> instead of <code>'{namespace}-{outputId}'</code>.
+</p>
+<p>Also some minor CSS and javascript is executed for functional puposes.
+</p>
+
+
+<h3>Value</h3>
+
+<p>HTML
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Jasper Schelfhout
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Only run this example in interactive R sessions
+if(interactive()){
+  # tibble support
+  modifiedData &lt;- editbl::eDT(tibble::as_tibble(mtcars))
+
+  # data.table support
+  modifiedData &lt;- editbl::eDT(dtplyr::lazy_dt(data.table::data.table(mtcars)))
+
+  # database support
+  tmpFile &lt;- tempfile(fileext = ".sqlite")
+  file.copy(system.file("extdata", "chinook.sqlite", package = 'editbl'), tmpFile)
+
+  conn &lt;- editbl::connectDB(dbname = tmpFile)
+  modifiedData &lt;- editbl::eDT(dplyr::tbl(conn, "Artist"), in_place = TRUE)
+  DBI::dbDisconnect(conn)
+
+  unlink(tmpFile)
+
+  # Within shiny
+  library(shiny)
+  library(editbl)
+  shinyApp(
+    ui = fluidPage(fluidRow(column(12, eDTOutput('tbl')))),
+    server = function(input, output) {
+      eDT('tbl',iris,)
+    }
+  )
+
+  # Custom inputUI
+  editbl::eDT(mtcars, inputUI = function(id, data){
+    ns &lt;- NS(id)
+    textInput(
+    ns("mpg"),
+    label = "mpg",
+    value = data$mpg)})
+}
+
+</code></pre>
+
+
+</div>

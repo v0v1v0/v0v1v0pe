@@ -1,0 +1,279 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>paired.exact.test</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Unconditional Exact Tests for 2x2 Tables with Paired Samples</h2>
+
+<h3>Description</h3>
+
+<p>Calculates unconditional exact test for paired samples</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">paired.exact.test(data, alternative = c("two.sided", "less", "greater"), npNumbers = 100,
+    np.interval = FALSE, beta = 0.001,
+    method = c("uam", "ucm", "uamcc", "csm"),
+    tsmethod = c("square", "central"),
+    conf.int = FALSE, conf.level = 0.95, to.plot = TRUE,
+    ref.pvalue = TRUE, delta = 0,
+    reject.alpha = NULL, useStoredCSM = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A two dimensional contingency table in matrix form</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>Indicates the alternative hypothesis: must be either "two.sided", "less", or "greater"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npNumbers</code></td>
+<td>
+<p>Number: The number of nuisance parameters considered</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>np.interval</code></td>
+<td>
+<p>Logical: Indicates if a confidence interval on the nuisance parameter should be computed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>Number: Confidence level for constructing the interval of nuisance parameters considered.  Only used if np.interval=TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>Indicates the method for finding the more extreme tables:
+must be either "UAM", "UCM", "UAMCC", or "CSM"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tsmethod</code></td>
+<td>
+<p>A character string describing the method to implement two-sided tests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.int</code></td>
+<td>
+
+<p>Logical: Indicates if a confidence interval on the difference in proportion should be computed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+<p>Number: Confidence level of interval on difference in proportion.  Only used if conf.int=TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>to.plot</code></td>
+<td>
+<p>Logical: Indicates if plot of p-value vs. nuisance parameter should be generated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref.pvalue</code></td>
+<td>
+<p>Logical: Indicates if p-value should be refined by maximizing the p-value function after the nuisance parameter is selected</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>Number: null hypothesis of the difference in proportion</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reject.alpha</code></td>
+<td>
+<p>Number: significance level for exact test.  Optional and primarily used to speed up <code>paired.reject.region</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useStoredCSM</code></td>
+<td>
+<p>Logical: uses stored CSM ordering matrix.  Only used if method="csm"</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function performs unconditional exact tests to compare two paired proportions.  The null hypothesis is the difference of two paired proportions is equal to 0. Under the null hypothesis, the probability of a 2x2 table is a trinomial distribution. The p-value is calculated by maximizing a nuisance parameter and summing the as or more extreme tables. The <code>method</code> parameter specifies the method to determine the more extreme tables (see references for more details):
+</p>
+
+<ul>
+<li>
+<p> UAM (Unconditional Asymptotic McNemar) - Uses McNemar's Z-statistic
+</p>
+</li>
+<li>
+<p> UCM (Unconditional Conditional McNemar) - Uses McNemar's conditional p-value
+</p>
+</li>
+<li>
+<p> UAMCC (Unconditional Asyptotic McNemar with Continuity Correction) - Uses McNemar's Z-statistic with Continuity Correction
+</p>
+</li>
+<li>
+<p> CSM - Starts with the most extreme table and sequentially adds more extreme tables based on the smallest p-value (calculated by maximizing the probability of a 2x2 table).  This is extending Barnard's original method to test two paired proportions
+</p>
+</li>
+</ul>
+<p>There is little research comparing two paired proportions.  The author of this R package recommends using the CSM (Convexity, Symmetry, and Minimization) test as this test is often the most powerful, but is much more computationally intensive.
+</p>
+<p>Once the more extreme tables are determined, the p-value is calculated by maximizing over the common discordant probability – a nuisance parameter.  The p-value computation has many local maxima and can be computationally intensive.  The code performs an exhaustive search by considering many values of the nuisance parameter from 0 to 0.5, represented by <code>npNumbers</code>.  If <code>ref.pvalue = TRUE</code>, then the code will also use the <code>optimise</code> function near the nuisance parameter to refine the p-value.  Increasing <code>npNumbers</code> and using <code>ref.pvalue</code> ensures the p-value is correctly calculated at the expense of slightly more computation time.
+</p>
+<p>Another approach, proposed by Berger and Sidik, is to calculate the Clopper-Pearson confidence interval of the nuisance parameter (represented by <code>np.interval</code>) and only maximize the p-value function for nuisance parameters within the confidence interval; this approach adds a small penalty to the p-value to control for the type 1 error rate (cannot be used with CSM).  If the CSM test is too computationally intensive, the author of this R package generally recommends using the UAM test with confidence interval approach.
+</p>
+<p>The tests can also be implemented for non-inferiority hypotheses by changing the <code>delta</code>. A confidence interval for the difference in proportion can be constructed by determining the smallest delta such that all greater deltas are significant (essentially the delta that crosses from non-significant to significant, but since the p-value is non-monotonic as a function of delta, this code takes the supremum).  We note the "UAM" method uses a delta-projected Z-statistic, while "UCM" method ignores the delta and uses the same ordering procedure.
+</p>
+<p>For two-sided tests, the code will either sum the probabilities for both sides of the table if <code>tsmethod = "square"</code> (Default) or construct a one-sided test and double the p-value if <code>tsmethod = "central"</code>.  The two methods give the same results when delta is zero.  For a non-zero delta, the "square" procedure is generally more powerful and conventional, although there are some advantages with using the "central" procedure.  Mainly, UCM test cannot order tables (i.e., use McNemar's conditional p-value) for a two-sided alternative with non-zero delta.  Thus, to calculate a two-sided confidence interval with UCM test, one has to resort to using the "central" approach.  For other tests, there is an equivalent statistic based on delta, and the two-sided p-value is determined by either the Agresti-Min interval (<code>tsmethod = "square"</code>) or Chan-Zhang interval (<code>tsmethod = "central"</code>).
+</p>
+<p>The CSM test is computationally intensive due to iteratively maximizing the p-value calculation to order the tables.  The CSM ordering matrix has been stored for total sample sizes less than or equal to 200.  Thus, using the <code>useStoredCSM = TRUE</code> can greatly improve computation time.  However, the stored ordering matrix was computed with <code>npNumbers=100</code> and it is possible that the ordering matrix was not optimal for larger <code>npNumbers</code>.  Increasing <code>npNumbers</code> and setting <code>useStoredCSM = FALSE</code> ensures the p-value is correctly calculated at the expense of significantly greater computation time.  The stored ordering matrix is not used in the calculation of confidence intervals or non-inferiority tests, so CSM can still be very computationally intensive.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with class "htest" containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>The p-value of the test</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+<p>The observed test statistic to determine more extreme tables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>An estimate of the difference in proportion</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>null.value</code></td>
+<td>
+<p>The difference in proportion under the null</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.int</code></td>
+<td>
+<p>A confidence interval for the difference in proportion.  Only present if <code>conf.int = TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>A character string describing the alternative hypothesis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character string describing the method to determine more extreme tables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tsmethod</code></td>
+<td>
+<p>A character string describing the method to implement two-sided tests</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>np</code></td>
+<td>
+<p>The nuisance parameter that maximizes the p-value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>np.range</code></td>
+<td>
+<p>The range of nuisance parameters considered</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name</code></td>
+<td>
+<p>A character string giving the names of the data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameter</code></td>
+<td>
+<p>The sample sizes</p>
+</td>
+</tr>
+</table>
+<h3>Warning</h3>
+
+<p>CSM tests with confidence intervals may take a very long time, even for small sample sizes.</p>
+
+
+<h3>Note</h3>
+
+<p>CSM test is much more computationally intensive.  Increasing the number of nuisance parameters considered and refining the p-value will increase the computation time, but more likely to ensure accurate calculations. Performing confidence intervals also greatly increases computation time.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Peter Calhoun</p>
+
+
+<h3>References</h3>
+
+<p>Berger, R.L. and Sidik, K. (2003) Exact unconditional tests for 2 x 2 matched-pairs design. <em>Statistical Methods in Medical Research</em>, <b>12</b>, 91–108
+</p>
+<p>Hsueh, H., Liu, J., and Chen, J.J. (2001) Unconditional exact tests for equivalence or noninferiority for paired binary endpoints. <em>Biometrics</em>, <b>57</b>, 478–483
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mcnemar.test</code> and <span class="pkg">exact2x2</span>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data &lt;- matrix(c(3,6,1,0), 2, 2,
+               dimnames=list(c("Population 1 Success", "Population 1 Failure"),
+                             c("Population 2 Success", "Population 2 Failure")))
+paired.exact.test(data, method="UAM", alternative="less")
+
+## Not run: 
+# Ensure that the ExactData R package is available before running the CSM test.
+if (requireNamespace("ExactData", quietly = TRUE)) {
+paired.exact.test(data, method="CSM", alternative="less")
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

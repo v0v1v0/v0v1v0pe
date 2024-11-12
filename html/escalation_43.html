@@ -1,0 +1,171 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_trialr_efftox</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get an object to fit the EffTox model using the trialr package.</h2>
+
+<h3>Description</h3>
+
+<p>This function returns an object that can be used to fit the EffTox model for
+phase I/II dose-finding using methods provided by the trialr package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_trialr_efftox(
+  parent_selector_factory = NULL,
+  real_doses,
+  efficacy_hurdle,
+  toxicity_hurdle,
+  p_e,
+  p_t,
+  eff0,
+  tox1,
+  eff_star,
+  tox_star,
+  priors,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>optional object of type
+<code>selector_factory</code> that is in charge of dose selection before
+this class gets involved. Leave as NULL to just use EffTox from the start.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>real_doses</code></td>
+<td>
+<p>A vector of numbers, the doses under investigation. They
+should be ordered from lowest to highest and be in consistent units.
+E.g. to conduct a dose-finding trial of doses 10mg, 20mg and 50mg, use
+c(10, 20, 50).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>efficacy_hurdle</code></td>
+<td>
+<p>Minimum acceptable efficacy probability.
+A number between 0 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>toxicity_hurdle</code></td>
+<td>
+<p>Maximum acceptable toxicity probability.
+A number between 0 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_e</code></td>
+<td>
+<p>Certainty required to infer a dose is acceptable with regards to
+being probably efficacious; a number between 0 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_t</code></td>
+<td>
+<p>Certainty required to infer a dose is acceptable with regards to
+being probably tolerable; a number between 0 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eff0</code></td>
+<td>
+<p>Efficacy probability required when toxicity is impossible;
+a number between 0 and 1 (see Details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tox1</code></td>
+<td>
+<p>Toxicity probability permitted when efficacy is guaranteed;
+a number between 0 and 1 (see Details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eff_star</code></td>
+<td>
+<p>Efficacy probability of an equi-utility third point (see
+Details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tox_star</code></td>
+<td>
+<p>Toxicity probability of an equi-utility third point (see
+Details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priors</code></td>
+<td>
+<p>instance of class <code>efftox_priors</code>, the
+hyperparameters for normal priors on the six model parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra args are passed to <code>stan_efftox</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code> that can fit the
+EffTox model to outcomes.
+</p>
+
+
+<h3>References</h3>
+
+<p>Thall, P., &amp; Cook, J. (2004). Dose-Finding Based on Efficacy-Toxicity
+Trade-Offs. Biometrics, 60(3), 684-693.
+https://doi.org/10.1111/j.0006-341X.2004.00218.x
+</p>
+<p>Thall, P., Herrick, R., Nguyen, H., Venier, J., &amp; Norris, J. (2014).
+Effective sample size for computing prior hyperparameters in Bayesian
+phase I-II dose-finding. Clinical Trials, 11(6), 657-666.
+https://doi.org/10.1177/1740774514547397
+</p>
+<p>Brock, K. (2020). trialr: Clinical Trial Designs in 'rstan'.
+R package version 0.1.5. https://github.com/brockk/trialr
+</p>
+<p>Brock, K. (2019). trialr: Bayesian Clinical Trial Designs in R and Stan.
+arXiv preprint arXiv:1907.00161.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">efftox_priors &lt;- trialr::efftox_priors
+p &lt;- efftox_priors(alpha_mean = -7.9593, alpha_sd = 3.5487,
+                   beta_mean = 1.5482, beta_sd = 3.5018,
+                   gamma_mean = 0.7367, gamma_sd = 2.5423,
+                   zeta_mean = 3.4181, zeta_sd = 2.4406,
+                   eta_mean = 0, eta_sd = 0.2,
+                   psi_mean = 0, psi_sd = 1)
+real_doses = c(1.0, 2.0, 4.0, 6.6, 10.0)
+model &lt;- get_trialr_efftox(real_doses = real_doses,
+                           efficacy_hurdle = 0.5, toxicity_hurdle = 0.3,
+                           p_e = 0.1, p_t = 0.1,
+                           eff0 = 0.5, tox1 = 0.65,
+                           eff_star = 0.7, tox_star = 0.25,
+                           priors = p, iter = 1000, chains = 1, seed = 2020)
+
+</code></pre>
+
+
+</div>

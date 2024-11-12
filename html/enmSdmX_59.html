@@ -1,0 +1,255 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trainESM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calibrate an ensemble of small models</h2>
+
+<h3>Description</h3>
+
+<p>This function calibrates a set of "ensembles of small models" (ESM), which are designed for modeling species with few occurrence records. In the original formulation, each model has two covariates interacting additively. Models are calibrated using all possible combinations of covariates. By default, this function does the same, but can also include univariate models, models with two covariates plus their interaction term, and models with quadratic and corresponding linear terms. This function will <em>only</em> train generalized linear models. Extending the types of algorithms is planned!
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trainESM(
+  data,
+  resp = names(data)[1],
+  preds = names(data)[2:ncol(data)],
+  univariate = FALSE,
+  quadratic = FALSE,
+  interaction = FALSE,
+  interceptOnly = FALSE,
+  method = "glm.fit",
+  scale = NA,
+  w = TRUE,
+  family = stats::binomial(),
+  ...,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame or matrix. Response variable and environmental predictors (and no other fields) for presences and non-presence sites.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp</code></td>
+<td>
+<p>Character or integer. Name or column index of response variable. Default is to use the first column in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preds</code></td>
+<td>
+<p>Character vector or integer vector. Names of columns or column indices of predictors. Default is to use the second and subsequent columns in <code>data</code> as predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>univariate, quadratic, interaction</code></td>
+<td>
+<p><code>TRUE</code> or <code>FALSE</code>: Whether or not to include univariate models, quadratic models, and/or models with 2-way interactions (default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interceptOnly</code></td>
+<td>
+<p>If <code>TRUE</code>, include an intercept-only model (default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Character: Name of function used to solve the GLM. For "normal" GLMs, this can be <code>'glm.fit'</code> (default), <code>'brglmFit'</code> (from the <span class="pkg">brglm2</span> package), or another function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>Either <code>NA</code> (default), or <code>TRUE</code> or <code>FALSE</code>. If <code>TRUE</code>, the predictors will be centered and scaled by dividing by subtracting their means then dividing by their standard deviations. The means and standard deviations will be returned in the model object under an element named "<code>scales</code>". For example, if you do something like <code>model &lt;- trainGLM(data, scale=TRUE)</code>, then you can get the means and standard deviations using <code>model$scales$mean</code> and <code>model$scales$sd</code>. If <code>FALSE</code>, no scaling is done. If <code>NA</code> (default), then the function will check to see if non-factor predictors have means ~0 and standard deviations ~1. If not, then a warning will be printed, but the function will continue to do its operations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+<p>Weights. Any of:
+</p>
+
+<ul>
+<li> <p><code>TRUE</code>: Causes the total weight of presences to equal the total weight of absences (if <code>family='binomial'</code>)
+</p>
+</li>
+<li> <p><code>FALSE</code>: Each datum is assigned a weight of 1.
+</p>
+</li>
+<li>
+<p> A numeric vector of weights, one per row in <code>data</code>.
+</p>
+</li>
+<li>
+<p> The name of the column in <code>data</code> that contains site weights.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>Character or function. Name of family for data error structure (see <code>family</code>). Default is to use the 'binomial' family.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to pass to <code>glm</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. If <code>TRUE</code> then display progress.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list object with several named elements:
+</p>
+
+<ul>
+<li> <p><code>models</code>: A list with each ESM model.
+</p>
+</li>
+<li> <p><code>tuning</code>: A <code>data.frame</code> with one row per model, in the order as they appear in <code>$models</code>.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Breiner, F.T., Guisan, A., Bergamini, A., and Nobis, M.P.  2015.  Overcoming limitations of modeling rare species by using ensembles of small models.  <em>Methods in Ecology and Evolution</em> 6:1210-1218.. <a href="https://doi.org/10.1111/2041-210X.12403">doi:10.1111/2041-210X.12403</a>
+Lomba, A., L. Pellissier, C. Randin, J. Vicente, J. Horondo, and A. Guisan.  2010.  Overcoming the rare species modeling complex: A novel hierarchical framework applied to an Iberian endemic plant. <em>Biological Conservation</em> 143:2647-2657. <a href="https://doi.org/10.1016/j.biocon.2010.07.007">doi:10.1016/j.biocon.2010.07.007</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>trainBRT</code>, <code>trainGAM</code>, <code>trainGLM</code>, <code>trainMaxEnt</code>, <code>trainMaxNet</code>, <code>trainNS</code>, <code>trainRF</code>, <code>trainByCrossValid</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># NB: The examples below show a very basic modeling workflow. They have been 
+# designed to work fast, not produce accurate, defensible models. They can
+# take a few minutes to run.
+
+library(terra)
+set.seed(123)
+
+### setup data
+##############
+
+# environmental rasters
+rastFile &lt;- system.file('extdata/madClim.tif', package='enmSdmX')
+madClim &lt;- rast(rastFile)
+
+# coordinate reference system
+wgs84 &lt;- getCRS('WGS84')
+
+# lemur occurrence data
+data(lemurs)
+occs &lt;- lemurs[lemurs$species == 'Eulemur fulvus', ]
+occs &lt;- vect(occs, geom=c('longitude', 'latitude'), crs=wgs84)
+
+occs &lt;- elimCellDuplicates(occs, madClim)
+
+occEnv &lt;- extract(madClim, occs, ID = FALSE)
+occEnv &lt;- occEnv[complete.cases(occEnv), ]
+	
+# create 10000 background sites (or as many as raster can support)
+bgEnv &lt;- terra::spatSample(madClim, 20000)
+bgEnv &lt;- bgEnv[complete.cases(bgEnv), ]
+bgEnv &lt;- bgEnv[1:min(10000, nrow(bgEnv)), ]
+
+# collate occurrences and background sites
+presBg &lt;- data.frame(
+  presBg = c(
+    rep(1, nrow(occEnv)),
+    rep(0, nrow(bgEnv))
+  )
+)
+
+env &lt;- rbind(occEnv, bgEnv)
+env &lt;- cbind(presBg, env)
+
+predictors &lt;- c('bio1', 'bio12')
+
+### calibrate models
+####################
+
+# "traditional" ESMs with just 2 linear predictors
+# just one model in this case because we have just 2 predictors
+esm1 &lt;- trainESM(
+   data = env,
+   resp = 'presBg',
+   preds = predictors,
+   family = stats::binomial(),
+   scale = TRUE,
+   w = TRUE
+)
+
+str(esm1, 1)
+esm1$tuning
+
+# extended ESM with other kinds of terms
+esm2 &lt;- trainESM(
+   data = env,
+   resp = 'presBg',
+   preds = predictors,
+   univariate = TRUE,
+   quadratic = TRUE,
+   interaction = TRUE,
+   interceptOnly = TRUE,
+   family = stats::binomial(),
+   scale = TRUE,
+   w = TRUE,
+   verbose = TRUE
+)
+
+str(esm2, 1)
+esm2$tuning
+
+### make a set of predictions to rasters
+########################################
+
+# center environmental rasters and divide by their SD
+madClimScaled &lt;- scale(madClim, center = esm2$scale$mean, scale = esm2$scale$sd)
+
+# make one raster per model
+predictions &lt;- list()
+for (i in 1:length(esm2$models)) {
+    predictions[[i]] &lt;- predict(madClimScaled, esm2$models[[i]], type = 'response')
+}
+
+# combine into a "stack"
+predictions &lt;- do.call(c, predictions)
+names(predictions) &lt;- esm2$tuning$model
+plot(predictions)
+
+# calculate (unweighted) mean
+prediction &lt;- mean(predictions)
+plot(prediction)
+plot(occs, pch = 1, add = TRUE)
+</code></pre>
+
+
+</div>

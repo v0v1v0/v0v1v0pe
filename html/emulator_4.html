@@ -1,0 +1,276 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>OO2002</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Implementation of the ideas of Oakley and O'Hagan 2002</h2>
+
+<h3>Description</h3>
+
+<p>Implementation of the ideas of Oakley and O'Hagan 2002:
+<code>var.conditional()</code> calculates the conditional variance-covariance
+matrix, and <code>cond.sample()</code> samples from the appropriate
+multivariate t distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cond.sample(n = 1, x, xold, d, A, Ainv, scales = NULL, pos.def.matrix =
+NULL, func = regressor.basis, ...)
+var.conditional(x, xold, d, A, Ainv, scales = NULL, pos.def.matrix = NULL, 
+    func = regressor.basis, distance.function = corr, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>In function <code>cond.sample()</code>, the number of observations
+to take, defaulting to 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Simulation design points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xold</code></td>
+<td>
+<p>Design points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Data vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>Correlation matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ainv</code></td>
+<td>
+<p>Inverse of correlation matrix <code class="reqn">A</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scales</code></td>
+<td>
+<p>Roughness lengths</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos.def.matrix</code></td>
+<td>
+<p>Positive definite matrix of correlations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>func</code></td>
+<td>
+<p>Function to calculate <code class="reqn">H</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance.function</code></td>
+<td>
+<p>Distance function (defaulting to <code>corr()</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to the distance function, usually <code>corr()</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>We wish to generate the distribution for the process at uncertain
+point <code>x</code>; uncertainty in <code>x</code> is captured by assuming it to
+be drawn from a pdf <code>X</code>.
+</p>
+<p>The basic idea is to estimate <code class="reqn">m^*</code> at <em>simulated</em> design
+points using <code>cond.sample()</code>, which samples from the multivariate
+t distribution conditional on the data <code>d</code> at the design points.
+The random datavector of estimates <code class="reqn">m^*</code> is called <code>ddash</code>.
+</p>
+<p>We repeat this process many times, each time estimating
+<code class="reqn">\eta(\cdot)</code> using the augmented dataset
+<code>c(d,ddash)</code> as a training set.
+</p>
+<p>For each estimated <code class="reqn">\eta(\cdot)</code>, we have a complete
+emulator that can be used to build up an ensemble of estimates.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>Function <code>cond.sample()</code> returns a <code class="reqn">n\times p</code> matrix
+whose rows are independent samples from the appropriate multivariate
+<code class="reqn">t</code> distribution.  Here, <code class="reqn">p</code> is the number of rows of <code>x</code>
+(ie the number of simulated design points).  Consider a case where there
+are just two simulated design points, close to each other but far from
+any point of the original design points.  Then function
+<code>cond.sample(n=4, ...)</code> will give four numbers which are close to
+one another but have high (between-instantiation) variance.
+</p>
+<p>Function <code>var.conditional()</code> calculates the denominator of equation
+3 of Oakley and OHagan 2002.  This function is intended to be called by
+<code>cond.sample()</code> but might be interesting <em>per se</em> when
+debugging or comparing different choices of simulated design points.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Function <code>cond.sample()</code> and <code>var.conditional()</code> together
+are a superset of function <code>interpolant()</code> because it accounts
+for covariance between multiple observations.  It is, however, much
+slower.
+</p>
+<p>Also note that these functions are used to good effect in the examples
+section of <code>oo2002.Rd</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p>J. Oakley 2002. <em>Bayesian inference for the
+uncertainty distribution of computer model outputs</em>.  Biometrika,
+89(4):769–784
+</p>
+</li>
+<li>
+<p>R. K. S. Hankin 2005. <em>Introducing BACCO, an R bundle for
+Bayesian analysis of computer code output</em>, Journal of Statistical
+Software, 14(16)
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>regressor.basis</code>, for a more visually informative
+example of <code>cond.sample()</code> et seq; and <code>interpolant</code>
+for more examples
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+     # Now we use the functions.  First we set up some design points:
+     # Suppose we are given the toy dataset and want to know the PDF of
+     # fourth power of the response at point x, where uncertainty in x
+     # may be represented as it being drawn from a normnl distribution
+     # with mean c(0.5,0.5,...,0.5) and a variance of 0.001.
+
+data(toy)
+val &lt;- toy
+real.relation &lt;- function(x){sum( (0:6)*x )}
+H &lt;- regressor.multi(val)
+d &lt;- apply(H,1,real.relation)
+
+     # and some scales (which are assumed to be known):
+fish &lt;- rep(1,6)
+fish[6] &lt;- 4
+
+     # And determine A and Ainv:
+A &lt;- corr.matrix(val,scales=fish)
+Ainv &lt;- solve(A)
+
+     # and add some suitably correlated Gaussian noise:
+d.noisy &lt;-  as.vector(rmvnorm(n=1, mean=d, 0.1*A))
+names(d.noisy) &lt;- names(d)
+
+     # Now some simulation design points.  Choose n'=6:
+xdash &lt;-  matrix(runif(36),ncol=6)
+
+     # And just for fun, we insert a near-useless seventh simulation
+     # design point (it is nearly useless because it is a near copy of
+     # the sixth).  We do this in order to test the coding:
+xdash &lt;- rbind(xdash,xdash[6,] + 1e-4)
+colnames(xdash) &lt;- colnames(val)
+rownames(xdash) &lt;- c("alpha","beta","gamma","delta","epsilon","zeta","zeta.copy")
+
+     # Print the variance matrix:
+(vm &lt;- var.conditional(x=xdash,xold=val,d=d.noisy,A=A,Ainv=Ainv,scales=fish))
+     # Note that the sixth and seventh columns are almost identical
+     # (and so, therefore, are the sixth and seventh rows) as
+     # expected.
+
+     # Also, the final eigenvalue of vm should be small:
+eigen(vm)$values
+
+
+     # Now sample from the conditional t-distribution.  Taking n=3 samples:
+(cs &lt;- cond.sample(n=3, x=xdash, xold=val, d=d.noisy, A=A, Ainv=Ainv,
+                   scales = fish, func = regressor.basis))
+
+     # Note the last two columns are nearly identical, as expected.
+
+     # Just as a test, what is the variance matrix at the design points?
+(vc &lt;- var.conditional(x=val,xold=val,d=d.noisy,A=A,Ainv=Ainv,scales=fish))
+     # (This should be exactly zero);
+max(eigen(vc)$values)
+     # should be small
+
+     # Next, we apply the methods of OO2002 using Monte Carlo techniques.
+     # We will generate  10 different versions of eta:
+number.of.eta &lt;- 10
+
+     # And, for each eta,  we will sample from the posterior t distribution 11 times:
+number.of.X &lt;- 11
+
+
+     # create an augmented design matrix, of the design points plus the
+     # simulated design points:
+design.augmented &lt;- rbind(val,xdash)
+A.augmented &lt;- corr.matrix(design.augmented, scales=fish)
+Ainv.augmented &lt;- solve(A.augmented)
+
+out &lt;- NULL
+for(i in seq_len(number.of.eta)){
+        # Create random data by sampling from the conditional
+        # multivariate t at the simulated design points xdash, from
+        # the t-distribution given the data d:
+   ddash &lt;- cond.sample(n=1, x=xdash, xold=val, d=d.noisy, Ainv=Ainv, scales=fish)
+
+        # Now use the emulator to calculate m^* at points chosen from
+        # the PDF of X:
+   jj &lt;-
+     interpolant.quick(x=rmvnorm(n=number.of.X,rep(0.5,6),diag(6)/1000),
+                       d=c(d.noisy,ddash),
+                       xold=design.augmented,
+                       Ainv=Ainv.augmented,
+                       scales=fish)
+   out &lt;- c(out,jj)
+}
+
+   # histogram of the fourth power:
+hist(out^4, col="gray")
+   # See oo2002 for another example of cond.sample() in use
+</code></pre>
+
+
+</div>

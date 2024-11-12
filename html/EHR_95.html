@@ -1,0 +1,107 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_Demo</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run Demographic Data</h2>
+
+<h3>Description</h3>
+
+<p>This module will load and modify demographic data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_Demo(demo.path, demo.columns = list(), toexclude, demo.mod.list)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>demo.path</code></td>
+<td>
+<p>filename of demographic file (CSV, RData, RDS) or data.frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>demo.columns</code></td>
+<td>
+<p>a named list that should specify columns in demo data; ‘id’,
+is required.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>toexclude</code></td>
+<td>
+<p>expression that should evaluate to a logical, indicating if
+the observation should be excluded</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>demo.mod.list</code></td>
+<td>
+<p>list of expressions, giving modifications to make</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See EHR Vignette for Structured Data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>list with two components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>demo</code></td>
+<td>
+<p>demographic data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude</code></td>
+<td>
+<p>vector of excluded visit IDs</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(2525)
+dateSeq &lt;- seq(as.Date('2019/01/01'), as.Date('2020/01/01'), by="day")
+demo &lt;- data.frame(mod_id_visit = 1:10,
+                   weight.lbs = rnorm(10,160,20),
+                   age = rnorm(10, 50, 10),
+                   enroll.date = sample(dateSeq, 10))
+tmpfile &lt;- paste0(tempfile(), '.rds')
+saveRDS(demo, file = tmpfile)
+
+# exclusion functions
+exclude_wt &lt;- function(x) x &lt; 150
+exclude_age &lt;- function(x) x &gt; 60
+ind.risk &lt;- function(wt, age) wt&gt;170 &amp; age&gt;55
+exclude_enroll &lt;- function(x) x &lt; as.Date('2019/04/01')
+
+# make demographic data that:
+# (1) excludes ids with weight.lbs &lt; 150, age &gt; 60, or enroll.date before 2019/04/01
+# (2) creates new 'highrisk' variable for subjects with weight.lbs&gt;170 and age&gt;55
+out &lt;- run_Demo(demo.path = tmpfile, demo.columns = list(id = 'mod_id_visit'),
+               toexclude = expression(
+                 exclude_wt(weight.lbs)|exclude_age(age)|exclude_enroll(enroll.date)
+               ),
+               demo.mod.list = list(highrisk = expression(ind.risk(weight.lbs, age))))
+
+out
+
+
+</code></pre>
+
+
+</div>

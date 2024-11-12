@@ -1,0 +1,114 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_demand</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Time-series EV demand</h2>
+
+<h3>Description</h3>
+
+<p>Obtain time-series of EV demand from sessions data set
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_demand(
+  sessions,
+  dttm_seq = NULL,
+  by = "Profile",
+  resolution = 15,
+  mc.cores = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sessions</code></td>
+<td>
+<p>tibble, sessions data set in standard format marked by <code>{evprof}</code> package
+(see <a href="https://mcanigueral.github.io/evprof/articles/sessions-format.html">this article</a>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dttm_seq</code></td>
+<td>
+<p>sequence of datetime values that will be the <code>datetime</code>
+variable of the returned time-series data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>character, being 'Profile' or 'Session'. When <code>by='Profile'</code> each column corresponds to an EV user profile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>integer, time resolution (in minutes) of the sessions datetime variables.
+If <code>dttm_seq</code> is defined this parameter is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mc.cores</code></td>
+<td>
+<p>integer, number of cores to use.
+Must be at least one, and parallelization requires at least two cores.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that the time resolution of variables <code>ConnectionStartDateTime</code> and
+<code>ChargingStartDateTime</code> must coincide with
+<code>resolution</code> parameter. For example, if a charging session in <code>sessions</code> starts charging
+at 15:32 and <code>resolution = 15</code>, the load of this session won't be computed. To solve this,
+the function automatically aligns charging sessions' start time according to
+<code>resolution</code>, so following the previous example the session would start at 15:30.
+</p>
+
+
+<h3>Value</h3>
+
+<p>time-series tibble with first column of type <code>datetime</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">suppressMessages(library(lubridate))
+suppressMessages(library(dplyr))
+
+# Get demand with the complete datetime sequence from the sessions
+sessions &lt;- head(evsim::california_ev_sessions, 100)
+demand &lt;- get_demand(
+  sessions,
+  by = "Session",
+  resolution = 60
+)
+demand %&gt;% plot_ts(ylab = "EV demand (kW)")
+
+# Get demand with a custom datetime sequence and resolution of 15 minutes
+sessions &lt;- head(evsim::california_ev_sessions_profiles, 100)
+dttm_seq &lt;- seq.POSIXt(
+  as_datetime(dmy(08102018)) %&gt;% force_tz(tz(sessions$ConnectionStartDateTime)),
+  as_datetime(dmy(11102018)) %&gt;% force_tz(tz(sessions$ConnectionStartDateTime)),
+  by = "15 mins"
+)
+demand &lt;- get_demand(
+  sessions,
+  dttm_seq = dttm_seq,
+  by = "Profile",
+  resolution = 15
+)
+demand %&gt;% plot_ts(ylab = "EV demand (kW)")
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,123 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trim_netest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Function to Reduce the Size of a <code>netest</code> Object</h2>
+
+<h3>Description</h3>
+
+<p>Trims formula environments from the <code>netest</code> object.
+Optionally converts the <code>newnetwork</code> element of the
+<code>netest</code> object to a <code>networkLite</code> class, and removes
+the <code>fit</code> element (if present) from the <code>netest</code>
+object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trim_netest(
+  object,
+  as.networkLite = TRUE,
+  keep.fit = FALSE,
+  keep = character(0)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>A <code>netest</code> class object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as.networkLite</code></td>
+<td>
+<p>If <code>TRUE</code>, converts <code>object$newnetwork</code>
+to a <code>networkLite</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.fit</code></td>
+<td>
+<p>If <code>FALSE</code>, removes the <code>object$fit</code> (if present)
+on the <code>netest</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+<p>Character vector of object names to keep in formula environments.
+By default, all objects are removed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>With larger, more complex network structures with epidemic models, it is
+generally useful to reduce the memory footprint of the fitted TERGM model
+object (estimated with <code>netest</code>). This utility function removes
+all but the bare essentials needed for simulating a network model with
+<code>netsim</code>.
+</p>
+<p>The function always trims the environments of <code>object$constraints</code> and
+<code>object$coef.diss$dissolution</code>.
+</p>
+<p>When both <code>edapprox = TRUE</code> and <code>nested.edapprox = TRUE</code> in the
+<code>netest</code> call, also trims the environments of <code>object$formula</code>
+and <code>object$formation</code>.
+</p>
+<p>When both <code>edapprox = TRUE</code> and <code>nested.edapprox = FALSE</code> in the
+<code>netest</code> call, also trims the environments of <code>object$formula</code>,
+<code>environment(object$formation)$formation</code>, and
+<code>environment(object$formation)$dissolution</code>.
+</p>
+<p>When <code>edapprox = FALSE</code> in the <code>netest</code> call, also trims the
+environments of <code>object$formation</code>,
+<code>environment(object$formula)$formation</code> and
+<code>environment(object$formula)$dissolution</code>.
+</p>
+<p>By default all objects are removed from these trimmed environments. Specific
+objects may be retained by passing their names as the <code>keep</code> argument.
+For the output of <code>trim_netest</code> to be usable in <code>netsim</code>
+simulation, any objects referenced in the formulas should be included in the
+<code>keep</code> argument.
+</p>
+<p>If <code>as.networkLite = TRUE</code>, converts <code>object$newnetwork</code> to a
+<code>networkLite</code> object. If <code>keep.fit = FALSE</code>, removes <code>fit</code> (if
+present) from <code>object</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>netest</code> object with formula environments trimmed, optionally with the
+<code>newnetwork</code> element converted to a <code>networkLite</code> and the
+<code>fit</code> element removed.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">nw &lt;- network_initialize(n = 100)
+formation &lt;- ~edges + concurrent
+target.stats &lt;- c(50, 25)
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 10)
+est &lt;- netest(nw, formation, target.stats, coef.diss,
+              set.control.ergm = control.ergm(MCMC.burnin = 1e5,
+                                              MCMC.interval = 1000))
+print(object.size(est), units = "KB")
+
+est.small &lt;- trim_netest(est)
+print(object.size(est.small), units = "KB")
+
+</code></pre>
+
+
+</div>

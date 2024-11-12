@@ -1,0 +1,375 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>excursions.inla</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Excursion sets and contour credible regions for latent Gaussian models</h2>
+
+<h3>Description</h3>
+
+<p>Excursion sets and contour credible regions for latent Gaussian models
+calculated using the INLA method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">excursions.inla(
+  result.inla,
+  stack,
+  name = NULL,
+  tag = NULL,
+  ind = NULL,
+  method,
+  alpha = 1,
+  F.limit,
+  u,
+  u.link = FALSE,
+  type,
+  n.iter = 10000,
+  verbose = 0,
+  max.threads = 0,
+  compressed = TRUE,
+  seed = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>result.inla</code></td>
+<td>
+<p>Result object from INLA call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stack</code></td>
+<td>
+<p>The stack object used in the INLA call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>The name of the component for which to do the calculation. This
+argument should only be used if a stack object is not provided, use the tag
+argument otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tag</code></td>
+<td>
+<p>The tag of the component in the stack for which to do the calculation.
+This argument should only be used if a stack object is provided, use the name
+argument otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ind</code></td>
+<td>
+<p>If only a part of a component should be used in the calculations,
+this argument specifies the indices for that part.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Method for handeling the latent Gaussian structure:
+</p>
+
+<dl>
+<dt>'EB' </dt>
+<dd>
+<p>Empirical Bayes</p>
+</dd>
+<dt>'QC' </dt>
+<dd>
+<p>Quantile correction</p>
+</dd>
+<dt>'NI' </dt>
+<dd>
+<p>Numerical integration</p>
+</dd>
+<dt>'NIQC' </dt>
+<dd>
+<p>Numerical integration with quantile correction</p>
+</dd>
+<dt>'iNIQC' </dt>
+<dd>
+<p>Improved integration with quantile correction</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Error probability for the excursion set of interest. The default
+value is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F.limit</code></td>
+<td>
+<p>Error probability for when to stop the calculation of the
+excursion function. The default value is <code>alpha</code>, and the value cannot
+be smaller than <code>alpha</code>. A smaller value of <code>F.limit</code> results in a
+smaller computation time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>Excursion or contour level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u.link</code></td>
+<td>
+<p>If u.link is TRUE, <code>u</code> is assumed to be in the scale of the
+data and is then transformed to the scale of the linear predictor (default FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Type of region:
+</p>
+
+<dl>
+<dt>'&gt;' </dt>
+<dd>
+<p>positive excursions</p>
+</dd>
+<dt>'&lt;' </dt>
+<dd>
+<p>negative excursions</p>
+</dd>
+<dt>'!=' </dt>
+<dd>
+<p>contour avoiding function</p>
+</dd>
+<dt>'=' </dt>
+<dd>
+<p>contour credibility function</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.iter</code></td>
+<td>
+<p>Number or iterations in the MC sampler that is used for
+approximating probabilities. The default value is 10000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Set to TRUE for verbose mode (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.threads</code></td>
+<td>
+<p>Decides the number of threads the program can use. Set to
+0 for using the maximum number of threads allowed by the system (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compressed</code></td>
+<td>
+<p>If INLA is run in compressed mode and a part of the linear
+predictor is to be used, then only add the relevant part. Otherwise the
+entire linear predictor is added internally (default TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Random seed (optional).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The different methods for handling the latent Gaussian structure are
+listed in order of accuracy and computational cost. The <code>EB</code> method is
+the simplest and is based on a Gaussian approximation of the posterior of the
+quantity of interest. The <code>QC</code> method uses the same Gaussian approximation
+but improves the accuracy by modifying the limits in the integrals that are
+computed in order to find the region. The other three methods are intended for
+Bayesian models where the posterior distribution for the quantity of  interest
+is obtained by integrating over the parameters in the model. The <code>NI</code>
+method approximates this integration in the same way as is done in INLA, and
+the <code>NIQC</code> and <code>iNIQC</code> methods combine this apprximation with the
+QC method for improved accuracy.
+</p>
+<p>If the main purpose of the analysis is to construct excursion or contour sets
+for low values of <code>alpha</code>, we recommend using <code>QC</code> for problems with
+Gaussian likelihoods and <code>NIQC</code> for problems with non-Gaussian likelihoods.
+The reason for this is that the more accurate methods also have higher
+computational costs.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>excursions.inla</code> returns an object of class "excurobj" with the 
+following elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>E </code></td>
+<td>
+<p>Excursion set, contour credible region, or contour avoiding set</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F </code></td>
+<td>
+<p>The excursion function corresponding to the set <code>E</code> calculated
+for values up to <code>F.limit</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G </code></td>
+<td>
+<p> Contour map set. <code class="reqn">G=1</code> for all nodes where the <code class="reqn">mu &gt; u</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M </code></td>
+<td>
+<p> Contour avoiding set. <code class="reqn">M=-1</code> for all non-significant nodes.
+<code class="reqn">M=0</code> for nodes where the process is significantly below <code>u</code> and
+<code class="reqn">M=1</code> for all nodes where the field is significantly above <code>u</code>.
+Which values that should be present depends on what type of set that is
+calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho </code></td>
+<td>
+<p>Marginal excursion probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean </code></td>
+<td>
+<p>Posterior mean</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars </code></td>
+<td>
+<p>Marginal variances</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta </code></td>
+<td>
+<p>A list containing various information about the calculation.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>This function requires the <code>INLA</code> package, which is not a CRAN
+package.  See <a href="https://www.r-inla.org/download-install">https://www.r-inla.org/download-install</a> for easy
+installation instructions.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>David Bolin <a href="mailto:davidbolin@gmail.com">davidbolin@gmail.com</a> and Finn Lindgren
+<a href="mailto:finn.lindgren@gmail.com">finn.lindgren@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Bolin, D. and Lindgren, F. (2015) <em>Excursion and contour
+uncertainty regions for latent Gaussian models</em>, JRSS-series B, vol 77, no 1,
+pp 85-106.
+</p>
+<p>Bolin, D. and Lindgren, F. (2018), <em>Calculating Probabilistic Excursion
+Sets and Related Quantities Using excursions</em>, Journal of Statistical Software,
+vol 86, no 1, pp 1-20.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>excursions</code>, <code>excursions.mc</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## In this example, we calculate the excursion function
+## for a partially observed AR process.
+## Not run: 
+if (require.nowarnings("INLA")) {
+  ## Sample the process:
+  rho &lt;- 0.9
+  tau &lt;- 15
+  tau.e &lt;- 1
+  n &lt;- 100
+  x &lt;- 1:n
+  mu &lt;- 10 * ((x &lt; n / 2) * (x - n / 2) + (x &gt;= n / 2) * (n / 2 - x) + n / 4) / n
+  Q &lt;- tau * sparseMatrix(
+    i = c(1:n, 2:n), j = c(1:n, 1:(n - 1)),
+    x = c(1, rep(1 + rho^2, n - 2), 1, rep(-rho, n - 1)),
+    dims = c(n, n), symmetric = TRUE
+  )
+  X &lt;- mu + solve(chol(Q), rnorm(n))
+
+  ## measure the sampled process at n.obs random locations
+  ## under Gaussian measurement noise.
+  n.obs &lt;- 50
+  obs.loc &lt;- sample(1:n, n.obs)
+  A &lt;- sparseMatrix(
+    i = 1:n.obs, j = obs.loc, x = rep(1, n.obs),
+    dims = c(n.obs, n)
+  )
+  Y &lt;- as.vector(A %*% X + rnorm(n.obs) / sqrt(tau.e))
+
+  ## Estimate the parameters using INLA
+  ef &lt;- list(c(list(ar = x), list(cov = mu)))
+  s.obs &lt;- inla.stack(data = list(y = Y), A = list(A), effects = ef, tag = "obs")
+  s.pre &lt;- inla.stack(data = list(y = NA), A = list(1), effects = ef, tag = "pred")
+  stack &lt;- inla.stack(s.obs, s.pre)
+  formula &lt;- y ~ -1 + cov + f(ar, model = "ar1")
+  result &lt;- inla(
+    formula = formula, family = "normal", data = inla.stack.data(stack),
+    control.predictor = list(A = inla.stack.A(stack), compute = TRUE),
+    control.compute = list(
+      config = TRUE,
+      return.marginals.predictor = TRUE
+    )
+  )
+
+  ## calculate the level 0 positive excursion function
+  res.qc &lt;- excursions.inla(result,
+    stack = stack, tag = "pred", alpha = 0.99, u = 0,
+    method = "QC", type = "&gt;", max.threads = 2
+  )
+  ## plot the excursion function and marginal probabilities
+  plot(res.qc$rho,
+    type = "l",
+    main = "marginal probabilities (black) and excursion function (red)"
+  )
+  lines(res.qc$F, col = 2)
+}
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

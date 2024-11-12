@@ -1,0 +1,202 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>systemfitAR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Linear Equation System Estimation with Correction on Autocorrelation</h2>
+
+<h3>Description</h3>
+
+<p>Fits a set of linear structural equations using Ordinary Least
+Squares (OLS), Weighted Least Squares (WLS), Seemingly Unrelated Regression (SUR), with the option of autocorrelation correlation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">systemfitAR(formula, method = "OLS", inst = NULL, data = list(),
+  restrict.matrix = NULL, restrict.rhs = NULL, restrict.regMat = NULL, 
+  pooled = FALSE, control = systemfit.control( ... ),
+  AR1 = FALSE, rho.sel = c("all", "mean"), model = c("static", "dynamic"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>an object of class <code>formula</code>
+(for single-equation models) or (typically) a list of objects of class 
+<code>formula</code> (for multiple-equation models).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the estimation method, one of "OLS", "WLS", "SUR";
+iterated estimation methods can be specified by setting control parameter
+<code>maxiter</code> larger than 1 (e.g. 500).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inst</code></td>
+<td>
+<p>one-sided model formula specifying instrumental variables
+or a list of one-sided model formulas if different instruments should
+be used for the different equations (only needed for 2SLS, W2SLS, and
+3SLS estimations).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an optional data framecontaining the variables in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>restrict.matrix</code></td>
+<td>
+<p>an optional j x k matrix to impose linear
+restrictions on the coefficients by 
+<code>restrict.matrix</code> * <code class="reqn">b</code> = <code>restrict.rhs</code>
+(j = number of restrictions, k = number of all coefficients,
+<code class="reqn">b</code> = vector of all coefficients)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>restrict.rhs</code></td>
+<td>
+<p>an optional vector with j elements to impose linear
+restrictions (see <code>restrict.matrix</code>); default is a vector
+that contains j zeros.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>restrict.regMat</code></td>
+<td>
+<p>an optional matrix to impose restrictions
+on the coefficients by post-multiplying the regressor matrix
+with this matrix (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>list of control parameters.
+The default is constructed by the function <code>systemfit.control</code>.
+See the documentation of <code>systemfit.control</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pooled</code></td>
+<td>
+<p>logical, restrict coefficients to be equal in all equations
+(only for panel-like data).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AR1 </code></td>
+<td>
+<p> whether first-order autocorrelation is corrected</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho.sel </code></td>
+<td>
+<p>how rho is computed; <code>rho.sel = "all"</code> means that the system is estimated as a single equation and the residuals are used to compute rho. If "mean", each equation in the system is estimated separately and the average of rhos from all the equations are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model </code></td>
+<td>
+<p>Static model has interceipt, while dynamic model has no intercept; see translog cost function and the package for detail.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed to <code>systemfit.control</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This is a wrapper of <code>systemfit</code> with an addition of autocorrelation correction. It is mainly used for SUR model with autocorrelation. The main reference sources are Greene (2003), LIMDEP 9.0 manual, Judge et al. (1985), and Berndt and Savin (1975).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>systemfit</code> returns a list of the class <code>systemfit</code>.
+This list contains one special object: "eq". It is a list and contains
+one object for each estimated equation. These objects are of the class
+<code>systemfit.equation</code> and contain the results that belong only to the
+regarding equation.  In addition, there are four new items in the output:
+</p>
+<p>The objects of the class <code>systemfit</code> and
+<code>systemfit.equation</code> have the following components (the elements of
+the latter are marked with an asterisk (<code class="reqn">*</code>)):
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>rho </code></td>
+<td>
+<p> autocorrelation coefficient</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho_ste </code></td>
+<td>
+<p>standard error of rho; if <code>rho.sel = "mean"</code>, then it is a vector of the standar errors for individual equations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data </code></td>
+<td>
+<p>data used for <code>systemfit</code>; this is data adjusted for autocorrelation if <code>AR1 = TRUE</code>; otherwise, it is just the raw data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula </code></td>
+<td>
+<p> forumula used for <code>systemfit</code>. This can be adjusted for autocorrelation; costant is adjusted as (1 - rho).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Changyou Sun (<a href="mailto:edwinsun258@gmail.com">edwinsun258@gmail.com</a>)</p>
+
+
+<h3>References</h3>
+
+<p>Greene, W. H. (2003)
+<em>Econometric Analysis, Fifth Edition</em>, Prentice Hall.
+</p>
+<p>Judge, George G.; W. E. Griffiths; R. Carter Hill; Helmut Luetkepohl and Tsoung-Chao Lee (1985)
+<em>The Theory and Practice of Econometrics, Second Edition</em>, Wiley.
+</p>
+<p>LIMDEP 9.0 software manual. 
+</p>
+<p>Berndt, E.R., and N.E. Savin. 1975. Estimation and hypothesis testing in singular equation systems with autoregressive disturbances. Econometrica 43(5/6):937-957.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lm</code>; <code>aiStaFit</code>; <code>systemfit</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Check Berndt and Savin (1975) dataset
+
+# Check Kemenda data          
+
+</code></pre>
+
+
+</div>

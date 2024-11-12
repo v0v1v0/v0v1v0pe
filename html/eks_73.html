@@ -1,0 +1,122 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidyst_ksupp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tidy and geospatial kernel support estimate</h2>
+
+<h3>Description</h3>
+
+<p>Tidy and geospatial versions of a kernel support estimate for 2-dimensional data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_ksupp(data, cont=95, convex_hull=TRUE, ...)
+st_ksupp(x, cont=95, convex_hull=TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>tidy kernel density estimate (output from <code>tidy_kde</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>spatial kernel density estimate (output from <code>st_kde</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cont</code></td>
+<td>
+<p>scalar contour level. Default is 95.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convex_hull</code></td>
+<td>
+<p>flag to compute convex hull of contour region. Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters in <code>ks::ksupp</code> function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The kernel support estimate is considered to be the <code>cont</code>% probability contour of the kernel density estimate, with an additional convex hull calculation if <code>convex_hull=TRUE</code>. For details of the computation of the kernel support estimate, see <code>?ks::ksupp</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The output from <code>*_ksupp</code> have the same structure as the kernel density estimate from <code>*_kde</code>, except that <code>x,y</code> indicate the boundary of the density support estimate (if <code>convex.hull=TRUE</code>) or the grid points inside the density support (if <code>convex.hull=FALSE</code>), rather than the complete grid points themselves.
+</p>
+<p>For <code>st_kdr</code>, the density support estimate is stored as a (multi)polygon <code>sf</code> object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## tidy density support estimate
+library(ggplot2)
+data(crabs, package="MASS")
+crabs2 &lt;- dplyr::select(crabs, FL, CW)
+t1 &lt;- tidy_kde(crabs2)
+t2 &lt;- tidy_ksupp(t1)
+ggplot(t1, aes(x=FL, y=CW)) + 
+    geom_contour_filled_ks(cont=c(25,50,75,95), colour="grey50") +
+    geom_polygon(data=t2, aes(linetype=label), fill=NA, colour=1) +
+    colorspace::scale_fill_discrete_sequential() +
+    scale_linetype_manual(values="dashed", name="Support\nconvex hull")
+
+ggplot(t2, aes(x=FL, y=CW)) + 
+    geom_polygon(data=t2, aes(colour=label), fill=NA, linetype="dashed") +
+    geom_point_ks(data=t1, colour=3) + scale_colour_manual(values=1)
+
+## geospatial density support estimate
+data(wa)
+data(grevilleasf)
+hakeoides &lt;- dplyr::filter(grevilleasf, species=="hakeoides")
+s1 &lt;- st_kde(hakeoides)
+s2 &lt;- st_ksupp(s1)
+s3 &lt;- st_ksupp(s1, cont=97.5)
+
+## base R plot
+xlim &lt;- c(1.2e5, 1.1e6); ylim &lt;- c(6.1e6, 7.2e6)
+plot(wa, xlim=xlim, ylim=ylim)
+plot(s1, cont=c(25,50,75,95,97.5), add=TRUE, border="grey50")
+plot(sf::st_geometry(hakeoides), add=TRUE, pch=16, col=1)
+plot(s2, add=TRUE, lty=2, lwd=2)
+plot(s3, add=TRUE, lty=3, lwd=2)
+
+## geom_sf plot
+gs1 &lt;- ggplot(s1) + geom_sf(data=wa, fill=NA) + ggthemes::theme_map()
+gs1 + geom_sf(data=st_get_contour(s1, cont=c(25,50,75,95,97.5)),
+    aes(fill=label_percent(contlabel)), col="grey50") +
+    geom_sf(data=st_get_contour(s2), 
+    aes(linetype=contlabel), fill=NA, colour=1) + 
+    geom_sf(data=st_get_contour(s3), 
+    aes(linetype=contlabel), fill=NA, colour=1) + 
+    geom_sf(data=hakeoides, aes(colour=species)) +
+    colorspace::scale_fill_discrete_sequential(palette="Heat2") +
+    scale_colour_manual(values=c(1,1)) + 
+    guides(colour=guide_legend(title="Locations")) +
+    scale_linetype_manual(values=c("dashed","dotted"), 
+    name="Support\nconvex hull") +
+    coord_sf(xlim=xlim, ylim=ylim)
+</code></pre>
+
+
+</div>

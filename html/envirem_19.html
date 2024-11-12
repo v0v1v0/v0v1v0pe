@@ -1,0 +1,132 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>verifyRasterNames</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Verify Raster Names</h2>
+
+<h3>Description</h3>
+
+<p>Given a SpatRaster, this function will verify the
+naming scheme and check that all required rasters are present.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">verifyRasterNames(
+  masterstack = NULL,
+  solradstack = NULL,
+  monthPET = NULL,
+  returnRasters = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>masterstack</code></td>
+<td>
+<p>SpatRaster containing all precipitation, 
+min temperature, max temperature, and (optionally) mean temperature variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solradstack</code></td>
+<td>
+<p>SpatRaster of monthly solar radiation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>monthPET</code></td>
+<td>
+<p>SpatRaster of monthly potential evapotranspiration</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnRasters</code></td>
+<td>
+<p>if <code>FALSE</code>, the function checks names
+and reports back. If <code>TRUE</code>, a SpatRaster is returned with
+standardized names.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function checks that the following are present:
+</p>
+<p>12 precipitation rasters
+</p>
+<p>12 min temperature rasters
+</p>
+<p>12 max temperature rasters
+</p>
+<p>12 mean temperature rasters [optional]
+</p>
+<p>12 solar radiation rasters
+</p>
+<p>12 PET rasters [optional]
+</p>
+<p>The naming scheme will be checked against the one 
+defined via the custom naming environment. See <code>link{?assignNames}</code>
+for additional details.
+</p>
+<p>The function can test the temp/precip SpatRaster
+and/or the solar radiation SpatRaster separately, or simultaneously.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Prints messages to the console if <code>returnRasters = FALSE</code>, 
+If <code>returnRasters = TRUE</code>, then a SpatRaster is returned. This SpatRaster
+will not include rasters that were deemed unnecessary.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Pascal Title
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Find example rasters
+rasterFiles &lt;- list.files(system.file('extdata', package='envirem'), full.names=TRUE)
+
+# create stack of temperature and precipitation rasters
+# and stack of solar radiation rasters
+solradFiles &lt;- grep('solrad', rasterFiles, value=TRUE)
+worldclim &lt;- rast(setdiff(rasterFiles, solradFiles))
+solar &lt;- rast(solradFiles)
+
+# modify naming
+names(worldclim) &lt;- gsub('tmin_', 'minTemp', names(worldclim))
+names(worldclim) &lt;- paste0(names(worldclim), '_v1.0')
+names(solar) &lt;- gsub('et_solrad_', 'solar_', names(solar))
+
+# but don't specify this change
+namingScheme()
+
+# Run check
+verifyRasterNames(masterstack = worldclim, solradstack = solar, returnRasters = FALSE)
+
+# But if we specify our naming scheme
+assignNames(tmin = 'minTemp##_v1.0', tmax = 'tmax_##_v1.0', tmean = 'tmean_##_v1.0', 
+	solrad = 'solar_##', precip = 'prec_##_v1.0')
+namingScheme()
+
+verifyRasterNames(masterstack = worldclim, solradstack = solar, returnRasters = FALSE)
+
+# set back to defaults
+assignNames(reset = TRUE)
+
+</code></pre>
+
+
+</div>

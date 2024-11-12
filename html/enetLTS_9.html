@@ -1,0 +1,148 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plotDiagnostic.enetLTS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+diagnostics plots from the <code>"enetLTS"</code> object
+</h2>
+
+<h3>Description</h3>
+
+<p>Produce plots for the diagnostics of the current model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plotDiagnostic.enetLTS(object,vers=c("reweighted","raw"),...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>the model fit to be plotted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vers</code></td>
+<td>
+<p>a character string denoting which model to use for the plots.
+Possible values are <code>"reweighted"</code> (the default) for
+plots from the reweighted fit, and <code>"raw"</code> for
+plots from the raw fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments from the <code>enetLTS</code> object if needed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>"ggplot"</code> (see <code>ggplot</code>).
+</p>
+
+
+<h3>Note</h3>
+
+<p>gives the plot of
+</p>
+<p>- First two components of estimated scores for multinomial logistic regression (for <code>family="multinomial"</code>)
+</p>
+<p>- y vs fitted values/link function. (for for both <code>family="binomial"</code> and <code>family="gaussian"</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Fatma Sevinc KURNAZ, Irene HOFFMANN, Peter FILZMOSER
+<br> Maintainer: Fatma Sevinc KURNAZ &lt;fatmasevinckurnaz@gmail.com&gt;; &lt;fskurnaz@yildiz.edu.tr&gt;</p>
+
+
+<h3>References</h3>
+
+<p>Kurnaz, F.S., Hoffmann, I. and Filzmoser, P. (2017) Robust and sparse estimation methods
+for high dimensional linear and logistic regression. <em>Chemometrics and Intelligent Laboratory Systems</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ggplot</code>,
+<code>enetLTS</code>,
+<code>coef.enetLTS</code>,
+<code>predict.enetLTS</code>,
+<code>residuals.enetLTS</code>,
+<code>fitted.enetLTS</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## for gaussian
+
+set.seed(86)
+n &lt;- 100; p &lt;- 25                             # number of observations and variables
+beta &lt;- rep(0,p); beta[1:6] &lt;- 1              # 10% nonzero coefficients
+sigma &lt;- 0.5                                  # controls signal-to-noise ratio
+x &lt;- matrix(rnorm(n*p, sigma),nrow=n)
+e &lt;- rnorm(n,0,1)                             # error terms
+eps &lt;- 0.1                                    # contamination level
+m &lt;- ceiling(eps*n)                           # observations to be contaminated
+eout &lt;- e; eout[1:m] &lt;- eout[1:m] + 10        # vertical outliers
+yout &lt;- c(x %*% beta + sigma * eout)        # response
+xout &lt;- x; xout[1:m,] &lt;- xout[1:m,] + 10      # bad leverage points
+
+
+fit1 &lt;- enetLTS(xout,yout,crit.plot=FALSE)
+plotDiagnostic.enetLTS(fit1)
+plotDiagnostic.enetLTS(fit1,vers="raw")
+
+## for binomial
+
+eps &lt;-0.05                                     # %10 contamination to only class 0
+m &lt;- ceiling(eps*n)
+y &lt;- sample(0:1,n,replace=TRUE)
+xout &lt;- x
+xout[y==0,][1:m,] &lt;- xout[1:m,] + 10;          # class 0
+yout &lt;- y                                      # wrong classification for vertical outliers
+
+
+fit2 &lt;- enetLTS(xout,yout,family="binomial",crit.plot=FALSE)
+plotDiagnostic.enetLTS(fit2)
+plotDiagnostic.enetLTS(fit2,vers="raw")
+
+
+## for multinomial
+
+n &lt;- 120; p &lt;- 15
+NC &lt;- 3
+X &lt;- matrix(rnorm(n * p), n, p)
+betas &lt;- matrix(1:NC, ncol=NC, nrow=p, byrow=TRUE)
+betas[(p-5):p,]=0; betas &lt;- rbind(rep(0,NC),betas)
+lv &lt;- cbind(1,X) %*% betas
+probs &lt;- exp(lv)/apply(exp(lv),1,sum)
+y &lt;- apply(probs,1,function(prob){sample(1:NC, 1, TRUE, prob)})
+xout &lt;- X
+eps &lt;-0.05                          # %10 contamination to only class 0
+m &lt;- ceiling(eps*n)
+xout[1:m,] &lt;- xout[1:m,] + 10       # bad leverage points
+yout &lt;- y
+
+
+fit3 &lt;- enetLTS(xout,yout,family="multinomial",crit.plot=FALSE)
+plotDiagnostic.enetLTS(fit3)
+plotDiagnostic.enetLTS(fit3,vers="raw")
+
+</code></pre>
+
+
+</div>

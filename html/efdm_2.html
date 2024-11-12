@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimatetransprobs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate Transition Probabilities from Pairdata</h2>
+
+<h3>Description</h3>
+
+<p>Estimate Transition Probabilities from Pairdata
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimatetransprobs(
+  dynamicvariables,
+  pairdata,
+  statespace,
+  factors = character(),
+  by = character(),
+  prior = "nochange"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dynamicvariables</code></td>
+<td>
+<p>The names of the dynamic variables, <code>character</code> vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pairdata</code></td>
+<td>
+<p><code>data.frame</code> Observed transitions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statespace</code></td>
+<td>
+<p><code>data.frame</code> or a <code>list</code> of two <code>data.frame</code>s if the state space changes as a result of the activity</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factors</code></td>
+<td>
+<p><code>character</code> Variables used by the activity</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p><code>character</code> Variables that split the state space</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>function or character</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Transition probabilities 'move' the forest areas allocated in the cells of state matrix
+from the initial states in the beginning of a EFDM run step to the end position. This end
+position will be the initial state of the next EFDM step. Length of a step (=time)
+in the EFDM run is typically determined by the pairdata. It is the time difference of
+tree observations. Note that the pairdata can be also constructed from single observation,
+if the other (pair) observation is estimated or modelled.
+</p>
+<p>Each activity needs to have a transition probability. If no pairdata is available,
+transition probability matrices can be based entirely on a prior defined with
+expert knowledge.
+</p>
+<p>The estimation uses an iterative Bayesian algorithm that is explained in
+<a href="https://github.com/ec-jrc/efdm/blob/master/documents/EFDMinstructions/Seija_Mathematics_behind_EFDM.pdf">https://github.com/ec-jrc/efdm/blob/master/documents/EFDMinstructions/Seija_Mathematics_behind_EFDM.pdf</a>.
+The transition probability estimate is the proportion of observed transitions
+divided by the number of all transitions from the same starting state.
+<code>prior</code> gives the number of prior transitions. For each <code>factor</code>
+variable the transitions are counted in classes of all factors before the
+current factor. The "most important" observations (having all classes right)
+is counted <code>length(factors)</code> times, the second most important observations
+are counted <code>length(factors)-1</code> times and so on.
+</p>
+<p>If pairdata is NULL prior is used by itself.
+</p>
+<p>Observations should have 'factor' and 'by' variables and statepairs with 0 and 1
+suffixes to indicate before and after observations.
+</p>
+<p>The estimation algorithm uses information across 'factor' variables, but not
+across 'by' variables.
+</p>
+<p><code>prior</code> can either <code>character</code> or <code>function</code>.
+</p>
+
+<ul>
+<li>
+<p> "nochange" implies that there is one observation where state doesn't change
+</p>
+</li>
+<li>
+<p> "uninformative" when no observations are given all states are as likely
+</p>
+</li>
+<li> <p><code>function(A, dynvar1, dynvar0)</code> where A is an array of zeros with
+dimnames(A) &lt;- c(dynvar1, dynvar0). The function should fill A with the number of
+prior transitions and return it.
+</p>
+</li>
+</ul>
+<p>The statespace is used to fill in the transitions where there are no observations.
+In special cases the statespace may change as a result of the activity.
+For example changing the tree species might lead to change in the volume classification used.
+</p>
+<p>This function assumes that the dynamic variables are coded as integers starting with 1.
+Other variables are not restricted.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Transition probabilities as a <code>data.frame</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Estimation can use observed transitions with different levels of factors.
+statespace &lt;- expand.grid(a=1:2, b=1:2, vol=1:5)
+pairdata &lt;- data.frame(a=c(1,1,2,2), b=c(1,2,1,2), vol0=c(1,1,1,1), vol1=c(2,3,4,5))
+state0 &lt;- statespace
+actprob &lt;- statespace
+actprob$test &lt;- 1
+state0$area &lt;- 0
+state0$area[1] &lt;- 1
+
+# With by=c("a", "b") there are two observations: one from prior and the other
+# from the exact combination of class levels.
+probs &lt;- estimatetransprobs("vol", pairdata, statespace, by=c("a", "b"), prior="nochange")
+act1 &lt;- define_activity("test", c("vol"), probs)
+runEFDM(state0, actprob, list(act1), 1)
+
+probs &lt;- estimatetransprobs("vol", pairdata, statespace, factors="a", by="b", prior="nochange")
+act2 &lt;- define_activity("test", c("vol"), probs)
+runEFDM(state0, actprob, list(act2), 1)
+
+probs &lt;- estimatetransprobs("vol", pairdata, statespace, factors="b", by="a", prior="nochange")
+act3 &lt;- define_activity("test", c("vol"), probs)
+runEFDM(state0, actprob, list(act3), 1)
+
+# The order of variables in factors argument specifies the order of importance.
+# Observation that differ in the first variable are counted more times.
+probs &lt;- estimatetransprobs("vol", pairdata, statespace, factors=c("a", "b"), prior="nochange")
+act4 &lt;- define_activity("test", c("vol"), probs)
+runEFDM(state0, actprob, list(act4), 1)
+
+probs &lt;- estimatetransprobs("vol", pairdata, statespace, factors=c("b", "a"), prior="nochange")
+act5 &lt;- define_activity("test", c("vol"), probs)
+runEFDM(state0, actprob, list(act5), 1)
+
+
+</code></pre>
+
+
+</div>

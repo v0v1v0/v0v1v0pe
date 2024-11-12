@@ -1,0 +1,641 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predIntPois</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Prediction Interval for a Poisson Distribution
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the mean of a <code>Poisson distribution</code>, and 
+construct a prediction interval for the next <code class="reqn">k</code> observations or 
+next set of <code class="reqn">k</code> sums.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  predIntPois(x, k = 1, n.sum = 1, method = "conditional", 
+    pi.type = "two-sided", conf.level = 0.95, round.limits = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector of observations, or an object resulting from a call to an 
+estimating function that assumes a Poisson distribution 
+(i.e., <code>epois</code> or <code>epoisCensored</code>).    
+If <code>x</code> is a numeric vector, 
+missing (<code>NA</code>), undefined (<code>NaN</code>), and 
+infinite (<code>Inf</code>, <code>-Inf</code>) values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>positive integer specifying the number of future observations or sums the 
+prediction interval should contain with confidence level <code>conf.level</code>.  
+The default value is <code>k=1</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.sum</code></td>
+<td>
+
+<p>positive integer specifying the sample size associated with the <code class="reqn">k</code> future 
+sums.  The default value is <code>n.sum=1</code> (i.e., individual observations).  
+Note that all future sums must be based on the same sample size.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>character string specifying the method to use.  The possible values are: <br><code>"conditional"</code> (based on a conditional distribution; the default), <br><code>"conditional.approx.normal"</code> (method based on approximating a conditional 
+distribution with the standard normal distribution), <br><code>"conditional.approx.t"</code> (method based on approximating a conditional 
+distribution with Student's t-distribution), and <br><code>"normal.approx"</code> (approximate method based on the fact that the 
+mean and varaince of a Poisson distribution are the same). <br></p>
+<p>See the DETAILS section for more information on these methods.  The <br><code>"conditional"</code> method 
+is only implemented for <code>k=1</code>; when <code>k</code> is bigger than 1, the value of 
+<code>method</code> cannot be <code>"conditional"</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.type</code></td>
+<td>
+
+<p>character string indicating what kind of prediction interval to compute.  
+The possible values are <code>pi.type="two-sided"</code> (the default), 
+<code>pi.type="lower"</code>, and <code>pi.type="upper"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>a scalar between 0 and 1 indicating the confidence level of the prediction interval.  
+The default value is <code>conf.level=0.95</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>round.limits</code></td>
+<td>
+
+<p>logical scalar indicating whether to round the computed prediction limits to the 
+nearest integer.  The default value is <code>round.limits=TRUE</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A prediction interval for some population is an interval on the real line constructed so 
+that it will contain <code class="reqn">k</code> future observations or averages from that population with 
+some specified probability <code class="reqn">(1-\alpha)100\%</code>, where 0 &lt; <code class="reqn">\alpha</code> &lt; 1 and <code class="reqn">k</code> 
+is some pre-specified positive integer.  The quantity <code class="reqn">(1-\alpha)100\%</code> is call 
+the confidence coefficient or confidence level associated with the prediction interval.
+</p>
+<p>In the case of a Poisson distribution, we have modified the 
+usual meaning of a prediction interval and instead construct an interval that will 
+contain <code class="reqn">k</code> future observations or <code class="reqn">k</code> future <em>sums</em> with a certain 
+confidence level.
+</p>
+<p>A prediction interval is a <em>random</em> interval; that is, the lower and/or 
+upper bounds are random variables computed based on sample statistics in the 
+baseline sample.  Prior to taking one specific baseline sample, the probability 
+that the prediction interval will contain the next <code class="reqn">k</code> averages is 
+<code class="reqn">(1-\alpha)100\%</code>.  Once a specific baseline sample is taken and the 
+prediction interval based on that sample is computed, the probability that that 
+prediction interval will contain the next <code class="reqn">k</code> averages is not necessarily 
+<code class="reqn">(1-a)100\%</code>, but it should be close.
+</p>
+<p>If an experiment is repeated <code class="reqn">N</code> times, and for each experiment:
+</p>
+
+<ol>
+<li>
+<p> A sample is taken and a <code class="reqn">(1-a)100\%</code> prediction interval for <code class="reqn">k=1</code> 
+future observation is computed, and 
+</p>
+</li>
+<li>
+<p> One future observation is generated and compared to the prediction interval,
+</p>
+</li>
+</ol>
+<p>then the number of prediction intervals that actually contain the future observation 
+generated in step 2 above is a binomial random variable with parameters 
+<code>size=</code><code class="reqn">N</code> and <code>prob=</code><code class="reqn">(1-\alpha)100\%</code> (see Binomial).
+</p>
+<p>If, on the other hand, only one baseline sample is taken and only one prediction 
+interval for <code class="reqn">k=1</code> future observation is computed, then the number of 
+future observations out of a total of <code class="reqn">N</code> future observations that will be 
+contained in that one prediction interval is a binomial random variable with 
+parameters <code>size=</code><code class="reqn">N</code> and <code>prob=</code><code class="reqn">(1-\alpha^*)100\%</code>, where 
+<code class="reqn">\alpha^*</code> depends on the true population parameters and the computed 
+bounds of the prediction interval.
+</p>
+<p>Because of the discrete nature of the Poisson distribution, 
+even if the true mean of the distribution <code class="reqn">\lambda</code> were known exactly, the 
+actual confidence level associated with a prediction limit will usually not be exactly equal to 
+<code class="reqn">(1-\alpha)100\%</code>.  For example, for the Poisson distribution with parameter 
+<code>lambda=2</code>, the interval [0, 4] contains 94.7% of this distribution and 
+the interval [0,5] contains 98.3% of this distribution.  Thus, no interval can 
+contain exactly 95% of this distribution, so it is impossible to construct an 
+exact 95% prediction interval for the next <code class="reqn">k=1</code> observation for a 
+Poisson distribution with parameter <code>lambda=2</code>.
+<br></p>
+<p><b>The Form of a Poisson Prediction Interval</b> <br>
+Let <code class="reqn">\underline{x} = x_1, x_2, \ldots, x_n</code> denote a vector of <code class="reqn">n</code> 
+observations from a Poisson distribution with parameter 
+<code>lambda=</code><code class="reqn">\lambda</code>.  Also, let <code class="reqn">X</code> denote the sum of these 
+<code class="reqn">n</code> random variables, i.e.,
+</p>
+<p style="text-align: center;"><code class="reqn">X = \sum_{i=1}^n x_i \;\;\;\;\;\; (1)</code>
+</p>
+
+<p>Finally, let <code class="reqn">m</code> denote the sample size associated with the <code class="reqn">k</code> future 
+sums (i.e., <code>n.sum=</code><code class="reqn">m</code>).  When <code class="reqn">m=1</code>, each sum is really just a 
+single observation, so in the rest of this help file the term “sums” 
+replaces the phrase “observations or sums”.
+</p>
+<p>Let <code class="reqn">\underline{y} = y_1, y_2, \ldots, y_m</code> denote a vector of <code class="reqn">m</code> 
+future observations from a Poisson distribution with parameter 
+<code>lambda=</code><code class="reqn">\lambda^{*}</code>, and set <code class="reqn">Y</code> equal to the sum of these 
+<code class="reqn">m</code> random variables, i.e.,
+</p>
+<p style="text-align: center;"><code class="reqn">Y = \sum_{i=1}^m y_i \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>Then <code class="reqn">Y</code> has a Poisson distribution with parameter 
+<code>lambda=</code><code class="reqn">m\lambda^{*}</code> (Johnson et al., 1992, p.160).  We are interested 
+in constructing a prediction limit for the next value of <code class="reqn">Y</code>, or else the next 
+<code class="reqn">k</code> sums of <code class="reqn">m</code> Poisson random variables, based on the observed value of 
+<code class="reqn">X</code> and assuming <code class="reqn">\lambda^{*} = \lambda</code>.
+</p>
+<p>For a Poisson distribution, the form of a two-sided prediction interval is:
+</p>
+<p style="text-align: center;"><code class="reqn">[m\bar{x} - K, m\bar{x} + K] = [cX - K, cX + K] \;\;\;\;\;\; (3)</code>
+</p>
+
+<p>where 
+</p>
+<p style="text-align: center;"><code class="reqn">\bar{x} = \frac{X}{n} = \sum_{i=1}^n x_i \;\;\;\;\;\; (4)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">c = \frac{m}{n} \;\;\;\;\;\; (5)</code>
+</p>
+
+<p>and <code class="reqn">K</code> is a constant that depends on the sample size <code class="reqn">n</code>, the 
+confidence level <code class="reqn">(1-\alpha)100\%</code>, the number of future sums <code class="reqn">k</code>, 
+and the sample size associated with the future sums <code class="reqn">m</code>. Do not confuse 
+the constant <code class="reqn">K</code> (uppercase <code class="reqn">K</code>) with the number of future sums 
+<code class="reqn">k</code> (lowercase <code class="reqn">k</code>).  The symbol <code class="reqn">K</code> is used here to be consistent 
+with the notation used for prediction intervals for the normal distribution 
+(see <code>predIntNorm</code>).
+</p>
+<p>Similarly, the form of a one-sided lower prediction interval is:
+</p>
+<p style="text-align: center;"><code class="reqn">[m\bar{x} - K, \infty] = [cX - K, \infty] \;\;\;\;\;\; (6)</code>
+</p>
+
+<p>and the form of a one-sided upper prediction interval is:
+</p>
+<p style="text-align: center;"><code class="reqn">[0, m\bar{x} + K] = [0, cX + K] \;\;\;\;\;\; (7)</code>
+</p>
+
+<p>The derivation of the constant <code class="reqn">K</code> is explained below.
+<br></p>
+<p><b>Conditional Distribution</b> (<code>method="conditional"</code>) <br>
+Nelson (1970) derives a prediction interval for the case <code class="reqn">k=1</code> based on the 
+conditional distribution of <code class="reqn">Y</code> given <code class="reqn">X+Y</code>.  He notes that the conditional 
+distribution of <code class="reqn">Y</code> given the quantity <code class="reqn">X+Y=w</code> is 
+binomial with parameters 
+<code>size=</code><code class="reqn">w</code> and <code>prob=</code><code class="reqn">[m\lambda^{*} / (m\lambda^{*} + n\lambda)]</code> 
+(Johnson et al., 1992, p.161).  When <code class="reqn">k=1</code>, the prediction limits are computed 
+as those most extreme values of <code class="reqn">Y</code> that still yield a non-significant test of 
+the hypothesis <code class="reqn">H_0: \lambda^{*} = \lambda</code>, which for the conditional 
+distribution of <code class="reqn">Y</code> is equivalent to the hypothesis 
+<code class="reqn">H_0</code>: <code>prob=[m /(m + n)]</code>.
+</p>
+<p>Using the relationship between the binomial and 
+F-distribution (see the explanation of exact confidence 
+intervals in the help file for <code>ebinom</code>), Nelson (1982, p. 203) states 
+that exact two-sided <code class="reqn">(1-\alpha)100\%</code> prediction limits [LPL, UPL] are the 
+closest integer solutions to the following equations:
+</p>
+<p style="text-align: center;"><code class="reqn">\frac{m}{LPL + 1} = \frac{n}{X} F(2 LPL + 2, 2X, 1 - \alpha/2) \;\;\;\;\;\; (8)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\frac{UPL}{n} = \frac{X+1}{n} F(2X + 2, 2 UPL, 1 - \alpha/2) \;\;\;\;\;\; (9)</code>
+</p>
+
+<p>where <code class="reqn">F(\nu_1, \nu_2, p)</code> denotes the <code class="reqn">p</code>'th quantile of the 
+F-distribution with <code class="reqn">\nu_1</code> and <code class="reqn">\nu_2</code> degrees of 
+freedom.
+</p>
+<p>If <code>ci.type="lower"</code>, <code class="reqn">\alpha/2</code> is replaced with <code class="reqn">\alpha</code> in 
+Equation (8) above for <code class="reqn">LPL</code>, and <code class="reqn">UPL</code> is set to <code class="reqn">\infty</code>.
+</p>
+<p>If <code>ci.type="upper"</code>, <code class="reqn">\alpha/2</code> is replaced with <code class="reqn">\alpha</code> in 
+Equation (9) above for <code class="reqn">UPL</code>, and <code class="reqn">LPL</code> is set to 0.
+</p>
+<p><b>NOTE:</b> This method is not extended to the case <code class="reqn">k &gt; 1</code>.
+<br></p>
+<p><b>Conditional Distribution Approximation Based on Normal Distribution</b> <br>
+(<code>method="conditional.approx.normal"</code>) <br>
+Cox and Hinkley (1974, p.245) derive an approximate prediction interval for the case 
+<code class="reqn">k=1</code>.  Like Nelson (1970), they note that the conditional distribution of 
+<code class="reqn">Y</code> given the quantity <code class="reqn">X+Y=w</code> is  binomial with 
+parameters <code>size=</code><code class="reqn">w</code> and 
+<code>prob=</code><code class="reqn">[m\lambda^{*} / (m\lambda^{*} + n\lambda)]</code>, and that the 
+hypothesis <code class="reqn">H_0: \lambda^{*} = \lambda</code> is equivalent to the hypothesis 
+<code class="reqn">H_0</code>: <code>prob=[m /(m + n)]</code>.
+</p>
+<p>Cox and Hinkley (1974, p.245) suggest using the normal approximation to the 
+binomial distribution (in this case, without the continuity correction; 
+see Zar, 2010, pp.534-536 for information on the continuity correction associated 
+with the normal approximation to the binomial distribution).  Under the null 
+hypothesis <code class="reqn">H_0: \lambda^{*} = \lambda</code>, the quantity
+</p>
+<p style="text-align: center;"><code class="reqn">z = [Y - \frac{c(X+Y)}{1+c}] / \{ [\frac{c(X+Y)}{(1+c)^2}]^{1/2} \} \;\;\;\;\;\; (10)</code>
+</p>
+
+<p>is approximately distributed as a standard normal random variable.
+</p>
+<p><em>The Case When k = 1</em> <br>
+When <code class="reqn">k = 1</code> and <code>pi.type="two-sided"</code>, the prediction limits are computed 
+by solving the equation
+</p>
+<p style="text-align: center;"><code class="reqn">z^2 \le z_{1 - \alpha/2}^2 \;\;\;\;\;\; (11)</code>
+</p>
+
+<p>where <code class="reqn">z_p</code> denotes the <code class="reqn">p</code>'th quantile of the standard normal distribution.  
+In this case, Gibbons (1987b) notes that the quantity <code class="reqn">K</code> in Equation (3) above 
+is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">K = \frac{t^2c}{2} tc[X (1 + \frac{1}{c}) + \frac{t^2}{4}]^{1/2} \;\;\;\;\;\; (12)</code>
+</p>
+
+<p>where <code class="reqn">t = z_{1-\alpha/2}</code>.
+</p>
+<p>When <code>pi.type="lower"</code> or <code>pi.type="upper"</code>, <code class="reqn">K</code> is computed exactly 
+as above, except <code class="reqn">t</code> is set to <code class="reqn">t = z_{1-\alpha}</code>.
+</p>
+<p><em>The Case When k &gt; 1</em> <br>
+When <code class="reqn">k &gt; 1</code>, Gibbons (1987b) suggests using the Bonferroni inequality.  
+That is, the value of <code class="reqn">K</code> is computed exactly as for the case <code class="reqn">k=1</code> 
+described above, except that the Bonferroni value of <code class="reqn">t</code> is used in place of the 
+usual value of <code class="reqn">t</code>:
+</p>
+<p>When <code>pi.type="two-side"</code>, <code class="reqn">t = z_{1 - (\alpha/k)/2}</code>.
+</p>
+<p>When <code>pi.type="lower"</code> or <code>pi.type="upper"</code>, <code class="reqn">t = z_{1 - \alpha/k}</code>.
+<br></p>
+<p><b>Conditional Distribution Approximation Based on Student's t-Distribution</b> <br>
+(<code>method="conditional.approx.t"</code>) <br>
+When <code>method="conditional.approx.t"</code>, the exact same procedure is used as when <br><code>method="conditional.approx.normal"</code>, except that the quantity in 
+Equation (10) is assumed to follow a Student's t-distribution with <code class="reqn">n-1</code> 
+degrees of freedom.  Thus, all occurrences of <code class="reqn">z_p</code> are replaced with 
+<code class="reqn">t_{n-1, p}</code>, where <code class="reqn">t_{\nu, p}</code> denotes the <code class="reqn">p</code>'th quantile of 
+Student's t-distribution with <code class="reqn">\nu</code> degrees of freedom.
+<br></p>
+<p><b>Normal Approximation</b> (<code>method="normal.approx"</code>) <br>
+The normal approximation for Poisson prediction limits was given by 
+Nelson (1970; 1982, p.203) and is based on the fact that the mean and variance of a 
+Poisson distribution are the same (Johnson et al, 1992, p.157), and for 
+“large” values of <code class="reqn">n</code> and <code class="reqn">m</code>, both <code class="reqn">X</code> and <code class="reqn">Y</code> are 
+approximately normally distributed.
+</p>
+<p><em>The Case When k = 1</em> <br>
+The quantity <code class="reqn">Y - cX</code> is approximately normally distributed with expectation and 
+variance given by:
+</p>
+<p style="text-align: center;"><code class="reqn">E(Y - cX) = E(Y) - cE(X) = m\lambda - cn\lambda = 0 \;\;\;\;\;\; (13)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">Var(Y - cX) = Var(Y) + c^2 Var(X) = m\lambda + c^2 n\lambda = m\lambda (1 + \frac{m}{n}) \;\;\;\;\;\; (14)</code>
+</p>
+
+<p>so the quantity 
+</p>
+<p style="text-align: center;"><code class="reqn">z = \frac{Y-cX}{\sqrt{m\hat{\lambda}(1 + \frac{m}{n})}} = \frac{Y-cX}{\sqrt{m\bar{x}(1 + \frac{m}{n})}} \;\;\;\;\;\; (15)</code>
+</p>
+
+<p>is approximately distributed as a standard normal random variable.  The function 
+<code>predIntPois</code>, however, assumes this quantity is distributed as approximately 
+a Student's t-distribution with <code class="reqn">n-1</code> degrees of freedom.
+</p>
+<p>Thus, following the idea of prediction intervals for a normal distribution 
+(see <code>predIntNorm</code>), when <code>pi.type="two-sided"</code>, the constant 
+<code class="reqn">K</code> for a <code class="reqn">(1-\alpha)100\%</code> prediction interval for the next <code class="reqn">k=1</code> sum 
+of <code class="reqn">m</code> observations is computed as:
+</p>
+<p style="text-align: center;"><code class="reqn">K = t_{n-1, 1-\alpha/2} \sqrt{m\bar{x} (1 + \frac{m}{n})} \;\;\;\;\;\; (16)</code>
+</p>
+
+<p>where <code class="reqn">t_{\nu, p}</code> denotes the <code class="reqn">p</code>'th quantile of a 
+Student's t-distribution with <code class="reqn">\nu</code> degrees of freedom. 
+</p>
+<p>Similarly, when <code>pi.type="lower"</code> or <code>pi.type="upper"</code>, the constant 
+<code class="reqn">K</code> is computed as:
+</p>
+<p style="text-align: center;"><code class="reqn">K = t_{n-1, 1-\alpha} \sqrt{m\bar{x} (1 + \frac{m}{n})} \;\;\;\;\;\; (17)</code>
+</p>
+
+<p><em>The Case When k &gt; 1</em> <br>
+When <code class="reqn">k &gt; 1</code>, the value of <code class="reqn">K</code> is computed exactly as for the case 
+<code class="reqn">k = 1</code> described above, except that the Bonferroni value of <code class="reqn">t</code> is used 
+in place of the usual value of <code class="reqn">t</code>:
+</p>
+<p>When <code>pi.type="two-sided"</code>, 
+</p>
+<p style="text-align: center;"><code class="reqn">K = t_{n-1, 1-(\alpha/k)/2} \sqrt{m\bar{x} (1 + \frac{m}{n})} \;\;\;\;\;\; (18)</code>
+</p>
+
+<p>When <code>pi.type="lower"</code> or <code>pi.type="upper"</code>, 
+</p>
+<p style="text-align: center;"><code class="reqn">K = t_{n-1, 1-(\alpha/k)} \sqrt{m\bar{x} (1 + \frac{m}{n})} \;\;\;\;\;\; (19)</code>
+</p>
+
+<p>Hahn and Nelson (1973, p.182) discuss another method of computing <code class="reqn">K</code> when 
+<code class="reqn">k &gt; 1</code>, but this method is not implemented here.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>x</code> is a numeric vector, <code>predIntPois</code> returns a list of class 
+<code>"estimate"</code> containing the estimated parameter, the prediction interval, 
+and other information.  See the help file for <br><code>estimate.object</code> for details.
+</p>
+<p>If <code>x</code> is the result of calling an estimation function, 
+<code>predIntPois</code> returns a list whose class is the same as <code>x</code>.  
+The list contains the same components as <code>x</code>, as well as a component called 
+<code>interval</code> containing the prediction interval information.  
+If <code>x</code> already has a component called <code>interval</code>, this component is 
+replaced with the prediction interval information.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Prediction and tolerance intervals have long been applied to quality control and 
+life testing problems.  Nelson (1970) notes that his development of confidence and 
+prediction limits for the Poisson distribution is based on well-known results 
+dating back to the 1950's.  Hahn and Nelson (1973) review predicion intervals for 
+several distributions, including Poisson prediction intervals.  The mongraph by 
+Hahn and Meeker (1991) includes a discussion of Poisson prediction intervals.
+</p>
+<p>Gibbons (1987b) uses the Poisson distribution to model the number of detected 
+compounds per scan of the 32 volatile organic priority pollutants (VOC), and also 
+to model the distribution of chemical concentration (in ppb), and presents formulas 
+for prediction and tolerance intervals.  The formulas for prediction intervals are 
+based on Cox and Hinkley (1974, p.245).  Gibbons (1987b) only deals with 
+the case where <code>n.sum=1</code>.
+</p>
+<p>Gibbons et al. (2009, pp. 72–76) discuss methods for Poisson prediction limits.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Cox, D.R., and D.V. Hinkley. (1974).  <em>Theoretical Statistics</em>.  
+Chapman and Hall, New York, pp.242–245.
+</p>
+<p>Gibbons, R.D. (1987b).  Statistical Models for the Analysis of Volatile Organic 
+Compounds in Waste Disposal Sites.  <em>Ground Water</em> <b>25</b>, 572–580.
+</p>
+<p>Gibbons, R.D., D.K. Bhaumik, and S. Aryal. (2009). 
+<em>Statistical Methods for Groundwater Monitoring</em>, Second Edition.  
+John Wiley &amp; Sons, Hoboken, pp. 72–76.
+</p>
+<p>Hahn, G.J., and W.Q. Meeker. (1991). <em>Statistical Intervals: A Guide for Practitioners</em>. 
+John Wiley and Sons, New York.
+</p>
+<p>Hahn, G., and W. Nelson. (1973).  A Survey of Prediction Intervals and Their 
+Applications.  <em>Journal of Quality Technology</em> <b>5</b>, 178–188.
+</p>
+<p>Johnson, N. L., S. Kotz, and A. Kemp. (1992).  <em>Univariate Discrete 
+Distributions</em>.  Second Edition.  John Wiley and Sons, New York, Chapter 4.
+</p>
+<p>Millard, S.P., and N.K. Neerchal. (2001). <em>Environmental Statistics with S-PLUS</em>. 
+CRC Press, Boca Raton.
+</p>
+<p>Miller, R.G. (1981a).  <em>Simultaneous Statistical Inference</em>.  
+McGraw-Hill, New York, pp.8, 76–81.
+</p>
+<p>Nelson, W.R. (1970).  Confidence Intervals for the Ratio of Two Poisson Means and 
+Poisson Predictor Intervals.  <em>IEEE Transactions of Reliability</em> <b>R-19</b>, 
+42–49.
+</p>
+<p>Nelson, W.R. (1982).  <em>Applied Life Data Analysis</em>.  John Wiley and Sons, 
+New York, pp.200–204.
+</p>
+<p>Zar, J.H. (2010). <em>Biostatistical Analysis</em>. 
+Fifth Edition. Prentice-Hall, Upper Saddle River, NJ, pp. 585–586.  
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Poisson</code>, <code>epois</code>,  
+<code>estimate.object</code>, Prediction Intervals, 
+<code>tolIntPois</code>, Estimating Distribution Parameters.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 20 observations from a Poisson distribution with parameter 
+  # lambda=2.  The interval [0, 4] contains 94.7% of this distribution and 
+  # the interval [0,5] contains 98.3% of this distribution.  Thus, because 
+  # of the discrete nature of the Poisson distribution, no interval contains 
+  # exactly 95% of this distribution.  Use predIntPois to estimate the mean 
+  # parameter of the true distribution, and construct a one-sided upper 
+  # 95% prediction interval for the next single observation from this distribution. 
+  # (Note: the call to set.seed simply allows you to reproduce this example.)
+
+  set.seed(250) 
+  dat &lt;- rpois(20, lambda = 2) 
+
+  predIntPois(dat, pi.type = "upper") 
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Poisson
+  #
+  #Estimated Parameter(s):          lambda = 1.8
+  #
+  #Estimation Method:               mle/mme/mvue
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Prediction Interval Method:      conditional
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                95%
+  #
+  #Number of Future Observations:   1
+  #
+  #Prediction Interval:             LPL = 0
+  #                                 UPL = 5
+
+  #----------
+
+  # Compare results above with the other approximation methods:
+
+  predIntPois(dat, method = "conditional.approx.normal", 
+    pi.type = "upper")$interval$limits
+  #LPL UPL 
+  #  0   4  
+ 
+
+  predIntPois(dat, method = "conditional.approx.t", 
+    pi.type = "upper")$interval$limits 
+  #LPL UPL 
+  #  0   4 
+
+
+  predIntPois(dat, method = "normal.approx", 
+    pi.type = "upper")$interval$limits 
+  #LPL UPL 
+  #  0   4 
+  #Warning message:
+  #In predIntPois(dat, method = "normal.approx", pi.type = "upper") :
+  #  Estimated value of 'lambda' and/or number of future observations 
+  #  is/are probably too small for the normal approximation to work well.
+
+  #==========
+
+  # Using the same data as in the previous example, compute a one-sided 
+  # upper 95% prediction limit for k=10 future observations.  
+
+  # Using conditional approximation method based on the normal distribution.
+
+  predIntPois(dat, k = 10, method = "conditional.approx.normal", 
+    pi.type = "upper") 
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Poisson
+  #
+  #Estimated Parameter(s):          lambda = 1.8
+  #
+  #Estimation Method:               mle/mme/mvue
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Prediction Interval Method:      conditional.approx.normal
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                95%
+  #
+  #Number of Future Observations:   10
+  #
+  #Prediction Interval:             LPL = 0
+  #                                 UPL = 6
+
+  
+  # Using method based on approximating conditional distribution with 
+  # Student's t-distribution
+
+  predIntPois(dat, k = 10, method = "conditional.approx.t", 
+    pi.type = "upper")$interval$limits
+  #LPL UPL 
+  #  0   6 
+
+  #==========
+
+  # Repeat the above example, but set k=5 and n.sum=3.  Thus, we want a 
+  # 95% upper prediction limit for the next 5 sets of sums of 3 observations.
+
+  predIntPois(dat, k = 5, n.sum = 3, method = "conditional.approx.t", 
+    pi.type = "upper")$interval$limits
+  #LPL UPL 
+  #  0  12
+
+  #==========
+
+  # Reproduce Example 3.6 in Gibbons et al. (2009, p. 75)
+  # A 32-constituent VOC scan was performed for n=16 upgradient 
+  # samples and there were 5 detections out of these 16.  We 
+  # want to construct a one-sided upper 95% prediction limit 
+  # for 20 monitoring wells (so k=20 future observations) based 
+  # on these data.
+
+  # First we need to create a data set that will yield a mean 
+  # of 5/16 based on a sample size of 16.  Any number of data 
+  # sets will do.  Here are two possible ones:
+
+  dat &lt;- c(rep(1, 5), rep(0, 11))
+  dat &lt;- c(2, rep(1, 3), rep(0, 12))
+
+  # Now call predIntPois.  Don't round the limits so we can 
+  # compare to the example in Gibbons et al. (2009).
+
+  predIntPois(dat, k = 20, method = "conditional.approx.t", 
+    pi.type = "upper", round.limits = FALSE)
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Poisson
+  #
+  #Estimated Parameter(s):          lambda = 0.3125
+  #
+  #Estimation Method:               mle/mme/mvue
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     16
+  #
+  #Prediction Interval Method:      conditional.approx.t
+  #
+  #Prediction Interval Type:        upper
+  #
+  #Confidence Level:                95%
+  #
+  #Number of Future Observations:   20
+  #
+  #Prediction Interval:             LPL = 0.000000
+  #                                 UPL = 2.573258
+
+  #==========
+
+  # Cleanup
+  #--------
+  rm(dat)
+</code></pre>
+
+
+</div>

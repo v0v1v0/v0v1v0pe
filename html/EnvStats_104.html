@@ -1,0 +1,871 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>elnormAlt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Estimate Parameters of a Lognormal Distribution (Original Scale)
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the mean and coefficient of variation of a 
+lognormal distribution, and optionally construct a 
+confidence interval for the mean.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  elnormAlt(x, method = "mvue", ci = FALSE, ci.type = "two-sided", 
+    ci.method = "land", conf.level = 0.95, parkin.list = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector of positive observations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>character string specifying the method of estimation.  Possible values are 
+<code>"mvue"</code> (minimum variance unbiased; the default), <code>"qmle"</code> 
+(quasi maximum likelihood), <code>"mle"</code> (maximum likelihood), <code>"mme"</code> 
+(method of moments), and <code>"mmue"</code> (method of moments based on the unbiased 
+estimate of variance).  See the DETAILS section for more information on these 
+estimation methods.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+
+<p>logical scalar indicating whether to compute a confidence interval for the 
+mean.  The default value is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.type</code></td>
+<td>
+
+<p>character string indicating what kind of confidence interval to compute.  The 
+possible values are <code>"two-sided"</code> (the default), <code>"lower"</code>, and 
+<code>"upper"</code>.  This argument is ignored if <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.method</code></td>
+<td>
+
+<p>character string indicating what method to use to construct the confidence interval 
+for the mean.  The possible values are <code>"land"</code> (Land's method; the default), 
+<code>zou</code> (Zou et al.'s method), <code>"parkin"</code> (Parkin et al.'s method), 
+<code>"cox"</code> (Cox's approximation), and <code>"normal.approx"</code> (normal approximation).  
+See the DETAILS section for more information.  This argument is ignored if 
+<code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>a scalar between 0 and 1 indicating the confidence level of the confidence interval.  
+The default value is <code>conf.level=0.95</code>. This argument is ignored if 
+<code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parkin.list</code></td>
+<td>
+
+<p>a list containing arguments for the function <code>eqnpar</code>.  The components 
+of this list are <code>lcl.rank</code> (set to <code>NULL</code> by default), <code>ucl.rank</code> 
+(set to <code>NULL</code> by default), <code>ci.method</code> (set to <code>"exact"</code> if the 
+sample size is <code class="reqn">\le 20</code>, otherwise set to <br><code>"normal.approx"</code>), and 
+<code>approx.conf.level</code> (set to the value of <code>conf.level</code>).  This argument is 
+ignored unless <code>ci=TRUE</code> and <code>ci.method="parkin"</code>. 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>x</code> contains any missing (<code>NA</code>), undefined (<code>NaN</code>) or 
+infinite (<code>Inf</code>, <code>-Inf</code>) values, they will be removed prior to 
+performing the estimation.
+</p>
+<p>Let <code class="reqn">\underline{x}</code> be a vector of <code class="reqn">n</code> observations from a  
+lognormal distribution with 
+parameters <code>mean=</code><code class="reqn">\theta</code> and <code>cv=</code><code class="reqn">\tau</code>.  Let <code class="reqn">\eta</code> denote the 
+standard deviation of this distribution, so that <code class="reqn">\eta = \theta \tau</code>.  Set 
+<code class="reqn">\underline{y} = log(\underline{x})</code>.  Then <code class="reqn">\underline{y}</code> is a vector of observations 
+from a normal distribution with parameters <code>mean=</code><code class="reqn">\mu</code> and <code>sd=</code><code class="reqn">\sigma</code>.  
+See the help file for LognormalAlt for the relationship between 
+<code class="reqn">\theta, \tau, \eta, \mu</code>, and <code class="reqn">\sigma</code>.
+</p>
+<p><b>Estimation</b> <br>
+This section explains how each of the estimators of <code>mean=</code><code class="reqn">\theta</code> and 
+<code>cv=</code><code class="reqn">\tau</code> are computed.  The approach is to first compute estimates of 
+<code class="reqn">\theta</code> and <code class="reqn">\eta^2</code> (the mean and variance of the lognormal distribution), 
+say <code class="reqn">\hat{\theta}</code> and <code class="reqn">\hat{\eta}^2</code>, then compute the estimate of the cv 
+<code class="reqn">\tau</code> by <code class="reqn">\hat{\tau} = \hat{\eta}/\hat{\theta}</code>.
+</p>
+<p><em>Minimum Variance Unbiased Estimation</em> (<code>method="mvue"</code>) <br>
+The minimum variance unbiased estimators (mvue's) of <code class="reqn">\theta</code> and <code class="reqn">\eta^2</code> were derived 
+by Finney (1941) and are discussed in Gilbert (1987, pp. 164-167) and Cohn et al. (1989).  These 
+estimators are computed as:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{mvue} = e^{\bar{y}} g_{n-1}(\frac{s^2}{2}) \;\;\;\; (1)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\eta}^2_{mvue} = e^{2 \bar{y}} \{g_{n-1}(2s^2) - g_{n-1}[\frac{(n-2)s^2}{n-1}]\} \;\;\;\; (2)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">\bar{y} = \frac{1}{n} \sum_{i=1}^n y_i \;\;\;\; (3)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">s^2 = \frac{1}{n-1} \sum_{i=1}^n (y_i - \bar{y})^2 \;\;\;\; (4)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">g_m(z) = \sum_{i=0}^\infty \frac{m^i (m+2i)}{m(m+2) \cdots (m+2i)} (\frac{m}{m+1})^i (\frac{z^i}{i!}) \;\;\;\; (5)</code>
+</p>
+
+<p>The expected value and variance of the mvue of <code class="reqn">\theta</code> are 
+(Bradu and Mundlak, 1970; Cohn et al., 1989):
+</p>
+<p style="text-align: center;"><code class="reqn">E[\hat{\theta}_{mvue}] = \theta \;\;\;\; (6)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">Var[\hat{\theta}_{mvue}] = e^{2\mu} \{e^{[(2+n-1)\sigma^2]/n} g_{n-1}(\frac{\sigma^4}{4n}) - e^{\sigma^2} \} \;\;\;\; (7)</code>
+</p>
+
+<p><em>Maximum Likelihood Estimation</em> (<code>method="mle"</code>) <br>
+The maximum likelihood estimators (mle's) of <code class="reqn">\theta</code> and <code class="reqn">\eta^2</code> are given by:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{mle} = exp(\bar{y} + \frac{\hat{\sigma}^2_{mle}}{2})  \;\;\;\; (8)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\eta}^2_{mle} = \hat{\theta}^2_{mle} \hat{\tau}^2_{mle} \;\;\;\; (9)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\tau}^2_{mle} = exp(\hat{\sigma}^2_{mle}) - 1 \;\;\;\; (10)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}^2_{mle} = \frac{n-1}{n} s^2 \;\;\;\; (11)</code>
+</p>
+
+<p>The expected value and variance of the mle of <code class="reqn">\theta</code> are (after Cohn et al., 1989):
+</p>
+<p style="text-align: center;"><code class="reqn">E[\hat{\theta}_{mle}] = \theta exp[\frac{-(n-1)\sigma^2}{2n}] (1 - \frac{\sigma^2}{n})^{-(n-1)/2} \;\;\;\; (12)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">Var[\hat{\theta}_{mle}] = exp(2\mu + \frac{\sigma^2}{n}) \{exp(\frac{\sigma^2}{n}) [1 - \frac{2\sigma^2}{n}]^{-(n-1)/2} - [1 - \frac{\sigma^2}{n}]^{-(n-1)} \} \;\;\;\; (13)</code>
+</p>
+
+<p>As can be seen from equation (12), the expected value of the mle of <code class="reqn">\theta</code> does not exist 
+when <code class="reqn">\sigma^2 &gt; n</code>.  In general, the <code class="reqn">p</code>'th moment of the mle of <code class="reqn">\theta</code> does not 
+exist when <code class="reqn">\sigma^2 &gt; n/p</code>. 
+</p>
+<p><em>Quasi Maximum Likelihood Estimation</em> (<code>method="qmle"</code>) <br> 
+The quasi maximum likelihood estimators (qmle's; Cohn et al., 1989; Gilbert, 1987, p.167) of 
+<code class="reqn">\theta</code> and <code class="reqn">\eta^2</code> are the same as the mle's, except the mle of 
+<code class="reqn">\sigma^2</code> in equations (8) and (10) is replaced with the more commonly used 
+mvue of <code class="reqn">\sigma^2</code> shown in equation (4):
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{qmle} = exp(\bar{y} + \frac{s^2}{2})  \;\;\;\; (14)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\eta}^2_{qmle} = \hat{\theta}^2_{qmle} \hat{\tau}^2_{qmle} \;\;\;\; (15)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\tau}^2_{qmle} = exp(s^2) - 1 \;\;\;\; (16)</code>
+</p>
+
+<p>The expected value and variance of the qmle of <code class="reqn">\theta</code> are (Cohn et al., 1989):
+</p>
+<p style="text-align: center;"><code class="reqn">E[\hat{\theta}_{mle}] = \theta exp[\frac{-(n-1)\sigma^2}{2n}] (1 - \frac{\sigma^2}{n-1})^{-(n-1)/2} \;\;\;\; (17)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">Var[\hat{\theta}_{mle}] = exp(2\mu + \frac{\sigma^2}{n}) \{exp(\frac{\sigma^2}{n}) [1 - \frac{2\sigma^2}{n-1}]^{-(n-1)/2} - [1 - \frac{\sigma^2}{n-1}]^{-(n-1)} \} \;\;\;\; (18)</code>
+</p>
+
+<p>As can be seen from equation (17), the expected value of the qmle of <code class="reqn">\theta</code> does not exist 
+when <code class="reqn">\sigma^2 &gt; (n - 1)</code>.  In general, the <code class="reqn">p</code>'th moment of the mle of <code class="reqn">\theta</code> does 
+not exist when <code class="reqn">\sigma^2 &gt; (n - 1)/p</code>.
+</p>
+<p>Note that Gilbert (1987, p. 167) incorrectly presents equation (12) rather than 
+equation (17) as the expected value of the qmle of <code class="reqn">\theta</code>.  For large values 
+of <code class="reqn">n</code> relative to <code class="reqn">\sigma^2</code>, however, equations (12) and (17) are 
+virtually identical.
+</p>
+<p><em>Method of Moments Estimation</em> (<code>method="mme"</code>) <br>
+The method of moments estimators (mme's) of <code class="reqn">\theta</code> and <code class="reqn">\eta^2</code> are found by equating 
+the sample mean and variance with their population values:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{mme} = \bar{x} = \frac{1}{n} \sum_{i=1}^n x_i \;\;\;\; (19)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\eta}_{mme} = \frac{1}{n} \sum_{i=1}^n (x_i - \bar{x})^2 \;\;\;\; (20)</code>
+</p>
+
+<p>Note that the estimator of variance in equation (20) is biased.
+</p>
+<p>The expected value and variance of the mme of <code class="reqn">\theta</code> are:
+</p>
+<p style="text-align: center;"><code class="reqn">E[\hat{\theta}_{mme}] = \theta \;\;\;\; (21)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">Var[\hat{\theta}_{mme}] = \frac{\eta^2}{n} = \frac{1}{n} exp(2\mu + \sigma^2) [exp(\sigma^2)-1] \;\;\;\; (22)</code>
+</p>
+
+<p><em>Method of Moments Estimation Based on the Unbiased Estimate of Variance</em> (<code>method="mmue"</code>) <br>
+These estimators are exactly the same as the method of moments estimators described above, except 
+that the usual unbiased estimate of variance is used:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{mmue} = \bar{x} = \frac{1}{n} \sum_{i=1}^n x_i \;\;\;\; (23)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\eta}_{mmue} = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2 \;\;\;\; (24)</code>
+</p>
+
+<p>Since the mmue of <code class="reqn">\theta</code> is equivalent to the mme of <code class="reqn">\theta</code>, so are its mean and varaince.
+<br></p>
+<p><b>Confidence Intervals</b> <br>
+This section explains the different methods for constructing confidence intervals 
+for <code class="reqn">\theta</code>, the mean of the lognormal distribution.
+</p>
+<p><em>Land's Method</em> (<code>ci.method="land"</code>) <br>
+Land (1971, 1975) derived a method for computing one-sided (lower or upper) 
+uniformly most accurate unbiased confidence intervals for <code class="reqn">\theta</code>.  A 
+two-sided confidence interval can be constructed by combining an optimal lower 
+confidence limit with an optimal upper confidence limit.  This procedure for 
+two-sided confidence intervals is only asymptotically optimal, but for most 
+purposes should be acceptable (Land, 1975, p.387). 
+</p>
+<p>As shown in equation (3) in the help file for LognormalAlt, the mean 
+<code class="reqn">\theta</code> of a lognormal random variable is related to the mean <code class="reqn">\mu</code> and 
+standard deviation <code class="reqn">\sigma</code> of the log-transformed random variable by the 
+following relationship:
+</p>
+<p style="text-align: center;"><code class="reqn">\theta = e^{\beta} \;\;\;\; (25)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">\beta = \mu + \frac{\sigma^2}{2} \;\;\;\; (26)</code>
+</p>
+
+<p>Land (1971) developed confidence bounds for the quantity <code class="reqn">\beta</code>.  The mvue of 
+<code class="reqn">\beta</code> is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\beta}_{mvue} = \bar{y} + \frac{s^2}{2} \;\;\;\; (27)</code>
+</p>
+
+<p>Note that <code class="reqn">\hat{\theta}_{qmle} = exp(\hat{\beta}_{mvue})</code>.  
+The <code class="reqn">(1-\alpha)100\%</code> two-sided confidence interval for <code class="reqn">\beta</code> is 
+given by:
+</p>
+<p style="text-align: center;"><code class="reqn">[ \hat{\beta}_{mvue} + s \frac{C_{\alpha/2}}{\sqrt{n-1}}, \;  \hat{\beta}_{mvue} + s \frac{C_{1-\alpha/2}}{\sqrt{n-1}} ] \;\;\;\; (28)</code>
+</p>
+
+<p>the <code class="reqn">(1-\alpha)100\%</code> one-sided upper confidence interval for <code class="reqn">\beta</code> is 
+given by:
+</p>
+<p style="text-align: center;"><code class="reqn">[ -\infty, \;  \hat{\beta}_{mvue} + s \frac{C_{1-\alpha}}{\sqrt{n-1}} ] \;\;\;\; (29)</code>
+</p>
+
+<p>and the <code class="reqn">(1-\alpha)100\%</code> one-sided lower confidence interval for <code class="reqn">\beta</code> is 
+given by:
+</p>
+<p style="text-align: center;"><code class="reqn">[ \hat{\beta}_{mvue} + s \frac{C_{\alpha}}{\sqrt{n-1}}, \;  \infty ] \;\;\;\; (30)</code>
+</p>
+
+<p>where <code class="reqn">s</code> is the estimate of <code class="reqn">\sigma</code> (see equation (4) above), and the 
+factor <code class="reqn">C</code> is given in tables in Land (1975).  
+</p>
+<p>Thus, by equations (25)-(30), the two-sided <code class="reqn">(1-\alpha)100\%</code> confidence 
+interval for <code class="reqn">\theta</code> is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">\{\hat{\theta}_{qmle} exp[s \frac{C_{\alpha/2}}{\sqrt{n-1}}], \;  \hat{\theta}_{qmle} exp[s \frac{C_{1-\alpha/2}}{\sqrt{n-1}}] \} \;\;\;\; (31)</code>
+</p>
+
+<p>the <code class="reqn">(1-\alpha)100\%</code> one-sided upper confidence interval for <code class="reqn">\theta</code> is 
+given by:
+</p>
+<p style="text-align: center;"><code class="reqn">\{ 0, \;  \hat{\theta}_{qmle} exp[s \frac{C_{1-\alpha}}{\sqrt{n-1}}] \} \;\;\;\; (32)</code>
+</p>
+
+<p>and the <code class="reqn">(1-\alpha)100\%</code> one-sided lower confidence interval for <code class="reqn">\theta</code> 
+is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">\{\hat{\theta}_{qmle} exp[s \frac{C_{\alpha}}{\sqrt{n-1}} ], \;  \infty \} \;\;\;\; (33)</code>
+</p>
+
+<p>Note that Gilbert (1987, pp. 169-171, 264-265) denotes the quantity <code class="reqn">C</code> above as 
+<code class="reqn">H</code> and reproduces a subset of Land's (1975) tables.  Some guidance documents 
+(e.g., USEPA, 1992d) refer to this quantity as the <code class="reqn">H</code>-statistic.
+</p>
+<p><em>Zou et al.'s Method</em> (<code>ci.method="zou"</code>) <br>
+Zou et al. (2009) proposed the following approximation for the two-sided 
+<code class="reqn">(1-\alpha)100\%</code> confidence intervals for <code class="reqn">\theta</code>.  The lower limit <code class="reqn">LL</code> 
+is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">LL = \hat{\theta}_{qmle} exp\{ -[\frac{z^2_{1-\alpha/2}s^2}{n} + (\frac{s^2}{2} - \frac{(n-1)s^2}{2\chi^2_{1-\alpha/2, n-1}})^2]^{1/2}\} \;\;\;\; (34)</code>
+</p>
+
+<p>and the upper limit <code class="reqn">UL</code> is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">UL = \hat{\theta}_{qmle} exp\{ [\frac{z^2_{1-\alpha/2}s^2}{n} + (\frac{(n-1)s^2}{2\chi^2_{\alpha/2, n-1}} - \frac{s^2}{2})^2]^{1/2}\} \;\;\;\; (35)</code>
+</p>
+
+<p>where <code class="reqn">z_p</code> denotes the <code class="reqn">p</code>'th quantile of the standard 
+normal distribuiton, and <code class="reqn">\chi_{p, \nu}</code> denotes the 
+<code class="reqn">p</code>'th quantile of the chi-square distribution with 
+<code class="reqn">\nu</code> degrees of freedom.  The <code class="reqn">(1-\alpha)100\%</code> one-sided lower confidence 
+limit and one-sided upper confidence limit are given by equations (34) and (35), 
+respectively, with <code class="reqn">\alpha/2</code> replaced by <code class="reqn">\alpha</code>.
+</p>
+<p><em>Parkin et al.'s Method</em> (<code>ci.method="parkin"</code>) <br>
+This method was developed by Parkin et al. (1990).  It can be shown that the 
+mean of a lognormal distribution corresponds to the <code class="reqn">p</code>'th quantile, where
+</p>
+<p style="text-align: center;"><code class="reqn">p = \Phi(\frac{\sigma}{2}) \;\;\;\; (36)</code>
+</p>
+
+<p>and <code class="reqn">\Phi</code> denotes the cumulative distribution function of the standard 
+normal distribution.  Parkin et al. (1990) suggested 
+estimating <code class="reqn">p</code> by replacing <code class="reqn">\sigma</code> in equation (36) with the estimate 
+<code class="reqn">s</code> as computed in equation (4).  Once an estimate of <code class="reqn">p</code> is obtained, a 
+nonparametric confidence interval can be constructed for <code class="reqn">p</code>, assuming <code class="reqn">p</code> 
+is equal to its estimated value (see <code>eqnpar</code>). 
+</p>
+<p><em>Cox's Method</em> (<code>ci.method="cox"</code>) <br>
+This method was suggested by Professor D.R. Cox and is illustrated in Land (1972).  
+El-Shaarawi (1989) adapts this method to the case of censored water quality data.  
+Cox's idea is to construct an approximate <code class="reqn">(1-\alpha)100\%</code> confidence interval 
+for the quantity <code class="reqn">\beta</code> defined in equation (26) above assuming the estimate of 
+<code class="reqn">\beta</code> is approximately normally distributed, and then exponentiate the 
+confidence limits.  That is, a two-sided <code class="reqn">(1-\alpha)100\%</code> confidence interval 
+for <code class="reqn">\theta</code> is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[exp(\hat{\beta} - t_{1-\alpha/2, n-1}\hat{\sigma}_{\hat{\beta}}), \; exp(\hat{\beta} + t_{1-\alpha/2, n-1}\hat{\sigma}_{\hat{\beta}})] \;\;\;\; (37)</code>
+</p>
+
+<p>where <code class="reqn">t(p, \nu)</code> denotes the <code class="reqn">p</code>'th quantile of 
+Student's t-distribution with <code class="reqn">\nu</code> degrees of freedom.  
+Note that this method, unlike the normal approximation method discussed below, 
+guarantees a positive value for the lower confidence limit.  One-sided confidence 
+intervals are computed in a similar fashion.
+</p>
+<p>Define an estimator of <code class="reqn">\beta</code> by:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\beta} = \hat{\mu} + \frac{\hat{\sigma}^2}{2} \;\;\;\; (38)</code>
+</p>
+
+<p>Then the variance of this estimator is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">Var(\hat{\beta}) = Var(\hat{\mu}) + Cov(\hat{\mu}, \hat{\sigma}^2) + \frac{1}{4}Var(\hat{\sigma}^2) \;\;\;\; (39)</code>
+</p>
+
+<p>The function <code>elnormAlt</code> follows Land (1972) and uses the minimum variance 
+unbiased estimator for <code class="reqn">\beta</code> shown in equation (27) above, so the variance and 
+estimated variance of this estimator are:
+</p>
+<p style="text-align: center;"><code class="reqn">Var(\hat{\beta}_{mvue}) = \frac{\sigma^2}{n} + \frac{\sigma^4}{2(n-1)} \;\;\;\; (40)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}^2_{\hat{\beta}} = \frac{s^2}{n} + \frac{s^4}{2(n+1)} \;\;\;\; (41)</code>
+</p>
+
+<p>Note that El-Shaarawi (1989, equation 5) simply replaces the value of <code class="reqn">s^2</code> in 
+equation (41) with some estimator of <code class="reqn">\sigma^2</code> (the mle or mvue of 
+<code class="reqn">\sigma^2</code>), rather than using the mvue of the variance of <code class="reqn">\beta</code> as shown 
+in equation (41).
+</p>
+<p><em>Normal Approximation</em> (<code>ci.method="normal.approx"</code>)
+This method constructs approximate <code class="reqn">(1-\alpha)100\%</code> confidence intervals for 
+<code class="reqn">\theta</code> based on the assumption that the estimator of <code class="reqn">\theta</code> is 
+approximately normally distributed.  That is, a two-sided <code class="reqn">(1-\alpha)100\%</code> 
+confidence interval for <code class="reqn">\theta</code> is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[\hat{\theta} - t_{1-\alpha/2, n-1}\hat{\sigma}_{\hat{\theta}}, \; \hat{\theta} + t_{1-\alpha/2, n-1}\hat{\sigma}_{\hat{\theta}}] \;\;\;\; (42)</code>
+</p>
+
+<p>One-sided confidence intervals are computed in a similar fashion.
+</p>
+<p>When <code>method="mvue"</code> is used to estimate <code class="reqn">\theta</code>, an unbiased estimate of 
+the variance of the estimator of <code class="reqn">\theta</code> is used in equation (42) 
+(Bradu and Mundlak, 1970, equation 4.3; Gilbert, 1987, equation 13.5):
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\sigma^2}_{\hat{\theta}} = e^{2\bar{y}} \{[g_{n-1}(\frac{s^2}{2})]^2 - g_{n-1}[\frac{s^2(n-2)}{n-1}] \} \;\;\;\; (43)</code>
+</p>
+
+<p>When <code>method="mle"</code> is used to estimate <code class="reqn">\theta</code>, the estimate of the 
+variance of the estimator of <code class="reqn">\theta</code> is computed by replacing <code class="reqn">\mu</code> and 
+<code class="reqn">\sigma^2</code> in equation (13) with their mle's:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}^2_{\hat{\theta}} = exp(2\bar{y} + \frac{\hat{\sigma}^2_{mle}}{n}) \{exp(\frac{\hat{\sigma}^2_{mle}}{n}) [1 - \frac{2\hat{\sigma}^2_{mle}}{n}]^{-(n-1)/2} - [1 - \frac{\hat{\sigma}^2_{mle}}{n}]^{-(n-1)} \} \;\;\;\; (44)</code>
+</p>
+
+<p>When <code>method="qmle"</code> is used to estimate <code class="reqn">\theta</code>, the estimate of the 
+variance of the estimator of <code class="reqn">\theta</code> is computed by replacing <code class="reqn">\mu</code> and 
+<code class="reqn">\sigma^2</code> in equation (18) with their mvue's:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}^2_{\hat{\theta}} = exp(2\bar{y} + \frac{s^2}{n}) \{exp(\frac{s^2}{n}) [1 - \frac{2 s^2}{n-1}]^{-(n-1)/2} - [1 - \frac{s^2}{n-1}]^{-(n-1)} \} \;\;\;\; (45)</code>
+</p>
+
+<p>Note that equation (45) is exactly the same as Gilbert's (1987, p. 167) equation 
+13.8a, except that Gilbert (1987) erroneously uses <code class="reqn">n</code> where he should use 
+<code class="reqn">n-1</code> instead.  For large values of <code class="reqn">n</code> relative to <code class="reqn">s^2</code>, however, 
+this makes little difference.
+</p>
+<p>When <code>method="mme"</code>, the estimate of the variance of the estimator of 
+<code class="reqn">\theta</code> is computed by replacing <code class="reqn">eta^2</code> in equation (22) with the 
+mme of <code class="reqn">\eta^2</code> defined in equation (20):
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}^2_{\hat{\theta}} = \frac{\hat{\eta}_{mme}^2}{n} = \frac{1}{n^2} \sum_{i=1}^n (x_i - \bar{x})^2 \;\;\;\; (46)</code>
+</p>
+
+<p>When <code>method="mmue"</code>, the estimate of the variance of the estimator of 
+<code class="reqn">\theta</code> is computed by replacing <code class="reqn">eta^2</code> in equation (22) with the 
+mmue of <code class="reqn">\eta^2</code> defined in equation (24):
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\sigma}^2_{\hat{\theta}} = \frac{\hat{\eta}_{mmue}^2}{n} = \frac{1}{n(n-1)} \sum_{i=1}^n (x_i - \bar{x})^2 \;\;\;\; (47)</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>a list of class <code>"estimate"</code> containing the estimated parameters and other information.  
+See <br><code>estimate.object</code> for details.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The normal and lognormal distribution are probably the two most frequently used 
+distributions to model environmental data.  In order to make any kind of 
+probability statement about a normally-distributed population (of chemical 
+concentrations for example), you have to first estimate the mean and standard 
+deviation (the population parameters) of the distribution.  Once you estimate 
+these parameters, it is often useful to characterize the uncertainty in the 
+estimate of the mean or variance.  This is done with confidence intervals.
+</p>
+<p>Some EPA guidance documents (e.g., Singh et al., 2002; Singh et al., 2010a,b) 
+strongly recommend against using a lognormal model for environmental data and 
+recommend trying a gamma distribuiton instead.
+</p>
+<p>USEPA (1992d) directs persons involved in risk assessment for Superfund sites to 
+use Land's (1971, 1975) method (<code>ci.method="land"</code>) for computing the upper 
+95% confidence interval for the mean, assuming the data follow a lognormal 
+distribution (the guidance document cites Gilbert (1987) as a source of descriptions 
+and tables for this method).  The last example in the EXAMPLES section below 
+reproduces an example from this guidance document.
+</p>
+<p>In the past, some authors suggested using the geometric mean, also called the 
+"rating curve" estimator (Cohn et al., 1989), as the estimator of the mean, 
+<code class="reqn">\theta</code>.  This estimator is computed as:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{rc} = e^{\bar{y}} \;\;\;\; (48)</code>
+</p>
+
+<p>Cohn et al. (1989) cite several authors who have pointed out this estimator is 
+biased and is not even a consistent estimator of the mean.  In fact, it is the 
+maximum likelihood estimator of the median of the distribution 
+(see <code>eqlnorm</code>.)
+</p>
+<p>Finney (1941) computed the efficiency of the method of moments estimators of the 
+mean (<code class="reqn">\theta</code>) and variance (<code class="reqn">\eta^2</code>) of the lognormal distribution 
+(equations (19)-(20)) relative to the mvue's (equations (1)-(2)) as a function of 
+<code class="reqn">\sigma^2</code> (the variance of the log-transformed observations), and found that 
+while the mme of <code class="reqn">\theta</code> is reasonably efficient compared to the mvue of 
+<code class="reqn">\theta</code>, the mme of <code class="reqn">\eta^2</code> performs quite poorly relative to the 
+mvue of <code class="reqn">\eta^2</code>.
+</p>
+<p>Cohn et al. (1989) and Parkin et al. (1988) have shown that the qmle and the mle 
+of the mean can be severely biased for typical environmental data, and suggest 
+always using the mvue.
+</p>
+<p>Parkin et al. (1990) studied the performance of various methods for constructing a 
+confidence interval for the mean via Monte Carlo simulation.  They compared 
+approximate methods to Land's optimal method (<code>ci.method="land"</code>).  They used 
+four parent lognormal distributions to generate observations; all had mean 10, but 
+differed in coefficient of variation: 50, 100, 200, and 500%.  They also generated 
+sample sizes from 6 to 100 in increments of 2.  For each combination of parent 
+distribution and sample size, they generated 25,000 Monte Carlo trials.  
+Parkin et al. found that for small sample sizes (<code class="reqn">n &lt; 20</code>), none of the 
+approximate methods (<code>"parkin"</code>, <code>"cox"</code>, <code>"normal.approx"</code>) worked 
+very well. For <code class="reqn">n &gt; 20</code>, their method (<code>"parkin"</code>) provided reasonably 
+accurate coverage.  Cox's method (<code>"cox"</code>) worked well for <code class="reqn">n &gt; 60</code>, and 
+performed slightly better than Parkin et al.'s method (<code>"parkin"</code>) for highly 
+skewed populations.
+</p>
+<p>Zou et al. (2009) used Monte Carlo simulation to compare the performance of their 
+method with the CGI method of Krishnamoorthy and Mathew (2003) and 
+the modified Cox method of Armstrong (1992) and El-Shaarawi and Lin (2007).  
+Performance was assessed based on 1) percentage of times the interval contained the 
+parameter value (coverage%), 2) balance between left and right tail errors, and 
+3) confidence interval width.  All three methods showed acceptable coverage 
+percentages.  The modified Cox method showed unbalanced tail errors, and Zou 
+et al.'s method showed consistently narrower average width.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Aitchison, J., and J.A.C. Brown (1957).  <em>The Lognormal Distribution 
+(with special references to its uses in economics)</em>.  Cambridge University Press, 
+London, Chapter 5.
+</p>
+<p>Armstrong, B.G. (1992).  Confidence Intervals for Arithmetic Means of Lognormally 
+Distributed Exposures.  <em>American Industrial Hygiene Association Journal</em> 
+<b>53</b>, 481–485.
+</p>
+<p>Bradu, D., and Y. Mundlak. (1970).  Estimation in Lognormal Linear Models.  
+<em>Journal of the American Statistical Association</em> <b>65</b>, 198–211.
+</p>
+<p>Cohn, T.A., L.L. DeLong, E.J. Gilroy, R.M. Hirsch, and D.K. Wells. (1989).  
+Estimating Constituent Loads.  <em>Water Resources Research</em> <b>25</b>(5), 
+937–942.
+</p>
+<p>Crow, E.L., and K. Shimizu. (1988).  <em>Lognormal Distributions: Theory and 
+Applications</em>.  Marcel Dekker, New York, Chapter 2.
+</p>
+<p>El-Shaarawi, A.H., and J. Lin. (2007).  Interval Estimation for Log-Normal Mean 
+with Applications to Water Quality.  <em>Environmetrics</em> <b>18</b>, 1–10.
+</p>
+<p>El-Shaarawi, A.H., and R. Viveros. (1997).  Inference About the Mean in 
+Log-Regression with Environmental Applications.  <em>Environmetrics</em> 
+<b>8</b>, 569–582.
+</p>
+<p>Forbes, C., M. Evans, N. Hastings, and B. Peacock. (2011).  Statistical Distributions. 
+Fourth Edition. John Wiley and Sons, Hoboken, NJ.
+</p>
+<p>Finney, D.J. (1941).  On the Distribution of a Variate Whose Logarithm is 
+Normally Distributed.  <em>Supplement to the Journal of the Royal Statistical 
+Society</em> <b>7</b>, 155–161.
+</p>
+<p>Gilbert, R.O. (1987). <em>Statistical Methods for Environmental Pollution Monitoring</em>. 
+Van Nostrand Reinhold, New York, NY.
+</p>
+<p>Johnson, N. L., S. Kotz, and N. Balakrishnan. (1994). 
+<em>Continuous Univariate Distributions, Volume 1</em>. 
+Second Edition. John Wiley and Sons, New York.
+</p>
+<p>Krishnamoorthy, K., and T.P. Mathew. (2003).  Inferences on the Means of Lognormal 
+Distributions Using Generalized p-Values and Generalized Confidence Intervals.  
+<em>Journal of Statistical Planning and Inference</em> <b>115</b>, 103–121.
+</p>
+<p>Land, C.E. (1971).  Confidence Intervals for Linear Functions of the Normal Mean 
+and Variance.  <em>The Annals of Mathematical Statistics</em> <b>42</b>(4), 1187–1205.
+</p>
+<p>Land, C.E. (1972).  An Evaluation of Approximate Confidence Interval Estimation 
+Methods for Lognormal Means.  <em>Technometrics</em> <b>14</b>(1), 145–158.
+</p>
+<p>Land, C.E. (1973).  Standard Confidence Limits for Linear Functions of the Normal 
+Mean and Variance.  <em>Journal of the American Statistical Association</em> 
+<b>68</b>(344), 960–963.
+</p>
+<p>Land, C.E. (1975).  Tables of Confidence Limits for Linear Functions of the 
+Normal Mean and Variance, in 
+<em>Selected Tables in Mathematical Statistics, Vol. III</em>.  
+American Mathematical Society, Providence, RI, pp. 385–419.
+</p>
+<p>Likes, J. (1980).  Variance of the MVUE for Lognormal Variance. 
+<em>Technometrics</em> <b>22</b>(2), 253–258.
+</p>
+<p>Limpert, E., W.A. Stahel, and M. Abbt. (2001).  Log-Normal Distributions Across the 
+Sciences:  Keys and Clues.  <em>BioScience</em> <b>51</b>, 341–352.
+</p>
+<p>Millard, S.P., and N.K. Neerchal. (2001). <em>Environmental Statistics with S-PLUS</em>. 
+CRC Press, Boca Raton, FL.
+</p>
+<p>Ott, W.R. (1995). <em>Environmental Statistics and Data Analysis</em>. 
+Lewis Publishers, Boca Raton, FL.
+</p>
+<p>Parkin, T.B., J.J. Meisinger, S.T. Chester, J.L. Starr, and J.A. Robinson. (1988).  
+Evaluation of Statistical Estimation Methods for Lognormally Distributed Variables.  
+<em>Journal of the Soil Science Society of America</em> <b>52</b>, 323–329.
+</p>
+<p>Parkin, T.B., S.T. Chester, and J.A. Robinson. (1990).  Calculating Confidence 
+Intervals for the Mean of a Lognormally Distributed Variable.  
+<em>Journal of the Soil Science Society of America</em> <b>54</b>, 321–326.
+</p>
+<p>Singh, A., A.K. Singh, and R.J. Iaci. (2002). 
+<em>Estimation of the Exposure Point Concentration Term Using a Gamma Distribution</em>.  
+EPA/600/R-02/084. October 2002. Technology Support Center for Monitoring and 
+Site Characterization, Office of Research and Development, Office of Solid Waste and 
+Emergency Response, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Singh, A., R. Maichle, and N. Armbya. (2010a). 
+<em>ProUCL Version 4.1.00 User Guide (Draft)</em>. EPA/600/R-07/041, May 2010. 
+Office of Research and Development, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Singh, A., N. Armbya, and A. Singh. (2010b). 
+<em>ProUCL Version 4.1.00 Technical Guide (Draft)</em>. EPA/600/R-07/041, May 2010.  
+Office of Research and Development, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (1992d).  <em>Supplemental Guidance to RAGS: Calculating the Concentration Term</em>.  
+Publication 9285.7-081, May 1992.  Intermittenet Bulletin, Volume 1, Number 1.  
+Office of Emergency and Remedial Response, Hazardous Site Evaluation Division, 
+OS-230. Office of Solid Waste and Emergency Response, 
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (2009).  <em>Statistical Analysis of Groundwater Monitoring Data at RCRA Facilities, Unified Guidance</em>.
+EPA 530/R-09-007, March 2009.  Office of Resource Conservation and Recovery Program Implementation and Information Division.  
+U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Zou, G.Y., C.Y. Huo, and J. Taleban. (2009).  Simple Confidence Intervals for 
+Lognormal Means and their Differences with Environmental Applications.  
+<em>Environmetrics</em> <b>20</b>, 172–180.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>LognormalAlt, Lognormal, Normal.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Using the Reference area TcCB data in the data frame EPA.94b.tccb.df, 
+  # estimate the mean and coefficient of variation, 
+  # and construct a 95% confidence interval for the mean.
+
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], ci = TRUE))  
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Lognormal
+  #
+  #Estimated Parameter(s):          mean = 0.5989072
+  #                                 cv   = 0.4899539
+  #
+  #Estimation Method:               mvue
+  #
+  #Data:                            TcCB[Area == "Reference"]
+  #
+  #Sample Size:                     47
+  #
+  #Confidence Interval for:         mean
+  #
+  #Confidence Interval Method:      Land
+  #
+  #Confidence Interval Type:        two-sided
+  #
+  #Confidence Level:                95%
+  #
+  #Confidence Interval:             LCL = 0.5243787
+  #                                 UCL = 0.7016992
+
+  #----------
+
+  # Compare the different methods of estimating the distribution parameters using the 
+  # Reference area TcCB data.
+
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], method = "mvue"))$parameters
+  #     mean        cv 
+  #0.5989072 0.4899539
+
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], method = "qmle"))$parameters
+  #     mean        cv 
+  #0.6004468 0.4947791 
+ 
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], method = "mle"))$parameters
+  #     mean        cv 
+  #0.5990497 0.4888968 
+ 
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], method = "mme"))$parameters
+  #     mean        cv 
+  #0.5985106 0.4688423 
+ 
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], method = "mmue"))$parameters
+  #     mean        cv 
+  #0.5985106 0.4739110
+
+  #----------
+
+  # Compare the different methods of constructing the confidence interval for
+  # the mean using the Reference area TcCB data.
+ 
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], 
+    method = "mvue", ci = TRUE, ci.method = "land"))$interval$limits
+  #      LCL       UCL 
+  #0.5243787 0.7016992
+
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], 
+    method = "mvue", ci = TRUE, ci.method = "zou"))$interval$limits
+  #      LCL       UCL 
+  #0.5230444 0.6962071 
+
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], 
+    method = "mvue", ci = TRUE, ci.method = "parkin"))$interval$limits
+  # LCL  UCL 
+  #0.50 0.74 
+ 
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], 
+     method = "mvue", ci = TRUE, ci.method = "cox"))$interval$limits
+  #      LCL       UCL 
+  #0.5196213 0.6938444 
+ 
+  with(EPA.94b.tccb.df, elnormAlt(TcCB[Area == "Reference"], 
+     method = "mvue", ci = TRUE, ci.method = "normal.approx"))$interval$limits
+  #      LCL       UCL 
+  #0.5130160 0.6847984 
+
+  #----------
+
+  # Reproduce the example in Highlights 7 and 8 of USEPA (1992d).  This example shows 
+  # how to compute the upper 95% confidence limit of the mean of a lognormal distribution 
+  # and compares it to the result of computing the upper 95% confidence limit assuming a 
+  # normal distribution. The data for this example are chromium concentrations (mg/kg) in 
+  # soil samples collected randomly over a Superfund site, and are stored in the data frame 
+  # EPA.92d.chromium.vec.
+
+  # First look at the data 
+
+  EPA.92d.chromium.vec
+  # [1]   10   13   20   36   41   59   67  110  110  136  140  160  200  230 1300
+
+  stripChart(EPA.92d.chromium.vec, ylab = "Chromium (mg/kg)")
+
+  # Note there is one very large "outlier" (1300).  
+  # Perform a goodness-of-fit test to determine whether a lognormal distribution 
+  # is appropriate:
+
+  gof.list &lt;- gofTest(EPA.92d.chromium.vec, dist = 'lnormAlt') 
+  gof.list 
+
+  #Results of Goodness-of-Fit Test 
+  #------------------------------- 
+  #
+  #Test Method:                     Shapiro-Wilk GOF
+  #
+  #Hypothesized Distribution:       Lognormal 
+  #
+  #Estimated Parameter(s):          mean = 159.855185
+  #                                 cv   =   1.493994
+  #
+  #Estimation Method:               mvue
+  #
+  #Data:                            EPA.92d.chromium.vec
+  #
+  #Sample Size:                     15
+  #
+  #Test Statistic:                  W = 0.9607179
+  #
+  #Test Statistic Parameter:        n = 15
+  #
+  #P-value:                         0.7048747
+  #
+  #Alternative Hypothesis:          True cdf does not equal the
+  #                                 Lognormal Distribution. 
+
+  plot(gof.list, digits = 2)
+
+  # The lognormal distribution seems to provide an adequate fit, although the largest 
+  # observation (1300) is somewhat suspect, and given the small sample size there is 
+  # not much power to detect any kind of mild deviation from a lognormal distribution.
+  
+  # Now compute the one-sided 95% upper confidence limit for the mean.  
+  # Note that the value of 502 mg/kg shown in Hightlight 7 of USEPA (1992d) is a bit 
+  # larger than the exact value of 496.6 mg/kg shown below.  
+  # This is simply due to rounding error.
+
+  elnormAlt(EPA.92d.chromium.vec, ci = TRUE, ci.type = "upper") 
+
+  #Results of Distribution Parameter Estimation 
+  #-------------------------------------------- 
+  #
+  #Assumed Distribution:          Lognormal 
+  #
+  #Estimated Parameter(s):        mean = 159.855185
+  #                                 cv   =   1.493994 
+  #
+  #Estimation Method:             mvue 
+  #
+  #Data:                          EPA.92d.chromium.vec 
+  #
+  #Sample Size:                   15 
+  #
+  #Confidence Interval for:       mean 
+  #
+  #Confidence Interval Method:    Land 
+  #
+  #Confidence Interval Type:      upper 
+  #
+  #Confidence Level:              95% 
+  #
+  #Confidence Interval:           LCL =   0 
+  #                               UCL = 496.6282 
+
+  # Now compare this result with the upper 95% confidence limit based on assuming 
+  # a normal distribution.  Again note that the value of 325 mg/kg shown in 
+  # Hightlight 8 is slightly larger than the exact value of 320.3 mg/kg shown below.  
+  # This is simply due to rounding error.
+
+  enorm(EPA.92d.chromium.vec, ci = TRUE, ci.type = "upper") 
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Normal
+  #
+  #Estimated Parameter(s):          mean = 175.4667
+  #                                 sd   = 318.5440
+  #
+  #Estimation Method:               mvue
+  #
+  #Data:                            EPA.92d.chromium.vec
+  #
+  #Sample Size:                     15
+  #
+  #Confidence Interval for:         mean
+  #
+  #Confidence Interval Method:      Exact
+  #
+  #Confidence Interval Type:        upper
+  #
+  #Confidence Level:                95%
+  #
+  #Confidence Interval:             LCL =     -Inf
+  #                                 UCL = 320.3304
+
+  #----------
+
+  # Clean up
+  #---------
+
+  rm(gof.list)
+</code></pre>
+
+
+</div>

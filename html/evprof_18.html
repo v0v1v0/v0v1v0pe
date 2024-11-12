@@ -1,0 +1,101 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_connection_models</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get a tibble of connection GMM for every user profile</h2>
+
+<h3>Description</h3>
+
+<p>Get a tibble of connection GMM for every user profile
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_connection_models(
+  subsets_clustering = list(),
+  clusters_definition = list()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>subsets_clustering</code></td>
+<td>
+<p>list with clustering results of each subset
+(direct output from function <code>cluser_sessions()</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters_definition</code></td>
+<td>
+<p>list of tibbles with clusters definitions
+(direct output from function <code>define_clusters()</code>) of each sub-set</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>tibble
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+
+# Select working day sessions (`Timecycle == 1`) that
+# disconnect the same day (`Disconnection == 1`)
+sessions_day &lt;- california_ev_sessions %&gt;%
+  divide_by_timecycle(
+    months_cycles = list(1:12), # Not differentiation between months
+    wdays_cycles = list(1:5, 6:7) # Differentiation between workdays/weekends
+  ) %&gt;%
+  divide_by_disconnection(
+    division_hour = 10, start = 3
+  ) %&gt;%
+  filter(
+    Disconnection == 1, Timecycle == 1
+  ) %&gt;%
+  sample_frac(0.05)
+plot_points(sessions_day, start = 3)
+
+# Identify two clusters
+sessions_clusters &lt;- cluster_sessions(
+  sessions_day, k=2, seed = 1234, log = TRUE
+)
+
+# Plot the clusters found
+plot_bivarGMM(
+  sessions = sessions_clusters$sessions,
+  models = sessions_clusters$models,
+  log = TRUE, start = 3
+)
+
+# Define the clusters with user profile interpretations
+clusters_definitions &lt;- define_clusters(
+  models = sessions_clusters$models,
+  interpretations = c(
+    "Connections during working hours",
+    "Connections during all day (high variability)"
+  ),
+  profile_names = c("Workers", "Visitors"),
+  log = TRUE
+)
+
+# Create a table with the connection GMM parameters
+get_connection_models(
+  subsets_clustering = list(sessions_clusters),
+  clusters_definition = list(clusters_definitions)
+)
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,248 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>global-actions</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Global Actions</h2>
+
+<h3>Description</h3>
+
+<p>Global actions are functions that are executed at each time step of the
+simulation. They are useful for implementing interventions, such as
+vaccination, isolation, and social distancing by means of tools.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">globalevent_tool(tool, prob, name = get_name_tool(tool), day = -99)
+
+globalevent_tool_logit(
+  tool,
+  vars,
+  coefs,
+  name = get_name_tool(tool),
+  day = -99
+)
+
+globalevent_set_params(
+  param,
+  value,
+  name = paste0("Set ", param, " to ", value),
+  day = -99
+)
+
+globalevent_fun(fun, name = deparse(substitute(fun)), day = -99)
+
+add_globalevent(model, action)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>tool</code></td>
+<td>
+<p>An object of class tool.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>Numeric scalar. A probability between 0 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>Character scalar. The name of the action.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>day</code></td>
+<td>
+<p>Integer. The day (step) at which the action is executed (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars</code></td>
+<td>
+<p>Integer vector. The position of the variables in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefs</code></td>
+<td>
+<p>Numeric vector. The coefficients of the logistic regression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>Character scalar. The name of the parameter to be set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>Numeric scalar. The value of the parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>Function. The function to be executed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>An object of class epiworld_model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>action</code></td>
+<td>
+<p>A global action.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>globalevent_tool_logit</code> allows to specify a logistic
+regression model for the probability of using a tool. The model is specified
+by the vector of coefficients <code>coefs</code> and the vector of variables <code>vars</code>.
+<code>vars</code> is an integer vector indicating the position of the variables in the
+model.
+</p>
+<p>The function <code>globalevent_set_param</code> allows to set a parameter of
+the model. The parameter is specified by its name <code>param</code> and the value by
+<code>value</code>.
+</p>
+<p>The function <code>globalevent_fun</code> allows to specify a function to be
+executed at a given day. The function object must receive an object of class
+epiworld_model as only argument.
+</p>
+<p>The function <code>add_globalevent</code> adds a global action to a model.
+The model checks for actions to be executed at each time step. If the added
+action matches the current time step, the action is executed. When <code>day</code> is
+negative, the action is executed at each time step. When <code>day</code> is positive,
+the action is executed at the specified time step.
+</p>
+
+
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> The <code>globalevent_set_params</code> function returns an object of class
+epiworld_globalevent_set_param and epiworld_globalevent.
+</p>
+</li>
+<li> <p><code>globalevent_tool</code> returns an object of class
+epiworld_globalevent_tool and epiworld_globalevent.
+</p>
+</li>
+<li> <p><code>globalevent_tool_logit</code> returns an object of class
+epiworld_globalevent_tool_logit and epiworld_globalevent.
+</p>
+</li>
+</ul>
+<ul><li>
+<p> The function <code>add_globalevent</code> returns the model with the added
+action.
+</p>
+</li></ul>
+<h3>See Also</h3>
+
+<p>epiworld-model
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simple model
+model_sirconn &lt;- ModelSIRCONN(
+  name                = "COVID-19",
+  n                   = 10000,
+  prevalence          = 0.01,
+  contact_rate        = 5,
+  transmission_rate   = 0.4,
+  recovery_rate       = 0.95
+)
+
+# Creating a tool
+epitool &lt;- tool(
+  name = "Vaccine",
+  prevalence = 0,
+  as_proportion = FALSE,
+  susceptibility_reduction = .9,
+  transmission_reduction = .5,
+  recovery_enhancer = .5, 
+  death_reduction = .9
+)
+
+
+# Adding a global action
+vaccine_day_20 &lt;- globalevent_tool(epitool, .2, day = 20)
+add_globalevent(model_sirconn, vaccine_day_20)
+
+# Running and printing
+run(model_sirconn, ndays = 40, seed = 1912)
+model_sirconn
+plot_incidence(model_sirconn)
+
+# Example 2: Changing the contact rate -------------------------------------
+model_sirconn2 &lt;- ModelSIRCONN(
+  name                = "COVID-19",
+  n                   = 10000,
+  prevalence          = 0.01,
+  contact_rate        = 5,
+  transmission_rate   = 0.4,
+  recovery_rate       = 0.95
+)
+
+closure_day_10 &lt;- globalevent_set_params("Contact rate", 0, day = 10)
+add_globalevent(model_sirconn2, closure_day_10)
+
+# Running and printing
+run(model_sirconn2, ndays = 40, seed = 1912)
+model_sirconn2
+plot_incidence(model_sirconn2)
+# Example using `globalevent_fun` to record the state of the
+# agents at each time step.
+
+# We start by creating an SIR connected model
+model &lt;- ModelSIRCONN(
+  name              = "SIR with Global Saver",
+  n                 = 1000,
+  prevalence        = 0.01,
+  contact_rate      = 5,
+  transmission_rate = 0.4,
+  recovery_rate     = 0.3
+  )
+
+# We create the object where the history of the agents will be stored
+agents_history &lt;- NULL
+
+# This function prints the total number of agents in each state
+# and stores the history of the agents in the object `agents_history`
+hist_saver &lt;- function(m) {
+  
+  message("Today's totals are: ", paste(get_today_total(m), collapse = ", "))
+
+  # We use the `&lt;&lt;-` operator to assign the value to the global variable
+  # `agents_history` (see ?"&lt;&lt;-")
+  agents_history &lt;&lt;- cbind(
+    agents_history,
+    get_agents_states(m)
+    )
+    
+}
+</code></pre>
+
+
+</div>

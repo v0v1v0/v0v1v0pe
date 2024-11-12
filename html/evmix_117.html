@@ -1,0 +1,268 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>itmnormgpd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Normal Bulk and GPD Tail Interval Transition Mixture Model</h2>
+
+<h3>Description</h3>
+
+<p>Density, cumulative distribution function, quantile function and
+random number generation for the normal bulk and GPD tail 
+interval transition mixture model. The
+parameters are the normal mean <code>nmean</code> and standard deviation <code>nsd</code>,
+threshold <code>u</code>, interval half-width <code>epsilon</code>, GPD scale
+<code>sigmau</code> and shape <code>xi</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ditmnormgpd(x, nmean = 0, nsd = 1, epsilon = nsd, u = qnorm(0.9,
+  nmean, nsd), sigmau = nsd, xi = 0, log = FALSE)
+
+pitmnormgpd(q, nmean = 0, nsd = 1, epsilon = nsd, u = qnorm(0.9,
+  nmean, nsd), sigmau = nsd, xi = 0, lower.tail = TRUE)
+
+qitmnormgpd(p, nmean = 0, nsd = 1, epsilon = nsd, u = qnorm(0.9,
+  nmean, nsd), sigmau = nsd, xi = 0, lower.tail = TRUE)
+
+ritmnormgpd(n = 1, nmean = 0, nsd = 1, epsilon = nsd,
+  u = qnorm(0.9, nmean, nsd), sigmau = nsd, xi = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>quantiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmean</code></td>
+<td>
+<p>normal mean</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsd</code></td>
+<td>
+<p>normal standard deviation (positive)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>interval half-width</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>threshold</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigmau</code></td>
+<td>
+<p>scale parameter (positive)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>shape parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if TRUE then log density</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>quantiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical, if FALSE then upper tail probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>cumulative probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>sample size (positive integer)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The interval transition mixture model combines a normal for
+the bulk model with GPD for the tail model, with a smooth transition
+over the interval <code class="reqn">(u-epsilon, u+epsilon)</code>. The mixing function warps
+the normal to map from <code class="reqn">(u-epsilon, u)</code> to <code class="reqn">(u-epsilon, u+epsilon)</code> and
+warps the GPD from <code class="reqn">(u, u+epsilon)</code> to <code class="reqn">(u-epsilon, u+epsilon)</code>.
+</p>
+<p>The cumulative distribution function is defined by 
+</p>
+<p style="text-align: center;"><code class="reqn">F(x)=\kappa(H_t(q(x)) + G(p(x)))</code>
+</p>
+
+<p>where <code class="reqn">H_t(x)</code> and <code class="reqn">G(x)</code> are the truncated normal and
+conditional GPD cumulative distribution functions 
+(i.e. <code>pnorm(x, nmean, nsd)</code> and
+<code>pgpd(x, u, sigmau, xi)</code>) respectively. The truncated 
+normal is not renormalised to be proper, so <code class="reqn">H_t(x)</code> contrubutes
+<code>pnorm(u, nmean, nsd)</code> to the cdf for all <code class="reqn">x\geq (u + \epsilon)</code>.
+The normalisation constant <code class="reqn">\kappa</code> ensures a proper density, given by 
+<code>1/(1+pnorm(u, nmean, nsd))</code> where 1 is from GPD component and
+latter is contribution from normal component.
+</p>
+<p>The mixing functions <code class="reqn">q(x)</code> and <code class="reqn">p(x)</code> suggested by Holden and Haug (2013)
+have been implemented. These are symmetric about the threshold <code class="reqn">u</code>. So for
+computational convenience only <code class="reqn">q(x;u)</code> has been implemented as 
+<code>qmix</code>
+for a given <code class="reqn">u</code>, with the complementary mixing function is then defined as
+<code class="reqn">p(x;u)=-q(-x;-u)</code>.
+</p>
+<p>A minor adaptation of the mixing function has been applied.  For the mixture model to
+function correctly <code class="reqn">q(x)&gt;=u</code> for all <code class="reqn">x\ge u+\epsilon</code>, as then the bulk model will contribute
+the constant <code class="reqn">H_t(u)=H(u)</code> for all <code class="reqn">x</code> above the interval. Holden and Haug (2013) define
+<code class="reqn">q(x)=x-\epsilon</code> for all <code class="reqn">x\ge u</code>. For more straightforward and interpretable 
+computational implementation the mixing function has been set to the threshold
+<code class="reqn">q(x)=u</code> for all <code class="reqn">x\ge u</code>, so the cdf/pdf of the normal model can be used
+directly. We do not have to define cdf/pdf for the non-proper truncated normal
+seperately. As such <code class="reqn">q'(x)=0</code> for all <code class="reqn">x\ge u</code> in
+<code>qmixxprime</code>, which also makes it clearer that
+normal does not contribute to the tail above the interval and vice-versa. 
+</p>
+<p>The quantile function within the transition interval is not available in
+closed form, so has to be solved numerically. Outside of the
+interval, the quantile are obtained from the normal and GPD components directly.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>ditmnormgpd</code> gives the density, 
+<code>pitmnormgpd</code> gives the cumulative distribution function,
+<code>qitmnormgpd</code> gives the quantile function and 
+<code>ritmnormgpd</code> gives a random sample.
+</p>
+
+
+<h3>Note</h3>
+
+<p>All inputs are vectorised except <code>log</code> and <code>lower.tail</code>.
+The main inputs (<code>x</code>, <code>p</code> or <code>q</code>) and parameters must be either
+a scalar or a vector. If vectors are provided they must all be of the same length,
+and the function will be evaluated for each element of vector. In the case of 
+<code>ritmnormgpd</code> any input vector must be of length <code>n</code>.
+</p>
+<p>Default values are provided for all inputs, except for the fundamentals 
+<code>x</code>, <code>q</code> and <code>p</code>. The default sample size for 
+<code>ritmnormgpd</code> is 1.
+</p>
+<p>Missing (<code>NA</code>) and Not-a-Number (<code>NaN</code>) values in <code>x</code>,
+<code>p</code> and <code>q</code> are passed through as is and infinite values are set to
+<code>NA</code>. None of these are not permitted for the parameters.
+</p>
+<p>Error checking of the inputs (e.g. invalid probabilities) is carried out and
+will either stop or give warning message as appropriate.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alfadino Akbar and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/Normal_distribution">http://en.wikipedia.org/wiki/Normal_distribution</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Generalized_Pareto_distribution">http://en.wikipedia.org/wiki/Generalized_Pareto_distribution</a>
+</p>
+<p>Scarrott, C.J. and MacDonald, A. (2012). A review of extreme value
+threshold estimation and uncertainty quantification. REVSTAT - Statistical
+Journal 10(1), 33-59. Available from <a href="http://www.ine.pt/revstat/pdf/rs120102.pdf">http://www.ine.pt/revstat/pdf/rs120102.pdf</a>
+</p>
+<p>Holden, L. and Haug, O. (2013). A mixture model for unsupervised tail
+estimation. arxiv:0902.4137
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>normgpd</code>, <code>gpd</code>
+and <code>dnorm</code>
+</p>
+<p>Other itmnormgpd: <code>fitmgng</code>,
+<code>fitmnormgpd</code>, <code>itmgng</code>
+</p>
+<p>Other normgpd: <code>fgng</code>, <code>fhpd</code>,
+<code>fitmnormgpd</code>, <code>flognormgpd</code>,
+<code>fnormgpdcon</code>, <code>fnormgpd</code>,
+<code>gngcon</code>, <code>gng</code>,
+<code>hpdcon</code>, <code>hpd</code>,
+<code>lognormgpdcon</code>, <code>lognormgpd</code>,
+<code>normgpdcon</code>, <code>normgpd</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(2, 2))
+
+xx = seq(-4, 5, 0.01)
+u = 1.5
+epsilon = 0.4
+kappa = 1/(1 + pnorm(u, 0, 1))
+
+f = ditmnormgpd(xx, nmean = 0, nsd = 1, epsilon, u, sigmau = 1, xi = 0.5)
+plot(xx, f, ylim = c(0, 1), xlim = c(-4, 5), type = 'l', lwd = 2, xlab = "x", ylab = "density")
+lines(xx, kappa * dgpd(xx, u, sigmau = 1, xi = 0.5), col = "red", lty = 2, lwd = 2)
+lines(xx, kappa * dnorm(xx, 0, 1), col = "blue", lty = 2, lwd = 2)
+abline(v = u + epsilon * seq(-1, 1), lty = c(2, 1, 2))
+legend('topright', c('Normal-GPD ITM', 'kappa*Normal', 'kappa*GPD'),
+      col = c("black", "blue", "red"), lty = c(1, 2, 2), lwd = 2)
+
+# cdf contributions
+F = pitmnormgpd(xx, nmean = 0, nsd = 1, epsilon, u, sigmau = 1, xi = 0.5)
+plot(xx, F, ylim = c(0, 1), xlim = c(-4, 5), type = 'l', lwd = 2, xlab = "x", ylab = "cdf")
+lines(xx[xx &gt; u], kappa * (pnorm(u, 0, 1) + pgpd(xx[xx &gt; u], u, sigmau = 1, xi = 0.5)),
+     col = "red", lty = 2, lwd = 2)
+lines(xx[xx &lt;= u], kappa * pnorm(xx[xx &lt;= u], 0, 1), col = "blue", lty = 2, lwd = 2)
+abline(v = u + epsilon * seq(-1, 1), lty = c(2, 1, 2))
+legend('topleft', c('Normal-GPD ITM', 'kappa*Normal', 'kappa*GPD'),
+      col = c("black", "blue", "red"), lty = c(1, 2, 2), lwd = 2)
+
+# simulated data density histogram and overlay true density 
+x = ritmnormgpd(10000, nmean = 0, nsd = 1, epsilon, u, sigmau = 1, xi = 0.5)
+hist(x, freq = FALSE, breaks = seq(-4, 1000, 0.1), xlim = c(-4, 5))
+lines(xx, ditmnormgpd(xx, nmean = 0, nsd = 1, epsilon, u, sigmau = 1, xi = 0.5),
+  lwd = 2, col = 'black')  
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

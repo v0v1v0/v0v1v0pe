@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prior</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prior specification</h2>
+
+<h3>Description</h3>
+
+<p>Specify priors for the chosen model. These values are entered manually by default but can be
+recycled from another prior (given in the <code>update</code> argument).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prior(
+  design,
+  type = "standard",
+  update = NULL,
+  do_ask = NULL,
+  fill_default = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>Design list for which a prior is constructed, typically the output of <code>design()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Character. What type of group-level model you plan on using i.e. <code>diagonal</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>update</code></td>
+<td>
+<p>Prior list from which to copy values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do_ask</code></td>
+<td>
+<p>Character. For which parameter types or hyperparameters to ask for prior specification,
+i.e. <code>Sigma</code>, <code>mu</code> or <code>loadings</code> for factor models, but <code>theta_mu_mean</code> or <code>A</code> also works.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fill_default</code></td>
+<td>
+<p>Boolean, If <code>TRUE</code> will fill all non-specified parameters, and parameters outside of <code>do_ask</code>, to default values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Either values to prefill, i.e. <code>theta_mu_mean = c(1:6)</code>, or additional arguments such as <code>n_factors = 2</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Where a value is not supplied, the user is prompted to enter
+numeric values (or functions that evaluate to numbers).
+</p>
+<p>To get the prior help use <code>prior_help(type)</code>. With <code>type</code> e.g. 'diagonal'.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A prior list object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># First define a design for the model
+design_DDMaE &lt;- design(data = forstmann,model=DDM,
+                           formula =list(v~0+S,a~E, t0~1, s~1, Z~1, sv~1, SZ~1),
+                           constants=c(s=log(1)))
+# Then set up a prior using prior
+p_vector=c(v_Sleft=-2,v_Sright=2,a=log(1),a_Eneutral=log(1.5),a_Eaccuracy=log(2),
+                     t0=log(.2),Z=qnorm(.5),sv=log(.5),SZ=qnorm(.5))
+psd &lt;- c(v_Sleft=1,v_Sright=1,a=.3,a_Eneutral=.3,a_Eaccuracy=.3,
+                     t0=.4,Z=1,sv=.4,SZ=1)
+# Here we left the variance prior at default
+prior_DDMaE &lt;- prior(design_DDMaE,mu_mean=p_vector,mu_sd=psd)
+# Also add a group-level variance prior:
+pscale &lt;- c(v_Sleft=.6,v_Sright=.6,a=.3,a_Eneutral=.3,a_Eaccuracy=.3,
+                             t0=.2,Z=.5,sv=.4,SZ=.3)
+df &lt;- .4
+prior_DDMaE &lt;- prior(design_DDMaE,mu_mean=p_vector,mu_sd=psd, A = pscale, df = df)
+# If we specify a new design
+design_DDMat0E &lt;- design(data = forstmann,model=DDM,
+                           formula =list(v~0+S,a~E, t0~E, s~1, Z~1, sv~1, SZ~1),
+                           constants=c(s=log(1)))
+# We can easily update the prior
+prior_DDMat0E &lt;- prior(design_DDMat0E, update = prior_DDMaE)
+</code></pre>
+
+
+</div>

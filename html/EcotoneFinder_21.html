@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>NetworkEcoSeries</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Networkeco for data series</h2>
+
+<h3>Description</h3>
+
+<p>Networkeco for data series
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">NetworkEcoSeries(ecotonefinder, threshold = 0.8, method = c("cmeans",
+  "vegclust"), plot.type = c("percentage", "heatmap", "corrplot",
+  "network"), plot = c("species", "community"), no.plot = FALSE,
+  order.sp = NULL, dist.method = "inner_product", dist = c("count",
+  "relative", "raw"), network.group = c("site", "cluster"),
+  method.corr = "number", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ecotonefinder</code></td>
+<td>
+<p>A list containing elements named in the same way than
+EcotoneFinderSeries function outcomes. Must contain cmeans results or
+vegclust results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>If dist = "count", the membership grade threshold used to
+sort the species in the different clusters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The membership computation method to be used. Must be present
+in the ecotonefinder list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.type</code></td>
+<td>
+<p>Which graphical representation to be plotted. Among
+"percentage", "corrplot", "heatmap","network"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>If plot = "species", the distances are computed between the
+species in the data. If plot = "community", the distances are computed
+between the cluster centroids.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>no.plot</code></td>
+<td>
+<p>Logical. Should the plot be displayed?. Set to TRUE to gain
+computation time with large community matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order.sp</code></td>
+<td>
+<p>Vector providing the order in which to arrange the species.
+If NULL, the column order will be kept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.method</code></td>
+<td>
+<p>Distance method for the computation of a distance matrix,
+when dist = "raw" or dist = "percent".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>The type of data on which distance calculations are made from. If
+dist = "raw", the distance matrix is computed from the membership matrix
+directly. if dist = "relative", the distance matrix is computed from the
+relative memberships grades of each species in the clusters (between 0 and
+1). If dist = "count", the species are assigned to clusters according to
+the threshold and the distance matrix is computed from the number of common
+species between the different clusters. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>network.group</code></td>
+<td>
+<p>If network.group = "site" the nodes of the networks will
+be colored according to the different times or sites of the series. If
+network.group = "cluster" the nodes of the network will be colored
+according to the different fuzzy clusters. Can be user defined (see qgraph
+documentation for details) but must be a factor of the same lenght as the
+nodes of the graph.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method.corr</code></td>
+<td>
+<p>If plot.type = "corrplot", the method to be used for the
+corrplot. Must be one of "circle", "square", "ellipse", "number", "shade",
+"color", "pie". Default to "number".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to the plotting functions, see
+details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>NetworkEcoSeries is a generalisation of the NetworkEco function to
+analyses space/time series. The ... argument may be used to pass additional
+arguments to the plotting functions (for graphical purposes).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the percentage matrix, the distance matrix and the
+network object (depending of the arguments passed to the function)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  
+  SyntheticTrialSeries &lt;- SyntheticDataSeries(CommunityPool = 40,
+                                              CommunityNum = 4, SpCo = NULL,
+                                              Length = 500, SeriesNum = 5,
+                                              Parameters = list(a=rep(60, 4),
+                                                              b=c(0,200,350,500),
+                                                              c=rep(0.03,4)),
+                                              pal = c("#008585", "#B8CDAE", "#E6C186", "#C7522B"),
+                                              replacement = TRUE,
+                                              Parameters.repl = TRUE)
+
+  EcoTimeSeriesTrial &lt;- EcotoneFinderSeries(data = SyntheticTrialSeries,
+                                            dist = "Distance",
+                                            method = c("cmeans","vegclust"),
+                                            series = "Time", groups = 4,
+                                            standardize = "hellinger", na.rm=TRUE)
+
+#### Network from the common number of species above membership threshold between clusters:
+  SyntheticNetworkSeries &lt;- NetworkEcoSeries(EcoTimeSeriesTrial, threshold = .2,
+                                             method = "cmeans", plot.type = "network",
+                                             plot = "community", dist = "count",
+                                             network.group = "cluster",
+                                             dist.method = "inner_product",
+                                             no.plot = FALSE, layout = "spring",
+                                             shape = "ellipse",
+                                             palette = "colorblind")
+
+#### Network of relations between species from their raw membership values in each cluster:
+  SyntheticNetworkSeries &lt;- NetworkEcoSeries(EcoTimeSeriesTrial, threshold = .2,
+                                             method = "cmeans", plot.type = "network",
+                                             plot = "species", dist = "raw",
+                                             dist.method = "inner_product",
+                                             no.plot = FALSE, layout = "spring",
+                                             shape = "ellipse",
+                                             palette = "colorblind")
+ 
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,269 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>netest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dynamic Network Model Estimation</h2>
+
+<h3>Description</h3>
+
+<p>Estimates statistical network models using the exponential
+random graph modeling (ERGM) framework with extensions for
+dynamic/temporal models (STERGM).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">netest(
+  nw,
+  formation,
+  target.stats,
+  coef.diss,
+  constraints,
+  coef.form = NULL,
+  edapprox = TRUE,
+  set.control.ergm = control.ergm(),
+  set.control.tergm = control.tergm(),
+  set.control.ergm.ego = control.ergm.ego(),
+  verbose = FALSE,
+  nested.edapprox = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nw</code></td>
+<td>
+<p>An object of class <code>network</code> or <code>egor</code>, with the latter
+indicating an <code>ergm.ego</code> fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formation</code></td>
+<td>
+<p>Right-hand sided STERGM formation formula in the form
+<code>~edges + ...</code>, where <code>...</code> are additional network
+statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target.stats</code></td>
+<td>
+<p>Vector of target statistics for the formation model, with
+one number for each network statistic in the model.  Ignored if
+fitting via <code>ergm.ego</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.diss</code></td>
+<td>
+<p>An object of class <code>disscoef</code> output from the
+<code>dissolution_coefs</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraints</code></td>
+<td>
+<p>Right-hand sided formula specifying constraints for the
+modeled network, in the form <code>~...</code>, where <code>...</code> are
+constraint terms. By default, no constraints are set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.form</code></td>
+<td>
+<p>Vector of coefficients for the offset terms in the formation
+formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edapprox</code></td>
+<td>
+<p>If <code>TRUE</code>, use the indirect edges dissolution
+approximation  method for the dynamic model fit, otherwise use the
+more time-intensive full STERGM estimation (see details).  For
+<code>nw</code> of class <code>egor</code>, only <code>edapprox = TRUE</code> is
+supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set.control.ergm</code></td>
+<td>
+<p>Control arguments passed to <code>ergm</code> (see
+details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set.control.tergm</code></td>
+<td>
+<p>Control arguments passed to <code>tergm</code>
+(see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set.control.ergm.ego</code></td>
+<td>
+<p>Control arguments passed to <code>ergm.ego</code> (see
+details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>If <code>TRUE</code>, print model fitting progress to console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nested.edapprox</code></td>
+<td>
+<p>Logical. If <code>edapprox = TRUE</code> the dissolution
+model is an initial segment of the formation model (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to other functions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>netest</code> is a wrapper function for the <code>ergm</code>, <code>ergm.ego</code>,
+and <code>tergm</code> functions that estimate static and dynamic network models.
+Network model estimation is the first step in simulating a stochastic
+network epidemic model in <code>EpiModel</code>. The output from <code>netest</code> is
+a necessary input for running the epidemic simulations in
+<code>netsim</code>. With a fitted network model, one should always first
+proceed to model diagnostics, available through the <code>netdx</code>
+function, to check model fit. A detailed description of fitting these
+models, along with examples, may be found in the
+<a href="http://www.epimodel.org/tut.html">Basic Network Models</a> tutorials.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A fitted network model object of class <code>netest</code>.
+</p>
+
+
+<h3>Edges Dissolution Approximation</h3>
+
+<p>The edges dissolution approximation method is described in Carnegie et al.
+This approximation requires that the dissolution coefficients are known, that
+the formation model is being fit to cross-sectional data conditional on those
+dissolution coefficients, and that the terms in the dissolution model are a
+subset of those in the formation model. Under certain additional conditions,
+the formation coefficients of a STERGM model are approximately equal to the
+coefficients of that same model fit to the observed cross-sectional data as
+an ERGM, minus the corresponding coefficients in the dissolution model. The
+approximation thus estimates this ERGM (which is typically much faster than
+estimating a STERGM) and subtracts the dissolution coefficients.
+</p>
+<p>The conditions under which this approximation best hold are when there are
+few relational changes from one time step to another; i.e. when either
+average relational durations are long, or density is low, or both.
+Conveniently, these are the same conditions under which STERGM estimation is
+slowest. Note that the same approximation is also used to obtain starting
+values for the STERGM estimate when the latter is being conducted. The
+estimation does not allow for calculation of standard errors, p-values, or
+likelihood for the formation model; thus, this approach is of most use when
+the main goal of estimation is to drive dynamic network simulations rather
+than to conduct inference on the formation model. The user is strongly
+encouraged to examine the behavior of the resulting simulations to confirm
+that the approximation is adequate for their purposes. For an example, see
+the vignette for the package <code>tergm</code>.
+</p>
+<p>It has recently been found that subtracting a modified version of the
+dissolution coefficients from the formation coefficients provides a more
+principled approximation, and this is now the form of the approximation
+applied by <code>netest</code>. The modified values subtracted from the formation
+coefficients are equivalent to the (crude) dissolution coefficients with
+their target durations increased by 1. The <code>nested.edapprox</code> argument
+toggles whether to implement this modified version by appending the
+dissolution terms to the formation model and appending the relevant values to
+the vector of formation model coefficients (value = <code>FALSE</code>), whereas
+the standard version subtracts the relevant values from the initial formation
+model coefficients (value = <code>TRUE</code>).
+</p>
+
+
+<h3>Control Arguments</h3>
+
+<p>The <code>ergm</code>, <code>ergm.ego</code>, and <code>tergm</code> functions allow control
+settings for the model fitting process. When fitting a STERGM directly (setting
+<code>edapprox</code> to <code>FALSE</code>), control parameters may be passed to the
+<code>tergm</code> function with the <code>set.control.tergm</code> argument in
+<code>netest</code>. The controls should be input through the
+<code>control.tergm()</code> function, with the available parameters listed in the
+<code>control.tergm</code> help page in the <code>tergm</code> package.
+</p>
+<p>When fitting a STERGM indirectly (setting <code>edapprox</code> to <code>TRUE</code>),
+control settings may be passed to the <code>ergm</code> function using
+<code>set.control.ergm</code>, or to the <code>ergm.ego</code> function using
+<code>set.control.ergm.ego</code>.  The controls should be input through the
+<code>control.ergm()</code> and <code>control.ergm.ego()</code> functions, respectively,
+with the available parameters listed in the
+<code>control.ergm</code> help page in the <code>ergm</code>
+package and the <code>control.ergm.ego</code>
+help page in the <code>ergm.ego</code> package. An example is below.
+</p>
+
+
+<h3>References</h3>
+
+<p>Krivitsky PN, Handcock MS. "A separable model for dynamic networks." JRSS(B).
+2014; 76.1:29-46.
+</p>
+<p>Carnegie NB, Krivitsky PN, Hunter DR, Goodreau SM. An approximation method
+for improving dynamic network model fitting. Journal of Computational and
+Graphical Statistics. 2014; 24(2): 502-519.
+</p>
+<p>Jenness SM, Goodreau SM and Morris M. EpiModel: An R Package for Mathematical
+Modeling of Infectious Disease over Networks. Journal of Statistical
+Software. 2018; 84(8): 1-47.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Use <code>netdx</code> to diagnose the fitted network model, and
+<code>netsim</code> to simulate epidemic spread over a simulated
+dynamic network consistent with the model fit.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Initialize a network of 100 nodes
+nw &lt;- network_initialize(n = 100)
+
+# Set formation formula
+formation &lt;- ~edges + concurrent
+
+# Set target statistics for formation
+target.stats &lt;- c(50, 25)
+
+# Obtain the offset coefficients
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 10)
+
+# Estimate the STERGM using the edges dissolution approximation
+est &lt;- netest(nw, formation, target.stats, coef.diss,
+              set.control.ergm = control.ergm(MCMC.burnin = 1e5,
+                                              MCMC.interval = 1000))
+est
+
+# To estimate the STERGM directly, use edapprox = FALSE
+# est2 &lt;- netest(nw, formation, target.stats, coef.diss, edapprox = FALSE)
+
+</code></pre>
+
+
+</div>

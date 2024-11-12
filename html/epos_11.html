@@ -1,0 +1,89 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>createNeuroTable</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create the final resulting data frame</h2>
+
+<h3>Description</h3>
+
+<p>Create the final resulting data frame
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">createNeuroTable(atchashda, atchashsec, dneuromaxk)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>atchashda</code></td>
+<td>
+<p>hashmap retrieved from readAtcMapIntoHashMapDrugNamesAtcCodes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>atchashsec</code></td>
+<td>
+<p>hashmap retrieved from readSecondLevelATC</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dneuromaxk</code></td>
+<td>
+<p>data frame containing columns for each intersection, ATC class, and reference list</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>data frame containing drug names with additional columns listing association to ATC classes
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">utils::data(rawDrugNamesCoOcEpSO, package="epos")
+utils::data(rawDrugNamesCoOcESSO, package="epos")
+utils::data(rawDrugNamesCoOcEPILONT, package="epos")
+utils::data(rawDrugNamesCoOcEPISEM, package="epos")
+utils::data(rawDrugNamesCoOcFENICS, package="epos")
+atchashda &lt;-
+readAtcMapIntoHashMapDrugNamesAtcCodes(
+  system.file("extdata", "db-atc.map", package = "epos"), "\t")
+atchashaa &lt;-
+  readAtcMapIntoHashMapAtcCodesAtcNames(
+    system.file("extdata", "db-atc.map", package = "epos"), "\t")
+atchashsec &lt;-
+  readSecondLevelATC(
+    system.file("extdata", "atc-secondlevel.map", package = "epos"), "\t")
+epso &lt;- rawDrugNamesCoOcEpSO
+neuroepso &lt;- filterNeuroDrugs(epso, atchashda)
+esso &lt;- rawDrugNamesCoOcESSO
+neuroesso   &lt;- filterNeuroDrugs(esso, atchashda)
+epi &lt;- rawDrugNamesCoOcEPILONT
+neuroepi    &lt;- filterNeuroDrugs(epi, atchashda)
+episem &lt;- rawDrugNamesCoOcEPISEM
+neuroepisem &lt;- filterNeuroDrugs(episem, atchashda)
+fenics &lt;- rawDrugNamesCoOcFENICS
+neurofenics &lt;- filterNeuroDrugs(fenics, atchashda)
+mx &lt;- max(
+    c(length(neuroepso), length(neuroesso), length(neuroepi),
+     length(neuroepisem), length(neurofenics)))
+dneuro &lt;-
+  data.frame(EpSO = c(neuroepso, rep(1, (mx-length(neuroepso)))),
+             ESSO = c(neuroesso, rep(1, (mx-length(neuroesso)))),
+             EPILONT = c(neuroepi, rep(1, (mx-length(neuroepi)))),
+             EPISEM = c(neuroepisem, rep(1, (mx-length(neuroepisem)))),
+             FENICS = c(neurofenics, rep(1, (mx-length(neurofenics)))))
+dneuromaxk &lt;- TopKLists::calculate.maxK(dneuro, L=5, d=5, v=10)
+neurotable &lt;- createNeuroTable(atchashda, atchashsec, dneuromaxk)
+</code></pre>
+
+
+</div>

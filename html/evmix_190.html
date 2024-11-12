@@ -1,0 +1,217 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mrlplot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Mean Residual Life Plot</h2>
+
+<h3>Description</h3>
+
+<p>Plots the sample mean residual life (MRL) plot.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mrlplot(data, tlim = NULL, nt = min(100, length(data)),
+  p.or.n = FALSE, alpha = 0.05, ylim = NULL,
+  legend.loc = "bottomleft", try.thresh = quantile(data, 0.9, na.rm =
+  TRUE), main = "Mean Residual Life Plot", xlab = "Threshold u",
+  ylab = "Mean Excess", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>vector of sample data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tlim</code></td>
+<td>
+<p>vector of (lower, upper) limits of range of threshold
+to plot MRL, or <code>NULL</code> to use default values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nt</code></td>
+<td>
+<p>number of thresholds for which to evaluate MRL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.or.n</code></td>
+<td>
+<p>logical, should tail fraction (<code>FALSE</code>) or number of
+exceedances (<code>TRUE</code>) be given on upper x-axis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>significance level over range (0, 1), or <code>NULL</code> for no CI</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylim</code></td>
+<td>
+<p>y-axis limits or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend.loc</code></td>
+<td>
+<p>location of legend (see <code>legend</code>) or <code>NULL</code> for no legend</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>try.thresh</code></td>
+<td>
+<p>vector of thresholds to consider</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main</code></td>
+<td>
+<p>title of plot</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab</code></td>
+<td>
+<p>x-axis label</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylab</code></td>
+<td>
+<p>y-axis label</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments to be passed to the plotting functions</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Plots the sample mean residual life plot, which is also known as the mean
+excess plot. 
+</p>
+<p>If the generalised Pareto distribution (GPD) is an appropriate model for the excesses <code class="reqn">X-u</code>
+above <code class="reqn">u</code> then their expected value is:
+</p>
+<p style="text-align: center;"><code class="reqn">E(X - u | X &gt; u) = \sigma_u / (1 - \xi).</code>
+</p>
+
+<p>For any higher threshold <code class="reqn">v &gt; u</code> the expected value is 
+</p>
+<p style="text-align: center;"><code class="reqn">E(X - v | X &gt; v) = [\sigma_u + \xi * (v - u)] / (1 - \xi)</code>
+</p>
+
+<p>which is linear in higher thresholds <code class="reqn">v</code> with intercept given by <code class="reqn">[\sigma_u - \xi *u]/(1 - \xi)</code>
+and gradient <code class="reqn">\xi/(1 - \xi)</code>. The estimated mean residual life above a threshold
+<code class="reqn">v</code> is given by the sample mean excess <code>mean(x[x &gt; v]) - v</code>. 
+</p>
+<p>Symmetric CLT based confidence intervals are provided, provided there are at least 5 exceedances.
+The sampling density for the MRL is shown by a greyscale image, where lighter greys indicate low density.
+</p>
+<p>A pre-chosen threshold (or more than one) can be given in <code>try.thresh</code>. The GPD is
+fitted to the excesses using maximum likelihood estimation. The estimated parameters are
+used to plot the linear function for all higher thresholds using a solid line. The threshold
+should set as low as possible, so a dashed line is shown below the pre-chosen threshold.
+If the MRL is similar to the dashed line then a lower threshold may be chosen.
+</p>
+<p>If no threshold limits are provided <code>tlim = NULL</code> then the lowest threshold is set
+to be just below the median data point and the maximum threshold is set to the 6th
+largest datapoint.
+</p>
+<p>The range of permitted thresholds is just below the minimum datapoint and the
+second largest value. If there are less unique values of data within the threshold
+range than the number of threshold evalations requested, then instead of a sequence
+of thresholds the MRL will be evaluated at each unique datapoint.
+</p>
+<p>The missing (<code>NA</code> and <code>NaN</code>) and non-finite values are ignored.
+</p>
+<p>The lower x-axis is the threshold and an upper axis either gives the number of 
+exceedances (<code>p.or.n = FALSE</code>) or proportion of excess (<code>p.or.n = TRUE</code>).
+Note that unlike the <code>gpd</code> related functions the missing values are ignored, so
+do not add to the lower tail fraction. But ignoring the missing values is consistent
+with all the other mixture model functions.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>mrlplot</code> gives the mean residual life plot. It also
+returns a matrix containing columns of the threshold, number of exceedances, mean excess,
+standard devation of excesses and <code class="reqn">100(1 - \alpha)\%</code> confidence interval if requested. The standard
+deviation and confidence interval are <code>NA</code> for less than 5 exceedances.
+</p>
+
+
+<h3>Acknowledgments</h3>
+
+<p>Based on the 
+<code>mrlplot</code> function in the 
+<code>evd</code> package for which Stuart Coles' and Alec Stephenson's contributions are gratefully acknowledged.
+They are designed to have similar syntax and functionality to simplify the transition for users of these packages.
+</p>
+
+
+<h3>Note</h3>
+
+<p>If the user specifies the threshold range, the thresholds above the second
+largest are dropped. A warning message is given if any thresholds have at most 5 
+exceedances, in which case the confidence interval is not calculated as it is
+unreliable due to small sample. If there are less than 10 exceedances of the minimum
+threshold then the function will stop.
+</p>
+<p>Error checking of the inputs (e.g. invalid probabilities) is carried out and
+will either stop or give warning message as appropriate.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Yang Hu and Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Scarrott, C.J. and MacDonald, A. (2012). A review of extreme value
+threshold estimation and uncertainty quantification. REVSTAT - Statistical
+Journal 10(1), 33-59. Available from <a href="http://www.ine.pt/revstat/pdf/rs120102.pdf">http://www.ine.pt/revstat/pdf/rs120102.pdf</a>
+</p>
+<p>Coles S.G. (2004). An Introduction to the Statistical Modelling of Extreme Values.
+Springer-Verlag: London.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gpd</code> and <code>mrlplot</code> from 
+<code>evd</code> library
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x = rnorm(1000)
+mrlplot(x)
+mrlplot(x, tlim = c(0, 2.2))
+mrlplot(x, tlim = c(0, 2), try.thresh = c(0.5, 1, 1.5))
+mrlplot(x, tlim = c(0, 3), try.thresh = c(0.5, 1, 1.5))
+
+</code></pre>
+
+
+</div>

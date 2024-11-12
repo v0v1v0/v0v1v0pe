@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ec.data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data helper</h2>
+
+<h3>Description</h3>
+
+<p>Make data lists from a data.frame
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ec.data(df, format = "dataset", header = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Required chart data as <strong>data.frame</strong>. <br>
+Except when format is <em>dendrogram</em>, then df is a <strong>list</strong>, result of hclust function.<br></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p>Output list format<br></p>
+
+<ul>
+<li> <p><strong>dataset</strong> = list to be used in <a href="https://echarts.apache.org/en/option.html#dataset.source">dataset</a> (default), or in <a href="https://echarts.apache.org/en/option.html#series-scatter.data">series.data</a> (without header). <br></p>
+</li>
+<li> <p><strong>values</strong> = list for customized <a href="https://echarts.apache.org/en/option.html#series-scatter.data">series.data</a> <br></p>
+</li>
+<li> <p><strong>names</strong> = named lists useful for named data like <a href="https://echarts.apache.org/en/option.html#series-sankey.links">sankey links</a>.
+</p>
+</li>
+<li> <p><strong>dendrogram</strong> = build series data for Hierarchical Clustering dendrogram
+</p>
+</li>
+<li> <p><strong>treePC</strong> = build series data for tree charts from parent/children data.frame
+</p>
+</li>
+<li> <p><strong>treeTT</strong> = build series data for tree charts from data.frame like Titanic.<br></p>
+</li>
+<li> <p><strong>boxplot</strong> = build dataset and source lists, see Details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>header</code></td>
+<td>
+<p>for dataset, to include the column names or not, default TRUE. Set it to FALSE for <a href="https://echarts.apache.org/en/option.html#series-scatter.data">series.data</a>.<br></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional parameters<br>
+Optional parameters for <strong>boxplot</strong> are:<br></p>
+
+<ul>
+<li> <p><em>layout</em> = 'h' for horizontal(default) or 'v' for vertical layout<br></p>
+</li>
+<li> <p><em>outliers</em> boolean to add outlier points (default FALSE)<br></p>
+</li>
+<li> <p><em>jitter</em> value for jitter of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.<br></p>
+</li>
+</ul>
+<p>Optional parameter for <strong>names</strong>:<br></p>
+
+<ul><li> <p><em>nasep</em> = single character name separator for nested lists, see Examples. <br>
+Purpose is to facilitate conversion from <em>data.frame</em> to nested named lists.<br></p>
+</li></ul>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>format='boxplot'</code> requires the first two <em>df</em> columns as: <br><code style="white-space: pre;">⁠   ⁠</code>column for the non-computational categorical axis<br><code style="white-space: pre;">⁠   ⁠</code>column with (numeric) data to compute the five boxplot values<br>
+Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.<br>
+Returns a <code>list(dataset, series, xAxis, yAxis)</code> to set params in ec.init.
+Make sure there is enough data for computation, 4+ values per boxplot.<br><code>format='treeTT'</code> expects data.frame <em>df</em> columns <em>pathString,value,(optional itemStyle)</em> for FromDataFrameTable.<br>
+It will add column 'pct' with value percentage for each node. See Details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list for <em>dataset.source</em>, <em>series.data</em> or other lists:<br>
+For boxplot - a named list, see Details and Examples <br>
+For dendrogram &amp; treePC - a tree structure, see format in <a href="https://echarts.apache.org/en/option.html#series-tree.data">tree data</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>some live <a href="https://rpubs.com/echarty/data-models">code samples</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+ds &lt;- iris |&gt; relocate(Species) |&gt;
+	 ec.data(format= 'boxplot', jitter= 0.1, layout= 'v')
+ec.init(
+  dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis,
+  legend= list(show= TRUE), tooltip= list(show= TRUE)
+)
+
+hc &lt;- hclust(dist(USArrests), "complete")
+ec.init(preset= FALSE,
+  series= list(list(
+    type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
+    data= ec.data(hc, format='dendrogram'),
+    # layout= 'radial', symbolSize= ec.clmn(scale= 0.33),
+    ## exclude added labels like 'pXX', leaving only the originals
+    label= list(formatter= htmlwidgets::JS(
+      "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
+  ))
+)
+
+# build required pathString,value and optional itemStyle columns
+df &lt;- as.data.frame(Titanic) |&gt; rename(value= Freq) |&gt; mutate(
+  pathString= paste('Titanic\nSurvival', Survived, Age, Sex, Class, sep='/'),
+	 itemStyle= case_when(Survived=='Yes' ~"color='green'", TRUE ~"color='LightSalmon'")) |&gt;
+	 select(pathString, value, itemStyle)
+ec.init(
+	  series= list(list(
+		  data= ec.data(df, format='treeTT'),
+		  type= 'tree', symbolSize= ec.clmn("(x) =&gt; {return Math.log(x)*10}")
+	  )),
+	  tooltip= list(formatter= ec.clmn('%@&lt;br&gt;%@%','value','pct'))
+)
+
+# column itemStyle_color will become itemStyle= list(color=...) in data list
+# attribute names separator (nasep) is "_"
+df &lt;- data.frame(name= c('A','B','C'), value= c(1,2,3), 
+     itemStyle_color= c('chartreuse','lightblue','pink'),
+     itemStyle_decal_symbol= c('rect','diamond','none'),
+     emphasis_itemStyle_color= c('darkgreen','blue','red')
+)
+ec.init(series.param= list(type='pie', data= ec.data(df, 'names', nasep='_')))
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,114 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fred</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fetch Data Series from FRED</h2>
+
+<h3>Description</h3>
+
+<p>Function that fetches economic data from the FRED based on the series ids.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fred(
+  ...,
+  key = NULL,
+  all = TRUE,
+  info = TRUE,
+  realtime_start = NULL,
+  realtime_end = NULL,
+  long = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>character vectors of series ids to search. Any names will be used to label the series in the resulting data.frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>key</code></td>
+<td>
+<p>32 character lower-cased alpha-numeric character string</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all</code></td>
+<td>
+<p>logical; should all observations be used? Defaults to <code>TRUE</code>. If <code>FALSE</code>, only observations existing in all series will be kept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>info</code></td>
+<td>
+<p>logical; should information about each series, such as units and title, be kept? If so, the information will be stored in a data.frame under the attribute <code>"info"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>realtime_start, realtime_end</code></td>
+<td>
+<p>character date strings of format "YYY-MM-DD" used obtain information that was known during the specified time period. If empty, the latest update of the information is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>long</code></td>
+<td>
+<p>logical; should the resulting data.frame be long or wide? Defaults to <code>FALSE</code> so that a new column is created for each series</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>fred</code> function search for series ids from the FRED and returns the
+values in a data.frame. Unless <code>long=TRUE</code>, a new column will be created
+for each series. The dates for each observation will be included in the <code>"date"</code>
+column and will be of class "Date". Each series will be a numeric value.
+</p>
+<p>If a series cannot be found, then it will be skipped and R will issue a warning.
+</p>
+<p>To access ALFRED, or the archived Federal Reserve Economic Data, use the <code>realtime_start</code>
+and <code>realtime_end</code> arguments to specify a time frame. More details about
+real time periods can be found at <a href="https://fred.stlouisfed.org/docs/api/fred/realtime_period.html">https://fred.stlouisfed.org/docs/api/fred/realtime_period.html</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>data.frame
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+api_key &lt;- "abcdefghijklmnopqrstuvwxyz123456"
+
+# Naive Phillips Curve Estimation
+df &lt;- fred(p = "CPIAUCSL", u = "u6rate", key=api_key)
+head(df)
+
+df$pi  &lt;- log(df$p) - log(c(NA, df$p[2:nrow(df)]))
+reg_pc &lt;- lm(pi ~ u, data = df)
+summary(reg_pc)
+
+# Different variations of the CPI
+cpis &lt;- c("CPIMEDSL", "CPIFABSL", "CPIHOSSL")
+names(cpis) &lt;- c("P_Med", "P_Food", "P_House")
+
+df_cpi &lt;- fred(cpis, key=api_key, long=TRUE)
+head(df)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

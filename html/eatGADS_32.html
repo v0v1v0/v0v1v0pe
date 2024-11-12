@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>collapseMultiMC_Text</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Recode multiple choice variable with multiple variables.</h2>
+
+<h3>Description</h3>
+
+<p>Recode multiple variables (representing a single multiple choice item) based on multiple character variables
+(representing a text field).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">collapseMultiMC_Text(
+  GADSdat,
+  mc_vars,
+  text_vars,
+  mc_var_4text,
+  var_suffix = "_r",
+  label_suffix = "(recoded)",
+  invalid_miss_code = -98,
+  invalid_miss_label = "Missing: Invalid response",
+  notext_miss_code = -99,
+  notext_miss_label = "Missing: By intention"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>GADSdat</code></td>
+<td>
+<p>A <code>GADSdat</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mc_vars</code></td>
+<td>
+<p>A character vector with the variable names of the multiple choice variable. Names of the character
+vector are the corresponding values that are represented by the individual variables.
+Creation by <code>matchValues_varLabels</code> is recommended.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>text_vars</code></td>
+<td>
+<p>A character vector with the names of the text variables which should be collapsed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mc_var_4text</code></td>
+<td>
+<p>The name of the multiple choice variable that signals that information from the text variable should be used. This variable is recoded according to the final status of the text variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var_suffix</code></td>
+<td>
+<p>Variable suffix for the newly created <code>GADSdat</code>. If an empty character, the existing variables are overwritten.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_suffix</code></td>
+<td>
+<p>Suffix added to variable label for the newly created or modified variables in the <code>GADSdat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>invalid_miss_code</code></td>
+<td>
+<p>Missing code which is given to new character variables if all text entries where recoded into the dichotomous variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>invalid_miss_label</code></td>
+<td>
+<p>Value label for <code>invalid_miss_code</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>notext_miss_code</code></td>
+<td>
+<p>Missing code which is given to empty character variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>notext_miss_label</code></td>
+<td>
+<p>Value label for <code>notext_miss_code</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If a multiple choice item can be answered with ticking multiple boxes, multiple variables in the data
+set are necessary to represent this item. In this case, an additional text field for further answers can also
+contain multiple values at once. However, some of the answers in the text field might be redundant to
+the dummy variables. <code>collapseMultiMC_Text</code> allows to recode multiple MC items of this
+kind based on multiple text variables. The recoding can be prepared by expanding the single text variable
+(<code>createLookup</code> and <code>applyLookup_expandVar</code>) and by matching the dummy variables
+to its underlying values stored in variable labels (<code>matchValues_varLabels</code>).
+</p>
+<p>The function recodes the dummy variables according to the character variables. Additionally, the <code>mc_var_4text</code>
+variable is recoded according to the final status of the <code>text_vars</code> (exception: if the text variables were
+originally <code>NA</code>, <code>mc_var_4text</code> is left as it was).
+</p>
+<p>Missing values in the character variables can be represented either by <code>NAs</code> or by empty characters.
+The multiple choice variables specified with <code>mc_vars</code> can only contain the values <code>0</code>,
+<code>1</code> and missing codes. The value <code>1</code> must always represent "this category applies".
+If necessary, use <code>recodeGADS</code> for recoding.
+</p>
+<p>For cases for which the <code>text_vars</code> contain only values that can be recoded into the <code>mc_vars</code>,
+all new <code>text_vars</code> are given specific missing codes (see <code>invalid_miss_code</code> and <code>invalid_miss_label</code>).
+All remaining <code>NAs</code> on the character variables are given a specific missing code (<code>notext_miss_code</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a <code>GADSdat</code> containing the newly computed variables.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Prepare example data
+mt2 &lt;- data.frame(ID = 1:4, mc1 = c(1, 0, 0, 0), mc2 = c(0, 0, 0, 0), mc3 = c(0, 1, 1, 0),
+                  text1 = c(NA, "Eng", "Aus", "Aus2"), text2 = c(NA, "Franz", NA, "Ger"),
+                  stringsAsFactors = FALSE)
+mt2_gads &lt;- import_DF(mt2)
+mt3_gads &lt;- changeVarLabels(mt2_gads, varName = c("mc1", "mc2", "mc3"),
+                            varLabel = c("Lang: Eng", "Aus spoken", "other"))
+
+## All operations (see also respective help pages of functions for further explanations)
+mc_vars &lt;- matchValues_varLabels(mt3_gads, mc_vars = c("mc1", "mc2", "mc3"),
+            values = c("Aus", "Eng", "Eng"), label_by_hand = c("other" = "mc3"))
+
+out_gads &lt;- collapseMultiMC_Text(mt3_gads, mc_vars = mc_vars,
+             text_vars = c("text1", "text2"), mc_var_4text = "mc3")
+
+out_gads2 &lt;- multiChar2fac(out_gads, vars = c("text1_r", "text2_r"))
+
+final_gads &lt;- remove2NAchar(out_gads2, vars = c("text1_r_r", "text2_r_r"),
+                              max_num = 1, na_value = -99, na_label = "missing: excessive answers")
+
+</code></pre>
+
+
+</div>

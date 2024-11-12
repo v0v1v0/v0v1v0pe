@@ -1,0 +1,107 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tobit_sd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit Tobit Standard Deviation via Maximum Likelihood</h2>
+
+<h3>Description</h3>
+
+<p>Fit the matrix of standard deviations given censored observations current
+mean estimates. Currently there are four models for S implemented: global,
+column-specific, row-specific, and rank-1.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tobit_sd(
+  L,
+  R,
+  mu = matrix(colMeans(L + R)/2, nrow(L), ncol(L), byrow = TRUE),
+  sd.structure = "global",
+  interval = c(1e-04, 100),
+  tol = .Machine$double.eps^0.25,
+  maxiter = 1000
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>matrix of lower bounds on observations (n x p)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>matrix of upper bounds on observations (n x p)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>matrix of known means (n x p)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd.structure</code></td>
+<td>
+<p>structure imposed on noise level estimates, must be one
+of: "global", "column", "row", or "rank1"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval</code></td>
+<td>
+<p>a vector containing the end-points of the interval defining
+the convex search space (default: <code>c(1e-4, 1e+2)</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>the desired accuracy</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxiter</code></td>
+<td>
+<p>early stopping condition</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>matrix of maximum likelihood estimates for each observation's 
+standard deviation (n x p)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(1)
+n = 100; p = 5; r = 2
+U.true = matrix(stats::rexp(n*r), n, r)
+V.true = matrix(sample(x = c(1,4,7),
+                       size = p*r, 
+                       replace = TRUE, 
+                       prob = c(0.7, 0.2, 0.1)), 
+                p, r)
+TH = tcrossprod(U.true, V.true)
+X = TH + matrix(stats::rnorm(n*p, sd = 1), n, p)
+ldl &lt;- 0.1 # lower detection limit, known to be non-negative
+L &lt;- ifelse(X &lt; ldl, 0, X)
+R &lt;- ifelse(X &lt; ldl, ldl, X)
+
+tobit_sd(L, R, mu = TH)
+tobit_sd(L, R, mu = TH, sd.structure = "column")
+</code></pre>
+
+
+</div>

@@ -1,0 +1,250 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>HOF.data.frame</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Hierarchical logistic regression</h2>
+
+<h3>Description</h3>
+
+<p>Fit seven hierarchical logistic regression models and select the most appropriate model
+by information criteria and a bootstrap approach to guarantee model stability.
+The first five shapes are known as Huisman-Olff-Fresco (HOF) models in ecology (Huisman et al. 1993).
+Additionally the package provides two bimodal shapes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'data.frame'
+HOF(veg, grad, M = max(veg), freq.limit = 10, ...)
+
+HOF(...)
+
+## Default S3 method:
+HOF(
+  occ,
+  grad,
+  M = max(occ),
+  y.name,
+  family = binomial,
+  lim = 100,
+  bootstrap = 100,
+  test = c("AICc", "BIC", "AIC", "Dev"),
+  modeltypes = eHOF.modelnames,
+  ...
+)
+
+## S3 method for class 'HOF'
+coef(object, model, ...)
+
+## S3 method for class 'HOF'
+deviance(object, model, ...)
+
+## S3 method for class 'HOF'
+fitted(object, model, ...)
+
+## S3 method for class 'HOF'
+predict(object, model, newdata, ...)
+
+pick.model(...)
+
+## S3 method for class 'HOF'
+pick.model(
+  object,
+  level = 0.95,
+  test = c("AICc", "BIC", "AIC", "Dev"),
+  modeltypes,
+  penal = "df",
+  gam = FALSE,
+  selectMethod = c("bootselect.lower", "bootselect.always", "IC.weight", "pick.model"),
+  silent = FALSE,
+  ...
+)
+
+## S3 method for class 'list'
+pick.model.HOF(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>veg</code></td>
+<td>
+<p>vegetation data frame. Either as matrix with species in columns and plots in rows, or in Turboveg format.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grad</code></td>
+<td>
+<p>gradient data vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>maximum attainable value in the HOF model, similar to binomial denominator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>freq.limit</code></td>
+<td>
+<p>lowest frequency of species analysed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to or from other methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>occ</code></td>
+<td>
+<p>species occurrences (=response) vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y.name</code></td>
+<td>
+<p>name of the species.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>error distribution. Alternatives are <code>binomial</code>, <code>poisson</code> and <code>gaussian</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lim</code></td>
+<td>
+<p>limiting criterion for minimization function, see details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap</code></td>
+<td>
+<p>number of bootstrap samplings to check model robustness, see details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+<p>information criterion for model selection. Alternatives are <code>"AICc"</code>, <code>"BIC"</code>, <code>"AIC"</code> or just <code>"Dev"iance</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modeltypes</code></td>
+<td>
+<p>vector of model types, when only a subset of the seven implemented modeltypes should be considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>HOF model object, results from function HOF. Either for a single species or a list for several species.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>You can specify the HOF model type to be used, otherwise it is selected through function [pick.model()].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>vector of gradient values to use</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>probability for model selection (1-P) for F or Chisq tests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penal</code></td>
+<td>
+<p>penalty term for model types, default is the number of model parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gam</code></td>
+<td>
+<p>calculate AIC of GAM model and compare it with HOF models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selectMethod</code></td>
+<td>
+<p>choose the model type selection method in case of divergence of the most frequent bootstrapped model or the one with highest information criterion weight from the primary chosen type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>messages about selectMethod</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The minimization function changed compared to package gravy (Oksanen 2002) from nlm to nlminb to be able to set a limit
+for estimated parameters (default= -100 to 100). The old models III and V have been often too sharp,
+<code>lim=Inf</code> will produce results similar to gravy.
+Function [pick.model()] finds the most adequate modeltype according to the chosen Information Criterion (AICc is default).
+Function <code>fitted</code> returns the fitted values for the used <code>grad</code>ient, and <code>predict</code> for any values in <code>newdata</code>.
+</p>
+<p>To improve and check model stability a bootstrapping mechanism is implemented in function HOF. If the initially chosen model type is different from the most frequent one, the latter will be chosen by default. Bootstrapping is done with sample(length(grad), replace = TRUE).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>HOF.fit</code> returns an object of class <code>"HOF"</code> which contains the parameters of the call,
+the fitting results for every model type and a vector of chosen model types from bootstrapping.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Florian Jansen, Jari Oksanen
+</p>
+
+
+<h3>References</h3>
+
+<p>Jansen, F. &amp; Oksanen, J. (2013) What shape are species responses along ecological gradients?
+- Huisman-Olf-Fresco models revisited. Journal of Vegetation Science, DOI: 10.1111/jvs.12050
+</p>
+<p>Oksanen, J. &amp; Minchin, P.R. (2002). Continuum theory revisited: what shape are species responses along ecological gradients?
+<em>Ecological  Modelling</em> 157, 119-129.
+</p>
+<p>Huisman, J., Olff, H. &amp; Fresco, L.F.M. (1993). A hierarchical set of models for species response analysis.
+<em>Journal of Vegetation Science</em> 4, 37-46.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>[plot.HOF()] provides advanced plotting schemes for HOF models.
+[Para()] derives model parameters like optimum, niche (width), slope etc.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(acre)
+  sel &lt;- c('MATRREC', 'RUMEACT', 'SILENOC', 'APHAARV', 'MYOSARV', 'DESUSOP', 'ARTE#VU')
+  mo &lt;- HOF(acre[,match(sel, names(acre))], acre.env$PH_KCL, M=1, bootstrap=NULL)
+  mo
+
+</code></pre>
+
+
+</div>

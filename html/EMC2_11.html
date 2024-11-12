@@ -1,0 +1,197 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>credible.emc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Posterior credible interval tests</h2>
+
+<h3>Description</h3>
+
+<p>Modeled after <code>t.test</code>, returns the credible interval of the parameter or test
+and what proportion of the posterior distribution (or the difference in posterior distributions
+in case of a two sample test) overlaps with mu.
+For a one sample test provide <code>x</code> and for two sample also provide <code>y</code>.
+Note that for comparisons within one model, we recommend using <code>hypothesis()</code> if the priors
+were well chosen.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'emc'
+credible(
+  x,
+  x_name = NULL,
+  x_fun = NULL,
+  x_fun_name = "fun",
+  selection = "mu",
+  y = NULL,
+  y_name = NULL,
+  y_fun = NULL,
+  y_fun_name = "fun",
+  x_subject = NULL,
+  y_subject = NULL,
+  mu = 0,
+  alternative = c("less", "greater")[1],
+  probs = c(0.025, 0.5, 0.975),
+  digits = 2,
+  p_digits = 3,
+  print_table = TRUE,
+  ...
+)
+
+credible(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An emc object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_name</code></td>
+<td>
+<p>A character string. Name of the parameter to be tested for <code>x</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_fun</code></td>
+<td>
+<p>Function applied to the MCMC chains to create
+variable to be tested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_fun_name</code></td>
+<td>
+<p>Name to give to quantity calculated by <code>x_fun</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selection</code></td>
+<td>
+<p>A character string designating parameter type (e.g. <code>alpha</code> or <code>covariance</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A second emc object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_name</code></td>
+<td>
+<p>A character string. Name of the parameter to be tested for <code>y</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_fun</code></td>
+<td>
+<p>Function applied to the MCMC chains to create
+variable to be tested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_fun_name</code></td>
+<td>
+<p>Name to give to quantity calculated by <code>y_fun</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_subject</code></td>
+<td>
+<p>Integer or name selecting a subject</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_subject</code></td>
+<td>
+<p>Integer or name selecting a subject</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>Numeric. <code>NULL</code> value for single sample test if <code>y</code> is not supplied (default 0)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p><code>less</code> or <code>greater</code> determining direction of test probability</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>Vector defining quantiles to return.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>Integer, significant digits for estimates in printed results</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_digits</code></td>
+<td>
+<p>Integer, significant digits for probability in printed results</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print_table</code></td>
+<td>
+<p>Boolean (defaults to <code>TRUE</code>) for printing results table</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional optional arguments that can be passed to <code>get_pars</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Invisible results table with no rounding.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Run a credible interval test (Bayesian ''t-test'')
+# Here the full model is an emc object with the hypothesized effect
+design_full &lt;- design(data = forstmann,model=DDM,
+                           formula =list(v~0+S,a~E, t0~1, s~1, Z~1, sv~1, SZ~1),
+                           constants=c(s=log(1)))
+
+full_model &lt;- make_emc(forstmann, design_full)
+full_model &lt;- fit(full_model)
+credible(full_model, x_name = "v")
+# We can also compare between two sets of emc objects
+# Now without a ~ E
+design_null &lt;- design(data = forstmann,model=DDM,
+                           formula =list(v~0+S,a~1, t0~1, s~1, Z~1, sv~1, SZ~1),
+                           constants=c(s=log(1)))
+
+null_model &lt;- make_emc(forstmann, design_null)
+null_model &lt;- fit(null_model)
+credible(x = null_model, x_name = "a", y = full_model, y_name = "a")
+
+# Or provide custom functions
+credible(x = full_model, x_fun = function(d) d["a_Eaccuracy"] - d["a_Eneutral"])
+
+## End(Not run)
+</code></pre>
+
+
+</div>

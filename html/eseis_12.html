@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>aux_hvanalysis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Perform H-V-spectral ratio analysis of a seismic data set</h2>
+
+<h3>Description</h3>
+
+<p>This function cuts a three component seismic data set into time windows
+that may or may not overlap and calculates the spectral ratio for each of 
+these windows. It returns a matrix with the ratios for each time slice. 
+Thus, it is a wrapper for the function <code>signal_hvratio</code>. For 
+further information about the technique and function arguments see the 
+description of <code>signal_hvratio</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">aux_hvanalysis(
+  data,
+  time,
+  window,
+  overlap = 0,
+  dt,
+  method = "periodogram",
+  kernel,
+  order = "xyz",
+  plot = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>List</code>, <code>data frame</code> or <code>matrix</code>, seismic
+componenents to be processed. If <code>data</code> is a matrix, the components 
+must be organised as columns. Also, <code>data</code> can be a list of 
+<code>eseis</code> objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p><code>POSIXct</code> vector with time values. If omitted, an 
+synthetic time vector will be created, based on <code>dt</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window</code></td>
+<td>
+<p><code>Numeric</code> scalar, time window length in seconds used to 
+calculate individual spectral ratios. Set to 10 percent of the time  
+series length by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overlap</code></td>
+<td>
+<p><code>Numeric</code> value, fraction of window overlap.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p><code>Numeric</code> value, sampling period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p><code>Character</code> value, method for calculating the spectra. 
+One out of <code>"periodogram"</code> , <code>"autoregressive"</code> and 
+<code>"multitaper"</code>, default is <code>"periodogram"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p><code>Numeric</code> value, window size (defined by number of 
+samples) of the moving window used for smoothing the spectra. By default 
+no smoothing is performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p><code>Character</code> value, order of the seismic components. 
+Describtion must contain the letters <code>"x"</code>,<code>"y"</code> and
+<code>"z"</code> in the order according to the input data set. Default is 
+<code>"xyz"</code> (NW-SE-vertical).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p><code>Logical</code> value, toggle plot output. Default is
+<code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to the plot function.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>matrix</code> with the h-v-frequency ratios for each time slice.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load example data set
+data(earthquake)
+
+## ATTENTION, THIS EXAMPLE DATA SET IS FAR FROM IDEAL FOR THIS PURPOSE
+
+## detrend data
+s &lt;- signal_detrend(data = s)
+
+## calculate the HV ratios straightforward
+HV &lt;- aux_hvanalysis(data = s,
+                     dt = 1 / 200,
+                     kernel = 100)
+
+## calculate the HV ratios with plot output, userdefined palette
+plot_col &lt;- colorRampPalette(colors = c("grey", "darkblue", "blue", "orange"))
+HV &lt;- aux_hvanalysis(data = s,
+                     dt = 1 / 200,
+                     kernel = 100,
+                     plot = TRUE,
+                     col = plot_col(100))
+
+## calculate the HV ratios with optimised method settings
+HV &lt;- aux_hvanalysis(data = s, 
+                     time = t,
+                     dt = 1 / 200, 
+                     window = 10, 
+                     overlap = 0.9, 
+                     method = "autoregressive",
+                     plot = TRUE,
+                     col = plot_col(100),
+                     xlab = "Time (UTC)",
+                     ylab = "f (Hz)")
+                     
+## calculate and plot stack (mean and sd) of all spectral ratios
+HV_mean &lt;- apply(X = HV, MARGIN = 1, FUN = mean)
+HV_sd &lt;- apply(X = HV, MARGIN = 1, FUN = sd)
+HV_f &lt;- as.numeric(rownames(HV))
+
+plot(x = HV_f, y = HV_mean, type = "l", ylim = c(0, 50))
+lines(x = HV_f, y = HV_mean + HV_sd, col = 2)
+lines(x = HV_f, y = HV_mean - HV_sd, col = 2)              
+
+</code></pre>
+
+
+</div>

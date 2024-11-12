@@ -1,0 +1,2260 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EplusJob</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run EnergyPlus Simulation and Collect Outputs</h2>
+
+<h3>Description</h3>
+
+<p><code>EplusJob</code> class wraps the EnergyPlus command line interface and provides
+methods to extract simulation outputs.
+</p>
+<p><code>eplus_job()</code> takes an IDF and EPW as input, and returns an <code>EplusJob</code> object
+for running EnergyPlus simulation and collecting outputs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eplus_job(idf, epw)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>idf</code></td>
+<td>
+<p>A path to an local EnergyPlus IDF file or an <code>Idf</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epw</code></td>
+<td>
+<p>A path to an local EnergyPlus EPW file or an <code>Epw</code> object. <code>epw</code>
+can also be <code>NULL</code> which will force design-day-only simulation when
+<code>$run()</code> method is called. Note this needs at least one
+<code>Sizing:DesignDay</code> object exists in the Idf.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>eplusr uses the EnergyPlus SQL output for extracting simulation outputs.
+</p>
+<p><code>EplusJob</code> has provide some wrappers that do SQL query to get report data
+results, i.e. results from <code>Output:Variable</code> and <code style="white-space: pre;">⁠Output:Meter*⁠</code>. But for
+<code>Output:Table</code> results, you have to be familiar with the structure of the
+EnergyPlus SQL results, especially for table <em>"TabularDataWithStrings"</em>. For
+details, please see <em>"2.20 eplusout.sql"</em>, especially <em>"2.20.4.4 TabularData
+Table"</em> in EnergyPlus <em>"Output Details and Examples"</em> documentation. An
+object in <code>Output:SQLite</code> with <code style="white-space: pre;">⁠Option Type⁠</code> value of <code>SimpleAndTabular</code> will
+be automatically created if it does not exists, to ensure that the output
+collection functionality works successfully.
+</p>
+<p>In order to make sure <code>.rdd</code> (Report Data Dictionary) and <code>.mdd</code> (Meter Data
+Dictionary) files are created during simulation, an object in
+<code>Output:VariableDictionary</code> class with <code style="white-space: pre;">⁠Key Field⁠</code> value being <code>IDF</code> will be
+automatically created if it does not exists.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>EplusJob</code> object.
+</p>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-EplusJob-new"><code>EplusJob$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-version"><code>EplusJob$version()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-path"><code>EplusJob$path()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-run"><code>EplusJob$run()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-kill"><code>EplusJob$kill()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-status"><code>EplusJob$status()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-errors"><code>EplusJob$errors()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-output_dir"><code>EplusJob$output_dir()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-list_files"><code>EplusJob$list_files()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-locate_output"><code>EplusJob$locate_output()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-read_rdd"><code>EplusJob$read_rdd()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-read_mdd"><code>EplusJob$read_mdd()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-list_table"><code>EplusJob$list_table()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-read_table"><code>EplusJob$read_table()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-report_data_dict"><code>EplusJob$report_data_dict()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-report_data"><code>EplusJob$report_data()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-tabular_data"><code>EplusJob$tabular_data()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EplusJob-print"><code>EplusJob$print()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-EplusJob-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create an <code>EplusJob</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$new(idf, epw)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>idf</code></dt>
+<dd>
+<p>Path to an local EnergyPlus IDF file or an Idf object.</p>
+</dd>
+<dt><code>epw</code></dt>
+<dd>
+<p>Path to an local EnergyPlus EPW file or an Epw object.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>An <code>EplusJob</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+if (is_avail_eplus("8.8")) {
+    name_idf &lt;- "1ZoneUncontrolled.idf"
+    name_epw &lt;-  "USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+
+    path_idf &lt;- path_eplus_example("8.8", name_idf)
+    path_epw &lt;- path_eplus_weather("8.8", name_epw)
+
+    # create from local files
+    job &lt;- eplus_job(path_idf, path_epw)
+
+    # create from an Idf and an Epw object
+    job &lt;- eplus_job(read_idf(path_idf), read_epw(path_epw))
+}
+}
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-version"></a>
+
+
+
+<h4>Method <code>version()</code>
+</h4>
+
+<p>Get the version of IDF in current job
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$version()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$version()⁠</code> returns the version of IDF that current <code>EplusJob</code> uses.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>base::numeric_version()</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$version()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-path"></a>
+
+
+
+<h4>Method <code>path()</code>
+</h4>
+
+<p>Get the paths of file that current <code>EpwSql</code> uses
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$path(type = c("all", "idf", "epw"))</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>type</code></dt>
+<dd>
+<p>If <code>"all"</code>, both the Idf path and Epw path are
+returned. If <code>"idf"</code>, only IDF path is returned. If <code>"epw"</code>,
+only EPW path is returned. If <code>epw</code> is <code>NULL</code>, <code>NA</code> is
+returned for EPW path. Default: <code>"all"</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$path()⁠</code> returns the path of IDF or EPW of current job.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$path()
+job$path("idf")
+job$path("epw")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-run"></a>
+
+
+
+<h4>Method <code>run()</code>
+</h4>
+
+<p>Run simulationA
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$run(
+  epw,
+  dir = NULL,
+  wait = TRUE,
+  force = FALSE,
+  echo = wait,
+  copy_external = FALSE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>epw</code></dt>
+<dd>
+<p>A path to an <code>.epw</code> file or an Epw object. <code>epw</code> can
+also be <code>NULL</code> which will force design-day-only simulation.
+Note this needs EnergyPlus v8.3 and later, and at least one
+<code>Sizing:DesignDay</code> object exists in the <code>Idf</code>. If not given,
+the <code>epw</code> input used when creating this <code>EplusJob</code> object will
+be used.</p>
+</dd>
+<dt><code>dir</code></dt>
+<dd>
+<p>The directory to save the simulation results. If <code>NULL</code>,
+the input <code>idf</code> folder will be used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>wait</code></dt>
+<dd>
+<p>If <code>TRUE</code>, R will hang on and wait for the simulation to
+complete. EnergyPlus standard output (stdout) and error
+(stderr) is printed to R console. If <code>FALSE</code>, simulation will
+be run in a background process.  Default: <code>TRUE</code>.</p>
+</dd>
+<dt><code>force</code></dt>
+<dd>
+<p>Only applicable when the last job runs with <code>wait</code>
+equals to <code>FALSE</code> and is still running. If <code>TRUE</code>, current
+running job is forced to stop and a new one will start.
+Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>echo</code></dt>
+<dd>
+<p>Only applicable when <code>wait</code> is <code>TRUE</code>. Whether to show
+standard output and error from EnergyPlus. Default: same as
+<code>wait</code>.</p>
+</dd>
+<dt><code>copy_external</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the external files that current <code>Idf</code>
+object depends on will also be copied into the simulation
+output directory. The values of file paths in the Idf will be
+changed automatically. This ensures that the output directory
+will have all files needed for the model to run. Default is
+<code>FALSE</code>.</p>
+</dd>
+<dt><code>readvars</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the <code>ReadVarESO</code> post-processor will run
+to generate CSV files from the ESO output. Since those CSV
+files are never used when extracting simulation data in eplusr,
+setting it to <code>FALSE</code> can speed up the simulation if there are
+hundreds of output variables or meters. Default: <code>TRUE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$run()⁠</code> runs the simulation using input IDF and EPW file. If <code>wait</code>
+is <code>FALSE</code>, the job is run in the background. You can get updated job
+status by just
+<a href="../../eplusr/html/EplusJob.html#method-print">printing</a>
+the <code>EplusJob</code> object.
+</p>
+<p>Parameter <code>epw</code> can be used to reset the EPW file to use for
+simulation. If not given, the <code>epw</code> input used when creating
+this <code>EplusJob</code> object will be used.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The <code>EplusJob</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# only run design day
+job$run(NULL)
+
+# specify output directory
+job$run(dir = tempdir())
+
+# run in the background
+job$run(wait = TRUE)
+# see job status
+job$status()
+
+# force to kill background job before running the new one
+job$run(force = TRUE)
+
+# do not show anything in the console
+job$run(echo = FALSE)
+
+# copy external files used in the model to simulation output directory
+job$run(copy_external = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-kill"></a>
+
+
+
+<h4>Method <code>kill()</code>
+</h4>
+
+<p>Kill current running job
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$kill()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$kill()⁠</code> kills the background EnergyPlus process if possible. It
+only works when simulation runs in non-waiting mode.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single logical value of <code>TRUE</code> or <code>FALSE</code>, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$kill()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-status"></a>
+
+
+
+<h4>Method <code>status()</code>
+</h4>
+
+<p>Get the job status
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$status()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$status()⁠</code> returns a named list of values that indicates the status of the
+job:
+</p>
+
+<ul>
+<li> <p><code>run_before</code>: <code>TRUE</code> if the job has been run before. <code>FALSE</code> otherwise.
+</p>
+</li>
+<li> <p><code>alive</code>: <code>TRUE</code> if the simulation is still running in the background.
+<code>FALSE</code> otherwise.
+</p>
+</li>
+<li> <p><code>terminated</code>: <code>TRUE</code> if the simulation was terminated during last
+simulation. <code>FALSE</code> otherwise. <code>NA</code> if the job has not been run yet.
+</p>
+</li>
+<li> <p><code>successful</code>: <code>TRUE</code> if last simulation ended successfully. <code>FALSE</code>
+otherwise. <code>NA</code> if the job has not been run yet.
+</p>
+</li>
+<li> <p><code>changed_after</code>: <code>TRUE</code> if the IDF file has been changed since last
+simulation. <code>FALSE</code> otherwise. <code>NA</code> if the job has not been run yet.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>A named list of 5 elements.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$status()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-errors"></a>
+
+
+
+<h4>Method <code>errors()</code>
+</h4>
+
+<p>Read simulation errors
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$errors(info = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>info</code></dt>
+<dd>
+<p>If <code>FALSE</code>, only warnings and errors are printed.
+Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>$errors() returns an ErrFile object which contains all
+contents of the simulation error file (<code>.err</code>). If <code>info</code> is <code>FALSE</code>,
+only warnings and errors are printed.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An ErrFile object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$errors()
+
+# show all information
+job$errors(info = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-output_dir"></a>
+
+
+
+<h4>Method <code>output_dir()</code>
+</h4>
+
+<p>Get simulation output directory
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$output_dir(open = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>open</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the output directory will be opened.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$output_dir()⁠</code> returns the output directory of simulation results.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$output_dir()
+
+# Below will open output directory
+# job$output_dir(open = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-list_files"></a>
+
+
+
+<h4>Method <code>list_files()</code>
+</h4>
+
+<p>List all output files in current simulation
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$list_files(simplify = FALSE, full = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>simplify</code></dt>
+<dd>
+<p>If <code>TRUE</code>, a character vector of EnergyPlus input
+and output file names in the output directory is given. If <code>FALSE</code>, a
+full named list of all possible input and output types is given. <code>NA</code>
+is returned if no input or output files are found for that type.
+Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>full</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the full file paths in the output directory
+are returned. Otherwise, only the file names are returned. Default:
+<code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$list_files()⁠</code> returns all input and output files for current
+EnergyPlus simulation.
+</p>
+<p>Description of all possible outputs from EnergyPlus can be found in
+EnergyPlus documentation "Output Details and Examples".
+</p>
+<p>Below gives a brief summary on the meaning of elements in the
+returned list.</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+   # </td>
+<td style="text-align: left;"> Element </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   1 </td>
+<td style="text-align: left;"> <code>ads</code> </td>
+<td style="text-align: left;"> EnergyPlus AirflowNetwork related output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   2 </td>
+<td style="text-align: left;"> <code>audit</code> </td>
+<td style="text-align: left;"> EnergyPlus inputs echo </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   3 </td>
+<td style="text-align: left;"> <code>bnd</code> </td>
+<td style="text-align: left;"> EnergyPlus branch node details </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   4 </td>
+<td style="text-align: left;"> <code>bsmt_audit</code> </td>
+<td style="text-align: left;"> Basement input Echo </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   5 </td>
+<td style="text-align: left;"> <code>bsmt_csv</code> </td>
+<td style="text-align: left;"> Basement CSV output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   6 </td>
+<td style="text-align: left;"> <code>bsmt_idf</code> </td>
+<td style="text-align: left;"> Basement IDF output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   7 </td>
+<td style="text-align: left;"> <code>bsmt_out</code> </td>
+<td style="text-align: left;"> Basement Output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   8 </td>
+<td style="text-align: left;"> <code>cbor</code> </td>
+<td style="text-align: left;"> Energyplus CBOR binary output introduced since v9.5 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   9 </td>
+<td style="text-align: left;"> <code>dbg</code> </td>
+<td style="text-align: left;"> Energyplus debug output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   10 </td>
+<td style="text-align: left;"> <code>delight</code> </td>
+<td style="text-align: left;"> EnergyPlus DElight simulation inputs and outputs </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   11 </td>
+<td style="text-align: left;"> <code>dfs</code> </td>
+<td style="text-align: left;"> EnergyPlus daylighting factor for exterior windows </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   12 </td>
+<td style="text-align: left;"> <code>dxf</code> </td>
+<td style="text-align: left;"> EnergyPlus surface drawing output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   13 </td>
+<td style="text-align: left;"> <code>edd</code> </td>
+<td style="text-align: left;"> EnergyPlus EMS report </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   14 </td>
+<td style="text-align: left;"> <code>eio</code> </td>
+<td style="text-align: left;"> EnergyPlus standard and optional reports </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   15 </td>
+<td style="text-align: left;"> <code>end</code> </td>
+<td style="text-align: left;"> EnergyPlus simulation status in one line </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   16 </td>
+<td style="text-align: left;"> <code>epjson</code> </td>
+<td style="text-align: left;"> EnergyPlus epJSON input converted from IDF </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   17 </td>
+<td style="text-align: left;"> <code>epmdet</code> </td>
+<td style="text-align: left;"> EPMacro inputs echo </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   18 </td>
+<td style="text-align: left;"> <code>epmidf</code> </td>
+<td style="text-align: left;"> EPMacro IDF output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   19 </td>
+<td style="text-align: left;"> <code>epw</code> </td>
+<td style="text-align: left;"> EnergyPlus Weather File input </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   20 </td>
+<td style="text-align: left;"> <code>err</code> </td>
+<td style="text-align: left;"> EnergyPlus error summarry </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   21 </td>
+<td style="text-align: left;"> <code>eso</code> </td>
+<td style="text-align: left;"> EnergyPlus standard output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   22 </td>
+<td style="text-align: left;"> <code>experr</code> </td>
+<td style="text-align: left;"> ExpandObjects error summary </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   23 </td>
+<td style="text-align: left;"> <code>expidf</code> </td>
+<td style="text-align: left;"> ExpandObjects IDF output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   24 </td>
+<td style="text-align: left;"> <code>glhe</code> </td>
+<td style="text-align: left;"> EnergyPlus ground heat exchange file </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   25 </td>
+<td style="text-align: left;"> <code>idf</code> </td>
+<td style="text-align: left;"> EnergyPlus IDF input </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   26 </td>
+<td style="text-align: left;"> <code>imf</code> </td>
+<td style="text-align: left;"> EPMacro IMF input </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   27 </td>
+<td style="text-align: left;"> <code>iperr</code> </td>
+<td style="text-align: left;"> convertESOMTR error summary </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   28 </td>
+<td style="text-align: left;"> <code>ipeso</code> </td>
+<td style="text-align: left;"> convertESOMTR standard output in IP units </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   29 </td>
+<td style="text-align: left;"> <code>ipmtr</code> </td>
+<td style="text-align: left;"> convertESOMTR meter output in IP units </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   30 </td>
+<td style="text-align: left;"> <code>json</code> </td>
+<td style="text-align: left;"> EnergyPlus JSON time series output introduced since v9.5 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   31 </td>
+<td style="text-align: left;"> <code>log</code> </td>
+<td style="text-align: left;"> EnergyPlus log output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   32 </td>
+<td style="text-align: left;"> <code>map</code> </td>
+<td style="text-align: left;"> EnergyPlus daylighting intensity map output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   33 </td>
+<td style="text-align: left;"> <code>mdd</code> </td>
+<td style="text-align: left;"> EnergyPlus meter list </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   34 </td>
+<td style="text-align: left;"> <code>meter</code> </td>
+<td style="text-align: left;"> EnergyPlus meter CSV output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   35 </td>
+<td style="text-align: left;"> <code>msgpack</code> </td>
+<td style="text-align: left;"> EnergyPlus MessagePack binary output introduced since v9.5 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   36 </td>
+<td style="text-align: left;"> <code>mtd</code> </td>
+<td style="text-align: left;"> EnergyPlus meter details </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   37 </td>
+<td style="text-align: left;"> <code>mtr</code> </td>
+<td style="text-align: left;"> EnergyPlus meter output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   38 </td>
+<td style="text-align: left;"> <code>perflog</code> </td>
+<td style="text-align: left;"> EnergyPlus log for `PerformancePrecisionTradeoffs </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   39 </td>
+<td style="text-align: left;"> <code>rdd</code> </td>
+<td style="text-align: left;"> EnergyPlus report variable names </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   40 </td>
+<td style="text-align: left;"> <code>rvaudit</code> </td>
+<td style="text-align: left;"> ReadVarsESO input echo </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   41 </td>
+<td style="text-align: left;"> <code>sci</code> </td>
+<td style="text-align: left;"> EnergyPlus cost benefit calculation information </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   42 </td>
+<td style="text-align: left;"> <code>screen</code> </td>
+<td style="text-align: left;"> EnergyPlus window scrren transmittance map output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   43 </td>
+<td style="text-align: left;"> <code>shading</code> </td>
+<td style="text-align: left;"> EnergyPlus surface shading CSV output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   44 </td>
+<td style="text-align: left;"> <code>shd</code> </td>
+<td style="text-align: left;"> EnergyPlus surface shading combination report </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   45 </td>
+<td style="text-align: left;"> <code>slab_ger</code> </td>
+<td style="text-align: left;"> Slab error summary </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   46 </td>
+<td style="text-align: left;"> <code>slab_gtp</code> </td>
+<td style="text-align: left;"> Slab ground temperature output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   47 </td>
+<td style="text-align: left;"> <code>slab_out</code> </td>
+<td style="text-align: left;"> Slab IDF output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   48 </td>
+<td style="text-align: left;"> <code>sln</code> </td>
+<td style="text-align: left;"> EnergyPlus <code style="white-space: pre;">⁠Output:Surfaces:List, Lines⁠</code> output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   49 </td>
+<td style="text-align: left;"> <code>sqlite</code> </td>
+<td style="text-align: left;"> EnergyPlus SQLite output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   50 </td>
+<td style="text-align: left;"> <code>sqlite_err</code> </td>
+<td style="text-align: left;"> EnergyPlus SQLite error summary </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   51 </td>
+<td style="text-align: left;"> <code>ssz</code> </td>
+<td style="text-align: left;"> EnergyPlus system sizing outputs in CSV, TAB or TXT format </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   52 </td>
+<td style="text-align: left;"> <code>svg</code> </td>
+<td style="text-align: left;"> HVAC-Diagram HVAC diagram output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   53 </td>
+<td style="text-align: left;"> <code>table</code> </td>
+<td style="text-align: left;"> EnergyPlus tabular outputs in CSV, TAB, TXT, HTM, or XML format </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   54 </td>
+<td style="text-align: left;"> <code>variable</code> </td>
+<td style="text-align: left;"> EnergyPlus report variable CSV output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   55 </td>
+<td style="text-align: left;"> <code>wrl</code> </td>
+<td style="text-align: left;"> EnergyPlus <code style="white-space: pre;">⁠Output:Surfaces:List, VRML⁠</code> output </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   56 </td>
+<td style="text-align: left;"> <code>zsz</code> </td>
+<td style="text-align: left;"> EnergyPlus system sizing outputs in CSV, TAB or TXT format </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   57 </td>
+<td style="text-align: left;"> <code>resource</code> </td>
+<td style="text-align: left;"> External file resources used for the simulation, e.g. <code>Schedule:File</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h5>Returns</h5>
+
+<p>If <code>FALSE</code>, a character vector. Otherwise, a named list.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# list all files in the output directory
+job$list_files(simplify = TRUE)
+
+# get a full list of all possible inputs and outputs even though they
+# may not exist for current simulation
+job$list_files()
+
+# return the full paths instead of just file names
+job$locate_output(full = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-locate_output"></a>
+
+
+
+<h4>Method <code>locate_output()</code>
+</h4>
+
+<p>Get path of output file
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$locate_output(suffix = ".err", strict = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>suffix</code></dt>
+<dd>
+<p>A string that indicates the file extension of
+simulation output. Default: <code>".err"</code>.</p>
+</dd>
+<dt><code>strict</code></dt>
+<dd>
+<p>If <code>TRUE</code>, it will check if the simulation was
+terminated, is still running or the file exists or not.
+Default: <code>TRUE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$locate_output()⁠</code> returns the path of a single output file specified
+by file suffix.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get the file path of the error file
+job$locate_output(".err", strict = FALSE)
+
+# can use to detect if certain output file exists
+job$locate_output(".expidf", strict = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-read_rdd"></a>
+
+
+
+<h4>Method <code>read_rdd()</code>
+</h4>
+
+<p>Read Report Data Dictionary (RDD) file
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$read_rdd()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$read_rdd()⁠</code> return the core data of Report Data Dictionary (RDD)
+file. For details, please see <code>read_rdd()</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An RddFile object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$read_rdd()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-read_mdd"></a>
+
+
+
+<h4>Method <code>read_mdd()</code>
+</h4>
+
+<p>Read Report Data Dictionary (RDD) file
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$read_mdd()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$read_mdd()⁠</code> return the core data of Meter Data Dictionary (MDD)
+file. For details, please see <code>read_mdd()</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An MddFile object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$read_mdd()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-list_table"></a>
+
+
+
+<h4>Method <code>list_table()</code>
+</h4>
+
+<p>List all table names in EnergyPlus SQL output
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$list_table()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$list_table()⁠</code> returns all available table and view names in the
+EnergyPlus SQLite file.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A character vector
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$list_table()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-read_table"></a>
+
+
+
+<h4>Method <code>read_table()</code>
+</h4>
+
+<p>Read a single table from EnergyPlus SQL output
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$read_table(name)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>name</code></dt>
+<dd>
+<p>A single string specifying the name of table to read.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$read_table()⁠</code> takes a valid table <code>name</code> of those from
+<a href="../../eplusr/html/EplusJob.html#method-list_table"><code>$list_table()</code></a>
+and returns that table data in a <code>data.table::data.table()</code> format.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# read a specific table
+job$read_table("Zones")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-report_data_dict"></a>
+
+
+
+<h4>Method <code>report_data_dict()</code>
+</h4>
+
+<p>Read report data dictionary from EnergyPlus SQL output
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$report_data_dict()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$report_data_dict()⁠</code> returns a <code>data.table::data.table()</code> which
+contains all information about report data.
+</p>
+<p>For details on the meaning of each columns, please see "2.20.2.1
+ReportDataDictionary Table" in EnergyPlus "Output Details and
+Examples" documentation.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> of 10 columns:
+</p>
+
+<ul>
+<li> <p><code>report_data_dictionary_index</code>: The integer used to link the
+dictionary data to the variable data. Mainly useful when joining
+different tables
+</p>
+</li>
+<li> <p><code>is_meter</code>: Whether report data is a meter data. Possible values:
+<code>0</code> and <code>1</code>
+</p>
+</li>
+<li> <p><code>timestep_type</code>: Type of data timestep. Possible values: <code>Zone</code> and
+<code style="white-space: pre;">⁠HVAC System⁠</code>
+</p>
+</li>
+<li> <p><code>key_value</code>: Key name of the data
+</p>
+</li>
+<li> <p><code>name</code>: Actual report data name
+</p>
+</li>
+<li> <p><code>reporting_frequency</code>: Data reporting frequency
+</p>
+</li>
+<li> <p><code>schedule_name</code>: Name the the schedule that controls reporting
+frequency.
+</p>
+</li>
+<li> <p><code>units</code>: The data units
+</p>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$report_data_dict()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-report_data"></a>
+
+
+
+<h4>Method <code>report_data()</code>
+</h4>
+
+<p>Read report data
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$report_data(
+  key_value = NULL,
+  name = NULL,
+  year = NULL,
+  tz = "UTC",
+  case = "auto",
+  all = FALSE,
+  wide = FALSE,
+  period = NULL,
+  month = NULL,
+  day = NULL,
+  hour = NULL,
+  minute = NULL,
+  interval = NULL,
+  simulation_days = NULL,
+  day_type = NULL,
+  environment_name = NULL
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>key_value</code></dt>
+<dd>
+<p>A character vector to identify key values of the
+data. If <code>NULL</code>, all keys of that variable will be returned.
+<code>key_value</code> can also be data.frame that contains <code>key_value</code>
+and <code>name</code> columns. In this case, <code>name</code> argument in
+<code style="white-space: pre;">⁠$report_data()⁠</code> is ignored. All available <code>key_value</code> for
+current simulation output can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-report_data_dict"><code>$report_data_dict()</code></a>.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>name</code></dt>
+<dd>
+<p>A character vector to identify names of the data. If
+<code>NULL</code>, all names of that variable will be returned. If
+<code>key_value</code> is a data.frame, <code>name</code> is ignored. All available
+<code>name</code> for current simulation output can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-report_data_dict"><code>$report_data_dict()</code></a>.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>year</code></dt>
+<dd>
+<p>Year of the date time in column <code>datetime</code>. If <code>NULL</code>, it
+will calculate a year value that meets the start day of week
+restriction for each environment. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>tz</code></dt>
+<dd>
+<p>Time zone of date time in column <code>datetime</code>. Default:
+<code>"UTC"</code>.</p>
+</dd>
+<dt><code>case</code></dt>
+<dd>
+<p>If not <code>NULL</code>, a character column will be added indicates
+the case of this simulation. If <code>"auto"</code>, the name of the IDF
+file without extension is used.</p>
+</dd>
+<dt><code>all</code></dt>
+<dd>
+<p>If <code>TRUE</code>, extra columns are also included in the returned
+<code>data.table::data.table()</code>.</p>
+</dd>
+<dt><code>wide</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the output is formatted in the same way as
+standard EnergyPlus csv output file.</p>
+</dd>
+<dt><code>period</code></dt>
+<dd>
+<p>A Date or POSIXt vector used to specify which time
+period to return. The year value does not matter and only
+month, day, hour and minute value will be used when
+subsetting. If <code>NULL</code>, all time period of data is returned.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>month, day, hour, minute</code></dt>
+<dd>
+<p>Each is an integer vector for month,
+day, hour, minute subsetting of <code>datetime</code> column when
+querying on the SQL database. If <code>NULL</code>, no subsetting is
+performed on those components. All possible <code>month</code>, <code>day</code>,
+<code>hour</code> and <code>minute</code> can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-read_table"><code>$read_table("Time")</code></a>.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>interval</code></dt>
+<dd>
+<p>An integer vector used to specify which interval
+length of report to extract. If <code>NULL</code>, all interval will be
+used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>simulation_days</code></dt>
+<dd>
+<p>An integer vector to specify which simulation
+day data to extract. Note that this number resets after warmup
+and at the beginning of an environment period. All possible
+<code>simulation_days</code> can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-read_table"><code>$read_table("Time")</code></a>.
+If <code>NULL</code>, all simulation days will be used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>day_type</code></dt>
+<dd>
+<p>A character vector to specify which day type of data
+to extract. All possible day types are: <code>Sunday</code>, <code>Monday</code>,
+<code>Tuesday</code>, <code>Wednesday</code>, <code>Thursday</code>, <code>Friday</code>, <code>Saturday</code>,
+<code>Holiday</code>, <code>SummerDesignDay</code>, <code>WinterDesignDay</code>, <code>CustomDay1</code>,
+and <code>CustomDay2</code>. All possible values for current simulation
+output can be obtained using
+<a href="../../eplusr/html/EplusSql.html#method-read_table"><code>$read_table("Time")</code></a>.</p>
+</dd>
+<dt><code>environment_name</code></dt>
+<dd>
+<p>A character vector to specify which
+environment data to extract. If <code>NULL</code>, all environment data
+are returned. Default: <code>NULL</code>. All possible
+<code>environment_name</code> for current simulation output can be
+obtained using:
+</p>
+<div class="sourceCode"><pre>$read_table("EnvironmentPeriods")
+</pre></div>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$report_data()⁠</code> extracts the report data in a
+<code>data.table::data.table()</code> using key values, variable names and other
+specifications.
+</p>
+<p><code style="white-space: pre;">⁠$report_data()⁠</code> can also directly take all or subset output from
+<code style="white-space: pre;">⁠$report_data_dict()⁠</code> as input, and extract all data specified.
+</p>
+<p>The returned column numbers varies depending on <code>all</code> argument.
+</p>
+
+<ul>
+<li> <p><code>all</code> is <code>FALSE</code>, the returned <code>data.table::data.table()</code> has 6 columns:
+</p>
+
+<ul>
+<li> <p><code>case</code>: Simulation case specified using <code>case</code> argument
+</p>
+</li>
+<li> <p><code>datetime</code>: The date time of simulation result
+</p>
+</li>
+<li> <p><code>key_value</code>: Key name of the data
+</p>
+</li>
+<li> <p><code>name</code>: Actual report data name
+</p>
+</li>
+<li> <p><code>units</code>: The data units
+</p>
+</li>
+<li> <p><code>value</code>: The data value
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>all</code> is <code>TRUE</code>, besides columns described above, extra columns are also
+included:
+</p>
+
+<ul>
+<li> <p><code>month</code>: The month of reported date time
+</p>
+</li>
+<li> <p><code>day</code>: The day of month of reported date time
+</p>
+</li>
+<li> <p><code>hour</code>: The hour of reported date time
+</p>
+</li>
+<li> <p><code>minute</code>: The minute of reported date time
+</p>
+</li>
+<li> <p><code>dst</code>: Daylight saving time indicator. Possible values: <code>0</code> and <code>1</code>
+</p>
+</li>
+<li> <p><code>interval</code>: Length of reporting interval
+</p>
+</li>
+<li> <p><code>simulation_days</code>: Day of simulation
+</p>
+</li>
+<li> <p><code>day_type</code>: The type of day, e.g. <code>Monday</code>, <code>Tuesday</code> and etc.
+</p>
+</li>
+<li> <p><code>environment_period_index</code>: The indices of environment.
+</p>
+</li>
+<li> <p><code>environment_name</code>: A text string identifying the environment.
+</p>
+</li>
+<li> <p><code>is_meter</code>: Whether report data is a meter data. Possible values: <code>0</code> and
+<code>1</code>
+</p>
+</li>
+<li> <p><code>type</code>: Nature of data type with respect to state. Possible values: <code>Sum</code>
+and <code>Avg</code>
+</p>
+</li>
+<li> <p><code>index_group</code>: The report group, e.g. <code>Zone</code>, <code>System</code>
+</p>
+</li>
+<li> <p><code>timestep_type</code>: Type of data timestep. Possible values: <code>Zone</code> and <code style="white-space: pre;">⁠HVAC System⁠</code>
+</p>
+</li>
+<li> <p><code>reporting_frequency</code>: The reporting frequency of the variable, e.g.
+<code style="white-space: pre;">⁠HVAC System Timestep⁠</code>, <code style="white-space: pre;">⁠Zone Timestep⁠</code>.
+</p>
+</li>
+<li> <p><code>schedule_name</code>: Name of the the schedule that controls reporting
+frequency.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>With the <code>datetime</code> column, it is quite straightforward to apply time-series
+analysis on the simulation output. However, another painful thing is that
+every simulation run period has its own <code style="white-space: pre;">⁠Day of Week for Start Day⁠</code>. Randomly
+setting the <code>year</code> may result in a date time series that does not have
+the same start day of week as specified in the RunPeriod objects.
+</p>
+<p>eplusr provides a simple solution for this. By setting <code>year</code> to <code>NULL</code>,
+which is the default behavior, eplusr will calculate a year value (from
+year 2017 backwards) for each run period that compliances with the start
+day of week restriction.
+</p>
+<p>It is worth noting that EnergyPlus uses 24-hour clock system where 24 is only
+used to denote midnight at the end of a calendar day. In EnergyPlus output,
+"00:24:00" with a time interval being 15 mins represents a time period from
+"00:23:45" to "00:24:00", and similarly "00:15:00" represents a time period
+from "00:24:00" to "00:15:00" of the next day. This means that if current day
+is Friday, day of week rule applied in schedule time period "00:23:45" to
+"00:24:00" (presented as "00:24:00" in the output) is also Friday, but not
+Saturday. However, if you try to get the day of week of time "00:24:00" in R,
+you will get Saturday, but not Friday. This introduces inconsistency and may
+cause problems when doing data analysis considering day of week value.
+</p>
+<p>With <code>wide</code> equals <code>TRUE</code>, <code style="white-space: pre;">⁠$report_data()⁠</code> will format the simulation output
+in the same way as standard EnergyPlus csv output file. Sometimes this can be
+useful as there may be existing tools/workflows that depend on this format.
+When both <code>wide</code> and <code>all</code> are <code>TRUE</code>, columns of runperiod environment names
+and date time components are also returned, including:
+<code style="white-space: pre;">⁠environment_period_index", "environment_name⁠</code>, <code>simulation_days</code>,
+<code>datetime</code>, <code>month</code>, <code>day</code>, <code>hour</code>, <code>minute</code>, <code>day_type</code>.
+</p>
+<p>For convenience, input character arguments matching in
+<code style="white-space: pre;">⁠$report_data()⁠</code> are <strong>case-insensitive</strong>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# read all report data
+job$report_data()
+
+# specify output variables using report data dictionary
+dict &lt;- job$report_data_dict()
+job$report_data(dict[units == "C"])
+
+# specify output variables using 'key_value' and 'name'
+job$report_data("environment", "site outdoor air drybulb temperature")
+
+# explicitly specify year value and time zone
+job$report_data(dict[1], year = 2020, tz = "Etc/GMT+8")
+
+# explicitly specify case name
+job$report_data(dict[1], case = "example")
+
+# get all possible columns
+job$report_data(dict[1], all = TRUE)
+
+# return in a format that is similar as EnergyPlus CSV output
+job$report_data(dict[1], wide = TRUE)
+
+# return in a format that is similar as EnergyPlus CSV output with
+# extra columns
+job$report_data(dict[1], wide = TRUE, all = TRUE)
+
+# only get data at the working hour on the first Monday
+job$report_data(dict[1], hour = 8:18, day_type = "monday", simulation_days = 1:7)
+
+# only get specified run period data
+job$read_table("EnvironmentPeriods") # possible environment name
+job$report_data(dict[1], environment_name = "San Francisco Intl Ap CA USA TMY3 WMO#=724940")
+# can also be done using 'environment_period_index' column
+job$report_data(dict[1], all = TRUE)[environment_period_index == 3L]
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-tabular_data"></a>
+
+
+
+<h4>Method <code>tabular_data()</code>
+</h4>
+
+<p>Read tabular data
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$tabular_data(
+  report_name = NULL,
+  report_for = NULL,
+  table_name = NULL,
+  column_name = NULL,
+  row_name = NULL,
+  wide = FALSE,
+  string_value = !wide
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>report_name, report_for, table_name, column_name, row_name</code></dt>
+<dd>
+<p>Each is
+a character vector for subsetting when querying the SQL
+database.  For the meaning of each argument, please see the
+description above.</p>
+</dd>
+<dt><code>wide</code></dt>
+<dd>
+<p>If <code>TRUE</code>, each table will be converted into the similar
+format as it is shown in EnergyPlus HTML output file. Default:
+<code>FALSE</code>.</p>
+</dd>
+<dt><code>string_value</code></dt>
+<dd>
+<p>Only applicable when <code>wide</code> is <code>TRUE</code>. If
+<code>string_value</code> is <code>FALSE</code>, instead of keeping all values as
+characters, values in possible numeric columns are converted
+into numbers. Default: the opposite of <code>wide</code>. Possible
+numeric columns indicate column that:
+</p>
+
+<ul>
+<li>
+<p> columns that have associated units
+</p>
+</li>
+<li>
+<p> columns that contents numbers
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$tabular_data()⁠</code> extracts the tabular data in a
+<code>data.table::data.table()</code> using report, table, column and row name
+specifications. The returned <code>data.table::data.table()</code> has
+9 columns:
+</p>
+
+<ul>
+<li> <p><code>case</code>: Simulation case specified using <code>case</code> argument
+</p>
+</li>
+<li> <p><code>index</code>: Tabular data index
+</p>
+</li>
+<li> <p><code>report_name</code>: The name of the report that the record belongs to
+</p>
+</li>
+<li> <p><code>report_for</code>: The <code>For</code> text that is associated with the record
+</p>
+</li>
+<li> <p><code>table_name</code>: The name of the table that the record belongs to
+</p>
+</li>
+<li> <p><code>column_name</code>: The name of the column that the record belongs to
+</p>
+</li>
+<li> <p><code>row_name</code>: The name of the row that the record belongs to
+</p>
+</li>
+<li> <p><code>units</code>: The units of the record
+</p>
+</li>
+<li> <p><code>value</code>: The value of the record <strong>in string format</strong> by default
+</p>
+</li>
+</ul>
+<p>For convenience, input character arguments matching in
+<code style="white-space: pre;">⁠$tabular_data()⁠</code> are <strong>case-insensitive</strong>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> with 8 columns (when <code>wide</code> is
+<code>FALSE</code>) or a named list of <code>data.table::data.table()</code>s where the
+names are the combination of <code>report_name</code>, <code>report_for</code> and
+<code>table_name</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# read all tabular data
+job$tabular_data()
+
+# explicitly specify data you want
+str(job$tabular_data(
+    report_name = "AnnualBuildingUtilityPerformanceSummary",
+    table_name = "Site and Source Energy",
+    column_name = "Total Energy",
+    row_name = "Total Site Energy"
+))
+
+# get tabular data in wide format and coerce numeric values
+str(job$tabular_data(
+    report_name = "AnnualBuildingUtilityPerformanceSummary",
+    table_name = "Site and Source Energy",
+    column_name = "Total Energy",
+    row_name = "Total Site Energy",
+    wide = TRUE, string_value = FALSE
+))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-EplusJob-print"></a>
+
+
+
+<h4>Method <code>print()</code>
+</h4>
+
+<p>Print <code>EplusSql</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EplusJob$print()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$print()⁠</code> shows the core information of this <code>EplusJob</code> object,
+including the path of model and weather, the version and path of
+EnergyPlus used to run simulations, and the simulation job status.
+</p>
+<p><code style="white-space: pre;">⁠$print()⁠</code> is quite useful to get the simulation status, especially
+when <code>wait</code> is <code>FALSE</code> in <code style="white-space: pre;">⁠$run()⁠</code>. The job status will be updated
+and printed whenever <code style="white-space: pre;">⁠$print()⁠</code> is called.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The <code>EplusSql</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+job$print()
+}
+
+</pre>
+</div>
+
+
+
+
+<h3>Author(s)</h3>
+
+<p>Hongyuan Jia
+</p>
+
+
+<h3>See Also</h3>
+
+<p>ParametricJob class for EnergyPlus parametric simulations.
+</p>
+<p><code>param_job()</code> for creating an EnergyPlus parametric job.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## ------------------------------------------------
+## Method `EplusJob$new`
+## ------------------------------------------------
+
+## Not run: 
+if (is_avail_eplus("8.8")) {
+    name_idf &lt;- "1ZoneUncontrolled.idf"
+    name_epw &lt;-  "USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+
+    path_idf &lt;- path_eplus_example("8.8", name_idf)
+    path_epw &lt;- path_eplus_weather("8.8", name_epw)
+
+    # create from local files
+    job &lt;- eplus_job(path_idf, path_epw)
+
+    # create from an Idf and an Epw object
+    job &lt;- eplus_job(read_idf(path_idf), read_epw(path_epw))
+}
+
+## End(Not run)
+
+## ------------------------------------------------
+## Method `EplusJob$version`
+## ------------------------------------------------
+
+## Not run: 
+job$version()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$path`
+## ------------------------------------------------
+
+## Not run: 
+job$path()
+job$path("idf")
+job$path("epw")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$run`
+## ------------------------------------------------
+
+## Not run: 
+# only run design day
+job$run(NULL)
+
+# specify output directory
+job$run(dir = tempdir())
+
+# run in the background
+job$run(wait = TRUE)
+# see job status
+job$status()
+
+# force to kill background job before running the new one
+job$run(force = TRUE)
+
+# do not show anything in the console
+job$run(echo = FALSE)
+
+# copy external files used in the model to simulation output directory
+job$run(copy_external = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$kill`
+## ------------------------------------------------
+
+## Not run: 
+job$kill()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$status`
+## ------------------------------------------------
+
+## Not run: 
+job$status()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$errors`
+## ------------------------------------------------
+
+## Not run: 
+job$errors()
+
+# show all information
+job$errors(info = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$output_dir`
+## ------------------------------------------------
+
+## Not run: 
+job$output_dir()
+
+# Below will open output directory
+# job$output_dir(open = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$list_files`
+## ------------------------------------------------
+
+## Not run: 
+# list all files in the output directory
+job$list_files(simplify = TRUE)
+
+# get a full list of all possible inputs and outputs even though they
+# may not exist for current simulation
+job$list_files()
+
+# return the full paths instead of just file names
+job$locate_output(full = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$locate_output`
+## ------------------------------------------------
+
+## Not run: 
+# get the file path of the error file
+job$locate_output(".err", strict = FALSE)
+
+# can use to detect if certain output file exists
+job$locate_output(".expidf", strict = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$read_rdd`
+## ------------------------------------------------
+
+## Not run: 
+job$read_rdd()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$read_mdd`
+## ------------------------------------------------
+
+## Not run: 
+job$read_mdd()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$list_table`
+## ------------------------------------------------
+
+## Not run: 
+job$list_table()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$read_table`
+## ------------------------------------------------
+
+## Not run: 
+# read a specific table
+job$read_table("Zones")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$report_data_dict`
+## ------------------------------------------------
+
+## Not run: 
+job$report_data_dict()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$report_data`
+## ------------------------------------------------
+
+## Not run: 
+# read all report data
+job$report_data()
+
+# specify output variables using report data dictionary
+dict &lt;- job$report_data_dict()
+job$report_data(dict[units == "C"])
+
+# specify output variables using 'key_value' and 'name'
+job$report_data("environment", "site outdoor air drybulb temperature")
+
+# explicitly specify year value and time zone
+job$report_data(dict[1], year = 2020, tz = "Etc/GMT+8")
+
+# explicitly specify case name
+job$report_data(dict[1], case = "example")
+
+# get all possible columns
+job$report_data(dict[1], all = TRUE)
+
+# return in a format that is similar as EnergyPlus CSV output
+job$report_data(dict[1], wide = TRUE)
+
+# return in a format that is similar as EnergyPlus CSV output with
+# extra columns
+job$report_data(dict[1], wide = TRUE, all = TRUE)
+
+# only get data at the working hour on the first Monday
+job$report_data(dict[1], hour = 8:18, day_type = "monday", simulation_days = 1:7)
+
+# only get specified run period data
+job$read_table("EnvironmentPeriods") # possible environment name
+job$report_data(dict[1], environment_name = "San Francisco Intl Ap CA USA TMY3 WMO#=724940")
+# can also be done using 'environment_period_index' column
+job$report_data(dict[1], all = TRUE)[environment_period_index == 3L]
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$tabular_data`
+## ------------------------------------------------
+
+## Not run: 
+# read all tabular data
+job$tabular_data()
+
+# explicitly specify data you want
+str(job$tabular_data(
+    report_name = "AnnualBuildingUtilityPerformanceSummary",
+    table_name = "Site and Source Energy",
+    column_name = "Total Energy",
+    row_name = "Total Site Energy"
+))
+
+# get tabular data in wide format and coerce numeric values
+str(job$tabular_data(
+    report_name = "AnnualBuildingUtilityPerformanceSummary",
+    table_name = "Site and Source Energy",
+    column_name = "Total Energy",
+    row_name = "Total Site Energy",
+    wide = TRUE, string_value = FALSE
+))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `EplusJob$print`
+## ------------------------------------------------
+
+## Not run: 
+job$print()
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,141 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build an error correction model</h2>
+
+<h3>Description</h3>
+
+<p>Builds an lm object that represents an error correction model (ECM) by automatically differencing and
+lagging predictor variables according to ECM methodology.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecm(
+  y,
+  xeq,
+  xtr,
+  includeIntercept = TRUE,
+  weights = NULL,
+  linearFitter = "lm",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The target variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xeq</code></td>
+<td>
+<p>The variables to be used in the equilibrium term of the error correction model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xtr</code></td>
+<td>
+<p>The variables to be used in the transient term of the error correction model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>includeIntercept</code></td>
+<td>
+<p>Boolean whether the y-intercept should be included (should be set to TRUE if using 'earth' as linearFitter)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Optional vector of weights to be passed to the fitting process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linearFitter</code></td>
+<td>
+<p>Whether to use 'lm' or 'earth' to fit the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to the 'lm' or 'earth' function (careful that some arguments may not be appropriate for ecm!)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The general format of an ECM is </p>
+<p style="text-align: center;"><code class="reqn">\Delta y_{t} = \beta_{0} + \beta_{1}\Delta x_{1,t} +...+ \beta_{i}\Delta x_{i,t} + \gamma(y_{t-1} - (\alpha_{1}x_{1,t-1} +...+ \alpha_{i}x_{i,t-1})).</code>
+</p>
+
+<p>The ecm function here modifies the equation to the following: </p>
+<p style="text-align: center;"><code class="reqn">\Delta y = \beta_{0} + \beta_{1}\Delta x_{1,t} +...+ \beta_{i}\Delta x_{i,t} + \gamma y_{t-1} + \gamma_{1}x_{1,t-1} +...+ \gamma_{i}x_{i,t-1},</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">where \gamma_{i} = -\gamma \alpha_{i},</code>
+</p>
+ 
+<p>so it can be modeled as a simpler ordinary least squares (OLS) function using R's lm function.
+</p>
+<p>Ordinarily, the ECM uses lag=1 when differencing the transient term and lagging the equilibrium term, as specified in the equation above. However, the ecm function here gives the user the ability to specify a lag greater than 1. 
+</p>
+<p>Notice that an ECM models the change in the target variable (y). This means that the predictors will be lagged and differenced,
+and the model will be built on one observation less than what the user inputs for y, xeq, and xtr. If these arguments contain vectors with too few observations (eg. one single observation),
+the function will not work. Additionally, for the same reason, if using weights in the ecm function, the length of weights should be one less than the number of rows in xeq or xtr.
+</p>
+<p>When inputting a single variable for xeq or xtr in base R, it is important to input it in the format "xeq=df['col1']" so they inherit the class 'data.frame'. Inputting such as "xeq=df[,'col1']" or "xeq=df$col1" will result in errors in the ecm function. You can load data via other R packages that store data in other formats, as long as those formats also inherit the 'data.frame' class.
+</p>
+<p>By default, base R's 'lm' is used to fit the model. However, users can opt to use 'earth', which uses Jerome Friedman's Multivariate Adaptive Regression Splines (MARS) to build a regression model, which transforms each continuous variable into piece-wise linear hinge functions. This allows for non-linear features in both the transient and equilibrium terms.
+</p>
+<p>ECM models are used for time series data. This means the user may need to consider stationarity and/or cointegration before using the model.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an lm object representing an error correction model
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lm, earth</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##Not run
+
+#Use ecm to predict Wilshire 5000 index based on corporate profits, 
+#Federal Reserve funds rate, and unemployment rate.
+data(Wilshire)
+
+#Use 2015-12-01 and earlier data to build models
+trn &lt;- Wilshire[Wilshire$date&lt;='2015-12-01',]
+
+#Assume all predictors are needed in the equilibrium and transient terms of ecm.
+xeq &lt;- xtr &lt;- trn[c('CorpProfits', 'FedFundsRate', 'UnempRate')]
+model1 &lt;- ecm(trn$Wilshire5000, xeq, xtr, includeIntercept=TRUE)
+
+#Assume CorpProfits and FedFundsRate are in the equilibrium term, 
+#UnempRate has only transient impacts.
+xeq &lt;- trn[c('CorpProfits', 'FedFundsRate')]
+xtr &lt;- trn['UnempRate']
+model2 &lt;- ecm(trn$Wilshire5000, xeq, xtr, includeIntercept=TRUE)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,299 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>step_embed</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Encoding Factors into Multiple Columns</h2>
+
+<h3>Description</h3>
+
+<p><code>step_embed()</code> creates a <em>specification</em> of a recipe step that will convert a
+nominal (i.e. factor) predictor into a set of scores derived from a
+tensorflow model via a word-embedding model. <code>embed_control</code> is a simple
+wrapper for setting default options.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">step_embed(
+  recipe,
+  ...,
+  role = "predictor",
+  trained = FALSE,
+  outcome = NULL,
+  predictors = NULL,
+  num_terms = 2,
+  hidden_units = 0,
+  options = embed_control(),
+  mapping = NULL,
+  history = NULL,
+  keep_original_cols = FALSE,
+  skip = FALSE,
+  id = rand_id("embed")
+)
+
+embed_control(
+  loss = "mse",
+  metrics = NULL,
+  optimizer = "sgd",
+  epochs = 20,
+  validation_split = 0,
+  batch_size = 32,
+  verbose = 0,
+  callbacks = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>recipe</code></td>
+<td>
+<p>A recipe object. The step will be added to the sequence of
+operations for this recipe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more selector functions to choose variables. For
+<code>step_embed</code>, this indicates the variables to be encoded into a numeric
+format. See <code>recipes::selections()</code> for more details. For the <code>tidy</code>
+method, these are not currently used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>role</code></td>
+<td>
+<p>For model terms created by this step, what analysis role should
+they be assigned?. By default, the function assumes that the embedding
+variables created will be used as predictors in a model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained</code></td>
+<td>
+<p>A logical to indicate if the quantities for preprocessing have
+been estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcome</code></td>
+<td>
+<p>A call to <code>vars</code> to specify which variable is used as the
+outcome in the neural network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictors</code></td>
+<td>
+<p>An optional call to <code>vars</code> to specify any variables to be
+added as additional predictors in the neural network. These variables
+should be numeric and perhaps centered and scaled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_terms</code></td>
+<td>
+<p>An integer for the number of resulting variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hidden_units</code></td>
+<td>
+<p>An integer for the number of hidden units in a dense ReLu
+layer between the embedding and output later. Use a value of zero for no
+intermediate layer (see Details below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>options</code></td>
+<td>
+<p>A list of options for the model fitting process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mapping</code></td>
+<td>
+<p>A list of tibble results that define the encoding. This is
+<code>NULL</code> until the step is trained by <code>recipes::prep()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>history</code></td>
+<td>
+<p>A tibble with the convergence statistics for each term. This
+is <code>NULL</code> until the step is trained by <code>recipes::prep()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_original_cols</code></td>
+<td>
+<p>A logical to keep the original variables in the
+output. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip</code></td>
+<td>
+<p>A logical. Should the step be skipped when the recipe is baked by
+<code>recipes::bake()</code>? While all operations are baked when <code>recipes::prep()</code> is
+run, some operations may not be able to be conducted on new data (e.g.
+processing the outcome variable(s)). Care should be taken when using <code>skip = TRUE</code> as it may affect the computations for subsequent operations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A character string that is unique to this step to identify it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimizer, loss, metrics</code></td>
+<td>
+<p>Arguments to pass to keras::compile()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epochs, validation_split, batch_size, verbose, callbacks</code></td>
+<td>
+<p>Arguments to pass
+to keras::fit()</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Factor levels are initially assigned at random to the new variables and these
+variables are used in a neural network to optimize both the allocation of
+levels to new columns as well as estimating a model to predict the outcome.
+See Section 6.1.2 of Francois and Allaire (2018) for more details.
+</p>
+<p>The new variables are mapped to the specific levels seen at the time of model
+training and an extra instance of the variables are used for new levels of
+the factor.
+</p>
+<p>One model is created for each call to <code>step_embed</code>. All terms given to the
+step are estimated and encoded in the same model which would also contain
+predictors give in <code>predictors</code> (if any).
+</p>
+<p>When the outcome is numeric, a linear activation function is used in the last
+layer while softmax is used for factor outcomes (with any number of levels).
+</p>
+<p>For example, the <code>keras</code> code for a numeric outcome, one categorical
+predictor, and no hidden units used here would be
+</p>
+<div class="sourceCode"><pre>  keras_model_sequential() %&gt;%
+  layer_embedding(
+    input_dim = num_factor_levels_x + 1,
+    output_dim = num_terms,
+    input_length = 1
+  ) %&gt;%
+  layer_flatten() %&gt;%
+  layer_dense(units = 1, activation = 'linear')
+</pre></div>
+<p>If a factor outcome is used and hidden units were requested, the code would
+be
+</p>
+<div class="sourceCode"><pre>  keras_model_sequential() %&gt;%
+  layer_embedding(
+    input_dim = num_factor_levels_x + 1,
+    output_dim = num_terms,
+    input_length = 1
+   ) %&gt;%
+  layer_flatten() %&gt;%
+  layer_dense(units = hidden_units, activation = "relu") %&gt;%
+  layer_dense(units = num_factor_levels_y, activation = 'softmax')
+</pre></div>
+<p>Other variables specified by <code>predictors</code> are added as an additional dense
+layer after <code>layer_flatten</code> and before the hidden layer.
+</p>
+<p>Also note that it may be difficult to obtain reproducible results using this
+step due to the nature of Tensorflow (see link in References).
+</p>
+<p>tensorflow models cannot be run in parallel within the same session (via
+<code>foreach</code> or <code>futures</code>) or the <code>parallel</code> package. If using a recipes with
+this step with <code>caret</code>, avoid parallel processing.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated version of <code>recipe</code> with the new step added to the
+sequence of existing steps (if any). For the <code>tidy</code> method, a tibble with
+columns <code>terms</code> (the selectors or variables for encoding), <code>level</code> (the
+factor levels), and several columns containing <code>embed</code> in the name.
+</p>
+
+
+<h3>Tidying</h3>
+
+<p>When you <code>tidy()</code> this step, a tibble is retruned with
+a number of columns with embedding information, and columns <code>terms</code>,
+<code>levels</code>, and <code>id</code>:
+</p>
+
+<dl>
+<dt>terms</dt>
+<dd>
+<p>character, the selectors or variables selected</p>
+</dd>
+<dt>levels</dt>
+<dd>
+<p>character, levels in variable</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>character, id of this step</p>
+</dd>
+</dl>
+<h3>Tuning Parameters</h3>
+
+<p>This step has 2 tuning parameters:
+</p>
+
+<ul>
+<li> <p><code>num_terms</code>: # Model Terms (type: integer, default: 2)
+</p>
+</li>
+<li> <p><code>hidden_units</code>: # Hidden Units (type: integer, default: 0)
+</p>
+</li>
+</ul>
+<h3>Case weights</h3>
+
+<p>The underlying operation does not allow for case weights.
+</p>
+
+
+<h3>References</h3>
+
+<p>Francois C and Allaire JJ (2018) <em>Deep Learning with R</em>, Manning
+</p>
+<p>"Concatenate Embeddings for Categorical Variables with Keras"
+<a href="https://flovv.github.io/Embeddings_with_keras_part2/">https://flovv.github.io/Embeddings_with_keras_part2/</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(grants, package = "modeldata")
+
+set.seed(1)
+grants_other &lt;- sample_n(grants_other, 500)
+
+rec &lt;- recipe(class ~ num_ci + sponsor_code, data = grants_other) %&gt;%
+  step_embed(sponsor_code,
+    outcome = vars(class),
+    options = embed_control(epochs = 10)
+  )
+
+</code></pre>
+
+
+</div>

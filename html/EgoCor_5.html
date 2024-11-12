@@ -1,0 +1,304 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>vario.mod</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Semi-variogram model fitting</h2>
+
+<h3>Description</h3>
+
+<p>The function allows for user friendly exponential semi-variogram model fitting to data.
+Based on the <code>gstat</code> function <code>variogram</code>, <code>vgm</code> and <code>fit.variogram</code>, the function fits one
+or multiple exponential semi-variogram models given one or multiple maximal distances and number of bins.
+All estimated model parameters are summarized in an information table.
+Graphics of all models can be observed in a shiny application output
+or in several plot windows, one for each empirical semi-variogram.
+Additionally, a pdf file including all the figures can be
+saved in a specified working directory.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">vario.mod(
+  data,
+  max.dist = c(2000, 1500, 1000, 750, 500, 250),
+  nbins = 13,
+  fit.method = 7,
+  shinyresults = TRUE,
+  windowplots = FALSE,
+  pdf = FALSE,
+  pdf.directory = getwd(),
+  pdf.name = "Semivariograms"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame or matrix containing the x-coordinates  in the first column,
+the y-coordinates  in the second column (by default in meters)
+and the data values in the third column.
+The dataset may contain more attributes in further columns. In this case, a warning is provided.
+All columns beyond the third one are ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.dist</code></td>
+<td>
+<p>An optional numeric argument; the default is the vector <code>c(2000,1500,1000,750,500,250)</code>.
+Either a scalar or vector containing the maximal distances can be inserted. If a vector is
+provided, the <code> nbins</code> argument must be either a scalar or a vector of the same length.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbins</code></td>
+<td>
+<p>An optional argument; the default is 13 bins for all empirical semi-variograms to be estimated.
+Either a scalar or vector containing the number of bins can be inserted. If a vector is
+provided, the <code>max.dist</code> argument must be either a scalar or a vector of the same length.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit.method</code></td>
+<td>
+<p>An optional argument that specifies the fit method used by the gstat function fit.variogram to fit the semivariogram.
+The default value ist 7. Only values 1,2,6,7 are possible. Please see the package description of gstat for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shinyresults</code></td>
+<td>
+<p>A logical argument; by default TRUE. If <code>shinyresults = T</code>,
+the information table and graphics of
+all estimated semi-variogram models can be observed in an automatically generated
+shiny application.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windowplots</code></td>
+<td>
+<p>A logical argument; by default FALSE. If <code>windowplots = T</code>, all graphics are
+opened in new windows. They can be observed and saved manually in a wished format.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pdf</code></td>
+<td>
+<p>A logical argument; by default FALSE. If <code>pdf = T</code>, all graphics are saved in a pdf file.
+The file path and the name of the pdf file can be specified by the following two arguments
+<code>pdf.directory</code> and <code>pdf.name</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pdf.directory</code></td>
+<td>
+<p>A character argument to specify the folder in which the pdf file is saved.
+If no file path is given, the pdf file is saved in the current working directory identified
+by <code>getwd()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pdf.name</code></td>
+<td>
+<p>A character argument to specify the name of the pdf file. If no name is provided, the
+file is saved as 'Semivariograms.pdf'.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>Prespecification and Interpretation of max.dist and nbins arguments:</strong>
+</p>
+<p><code>max.dist</code>:
+only data pairs with a separation smaller than the prespecified maximal distance are included in the semi-variogram
+estimation. Data pairs that are separated by a higher distance are excluded.
+</p>
+<p><code>nbins</code>: the interval (0, <code>max.dist</code>] is separated into <code>nbins</code> equidistant
+lag bins or intervals, respectively. Each pairwise distance is then assigned to one of the
+bins. The point pair subsets <code class="reqn">N(h_k) := \{(\mathbf{s_i}, \mathbf{s_j}) \in D |\;\; ||\mathbf{s_i}-\mathbf{s_j}|| \in Bin_k\}</code>
+are defined
+and a point estimate of the semi-variogram is estimated for each <code class="reqn">Bin_k</code> for <code class="reqn">k =1,...</code><code>nbins</code>.
+</p>
+<p><strong>Empirical semi-variogram estimator:</strong>
+</p>
+<p>Using the <code>gstat</code> function <code>variogram</code> an empirical semi-variogram according to
+Matheron's semi-variogram estimator (Matheron 1962)
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\gamma}(h) = \frac{1}{2\cdot|N(h)|} \sum_{(\mathbf{s_i},
+         \mathbf{s_j}) \in N(h)}\{Z(\mathbf{s_i})- Z(\mathbf{s_j})\}^2</code>
+</p>
+
+<p>with <code class="reqn">N(h)</code> defined as above is obtained.
+</p>
+<p><strong>Exponential semi-variogram model:</strong>
+</p>
+<p>Based on the empirical semi-variogram an exponential semi-variogram model of the form
+(Cressie et al. 1993)
+</p>
+<p style="text-align: center;"><code class="reqn">\gamma_{exp}(h) =  c_0 + \sigma_0^2 \Big\{1 - \exp\big(- \frac{h}{\phi}\big)\Big\}</code>
+</p>
+
+<p>for <code class="reqn">h &gt; 0</code>
+is fitted using the <code>vgm</code> and <code>fit.variogram</code> function from package <code>gstat</code> via
+weighted least squares estimation. The weights have the form
+<code class="reqn"> w_k = \vert N(h_k) \vert / h_k^2</code> specified by the <code>fit.method = 7</code> argument
+within the <code>fit.variogram</code> function.
+</p>
+<p>For the numerical optimization, starting values for the model parameters have to be provided.
+The initial value for the partial sill <code class="reqn">\sigma_0^2</code> equals the empirical variance of
+the observations. The starting value for the nugget effect <code class="reqn">c_0</code> is set to zero.
+The initial value for the shape parameter <code class="reqn">\phi</code> is set as <code>max.dist</code> divided by 3.
+</p>
+<p><strong>Result statistics:</strong>
+</p>
+<p>The results for all models are automatically printed when running the function and can be
+found under <code>function.output$infotable</code>. Part of the table contains a repetition of the
+specified <code>max.dist</code> and <code>nbins</code> parameters as well as the estimated model parameters.
+The additional statistics within the infotable output are the following:
+</p>
+<p>Practical range: In case of the exponential semi-variogram model, the
+sill <code class="reqn">\sigma^2 = c_0 + \sigma_0^2</code> is only reached asymptotically. The distance <code class="reqn">H</code>
+at which <code class="reqn">\gamma(h^* = 0.95 \cdot \sigma^2)</code> is called the practical range.
+Formally, the practical range is
+defined as
+</p>
+<p style="text-align: center;"><code class="reqn">prac.range = \phi ln\Big( \frac{\sigma_0^2}{0.05(c_0 + \sigma_0^2)} \Big).</code>
+</p>
+
+<p>Relative Structural Variability (RSV): The relative structural variability is a measure of
+the proportion of the total variance with a spatial structure and
+defined as
+</p>
+<p style="text-align: center;"><code class="reqn">RSV = \frac{\sigma_0^2}{c_0 + \sigma_0^2}.</code>
+</p>
+
+<p>Relative Bias: The relative bias describes the proportion of the total variance according
+to the semi-variogram model to the true total variance. It is estimated as
+</p>
+<p style="text-align: center;"><code class="reqn">rel. bias = \frac{c_0 + \sigma_0^2}{\widehat{Var(Z)}},</code>
+</p>
+
+<p>where <code class="reqn">\widehat{Var(Z)}</code> is the sample variance or empirical variance of the attribute of
+interest of the dataset at hand.
+A relative bias of 1 indicates equality of
+sample variance and variance according to the semi-variogram model.
+</p>
+<p>For more details, see Schabenberger and Gotway (2017).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the following arguments:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>infotable</code></td>
+<td>
+<p>A table containing the statistics of all estimated exponential semi-variogram models.
+Each row corresponds to one model.
+Shown are the prespecified <code>max.dist</code> and <code>nbins</code> values, the parameter estimates for the nugget effect, partial
+sill and shape, the resulting estimated practical range,
+the relative structured variability (RSV) and the relative bias.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variog.list</code></td>
+<td>
+<p>A list: each list entry contains the <code>variog</code> output with further information
+on the estimated empirical semi-variogram.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vmod.list</code></td>
+<td>
+<p>A list: each list entry contains the <code>variofit</code> output with further information
+on the fitted parametric semi-variogram model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>input.arguments</code></td>
+<td>
+<p>A list containing the evaluated input arguments, namely the <code>$data</code> used to fit the
+exponential semi-variogram, the <code>$max.dist</code> and <code>$nbins</code> specifications and the
+specifications for the pdf-output, <code>$pdf</code>, <code>$pdf.directory</code> and <code>$pdf.name</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>Contains the call of the function.</p>
+</td>
+</tr>
+</table>
+<p>The models are visualized in an automatically opened shiny application if <code>shinyresults = T</code>. Beware
+that in this case the output of the <code>vario.mod</code> function is not saved in the environment, even with a variable name assigned.
+In order to save the output, set <code>shinyresults = F</code>.
+</p>
+<p>If the argument <code>windowplots = T</code>, one or multiple graphics of the estimated
+empirical semi-variograms and semi-variogram models are plotted in the R environment.
+If the argument <code>pdf = T</code>, a pdf file containing the same figures is saved in the manually
+specified or current working directory.
+</p>
+
+
+<h3>References</h3>
+
+<p>Cressie N, Ribeiro PJ, Diggle PJ (1993).
+<em>Statistics for spatial data</em>, Rev. ed. edition.
+Wiley, New York.
+ISBN 9781119115151.<br><br> Matheron G (1962).
+<em>Traité de géostatistique appliquée. 1 (1962)</em>, volume 1.
+Editions Technip.<br><br> Schabenberger O, Gotway CA (2017).
+<em>Statistical methods for spatial data analysis</em>.
+CRC press.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>variogram</code> in the <code>gstat</code> package for further information on
+the estimation of the empirical semi-variogram;
+</p>
+<p><code>fit.variogram</code> and <code>vgm</code> in the <code>gstat</code> package for further information on the default settings
+when fitting an exponential semi-variogram model to an empirical semi-variogram.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(interactive()){
+
+## Example 1
+# Default options:
+vario.mod(data = birth)
+
+# This is equal to
+vario.mod(data = birth, max.dist = c(2000,1500,1000,750,500,250), nbins = 13,
+          shinyresults = TRUE, windowplots = FALSE,
+          pdf = FALSE, pdf.directory = getwd(), pdf.name = "Semivariograms")
+
+## Example 2
+# Open graphics in regular windows and not in shiny application:
+vario.mod(data = birth, max.dist = c(2000,1500,1000,750,500,250), nbins = 15:10,
+          shinyresults = FALSE, windowplots = TRUE)
+
+## Example 3
+# Generate a pdf with the following command:
+vario.mod(data = birth, shinyresults = FALSE, windowplots = FALSE,
+          pdf = TRUE, pdf.directory = getwd())
+# You find a pdf file in your current working directory.
+
+}
+
+
+</code></pre>
+
+
+</div>

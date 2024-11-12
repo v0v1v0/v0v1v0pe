@@ -1,0 +1,238 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fit.emc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Model estimation in EMC2</h2>
+
+<h3>Description</h3>
+
+<p>General purpose function to estimate models specified in EMC2.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'emc'
+fit(
+  emc,
+  stage = NULL,
+  iter = 1000,
+  stop_criteria = NULL,
+  report_time = TRUE,
+  p_accept = 0.8,
+  step_size = 100,
+  verbose = TRUE,
+  verboseProgress = FALSE,
+  fileName = NULL,
+  particles = NULL,
+  particle_factor = 50,
+  cores_per_chain = 1,
+  cores_for_chains = length(emc),
+  max_tries = 20,
+  n_blocks = 1,
+  ...
+)
+
+fit(emc, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>emc</code></td>
+<td>
+<p>An emc object created with <code>make_emc</code>,
+or a path to where the emc object is stored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stage</code></td>
+<td>
+<p>A string. Indicates which stage to start the run from, either <code>preburn</code>, <code>burn</code>, <code>adapt</code> or <code>sample</code>.
+If unspecified, it will run the subsequent stage (if there is one).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>An integer. Indicates how many iterations to run in the sampling stage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop_criteria</code></td>
+<td>
+<p>A list. Defines the stopping criteria and for which types
+of parameters these should hold. See the details and examples section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>report_time</code></td>
+<td>
+<p>Boolean. If <code>TRUE</code>, the time taken to run the MCMC chains till completion of the <code>stop_criteria</code> will be printed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_accept</code></td>
+<td>
+<p>A double. The target acceptance probability of the MCMC process.
+This fine-tunes the width of the search space to obtain the desired acceptance probability. Defaults to .8</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step_size</code></td>
+<td>
+<p>An integer. After each step, the stopping requirements as specified
+by <code>stop_criteria</code> are checked and proposal distributions are updated. Defaults to 100.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. Whether to print messages between each step with the current status regarding the <code>stop_criteria</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verboseProgress</code></td>
+<td>
+<p>Logical. Whether to print a progress bar within each step or not.
+Will print one progress bar for each chain and only if <code>cores_for_chains = 1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fileName</code></td>
+<td>
+<p>A string. If specified, will auto-save emc object at this location on every iteration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>particles</code></td>
+<td>
+<p>An integer. How many particles to use, default is <code>NULL</code> and
+<code>particle_factor</code> is used instead. If specified, <code>particle_factor</code> is overwritten.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>particle_factor</code></td>
+<td>
+<p>An integer. <code>particle_factor</code> multiplied by the square
+root of the number of sampled parameters determines the number of particles used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores_per_chain</code></td>
+<td>
+<p>An integer. How many cores to use per chain. Parallelizes across
+participant calculations. Only available on Linux or Mac OS. For Windows, only
+parallelization across chains (<code>cores_for_chains</code>) is available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores_for_chains</code></td>
+<td>
+<p>An integer. How many cores to use across chains.
+Defaults to the number of chains. The total number of cores used is equal to <code>cores_per_chain</code> * <code>cores_for_chains</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_tries</code></td>
+<td>
+<p>An integer. How many times should it try to meet the finish
+conditions as specified by <code>stop_criteria</code>? Defaults to 20. <code>max_tries</code> is
+ignored if the required number of iterations has not been reached yet.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_blocks</code></td>
+<td>
+<p>An integer. Number of blocks. Will block the parameter chains such that they are
+updated in blocks. This can be helpful in extremely tough models with a large number of parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional optional arguments</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>stop_criteria</code> is either a list of lists with names of the stages,
+or a single list in which case its assumed to be for the sample <code>stage</code> (see examples).
+The potential stop criteria to be set are:
+</p>
+<p><code>selection</code> (character vector): For which parameters the <code>stop_criteria</code> should hold
+</p>
+<p><code>mean_gd</code> (numeric): The mean Gelman-Rubin diagnostic across all parameters in the selection
+</p>
+<p><code>max_gd</code> (numeric): The max Gelman-Rubin diagnostic across all parameters in the selection
+</p>
+<p><code>min_unique</code> (integer): The minimum number of unique samples in the MCMC chains across all parameters in the selection
+</p>
+<p><code>min_es</code> (integer): The minimum number of effective samples across all parameters in the selection
+</p>
+<p><code>omit_mpsrf</code> (Boolean): Whether to include the multivariate point-scale reduction factor in the Gelman-Rubin diagnostic. Default is <code>FALSE</code>.
+</p>
+<p><code>iter</code> (integer): The number of MCMC samples to collect.
+</p>
+<p>The estimation is performed using particle-metropolis within-Gibbs sampling.
+For sampling details see:
+</p>
+<p>Gunawan, D., Hawkins, G. E., Tran, M.-N., Kohn, R., &amp; Brown, S. (2020).
+New estimation approaches for the hierarchical linear ballistic accumulator model.
+<em>Journal of Mathematical Psychology</em> ,96, 102368. doi.org/10.1016/j.jmp.2020.102368
+</p>
+<p>Stevenson, N., Donzallaz, M. C., Innes, R. J., Forstmann, B., Matzke, D., &amp; Heathcote, A. (2024).
+EMC2: An R Package for cognitive models of choice. doi.org/10.31234/osf.io/2e4dq
+</p>
+
+
+<h3>Value</h3>
+
+<p>An emc object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# First define a design
+design_DDMaE &lt;- design(data = forstmann,model=DDM,
+                           formula =list(v~0+S,a~E, t0~1, s~1, Z~1, sv~1, SZ~1),
+                           constants=c(s=log(1)))
+# Then make the emc object, we've omitted a prior here for brevity so default priors will be used.
+emc_forstmann &lt;- make_emc(forstmann, design)
+
+# With the emc object we can start sampling by simply calling fit
+emc_forstmann &lt;- fit(emc_forstmann, fileName = "intermediate_save_location.RData")
+
+# For particularly hard models it pays off to increase the ``particle_factor``
+# and, although to a lesser extent, lower ``p_accept``.
+emc_forstmann &lt;- fit(emc_forstmann, particle_factor = 100, p_accept = .6)
+
+# Example of how to use the stop_criteria:
+emc_forstmann &lt;- fit(emc_forstmann, stop_criteria = list(mean_gd = 1.1, max_gd = 1.5,
+            selection = c('alpha', 'sigma2'), omit_mpsrf = TRUE, min_es = 1000))
+# In this case the stop_criteria are set for the sample stage, which will be
+# run until the mean_gd &lt; 1.1, the max_gd &lt; 1.5 (omitting the multivariate psrf)
+# and the effective sample size &gt; 1000,
+# for both the individual-subject parameters ("alpha")
+# and the group-level variance parameters.
+
+# For the unspecified stages in the ``stop_criteria`` the default values
+# are assumed which are found in Stevenson et al. 2024 &lt;doi.org/10.31234/osf.io/2e4dq&gt;
+
+# Alternatively, you can also specify the stop_criteria for specific stages by creating a
+# nested list
+emc_forstmann &lt;- fit(emc_forstmann, stop_criteria = list("burn" = list(mean_gd = 1.1, max_gd = 1.5,
+            selection = c('alpha')), "adapt" = list(min_unique = 100)))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

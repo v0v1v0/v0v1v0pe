@@ -1,0 +1,291 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>repLmer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Replication methods (JK1 and JK2) for multilevel linear regression models and trend estimation.</h2>
+
+<h3>Description</h3>
+
+<p>Compute multilevel linear models for complex cluster designs with multiple imputed variables based
+on the Jackknife (JK1, JK2) procedure. Conceptually, the function combines replication
+methods and methods for multiple imputed data. Technically, this is a wrapper for the <code>BIFIE.twolevelreg</code> function
+of the <code>BIFIEsurvey</code> package. <code>repLmer</code> only adds functionality for trend estimation. Please note
+that the function is not suitable for logistic logit/probit models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">repLmer(datL, ID, wgt = NULL, L1wgt=NULL, L2wgt=NULL, type = c("JK2", "JK1"),
+            PSU = NULL, repInd = NULL, jkfac = NULL, rho = NULL, imp=NULL,
+            group = NULL, trend = NULL, dependent, formula.fixed, formula.random,
+            doCheck = TRUE, na.rm = FALSE, clusters, verbose = TRUE)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>datL</code></td>
+<td>
+
+<p>Data frame in the long format (i.e. each line represents one ID unit in one imputation of one nest) containing all
+variables for analysis.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ID</code></td>
+<td>
+
+<p>Variable name or column number of student identifier (ID) variable. ID variable must not contain any missing values.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wgt</code></td>
+<td>
+
+<p>Optional: Variable name or column number of case weighting variable. If no weighting variable is specified,
+all cases will be equally weighted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L1wgt</code></td>
+<td>
+
+<p>Name of Level 1 weight variable. This is optional. If it is not provided, <code>L1wgt</code> is calculated from the
+total weight (i.e., <code>wgt</code>) and <code>L2wgt</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L2wgt</code></td>
+<td>
+
+<p>Name of Level 2 weight variable
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>Defines the replication method for cluster replicates which is to be applied. Depending on <code>type</code>, additional
+arguments must be specified (e.g., <code>PSU</code> and/or <code>repInd</code> or <code>repWgt</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PSU</code></td>
+<td>
+
+
+<p>Variable name or column number of variable indicating the primary sampling unit (PSU). When a jackknife procedure is applied,
+the PSU is the jackknife zone variable. If <code>NULL</code>, no cluster structure is assumed and
+standard errors are computed according to a random sample.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repInd</code></td>
+<td>
+
+
+<p>Variable name or column number of variable indicating replicate ID. In a jackknife procedure, this is the jackknife replicate
+variable. If <code>NULL</code>, no cluster structure is assumed and standard errors are computed according to a random sample.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jkfac</code></td>
+<td>
+
+<p>Argument is passed to <code>BIFIE.data.jack</code> and specifies the factor for multiplying jackknife replicate
+weights.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+
+<p>Fay factor for statistical inference. The argument is passed to the <code>fayfac</code> argument of the
+<code>BIFIE.data.jack</code> function from the <code>BIFIEsurvey</code> package. See the
+corresponding help page for further details. For convenience, if <code>rho = NULL</code> (the default)
+and <code>type = "JK1"</code>, <code>BIFIE.data.jack</code> is called with
+<code>jktype="JK_GROUP"</code> and <code>fayfac = rho</code>, where <code class="reqn">\rho = (N_{cluster} - 1) \times N_{cluster}^{-1}</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>imp</code></td>
+<td>
+<p>Name or column number of the imputation variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+
+
+<p>Optional: column number or name of one grouping variable. Note: in contrast to <code>repMean</code>, only one grouping variable can be specified.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend</code></td>
+<td>
+
+<p>Optional: name or column number of the trend variable. Note: Trend variable must have exact two levels. Levels for
+grouping variables must be equal in both 'sub populations' partitioned by the trend variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dependent</code></td>
+<td>
+
+<p>Name or column number of the dependent variable
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula.fixed</code></td>
+<td>
+
+<p>An R formula for fixed effects
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula.random</code></td>
+<td>
+
+<p>An R formula for random effects
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doCheck</code></td>
+<td>
+
+<p>Logical: Check the data for consistency before analysis? If <code>TRUE</code> groups with insufficient data are excluded from
+analysis to prevent subsequent functions from crashing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+
+<p>Logical: Should cases with missing values be dropped?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+
+<p>Variable name or column number of cluster variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>Logical: Show analysis information on console?
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+
+
+
+
+<p>A list of data frames in the long format. The output can be summarized using the <code>report</code> function.
+The first element of the list is a list with either one (no trend analyses) or two (trend analyses)
+data frames with at least six columns each. For each subpopulation denoted by the <code>groups</code>
+statement, each dependent variable, each parameter and each coefficient the corresponding value is given. 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>Denotes the group an analysis belongs to. If no groups were specified and/or analysis for the 
+whole sample were requested, the value of ‘group’ is ‘wholeGroup’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depVar</code></td>
+<td>
+<p>Denotes the name of the dependent variable in the analysis. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modus</code></td>
+<td>
+<p>Denotes the mode of the analysis. For example, if a JK2 analysis without sampling weights was 
+conducted, ‘modus’ takes the value ‘jk2.unweighted’. If a analysis without any replicates but with sampling
+weights was conducted, ‘modus’ takes the value ‘weighted’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameter</code></td>
+<td>
+<p>Denotes the parameter of the regression model for which the corresponding value is given
+further. Amongst others, the ‘parameter’ column takes the values ‘(Intercept)’ and ‘gendermale’ if ‘gender’ 
+was the dependent variable, for instance. See example 1 for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficient</code></td>
+<td>
+<p>Denotes the coefficient for which the corresponding value is given further. Takes the 
+values ‘est’ (estimate) and ‘se’ (standard error of the estimate).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>The value of the parameter estimate in the corresponding group.</p>
+</td>
+</tr>
+</table>
+<p>If groups were specified, further columns which are denoted by the group names are added to the data frame. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### load example data (long format)
+data(lsa)
+### use only the first nest, use only reading
+btRead &lt;- subset(lsa, nest==1 &amp; domain=="reading")
+
+
+### random intercept model with groups
+mod1 &lt;- repLmer(datL = btRead, ID = "idstud", wgt = "wgt", L1wgt="L1wgt", L2wgt="L2wgt",
+        type = "jk2", PSU = "jkzone", repInd = "jkrep", imp = "imp",trend="year",
+        group="country", dependent="score", formula.fixed = ~as.factor(sex)+mig,
+        formula.random=~1, clusters="idclass")
+res1 &lt;- report(mod1)
+
+### random slope without groups and without trend
+mod2 &lt;- repLmer(datL = subset(btRead, country=="countryA" &amp; year== 2010),
+        ID = "idstud", wgt = "wgt", L1wgt="L1wgt", L2wgt="L2wgt", type = "jk2",
+        PSU = "jkzone", repInd = "jkrep", imp = "imp", dependent="score",
+        formula.fixed = ~as.factor(sex)*mig, formula.random=~mig, clusters="idclass")
+res2 &lt;- report(mod2)
+</code></pre>
+
+
+</div>

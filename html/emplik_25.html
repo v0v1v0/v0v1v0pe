@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>emplikH2B</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Return binomial empirical likelihood ratio for the given lambda, with 2-sample right censored data</h2>
+
+<h3>Description</h3>
+
+<p>Compute the binomial empirical likelihood ratio for the given tilt parameter lambda. 
+Most useful for construct Wilks confidence intervals.
+The null hypothesis or constraint is defined by the parameter <code class="reqn">\theta</code>, where 
+</p>
+<p style="text-align: center;"><code class="reqn">
+\int fun1(t) d \log(1-H_1(t)) - \int fun2(t) d \log (1-H_2(t)) = \theta </code>
+</p>
+<p>.
+</p>
+<p>If the lambda=0, you get the Nelson-Aalen (NPMLE) and output -2LLR =0. Otherwise the lambda is not scaled
+(as in one sample case). Since there are two sample sizes. It can be confusing which sample size to use for scale.
+So the lambda here is larger than those in one sample by a sclae of (either?) sample size.
+</p>
+<p>Where <code class="reqn">H_1(t)</code> and <code class="reqn">H_2(t)</code> are the unknown
+cumulative hazard function for sample 1/2; <code class="reqn">fun1(t)</code> and <code class="reqn">fun2(t)</code> can be any given function. 
+It can even be random, just need to be predictable.
+In the future, the input function <code class="reqn">fun</code> may replaced by the vector of <code class="reqn">fun(x)</code>, 
+since this is more flexible.
+</p>
+<p>Input data can be right censored. If no censoring, set <code>d1=rep(1, length(x1))</code>, and/or <code>d2=rep(1, length(x2))</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emplikH2B(lambda, x1, d1, x2, d2, fun1, fun2, CIforTheta=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>a scalar. Can be positive or negative. The amount of tiling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x1</code></td>
+<td>
+<p>a vector of the censored survival times. sample 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d1</code></td>
+<td>
+<p>a vector of the censoring indicators, 1-uncensor; 0-right censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x2</code></td>
+<td>
+<p>a vector of the censored survival times. sample 2</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d2</code></td>
+<td>
+<p>a vector of the censoring indicators, 1-uncensor; 0-right censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun1</code></td>
+<td>
+<p>a left continuous (weight) function used to calculate 
+the weighted hazard in the parameter <code class="reqn">\theta</code>. <code>fun1</code> must be able 
+to take a vector input. See example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun2</code></td>
+<td>
+<p>Ditto</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CIforTheta</code></td>
+<td>
+<p>an optional logical value. Default to FALSE. If set to TRUE,
+will return the integrated hazard value for the given lambda.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is used to calculate lambda confidence interval (Wilks type) for <code class="reqn">\theta</code>.
+</p>
+<p>This function is designed for the case where the 
+true distribution should be discrete. Ties in the data are OK.
+</p>
+<p>The log empirical likelihood used here is the ‘binomial’ version empirical likelihood:
+</p>
+<p style="text-align: center;"><code class="reqn">  
+log EL1 = \sum_{i=1}^n \delta_i \log (dH(x_i))  + (R_i - \delta_i)\log [1- dH(x_i) ]  ~,
+</code>
+</p>
+
+<p>(similarly defined for sample 2) and the overall log EL = log EL1 + log EL2.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>the -2Log Empirical Likelihood ratio, binomial version.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>the input lambda. The tilt. The Lagrange multiplier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>times1</code></td>
+<td>
+<p>the location of the hazard jumps. sample 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>times2</code></td>
+<td>
+<p>the location of the hazard jumps. sample 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wts1</code></td>
+<td>
+<p>the jump size of hazard function at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wts2</code></td>
+<td>
+<p>the jump size of hazard function at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>HazDiff2</code></td>
+<td>
+<p>Difference of two hazard integrals. theta defined above.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Pan, X. and Zhou, M. (2002),
+“Empirical likelihood in terms of hazard for censored data”. 
+<em>Journal of Multivariate Analysis</em> <b>80</b>, 166-188.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## fun &lt;- function(x) { as.numeric(x &lt;= 6.5) }
+## emplikH1.test( x=c(1,2,3,4,5), d=c(1,1,0,1,1), theta=2, fun=fun) 
+## fun2 &lt;- function(x) {exp(-x)}  
+## emplikH1.test( x=c(1,2,3,4,5), d=c(1,1,0,1,1), theta=0.2, fun=fun2) 
+</code></pre>
+
+
+</div>

@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fitMOStruncnormal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Truncated normal EMOS model fit to a training set
+</h2>
+
+<h3>Description</h3>
+
+<p>Fits a truncated normal EMOS model to a given training set.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fitMOStruncnormal(ensembleData, control = controlMOStruncnormal(),
+                  exchangeable = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ensembleData</code></td>
+<td>
+
+<p>An <code>ensembleData</code> object including ensemble forecasts and
+verification observations.
+Missing values (indicated by <code>NA</code>) are allowed. Dates are ignored
+if they are included.  This is the training set for the model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+
+<p>A list of control values for the fitting functions specified via the
+function  controlMOStruncnormal. For details
+and default values, see controlMOStruncnormal.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exchangeable</code></td>
+<td>
+
+<p>An optional numeric or character vector or factor indicating groups of
+ensemble members that are exchangeable (indistinguishable).
+The models have equal EMOS coefficients within each group.
+If supplied, this argument will override any specification of
+exchangeability in <code>ensembleData</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Given an ensemble of size <code class="reqn">m</code>: <code class="reqn">X_1, \ldots , X_m</code>, the
+following truncated normal model is fit by <code>ensembleMOStruncnormal</code>: 
+</p>
+<p style="text-align: center;"><code class="reqn">Y ~ N_0(a + b_1 X_1 + ... + b_m X_m, c + dS^2),</code>
+</p>
+
+<p>where <code class="reqn">N_0</code> denotes the normal distribution truncated at zero,
+with location <code class="reqn">a + b_1 X_1 + ... + b_m X_m</code> and squared scale
+<code class="reqn">c + dS^2</code>.
+<code>B</code> is a vector of fitted regression coefficients: <code class="reqn">b_1,
+  \ldots, b_m</code>.  Specifically, <code class="reqn">a, b_1,\ldots, b_m, c, d</code> are
+fitted to optimize
+<code>control$scoringRule</code> over the specified training period using
+<code>optim</code> with <code>method = control$optimRule</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following output components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+
+<p>The fitted intercept.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+
+<p>The fitted EMOS coefficients.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c,d</code></td>
+<td>
+
+<p>The fitted parameters for the squared scale, see details.
+</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>T. L. Thorarinsdottir and T. Gneiting,
+Probabilistic forecasts of wind speed: 
+Ensemble model output statistics by using 
+heteroscedastic censored regression.
+<em>Journal of the Royal Statistical Society Series A</em> 
+173:371–388, 2010.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>controlMOStruncnormal</code>,
+<code>ensembleMOStruncnormal</code>,
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("ensBMAtest", package = "ensembleBMA")
+
+ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+obs &lt;- paste("MAXWSP10","obs", sep = ".")
+ens &lt;- paste("MAXWSP10", ensMemNames, sep = ".")
+windTestData &lt;- ensembleData(forecasts = ensBMAtest[,ens],
+                             dates = ensBMAtest[,"vdate"],
+                             observations = ensBMAtest[,obs],
+                             station = ensBMAtest[,"station"],
+                             forecastHour = 48,
+                             initializationTime = "00")
+                             
+windTrain &lt;- trainingData(windTestData, trainingDays = 30,
+                          date = "2008010100")
+
+windTestFit &lt;- fitMOStruncnormal(windTrain)
+</code></pre>
+
+
+</div>

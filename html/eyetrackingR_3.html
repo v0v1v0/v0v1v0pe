@@ -1,0 +1,86 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>analyze_boot_splines</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate confidence intervals for bootstrapped splines data</h2>
+
+<h3>Description</h3>
+
+<p>Deprecated. Performing this analysis should be done by calling <code>analyze_time_bins(test="boot_splines")</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">analyze_boot_splines(data)
+
+## S3 method for class 'boot_splines_data'
+analyze_boot_splines(data)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The output of the <code>boot_splines_data</code> function</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>Estimates a confidence interval over the difference between means (within- or between-subjects)
+from <code>boot_splines_data</code>. Confidence intervals are derived from the alpha argument in 
+<code>boot_splines_data</code> (e.g., alpha = .05, CI=(.025,.975); alpha=.01, CI=(.005,.0995))
+</p>
+
+
+<h3>Value</h3>
+
+<p>A dataframe indicating means and CIs for each time-bin
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul><li> <p><code>analyze_boot_splines(boot_splines_data)</code>: 
+</p>
+</li></ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+data(word_recognition)
+data &lt;- make_eyetrackingr_data(word_recognition, 
+                               participant_column = "ParticipantName",
+                               trial_column = "Trial",
+                               time_column = "TimeFromTrialOnset",
+                               trackloss_column = "TrackLoss",
+                               aoi_columns = c('Animate','Inanimate'),
+                               treat_non_aoi_looks_as_missing = TRUE )
+response_window &lt;- subset_by_window(data, window_start_time = 15500, window_end_time = 21000, 
+                                    rezero = FALSE)
+response_time &lt;- make_time_sequence_data(response_window, time_bin_size = 500, aois = "Animate", 
+                                         predictor_columns = "Sex", 
+                                         summarize_by = "ParticipantName")
+                                         
+# bootstrap resample 500 smoothed splines from the dataset,
+# comparing females versus females at an alpha of .05                                         
+df_bootstrapped &lt;- make_boot_splines_data(response_time,
+                                          predictor_column = 'Sex',
+                                          within_subj = FALSE,
+                                          bs_samples = 500,
+                                          alpha = .05,
+                                          smoother = "smooth.spline")
+
+# analyze the divergences that occurred
+boot_splines_analysis &lt;- analyze_boot_splines(df_bootstrapped)
+summary(boot_splines_analysis)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

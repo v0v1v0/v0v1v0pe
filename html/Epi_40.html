@@ -1,0 +1,458 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ci.lin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Compute linear functions of parameters with standard errors and
+confidence limits, optionally transforming to a different scale.
+</h2>
+
+<h3>Description</h3>
+
+<p>For a given model object the function computes a linear function of
+the parameters and the corresponding standard errors, p-values and
+confidence intervals.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ci.lin( obj,
+    ctr.mat = NULL,
+     subset = NULL,
+     subint = NULL,
+      xvars = NULL,
+      diffs = FALSE,
+       fnam = !diffs,
+       vcov = FALSE,
+      alpha = 0.05,
+         df = Inf,
+        Exp = FALSE,
+     sample = FALSE )
+ci.exp( ..., Exp = TRUE, pval = FALSE )
+Wald( obj, H0=0, ... )
+ci.mat( alpha = 0.05, df = Inf )
+ci.pred( obj, newdata,
+         Exp = NULL,
+       alpha = 0.05 )
+ci.ratio( r1, r2,
+         se1 = NULL,
+         se2 = NULL,
+      log.tr = !is.null(se1) &amp; !is.null(se2),
+       alpha = 0.05,
+        pval = FALSE )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>A model object (in general of class <code>glm</code>, but for
+<code>ci.lin</code> and <code>ci.exp</code> it may also be of class
+<code>lm</code>,
+<code>coxph</code>,
+<code>survreg</code>,
+<code>clogistic</code>,
+<code>cch</code>,
+<code>lme</code>,
+<code>mer</code>,
+<code>lmerMod</code>,
+<code>glmerMod</code>,
+<code>gls</code>,
+<code>nls</code>,
+<code>gnlm</code>,
+<code>MIresult</code>,
+<code>mipo</code>,
+<code>polr</code>,
+or <code>rq</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ctr.mat</code></td>
+<td>
+<p>Matrix, data frame or list (of two or four data frames).
+</p>
+<p>If <code>ctr.mat</code> is a matrix, it should be a contrast matrix to be
+multiplied to the parameter vector, i.e. the desired linear function
+of the parameters.
+</p>
+<p>If it is a data frame it should have columns corresponding to a
+prediction frame, see details.
+</p>
+<p>If it is a list, it must contain two or four data frames that are
+(possibly partial) prediction frames for <code>obj</code>, see argument
+<code>xvars</code> and details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xvars</code></td>
+<td>
+<p>Character vector. If quantitative variables in the model
+are omitted from data frames supplied in a list to <code>ctr.mat</code>,
+they should be listed here. Omitted factors need not be mentioned
+here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>The subset of the parameters to be used. If given as a
+character vector, the elements are in turn matched against the
+parameter names (using <code>grep</code>) to find the subset. Repeat
+parameters may result from using a character vector. This is
+considered a facility.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subint</code></td>
+<td>
+<p>Character. <code>sub</code>set selection, but where each
+element of the character vector is used to
+select a subset of parameters and only the <code>int</code>ersection
+of these is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diffs</code></td>
+<td>
+<p>If TRUE, all differences between parameters
+in the subset are computed, and the <code>subset</code> argument is
+required. The argument <code>ctr.mat</code> is ignored. If <code>obj</code>
+inherits from <code>lm</code>, and <code>subset</code> is given as a string
+<code>subset</code> is used to search among the factors in the model and
+differences of all factor levels for the first match are shown.
+If <code>subset</code> does not match any of the factors in the model, all
+pairwise differences between parameters matching are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fnam</code></td>
+<td>
+<p>Should the common part of the parameter names be included
+with the annotation of contrasts? Ignored if <code>diffs==T</code>. If a
+string is supplied this will be prefixed to the labels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>Should the covariance matrix of the set of parameters be
+returned? If this is set, <code>Exp</code> is ignored. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Significance level for the confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Integer. Number of degrees of freedom in the t-distribution used
+to compute the quantiles used to construct the confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Exp</code></td>
+<td>
+<p>For <code>ci.lin</code>, if <code>TRUE</code> columns 5:6 are replaced
+with exp( columns 1,5,6 ). For <code>ci.exp</code>, if <code>FALSE</code>, the
+untransformed parameters are returned. For <code>ci.pred</code> it
+indicates whether the predictions should be exponentiated - the
+default (<code>Exp=NULL</code>) is to make a prediction with a Wald CI on
+the scale of the linear predictor and back-transform it by the
+inverse link function; if <code>FALSE</code>, the prediction on the link
+scale is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample</code></td>
+<td>
+<p>Logical or numerical. If <code>TRUE</code> or numerical a
+sample of size <code>as.numeric(sample)</code> is drawn from the
+multivariate normal with mean equal to the (<code>subset</code> defined)
+coefficients and variance equal to the estimated variance-covariance
+of these. These are then transformed by <code>ctr.mat</code> and
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval</code></td>
+<td>
+<p>Logical. Should a column of P-values be included with the
+estimates and confidence intervals output by <code>ci.exp</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H0</code></td>
+<td>
+<p>Numeric. The null values for the selected/transformed
+parameters to be tested by a Wald test. Must have the same length as
+the selected parameter vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Parameters passed on to <code>ci.lin</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>Data frame of covariates where prediction is made.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r1,r2</code></td>
+<td>
+<p>Estimates of rates in two independent groups, with
+confidence limits. Can be either 3-column matrices or data frames
+with estimates and confidence intervals or 2 two column structures
+with confidence limits. Only the confidence limits</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se1,se2</code></td>
+<td>
+<p>Standard errors of log-rates in the two groups. If
+given, it is assumed that <code>r1</code> and <code>r2</code> represent
+log-rates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.tr</code></td>
+<td>
+<p>Logical, if true, it is assumed that <code>r1</code> and
+<code>r2</code> represent log-rates with confidence intervals.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>ci.lin</code> returns a matrix with number of rows and row names as
+<code>ctr.mat</code>. The columns are Estimate, Std.Err, z, P, 2.5% and
+97.5% (or according to the value of <code>alpha</code>).  If
+<code>vcov=TRUE</code> a list of length 2 with components <code>coef</code> (a
+vector), the desired functional of the parameters and <code>vcov</code> (a
+square matrix), the variance covariance matrix of this, is returned
+but not printed. If <code>Exp==TRUE</code> the confidence intervals for the
+parameters are replaced with three columns: exp(estimate,c.i.).
+</p>
+<p><code>ci.exp</code> returns only the exponentiated parameter estimates with
+confidence intervals. It is merely a wrapper for <code>ci.lin</code>,
+fishing out the last 3 columns from <code>ci.lin(...,Exp=TRUE)</code>. If
+you just want the estimates and confidence limits, but not
+exponentiated, use <code>ci.exp(...,Exp=FALSE)</code>.
+</p>
+<p>If <code>ctr.mat</code> is a data frame, the model matrix corresponding to
+this is constructed and supplied. This is only supported for objects
+of class <code>lm</code>, <code>glm</code>, <code>gam</code> and <code>coxph</code>.
+</p>
+<p>So the default behaviour will be to produce the same as
+<code>ci.pred</code>, apparently superfluous. The purpose of this is to
+allow the use of the arguments <code>vcov</code> that produces the
+variance-covariance matrix of the predictions, and <code>sample</code> that
+produces a sample of predictions using sampling from the multivariate
+normal with mean equal to parameters and variance equal to the
+hessian.
+</p>
+<p>If <code>ctr.mat</code> is a list of two data frames, the difference of the
+predictions from using the first versus the last as newdata arguments
+to predict is computed. Columns that would be identical in the two
+data frames can be omitted (see below), but names of numerical
+variables omitted must be supplied in a character vector
+<code>xvars</code>. Factors omitted need not be named.
+</p>
+<p>If the second data frame has only one row, this is replicated to match
+the number of rows in the first. This facility is primarily aimed at
+teasing out RRs that are non-linear functions of a quantitative
+variable without setting up contrast matrices using the same code as
+in the model. Note however if splines are used with computed knots
+stored in a vector such as <code>Ns(x,knots=kk)</code> then the <code>kk</code>
+must be available in the (global) environment; it will not be found
+inside the model object. In practical terms it means that if you save
+model objects for later prediction you should save the knots used in
+the spline setups too.
+</p>
+<p>If <code>ctr.mat</code> is a list of four data frames, the difference of the
+difference of predictions from using the first and second versus
+difference of predictions from using the third and fourth is computed.
+Simply <code>(pr1-pr2) - (pr3-pr4)</code> with obvious notation. Useful to
+derive esoteric interaction effects.
+</p>
+<p>Finally, only arguments <code>Exp</code>, <code>vcov</code>, <code>alpha</code> and
+<code>sample</code> from <code>ci.lin</code> are honored when <code>ctr.mat</code> is a
+data frame or a list of two data frames.
+</p>
+<p>You can leave out variables (columns) from the two data frames that
+would be identical, basically variables not relevant for the
+calculation of the contrast. In many cases <code>ci.lin</code> (really
+<code>Epi:::ci.dfr</code>) can figure out the names of the omitted columns,
+but occasionally you will have to supply the names of the omitted
+variables in the <code>xvars</code> argument. Factors omitted need not be
+listed in <code>xvars</code>, although no harm is done doing so.
+</p>
+<p><code>Wald</code> computes a Wald test for a subset of (possibly linear
+combinations of) parameters being equal to the vector of null
+values as given by <code>H0</code>. The selection of the subset of
+parameters is the same as for <code>ci.lin</code>. Using the <code>ctr.mat</code>
+argument makes it possible to do a Wald test for equality of
+parameters. <code>Wald</code> returns a named numerical vector of length 3,
+with names <code>Chisq</code>, <code>d.f.</code> and <code>P</code>.
+</p>
+<p><code>ci.mat</code> returns a 2 by 3 matrix with rows <code>c(1,0,0)</code> and
+<code>c(0,-1,1)*1.96</code>, devised to post-multiply to a p by 2 matrix with
+columns of estimates and standard errors, so as to produce a p by 3 matrix
+of estimates and confidence limits. Used internally in <code>ci.lin</code> and
+<code>ci.cum</code>.
+The 1.96 is replaced by the appropriate quantile from the normal or
+t-distribution when arguments <code>alpha</code> and/or <code>df</code> are given.
+</p>
+<p><code>ci.pred</code> returns a 3-column matrix with estimates and upper and
+lower confidence intervals as columns. This is just a convenience
+wrapper for <code>predict.glm(obj,se.fit=TRUE)</code> which returns a rather
+unhandy structure. The prediction with c.i. is made in the <code>link</code>
+scale, and by default transformed by the inverse link, since the most
+common use for this is for multiplicative Poisson or binomial models
+with either log or logit link.
+</p>
+<p><code>ci.ratio</code> returns the rate-ratio of two independent set of
+rates given with confidence intervals or s.e.s. If <code>se1</code> and
+<code>se2</code> are given and <code>log.tr=FALSE</code> it is assumed that
+<code>r1</code> and <code>r2</code> are rates and <code>se1</code> and <code>se2</code> are
+standard errors of the log-rates.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen,
+<a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a> &amp; Michael Hills
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>ci.eta</code> for a simple version only needing
+coefficients and variance-covariance matrix. See also <code>ci.cum</code>
+for a function computing cumulative sums of (functions of) parameter
+estimates, and <code>ci.surv</code> for a function computing
+confidence intervals for survival functions based on smoothed
+rates. The example code for <code>matshade</code> has an application
+of predicting a rate-ratio using a list of two prediction frames in the
+<code>ctr.mat</code> argument.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Bogus data:
+f &lt;- factor( sample( letters[1:5], 200, replace=TRUE ) )
+g &lt;- factor( sample( letters[1:3], 200, replace=TRUE ) )
+x &lt;- rnorm( 200 )
+y &lt;- 7 + as.integer( f ) * 3 + 2 * x + 1.7 * rnorm( 200 )
+
+# Fit a simple model:
+mm &lt;- lm( y ~ x + f + g )
+ci.lin( mm )
+ci.lin( mm, subset=3:6, diff=TRUE, fnam=FALSE )
+ci.lin( mm, subset=3:6, diff=TRUE, fnam=TRUE )
+ci.lin( mm, subset="f", diff=TRUE, fnam="f levels:" )
+print( ci.lin( mm, subset="g", diff=TRUE, fnam="gee!:", vcov=TRUE ) )
+
+# Use character defined subset to get ALL contrasts:
+ci.lin( mm, subset="f", diff=TRUE )
+
+# Suppose the x-effect differs across levels of g:
+mi &lt;- update( mm, . ~ . + g:x )
+ci.lin( mi )
+# RR a vs. b by x:
+nda &lt;- data.frame( x=-3:3, g="a", f="b" )
+ndb &lt;- data.frame( x=-3:3, g="b", f="b" )
+# 
+ci.lin( mi, list(nda,ndb) )
+# Same result if f column is omitted because "f" columns are identical
+ci.lin( mi, list(nda[,-3],ndb[,-3]) )
+# However, crashes if knots in spline is supplied, and non-factor omitted
+xk &lt;- -1:1
+xi &lt;- c(-0.5,0.5)
+ww &lt;- rnorm(200)
+mi &lt;- update( mm, . ~ . -x + ww + Ns(x,knots=xk) + g:Ns(x,knots=xi) )
+# Will crash 
+try( cbind( nda$x, ci.lin( mi, list(nda,ndb) ) ) )
+# Must specify num vars (not factors) omitted from nda, ndb
+cbind( nda$x, ci.lin( mi, list(nda,ndb), xvars="ww" ) )
+
+# A Wald test of whether the g-parameters are 0
+Wald( mm, subset="g" )
+# Wald test of whether the three first f-parameters are equal:
+( CM &lt;- rbind( c(1,-1,0,0), c(1,0,-1,0)) )
+Wald( mm, subset="f", ctr.mat=CM )
+# or alternatively
+( CM &lt;- rbind( c(1,-1,0,0), c(0,1,-1,0)) )
+Wald( mm, subset="f", ctr.mat=CM )
+
+# Confidence intervals for ratio of rates
+# Rates and ci supplied, but only the range (lower and upper ci) is used
+ci.ratio( cbind(10,8,12.5), cbind(5,4,6.25) )
+ci.ratio( cbind(8,12.5), cbind(4,6.25) )
+
+# Beware of the offset when making predictions with ci.pred and ci.exp
+## Not run: 
+library( mgcv )
+data( mortDK )
+m.arg  &lt;- glm( dt ~ age , offset=log(risk) , family=poisson, data=mortDK )
+m.form &lt;- glm( dt ~ age + offset(log(risk)), family=poisson, data=mortDK )
+a.arg  &lt;- gam( dt ~ age , offset=log(risk) , family=poisson, data=mortDK )
+a.form &lt;- gam( dt ~ age + offset(log(risk)), family=poisson, data=mortDK )
+
+nd &lt;- data.frame( age=60:65, risk=100 )
+round( ci.pred( m.arg , nd ), 4 )
+round( ci.pred( m.form, nd ), 4 )
+round( ci.exp ( m.arg , nd ), 4 )
+round( ci.exp ( m.form, nd ), 4 )
+round( ci.pred( a.arg , nd ), 4 )
+round( ci.pred( a.form, nd ), 4 )
+round( ci.exp ( a.arg , nd ), 4 )
+round( ci.exp ( a.form, nd ), 4 )
+
+nd &lt;- data.frame( age=60:65 )
+try( ci.pred( m.arg , nd ) )
+try( ci.pred( m.form, nd ) )
+try( ci.exp ( m.arg , nd ) )
+try( ci.exp ( m.form, nd ) )
+try( ci.pred( a.arg , nd ) )
+try( ci.pred( a.form, nd ) )
+try( ci.exp ( a.arg , nd ) )
+try( ci.exp ( a.form, nd ) )
+
+## End(Not run)
+# The offset may be given as an argument (offset=log(risk))
+# or as a term (+offset(log)), and depending on whether we are using a
+# glm or a gam Poisson model and whether we use ci.pred or ci.exp to
+# predict rates the offset is either used or ignored and either
+# required or not; the state of affairs can be summarized as:
+#
+#                     offset
+#                     -------------------------------------
+#                     usage                 required?
+#                     ------------------    ---------------                      
+# function  model     argument   term       argument   term
+# ---------------------------------------------------------
+# ci.pred   glm       used       used       yes        yes
+#           gam       ignored    used       no         yes
+#  		      
+# ci.exp    glm       ignored    ignored    no         yes
+#           gam       ignored    ignored    no         yes
+# ---------------------------------------------------------
+</code></pre>
+
+
+</div>

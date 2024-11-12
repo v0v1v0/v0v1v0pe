@@ -1,0 +1,206 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ensembleBMAnormal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+BMA mixture of normals modeling
+</h2>
+
+<h3>Description</h3>
+
+<p>Fits a Bayesian Model Averaging mixture of normals to ensemble forecasts.
+Allows specification of a training rule and forecasting dates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ensembleBMAnormal(ensembleData, trainingDays, dates = NULL, 
+                  control = controlBMAnormal(), exchangeable = NULL,
+                  minCRPS = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ensembleData</code></td>
+<td>
+
+<p>An <code>ensembleData</code> object including ensemble forecasts with 
+the corresponding verifying observations and their dates. 
+Missing values (indicated by <code>NA</code>) are allowed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainingDays</code></td>
+<td>
+
+<p>An integer giving the number of time steps (e.g. days)
+in the training period. There is no default.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+
+<p>The dates for which BMA forecasting models are desired. 
+By default, this will be all dates in <code>ensembleData</code>
+for which modeling is allowed given the training rule.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+
+<p>A list of control values for the fitting functions. The defaults are
+given by the function <code>controlBMAnormal</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exchangeable</code></td>
+<td>
+
+<p>A numeric or character vector or factor indicating groups of
+ensemble members that are exchangeable (indistinguishable).
+The modeling will have equal weights and parameters within each group.
+The default determines exchangeability from <code>ensembleData</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minCRPS</code></td>
+<td>
+
+<p>A logical variable indicating whether or not to add a postprocessing
+step after the BMA fit to choose the standard deviation so as to
+minimize the CRPS for the training data. The default is not to do
+the CRPS minimization, because it can add considerable extra cost
+to the computation, particularly when there are many ensemble members.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The output is for all of the <code>dates</code> in <code>ensembleData</code>, so there
+will be missing entries denoted by <code>NA</code> for dates that are too recent 
+to be forecast with  the training rule. <br>
+The following methods are available for <code>ensembleBMAnormal</code> objects:
+<code>cdf</code>, <code>quantileForecast</code>, <code>modelParameters</code>,  
+<code>brierScore</code>, <code>crps</code>, <code>CRPS</code> and <code>MAE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following output components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>training</code></td>
+<td>
+
+<p>A list containing information on the training length and lag and
+the number of instances used for training for each modeling day.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>biasCoefs</code></td>
+<td>
+
+<p>The fitted bias-correction coefficients for each ensemble member at each date.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd</code></td>
+<td>
+
+<p>The fitted standard deviations for the mixture of normals model
+at each date.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+<p>The fitted BMA weights for the normal components for each ensemble member at each date.
+</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>A. E. Raftery, T. Gneiting, F. Balabdaoui and M. Polakowski,
+Using Bayesian model averaging to calibrate forecast ensembles,
+<em>Monthly Weather Review 133:1155-1174, 2005</em>.
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting and J. M. Sloughter,
+<code>ensembleBMA</code>: An <code>R</code> Package for Probabilistic Forecasting
+using Ensembles and Bayesian Model Averaging,
+Technical Report No. 516R, Department of Statistics, University of
+Washington, 2007 (revised 2010).
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting,
+Calibrating Multi-Model Forecast Ensembles
+with Exchangeable and Missing Members using Bayesian Model Averaging,
+<em>Monthly Weather Review 138:190–202, 2010</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleData</code>, 
+<code>controlBMAnormal</code>, 
+<code>fitBMAnormal</code>,
+<code>cdf</code>,
+<code>quantileForecast</code>,
+<code>modelParameters</code>,
+<code>brierScore</code>,
+<code>crps</code>,
+<code>MAE</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(ensBMAtest)
+
+  ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+  obs &lt;- paste("T2","obs", sep = ".")
+  ens &lt;- paste("T2", ensMemNames, sep = ".")
+
+  tempTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"],
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+## Not run:  #  R check
+  tempTestFit &lt;- ensembleBMAnormal( tempTestData, trainingDays = 30)
+
+## equivalent to
+##   tempTestFit &lt;- ensembleBMA( tempTestData, trainingDays = 30,
+##                                model = "normal")
+
+## End(Not run)
+
+# for quick run only; use more training days for forecasting
+ tempTestFit &lt;- ensembleBMAnormal( tempTestData[1:20,], trainingDays = 8)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dgaps</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximum likelihood estimation using left-censored inter-exceedances times</h2>
+
+<h3>Description</h3>
+
+<p>Calculates maximum likelihood estimates of the extremal index <code class="reqn">\theta</code>
+based on a model for threshold inter-exceedances times of
+Holesovsky and Fusek (2020).  We refer to this as the <code class="reqn">D</code>-gaps model,
+because it uses a tuning parameter <code class="reqn">D</code>, whereas the related <code class="reqn">K</code>-gaps
+model of Suveges and Davison (2010) has a tuning parameter <code class="reqn">K</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dgaps(data, u, D = 1, inc_cens = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A numeric vector or numeric matrix of raw data.  If <code>data</code>
+is a matrix then the log-likelihood is constructed as the sum of
+(independent) contributions from different columns. A common situation is
+where each column relates to a different year.
+</p>
+<p>If <code>data</code> contains missing values then <code>split_by_NAs</code> is
+used to divide the data further into sequences of non-missing values,
+stored in different columns in a matrix.  Again, the log-likelihood
+is constructed as a sum of contributions from different columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>A numeric scalar.  Extreme value threshold applied to data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>A numeric scalar.  The censoring parameter <code class="reqn">D</code>. Threshold
+inter-exceedances times that are not larger than <code>D</code> units are
+left-censored, occurring with probability
+<code class="reqn">\log(1 - \theta e^{-\theta d})</code>,
+where <code class="reqn">d = q D</code> and <code class="reqn">q</code> is the probability with which the
+threshold <code class="reqn">u</code> is exceeded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inc_cens</code></td>
+<td>
+<p>A logical scalar indicating whether or not to include
+contributions from right-censored inter-exceedance times, relating to the
+first and last observations. It is known that these times are greater
+than or equal to the time observed.
+If <code>data</code> has multiple columns then there will be right-censored
+first and last inter-exceedance times for each column.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>inc_cens = FALSE</code> then the maximum likelihood estimate of
+the extremal index <code class="reqn">\theta</code> under the <code class="reqn">D</code>-gaps model of
+Holesovsky and Fusek (2020) is calculated.  Under this model
+inter-exceedance times that are less than or equal to <code class="reqn">D</code> are
+left-censored, as a strategy to mitigate model mis-specification resulting
+from the fact that inter-exceedance times that are equal to 0 are expected
+under the model but only positive inter-exceedance times can be observed
+in practice.
+</p>
+<p>If <code>inc_cens = TRUE</code> then information from the right-censored
+first and last inter-exceedance times are also included in the likelihood
+to be maximized.
+For an explanation of the idea see Attalides (2015).  The form of the
+log-likelihood is given in the <strong>Details</strong> section of
+<code>dgaps_stat</code>.
+</p>
+<p>It is possible that the estimate of <code class="reqn">\theta</code> is equal to 1, and also
+possible that it is equal to 0. <code>dgaps_stat</code> explains the
+respective properties of the data that cause these events to occur.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object (a list) of class <code>c("dgaps", "exdex")</code> containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td>
+<code>theta</code> </td>
+<td>
+<p>The maximum likelihood estimate (MLE) of
+<code class="reqn">\theta</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>se</code> </td>
+<td>
+<p>The estimated standard error of the MLE, calculated
+using an algebraic expression for the observed information.  If the
+estimate of <code class="reqn">\theta</code> is 0 then <code>se</code> is <code>NA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>se_exp</code> </td>
+<td>
+<p>The estimated standard error of the MLE,
+calculated using an algebraic expression for the expected information.
+If the estimate of <code class="reqn">\theta</code> is 0 then <code>se_exp</code> is <code>NA</code>.
+This is provided because cases may be encountered where the observed
+information is not positive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>ss</code> </td>
+<td>
+<p>The list of summary statistics returned from
+<code>dgaps_stat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>D, u, inc_cens</code> </td>
+<td>
+<p>The input values of <code>D</code>,
+<code>u</code> and <code>inc_cens</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_loglik </code></td>
+<td>
+<p>The value of the log-likelihood at the MLE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call </code></td>
+<td>
+<p>The call to <code>dgaps</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Holesovsky, J. and Fusek, M. Estimation of the extremal index
+using censored distributions. Extremes 23, 197-213 (2020).
+<a href="https://doi.org/10.1007/s10687-020-00374-3">doi:10.1007/s10687-020-00374-3</a>
+</p>
+<p>Suveges, M. and Davison, A. C. (2010) Model
+misspecification in peaks over threshold analysis, <em>Annals of
+Applied Statistics</em>, <strong>4</strong>(1), 203-221.
+<a href="https://doi.org/10.1214/09-AOAS292">doi:10.1214/09-AOAS292</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dgaps_confint</code> to estimate confidence intervals
+for <code class="reqn">\theta</code>.
+</p>
+<p><code>dgaps_methods</code> for S3 methods for <code>"dgaps"</code>
+objects.
+</p>
+<p><code>dgaps_imt</code> for the information matrix test, which
+may be used to inform the choice of the pair (<code>u, D</code>).
+</p>
+<p><code>choose_ud</code> for a diagnostic plot based on
+<code>dgaps_imt</code>.
+</p>
+<p><code>dgaps_stat</code> for the calculation of sufficient
+statistics for the <code class="reqn">D</code>-gaps model.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### S&amp;P 500 index
+
+u &lt;- quantile(sp500, probs = 0.60)
+theta &lt;- dgaps(sp500, u = u, D = 1)
+theta
+summary(theta)
+coef(theta)
+nobs(theta)
+vcov(theta)
+logLik(theta)
+
+### Newlyn sea surges
+
+u &lt;- quantile(newlyn, probs = 0.60)
+theta &lt;- dgaps(newlyn, u = u, D = 2)
+theta
+summary(theta)
+
+### Uccle July temperatures
+
+# Using vector input, which merges data from different years
+u &lt;- quantile(uccle720$temp, probs = 0.9, na.rm = TRUE)
+theta &lt;- dgaps(uccle720$temp, u = u, D = 2)
+theta
+
+# Using matrix input to separate data from different years
+u &lt;- quantile(uccle720m, probs = 0.9, na.rm = TRUE)
+theta &lt;- dgaps(uccle720m, u = u, D = 2)
+theta
+</code></pre>
+
+
+</div>

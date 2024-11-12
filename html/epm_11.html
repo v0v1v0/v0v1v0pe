@@ -1,0 +1,218 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>customBetaDiv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Custom beta diversity metrics</h2>
+
+<h3>Description</h3>
+
+<p>Define your own function for summarizing information across a
+moving window of grid cells.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">customBetaDiv(
+  x,
+  fun,
+  radius,
+  minTaxCount = 1,
+  focalCoord = NULL,
+  metricName = "custom_metric"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>object of class <code>epmGrid</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a function to apply to grid cell neighborhoods (see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>radius</code></td>
+<td>
+<p>Radius of the moving window in map units.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minTaxCount</code></td>
+<td>
+<p>the minimum number of taxa needed to apply the function.
+For instance, should the function be applied to gridcells with just 1
+taxon?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focalCoord</code></td>
+<td>
+<p>vector of x and y coordinate, see details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metricName</code></td>
+<td>
+<p>the name you would like to attach to the output</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function will identify the neighbors of every cell and will
+apply the specified function to those sets of cell neighborhoods. 
+</p>
+<p>The custom function should have just one input: a list of taxon names, where
+the list will represent a set of grid cells (focal cell + neighboring cells).
+</p>
+<p>However, if a set of focal coordinates is provided, then rather than apply the
+function to each neighborhood of cells, the function should have two inputs: the
+focal cell and another cell, and that function will be applied to every pair 
+defined by the focal cell and another cell. See examples.
+</p>
+<p>Within the function call, the trait data already attached to the epmGrid object 
+must be referred to as dat, and the phylogenetic tree already attached to the 
+epmGrid must be referred to as phylo.<br></p>
+<p>If the input epmGrid object contains a set of trees, then this function will
+be applied, using each tree in turn, and will return a list of results. This
+list can then be passed to <code>summarizeEpmGridList</code> to be summarized.
+</p>
+<p>See examples below.
+</p>
+
+
+<h3>Value</h3>
+
+<p>object of class <code>epmGrid</code>, or list of <code>epmGrid</code> objects
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Pascal Title
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+tamiasEPM &lt;- addPhylo(tamiasEPM, tamiasTree)
+tamiasEPM &lt;- addTraits(tamiasEPM, tamiasTraits)
+
+# An example using a multivariate dataset
+## For each focal cell + neighbors, calculate the morphological standard deviation
+## per grid cell and return the standard deviation.
+f &lt;- function(cellList) {
+	vec &lt;- numeric(length(cellList))
+	for (i in 1:length(cellList)) {
+		vec[[i]] &lt;- max(dist(dat[cellList[[i]], ]))
+	}
+	return(sd(vec, na.rm = TRUE))	
+}
+
+xx &lt;- customBetaDiv(tamiasEPM, fun = f, radius = 70000, minTaxCount = 2, metricName = 'maxdist')
+
+
+# An example using only the phylogeny.
+## Calculate standard deviation of phylogenetic diversity across cell neighborhood.
+f &lt;- function(cellList) {
+	vec &lt;- numeric(length(cellList))
+	for (i in 1:length(cellList)) {
+		vec[[i]] &lt;- faithPD(phylo, cellList[[i]])
+	}
+	return(sd(vec, na.rm = TRUE))	
+}
+
+xx &lt;- customBetaDiv(tamiasEPM, fun = f, radius = 70000, minTaxCount = 1, metricName = 'faithPD')
+
+
+
+# an example that involves both morphological and phylogenetic data
+## nonsensical, but for illustrative purposes:
+## ratio of Faith's phylogenetic diversity to morphological range
+## the standard deviation of this measure across grid cells 
+## in a neighborhood.
+f &lt;- function(cellList) {
+	vec &lt;- numeric(length(cellList))
+	for (i in 1:length(cellList)) {
+		vec[[i]] &lt;- faithPD(phylo, cellList[[i]]) / 
+		max(dist(dat[cellList[[i]], ]))
+	}
+	return(sd(vec, na.rm = TRUE))	
+}
+
+xx &lt;- customBetaDiv(tamiasEPM, fun = f, radius = 70000, minTaxCount = 2, 
+  metricName = 'ratio_PD_maxdist')
+
+
+
+
+# from a focal coordinate to all other sites
+## Here, the function has 2 inputs.
+## Example: calculate the per grid cell mean and take the distance.
+f &lt;- function(focalCell, otherCell) {
+	x1 &lt;- colMeans(dat[focalCell, ])
+	x2 &lt;- colMeans(dat[otherCell, ])
+	return(as.matrix(dist(rbind(x1, x2)))[1,2])
+}
+
+xx &lt;- customBetaDiv(tamiasEPM, fun = f, radius = 70000, minTaxCount = 1,
+ focalCoord = c(-1413764, 573610.8), metricName = 'meandist')
+
+
+
+# Example involving a set of trees
+tamiasEPM &lt;- addPhylo(tamiasEPM, tamiasTreeSet, replace = TRUE)
+
+## Calculate standard deviation of phylogenetic diversity across cell
+## neighborhood.
+f &lt;- function(cellList) {
+	vec &lt;- numeric(length(cellList))
+	for (i in 1:length(cellList)) {
+		vec[[i]] &lt;- faithPD(phylo, cellList[[i]])
+	}
+	return(sd(vec, na.rm = TRUE))	
+}
+
+# This time, a list of sf objects will be returned, one for each input tree.
+xx &lt;- customBetaDiv(tamiasEPM, fun = f, radius = 70000, minTaxCount = 1,
+ metricName = 'faithPD')
+
+
+
+# also works with square grid cells
+tamiasEPM2 &lt;- createEPMgrid(tamiasPolyList, resolution = 50000,
+	cellType = 'square', method = 'centroid')
+tamiasEPM2 &lt;- addPhylo(tamiasEPM2, tamiasTree)
+tamiasEPM2 &lt;- addTraits(tamiasEPM2, tamiasTraits)
+
+
+f &lt;- function(cellList) {
+	vec &lt;- numeric(length(cellList))
+	for (i in 1:length(cellList)) {
+		vec[[i]] &lt;- faithPD(phylo, cellList[[i]]) / 
+		max(dist(dat[cellList[[i]], ]))
+	}
+	return(sd(vec, na.rm = TRUE))	
+}
+
+xx &lt;- customBetaDiv(tamiasEPM2, fun = f, radius = 70000, minTaxCount = 2,
+ metricName = 'ratio_PD_maxdist')
+
+
+
+</code></pre>
+
+
+</div>

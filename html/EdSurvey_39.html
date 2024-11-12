@@ -1,0 +1,314 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>edsurveyTable</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>EdSurvey Tables With Conditional Means</h2>
+
+<h3>Description</h3>
+
+<p>Returns a summary table (as a <code>data.frame</code>)
+that shows the number of students, the percentage of students, and the mean
+value of the outcome (or left-hand side) variable by the
+predictor (or right-hand side) variable(s).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">edsurveyTable(
+  formula,
+  data,
+  weightVar = NULL,
+  jrrIMax = 1,
+  pctAggregationLevel = NULL,
+  returnMeans = TRUE,
+  returnSepct = TRUE,
+  varMethod = c("jackknife", "Taylor"),
+  drop = FALSE,
+  dropOmittedLevels = TRUE,
+  defaultConditions = TRUE,
+  recode = NULL,
+  returnVarEstInputs = FALSE,
+  omittedLevels = deprecated()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>object of class <code>formula</code>,
+potentially with
+a subject scale or subscale
+on the left-hand side and
+variables to tabulate
+on the right-hand side.
+When the left-hand side of the
+formula is omitted and <code>returnMeans</code> is <code>TRUE</code>,
+then the default subject scale or subscale is used.
+You can find the default composite scale and all subscales
+using the function <code>showPlausibleValues</code>.
+Note that the order of the right-hand side variables affects the output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>object of class <code>edsurvey.data.frame</code>. See <code>readNAEP</code>
+for how to generate an <code>edsurvey.data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weightVar</code></td>
+<td>
+<p>character string indicating the weight variable to use.
+Note that only the name of the
+weight variable needs to be included here, and any
+replicate weights will be automatically included.
+When this argument is <code>NULL</code>, the function uses the default.
+Use <code>showWeights</code> to find the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jrrIMax</code></td>
+<td>
+<p>a numeric value; when using the jackknife variance estimation method, the default estimation option, <code>jrrIMax=1</code>, uses the
+sampling variance from the first plausible value as the component for sampling variance estimation. The <code class="reqn">V_{jrr}</code>
+term (see the Details section of
+<code>lm.sdf</code> to see the definition of <code class="reqn">V_{jrr}</code>) can be estimated with any number of plausible values, and values larger than the number of
+plausible values on the survey (including <code>Inf</code>) will result in all of the plausible values being used.
+Higher values of <code>jrrIMax</code> lead to longer computing times and more accurate variance estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pctAggregationLevel</code></td>
+<td>
+<p>the percentage variable sums up to 100 for the first
+<code>pctAggregationLevel</code> columns.
+So, when set to <code>0</code>, the <code>PCT</code> column adds up to 1
+across the entire sample.
+When set to <code>1</code>, the <code>PCT</code> column adds up to 1
+within each level of the first variable on the
+right-hand side of the formula; when set to <code>2</code>,
+then the percentage
+adds up to 100 within the interaction of the
+first and second variable, and so on.
+Default is <code>NULL</code>, which will result in the
+lowest feasible aggregation level.
+See Examples section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnMeans</code></td>
+<td>
+<p>a logical value; set to <code>TRUE</code> (the default) to get the <code>MEAN</code> and
+<code>SE(MEAN)</code> columns in the returned table described in the Value section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnSepct</code></td>
+<td>
+<p>set to <code>TRUE</code> (the default) to get the <code>SEPCT</code> column in the returned table described in the Value section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varMethod</code></td>
+<td>
+<p>a character set to <code>jackknife</code> or <code>Taylor</code> that indicates the variance estimation method
+to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>a logical value. When set to the default value of <code>FALSE</code>, when a single column is returned, it is still represented as a <code>data.frame</code> and is
+not converted to a vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dropOmittedLevels</code></td>
+<td>
+<p>a logical value. When set to the default value of <code>TRUE</code>, drops those levels of all factor variables that are specified
+in an <code>edsurvey.data.frame</code>. Use <code>print</code> on an <code>edsurvey.data.frame</code> to see the omitted levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>defaultConditions</code></td>
+<td>
+<p>a logical value. When set to the default value of <code>TRUE</code>, uses the default conditions stored in an <code>edsurvey.data.frame</code>
+to subset the data. Use <code>print</code> on an <code>edsurvey.data.frame</code> to see the default conditions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recode</code></td>
+<td>
+<p>a list of lists to recode variables. Defaults to <code>NULL</code>. Can be set as
+<code>recode</code> <code>=</code> <code>list(var1</code> <code>=</code> <code>list(from</code> <code>=</code> <code>c("a", "b", "c"),</code> <code>to</code> <code>=</code> <code>"c"))</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnVarEstInputs</code></td>
+<td>
+<p>a logical value set to <code>TRUE</code> to return the
+inputs to the jackknife and imputation variance
+estimates, which allows for
+the computation
+of covariances between estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omittedLevels</code></td>
+<td>
+<p>this argument is deprecated. Use <code>dropOmittedLevels</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This method can be used to generate a simple one-way, two-way, or
+<em>n</em>-way
+table with unweighted and weighted <em>n</em> values and percentages. It also
+can calculate the average of the subject scale or subscale for students at
+each level of the cross-tabulation table.
+</p>
+<p>A detailed description of all statistics is given in the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A table with the following columns:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>RHS levels</code></td>
+<td>
+<p>one column for each right-hand side variable. Each row
+regards students who are at the levels shown in that row.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>count of the number of students in the survey in the <code>RHS levels</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>WTD_N</code></td>
+<td>
+<p>the weighted <em>N</em> count of students in the survey in <code>RHS levels</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PCT</code></td>
+<td>
+<p>the percentage of students at the aggregation level specified by <code>pctAggregationLevel</code> (see Arguments).
+See the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>
+in the section
+“Estimation of Weighted Percentages” and its first subsection
+“Estimation of Weighted Percentages When Plausible Values Are Not Present.”</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SE(PCT)</code></td>
+<td>
+<p>the standard  error of the percentage, accounting
+for the survey sampling methodology. When <code>varMethod</code>
+is the <code>jackknife</code>, the calculation of this column is
+described in the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>
+in the section
+“Estimation of the Standard Error of Weighted Percentages When Plausible Values Are Not Present, Using the Jackknife Method.”
+When <code>varMethod</code> is set to <code>Taylor</code>, the calculation of this column is described in
+“Estimation of the Standard Error of Weighted Percentages When Plausible Values Are Not Present, Using the Taylor Series Method.”
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MEAN</code></td>
+<td>
+<p>the mean assessment score for units in the <code>RHS levels</code>, calculated according to the  vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>
+in the section
+“Estimation of Weighted Means When Plausible Values Are Present.”</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SE(MEAN)</code></td>
+<td>
+<p>the standard error of the <code>MEAN</code> column (the mean assessment score for units in the <code>RHS levels</code>), calculated according to the vignette titled
+<a href="https://www.air.org/sites/default/files/EdSurvey-Statistics.pdf"><em>Statistical Methods Used in EdSurvey</em></a>
+in the sections
+“Estimation of Standard Errors of Weighted Means When Plausible Values Are Present, Using the Jackknife Method”
+or
+“Estimation of Standard Errors of Weighted Means When Plausible Values Are Present, Using the Taylor Series Method,”
+depending on the value of <code>varMethod</code>.</p>
+</td>
+</tr>
+</table>
+<p>When <code>returnVarEstInputs</code> is <code>TRUE</code>, two additional elements are
+returned. These are <code>meanVarEstInputs</code> and <code>pctVarEstInputs</code> and
+regard the <code>MEAN</code> and <code>PCT</code> columns, respectively. These two
+objects can be used for calculating covariances with
+<code>varEstToCov</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Paul Bailey and Ahmad Emad
+</p>
+
+
+<h3>References</h3>
+
+<p>Binder, D. A. (1983). On the variances of asymptotically normal estimators from complex surveys. <em>International Statistical Review</em>, <em>51</em>(3), 279–292.
+</p>
+<p>Rubin, D. B. (1987). <em>Multiple imputation for nonresponse in surveys</em>. New York, NY: Wiley.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# read in the example data (generated, not real student data)
+
+sdf &lt;- readNAEP(path=system.file("extdata/data", "M36NT2PM.dat", package = "NAEPprimer"))
+
+# create a table that shows only the breakdown of dsex
+edsurveyTable(formula=composite ~ dsex, data=sdf, returnMeans=FALSE, returnSepct=FALSE)
+
+# create a table with composite scores by dsex
+edsurveyTable(formula=composite ~ dsex, data=sdf)
+
+# add a second variable
+edsurveyTable(formula=composite ~ dsex + b017451, data=sdf)
+
+# add a second variable, do not omit any levels
+edsurveyTable(formula=composite ~ dsex + b017451 + b003501, data=sdf, omittedLevels=FALSE)
+
+# add a second variable, do not omit any levels, change aggregation level
+edsurveyTable(formula=composite ~ dsex + b017451 + b003501, data=sdf, omittedLevels=FALSE,
+	            pctAggregationLevel=0)
+
+edsurveyTable(formula=composite ~ dsex + b017451 + b003501, data=sdf, omittedLevels=FALSE,
+	            pctAggregationLevel=1)
+
+edsurveyTable(formula=composite ~ dsex + b017451 + b003501, data=sdf, omittedLevels=FALSE,
+	            pctAggregationLevel=2)
+
+# variance estimation using the Taylor series 
+edsurveyTable(formula=composite ~ dsex + b017451 + b003501, data=sdf, varMethod="Taylor")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

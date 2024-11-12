@@ -1,0 +1,218 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ExtQ</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Univariate Extreme Quantile</h2>
+
+<h3>Description</h3>
+
+<p>Computes the extreme-quantiles of a univariate random variable corresponding to some exceedance probabilities.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ExtQ(P=NULL, method="Frequentist", pU=NULL, 
+     cov=NULL, param=NULL,  param_post=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p>A vector with values in <code class="reqn">[0,1]</code> indicating the probabilities of the quantiles to be computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character string indicating the estimation method. Takes value <code>"bayesian"</code> or <code>"frequentist"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pU</code></td>
+<td>
+<p>A value in <code class="reqn">[0,1]</code> indicating the probability of exceeding a high threshold. In the estimation procedure, observations below the threshold are censored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov</code></td>
+<td>
+<p>A <code class="reqn">q \times c</code> matrix indicating <code class="reqn">q</code> observations of <code class="reqn">c-1</code> covariates for the location parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>A <code class="reqn">(c + 2)</code> vector indicating the estimated parameters. Required when <code>method="Frequentist"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param_post</code></td>
+<td>
+<p>A <code class="reqn">n \times (c + 2)</code> matrix indicating the posterior sample for the parameters, where <code class="reqn">n</code> is the number of MCMC replicates after removal of the burn-in period. Required when <code>method="Bayesian"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The first column of <code>cov</code> is a vector of 1s corresponding to the intercept. 
+</p>
+<p>When <code>pU</code> is <code>NULL</code> (default), then it is assumed that a block maxima approach was taken and quantiles are computed using the <code>qGEV</code> function. When <code>pU</code> is provided, the it is assumed that a threshold exceedances approach is taken and the quantiles are computed as
+</p>
+<p style="text-align: center;"><code class="reqn">\mu + \sigma * \left(\left(\frac{pU}{P}\right)^\xi-1\right) \frac{1}{\xi}.</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>When <code>method=="frequentist"</code>, the function returns a vector of length <code>length(P)</code> if <code>ncol(cov)=1</code> (constant mean) or a <code>(length(P) x nrow(cov))</code> matrix if <code>ncol(cov)&gt;1</code>. <br></p>
+<p>When <code>method=="bayesian"</code>, the function returs a <code>(length(param_post) x length(P))</code> matrix if <code>ncol(cov)=1</code> or a list of <code>ncol(cov)</code> elements each taking a <code>(length(param_post) x length(P))</code> matrix if <code>ncol(cov)&gt;1</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Simone Padoan, <a href="mailto:simone.padoan@unibocconi.it">simone.padoan@unibocconi.it</a>,
+<a href="https://faculty.unibocconi.it/simonepadoan/">https://faculty.unibocconi.it/simonepadoan/</a>;
+Boris Beranger, <a href="mailto:borisberanger@gmail.com">borisberanger@gmail.com</a>
+<a href="https://www.borisberanger.com">https://www.borisberanger.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Beranger, B., Padoan, S. A. and Sisson, S. A. (2021).
+Estimation and uncertainty quantification for extreme quantile regions.
+<em>Extremes</em>, <b>24</b>, 349-375.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fGEV</code>, <code>qGEV</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##################################################
+### Example - Pollution levels in Milan, Italy ###
+##################################################
+
+## Not run: 
+
+data(MilanPollution)
+
+# Frequentist estimation
+fit &lt;- fGEV(Milan.winter$PM10)
+fit$est
+
+q1 &lt;- ExtQ(P=1/c(600,1200,2400), method="Frequentist", param=fit$est)
+q1
+
+# Bayesian estimation with high threshold
+cov &lt;- cbind(rep(1,nrow(Milan.winter)), Milan.winter$MaxTemp, 
+             Milan.winter$MaxTemp^2)
+u &lt;- quantile(Milan.winter$PM10, prob=0.9, type=3, na.rm=TRUE)
+
+fit2 &lt;- fGEV(data=Milan.winter$PM10, par.start=c(50,0,0,20,1), 
+               method="Bayesian", u=u, cov=cov, sig0=0.1, nsim=5e+4) 
+
+r &lt;- range(Milan.winter$MaxTemp, na.rm=TRUE)
+t &lt;- seq(from=r[1], to=r[2], length=50)
+pU &lt;- mean(Milan.winter$PM10&gt;u, na.rm=TRUE)
+q2 &lt;- ExtQ(P=1/c(600,1200,2400), method="Bayesian", pU=pU,
+           cov=cbind(rep(1,50), t, t^2),
+           param_post=fit2$param_post[-c(1:3e+4),])
+             
+R &lt;- c(min(unlist(q2)), 800)
+qseq &lt;- seq(from=R[1],to=R[2], length=512)
+Xl &lt;- "Max Temperature"
+Yl &lt;- expression(PM[10])
+  
+for(i in 1:length(q2)){
+  K_q2 &lt;- apply(q2[[i]],2, function(x) density(x, from=R[1], to=R[2])$y)
+  D &lt;- cbind(expand.grid(t, qseq), as.vector(t(K_q2)) )
+  colnames(D) &lt;- c("x","y","z")
+  fields::image.plot(x=t, y=qseq, z=matrix(D$z, 50, 512), xlim=r, 
+                           ylim=R, xlab=Xl, ylab=Yl)
+}
+
+
+## End(Not run)
+  
+##########################################################
+### Example - Simulated data from Frechet distirbution ###
+##########################################################
+  
+if(interactive()){  
+  
+set.seed(999)  
+data &lt;- extraDistr::rfrechet(n=1500, mu=3, sigma=1, lambda=1/3)
+
+u &lt;- quantile(data, probs=0.9, type=3)
+fit3 &lt;- fGEV(data=data, par.start=c(1,2,1), method="Bayesian", 
+             u=u, sig0=1, nsim=5e+4)
+  
+pU &lt;- mean(data&gt;u)
+P &lt;- 1/c(750,1500,3000)
+q3 &lt;- ExtQ(P=P, method="Bayesian", pU=pU,
+           param_post=fit3$param_post[-c(1:3e+4),])  
+
+### Illustration
+
+# Tail index estimation
+
+ti_true &lt;- 3
+ti_ps &lt;- fit3$param_post[-c(1:3e+4),3]
+
+K_ti &lt;- density(ti_ps) # KDE of the tail index
+H_ti &lt;- hist(ti_ps, prob=TRUE, col="lightgrey",
+			       ylim=range(K_ti$y), main="", xlab="Tail Index",
+			       cex.lab=1.8, cex.axis=1.8, lwd=2)
+ti_ic &lt;- quantile(ti_ps, probs=c(0.025, 0.975))
+
+points(x=ti_ic, y=c(0,0), pch=4, lwd=4)
+lines(K_ti, lwd = 2, col = "dimgrey")
+abline(v=ti_true, lwd=2)
+abline(v=mean(ti_ps), lwd=2, lty=2)  
+  
+# Quantile estimation
+
+q3_true &lt;- extraDistr::qfrechet(p=P, mu=3, sigma=1, lambda=1/3, lower.tail=FALSE)
+
+ci &lt;- apply(log(q3), 2, function(x) quantile(x, probs=c(0.025, 0.975)))
+K_q3 &lt;- apply(log(q3), 2, density)
+
+R &lt;- range(log(c(q3_true, q3, data)))
+Xlim &lt;- c(log(quantile(data, 0.95)), R[2])
+Ylim &lt;- c(0, max(K_q3[[1]]$y, K_q3[[2]]$y, K_q3[[3]]$y))
+
+plot(0, main="", xlim=Xlim, ylim=Ylim, xlab=expression(log(x)), 
+     ylab="Density", cex.lab=1.8, cex.axis=1.8, lwd=2)
+cval &lt;- c(211, 169, 105)	 
+for(j in 1:length(P)){
+  col &lt;- rgb(cval[j], cval[j], cval[j], 0.8*255, maxColorValue=255)
+  col2 &lt;- rgb(cval[j], cval[j], cval[j],  255, maxColorValue=255)
+  polygon(K_q3[[j]], col=col, border=col2, lwd=4)
+}
+points(log(data), rep(0,n), pch=16)	 
+# add posterior means
+abline(v=apply(log(q3),2,mean), lwd=2, col=2:4)
+# add credible intervals
+abline(v=ci[1,], lwd=2, lty=3, col=2:4)
+abline(v=ci[2,], lwd=2, lty=3, col=2:4)
+
+}
+
+</code></pre>
+
+
+</div>

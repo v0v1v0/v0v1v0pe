@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>replace_errors</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Replace erroneous fields with NA or a suggested value</h2>
+
+<h3>Description</h3>
+
+<p>Find erroneous fields using <code>locate_errors()</code> and replace these
+fields automatically with NA or a suggestion that is provided by the error detection algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">replace_errors(
+  data,
+  x,
+  ref = NULL,
+  ...,
+  cl = NULL,
+  Ncpus = getOption("Ncpus", 1),
+  value = c("NA", "suggestion")
+)
+
+## S4 method for signature 'data.frame,validator'
+replace_errors(
+  data,
+  x,
+  ref = NULL,
+  ...,
+  cl = NULL,
+  Ncpus = getOption("Ncpus", 1),
+  value = c("NA", "suggestion")
+)
+
+## S4 method for signature 'data.frame,ErrorLocalizer'
+replace_errors(
+  data,
+  x,
+  ref = NULL,
+  ...,
+  cl = NULL,
+  Ncpus = getOption("Ncpus", 1),
+  value = c("NA", "suggestion")
+)
+
+## S4 method for signature 'data.frame,errorlocation'
+replace_errors(
+  data,
+  x,
+  ref = NULL,
+  ...,
+  cl = NULL,
+  Ncpus = 1,
+  value = c("NA", "suggestion")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data to be checked</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>validator()</code> or <code>errorlocation</code> object.
+If an <code>errorlocation</code> is already available (through <code>locate_errors()</code>) this
+is more efficient.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref</code></td>
+<td>
+<p>optional reference data set</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>these parameters are handed over to <code>locate_errors()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cl</code></td>
+<td>
+<p>optional cluster for parallel execution (see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ncpus</code></td>
+<td>
+<p>number of nodes to use. (see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p><code>NA</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that you can also use the result of <code>locate_errors()</code> with <code>replace_errors</code>.
+When the procedure takes a long time and <code>locate_errors</code> was called previously
+this is the preferred way, because otherwise <code>locate_errors</code> will be executed again.
+The errors that were removed from the <code>data.frame</code> can be retrieved with the function
+<code>errors_removed()</code>. For more control over error localization see <code>locate_errors()</code>.
+</p>
+<p><code>replace_errors</code> has the same parallelization options as <code>locate_errors()</code> (see there).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>data</code> with erroneous values removed.
+</p>
+
+
+<h3>Note</h3>
+
+<p>In general it is better to replace the erroneous fields with <code>NA</code> and apply a proper
+imputation method. Suggested values from the error localization method may introduce an undesired bias.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>errorlocation-class()</code>
+</p>
+<p>Other error finding: 
+<code>errorlocation-class</code>,
+<code>errors_removed()</code>,
+<code>expand_weights()</code>,
+<code>locate_errors()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">rules &lt;- validator( profit + cost == turnover
+              , cost - 0.6*turnover &gt;= 0
+              , cost&gt;= 0
+              , turnover &gt;= 0
+)
+data &lt;- data.frame(profit=755, cost=125, turnover=200)
+
+data_no_error &lt;- replace_errors(data,rules)
+
+# faulty data was replaced with NA
+data_no_error
+
+errors_removed(data_no_error)
+
+# a bit more control, you can supply the result of locate_errors
+# to replace_errors, which is a good thing, otherwise replace_errors will call
+# locate_errors internally.
+error_locations &lt;- locate_errors(data, rules)
+replace_errors(data, error_locations)
+</code></pre>
+
+
+</div>

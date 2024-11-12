@@ -1,0 +1,140 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compute_fct_adjs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate adjustment factors for an underlying assumption</h2>
+
+<h3>Description</h3>
+
+<p>There often are situations where an industry table is used for an assumed
+rate due to a company lacking sufficient credibility to write their own
+assumption. However, as experience becomes more available, a company would
+likely want to incorporate this experience into the industry assumption
+because it provides valuable insight into their own policyholders. A common
+industry approach is to apply "factor adjustments" developed using company
+experience to the industry assumption.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compute_fct_adjs(
+  .data,
+  expected_rate,
+  measure_sets = guess_measure_sets(.data),
+  amount_scalar = NULL,
+  method = c("simultaneous", "sequential"),
+  cred_wt_adjs = FALSE,
+  balance_adjs = FALSE,
+  na.rm = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>A <code>base::data.frame()</code> that houses an experience study.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expected_rate</code></td>
+<td>
+<p>The underlying expected rate in the experience study for which factor
+adjustments are being generated for.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>measure_sets</code></td>
+<td>
+<p>A (potentially named) list of measure sets. Only need to specify once if
+chaining multiple <code>expstudy</code> functions as the <code>measure_sets</code> will be
+passed as an attribute in results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amount_scalar</code></td>
+<td>
+<p>A numeric vector to use when determining amount-weighted expecteds and
+variances. The function will determine whether or not the new
+expecteds/variances are amount-weighted if the corresponding actuals in
+the study have values greater than 1 (actuals that are not
+amount-weighted, i.e., counts, should only be 0 or 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>String indicating the method of determining factor adjustments:
+</p>
+<div class="sourceCode"><pre>* `simultaneous` will calculate factor adjustments for all combinations
+of group values in one iteration.
+* `sequential` will calculate factor adjustments for each grouping
+variable individually and applies that factor adjustment to the
+underlying expected rate before continuing with the next grouping
+variable's factor computation.
+</pre></div>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cred_wt_adjs</code></td>
+<td>
+<p>Logical indicating if factor adjustments should be credibility-weighted
+using partial credibility scores.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>balance_adjs</code></td>
+<td>
+<p>Logical indicating if credibility-weighted adjustments should be scaled to
+produce a 100% A/E ratio in aggregate (has no effect if
+<code>cred_wt_adjs = FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>logical.  Should missing values (including <code>NaN</code>) be
+removed?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function piggy-backs off of <code>measure_sets</code> defined in other expstudy
+functions to quickly produce factor adjustments under a variety of methods.
+Providing a <code>dplyr::grouped_df()</code> will generate factors for each group
+according to the method specified. If two or more grouping variables are
+provided, an additional "composite" factor adjustment will also be generated
+which is the product of each individual adjustment.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of data frames that house factor adjustments for each measure set
+provided in <code>measure_sets</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">mortexp |&gt;
+  dplyr::group_by(
+    GENDER,
+    SMOKING_STATUS
+  ) |&gt;
+  compute_fct_adjs(
+    EXPECTED_MORTALITY_RT,
+    amount_scalar = FACE_AMOUNT
+  )
+
+</code></pre>
+
+
+</div>

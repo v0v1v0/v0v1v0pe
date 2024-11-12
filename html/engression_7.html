@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.engression</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prediction Function for Engression Models</h2>
+
+<h3>Description</h3>
+
+<p>This function computes predictions from a trained engression model. It allows for the generation of point estimates, quantiles,
+or samples from the estimated distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'engression'
+predict(
+  object,
+  Xtest,
+  type = c("mean", "sample", "quantile")[1],
+  trim = 0.05,
+  quantiles = 0.1 * (1:9),
+  nsample = 200,
+  drop = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>A trained engression model returned from engression, engressionBagged or engressionfit functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xtest</code></td>
+<td>
+<p>A matrix or data frame representing the predictors in the test set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>The type of prediction to make. "mean" for point estimates, "sample" for samples from the estimated distribution,
+or "quantile" for quantiles of the estimated distribution (default: "mean").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trim</code></td>
+<td>
+<p>The proportion of extreme values to trim when calculating the mean (default: 0.05).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantiles</code></td>
+<td>
+<p>The quantiles to estimate if type is "quantile" (default: 0.1*(1:9)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsample</code></td>
+<td>
+<p>The number of samples to draw if type is "sample" (default: 200).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>A boolean indicating whether to drop dimensions of length 1 from the output (default: TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments (currently ignored)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A matrix or array of predictions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+  n = 1000
+  p = 5
+
+  X = matrix(rnorm(n*p),ncol=p)
+  Y = (X[,1]+rnorm(n)*0.1)^2 + (X[,2]+rnorm(n)*0.1) + rnorm(n)*0.1
+  Xtest = matrix(rnorm(n*p),ncol=p)
+  Ytest = (Xtest[,1]+rnorm(n)*0.1)^2 + (Xtest[,2]+rnorm(n)*0.1) + rnorm(n)*0.1
+
+  ## fit engression object
+  engr = engression(X,Y)
+  print(engr)
+
+  ## prediction on test data
+  Yhat = predict(engr,Xtest,type="mean")
+  cat("\n correlation between predicted and realized values:  ", signif(cor(Yhat, Ytest),3))
+  plot(Yhat, Ytest,xlab="prediction", ylab="observation")
+
+  ## quantile prediction
+  Yhatquant = predict(engr,Xtest,type="quantiles")
+  ord = order(Yhat)
+  matplot(Yhat[ord], Yhatquant[ord,], type="l", col=2,lty=1,xlab="prediction", ylab="observation")
+  points(Yhat[ord],Ytest[ord],pch=20,cex=0.5)
+
+  ## sampling from estimated model
+  Ysample = predict(engr,Xtest,type="sample",nsample=1)
+  
+
+
+
+</code></pre>
+
+
+</div>

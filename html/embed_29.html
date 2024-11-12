@@ -1,0 +1,216 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>step_lencode_bayes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Supervised Factor Conversions into Linear Functions using Bayesian Likelihood
+Encodings</h2>
+
+<h3>Description</h3>
+
+<p><code>step_lencode_bayes()</code> creates a <em>specification</em> of a recipe step that will
+convert a nominal (i.e. factor) predictor into a single set of scores derived
+from a generalized linear model estimated using Bayesian analysis.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">step_lencode_bayes(
+  recipe,
+  ...,
+  role = NA,
+  trained = FALSE,
+  outcome = NULL,
+  options = list(seed = sample.int(10^5, 1)),
+  verbose = FALSE,
+  mapping = NULL,
+  skip = FALSE,
+  id = rand_id("lencode_bayes")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>recipe</code></td>
+<td>
+<p>A recipe object. The step will be added to the sequence of
+operations for this recipe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more selector functions to choose variables. For
+<code>step_lencode_bayes</code>, this indicates the variables to be encoded into a
+numeric format. See <code>recipes::selections()</code> for more details. For the
+<code>tidy</code> method, these are not currently used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>role</code></td>
+<td>
+<p>Not used by this step since no new variables are created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trained</code></td>
+<td>
+<p>A logical to indicate if the quantities for preprocessing have
+been estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcome</code></td>
+<td>
+<p>A call to <code>vars</code> to specify which variable is used as the
+outcome in the generalized linear model. Only numeric and two-level factors
+are currently supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>options</code></td>
+<td>
+<p>A list of options to pass to <code>rstanarm::stan_glmer()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical to control the default printing by
+<code>rstanarm::stan_glmer()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mapping</code></td>
+<td>
+<p>A list of tibble results that define the encoding. This is
+<code>NULL</code> until the step is trained by <code>recipes::prep()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip</code></td>
+<td>
+<p>A logical. Should the step be skipped when the recipe is baked by
+<code>recipes::bake()</code>? While all operations are baked when <code>recipes::prep()</code> is
+run, some operations may not be able to be conducted on new data (e.g.
+processing the outcome variable(s)). Care should be taken when using <code>skip = TRUE</code> as it may affect the computations for subsequent operations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A character string that is unique to this step to identify it.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each factor predictor, a generalized linear model is fit to the outcome
+and the coefficients are returned as the encoding. These coefficients are on
+the linear predictor scale so, for factor outcomes, they are in log-odds
+units. The coefficients are created using a no intercept model and, when two
+factor outcomes are used, the log-odds reflect the event of interest being
+the <em>first</em> level of the factor.
+</p>
+<p>For novel levels, a slightly timmed average of the coefficients is returned.
+</p>
+<p>A hierarchical generalized linear model is fit using <code>rstanarm::stan_glmer()</code>
+and no intercept via
+</p>
+<div class="sourceCode"><pre>  stan_glmer(outcome ~ (1 | predictor), data = data, ...)
+</pre></div>
+<p>where the <code>...</code> include the <code>family</code> argument (automatically set by the step,
+unless passed in by <code>options</code>) as well as any arguments given to the
+<code>options</code> argument to the step. Relevant options include <code>chains</code>, <code>iter</code>,
+<code>cores</code>, and arguments for the priors (see the links in the References
+below). <code>prior_intercept</code> is the argument that has the most effect on the
+amount of shrinkage.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated version of <code>recipe</code> with the new step added to the
+sequence of existing steps (if any). For the <code>tidy</code> method, a tibble with
+columns <code>terms</code> (the selectors or variables for encoding), <code>level</code> (the
+factor levels), and <code>value</code> (the encodings).
+</p>
+
+
+<h3>Tidying</h3>
+
+<p>When you <code>tidy()</code> this step, a tibble is retruned with
+columns <code>level</code>, <code>value</code>, <code>terms</code>, and <code>id</code>:
+</p>
+
+<dl>
+<dt>level</dt>
+<dd>
+<p>character, the factor levels</p>
+</dd>
+<dt>value</dt>
+<dd>
+<p>numeric, the encoding</p>
+</dd>
+<dt>terms</dt>
+<dd>
+<p>character, the selectors or variables selected</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>character, id of this step</p>
+</dd>
+</dl>
+<h3>Case weights</h3>
+
+<p>This step performs an supervised operation that can utilize case weights.
+To use them, see the documentation in recipes::case_weights and the examples on
+<code>tidymodels.org</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Micci-Barreca D (2001) "A preprocessing scheme for high-cardinality
+categorical attributes in classification and prediction problems," ACM SIGKDD
+Explorations Newsletter, 3(1), 27-32.
+</p>
+<p>Zumel N and Mount J (2017) "vtreat: a data.frame Processor for Predictive
+Modeling," arXiv:1611.09477
+</p>
+<p>"Hierarchical Partial Pooling for Repeated Binary Trials"
+<a href="https://CRAN.R-project.org/package=rstanarm/vignettes/pooling.html">https://CRAN.R-project.org/package=rstanarm/vignettes/pooling.html</a>
+</p>
+<p>"Prior Distributions for <code>rstanarm</code> Models"
+<a href="http://mc-stan.org/rstanarm/reference/priors.html">http://mc-stan.org/rstanarm/reference/priors.html</a>
+</p>
+<p>"Estimating Generalized (Non-)Linear Models with Group-Specific Terms with
+<code>rstanarm</code>" <a href="http://mc-stan.org/rstanarm/articles/glmer.html">http://mc-stan.org/rstanarm/articles/glmer.html</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(recipes)
+library(dplyr)
+library(modeldata)
+
+data(grants)
+
+set.seed(1)
+grants_other &lt;- sample_n(grants_other, 500)
+
+reencoded &lt;- recipe(class ~ sponsor_code, data = grants_other) %&gt;%
+  step_lencode_bayes(sponsor_code, outcome = vars(class))
+
+
+</code></pre>
+
+
+</div>

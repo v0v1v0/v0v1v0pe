@@ -1,0 +1,518 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>LCa.fit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Fit Lee-Carter-type models for rates to arbitrarily shaped observations
+of rates in a Lexis diagram. 
+</h2>
+
+<h3>Description</h3>
+
+<p>The Lee-Carter model is originally defined as a model for rates
+observed in A-sets (age by period) of a Lexis diagram, as
+log(rate(x,t)) = a(x) + b(x)k(t), using one parameter per age(x) and
+period(t). This function uses natural splines for a(), b() and k(),
+placing knots for each effect such that the number of events is the
+same between knots. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">LCa.fit( data, A, P, D, Y,
+         model = "APa",    # or one of "ACa", "APaC", "APCa" or "APaCa" 
+         a.ref,            # age reference for the interactions
+        pi.ref = a.ref,    # age reference for the period interaction
+        ci.ref = a.ref,    # age reference for the cohort interaction
+         p.ref,            # period reference for the interaction
+         c.ref,            # cohort reference for the interactions
+          npar = c(a = 6,  # no. knots for main age-effect
+                   p = 6,  # no. knots for period-effect
+                   c = 6,  # no. knots for cohort-effect
+                  pi = 6,  # no. knots for age in the period interaction
+                  ci = 6), # no. knots for age in the cohort interaction
+            VC = TRUE,     # numerical calculation of the Hessian?
+         alpha = 0.05,     # 1 minus confidence level
+           eps = 1e-6,     # convergence criterion
+         maxit = 100,      # max. no iterations
+         quiet = TRUE )    # cut the crap
+## S3 method for class 'LCa'
+print( x, ... )
+## S3 method for class 'LCa'
+summary( object, show.est=FALSE, ... )
+## S3 method for class 'LCa'
+plot( x, ... )
+## S3 method for class 'LCa'
+predict( object, newdata,
+                        alpha = 0.05,
+                        level = 1-alpha,
+                          sim = ( "vcov" %in% names(object) ),
+                          ... )
+      </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A data frame. Must have columns <code>A</code>(age), <code>P</code>(period, that is
+calendar time), <code>D</code>(no. of events) and <code>Y</code>(person-time,
+exposure). Alternatively these four quantities can be given as
+separate vectors:
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+
+<p>Vector of ages (midpoint of observation).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+
+<p>Vector of period (midpoint of observation).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+
+<p>Vector of no. of events.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+<p>Vector of person-time. Demographers would say "exposure", bewildering epidemiologists.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a.ref</code></td>
+<td>
+
+<p>Reference age for the age-interaction term(s) <code>pi(x)</code> and/or
+<code>pi(x)</code>, where <code>pi(a.ref)=1</code> and <code>ci(a.ref)=1</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.ref</code></td>
+<td>
+
+<p>Same, but specifically for the interaction with period.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.ref</code></td>
+<td>
+
+<p>Same, but specifically for the interaction with cohort.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.ref</code></td>
+<td>
+
+<p>Reference period for the time-interaction term <code>kp(t)</code> where <code>kp(p.ref)=0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c.ref</code></td>
+<td>
+
+<p>Reference period for the time-interaction term <code>kp(t)</code> where <code>kc(c.ref)=0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+<p>Character, either <code>"APa"</code> which is the classical Lee-Carter model
+for log-rates, other possibilities are <code>"ACa"</code>, <code>"APCa"</code>,
+<code>"APaC"</code> or <code>"APaCa"</code>, see details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npar</code></td>
+<td>
+
+<p>A (possibly named) vector or list, with either the number of knots or
+the actual vectors of knots for each term. If unnamed, components are
+taken to be in the order (a,b,t), if the model is "APaCa" in the order
+(a,p,c,pi,ci).  If a vector, the three integers indicate the number of
+knots for each term; these will be placed so that there is an equal
+number of events (<code>D</code>) between each, and half as many below the
+first and above the last knot. If <code>npar</code> is a list of scalars the
+behavior is the same. If <code>npar</code> is a list of vectors, these are
+taken as the knots for the natural splines. See details for naming
+convention. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VC</code></td>
+<td>
+
+<p>Logical. Should the variance-covariance matrix of the parameters be
+computed by numerical differentiation? See details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>1 minus the confidence level used when calculating
+confidence intervals for estimates in <code>LCa.fit</code> and for
+predictions by <code>predict.LCa</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+
+<p>Convergence criterion for the deviance, we use the the relative
+difference between deviance from the two models fitted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+
+<p>Maximal number of iterations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+
+<p>Shall I shut up or talk extensively to you about iteration progression etc.?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An <code>LCa</code> object, see under "Value".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show.est</code></td>
+<td>
+<p>Logical. Should the estimates be printed?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An <code>LCa</code> object, see under "Value".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>Prediction data frame, must have columns <code>A</code> and
+<code>P</code>. Any <code>Y</code> column is ignored, predictions are given in
+units of the <code>Y</code> supplied for the call that generated the
+<code>LCa</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>Confidence level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sim</code></td>
+<td>
+<p>Logical or numeric. If <code>TRUE</code>, prediction c.i.s will be
+based on 1000 simulations from the posterior parameters. If numeric,
+it will be based on that number of simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters passed on to the method.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The Lee-Carter model is non-linear in age and time so does not fit
+in the classical glm-Poisson framework. But for fixed <code>b(x)</code> it
+is a glm, and also for fixed <code>a(x)</code>, <code>k(t)</code>. The function
+alternately fits the two versions until the same fit is produced (same
+deviance).
+</p>
+<p>The multiplicative age by period term could equally well have been a
+multiplicative age by cohort or even both. Thus the most extensive
+model has 5 continuous functions:
+</p>
+<p style="text-align: center;"><code class="reqn">\log(\lambda(a,p)) = f(a) + b_p(a)k_p(p) + b_c(a)k_c(p-a)</code>
+</p>
+
+<p>Each of these is fitted by a natural spline, with knots placed at the
+quantiles of the events along the age (a), calendar time (p) respective
+cohort (p-a) scales. Alternatively the knots can be specified explicitly
+in the argument <code>npar</code> as a named list, where
+<code>a</code> refers to <code class="reqn">f(a)</code>,
+<code>p</code> refers to <code class="reqn">k_p(p)</code>,
+<code>c</code> refers to <code class="reqn">k_c(p-a)</code>,
+<code>pi</code> (<code>p</code>eriod <code>i</code>nteraction) refers to <code class="reqn">b_p(a)</code>
+and
+<code>ci</code> (<code>c</code>ohort <code>i</code>nteraction) refers to <code class="reqn">b_c(p-a)</code>.
+</p>
+<p>The naming convention for the models is a capital <code>P</code> and/or
+<code>C</code> if the effect is in the model followed by a lower case
+<code>a</code> if there is an interaction with age. Thus there are 5 different
+models that can be fitted: <code>APa</code>, <code>ACa</code>, <code>APaC</code>  <code>APCa</code>
+and <code>APaCa</code>.
+</p>
+<p>The standard errors of the parameters from the two separate model fits
+in the iterations are however wrong; they are conditional on a subset
+of the parameters having a fixed value. However, analytic calculation
+of the Hessian is a bit of a nightmare, so this is done numerically
+using the <code>hessian</code> function from the <code>numDeriv</code> package if
+<code>VC=TRUE</code>.
+</p>
+<p>The coefficients and the variance-covariance matrix of these are used
+in <code>predict.LCa</code> for a parametric bootstrap (that is, a
+simulation from a multivariate normal with mean equal to the parameter
+estimates and variance as the estimated variance-covariance) to get
+confidence intervals for the predictions if <code>sim</code> is <code>TRUE</code>
+— which it is by default if they are part of the object.
+</p>
+<p>The <code>plot</code> for <code>LCa</code> objects merely produces between 3 and 5
+panels showing each of the terms in the model. These are mainly for
+preliminary inspection; real reporting of the effects should use
+proper relative scaling of the effects.</p>
+
+
+<h3>Value</h3>
+
+<p><code>LCa.fit</code> returns an object of class <code>LCa</code> (smooth
+effects <code>L</code>ee-<code>Ca</code>rter model); it is a list with the
+following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Character, either <code>APa</code>, <code>ACa</code>, <code>APaC</code>,
+<code>APCa</code> or <code>APaCa</code>, indicating the variable(s) interacting
+with age.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ax</code></td>
+<td>
+<p>3-column matrix of age-effects, c.i. from the age-time
+model. Row names are the unique occurring ages in the
+dataset. Estimates are rates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi</code></td>
+<td>
+<p>3-column matrix of age-period interaction effects, c.i. from the age
+model. Row names are the actually occurring ages in the
+dataset. Estimates are multipliers of the log-RRs in <code>kp</code>,
+centered at 1 at <code>pi.ref</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kp</code></td>
+<td>
+<p>3-column matrix of period-effects, with c.i.s from the
+age-time model. Row names are the actually occurring times in the 
+dataset. Estimates are rate-ratios centered at 1 at <code>p.ref</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+<p>3-column matrix of age-cohort interaction effects, c.i. from the age
+model. Row names are the actually occurring ages in the
+dataset. Estimates are multipliers of the log-RRs in <code>kc</code>,
+centered at 1 at <code>ci.ref</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kc</code></td>
+<td>
+<p>3-column matrix of cohort-effects, with c.i.s from the age-time
+model. Row names are the actually occurring times in the
+dataset. Estimates are rate-ratios centered at 1 at <code>c.ref</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod.at</code></td>
+<td>
+<p><code>glm</code> object with the final age-time model — estimates
+the terms <code>ax</code>, <code>kp</code>, <code>kc</code>. Gives
+the same fit as the <code>mod.b</code> model after convergence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod.b</code></td>
+<td>
+<p><code>glm</code> object with the final age model — estimates
+the terms <code>pi</code>, <code>ci</code>. Gives
+the same fit as the <code>mod.at</code> model after convergence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>All coefficients from both models, in the order <code>ax</code>,
+<code>kp</code>, <code>kc</code>, <code>pi</code>, <code>ci</code>. Only present if
+<code>LCa.fit</code> were called with <code>VC=TRUE</code> (the default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>Variance-covariance matrix of coefficients from both
+models, in the same order as in the <code>coef</code>. Only present if
+<code>LCa.fit</code> were called with <code>VC=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knots</code></td>
+<td>
+<p>List of vectors of knots used in for the age, period and
+cohort effects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refs</code></td>
+<td>
+<p>List of reference points used for the age, period and
+cohort terms in the interactions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deviance</code></td>
+<td>
+<p>Deviance of the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df.residual</code></td>
+<td>
+<p>Residual degrees of freedom</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>Number of iterations used to reach convergence.</p>
+</td>
+</tr>
+</table>
+<p><code>plot.LCa</code> plots the estimated effects in separate panels,
+using a log-scale for the baseline rates (<code>ax</code>) and the time-RR
+(<code>kt</code>). For the <code>APaCa</code> model 5 panels are plotted.
+</p>
+<p><code>summary.LCa</code> returns (invisibly) a matrix with the parameters
+from the models and a column of the conditional se.s and additionally
+of the se.s derived from the numerically computed Hessian (if
+<code>LCa.fit</code> were called with <code>VC=TRUE</code>.)
+</p>
+<p><code>predict.LCa</code> returns a matrix with one row per row in
+<code>newdata</code>. If <code>LCa.fit</code> were called with <code>VC=TRUE</code>
+there will be 3 columns, namely prediction (1st column) and c.i.s
+based on a simulation of parameters from a multivariate normal with
+mean <code>coef</code> and variance <code>vcov</code> using the median and
+<code>alpha</code>/2 quantiles from the <code>sim</code> simulations.  If
+<code>LCa.fit</code> were called with <code>VC=FALSE</code> there will be 6
+columns, namely estimates and c.i.s from age-time model
+(<code>mod.at</code>), and from the age-interaction model (<code>mod.b</code>),
+both using conditional variances, and therefore likely with too narrow
+confidence limits.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="http://bendixcarstensen.com">http://bendixcarstensen.com</a>
+</p>
+<p>This function was conceived while teaching a course on APC models at
+the Max Planck Institute of Demographic Research (MPIDR,
+<a href="https://www.demogr.mpg.de/en/">https://www.demogr.mpg.de/en/</a>) in Rostock in May 2016
+(<a href="http://bendixcarstensen.com/APC/MPIDR-2016/">http://bendixcarstensen.com/APC/MPIDR-2016/</a>), and finished
+during a week long research stay there, kindly sponsored by the MPIDR.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>apc.fit</code>,
+<code>apc.LCa</code>,
+<code>lca</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library( Epi )
+# Load the testis cancer data by Lexis triangles
+data( testisDK )
+tc &lt;- subset( testisDK, A&gt;14 &amp; A&lt;60 )
+head( tc )
+
+# We want to see rates per 100,000 PY
+tc$Y &lt;- tc$Y / 10^5
+
+# Fit the Lee-Carter model with age-period interaction (default)
+LCa.tc &lt;- LCa.fit( tc, model="ACa", a.ref=30, p.ref=1980, quiet=FALSE, eps=10e-4, maxit=50 )
+
+LCa.tc
+summary( LCa.tc )
+
+# Inspect what we got
+names( LCa.tc )
+
+# show the estimated effects
+par( mfrow=c(1,3) )
+plot( LCa.tc )
+
+# Prediction data frame for ages 15 to 60 for two time points: 
+nd &lt;- data.frame( A=15:60 )
+# LCa predictions
+p70 &lt;- predict.LCa( LCa.tc, newdata=cbind(nd,P=1970), sim=1000 )
+p90 &lt;- predict.LCa( LCa.tc, newdata=cbind(nd,P=1990), sim=1000 )
+
+# Inspect the curves from the parametric bootstrap (simulation):
+par( mfrow=c(1,1) )
+head( cbind(p70,p90) )
+matplot( nd$A, cbind(p70,p90), type="l", lwd=c(6,3,3), lty=c(1,3,3),
+         col=rep( 2:3, each=3 ), log="y",
+         ylab="Testis cancer incidence per 100,000 PY in 1970 resp. 1990", xlab="Age" )
+</code></pre>
+
+
+</div>

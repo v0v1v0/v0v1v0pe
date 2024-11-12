@@ -1,0 +1,554 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predIntNparSimultaneousTestPower</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Probability That at Least One Set of Future Observations Violates the Given Rule Based on a Nonparametric Simultaneous Prediction Interval
+</h2>
+
+<h3>Description</h3>
+
+<p>Compute the probability that at least one set of future observations violates the 
+given rule based on a nonparametric simultaneous prediction interval for the next 
+<code class="reqn">r</code> future sampling occasions.  The three possible rules are: 
+<code class="reqn">k</code>-of-<code class="reqn">m</code>, California, or Modified California.  The probability is based 
+on assuming the true distribution of the observations is normal.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  predIntNparSimultaneousTestPower(n, n.median = 1, k = 1, m = 2, r = 1, 
+    rule = "k.of.m", lpl.rank = ifelse(pi.type == "upper", 0, 1), 
+    n.plus.one.minus.upl.rank = ifelse(pi.type == "lower", 0, 1), 
+    delta.over.sigma = 0, pi.type = "upper", r.shifted = r,  
+    method = "approx", NMC = 100, ci = FALSE, ci.conf.level = 0.95, 
+    integrate.args.list = NULL, evNormOrdStats.method = "royston") 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>vector of positive integers specifying the sample sizes.  
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>) 
+values are not allowed.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.median</code></td>
+<td>
+
+<p>vector of positive odd integers specifying the sample size associated with the 
+future medians.  The default value is <code>n.median=1</code> (i.e., individual 
+observations).  Note that all future medians must be based on the same 
+sample size.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>for the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule (<code>rule="k.of.m"</code>), a vector of positive integers 
+specifying the minimum number of observations (or medians) out of <code class="reqn">m</code> 
+observations (or medians) (all obtained on one future sampling “occassion”) 
+the prediction interval should contain.  
+The default value is <code>k=1</code>.  This argument is ignored when the argument 
+<code>rule</code> is not equal to <code>"k.of.m"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+
+<p>vector of positive integers specifying the maximum number of future observations (or 
+medians) on one future sampling “occasion”.  
+The default value is <code>m=2</code>, except when <code>rule="Modified.CA"</code>, in which 
+case this argument is ignored and <code>m</code> is automatically set equal to <code>4</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+
+<p>vector of positive integers specifying the number of future sampling 
+“occasions”.  The default value is <code>r=1</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+
+<p>character string specifying which rule to use.  The possible values are 
+<code>"k.of.m"</code> (<code class="reqn">k</code>-of-<code class="reqn">m</code> rule; the default), <code>"CA"</code> (California rule), 
+and <code>"Modified.CA"</code> (modified California rule).  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lpl.rank</code></td>
+<td>
+
+<p>vector of non-negative integers indicating the rank of the order statistic to use for 
+the lower bound of the prediction interval.  When <code>pi.type="lower"</code>, the 
+default value is <code>lpl.rank=1</code> (implying the minimum value of <code>x</code> is used 
+as the lower bound of the prediction interval).  When <code>pi.type="upper"</code>, 
+the argument <code>lpl.rank</code> is set equal to <code>0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.plus.one.minus.upl.rank</code></td>
+<td>
+
+<p>vector of non-negative integers related to the rank of the order statistic to use for 
+the upper bound of the prediction interval.  A value of <code>n.plus.one.minus.upl.rank=1</code> 
+(the default) means use the first largest value, and in general a value of <br><code>n.plus.one.minus.upl.rank=</code><code class="reqn">i</code> means use the <code class="reqn">i</code>'th largest value. 
+When <code>pi.type="lower"</code>, the argument <code>n.plus.one.minus.upl.rank</code> is set 
+equal to <code>0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta.over.sigma</code></td>
+<td>
+
+<p>numeric vector indicating the ratio <code class="reqn">\Delta/\sigma</code>.  The quantity 
+<code class="reqn">\Delta</code> (delta) denotes the difference between the mean of the population 
+that was sampled to construct the prediction interval, and the mean of the 
+population that will be sampled to produce the future observations.  The quantity 
+<code class="reqn">\sigma</code> (sigma) denotes the population standard deviation for both populations.  
+The default value is <br><code>delta.over.sigma=0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.type</code></td>
+<td>
+
+<p>character string indicating what kind of prediction interval to compute.  
+The possible values are <code>"two.sided"</code> (the default), <code>"lower"</code>, and 
+<code>"upper"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.shifted</code></td>
+<td>
+
+<p>vector of positive integers specifying the number of future sampling occasions for 
+which the scaled mean is shifted by <code class="reqn">\Delta/\sigma</code>.  All values must be 
+integeters between <code>1</code> and the corresponding element of <code>r</code>.  
+The default value is <code>r.shifted=r</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>character string indicating what method to use to compute the power.  The possible 
+values are <code>"approx"</code> (approximation based on <br><code>predIntNormSimultaneousTestPower</code>; the default) and 
+<code>"simulate"</code> (Monte Carlo simulation).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NMC</code></td>
+<td>
+
+<p>positive integer indicating the number of Monte Carlo trials to run when <br><code>method="simulate"</code>.  The default value is <code>NMC=100</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+
+<p>logical scalar indicating whether to compute a confidence interval for the power 
+when <code>method="simulate"</code>.  The default value is <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.conf.level</code></td>
+<td>
+
+<p>numeric scalar between 0 and 1 indicating the confidence level associated with the 
+confidence interval for the power.  The argument is ignored if <code>ci=FALSE</code> 
+or <code>method="approx"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>integrate.args.list</code></td>
+<td>
+
+<p>list of arguments to supply to the <code>integrate</code> function.  The default 
+value is <code>NULL</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>evNormOrdStats.method</code></td>
+<td>
+
+<p>character string indicating which method to use in the call to 
+<code>evNormOrdStatsScalar</code> when <code>method="approx"</code>.  The default 
+value is <code>evNormOrdStats.method="royston"</code>.  See the DETAILS section for 
+more information.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><em>What is a Nonparametric Simultaneous Prediction Interval?</em> <br>
+A nonparametric prediction interval for some population is an interval on the real line 
+constructed so that it will contain at least <code class="reqn">k</code> of <code class="reqn">m</code> future observations from 
+that population with some specified probability <code class="reqn">(1-\alpha)100\%</code>, where 
+<code class="reqn">0 &lt; \alpha &lt; 1</code> and <code class="reqn">k</code> and <code class="reqn">m</code> are some pre-specified positive integers 
+and <code class="reqn">k \le m</code>.  The quantity <code class="reqn">(1-\alpha)100\%</code> is called  
+the confidence coefficient or confidence level associated with the prediction 
+interval.  The function <code>predIntNpar</code> computes a standard 
+nonparametric prediction interval.
+</p>
+<p>The function <code>predIntNparSimultaneous</code> computes a nonparametric simultaneous 
+prediction interval that will contain a certain number of future observations 
+with probability <code class="reqn">(1-\alpha)100\%</code> for each of <code class="reqn">r</code> future sampling 
+“occasions”, 
+where <code class="reqn">r</code> is some pre-specified positive integer.  The quantity <code class="reqn">r</code> may 
+refer to <code class="reqn">r</code> distinct future sampling occasions in time, or it may for example 
+refer to sampling at <code class="reqn">r</code> distinct locations on one future sampling occasion, 
+assuming that the population standard deviation is the same at all of the <code class="reqn">r</code> 
+distinct locations.
+</p>
+<p>The function <code>predIntNparSimultaneous</code> computes a nonparametric simultaneous  
+prediction interval based on one of three possible rules:
+</p>
+
+<ul>
+<li>
+<p> For the <code class="reqn">k</code>-of-<code class="reqn">m</code> rule (<code>rule="k.of.m"</code>), at least <code class="reqn">k</code> of 
+the next <code class="reqn">m</code> future observations will fall in the prediction 
+interval with probability <code class="reqn">(1-\alpha)100\%</code> on each of the <code class="reqn">r</code> future 
+sampling occasions.  If obserations are being taken sequentially, for a particular 
+sampling occasion, up to <code class="reqn">m</code> observations may be taken, but once 
+<code class="reqn">k</code> of the observations fall within the prediction interval, sampling can stop.  
+Note:  For this rule, when <code class="reqn">r=1</code>, the results of <code>predIntNparSimultaneous</code> 
+are equivalent to the results of <code>predIntNpar</code>.
+</p>
+</li>
+<li>
+<p> For the California rule (<code>rule="CA"</code>), with probability 
+<code class="reqn">(1-\alpha)100\%</code>, for each of the <code class="reqn">r</code> future sampling occasions, either 
+the first observation will fall in the prediction interval, or else all of the next 
+<code class="reqn">m-1</code> observations will fall in the prediction interval. That is, if the first 
+observation falls in the prediction interval then sampling can stop.  Otherwise, 
+<code class="reqn">m-1</code> more observations must be taken.
+</p>
+</li>
+<li>
+<p> For the Modified California rule (<code>rule="Modified.CA"</code>), with probability 
+<code class="reqn">(1-\alpha)100\%</code>, for each of the <code class="reqn">r</code> future sampling occasions, either the 
+first observation will fall in the prediction interval, or else at least 2 out of 
+the next 3 observations will fall in the prediction interval.  That is, if the first 
+observation falls in the prediction interval then sampling can stop.  Otherwise, up 
+to 3 more observations must be taken.
+</p>
+</li>
+</ul>
+<p>Nonparametric simultaneous prediction intervals can be extended to using medians 
+in place of single observations (USEPA, 2009, Chapter 19).  That is, you can 
+create a nonparametric simultaneous prediction interval that will contain a 
+specified number of medians (based on which rule you choose) on each of <code class="reqn">r</code> 
+future sampling occassions, where each each median is based on <code class="reqn">b</code> individual 
+observations.  For the function <code>predIntNparSimultaneous</code>, the argument 
+<code>n.median</code> corresponds to <code class="reqn">b</code>.
+<br></p>
+<p><b>The Form of a Nonparametric Prediction Interval</b> <br>
+Let <code class="reqn">\underline{x} = x_1, x_2, \ldots, x_n</code> denote a vector of <code class="reqn">n</code> 
+independent observations from some continuous distribution, and let 
+<code class="reqn">x_{(i)}</code> denote the the <code class="reqn">i</code>'th order statistics in <code class="reqn">\underline{x}</code>.  
+A two-sided nonparametric prediction interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(v)}] \;\;\;\;\;\; (1)</code>
+</p>
+
+<p>where <code class="reqn">u</code> and <code class="reqn">v</code> are positive integers between 1 and <code class="reqn">n</code>, and 
+<code class="reqn">u &lt; v</code>.  That is, <code class="reqn">u</code> denotes the rank of the lower prediction limit, and 
+<code class="reqn">v</code> denotes the rank of the upper prediction limit.  To make it easier to write 
+some equations later on, we can also write the prediction interval (1) in a slightly 
+different way as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(n + 1 - w)}] \;\;\;\;\;\; (2)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">w = n + 1 - v \;\;\;\;\;\; (3)</code>
+</p>
+
+<p>so that <code class="reqn">w</code> is a positive integer between 1 and <code class="reqn">n-1</code>, and 
+<code class="reqn">u &lt; n+1-w</code>.  In terms of the arguments to the function <code>predIntNparSimultaneous</code>, 
+the argument <code>lpl.rank</code> corresponds to <code class="reqn">u</code>, and the argument 
+<code>n.plus.one.minus.upl.rank</code> corresponds to <code class="reqn">w</code>.
+</p>
+<p>If we allow <code class="reqn">u=0</code> and <code class="reqn">w=0</code> and define lower and upper bounds as:
+</p>
+<p style="text-align: center;"><code class="reqn">x_{(0)} = lb \;\;\;\;\;\; (4)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">x_{(n+1)} = ub \;\;\;\;\;\; (5)</code>
+</p>
+
+<p>then Equation (2) above can also represent a one-sided lower or one-sided upper 
+prediction interval as well.  That is, a one-sided lower nonparametric prediction 
+interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(u)}, x_{(n + 1)}] =  [x_{(u)}, ub] \;\;\;\;\;\; (6)</code>
+</p>
+
+<p>and a one-sided upper nonparametric prediction interval is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{(0)}, x_{(n + 1 - w)}]  = [lb, x_{(n + 1 - w)}] \;\;\;\;\;\; (7)</code>
+</p>
+
+<p>Usually, <code class="reqn">lb = -\infty</code> or <code class="reqn">lb = 0</code> and <code class="reqn">ub = \infty</code>.
+</p>
+<p><b>Note:</b>  For nonparametric simultaneous prediction intervals, only lower 
+(<code>pi.type="lower"</code>) and upper (<code>pi.type="upper"</code>) prediction 
+intervals are available.
+<br></p>
+<p><b>Computing Power</b> <br>
+The "power" of the prediction interval is defined as the probability that 
+at least one set of future observations violates the given rule based on a 
+simultaneous prediction interval for the next <code class="reqn">r</code> future sampling occasions, 
+where the population for the future observations is allowed to differ from 
+the population for the observations used to construct the prediction interval.
+</p>
+<p>For the function <code>predIntNparSimultaneousTestPower</code>, power is computed assuming 
+both the background and future the observations come from normal distributions with 
+the same standard deviation, but the means of the distributions are allowed to differ.
+The quantity <code class="reqn">\Delta</code> (upper case delta) denotes the difference between the 
+mean of the population that was sampled to construct the prediction interval, and 
+the mean of the population that will be sampled to produce the future observations.  
+The quantity <code class="reqn">\sigma</code> (sigma) denotes the population standard deviation of both 
+of these populations.  The argument <code>delta.over.sigma</code> corresponds to the 
+quantity <code class="reqn">\Delta/\sigma</code>.
+</p>
+<p><em>Approximate Power</em> (<code>method="approx"</code>) <br>
+Based on Gansecki (2009), the power of a nonparametric simultaneous prediction 
+interval when the underlying observations come from a nomral distribution 
+can be approximated by the power of a normal simultaneous prediction 
+interval (see <code>predIntNormSimultaneousTestPower</code>) where the multiplier 
+<code class="reqn">K</code> is replaced with the expected value of the normal order statistic that 
+corresponds to the rank of the order statistic used for the upper or lower bound 
+of the prediction interval.  Gansecki (2009) uses the approximation:
+</p>
+<p style="text-align: center;"><code class="reqn">K = \Phi^{-1}(\frac{i - 0.5}{n}) \;\;\;\;\;\; (8)</code>
+</p>
+
+<p>where <code class="reqn">\Phi</code> denotes the cumulative distribution function of the standard 
+normal distribution and <code class="reqn">i</code> denotes the rank of the order statistic used 
+as the prediction limit.  By default, the value of the argument <br><code>evNormOrdStats.method="royston"</code>, so the function 
+<code>predIntNparSimultaneousTestPower</code> uses the exact value of the 
+expected value of the normal order statistic in the call to 
+<code>evNormOrdStatsScalar</code>.  You can change the 
+method of computing the expected value of the normal order statistic by 
+changing the value of the argument <code>evNormOrdStats.method</code>.
+<br></p>
+<p><em>Power Based on Monte Carlo Simulation</em> (<code>method="simulate"</code>) <br>
+When <code>method="simulate"</code>, the power of the nonparametric simultaneous 
+prediction interval is estimated based on a Monte Carlo simulation.  The argument 
+<code>NMC</code> determines the number of Monte Carlo trials.  If <code>ci=TRUE</code>, a 
+confidence interval for the power is created based on the <code>NMC</code> Monte Carlo 
+estimates of power.
+</p>
+
+
+<h3>Value</h3>
+
+<p>vector of values between 0 and 1 equal to the probability that 
+the rule will be violated.
+</p>
+
+
+<h3>Note</h3>
+
+<p>See the help file for <code>predIntNparSimultaneous</code>.
+</p>
+<p>In the course of designing a sampling program, an environmental scientist may wish 
+to determine the relationship between sample size, significance level, power, and 
+scaled difference if one of the objectives of the sampling program is to determine 
+whether two distributions differ from each other.  The functions 
+<code>predIntNparSimultaneousTestPower</code> and <br><code>plotPredIntNparSimultaneousTestPowerCurve</code> can be 
+used to investigate these relationships for the case of normally-distributed 
+observations. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>See the help file for <code>predIntNparSimultaneous</code>.
+</p>
+<p>Gansecki, M. (2009).  <em>Using the Optimal Rank Values Calculator</em>.  
+US Environmental Protection Agency, Region 8, March 10, 2009.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plotPredIntNparSimultaneousTestPowerCurve</code>, 
+<code>predIntNparSimultaneous</code>, <br><code>predIntNparSimultaneousN</code>, 
+<code>predIntNparSimultaneousConfLevel</code>, <br><code>plotPredIntNparSimultaneousDesign</code>, 
+<code>predIntNpar</code>, <code>tolIntNpar</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Example 19-5 of USEPA (2009, p. 19-33) shows how to compute nonparametric upper 
+  # simultaneous prediction limits for various rules based on trace mercury data (ppb) 
+  # collected in the past year from a site with four background wells and 10 compliance 
+  # wells (data for two of the compliance wells  are shown in the guidance document).  
+  # The facility must monitor the 10 compliance wells for five constituents 
+  # (including mercury) annually.
+  
+  # Here we will compute the confidence levels and powers associated with  
+  # two different sampling plans: 
+  # 1) the 1-of-2 retesting plan for a median of order 3 using the 
+  #    background maximum and 
+  # 2) the 1-of-4 plan on individual observations using the 3rd highest 
+  #    background value.
+  # Power will be computed assuming a normal distribution and setting 
+  # delta.over.sigma equal to 2, 3, and 4.
+  # The data for this example are stored in EPA.09.Ex.19.5.mercury.df.
+
+  # We will pool data from 4 background wells that were sampled on 
+  # a number of different occasions, giving us a sample size of 
+  # n = 20 to use to construct the prediction limit.
+
+  # There are 10 compliance wells and we will monitor 5 different 
+  # constituents at each well annually.  For this example, USEPA (2009) 
+  # recommends setting r to the product of the number of compliance wells and 
+  # the number of evaluations per year.  
+
+  # To determine the minimum confidence level we require for 
+  # the simultaneous prediction interval, USEPA (2009) recommends 
+  # setting the maximum allowed individual Type I Error level per constituent to:
+ 
+  # 1 - (1 - SWFPR)^(1 / Number of Constituents)
+  
+  # which translates to setting the confidence limit to 
+
+  # (1 - SWFPR)^(1 / Number of Constituents)
+
+  # where SWFPR = site-wide false positive rate.  For this example, we 
+  # will set SWFPR = 0.1.  Thus, the required individual Type I Error level 
+  # and confidence level per constituent are given as follows:
+
+  # n  = 20 based on 4 Background Wells
+  # nw = 10 Compliance Wells
+  # nc =  5 Constituents
+  # ne =  1 Evaluation per year
+
+  n  &lt;- 20
+  nw &lt;- 10
+  nc &lt;-  5
+  ne &lt;-  1
+
+  # Set number of future sampling occasions r to 
+  # Number Compliance Wells x Number Evaluations per Year
+  r  &lt;-  nw * ne
+
+  conf.level &lt;- (1 - 0.1)^(1 / nc)
+  conf.level
+  #[1] 0.9791484
+
+  # So the required confidence level is 0.98, or 98%.
+  # Now determine the confidence level associated with each plan.
+  # Note that both plans achieve the required confidence level.
+ 
+  # 1) the 1-of-2 retesting plan for a median of order 3 using the 
+  #    background maximum
+
+  predIntNparSimultaneousConfLevel(n = 20, n.median = 3, k = 1, m = 2, r = r)
+  #[1] 0.9940354
+
+
+  # 2) the 1-of-4 plan based on individual observations using the 3rd highest 
+  #    background value.
+
+  predIntNparSimultaneousConfLevel(n = 20, k = 1, m = 4, r = r, 
+    n.plus.one.minus.upl.rank = 3)
+  #[1] 0.9864909
+
+  #------------------------------------------------------------------------------
+  # Compute approximate power of each plan to detect contamination at just 1 well 
+  # assuming true underying distribution of Hg is Normal at all wells and 
+  # using delta.over.sigma equal to 2, 3, and 4.
+  #------------------------------------------------------------------------------
+
+  # Computer aproximate power for 
+  # 1) the 1-of-2 retesting plan for a median of order 3 using the 
+  #    background maximum
+
+  predIntNparSimultaneousTestPower(n = 20, n.median = 3, k = 1, m = 2, r = r, 
+    delta.over.sigma = 2:4, r.shifted = 1)
+  #[1] 0.3953712 0.9129671 0.9983054
+
+
+  # Compute approximate power for
+  # 2) the 1-of-4 plan based on individual observations using the 3rd highest 
+  #    background value.
+
+  predIntNparSimultaneousTestPower(n = 20, k = 1, m = 4, r = r, 
+    n.plus.one.minus.upl.rank = 3, delta.over.sigma = 2:4, r.shifted = 1)
+  #[1] 0.4367972 0.8694664 0.9888779
+
+
+  #----------
+
+  ## Not run: 
+  # Compare estimated power using approximation method with estimated power
+  # using Monte Carlo simulation for the 1-of-4 plan based on individual 
+  # observations using the 3rd highest background value.
+
+  predIntNparSimultaneousTestPower(n = 20, k = 1, m = 4, r = r, 
+    n.plus.one.minus.upl.rank = 3, delta.over.sigma = 2:4, r.shifted = 1, 
+    method = "simulate", ci = TRUE, NMC = 1000)
+  #[1] 0.437 0.863 0.989
+  #attr(,"conf.int")
+  #         [,1]      [,2]      [,3]
+  #LCL 0.4111999 0.8451148 0.9835747
+  #UCL 0.4628001 0.8808852 0.9944253
+  
+## End(Not run)
+ 
+  #==========
+
+  # Cleanup
+  #--------
+  rm(n, nw, nc, ne, r, conf.level) 
+</code></pre>
+
+
+</div>

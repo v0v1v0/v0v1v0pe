@@ -1,0 +1,117 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fit_mods</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit a model to simulated datasets</h2>
+
+<h3>Description</h3>
+
+<p>Fits a specified model to each of the simulated datasets and returns a dataframe
+summarizing results from fitting the model to each dataset, including the estimated
+effect and the estimated standard error for that estimated effect. The model is specified
+through a user-created R function, which must take specific input and return
+output in a specific format. For more details, see the parameter definitions,
+the Details section, and the vignette for the <code>eesim</code> package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fit_mods(data, custom_model = NULL, custom_model_args = list())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A list of simulated data sets. Each simulated dataset must include a
+column called <code>x</code> with daily exposure values and a column called <code>outcome</code> with
+daily outcome values. Typically, this will be the outcome from <code>create_sims</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_model</code></td>
+<td>
+<p>The object name of an R function that defines the code that will be used
+to fit the model. This object name should not be in quotations. See Details for more.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_model_args</code></td>
+<td>
+<p>A list of arguments and their values for a custom
+model. These arguments are passed through to the function specified with <code>custom_model</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function specified by the <code>custom_model</code> argument should be
+a user-created function that inputs a data frame with columns named "x" for
+exposure values and "outcome" for outcome values. The function must output a data
+frame with columns called <code>Estimate</code>, <code>Std. Error</code>, <code>t value</code>,
+<code>Pr(&gt;|t|)</code>, <code>2.5%</code>, and <code>97.5%</code>. Note that these columns are the output
+from <code>summary</code> and <code>confint</code> for models fit using a <code>glm</code> call. You may
+use the function <code>format_out</code> from eesim within your function to produce output
+with these columns if this model is fit using <code>glm</code> or something similar.
+For more details and examples, see the vignette for <code>eesim</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame in which each row gives the results from the model-fitting function run
+on one of the simulated datasets input to the function as the <code>data</code> object. The returned
+data frame has one row per simulated dataset and the following columns:
+</p>
+
+<ul>
+<li>
+<p><code>Estimate</code>: The estimated <code class="reqn">\beta</code> (log relative risk) as estimated by
+the model specified with <code>custom_model</code>.
+</p>
+</li>
+<li>
+<p><code>Std.Error</code>: The standard error for the estimated <code class="reqn">\beta</code>.
+</p>
+</li>
+<li>
+<p><code>t.value</code>: The test statistic for a test of the null hypothesis <code class="reqn">\beta = 0</code>.
+</p>
+</li>
+<li>
+<p><code>p.value</code>: The p-value for a test of the null hypothesis <code class="reqn">\beta = 0</code>.
+</p>
+</li>
+<li>
+<p><code>lower_ci</code>: The lower value in the 95% confidence interval estimated for
+<code class="reqn">\beta</code>.
+</p>
+</li>
+<li>
+<p><code>upper_ci</code>: The upper value in the 95% confidence interval estimated for
+<code class="reqn">\beta</code>.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a set of simulated datasets and then fit the model defined in `spline_mod` to
+# all datasets, using the argument `df_year = 7` in the call to `spline_mod`. The `spline_mod`
+# function is included in the `eesim` package and can be investigating by calling the function
+# name without parentheses (i.e., `spline_mod`).
+sims &lt;- create_sims(n_reps = 10, n = 5 * 365, central = 100, sd = 10,
+            exposure_type = "continuous", exposure_trend = "cos1",
+            exposure_amp = .6, average_outcome = 22,
+            outcome_trend = "no trend", outcome_amp = .6, rr = 1.01)
+fit_mods(data = sims, custom_model = spline_mod, custom_model_args = list(df_year = 7))
+
+</code></pre>
+
+
+</div>

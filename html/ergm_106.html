@@ -1,0 +1,1162 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>control.ergm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Auxiliary function for fine-tuning ERGM fitting.</h2>
+
+<h3>Description</h3>
+
+<p>This function is only used within a call to the <code>ergm()</code> function.
+See the Usage section in <code>ergm()</code> for details. Also see the
+Details section about some of the interactions between its
+arguments.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">control.ergm(
+  drop = TRUE,
+  init = NULL,
+  init.method = NULL,
+  main.method = c("MCMLE", "Stochastic-Approximation"),
+  force.main = FALSE,
+  main.hessian = TRUE,
+  checkpoint = NULL,
+  resume = NULL,
+  MPLE.samplesize = .Machine$integer.max,
+  init.MPLE.samplesize = function(d, e) max(sqrt(d), e, 40) * 8,
+  MPLE.type = c("glm", "penalized", "logitreg"),
+  MPLE.maxit = 10000,
+  MPLE.nonvar = c("warning", "message", "error"),
+  MPLE.nonident = c("warning", "message", "error"),
+  MPLE.nonident.tol = 1e-10,
+  MPLE.covariance.samplesize = 500,
+  MPLE.covariance.method = "invHess",
+  MPLE.covariance.sim.burnin = 1024,
+  MPLE.covariance.sim.interval = 1024,
+  MPLE.check = TRUE,
+  MPLE.constraints.ignore = FALSE,
+  MCMC.prop = trim_env(~sparse + .triadic),
+  MCMC.prop.weights = "default",
+  MCMC.prop.args = list(),
+  MCMC.interval = NULL,
+  MCMC.burnin = EVL(MCMC.interval * 16),
+  MCMC.samplesize = NULL,
+  MCMC.effectiveSize = NULL,
+  MCMC.effectiveSize.damp = 10,
+  MCMC.effectiveSize.maxruns = 16,
+  MCMC.effectiveSize.burnin.pval = 0.2,
+  MCMC.effectiveSize.burnin.min = 0.05,
+  MCMC.effectiveSize.burnin.max = 0.5,
+  MCMC.effectiveSize.burnin.nmin = 16,
+  MCMC.effectiveSize.burnin.nmax = 128,
+  MCMC.effectiveSize.burnin.PC = FALSE,
+  MCMC.effectiveSize.burnin.scl = 32,
+  MCMC.effectiveSize.order.max = NULL,
+  MCMC.return.stats = 2^12,
+  MCMC.runtime.traceplot = FALSE,
+  MCMC.maxedges = Inf,
+  MCMC.addto.se = TRUE,
+  MCMC.packagenames = c(),
+  SAN.maxit = 4,
+  SAN.nsteps.times = 8,
+  SAN = control.san(term.options = term.options, SAN.maxit = SAN.maxit, SAN.prop =
+    MCMC.prop, SAN.prop.weights = MCMC.prop.weights, SAN.prop.args = MCMC.prop.args,
+    SAN.nsteps = EVL(MCMC.burnin, 16384) * SAN.nsteps.times, SAN.samplesize =
+    EVL(MCMC.samplesize, 1024), SAN.packagenames = MCMC.packagenames, parallel =
+    parallel, parallel.type = parallel.type, parallel.version.check =
+    parallel.version.check),
+  MCMLE.termination = c("confidence", "Hummel", "Hotelling", "precision", "none"),
+  MCMLE.maxit = 60,
+  MCMLE.conv.min.pval = 0.5,
+  MCMLE.confidence = 0.99,
+  MCMLE.confidence.boost = 2,
+  MCMLE.confidence.boost.threshold = 1,
+  MCMLE.confidence.boost.lag = 4,
+  MCMLE.NR.maxit = 100,
+  MCMLE.NR.reltol = sqrt(.Machine$double.eps),
+  obs.MCMC.mul = 1/4,
+  obs.MCMC.samplesize.mul = sqrt(obs.MCMC.mul),
+  obs.MCMC.samplesize = EVL(round(MCMC.samplesize * obs.MCMC.samplesize.mul)),
+  obs.MCMC.effectiveSize = NVL3(MCMC.effectiveSize, . * obs.MCMC.mul),
+  obs.MCMC.interval.mul = sqrt(obs.MCMC.mul),
+  obs.MCMC.interval = EVL(round(MCMC.interval * obs.MCMC.interval.mul)),
+  obs.MCMC.burnin.mul = sqrt(obs.MCMC.mul),
+  obs.MCMC.burnin = EVL(round(MCMC.burnin * obs.MCMC.burnin.mul)),
+  obs.MCMC.prop = MCMC.prop,
+  obs.MCMC.prop.weights = MCMC.prop.weights,
+  obs.MCMC.prop.args = MCMC.prop.args,
+  obs.MCMC.impute.min_informative = function(nw) network.size(nw)/4,
+  obs.MCMC.impute.default_density = function(nw) 2/network.size(nw),
+  MCMLE.min.depfac = 2,
+  MCMLE.sampsize.boost.pow = 0.5,
+  MCMLE.MCMC.precision = if (startsWith("confidence", MCMLE.termination[1])) 0.1 else
+    0.005,
+  MCMLE.MCMC.max.ESS.frac = 0.1,
+  MCMLE.metric = c("lognormal", "logtaylor", "Median.Likelihood", "EF.Likelihood",
+    "naive"),
+  MCMLE.method = c("BFGS", "Nelder-Mead"),
+  MCMLE.dampening = FALSE,
+  MCMLE.dampening.min.ess = 20,
+  MCMLE.dampening.level = 0.1,
+  MCMLE.steplength.margin = 0.05,
+  MCMLE.steplength = NVL2(MCMLE.steplength.margin, 1, 0.5),
+  MCMLE.steplength.parallel = c("observational", "never"),
+  MCMLE.sequential = TRUE,
+  MCMLE.density.guard.min = 10000,
+  MCMLE.density.guard = exp(3),
+  MCMLE.effectiveSize = 64,
+  obs.MCMLE.effectiveSize = NULL,
+  MCMLE.interval = 1024,
+  MCMLE.burnin = MCMLE.interval * 16,
+  MCMLE.samplesize.per_theta = 32,
+  MCMLE.samplesize.min = 256,
+  MCMLE.samplesize = NULL,
+  obs.MCMLE.samplesize.per_theta = round(MCMLE.samplesize.per_theta *
+    obs.MCMC.samplesize.mul),
+  obs.MCMLE.samplesize.min = 256,
+  obs.MCMLE.samplesize = NULL,
+  obs.MCMLE.interval = round(MCMLE.interval * obs.MCMC.interval.mul),
+  obs.MCMLE.burnin = round(MCMLE.burnin * obs.MCMC.burnin.mul),
+  MCMLE.steplength.solver = c("glpk", "lpsolve"),
+  MCMLE.last.boost = 4,
+  MCMLE.steplength.esteq = TRUE,
+  MCMLE.steplength.miss.sample = function(x1) c(max(ncol(rbind(x1)) * 2, 30), 10),
+  MCMLE.steplength.min = 1e-04,
+  MCMLE.effectiveSize.interval_drop = 2,
+  MCMLE.save_intermediates = NULL,
+  MCMLE.nonvar = c("message", "warning", "error"),
+  MCMLE.nonident = c("warning", "message", "error"),
+  MCMLE.nonident.tol = 1e-10,
+  SA.phase1_n = function(q, ...) max(200, 7 + 3 * q),
+  SA.initial_gain = 0.1,
+  SA.nsubphases = 4,
+  SA.min_iterations = function(q, ...) (7 + q),
+  SA.max_iterations = function(q, ...) (207 + q),
+  SA.phase3_n = 1000,
+  SA.interval = 1024,
+  SA.burnin = SA.interval * 16,
+  SA.samplesize = 1024,
+  CD.samplesize.per_theta = 128,
+  obs.CD.samplesize.per_theta = 128,
+  CD.nsteps = 8,
+  CD.multiplicity = 1,
+  CD.nsteps.obs = 128,
+  CD.multiplicity.obs = 1,
+  CD.maxit = 60,
+  CD.conv.min.pval = 0.5,
+  CD.NR.maxit = 100,
+  CD.NR.reltol = sqrt(.Machine$double.eps),
+  CD.metric = c("naive", "lognormal", "logtaylor", "Median.Likelihood", "EF.Likelihood"),
+  CD.method = c("BFGS", "Nelder-Mead"),
+  CD.dampening = FALSE,
+  CD.dampening.min.ess = 20,
+  CD.dampening.level = 0.1,
+  CD.steplength.margin = 0.5,
+  CD.steplength = 1,
+  CD.adaptive.epsilon = 0.01,
+  CD.steplength.esteq = TRUE,
+  CD.steplength.miss.sample = function(x1) ceiling(sqrt(ncol(rbind(x1)))),
+  CD.steplength.min = 1e-04,
+  CD.steplength.parallel = c("observational", "always", "never"),
+  CD.steplength.solver = c("glpk", "lpsolve"),
+  loglik = control.logLik.ergm(),
+  term.options = NULL,
+  seed = NULL,
+  parallel = 0,
+  parallel.type = NULL,
+  parallel.version.check = TRUE,
+  parallel.inherit.MT = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>Logical: If TRUE, terms whose observed statistic values are at
+the extremes of their possible ranges are dropped from the fit and their
+corresponding parameter estimates are set to plus or minus infinity, as
+appropriate.  This is done because maximum likelihood estimates cannot exist
+when the vector of observed statistic lies on the boundary of the convex
+hull of possible statistic values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>numeric or <code>NA</code> vector equal in length to the number of
+parameters in the model or <code>NULL</code> (the default); the initial values for
+the estimation and coefficient offset terms. If <code>NULL</code> is passed, all
+of the initial values are computed using the method specified by
+<code>control$init.method</code>.  If a numeric vector is
+given, the elements of the vector are interpreted as follows: </p>
+
+<ul>
+<li>
+<p> Elements corresponding to terms enclosed in <code>offset()</code> are used as
+the fixed offset coefficients. Note that offset coefficients alone can be
+more conveniently specified using <code>ergm()</code> argument
+<code>offset.coef</code>. If both <code>offset.coef</code> and <code>init</code> arguments are
+given, values in <code>offset.coef</code> will take precedence.
+</p>
+</li>
+<li>
+<p> Elements that do not correspond to offset terms and are not <code>NA</code>
+are used as starting values in the estimation.
+</p>
+</li>
+<li>
+<p> Initial values for the elements that are <code>NA</code> are fit using the
+method specified by <code>control$init.method</code>.
+</p>
+</li>
+</ul>
+<p> Passing <code>control.ergm(init=coef(prev.fit))</code> can be used to
+“resume” an uncoverged <code>ergm()</code> run, though <code>checkpoint</code> and
+'resume' would be better under most circumstances.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init.method</code></td>
+<td>
+<p>A chatacter vector or <code>NULL</code>. The default
+method depends on the reference measure used. For the binary
+(<code>"Bernoulli"</code>) ERGMs, with dyad-independent constraints,
+it's maximum pseudo-likelihood estimation (MPLE). Other valid
+values include <code>"zeros"</code> for a <code>0</code> vector of
+appropriate length and <code>"CD"</code> for contrastive divergence. If
+passed explicitly, this setting overrides the reference's
+limitations.
+</p>
+<p>Valid initial methods for a given reference are set by the
+<code style="white-space: pre;">⁠InitErgmReference.*⁠</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main.method</code></td>
+<td>
+<p>One of "MCMLE" (default) or
+"Stochastic-Approximation".  Chooses the estimation method used
+to find the MLE.  <code>MCMLE</code> attempts to maximize an
+approximation to the log-likelihood function.
+<code>Stochastic-Approximation</code> are both stochastic approximation
+algorithms that try to solve the method of moments equation that
+yields the MLE in the case of an exponential family model. The
+direct use of the likelihood function has many theoretical
+advantages over stochastic approximation, but the choice will
+depend on the model and data being fit. See Handcock (2000) and
+Hunter and Handcock (2006) for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force.main</code></td>
+<td>
+<p>Logical: If TRUE, then force MCMC-based estimation method,
+even if the exact MLE can be computed via maximum pseudolikelihood
+estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main.hessian</code></td>
+<td>
+<p>Logical: If TRUE, then an approximate Hessian matrix is
+used in the MCMC-based estimation method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>checkpoint</code></td>
+<td>
+<p>At the start of every iteration, save the state
+of the optimizer in a way that will allow it to be resumed. The
+name is passed through <code>sprintf()</code> with iteration number as the
+second argument. (For example, <code>checkpoint="step_%03d.RData"</code>
+will save to <code>step_001.RData</code>, <code>step_002.RData</code>, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resume</code></td>
+<td>
+<p>If given a file name of an <code>RData</code> file produced by
+<code>checkpoint</code>, the optimizer will attempt to resume after
+restoring the state. Control parameters from the saved state will
+be reused, except for those whose value passed via
+<code>control.ergm()</code> had change from the saved run. Note that if the
+network, the model, or some critical settings differ between
+runs, the results may be undefined.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MPLE.samplesize, init.MPLE.samplesize</code></td>
+<td>
+<p>These parameters control the maximum number of dyads (potential
+ties) that will be used by the MPLE to construct the predictor
+matrix for its logistic regression. In general, the algorithm
+visits dyads in a systematic sample that, if it does not hit one
+of these limits, will visit every informative dyad. If a limit is
+exceeded, case-control approximation to the likelihood,
+comprising all edges and those non-edges that have been visited
+by the algorithm before the limit was exceeded will be used.
+</p>
+<p><code>MPLE.samplesize</code> limits the number of dyads visited, unless the
+MPLE is being computed for the purpose of being the initial value
+for MCMC-based estimation, in which case <code>init.MPLE.samplesize</code>
+is used instead, All of these can be specified either as numbers or as
+<code style="white-space: pre;">⁠function(d,e)⁠</code> taking the number of informative dyads and
+informative edges. Specifying or returning a larger number than
+the number of informative dyads is safe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MPLE.type</code></td>
+<td>
+<p>One of <code>"glm"</code>, <code>"penalized"</code>, or
+<code>"logitreg"</code>.  Chooses method of calculating MPLE.  <code>"glm"</code> is the
+usual formal logistic regression called via <code>glm()</code>, whereas
+<code>"penalized"</code> uses the bias-reduced method of Firth (1993) as
+originally implemented by Meinhard Ploner, Daniela Dunkler, Harry
+Southworth, and Georg Heinze in the "logistf" package. <code>"logitreg"</code> is
+an "in-house" implementation that is slower and probably less stable but
+supports nonlinear logistic regression. It is invoked automatically when the
+model has curved terms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MPLE.maxit</code></td>
+<td>
+<p>Maximum number of iterations for <code>"logitreg"</code>
+implementation of MPLE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MPLE.nonident, MPLE.nonident.tol, MPLE.nonvar, MCMLE.nonident, MCMLE.nonident.tol, MCMLE.nonvar</code></td>
+<td>
+<p>A rudimentary nonidentifiability/multicollinearity diagnostic. If
+<code>MPLE.nonident.tol &gt; 0</code>, test the MPLE covariate matrix or the CD
+statistics matrix has linearly dependent columns via QR decomposition with tolerance <code>MPLE.nonident.tol</code>. This is
+often (not always) indicative of a non-identifiable
+(multicollinear) model. If nonidentifiable, depending on
+<code>MPLE.nonident</code> issue a warning, an error, or a message
+specifying the potentially redundant statistics. Before the
+diagnostic is performed, covariates that do not vary (i.e.,
+all-zero columns) are dropped, with their handling controlled by
+<code>MPLE.nonvar</code>. The corresponding <code style="white-space: pre;">⁠MCMLE.*⁠</code> arguments provide a
+similar diagnostic for the unconstrained MCMC sample's estimating
+functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MPLE.covariance.method, MPLE.covariance.samplesize, MPLE.covariance.sim.burnin, MPLE.covariance.sim.interval</code></td>
+<td>
+<p>Controls for estimating the MPLE covariance
+matrix. <code style="white-space: pre;">⁠MPLE.covariance method⁠</code> determines the method, with
+<code>invHess</code> (the default) returning the covariance estimate
+obtained from the <code>glm()</code>. <code>Godambe</code> estimates the covariance
+matrix using the Godambe-matrix (Schmid and Hunter 2023). This
+method is recommended for dyad-dependent models. Alternatively,
+<code>bootstrap</code> estimates standard deviations using a parametric
+bootstrapping approach (see Schmid and Desmarais 2017). The
+other parameters control, respectively, the number of networks to
+simulate, the MCMC burn-in, and the MCMC interval for <code>Godambe</code>
+and <code>bootstrap</code> methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MPLE.check</code></td>
+<td>
+<p>If <code>TRUE</code> (the default), perform the MPLE
+existence check described by Schmid and Hunter (2023).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MPLE.constraints.ignore</code></td>
+<td>
+<p>If <code>TRUE</code>, MPLE will ignore all
+dyad-independent constraints except for those due to attributes
+missingness. This can be used to avert evaluating and storing the
+<code>rlebdm</code>s for very large networks except where absolutely
+necessary. Note that this can be very dangerous unless you know
+what you are doing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.prop</code></td>
+<td>
+<p>Specifies the proposal (directly) and/or
+a series of "hints" about the structure of the model being
+sampled. The specification is in the form of a one-sided formula
+with hints separated by <code>+</code> operations. If the LHS exists and is
+a string, the proposal to be used is selected directly.
+</p>
+<p>A common and default "hint" is <code>~sparse</code>, indicating
+that the network is sparse and that the sample should put roughly
+equal weight on selecting a dyad with or without a tie as a
+candidate for toggling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.prop.weights</code></td>
+<td>
+<p>Specifies the proposal
+distribution used in the MCMC Metropolis-Hastings algorithm.  Possible
+choices depending on selected <code>reference</code> and <code>constraints</code>
+arguments of the <code>ergm()</code> function, but often include <code>"TNT"</code>
+and <code>"random"</code>, and the <code>"default"</code> is to use the one with the
+highest priority available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.prop.args</code></td>
+<td>
+<p>An alternative, direct way of
+specifying additional arguments to proposal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.interval</code></td>
+<td>
+<p>Number of proposals between sampled statistics.
+Increasing interval will reduces the autocorrelation in the sample, and may
+increase the precision in estimates by reducing MCMC error, at the expense
+of time. Set the interval higher for larger networks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.burnin</code></td>
+<td>
+<p>Number of proposals before any MCMC sampling is done. It
+typically is set to a fairly large number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.samplesize</code></td>
+<td>
+<p>Number of network statistics, randomly drawn from a
+given distribution on the set of all networks, returned by the
+Metropolis-Hastings algorithm.  Increasing sample size may increase the
+precision in the estimates by reducing MCMC error, at the expense of time.
+Set it higher for larger networks, or when using parallel functionality.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.effectiveSize, MCMC.effectiveSize.damp, MCMC.effectiveSize.maxruns, MCMC.effectiveSize.burnin.pval, MCMC.effectiveSize.burnin.min, MCMC.effectiveSize.burnin.max, MCMC.effectiveSize.burnin.nmin, MCMC.effectiveSize.burnin.nmax, MCMC.effectiveSize.burnin.PC, MCMC.effectiveSize.burnin.scl, MCMC.effectiveSize.order.max</code></td>
+<td>
+<p>Set <code>MCMC.effectiveSize</code> to a non-NULL value to adaptively
+determine the burn-in and the MCMC length needed to get the
+specified effective size; 50 is a reasonable value. In the
+adaptive MCMC mode, MCMC is run forward repeatedly
+(<code>MCMC.samplesize*MCMC.interval</code> steps, up to
+<code>MCMC.effectiveSize.maxruns</code> times) until the target effective
+sample size is reached or exceeded.
+</p>
+<p>After each run, the returned statistics are mapped to the
+estimating function scale, then an exponential decay model is fit
+to the scaled statistics to find that burn-in which would reduce
+the difference between the initial values of statistics and their
+equilibrium values by a factor of <code>MCMC.effectiveSize.burnin.scl</code>
+of what it initially was, bounded by <code>MCMC.effectiveSize.min</code> and
+<code>MCMC.effectiveSize.max</code> as proportions of sample size. If the
+best-fitting decay exceeds <code>MCMC.effectiveSize.max</code>, the
+exponential model is considered to be unsuitable and
+<code>MCMC.effectiveSize.min</code> is used.
+</p>
+<p>A Geweke diagnostic is then run, after thinning the sample to
+<code>MCMC.effectiveSize.burnin.nmax</code>. If this Geweke diagnostic
+produces a <code class="reqn">p</code>-value higher than
+<code>MCMC.effectiveSize.burnin.pval</code>, it is accepted.
+</p>
+<p>If <code>MCMC.effectiveSize.burnin.PC&gt;0</code>, instead of using the full
+sample for burn-in estimation, at most this many principal
+components are used instead.
+</p>
+<p>The effective size of the post-burn-in sample is computed via
+Vats et al. (2019), and compared to the target
+effective size. If it is not matched, the MCMC run is resumed,
+with the additional draws needed linearly extrapolated but
+weighted in favor of the baseline <code>MCMC.samplesize</code> by the
+weighting factor <code>MCMC.effectiveSize.damp</code> (higher = less
+damping). Lastly, if after an MCMC run, the number of samples
+equals or exceeds <code>2*MCMC.samplesize</code>, the chain will be thinned
+by 2 until it falls below that, while doubling
+<code>MCMC.interval</code>. <code>MCMC.effectiveSize.order.max</code> can be used to
+set the order of the AR model used to estimate the effective
+sample size and the variance for the Geweke diagnostic.
+</p>
+<p>Lastly, if <code>MCMC.effectiveSize</code> is a matrix, say, <code class="reqn">W</code>, it
+will be treated as a target precision (inverse-variance) matrix.
+If <code class="reqn">V</code> is the sample covariance matrix, the target effective
+size <code class="reqn">n_{\text{eff}}</code> will be set such that
+<code class="reqn">V/n_{\text{eff}}</code> is close to <code class="reqn">W</code> in magnitude,
+specifically that <code class="reqn">\operatorname{tr}((V/n_{\text{eff}})W)/p\approx 1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.return.stats</code></td>
+<td>
+<p>Numeric: If positive, include an
+<code>mcmc.list</code> (two, if observational process was involved) of
+MCMC network statistics from the last iteration of network of the
+estimation. They will be thinned to have length of at most
+<code>MCMC.return.stats</code>. They are used for MCMC diagnostics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.runtime.traceplot</code></td>
+<td>
+<p>Logical: If <code>TRUE</code>, plot traceplots of the MCMC
+sample after every MCMC MLE iteration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.maxedges</code></td>
+<td>
+<p>The maximum number of edges that may occur during the MCMC sampling. If this number is exceeded at any time, sampling is stopped immediately.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.addto.se</code></td>
+<td>
+<p>Whether to add the standard errors induced by the MCMC
+algorithm to the estimates' standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC.packagenames</code></td>
+<td>
+<p>Names of packages in which to look for change
+statistic functions in addition to those autodetected. This argument should
+not be needed outside of very strange setups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SAN.maxit</code></td>
+<td>
+<p>When <code>target.stats</code> argument is passed to
+<code>ergm()</code>, the maximum number of attempts to use <code>san()</code>
+to obtain a network with statistics close to those specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SAN.nsteps.times</code></td>
+<td>
+<p>Multiplier for <code>SAN.nsteps</code> relative to
+<code>MCMC.burnin</code>. This lets one control the amount of SAN burn-in
+(arguably, the most important of SAN parameters) without overriding the
+other <code>SAN</code> defaults.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SAN</code></td>
+<td>
+<p>Control arguments to <code>san()</code>.  See
+<code>control.san()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.termination</code></td>
+<td>
+<p>The criterion used for terminating MCMLE
+estimation:
+</p>
+
+<ul><li> <p><code>"Hummel"</code> Terminate when the Hummel step length is
+1 for two consecutive iterations. For the last iteration, the sample size is
+boosted by a factor of <code>MCMLE.last.boost</code>. See Hummel et. al. (2012).
+</p>
+</li></ul>
+<p>Note that this criterion is incompatible with <code>MCMLE.steplength</code>
+<code class="reqn">\ne</code> 1 or <code>MCMLE.steplength.margin</code> <code class="reqn">=</code> <code>NULL</code>.
+</p>
+
+<ul>
+<li> <p><code>"Hotelling"</code> After every MCMC sample, an autocorrelation-adjusted
+Hotelling's T^2 test for equality of MCMC-simulated network statistics to
+observed is conducted, and if its P-value exceeds
+<code>MCMLE.conv.min.pval</code>, the estimation is considered to have converged
+and finishes. This was the default option in <code>ergm</code> version 3.1.
+</p>
+</li>
+<li> <p><code>"precision"</code> Terminate when the estimated loss in estimating precision
+due to using MCMC standard errors is below the precision bound specified by
+<code>MCMLE.MCMC.precision</code>, and the Hummel step length is 1 for two
+consecutive iterations. See <code>MCMLE.MCMC.precision</code> for details. This
+feature is in experimental status until we verify the coverage of the
+standard errors.
+</p>
+</li>
+</ul>
+<p>Note that this criterion is incompatible with
+<code class="reqn">\code{MCMLE.steplength}\ne 1</code> or
+<code class="reqn">\code{MCMLE.steplength.margin}=\code{NULL}</code>.
+</p>
+
+<ul>
+<li> <p><code>"confidence"</code>: Performs an equivalence test to prove with level
+of confidence <code>MCMLE.confidence</code> that the true value of the
+deviation of the simulated mean value parameter from the observed
+is within an ellipsoid defined by the inverse-variance-covariance
+of the sufficient statistics multiplied by a scaling factor
+<code>control$MCMLE.MCMC.precision</code> (which has a different default).
+</p>
+</li>
+<li> <p><code>"none"</code> Stop after
+<code>MCMLE.maxit</code> iterations.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.maxit</code></td>
+<td>
+<p>Maximum number of times the parameter for the MCMC should
+be updated by maximizing the MCMC likelihood. At each step the parameter is
+changed to the values that maximizes the MCMC likelihood based on the
+current sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.conv.min.pval</code></td>
+<td>
+<p>The P-value used in the Hotelling test for early
+termination.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.confidence</code></td>
+<td>
+<p>The confidence level for declaring
+convergence for <code>"confidence"</code> methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.confidence.boost</code></td>
+<td>
+<p>The maximum increase factor in sample
+size (or target effective size, if enabled) when the
+<code>"confidence"</code> termination criterion is either not approaching
+the tolerance region or is unable to prove convergence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.confidence.boost.threshold, MCMLE.confidence.boost.lag</code></td>
+<td>
+<p>Sample size or target effective size will be increaed if the distance from the tolerance region fails to decrease more than MCMLE.confidence.boost.threshold in this many successive iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.NR.maxit, MCMLE.NR.reltol</code></td>
+<td>
+<p>The method, maximum number of
+iterations and relative tolerance to use within the <code>optim</code> rountine in
+the MLE optimization. Note that by default, ergm uses <code>trust</code>, and
+falls back to <code>optim</code> only when <code>trust</code> fails.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obs.MCMC.prop, obs.MCMC.prop.weights, obs.MCMC.prop.args, obs.MCMLE.effectiveSize, obs.MCMC.samplesize, obs.MCMC.burnin, obs.MCMC.interval, obs.MCMC.mul, obs.MCMC.samplesize.mul, obs.MCMC.burnin.mul, obs.MCMC.interval.mul, obs.MCMC.effectiveSize, obs.MCMLE.burnin, obs.MCMLE.interval, obs.MCMLE.samplesize, obs.MCMLE.samplesize.per_theta, obs.MCMLE.samplesize.min</code></td>
+<td>
+<p>Corresponding MCMC parameters and settings used for the constrained sample when
+unobserved data are present in the estimation routine. By default, they are controlled by the <code style="white-space: pre;">⁠*.mul⁠</code>
+parameters, as fractions of the corresponding settings for the
+unconstrained (standard) MCMC.
+</p>
+<p>These can, in turn, be controlled by <code>obs.MCMC.mul</code>, which can be
+used to set the overal multiplier for the number of MCMC steps in
+the constrained sample; one half of its effect applies to the
+burn-in and interval and the other half to the total sample
+size. For example, for <code>obs.MCMC.mul=1/4</code> (the default),
+<code>obs.MCMC.samplesize</code> is set to <code class="reqn">\sqrt{1/4}=1/2</code> that of
+<code>obs.MCMC.samplesize</code>, and <code>obs.MCMC.burnin</code> and
+<code>obs.MCMC.interval</code> are set to <code class="reqn">\sqrt{1/4}=1/2</code> of their
+respective unconstrained sampling parameters. When
+<code>MCMC.effectiveSize</code> or <code>MCMLE.effectiveSize</code> are given, their
+corresponding <code>obs</code> parameters are set to them multiplied by
+<code>obs.MCMC.mul</code>.
+</p>
+<p>Lastly, if <code>MCMLE.effectiveSize</code> is not NULL but
+<code>obs.MCMLE.effectiveSize</code> is, the constrained sample's target
+effective size is set adaptively to achieve a similar precision
+for the estimating functions as that achieved for the
+unconstrained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obs.MCMC.impute.min_informative, obs.MCMC.impute.default_density</code></td>
+<td>
+<p>Controls for imputation of missing dyads for initializing MCMC
+sampling. If numeric, <code>obs.MCMC.impute.min_informative</code> specifies
+the minimum number dyads that need to be non-missing before
+sample network density is used as the imputation density. It can
+also be specified as a function that returns this
+value. <code>obs.MCMC.impute.default_density</code> similarly controls the
+imputation density when number of non-missing dyads is too low.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.min.depfac, MCMLE.sampsize.boost.pow</code></td>
+<td>
+<p>When using adaptive MCMC effective size, and methods that increase the MCMC sample size, use <code>MCMLE.sampsize.boost.pow</code> as the power of the boost amount (relative to the boost of the target effective size), but ensure that sample size is no less than <code>MCMLE.min.depfac</code> times the target effective size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.MCMC.precision, MCMLE.MCMC.max.ESS.frac</code></td>
+<td>
+<p><code>MCMLE.MCMC.precision</code> is a vector of upper bounds on the standard
+errors induced by the MCMC algorithm, expressed as a percentage of the total
+standard error. The MCMLE algorithm will terminate when the MCMC standard
+errors are below the precision bound, and the Hummel step length is 1 for
+two consecutive iterations. This is an experimental feature.
+</p>
+<p>If effective sample size is used (see <code>MCMC.effectiveSize</code>), then ergm
+may increase the target ESS to reduce the MCMC standard error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.metric</code></td>
+<td>
+<p>Method to calculate the loglikelihood approximation.
+See Hummel et al (2010) for an explanation of "lognormal" and "naive".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.method</code></td>
+<td>
+<p>Deprecated. By default, ergm uses <code>trust</code>, and
+falls back to <code>optim</code> with Nelder-Mead method when <code>trust</code> fails.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.dampening</code></td>
+<td>
+<p>(logical) Should likelihood dampening be used?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.dampening.min.ess</code></td>
+<td>
+<p>The effective sample size below which
+dampening is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.dampening.level</code></td>
+<td>
+<p>The proportional distance from boundary of the
+convex hull move.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.steplength.margin</code></td>
+<td>
+<p>The extra margin required for a Hummel step
+to count as being inside the convex hull of the sample.  Set this to 0 if
+the step length gets stuck at the same value over several iteraions. Set it
+to <code>NULL</code> to use fixed step length. Note that this parameter is
+required to be non-<code>NULL</code> for MCMLE termination using Hummel or
+precision criteria.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.steplength</code></td>
+<td>
+<p>Multiplier for step length (on the
+mean-value parameter scale), which may (for values less than one)
+make fitting more stable at the cost of computational efficiency.
+</p>
+<p>If <code>MCMLE.steplength.margin</code> is not <code>NULL</code>, the step
+length will be set using the algorithm of Hummel et
+al. (2010). In that case, it will serve as the maximum step
+length considered. However, setting it to anything other than 1
+will preclude using Hummel or precision as termination criteria.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.steplength.parallel</code></td>
+<td>
+<p>Whether parallel multisection
+search (as opposed to a bisection search) for the Hummel step
+length should be used if running in multiple threads. Possible
+values (partially matched) are <code>"never"</code>, and
+(default) <code>"observational"</code> (i.e., when missing data MLE is
+used).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.sequential</code></td>
+<td>
+<p>Logical: If TRUE, the next iteration of the fit uses
+the last network sampled as the starting network.  If FALSE, always use the
+initially passed network.  The results should be similar (stochastically),
+but the TRUE option may help if the <code>target.stats</code> in the
+<code>ergm()</code> function are far from the initial network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.density.guard.min, MCMLE.density.guard</code></td>
+<td>
+<p>A simple heuristic to
+stop optimization if it finds itself in an overly dense region, which
+usually indicates ERGM degeneracy: if the sampler encounters a network
+configuration that has more than <code>MCMLE.density.guard.min</code> edges and
+whose number of edges is exceeds the observed network by more than
+<code>MCMLE.density.guard</code>, the optimization process will be stopped with an
+error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.effectiveSize, MCMLE.effectiveSize.interval_drop, MCMLE.burnin, MCMLE.interval, MCMLE.samplesize, MCMLE.samplesize.per_theta, MCMLE.samplesize.min</code></td>
+<td>
+<p>Sets the corresponding <code style="white-space: pre;">⁠MCMC.*⁠</code> parameters when
+<code>main.method="MCMLE"</code> (the default). Used because defaults may be
+different for different methods. <code>MCMLE.samplesize.per_theta</code>
+controls the MCMC sample size (not target effective size) as a
+function of the number of (curved) parameters in the model, and
+<code>MCMLE.samplesize.min</code> sets the minimum sample size regardless of
+their number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.steplength.solver</code></td>
+<td>
+<p>The linear program solver to use for
+MCMLE step length calculation. Can be either <code>"glpk"</code> to use
+<a href="https://CRAN.R-project.org/package=Rglpk"><span class="pkg">Rglpk</span></a> or <code>"lpsolve"</code> to use <a href="https://CRAN.R-project.org/package=lpSolveAPI"><span class="pkg">lpSolveAPI</span></a>.
+<a href="https://CRAN.R-project.org/package=Rglpk"><span class="pkg">Rglpk</span></a> can be orders of magnitude faster, particularly
+for models with many parameters and with large sample sizes, so
+it is used where available; but it requires an external library
+to install under some operating systems, so fallback to
+<a href="https://CRAN.R-project.org/package=lpSolveAPI"><span class="pkg">lpSolveAPI</span></a> provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.last.boost</code></td>
+<td>
+<p>For the Hummel termination criterion, increase the
+MCMC sample size of the last iteration by this factor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.steplength.esteq</code></td>
+<td>
+<p>For curved ERGMs, should the estimating function
+values be used to compute the Hummel step length? This allows the Hummel
+stepping algorithm converge when some sufficient statistics are at 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.steplength.miss.sample</code></td>
+<td>
+<p>In fitting the missing data
+MLE, the rules for step length become more complicated. In short,
+it is necessary for <em>all</em> points in the constrained sample
+to be in the convex hull of the unconstrained (though they may be
+on the border); and it is necessary for their centroid to be in
+its interior. This requires checking a large number of points
+against whether they are in the convex hull, so to speed up the
+procedure, a sample is taken of the points most likely to be
+outside it.  This parameter specifies the sample size or a
+function of the unconstrained sample matrix to determine the
+sample size. If the parameter or the return value of the function
+has a length of 2, the first element is used as the sample size,
+and the second element is used in an early-termination heuristic,
+only continuing the tests until this many test points in a row
+did not yield a change in the step length.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.steplength.min</code></td>
+<td>
+<p>Stops MCMLE estimation when the step length gets
+stuck below this minimum value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMLE.save_intermediates</code></td>
+<td>
+<p>Every iteration, after MCMC
+sampling, save the MCMC sample and some miscellaneous information
+to a file with this name. This is mainly useful for diagnostics
+and debugging. The name is passed through <code>sprintf()</code> with
+iteration number as the second argument. (For example,
+<code>MCMLE.save_intermediates="step_%03d.RData"</code> will save to
+<code>step_001.RData</code>, <code>step_002.RData</code>, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SA.phase1_n</code></td>
+<td>
+<p>A constant or a function of number of free
+parameters <code>q</code>, number of free canonical statistic <code>p</code>, and
+network size <code>n</code>, giving the number of MCMC samples to draw in
+Phase 1 of the stochastic approximation algorithm.  Defaults to
+<code class="reqn">\max(200, 7+3p)</code>.  See Snijders (2002) for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SA.initial_gain</code></td>
+<td>
+<p>Initial gain to Phase 2 of the stochastic
+approximation algorithm. Defaults to 0.1. See Snijders (2002) for
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SA.nsubphases</code></td>
+<td>
+<p>Number of sub-phases in Phase 2 of the
+stochastic approximation algorithm.  Defaults to
+<code>MCMLE.maxit</code>.  See Snijders (2002) for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SA.min_iterations, SA.max_iterations</code></td>
+<td>
+<p>A constant or a function
+of number of free parameters <code>q</code>, number of free canonical
+statistic <code>p</code>, and network size <code>n</code>, giving the baseline numbers
+of iterations within each subphase of Phase 2 of the stochastic
+approximation algorithm. Default to <code class="reqn">7+p</code> and <code class="reqn">207+p</code>,
+respectively.  See Snijders (2002) for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SA.phase3_n</code></td>
+<td>
+<p>Sample size for the MCMC sample in Phase 3 of
+the stochastic approximation algorithm.  See Snijders (2002) for
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SA.burnin, SA.interval, SA.samplesize</code></td>
+<td>
+<p>Sets the corresponding
+<code style="white-space: pre;">⁠MCMC.*⁠</code> parameters when <code>main.method="Stochastic-Approximation"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CD.samplesize.per_theta, obs.CD.samplesize.per_theta, CD.maxit, CD.conv.min.pval, CD.NR.maxit, CD.NR.reltol, CD.metric, CD.method, CD.dampening, CD.dampening.min.ess, CD.dampening.level, CD.steplength.margin, CD.steplength, CD.steplength.parallel, CD.adaptive.epsilon, CD.steplength.esteq, CD.steplength.miss.sample, CD.steplength.min, CD.steplength.solver</code></td>
+<td>
+<p>Miscellaneous tuning parameters of the CD sampler and
+optimizer. These have the same meaning as their <code style="white-space: pre;">⁠MCMLE.*⁠</code> and
+<code style="white-space: pre;">⁠MCMC.*⁠</code> counterparts.
+</p>
+<p>Note that only the Hotelling's stopping criterion is implemented
+for CD.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CD.nsteps, CD.multiplicity</code></td>
+<td>
+<p>Main settings for contrastive
+divergence to obtain initial values for the estimation:
+respectively, the number of Metropolis–Hastings steps to take
+before reverting to the starting value and the number of
+tentative proposals per step. Computational experiments indicate
+that increasing <code>CD.multiplicity</code> improves the estimate
+faster than increasing <code>CD.nsteps</code> — up to a point — but
+it also samples from the wrong distribution, in the sense that
+while as <code>CD.nsteps</code><code class="reqn">\rightarrow\infty</code>, the CD estimate
+approaches the MLE, this is not the case for
+<code>CD.multiplicity</code>.
+</p>
+<p>In practice, MPLE, when available, usually outperforms CD for
+even a very high <code>CD.nsteps</code> (which is, in turn, not very
+stable), so CD is useful primarily when MPLE is not
+available. This feature is to be considered experimental and in
+flux.
+</p>
+<p>The default values have been set experimentally, providing a
+reasonably stable, if not great, starting values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CD.nsteps.obs, CD.multiplicity.obs</code></td>
+<td>
+<p>When there are missing dyads,
+<code>CD.nsteps</code> and <code>CD.multiplicity</code> must be set to a relatively high
+value, as the network passed is not necessarily a good start for CD.
+Therefore, these settings are in effect if there are missing dyads in the
+observed network, using a higher default number of steps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>See <code>control.ergm.bridge()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term.options</code></td>
+<td>
+<p>A list of additional arguments to be passed to term initializers. See <code>? term.options</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Seed value (integer) for the random number generator.  See
+<code>set.seed()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>Number of threads in which to run the sampling. Defaults to
+0 (no parallelism). See the entry on parallel processing
+for details and troubleshooting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel.type</code></td>
+<td>
+<p>API to use for parallel processing. Supported values
+are <code>"MPI"</code> and <code>"PSOCK"</code>. Defaults to using the <code>parallel</code>
+package with PSOCK clusters. See <code>ergm-parallel</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel.version.check</code></td>
+<td>
+<p>Logical: If TRUE, check that the version of
+<span class="pkg">ergm</span> running on the slave nodes is the same as
+that running on the master node.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel.inherit.MT</code></td>
+<td>
+<p>Logical: If TRUE, slave nodes and
+processes inherit the <code>set.MT_terms()</code> setting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>A dummy argument to catch deprecated or mistyped control parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Different estimation methods or components of estimation have
+different efficient tuning parameters; and we generally want to use
+the estimation controls to inform the simulation controls in
+<code>control.simulate.ergm()</code>. To accomplish this, <code>control.ergm()</code> uses
+method-specific controls, with the method identified by the prefix:
+</p>
+
+<dl>
+<dt><code>CD</code></dt>
+<dd>
+<p>Contrastive Divergence estimation (Krivitsky 2017)</p>
+</dd>
+<dt><code>MPLE</code></dt>
+<dd>
+<p>Maximum Pseudo-Likelihood Estimation (Strauss and Ikeda 1990)</p>
+</dd>
+<dt><code>MCMLE</code></dt>
+<dd>
+<p>Monte-Carlo MLE (Hunter and Handcock 2006; Hummel et al. 2012)</p>
+</dd>
+<dt><code>SA</code></dt>
+<dd>
+<p>Stochastic Approximation via Robbins–Monro (Robbins and Monro 1951; Snijders 2002)</p>
+</dd>
+<dt><code>SAN</code></dt>
+<dd>
+<p>Simulated Annealing used when <code>target.stats</code> are specified for <code>ergm()</code></p>
+</dd>
+<dt><code>obs</code></dt>
+<dd>
+<p>Missing data MLE (Handcock and Gile 2010)</p>
+</dd>
+<dt><code>init</code></dt>
+<dd>
+<p>Affecting how initial parameter guesses are obtained</p>
+</dd>
+<dt><code>parallel</code></dt>
+<dd>
+<p>Affecting parallel processing</p>
+</dd>
+<dt><code>MCMC</code></dt>
+<dd>
+<p>Low-level MCMC simulation controls</p>
+</dd>
+</dl>
+<p>Corresponding <code>MCMC</code> controls will usually be overwritten by the
+method-specific ones. After the estimation finishes, they will
+contain the last MCMC parameters used.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with arguments as components.
+</p>
+
+
+<h3>References</h3>
+
+<p>Handcock MS, Gile KJ (2010).
+“Modeling Social Networks from Sampled Data.”
+<em>Annals of Applied Statistics</em>, <b>4</b>(1), 5–25.
+ISSN 1932-6157, <a href="https://doi.org/10.1214/08-AOAS221">doi:10.1214/08-AOAS221</a>.<br><br> Hummel RM, Hunter DR, Handcock MS (2012).
+“Improving Simulation-based Algorithms for Fitting ERGMs.”
+<em>Journal of Computational and Graphical Statistics</em>, <b>21</b>(4), 920–939.
+<a href="https://doi.org/10.1080/10618600.2012.679224">doi:10.1080/10618600.2012.679224</a>.<br><br> Hunter DR, Handcock MS (2006).
+“Inference in Curved Exponential Family Models for Networks.”
+<em>Journal of Computational and Graphical Statistics</em>, <b>15</b>(3), 565–583.
+ISSN 1061-8600, <a href="https://doi.org/10.1198/106186006X133069">doi:10.1198/106186006X133069</a>.<br><br> Krivitsky PN (2017).
+“Using Contrastive Divergence to Seed Monte Carlo MLE for Exponential-family Random Graph Models.”
+<em>Computational Statistics &amp; Data Analysis</em>, <b>107</b>, 149–161.
+<a href="https://doi.org/10.1016/j.csda.2016.10.015">doi:10.1016/j.csda.2016.10.015</a>.<br><br> Robbins H, Monro S (1951).
+“A Stochastic Approximation Method.”
+<em>The Annals of Mathematical Statistics</em>, <b>22</b>(3), 400–407.
+ISSN 00034851.<br><br> Schmid CS, Desmarais BA (2017).
+“Exponential random graph models with big networks: Maximum pseudolikelihood estimation and the parametric bootstrap.”
+In <em>2017 IEEE international conference on big data (Big Data)</em>, 116–121.
+IEEE.<br><br> Schmid CS, Hunter DR (2023).
+“Computing Pseudolikelihood Estimators for Exponential-Family Random Graph Models.”
+<em>Journal of Data Science</em>, <b>21</b>(2), 295–309.
+<a href="https://doi.org/10.6339/23-JDS1094">doi:10.6339/23-JDS1094</a>.<br><br> Snijders TAB (2002).
+“Markov chain Monte Carlo Estimation of Exponential Random Graph Models.”
+<em>Journal of Social Structure</em>, <b>3</b>(2).<br><br> Strauss D, Ikeda M (1990).
+“Pseudolikelihood Estimation for Social Networks.”
+<em>Journal of the American Statistical Association</em>, <b>85</b>(409), 204–212.
+ISSN 0162-1459.<br><br> Vats D, Flegal JM, Jones GL (2019).
+“Multivariate output analysis for Markov chain Monte Carlo.”
+<em>Biometrika</em>, <b>106</b>(2), 321-337.
+<a href="https://doi.org/10.1093/biomet/asz002">doi:10.1093/biomet/asz002</a>.
+</p>
+
+<ul>
+<li>
+<p> Firth (1993), Bias Reduction in Maximum Likelihood Estimates.
+Biometrika, 80: 27-38.
+</p>
+</li>
+<li>
+<p> Kristoffer Sahlin. Estimating convergence of Markov chain Monte Carlo
+simulations. Master's Thesis. Stockholm University, 2011.
+<a href="https://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf">https://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf</a>
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>ergm()</code>. The <code>control.simulate()</code> function
+performs a similar function for <code>simulate.ergm()</code>;
+<code>control.gof()</code> performs a similar function for <code>gof()</code>.
+</p>
+
+
+</div>

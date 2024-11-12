@@ -1,0 +1,221 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gaussint</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sequential estimation of Gaussian integrals</h2>
+
+<h3>Description</h3>
+
+<p><code>gaussint</code> is used for calculating <code class="reqn">n</code>-dimensional Gaussian integrals
+</p>
+<p style="text-align: center;"><code class="reqn">\int_a^b \frac{|Q|^{1/2}}{(2\pi)^{n/2}}
+\exp(-\frac1{2}(x-\mu)^{T}Q(x-\mu)) dx</code>
+</p>
+
+<p>A limit value <code class="reqn">lim</code> can be used to stop the integration if the sequential
+estimate goes below the limit, which can result in substantial computational
+savings in cases when one only is interested in testing if the integral is above
+the limit value. The integral is calculated sequentially, and estimates for
+all subintegrals are also returned.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gaussint(
+  mu,
+  Q.chol,
+  Q,
+  a,
+  b,
+  lim = 0,
+  n.iter = 10000,
+  ind,
+  use.reordering = c("natural", "sparsity", "limits"),
+  max.size,
+  max.threads = 0,
+  seed
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>Expectation vector for the Gaussian distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q.chol</code></td>
+<td>
+<p>The Cholesky factor of the precision matrix (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q</code></td>
+<td>
+<p>Precision matrix for the Gaussian distribution. If Q is supplied but not Q.chol,
+the cholesky factor is computed before integrating.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>Lower limit in integral.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>Upper limit in integral.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lim</code></td>
+<td>
+<p>If this argument is used, the integration is stopped and 0 is returned
+if the estimated value goes below <code class="reqn">lim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.iter</code></td>
+<td>
+<p>Number or iterations in the MC sampler that is used for approximating
+probabilities. The default value is 10000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ind</code></td>
+<td>
+<p>Indices of the nodes that should be analyzed (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.reordering</code></td>
+<td>
+<p>Determines what reordering to use:
+</p>
+
+<dl>
+<dt>"natural" </dt>
+<dd>
+<p>No reordering is performed.</p>
+</dd>
+<dt>"sparsity" </dt>
+<dd>
+<p>Reorder for sparsity in the cholesky factor (MMD reordering
+is used).</p>
+</dd>
+<dt>"limits" </dt>
+<dd>
+<p>Reorder by moving all nodes with a=-Inf and b=Inf first and
+then reordering for sparsity (CAMD reordering is used).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.size</code></td>
+<td>
+<p>The largest number of sub-integrals to compute. Default is the total
+dimension of the distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.threads</code></td>
+<td>
+<p>Decides the number of threads the program can use. Set to 0 for
+using the maximum number of threads allowed by the system (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>The random seed to use (optional).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function uses sequential importance sampling to estimate the
+Gaussian integral, and returns all computed sub-integrals. This means that if, for
+example, the function is used to compute <code class="reqn">P(x&gt;0)</code> for an n-dimensional Gaussian
+variable <code class="reqn">x</code>, then all integrals <code class="reqn">P(x_1&gt;0,\ldots,x_i&gt;0)</code> for <code class="reqn">i=1,\ldots,n</code> are
+computed.
+</p>
+<p>If one is only interested in whether <code class="reqn">P(x&gt;0)&gt;\alpha</code> or not, then one can
+stop the integration as soon as <code class="reqn">P(x_1&gt;0,\ldots,x_i&gt;0)&lt;\alpha</code>. This can save a lot of
+computation time if <code class="reqn">P(x_1&gt;0,\ldots,x_i&gt;0)&lt; \alpha</code> for <code class="reqn">i</code> much smaller than
+<code class="reqn">n</code>. This limit value is specified by the <code>lim</code> argument.
+</p>
+<p>Which reordering to use depends on what the purpose of the calculation is and what
+the integration limits are. However, in general the <code>limits</code> reordering is typically
+most appropriate since this combines sparisty (which improves accuracy and reduces
+computational cost) with automatic handling of dimensions with limits <code>a=-Inf</code> and
+<code>b=Inf</code>, which do not affect the probability but affect the computation time
+if they are not handled separately.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>P </code></td>
+<td>
+<p>Value of the integral.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>E </code></td>
+<td>
+<p>Estimated error of the P estimate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pv </code></td>
+<td>
+<p>A vector with the estimates of all sub-integrals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ev </code></td>
+<td>
+<p>A vector with the estimated errors of the Pv estimates.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>David Bolin <a href="mailto:davidbolin@gmail.com">davidbolin@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Bolin, D. and Lindgren, F. (2015) <em>Excursion and contour uncertainty regions for latent Gaussian models</em>, JRSS-series B, vol 77, no 1, pp 85-106.
+</p>
+<p>Bolin, D. and Lindgren, F. (2018), <em>Calculating Probabilistic Excursion Sets and Related Quantities Using excursions</em>, Journal of Statistical Software, vol 86, no 1, pp 1-20.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Create mean and a tridiagonal precision matrix
+n &lt;- 11
+mu.x &lt;- seq(-5, 5, length = n)
+Q.x &lt;- Matrix(toeplitz(c(1, -0.1, rep(0, n - 2))))
+## Calculate the probability that the variable is between mu-3 and mu+3
+prob &lt;- gaussint(mu = mu.x, Q = Q.x, a = mu.x - 3, b = mu.x + 3, max.threads = 2)
+prob$P
+</code></pre>
+
+
+</div>

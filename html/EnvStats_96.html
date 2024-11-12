@@ -1,0 +1,658 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>egamma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Estimate Parameters of Gamma Distribution
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the shape and scale parameters (or the mean and coefficient of 
+variation) of a Gamma distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  egamma(x, method = "mle", ci = FALSE, 
+    ci.type = "two-sided", ci.method = "normal.approx", 
+    normal.approx.transform = "kulkarni.powar", conf.level = 0.95)
+
+  egammaAlt(x, method = "mle", ci = FALSE, 
+    ci.type = "two-sided", ci.method = "normal.approx", 
+    normal.approx.transform = "kulkarni.powar", conf.level = 0.95)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector of non-negative observations. 
+Missing (<code>NA</code>), undefined (<code>NaN</code>), and 
+infinite (<code>Inf</code>, <code>-Inf</code>) values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>character string specifying the method of estimation.  The possible values are: <br><code>"mle"</code> (maximum likelihood; the default), <br><code>"bcmle"</code> (bias-corrected mle), <br><code>"mme"</code> (method of moments), and <br><code>"mmue"</code> (method of moments based on the unbiased estimator of variance). <br> 
+See the DETAILS section for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+
+<p>logical scalar indicating whether to compute a confidence interval for the mean.  
+The default value is <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.type</code></td>
+<td>
+
+<p>character string indicating what kind of confidence interval to compute.  
+The possible values are 
+<code>"two-sided"</code> (the default), <code>"lower"</code>, and <code>"upper"</code>.  
+This argument is ignored if <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.method</code></td>
+<td>
+
+<p>character string indicating which method to use to construct the confidence interval.  
+Possible values are <code>"normal.approx"</code> (the default), 
+<code>"profile.likelihood"</code>, <code>"chisq.approx"</code>, and <code>"chisq.adj"</code>.  
+This argument is ignored if <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normal.approx.transform</code></td>
+<td>
+
+<p>character string indicating which power transformation to use when <br><code>ci.method="normal.approx"</code>.  Possible values are <br><code>"kulkarni.powar"</code> (the default), <code>"cube.root"</code>, and 
+<code>"fourth.root"</code>.  See the DETAILS section for more informaiton.  
+This argument is ignored if <code>ci=FALSE</code> or <code>ci.method="chisq.approx"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>a scalar between 0 and 1 indicating the confidence level of the confidence interval.  The default 
+value is <code>conf.level=0.95</code>.  This argument is ignored if <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>x</code> contains any missing (<code>NA</code>), undefined (<code>NaN</code>) or 
+infinite (<code>Inf</code>, <code>-Inf</code>) values, they will be removed prior to 
+performing the estimation.
+</p>
+<p>Let <code class="reqn">\underline{x} = x_1, x_2, \ldots, x_n</code> denote a random sample of 
+<code class="reqn">n</code> observations from a gamma distribution 
+with parameters <code>shape=</code><code class="reqn">\kappa</code> and <code>scale=</code><code class="reqn">\theta</code>.  
+The relationship between these parameters and the mean (<code>mean=</code><code class="reqn">\mu</code>) 
+and coefficient of variation (<code>cv=</code><code class="reqn">\tau</code>) of this distribution is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">\kappa = \tau^{-2} \;\;\;\;\;\; (1)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\theta = \mu/\kappa \;\;\;\;\;\; (2)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\mu = \kappa \; \theta \;\;\;\;\;\; (3)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\tau = \kappa^{-1/2} \;\;\;\;\;\; (4)</code>
+</p>
+
+<p>The function <code>egamma</code> returns estimates of the shape and scale parameters.  
+The function <code>egammaAlt</code> returns estimates of the mean (<code class="reqn">\mu</code>) and 
+coefficient of variation (<code class="reqn">cv</code>) based on the estimates of the shape and 
+scale parameters.
+</p>
+<p><b>Estimation</b> <br></p>
+<p><em>Maximum Likelihood Estimation</em> (<code>method="mle"</code>) <br>
+The maximum likelihood estimators (mle's) of the shape and scale parameters 
+<code class="reqn">\kappa</code> and <code class="reqn">\theta</code> are solutions of the simultaneous equations:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\kappa}_{mle} =  \frac{1}{n}\sum_{i=1}^n log(x_i) - log(\bar{x}) = \psi(\hat{\kappa}_{mle}) - log(\hat{\kappa}_{mle}) \ \;\;\;\;\;\; (5)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{mle} = \bar{x} / \hat{\kappa}_{mle} \;\;\;\;\;\; (6)</code>
+</p>
+
+<p>where <code class="reqn">\psi</code> denotes the <code>digamma function</code>, 
+and <code class="reqn">\bar{x}</code> denotes the sample mean:
+</p>
+<p style="text-align: center;"><code class="reqn">\bar{x} = \frac{1}{n}\sum_{i=1}^n x_i \;\;\;\;\;\; (7)</code>
+</p>
+ 
+<p>(Forbes et al., 2011, chapter 22; Johnson et al., 1994, chapter 17).  
+<br></p>
+<p><em>Bias-Corrected Maximum Likelihood Estimation</em> (<code>method="bcmle"</code>) <br>
+The “bias-corrected” maximum likelihood estimator of 
+the shape parameter is based on the suggestion of Anderson and Ray (1975; 
+see also Johnon et al., 1994, p.366 and Singh et al., 2010b, p.48), who noted that 
+the bias of the maximum likelihood estimator of the shape parameter can be 
+considerable when the sample size is small.  This estimator is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\kappa}_{bcmle} = \frac{n-3}{n}\hat{\kappa}_{mle} + \frac{2}{3n} \;\;\;\;\;\; (8)</code>
+</p>
+
+<p>When <code>method="bcmle"</code>, Equation (6) above is modified so that the estimate of the 
+scale paramter is based on the “bias-corrected” maximum likelihood estimator 
+of the shape parameter:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{bcmle} = \bar{x} / \hat{\kappa}_{bcmle} \;\;\;\;\;\; (9)</code>
+</p>
+
+<p><br></p>
+<p><em>Method of Moments Estimation</em> (<code>method="mme"</code>) <br>
+The method of moments estimators (mme's) of the shape and scale parameters 
+<code class="reqn">\kappa</code> and <code class="reqn">\theta</code> are:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\kappa}_{mme} = (\bar{x}/s_m)^2 \;\;\;\;\;\; (10)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{mme} = s_m^2 / \bar{x} \;\;\;\;\;\; (11)</code>
+</p>
+
+<p>where <code class="reqn">s_m^2</code> denotes the method of moments estimator of variance:
+</p>
+<p style="text-align: center;"><code class="reqn">s_m^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \bar{x})^2 \;\;\;\;\;\; (12)</code>
+</p>
+
+<p><br></p>
+<p><em>Method of Moments Estimation Based on the Unbiased Estimator of Variance</em> (<code>method="mmue"</code>) <br>  
+The method of moments estimators based on the unbiased estimator of variance 
+are exactly the same as the method of moments estimators, 
+except that the method of moments estimator of variance is replaced with the 
+unbiased estimator of variance:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\kappa}_{mmue} = (\bar{x}/s)^2 \;\;\;\;\;\; (13)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\hat{\theta}_{mmue} = s^2 / \bar{x} \;\;\;\;\;\; (14)</code>
+</p>
+
+<p>where <code class="reqn">s^2</code> denotes the unbiased estimator of variance:
+</p>
+<p style="text-align: center;"><code class="reqn">s^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2 \;\;\;\;\;\; (15)</code>
+</p>
+
+<p><br></p>
+<p><b>Confidence Intervals</b> <br>
+This section discusses how confidence intervals for the mean <code class="reqn">\mu</code> are computed.
+</p>
+<p><em>Normal Approximation</em> (<code>ci.method="normal.approx"</code>) <br>
+The normal approximation method is based on the method of Kulkarni and Powar (2010), 
+who use a power transformation of the the original data to approximate a sample 
+from a normal distribuiton, compute the confidence interval for the mean on the 
+transformed scale using the usual formula for a confidence interval for the 
+mean of a normal distribuiton, and then tranform the limits back to the original 
+space using equations based on the expected value of a gamma random variable 
+raised to a power.  
+</p>
+<p>The particular power used for the normal approximation is defined by the argument <br><code>normal.approx.transform</code>.  The value 
+<code>normal.approx.transform="cube.root"</code> uses the cube root transformation 
+suggested by Wilson and Hilferty (1931), and the value <br><code>"fourth.root"</code> uses the fourth root transformation suggested 
+by Hawkins and Wixley (1986).  The default value <code>"kulkarni.powar"</code> 
+uses the “Optimum Power Normal Approximation Method” of Kulkarni and Powar 
+(2010), who show this method performs the best in terms of maintining coverage 
+and minimizing confidence interval width compared to eight other methods.  
+The “optimum” power <code class="reqn">p</code> is determined by:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+  <code class="reqn">p = -0.0705 - 0.178\hat{\kappa} + 0.475 \sqrt{\hat{\kappa}}</code> </td>
+<td style="text-align: left;"> if <code class="reqn">\hat{\kappa} \le 1.5</code> </td>
+<td style="text-align: left;"> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  <code class="reqn">p = 0.246</code> </td>
+<td style="text-align: left;"> if <code class="reqn">\hat{\kappa} &gt; 1.5</code> </td>
+<td style="text-align: left;"> (16)
+  </td>
+</tr>
+</table>
+<p>where <code class="reqn">\hat{\kappa}</code> denotes the estimate of the shape parameter.  
+Kulkarni and Powar (2010) 
+derived this equation by determining what power transformation yields a skew closest to 0 and 
+a kurtosis closest to 3 for a gamma random variable with a given shape parameter.  
+Although Kulkarni and Powar (2010) use the maximum likelihood estimate of shape to 
+determine the power to use to induce approximate normality, for the functions 
+<code>egamma</code> and <code>egammaAlt</code> the power is based on whatever estimate of 
+shape is used (e.g., <code>method="mle"</code>, <code>method="bcmle"</code>, etc.). 
+<br></p>
+<p><em>Likelihood Profile</em> (<code>ci.method="profile.likelihood"</code>) <br>
+This method was proposed by Cox (1970, p.88), and Venzon and Moolgavkar (1988) 
+introduced an efficient method of computation.  This method is also discussed by  
+Stryhn and Christensen (2003) and Royston (2007).  
+The idea behind this method is to invert the likelihood-ratio test to obtain a 
+confidence interval for the mean <code class="reqn">\mu</code> while treating the coefficient of 
+variation <code class="reqn">\tau</code> as a nuisance parameter.
+</p>
+<p>The likelihood function is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">L(\mu, \tau | \underline{x}) = \prod_{i=1}^n \frac{x_i^{\kappa-1} e^{-x_i/\theta}}{\theta^\kappa \Gamma(\kappa)} \;\;\;\;\;\; (17)</code>
+</p>
+
+<p>where <code class="reqn">\kappa</code>, <code class="reqn">\theta</code>, <code class="reqn">\mu</code>, and <code class="reqn">\tau</code> are defined in 
+Equations (1)-(4) above, and 
+<code class="reqn">\Gamma(t)</code> denotes the Gamma function evaluated at <code class="reqn">t</code>. 
+</p>
+<p>Following Stryhn and Christensen (2003), denote the maximum likelihood estimates 
+of the mean and coefficient of variation by <code class="reqn">(\mu^*, \tau^*)</code>.  
+The likelihood ratio test statistic (<code class="reqn">G^2</code>) of the hypothesis 
+<code class="reqn">H_0: \mu = \mu_0</code> (where <code class="reqn">\mu_0</code> is a fixed value) equals the 
+drop in <code class="reqn">2 log(L)</code> between the “full” model and the reduced model with 
+<code class="reqn">\mu</code> fixed at <code class="reqn">\mu_0</code>, i.e.,
+</p>
+<p style="text-align: center;"><code class="reqn">G^2 = 2 \{log[L(\mu^*, \tau^*)] - log[L(\mu_0, \tau_0^*)]\} \;\;\;\;\;\; (18)</code>
+</p>
+
+<p>where <code class="reqn">\tau_0^*</code> is the maximum likelihood estimate of <code class="reqn">\tau</code> for the 
+reduced model (i.e., when <code class="reqn">\mu = \mu_0</code>).  Under the null hypothesis, 
+the test statistic <code class="reqn">G^2</code> follows a 
+chi-squared distribution with 1 degree of freedom.
+</p>
+<p>Alternatively, we may 
+express the test statistic in terms of the profile likelihood function <code class="reqn">L_1</code> 
+for the mean <code class="reqn">\mu</code>, which is obtained from the usual likelihood function by 
+maximizing over the parameter <code class="reqn">\tau</code>, i.e.,
+</p>
+<p style="text-align: center;"><code class="reqn">L_1(\mu) = max_{\tau} L(\mu, \tau) \;\;\;\;\;\; (19)</code>
+</p>
+
+<p>Then we have 
+</p>
+<p style="text-align: center;"><code class="reqn">G^2 = 2 \{log[L_1(\mu^*)] - log[L_1(\mu_0)]\} \;\;\;\;\;\; (20)</code>
+</p>
+
+<p>A two-sided <code class="reqn">(1-\alpha)100\%</code> confidence interval for the mean <code class="reqn">\mu</code> 
+consists of all values of <code class="reqn">\mu_0</code> for which the test is not significant at 
+level <code class="reqn">alpha</code>:
+</p>
+<p style="text-align: center;"><code class="reqn">\mu_0: G^2 \le \chi^2_{1, {1-\alpha}} \;\;\;\;\;\; (21)</code>
+</p>
+
+<p>where <code class="reqn">\chi^2_{\nu, p}</code> denotes the <code class="reqn">p</code>'th quantile of the 
+chi-squared distribution with <code class="reqn">\nu</code> degrees of freedom.  
+One-sided lower and one-sided upper confidence intervals are computed in a similar 
+fashion, except that the quantity <code class="reqn">1-\alpha</code> in Equation (21) is replaced with 
+<code class="reqn">1-2\alpha</code>.
+<br></p>
+<p><em>Chi-Square Approximation</em> (<code>ci.method="chisq.approx"</code>) <br>
+This method is based on the relationship between the sample mean of the gamma 
+distribution and the chi-squared distribution (Grice and Bain, 1980):
+</p>
+<p style="text-align: center;"><code class="reqn">\frac{2n\bar{x}}{\theta} \sim \chi^2_{2n\kappa} \;\;\;\;\;\; (22)</code>
+</p>
+
+<p>Therefore, an exact one-sided upper <code class="reqn">(1-\alpha)100\%</code> confidence interval 
+for the mean <code class="reqn">\mu</code> is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">[0, \, \frac{2n\bar{x}\kappa}{\chi^2_{2n\kappa, \alpha}}] \;\;\;\;\;\; (23)</code>
+</p>
+
+<p>an exact one-sided lower <code class="reqn">(1-\alpha)100\%</code> confidence interval 
+is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">[\frac{2n\bar{x}\kappa}{\chi^2_{2n\kappa, 1-\alpha}}, \, \infty] \;\;\;\;\;\; (24)</code>
+</p>
+
+<p>and a two-sided <code class="reqn">(1-\alpha)100\%</code> confidence interval is given by:
+</p>
+<p style="text-align: center;"><code class="reqn">[\frac{2n\bar{x}\kappa}{\chi^2_{2n\kappa, 1-\alpha/2}}, 
+    \, \frac{2n\bar{x}\kappa}{\chi^2_{2n\kappa, \alpha/2}}] \;\;\;\;\;\; (25)</code>
+</p>
+
+<p>Because this method is exact only when the shape parameter <code class="reqn">\kappa</code> is known, the 
+method used here is called the “chi-square approximation” method 
+because the estimate of the shape parameter, <code class="reqn">\hat{\kappa}</code>, is used in place 
+of <code class="reqn">\kappa</code> in Equations (23)-(25) above.  The Chi-Square Approximation method 
+is <b>not</b> the method proposed by Grice and Bain (1980) in which the 
+confidence interval is adjusted based on adjusting for the fact that the shape 
+parameter <code class="reqn">\kappa</code> is estimated (see the explanation of the 
+Chi-Square Adjusted method below).  The Chi-Square Approximation method used 
+by <code>egamma</code> and <code>egammaAlt</code> is equivalent to the “approximate gamma” 
+method of <em>ProUCL</em> (USEPA, 2015, equation (2-34), p.62).
+<br></p>
+<p><em>Chi-Square Adjusted</em> (<code>ci.method="chisq.adj"</code>) <br>
+This is the same method as the Chi-Square Approximation method discussed above, 
+execpt that the value of <code class="reqn">\alpha</code> is adjusted to account for the fact that 
+the shape parameter <code class="reqn">\kappa</code> is estimated rather than known.  Grice and Bain (1980) 
+performed Monte Carlo simulations to determine how to adjust <code class="reqn">\alpha</code> and the 
+values in their Table 2 are given in the matrix <code>Grice.Bain.80.mat</code>.  
+This method requires that the sample size <code class="reqn">n</code> is at least 5 and the confidence level 
+is between 75% and 99.5% (except when <code class="reqn">n=5</code>, in which case the confidence level 
+must be less than 99%).  For values of the sample size <code class="reqn">n</code> and/or <code class="reqn">\alpha</code> 
+that are not listed in the table, linear interpolation is used (when the sample 
+size <code class="reqn">n</code> is greater than 40, linear interpolation on <code class="reqn">1/n</code> is used, as 
+recommended by Grice and Bain (1980)).  The Chi-Square Adjusted method used 
+by <code>egamma</code> and <code>egammaAlt</code> is equivalent to the “adjusted gamma” 
+method of <em>ProUCL</em> (USEPA, 2015, equation (2-35), p.63).
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list of class <code>"estimate"</code> containing the estimated parameters and other information.  
+See <br><code>estimate.object</code> for details.
+</p>
+
+
+<h3>Warning</h3>
+
+<p>When <code>ci=TRUE</code> and <code>ci.method="normal.approx"</code>, it is possible for the 
+lower confidence limit based on the transformed data to be less than 0.  
+In this case, the lower confidence limit on the original scale is set to 0 and a warning is 
+issued stating that the normal approximation is not accurate in this case.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The gamma distribution takes values on the positive real line. 
+Special cases of the gamma are the exponential distribution and 
+the chi-square distributions. Applications of the gamma include 
+life testing, statistical ecology, queuing theory, inventory control, and precipitation 
+processes. A gamma distribution starts to resemble a normal distribution as the 
+shape parameter a tends to infinity.
+</p>
+<p>Some EPA guidance documents (e.g., Singh et al., 2002; Singh et al., 2010a,b) strongly recommend 
+against using a lognormal model for environmental data and recommend trying a gamma distribuiton 
+instead.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Anderson, C.W., and W.D. Ray. (1975). Improved Maximum Likelihood Estimators 
+for the Gamma Distribution. <em>Communications in Statistics</em>, <b>4</b>, 437–448.
+</p>
+<p>Forbes, C., M. Evans, N. Hastings, and B. Peacock. (2011).  
+<em>Statistical Distributions, Fourth Edition</em>. 
+John Wiley and Sons, Hoboken, NJ.
+</p>
+<p>Grice, J.V., and L.J. Bain. (1980). Inferences Concerning the Mean of the Gamma Distribution. 
+<em>Journal of the American Statistician</em>, <b>75</b>, 929-933.
+</p>
+<p>Hawkins, D. M., and R.A.J. Wixley. (1986). A Note on the Transformation of 
+Chi-Squared Variables to Normality. <em>The American Statistician</em>,
+<b>40</b>, 296–298.
+</p>
+<p>Johnson, N.L., S. Kotz, and N. Balakrishnan. (1994). 
+<em>Continuous Univariate Distributions, Volume 1</em>. Second Edition. 
+John Wiley and Sons, New York, Chapter 17.
+</p>
+<p>Kulkarni, H.V., and S.K. Powar. (2010). A New Method for Interval Estimation of the Mean 
+of the Gamma Distribution. <em>Lifetime Data Analysis</em>, <b>16</b>, 431–447.
+</p>
+<p>Singh, A., A.K. Singh, and R.J. Iaci. (2002). 
+<em>Estimation of the Exposure Point Concentration Term Using a Gamma Distribution</em>.  
+EPA/600/R-02/084. October 2002. Technology Support Center for Monitoring and 
+Site Characterization, Office of Research and Development, Office of Solid Waste and 
+Emergency Response, U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>USEPA. (2015).  <em>ProUCL Version 5.1.002 Technical Guide</em>.  EPA/600/R-07/041, October 2015.  
+Office of Research and Development. U.S. Environmental Protection Agency, Washington, D.C.
+</p>
+<p>Wilson, E.B., and M.M. Hilferty. (1931). The Distribution of Chi-Squares. 
+<em>Proceedings of the National Academy of Sciences</em>, <b>17</b>, 684–688.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>GammaDist</code>, <code>estimate.object</code>, <code>eqgamma</code>, 
+<code>predIntGamma</code>, <code>tolIntGamma</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 20 observations from a gamma distribution with parameters 
+  # shape=3 and scale=2, then estimate the parameters. 
+  # (Note: the call to set.seed simply allows you to reproduce this 
+  # example.)
+
+  set.seed(250) 
+  dat &lt;- rgamma(20, shape = 3, scale = 2) 
+  egamma(dat, ci = TRUE)
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Gamma
+  #
+  #Estimated Parameter(s):          shape = 2.203862
+  #                                 scale = 2.174928
+  #
+  #Estimation Method:               mle
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Confidence Interval for:         mean
+  #
+  #Confidence Interval Method:      Optimum Power Normal Approximation
+  #                                 of Kulkarni &amp; Powar (2010)
+  #                                 using mle of 'shape'
+  #
+  #Normal Transform Power:          0.246
+  #
+  #Confidence Interval Type:        two-sided
+  #
+  #Confidence Level:                95%
+  #
+  #Confidence Interval:             LCL = 3.361652
+  #                                 UCL = 6.746794
+
+  # Clean up
+  rm(dat)
+
+  #====================================================================
+
+  # Using the reference area TcCB data in EPA.94b.tccb.df, assume a 
+  # gamma distribution, estimate the parameters based on the 
+  # bias-corrected mle of shape, and compute a one-sided upper 90% 
+  # confidence interval for the mean.
+
+  #----------
+  # First test to see whether the data appear to follow a gamma 
+  # distribution.
+
+  with(EPA.94b.tccb.df, 
+    gofTest(TcCB[Area == "Reference"], dist = "gamma", 
+      est.arg.list = list(method = "bcmle"))
+  )
+
+  #Results of Goodness-of-Fit Test
+  #-------------------------------
+  #
+  #Test Method:                     Shapiro-Wilk GOF Based on 
+  #                                 Chen &amp; Balakrisnan (1995)
+  #
+  #Hypothesized Distribution:       Gamma
+  #
+  #Estimated Parameter(s):          shape = 4.5695247
+  #                                 scale = 0.1309788
+  #
+  #Estimation Method:               bcmle
+  #
+  #Data:                            TcCB[Area == "Reference"]
+  #
+  #Sample Size:                     47
+  #
+  #Test Statistic:                  W = 0.9703827
+  #
+  #Test Statistic Parameter:        n = 47
+  #
+  #P-value:                         0.2739512
+  #
+  #Alternative Hypothesis:          True cdf does not equal the
+  #                                 Gamma Distribution.
+
+  #----------
+  # Now estimate the paramters and compute the upper confidence limit.
+
+  with(EPA.94b.tccb.df, 
+    egamma(TcCB[Area == "Reference"], method = "bcmle", ci = TRUE, 
+      ci.type = "upper", conf.level = 0.9) 
+  )
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Gamma
+  #
+  #Estimated Parameter(s):          shape = 4.5695247
+  #                                 scale = 0.1309788
+  #
+  #Estimation Method:               bcmle
+  #
+  #Data:                            TcCB[Area == "Reference"]
+  #
+  #Sample Size:                     47
+  #
+  #Confidence Interval for:         mean
+  #
+  #Confidence Interval Method:      Optimum Power Normal Approximation
+  #                                 of Kulkarni &amp; Powar (2010)
+  #                                 using bcmle of 'shape'
+  #
+  #Normal Transform Power:          0.246
+  #
+  #Confidence Interval Type:        upper
+  #
+  #Confidence Level:                90%
+  #
+  #Confidence Interval:             LCL = 0.0000000
+  #                                 UCL = 0.6561838
+
+  #------------------------------------------------------------------
+
+  # Repeat the above example but use the alternative parameterization.
+
+  with(EPA.94b.tccb.df, 
+    egammaAlt(TcCB[Area == "Reference"], method = "bcmle", ci = TRUE, 
+      ci.type = "upper", conf.level = 0.9) 
+  )
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Gamma
+  #
+  #Estimated Parameter(s):          mean = 0.5985106
+  #                                 cv   = 0.4678046
+  #
+  #Estimation Method:               bcmle of 'shape'
+  #
+  #Data:                            TcCB[Area == "Reference"]
+  #
+  #Sample Size:                     47
+  #
+  #Confidence Interval for:         mean
+  #
+  #Confidence Interval Method:      Optimum Power Normal Approximation
+  #                                 of Kulkarni &amp; Powar (2010)
+  #                                 using bcmle of 'shape'
+  #
+  #Normal Transform Power:          0.246
+  #
+  #Confidence Interval Type:        upper
+  #
+  #Confidence Level:                90%
+  #
+  #Confidence Interval:             LCL = 0.0000000
+  #                                 UCL = 0.6561838
+
+  #------------------------------------------------------------------
+
+  # Compare the upper confidence limit based on 
+  # 1) the default method: 
+  #    normal approximation method based on Kulkarni and Powar (2010)
+  # 2) Profile Likelihood 
+  # 3) Chi-Square Approximation
+  # 4) Chi-Square Adjusted
+
+  # Default Method 
+  #---------------
+  with(EPA.94b.tccb.df, 
+    egamma(TcCB[Area == "Reference"], method = "bcmle", ci = TRUE, 
+      ci.type = "upper", conf.level = 0.9)$interval$limits["UCL"]
+  )
+
+  #      UCL 
+  #0.6561838
+
+  # Profile Likelihood 
+  #-------------------
+  with(EPA.94b.tccb.df, 
+    egamma(TcCB[Area == "Reference"], method = "mle", ci = TRUE, 
+      ci.type = "upper", conf.level = 0.9,
+      ci.method = "profile.likelihood")$interval$limits["UCL"]
+  )
+
+  #      UCL 
+  #0.6527009
+
+
+  # Chi-Square Approximation
+  #-------------------------
+  with(EPA.94b.tccb.df, 
+    egamma(TcCB[Area == "Reference"], method = "mle", ci = TRUE, 
+      ci.type = "upper", conf.level = 0.9, 
+      ci.method = "chisq.approx")$interval$limits["UCL"]
+  )
+
+  #      UCL 
+  #0.6532188
+
+
+  # Chi-Square Adjusted
+  #--------------------
+  with(EPA.94b.tccb.df, 
+    egamma(TcCB[Area == "Reference"], method = "mle", ci = TRUE, 
+      ci.type = "upper", conf.level = 0.9, 
+      ci.method = "chisq.adj")$interval$limits["UCL"]
+  )
+
+  #    UCL 
+  #0.65467
+
+</code></pre>
+
+
+</div>

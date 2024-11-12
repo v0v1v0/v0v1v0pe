@@ -1,0 +1,87 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecr.ebars</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Error bars</h2>
+
+<h3>Description</h3>
+
+<p>Custom series to display error-bars for scatter, bar or line series
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecr.ebars(wt, encode = list(x = 1, y = c(2, 3, 4)), hwidth = 6, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>wt</code></td>
+<td>
+<p>An echarty widget to add error bars to, see ec.init.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encode</code></td>
+<td>
+<p>Column selection for both axes (x &amp; y) as vectors, see <a href="https://echarts.apache.org/en/option.html#series-bar.encode">encode</a></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hwidth</code></td>
+<td>
+<p>Half-width of error bar in pixels, default is 6.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>More parameters for <a href="https://echarts.apache.org/en/option.html#series-custom.type">custom serie</a></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Command should be called after <em>ec.init</em> where main series are set.<br><em>ecr.ebars</em> are custom series, so <em>ec.init(load='custom')</em> is required. <br>
+Horizontal and vertical layouts supported, only switch <em>encode</em> values 'x' and 'y', both for series and ecr.ebars.<br>
+Grouped bar series are supported.<br>
+Have own default tooltip format showing <em>value, high &amp; low</em>.<br>
+Non-grouped series could be shown with formatter <em>riErrBarSimple</em> instead of <em>ecr.ebars</em>. See example below.<br>
+Limitations:<br><code style="white-space: pre;">⁠     ⁠</code>manually add axis type='category' if needed<br><code style="white-space: pre;">⁠     ⁠</code>error bars cannot have own name when data is grouped<br><code style="white-space: pre;">⁠     ⁠</code>legend select/deselect will not re-position grouped error bars<br></p>
+
+
+<h3>Value</h3>
+
+<p>A widget with error bars added if successful, otherwise the input widget
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+df &lt;- mtcars |&gt; group_by(cyl,gear) |&gt; summarise(yy= round(mean(mpg),2)) |&gt;
+  mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2))
+ec.init(df, load= 'custom', ctype= 'bar', tooltip= list(show=TRUE), 
+      xAxis= list(type='category')) |&gt; 
+ecr.ebars(encode= list(y=c(3,4,5), x=2))
+     
+# ----- riErrBarSimple ------
+df &lt;- mtcars |&gt; mutate(x=1:nrow(mtcars),hi=hp-drat*3, lo=hp+wt*3) |&gt; select(x,hp,hi,lo)
+ec.init(df, load= 'custom', legend= list(show= TRUE)) |&gt; 
+ec.upd({ series &lt;- append(series, list(
+    list(type= 'custom', name= 'error',
+         data= ec.data(df |&gt; select(x,hi,lo)),
+         renderItem= htmlwidgets::JS('riErrBarSimple')
+    )))
+})
+
+</code></pre>
+
+
+</div>

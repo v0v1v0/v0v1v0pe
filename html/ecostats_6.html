@@ -1,0 +1,146 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>BlockBootID</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Construct a moving block bootstrap resampling scheme</h2>
+
+<h3>Description</h3>
+
+<p>A spatial moving block bootstrap resampling scheme is constructed, that can then
+be used in resampling-based inference (e.g. using <code>anova.manyglm</code>).
+Blocks are constructed as discs or tiles of observations of a user-specified size and shape.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">BlockBootID(
+  x,
+  y,
+  block_L,
+  nBoot = 499,
+  Grid_space,
+  lookuptables.folderpath = NA,
+  shape = "disc",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the easting of spatial coordinate for the site.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>the northing of the spatial coordinate for the site.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block_L</code></td>
+<td>
+<p>the size of the spatial blocks to be resampled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nBoot</code></td>
+<td>
+<p>the number of resamples required (defaults to 499).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Grid_space</code></td>
+<td>
+<p>the resolution of the lattice used to sample centres of spatial blocks.
+Defaults to a third of the resolution of <code>block_Ls</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lookuptables.folderpath</code></td>
+<td>
+<p>(optional) path to a directory where lookup tables can be found
+that assign observations to spatial blocks. Such tables would considerably speed up the process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape</code></td>
+<td>
+<p>shape of the spatial blocks to resample. Default is <code>disc</code>, but <code>square</code> 
+tiles can also be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments passed to <code>resample_blocks_by_area</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A spatial moving block bootstrap resampling scheme is constructed, that can then
+be used in resampling-based inference. A matrix of IDs is returned, with different resamples 
+in different rows of the matrix, which can be used as input to functions designed for 
+resampling-based inference (such as <code>anova.manyglm</code>).
+</p>
+<p>Blocks are constructed as discs or tiles of observations, whose size is controlled by <code>blockl_L</code>,
+these blocks are kept together in resampling. The centre of each block is chosen 
+at random along a lattice specified via <code>Grid_space</code>. 
+</p>
+<p>The most computationally intensive part of this process is working out which observations 
+belong in which blocks. If repeated analyses are to be undertaken in the same spatial domain 
+using the same sites, it is best to run this process only once and save the result as a set of
+lookup tables.
+Then the path to the directory containing these tables is specified via <code>lookuptables.folderpath</code>
+and the whole thing runs heaps faster.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix of IDs for each moving block bootstrap resample, with different
+resamples in rows and observations in columns.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Eve Slavich &lt;eve.slavich@unsw.edu.au&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>anova.manyglm</code>, <code>lm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(Myrtaceae)
+# fit a lm:
+library(mvabund)
+Myrtaceae$logrich=log(Myrtaceae$richness+1)
+mft_richAdd = manylm(logrich~soil+poly(TMP_MAX,degree=2)+
+                     poly(TMP_MIN,degree=2)+poly(RAIN_ANN,degree=2),
+                                        data=Myrtaceae)
+                                        
+# construct a boot ID matrix: 
+BootID = BlockBootID(x = Myrtaceae$X, y = Myrtaceae$Y, block_L = 20,
+            nBoot = 199, Grid_space = 5)
+anova(mft_richAdd,resamp="case",bootID=BootID)
+
+
+</code></pre>
+
+
+</div>

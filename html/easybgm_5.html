@@ -1,0 +1,219 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>easybgm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit a Bayesian analysis of networks</h2>
+
+<h3>Description</h3>
+
+<p>Easy estimation of a Bayesian analysis of networks to obtain conditional (in)dependence relations between variables in a network.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">easybgm(
+  data,
+  type,
+  package = NULL,
+  not_cont = NULL,
+  iter = 10000,
+  save = FALSE,
+  centrality = FALSE,
+  progress = TRUE,
+  posterior_method = "model-averaged",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An n x p matrix or dataframe containing the variables for n independent observations on p variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>What is the data type? Options: continuous, mixed, ordinal, binary</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>package</code></td>
+<td>
+<p>The R-package that should be used for fitting the network model; supports BGGM, BDgraph, and bgms. Optional argument;
+default values are specified depending on the datatype.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>not_cont</code></td>
+<td>
+<p>If data-type is mixed, a vector of length p, specifying the not-continuous
+variables (1 = not continuous, 0 = continuous).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>number of iterations for the sampler.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save</code></td>
+<td>
+<p>Logical. Should the posterior samples be obtained (default = FALSE)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>centrality</code></td>
+<td>
+<p>Logical. Should the centrality measures be extracted (default = FALSE)? Note, that it will significantly increase the computation time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>Logical. Should a progress bar be shown (default = TRUE)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>posterior_method</code></td>
+<td>
+<p>Determines how the posterior samples of the edge weight parameters are obtained for models fit with BDgraph. The argument can be either MAP for the maximum-a-posteriori or model-averaged. If MAP, samples are obtained for the edge weights only for the most likely structure. If model-averaged, samples are obtained for all plausible structures weighted by their posterior probability. Default is model-averaged.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments that are handed to the fitting functions of the packages, e.g., informed prior specifications.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Users may oftentimes wish to deviate from the default, usually uninformative, prior specifications of the
+packages to informed priors. This can be done by simply adding additional arguments to the <code>easybgm</code> function.
+Depending on the package that is running the underlying network estimation, researcher can specify different prior
+arguments. We give an overview of the prior arguments per package below.
+</p>
+<p><strong>bgms</strong>:
+</p>
+
+<ul>
+<li> <p><code>interaction_prior</code> prior distribution of the interaction parameters, can be either "UnitInfo" for the Unit Information prior, or "Cauchy" for the Cauchy distribution. The default is set to "UnitInfo".
+</p>
+</li>
+<li> <p><code>edge_prior</code> prior on the graph structure, which can be either "Bernoulli" or "Beta-Bernoulli". The default is "Bernoulli".
+</p>
+</li>
+<li> <p><code>inclusion_prior</code> prior edge inclusion probability for the "Bernoulli" distribution. The default is 0.5.
+</p>
+</li>
+<li> <p><code>beta_bernoulli_alpha</code> and <code>beta_bernoulli_alpha</code> the parameters of the "Beta-Bernoulli" distribution. The default is 1 for both.
+</p>
+</li>
+<li> <p><code>threshold_alpha</code> and <code>threshold_beta</code> the parameters of the beta-prime distribution for the threshold parameters. The defaults are both set to 1.
+</p>
+</li>
+</ul>
+<p><strong>BDgraph</strong>:
+</p>
+
+<ul>
+<li> <p><code>df.prior</code> prior on the parameters (i.e., inverse covariance matrix), degrees of freedom of the prior G-Wishart distribution. The default is set to 2.5.
+</p>
+</li>
+<li> <p><code>g.prior</code> prior probability of edge inclusion. This can be either a scalar, if it is the same for all edges, or a matrix, if it should be different among the edges. The default is set to 0.5.
+</p>
+</li>
+</ul>
+<p><strong>BGGM</strong>:
+</p>
+
+<ul><li> <p><code>prior_sd</code> the standard deviation of the prior distribution of the interaction parameters, approximately the scale of a beta distribution. The default is 0.25.
+</p>
+</li></ul>
+<p>We would always encourage researcher to conduct prior robustness checks.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The returned object of <code>easybgm</code> contains several elements:
+</p>
+
+<ul>
+<li> <p><code>parameters</code> A p x p matrix containing partial associations.
+</p>
+</li>
+<li> <p><code>inc_probs</code> A p x p matrix containing the posterior inclusion probabilities.
+</p>
+</li>
+<li> <p><code>BF</code> A p x p matrix containing the posterior inclusion Bayes factors.
+</p>
+</li>
+<li> <p><code>structure</code> Adjacency matrix of the median probability model (i.e., edges with a posterior probability larger 0.5).
+</p>
+</li>
+</ul>
+<p>In addition, for <code>BDgraph</code> and <code>bgms</code>, the function returns:
+</p>
+
+<ul>
+<li> <p><code>structure_probabilities</code> A vector containing the posterior probabilities of all visited structures, between 0 and 1.
+</p>
+</li>
+<li> <p><code>graph_weights</code> A vector containing the number of times a particular structure was visited.
+</p>
+</li>
+<li> <p><code>sample_graphs</code> A vector containing the indexes of a particular structure.
+</p>
+</li>
+</ul>
+<p>For all packages, when setting <code>save = TRUE</code> and <code>centrality = TRUE</code>, the function will return the following objects respectively:
+</p>
+
+<ul>
+<li> <p><code>samples_posterior</code> A k x iter matrix containing the posterior samples for each parameter (i.e., k = (p/(p-1))/2) at each iteration (i.e., iter) of the sampler.
+</p>
+</li>
+<li> <p><code>centrality</code> A p x iter matrix containing the centrality of a node at each iteration of the sampler.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(easybgm)
+library(bgms)
+
+data &lt;- na.omit(Wenchuan)
+
+# Fitting the Wenchuan PTSD data
+
+fit &lt;- easybgm(data, type = "continuous",
+                iter = 1000 # for demonstration only (&gt; 5e4 recommended)
+                )
+
+summary(fit)
+
+
+# To extract the posterior parameter distribution
+# and centrality measures
+
+fit &lt;- easybgm(data, type = "continuous",
+                iter = 1000, # for demonstrative purposes, generally, 1e5 iterations are recommended
+                save = TRUE,
+                centrality = TRUE)
+
+</code></pre>
+
+
+</div>

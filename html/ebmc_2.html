@@ -1,0 +1,80 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>measure</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculating Performance Measurement in Class Imbalance Problem</h2>
+
+<h3>Description</h3>
+
+<p>The function is an interation of multiple performance measurements that can be used to assess model performance in class imbalance problem. Totally six measurements are included.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">measure(label, probability, metric, threshold = 0.5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>A vector of actual labels of target variable in test set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probability</code></td>
+<td>
+<p>A vector of probability estimated by the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric</code></td>
+<td>
+<p>Measurement used for assessing model performance. <b>auc</b>, <b>gmean</b>, <b>tpr</b>, <b>tnr</b>, <b>f</b>, and <b>acc</b> are available. Please see Details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>Probability threshold for determining the class of instances. A numerical value ranging from 0 to 1. Default is 0.5</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function integrates six common measurements. It uses pROC::roc() and pROC::auc() to calculate <b>auc</b> (Area Under Curve), while calculates other measurements without dependency on other package: <b>gmean</b> (Geometric Mean), <b>tpr</b> (True Positive Rate), <b>tnr</b> (True Negative Rate),and <b>f</b> (F-Measure).
+</p>
+<p><b>acc</b> (Accuracy) is also included for any possible use, although such measurement can be misleading when the classes of test set is highly imbalanced.
+</p>
+<p><em>threshold</em> is the probability cutoff for determing the predicted class of instances. For AUC, users do not need to specify threshold because AUC is not affected by the probability cutoff. However, the threshold is required for other five measurements.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("iris")
+iris &lt;- iris[1:70, ]
+iris$Species &lt;- factor(iris$Species, levels = c("setosa", "versicolor"), labels = c("0", "1"))
+
+# Creat training and test set
+samp &lt;- sample(nrow(iris), nrow(iris) * 0.7)
+train &lt;- iris[samp, ]
+test &lt;- iris[-samp, ]
+
+# Model building and prediction
+model &lt;- rus(Species ~ ., data = train, size = 10, alg = "c50")
+prob &lt;- predict(model, newdata = test, type = "prob")
+
+# Calculate measurements
+auc &lt;- measure(label = test$Species, probability = prob, metric = "auc")
+gmean &lt;- measure(label = test$Species, probability = prob, metric = "gmean", threshold = 0.5)
+</code></pre>
+
+
+</div>

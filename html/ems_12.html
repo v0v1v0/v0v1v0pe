@@ -1,0 +1,276 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataquality</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Collection of functions to check data quality in a dataset and remove not valid or extreme values.</h2>
+
+<h3>Description</h3>
+
+<p>These functions return the counts and fractions of expected values, unexpected values, missing values and not valid values. They are able to do it with factor variables, numeric variables and date variables. <code>t_factor</code>, <code>t_num</code>, and <code>t_date</code> do the job for a single variable and have simpler arguments, while <code>factor.table</code>, <code>num.table</code>, and <code>date.table</code> do the job for several variables at once. <code>rm.unwanted</code> cheks the factor and numeric variables and remove the not valid or extreme values. This approach is attractive before data imputation. They all return a <code>data.frame</code>.
+</p>
+<p><code>t_factor</code> and <code>factor.table</code> will try to get factor or character variables and check how much of its content match with the expectd. They will try to treat the levels or cells containing " " as <code>NAs</code>.
+</p>
+<p><code>t_num</code> will try to get a numeric variable (even if it is currently formated as character or factor) and check how much of its content is expected (match a desired range), unexpected, non-numeric values and missing vlaues. <code>num.table</code> does the same, but for two or more variables at once.
+</p>
+<p><code>t_date</code> will try to get a date variable (even if it is currently formated as character or factor) and check how much of its content is expected (match a desired range), unexpected, non-date values and missing vlaues. <code>date.table</code> does the same, but for two or more variables at once.
+</p>
+<p><code>rm.unwanted</code> will chek in data the variables specified in the limits object according to the limits specified for each variable. If there are levels considered not valid in a factor variable, these levels are deleted. For example, if Sex is expected to be "M" and "F", and there is also an "I" level in data, every "I" is replaced by <code>NA</code>. Similarly, misspelled levels will be understood as non-valid levels and coercerd to <code>NA</code>, with the exception of leading or trailing empty spaces and lower and upper cases diferences if <code>try.keep = TRUE</code>. If there is a continuous numeric variable and it is expected to have values ranging from 30 to 700, the values outside this range, i.e. higher then 700 or lower then 30, are replaced by <code>NA</code>. Non-numeric elements, i.e. non-valid elements that should be numeric, will also be coerced to <code>NA</code>. If a varible is specified in <code>num.limits</code>, then it will be returned as a numeric variable, even if it was formated as factor or character. If a variable is specified in limits, the returnig format will depend on the <code>stringAsFactors</code> argument, unless it is formated as logical. In this case it is skipped. The arguments <code>limits</code> and <code>num.limits</code> may be <code>NULL</code>, meaning that the factor-character variables or the numeric variables , respectively, will not be edited.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">t_factor(
+  data,
+  variable,
+  legal,
+  var.labels = attr(data, "var.labels")[match(variable, names(data))],
+  digits = 3
+)
+
+factor.table(
+  data,
+  limits,
+  var.labels = attr(data, "var.labels")[match(unlist(sapply(seq_along(limits),
+    function(i) limits[[i]][1])), names(data))],
+  digits = 3
+)
+
+t_num(
+  data,
+  num.var,
+  num.max = 100,
+  num.min = 0,
+  var.labels = attr(data, "var.labels")[match(num.var, names(data))],
+  digits = 3
+)
+
+num.table(
+  data,
+  num.limits,
+  var.labels = attr(data, "var.labels")[match(num.limits$num.var, names(data))],
+  digits = 3
+)
+
+t_date(
+  data,
+  date.var,
+  date.max = as.Date("2010-11-30"),
+  date.min = as.Date("2010-01-31"),
+  format.date = "auto",
+  digits = 3,
+  var.labels = attr(data, "var.labels")[match(date.var, names(data))]
+)
+
+date.table(
+  data,
+  date.limits,
+  format.date = "auto",
+  digits = 3,
+  var.labels = attr(data, "var.labels")[match(date.limits$date.var, names(data))]
+)
+
+rm.unwanted(
+  data,
+  limits = NULL,
+  num.limits = TRUE,
+  try.keep = TRUE,
+  stringAsFactors = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data.frame where variables will be tested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variable</code></td>
+<td>
+<p>A character vector of length one, indicating the name of the variable in the dataset to be tested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legal</code></td>
+<td>
+<p>A character vector representeing the expected levels of the tested variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.labels</code></td>
+<td>
+<p>Variables labels for a nice output. Must be informed in the same order as variable argument. By default, it captures the labels stored in attr(data, "var.labels"), if any. If not informed, the function returns the variables names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>Number of decimal places for rounding.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>limits</code></td>
+<td>
+<p>a list of two or more lists, each containing the arguments variable name and legal levels (in this order), to check on the factor variables. In the case of <code>rm.unwanted</code>, if left NULL, it means no numeric variable will be checked. See examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.var</code></td>
+<td>
+<p>A character vector indicating the name of a variable that should be numeric (although it can yet be formated as character or factor).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.max, num.min</code></td>
+<td>
+<p>The maximal and minimal limits of acceptable range of a numeric variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.limits</code></td>
+<td>
+<p>A data.frame with the following variables: num.var, num.max and num.min, representing the numeric variables names, maximal and minimal expected valid values. In the case of <code>rm.unwanted</code>, if left NULL, it means no numeric variable will be checked. See example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date.var</code></td>
+<td>
+<p>A character vector indicating the name of a variable in data that should be a date (althoug it can yet be formated as character or factor).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date.max, date.min</code></td>
+<td>
+<p>The maximal and minimal limits of acceptable range of a date variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format.date</code></td>
+<td>
+<p>Default is "auto". If so, <code>t_date</code> will use <code>f.date</code> to detect the date format and format it as date. If not set to "auto", it should be a date format to be passed to <code>as.Date</code> format argument. If <code>format.date</code> is misspecified, then <code>t_date</code> and <code>date.table</code> will identify all dates as non-dates. For <code>date.table</code>, if it is set to 'auto' , it will use <code>f.date</code> to detect the date format and format it as date. If different from 'auto', one should specify the desired date formats in the date.limits data.frame. See example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date.limits</code></td>
+<td>
+<p>A <code>data.frame</code> with the following variables: date.var, date.max, date.min, and (optionaly) format.date. These represent values of the arguments above. See example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>try.keep</code></td>
+<td>
+<p>Default is <code>TRUE</code>. If <code>TRUE</code>, <code>remove.unwanted</code> will first trim all empty spaces and transform all levels to lower case characters before comparing the found levels and expected levels of a character/factor variable. Therefore, found levels such as "yes  " will be considered identical to the expected level "Yes", and will not be coerced to <code>NA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stringAsFactors</code></td>
+<td>
+<p>In <code>rm.unwanted</code>, if set to <code>TRUE</code>, the default value, variables in the limits argument that are character and numeric variables in data will be returned as factors. Logical variables are skipped. However, a variable will be returned as logical if it is originally a factor but its final levels are <code>TRUE</code> and <code>FALSE</code> and <code>stringAsFactors = FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Lunna Borges &amp; Pedro Brasil
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>miscellaneous</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simulating a dataset with 5 factor variables and assigning labels
+y &lt;- data.frame(Var1 = sample(c("Yes","No", "Ignored", "", "yes ", NA), 200, replace = TRUE),
+                Var2 = sample(c("Death","Discharge", "", NA), 200, replace = TRUE),
+                Var3 = sample(c(16:35, NA), 200, replace = TRUE),
+                Var4 = sample(c(12:300, "Female", "", NA), 200, replace = TRUE),
+                Var5 = sample(c(60:800), 200, replace = TRUE))
+attr(y, "var.labels") &lt;- c("Intervention use","Unit destination","BMI","Age","Cholesterol")
+summary(y)
+
+# Cheking the quality only the first variable
+t_factor(y, "Var1", c("Yes","No","Ignored"))
+
+# Checking two or more variables at once
+factor.limits  = list(list("Var1",c("Yes","No")),
+                      list("Var2",c("Death","Discharge")))
+factor.table(y, limits = factor.limits)
+
+# Checking only one variable that shohuld be numeric
+t_num(y,"Var3", num.min = 17, num.max = 32)
+
+# Making the limits data.frame
+num.limits &lt;- data.frame(num.var = c("Var3","Var4","Var5"),
+              num.min = c(17,18,70), num.max = c(32,110,300))
+num.limits
+
+# Checking two or more numeric variables (or the ones that
+#          should be as numeric) at once
+num.table(y, num.limits)
+
+# Removing the unwanted values (extremes or not valid).
+y &lt;- rm.unwanted(data = y, limits = factor.limits,
+                           num.limits = num.limits)
+summary(y)
+
+rm(y, num.limits, factor.limits)
+#'
+# Loading a dataset and assigning labels
+data(icu)
+attr(icu, "var.labels")[match(c("UnitAdmissionDateTime","UnitDischargeDateTime",
+   "HospitalAdmissionDate", "HospitalDischargeDate"), names(icu))] &lt;-
+   c("Unit admission","Unit discharge","Hospital admission","Hospital discharge")
+
+# Checking only one variable that should be a date.
+t_date(icu, "HospitalDischargeDate", date.max = as.Date("2013-10-30"),
+                                     date.min = as.Date("2013-02-20"))
+
+# Checking a date variable misspecifying the date format
+# will cause the variable dates to be identified as non-date values.
+t_date(data = icu, date.var = "HospitalDischargeDate",
+                   date.max = as.Date("2013-10-30"),
+                   date.min = as.Date("2013-02-20"),
+                   format.date = "%d/%m/%Y")
+
+# Making a limit data.frame assuming an 'auto' format.date
+d.lim &lt;- data.frame(date.var = c("UnitAdmissionDateTime","UnitDischargeDateTime",
+                   "HospitalAdmissionDate","HospitalDischargeDate"),
+                   date.min = rep(as.Date("2013-02-28"), 4),
+                   date.max = rep(as.Date("2013-11-30"), 4))
+d.lim
+
+# Checking two or more date variables (or the ones that should be as date) at once
+date.table(data = icu, date.limits = d.lim)
+
+# Making a limit data.frame specifying format.date argument
+# Here the the last 'format.date' is missspecified on purpose
+# So, the last date will be identified as non-date values.
+d.lim &lt;- data.frame(date.var = c("UnitAdmissionDateTime","UnitDischargeDateTime",
+         "HospitalAdmissionDate","HospitalDischargeDate"),
+          date.min = rep(as.Date("2013-02-28"), 4),
+          date.max = rep(as.Date("2013-11-30"), 4),
+          format.date = c(rep("%Y/%m/%d",3), "%Y-%m-%d"))
+d.lim
+
+# Checking the quality of date variable with new limits.
+# The 'format.date = ""' is required to force the function to look the format
+# into the date.limits data.frame
+date.table(data = icu, date.limits = d.lim, format.date = "")
+
+rm(icu, d.lim)
+
+</code></pre>
+
+
+</div>

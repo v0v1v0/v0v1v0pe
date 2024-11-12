@@ -1,0 +1,218 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ezBoot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute bootstrap resampled predictions</h2>
+
+<h3>Description</h3>
+
+<p>This function is used to compute bootstrap resampled predictions for each cell in a specified experimental design, using either cell means or mixed effects modelling to obtain predictions. The results can be visualized using <code>ezPlot2</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ezBoot(
+    data
+    , dv
+    , wid
+    , within = NULL
+    , between = NULL
+    , resample_within = TRUE
+    , iterations = 1e3
+    , lmer = FALSE
+    , lmer_family = gaussian
+    , parallel = FALSE
+    , alarm = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Data frame containing the data to be analyzed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dv</code></td>
+<td>
+
+<p>Name of the column in <code>data</code> that contains the dependent variable. Values in this column must be numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wid</code></td>
+<td>
+
+<p>Name of the column in <code>data</code> that contains the variable specifying the case/Ss identifier.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within</code></td>
+<td>
+
+<p>Names of columns in <code>data</code> that contain predictor variables that are manipulated (or observed) within-Ss. If a single value, may be specified by name alone; if multiple values, must be specified as a .() list.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>between</code></td>
+<td>
+
+<p>Names of columns in <code>data</code> that contain predictor variables that are manipulated (or observed) between-Ss. If a single value, may be specified by name alone; if multiple values, must be specified as a .() list.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample_within</code></td>
+<td>
+
+<p>Logical value specifying whether to resample within each cell of the design within each wid unit. If there is only one observation per such cells, then this should be set to FALSE to avoid useless computation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+
+<p>Numeric value specifying the number of bootstrap iterations to complete.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lmer</code></td>
+<td>
+
+<p>Logical. If TRUE, predictions are obtained via mixed effects modelling; if FALSE predictions are obtained via cell means.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lmer_family</code></td>
+<td>
+
+<p>When obtaining predictions via mixed effects modelling (i.e. when <code>lmer=TRUE</code>), you must specify the residuals family. While the bootstrap is in theory non-parametric, it may be more powerful if you specify a family that might reasonably expected to match your data. For example, if the data are binary outcomes (eg. accuracy), then use the <code>binomial</code> family. See <code>lmer</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+
+<p>Logical. If TRUE, computation will be parallel, assuming that a parallel backend has been specified (as in <code>library(doMC);options(cores=4);registerDoMC()</code>. Likely only to work when running R from a unix terminal.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alarm</code></td>
+<td>
+
+<p>Logical. If TRUE, call the <code>alarm</code> function when <code>ezBoot</code> completes.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>While <code>within</code> and <code>between</code> are both optional, at least one column of <code>data</code> must be provided to either <code>within</code> or <code>between</code>. Any numeric or character variables in <code>data</code> that are specified as either <code>wid</code>, <code>within</code> or <code>between</code> will be converted to a factor with a warning. Prior to running, <code>dv</code> is collapsed to a mean for each cell defined by the combination of <code>wid</code>, <code>within</code> or <code>between</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing either two or three components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>If predictions are obtained by mixed effects modelling, an <code>link[lme4]{lmer}</code> object consisting of the original mixed effects model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cells</code></td>
+<td>
+<p>A data frame containing predictions for each cell of the design.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boots</code></td>
+<td>
+<p>A data frame containing predictions for each cell of the design from each iteration of the bootstrap procedure.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Michael A. Lawrence <a href="mailto:mike.lwrnc@gmail.com">mike.lwrnc@gmail.com</a><br>
+Visit the <code>ez</code> development site at <a href="http://github.com/mike-lawrence/ez">http://github.com/mike-lawrence/ez</a><br>
+for the bug/issue tracker and the link to the mailing list.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>link{ezANOVA}</code>, <code>ezMixed</code>, <code>ezPerm</code>, <code>ezPlot2</code>, <code>ezResample</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#Read in the ANT data (see ?ANT).
+data(ANT)
+head(ANT)
+ezPrecis(ANT)
+
+#Run ezBoot on the accurate RT data
+rt = ezBoot(
+    data = ANT
+    , dv = rt
+    , wid = subnum
+    , within = .(cue,flank)
+    , between = group
+    , iterations = 1e1 #1e3 or higher is best for publication
+)
+
+## Not run: 
+#plot the full design
+p = ezPlot2(
+    preds = rt
+    , x = flank
+    , split = cue
+    , col = group
+)
+print(p)
+
+#plot the effect of group across the flank*cue design
+p = ezPlot2(
+    preds = rt
+    , x = flank
+    , split = cue
+    , diff = group
+)
+print(p)
+
+#plot the flank*cue design, averaging across group
+p = ezPlot2(
+    preds = rt
+    , x = flank
+    , split = cue
+)
+print(p)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

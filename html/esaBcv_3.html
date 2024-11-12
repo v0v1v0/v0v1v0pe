@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EsaBcv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate Latent Factor Matrix</h2>
+
+<h3>Description</h3>
+
+<p>Find out the best number of factors using Bi-Cross-Validation (BCV) with
+Early-Stopping-Alternation (ESA) and then estimate the factor matrix.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EsaBcv(Y, X = NULL, r.limit = 20, niter = 3, nRepeat = 12, only.r = F,
+  svd.method = "fast", center = F)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>observed data matrix. p is the number of variables and
+n is the sample size. Dimension is <code>c(n, p)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>the known predictors of size <code>c(n, k)</code> if any. Default is NULL (no known predictors).
+<code>k</code> is the number of known covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.limit</code></td>
+<td>
+<p>the maximum number of factor to try. Default is 20.
+Can be set to Inf.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>niter</code></td>
+<td>
+<p>the number of iterations for ESA. Default is 3.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nRepeat</code></td>
+<td>
+<p>number of repeats of BCV. In other words, the random partition of <code class="reqn">Y</code>
+will be repeated for <code>nRepeat</code> times. Default is 12.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>only.r</code></td>
+<td>
+<p>whether only to estimate and return the number of factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>svd.method</code></td>
+<td>
+<p>either "fast", "propack" or "standard".
+"fast" is using the <code>fast.svd</code> function in package corpcor to compute SVD, "propack" is using the <code>propack.svd</code> to compute SVD and "standard"
+is using the <code>svd</code> function in the base package. Because of PROPACK
+issues, "propack" fails for some matrices, and when that happens,
+the function will use "fast" to
+compute the SVD of that matrix instead. Default method is "fast".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p>logical, whether to add an intercept term in the model.
+Default is False.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The model is
+</p>
+<p style="text-align: center;"><code class="reqn">Y = 1 \mu' + X \beta + n^{1/2}U D V' + E \Sigma^{1/2}</code>
+</p>
+
+<p>where <code class="reqn">D</code> and <code class="reqn">\Sigma</code> are diagonal matrices, <code class="reqn">U</code> and <code class="reqn">V</code>
+are orthogonal and <code class="reqn">mu'</code>
+and <code class="reqn">V'</code> represent _mu transposed_ and _V transposed_ respectively.
+The entries of <code class="reqn">E</code> are assumed to be i.i.d. standard Gaussian.
+The model assumes heteroscedastic noises and especially works well for
+high-dimensional data. The method is based on Owen and Wang (2015).  Notice that
+when nonnull <code>X</code> is given or centering the data is required (which is essentially
+adding a known covariate with all <code class="reqn">1</code>), for identifiability, it's required that
+<code class="reqn">&lt;X, U&gt; = 0</code> or <code class="reqn">&lt;1, U&gt; = 0</code> respectively. Then the method will first make a rotation
+of the data matrix to remove the known predictors or centers, and then use
+the latter <code>n - k</code> (or <code>n - k - 1</code> if centering is required) samples to
+estimate the latent factors. The rotation idea first appears in Sun et.al. (2012).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>EsaBcv</code> returns an obejct of <code>class</code> "esabcv"
+The function <code>plot</code> plots the cross-validation results and points out the
+number of factors estimated
+An object of class "esabcv" is a list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>best.r</code></td>
+<td>
+<p>the best number of factor estimated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estSigma</code></td>
+<td>
+<p>the diagonal entries of estimated <code class="reqn">\Sigma</code>
+which is a vector of length <code>p</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estU</code></td>
+<td>
+<p>the estimated <code class="reqn">U</code>. Dimension is <code>c(n, r)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estD</code></td>
+<td>
+<p>the estimated diagonal entries of <code class="reqn">D</code>
+which is a vector of length <code>r</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estV</code></td>
+<td>
+<p>the estimated <code class="reqn">V</code>. Dimension is <code>c(p, r)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>the estimated <code class="reqn">\beta</code> which is a matrix of size <code>c(k, p)</code>.
+Return NULL if the argument <code>X</code> is NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estS</code></td>
+<td>
+<p>the estimated signal(factor) matrix <code class="reqn">S</code> where
+</p>
+<p style="text-align: center;"><code class="reqn">S = 1 \mu' + X \beta + n^{1/2}U D V'</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>the sample centers of each variable which is a vector of length
+<code>p</code>. It's an estimate of <code class="reqn">\mu</code>. Return
+NULL if the argument <code>center</code> is False.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.r</code></td>
+<td>
+<p>the actual maximum number of factors used. For the details of how this is decided,
+please refer to Owen and Wang (2015)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>result.list</code></td>
+<td>
+<p>a matrix with dimension <code>c(nRepeat, (max.r + 1))</code> storing
+the detailed BCV entrywise MSE of each repeat for r from 0 to <code>max.r</code></p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Art B. Owen and Jingshu Wang(2015), Bi-cross-validation for factor analysis,
+<a href="http://arxiv.org/abs/1503.03515">http://arxiv.org/abs/1503.03515</a>
+</p>
+<p>Yunting Sun, Nancy R. Zhang and Art B. Owen, Multiple hypothesis testing adjusted for latent variables, with an application to the AGEMAP gene expression data. The Annuals of Applied Statistics, 6(4): 1664-1688, 2012
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ESA</code>, <code>plot.esabcv</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">Y &lt;- matrix(rnorm(100), nrow = 10)
+EsaBcv(Y)
+</code></pre>
+
+
+</div>

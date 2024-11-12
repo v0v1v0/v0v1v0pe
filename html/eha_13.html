@@ -1,0 +1,410 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>coxreg2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cox regression</h2>
+
+<h3>Description</h3>
+
+<p>Performs Cox regression with some special attractions, especially
+<em>sampling of risksets</em> and <em>the weird bootstrap</em>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">coxreg2(formula = formula(data), data = parent.frame(), weights,
+subset, t.offset, na.action = getOption("na.action"), init = NULL, method =
+c("efron", "breslow", "mppl", "ml"), control = list(eps = 1e-08, maxiter =
+25, trace = FALSE), singular.ok = TRUE, model = FALSE, center = NULL, x =
+FALSE, y = TRUE, hazards = NULL, boot = FALSE, efrac = 0, geometric = FALSE,
+rs = NULL, frailty = NULL, max.survs = NULL, coxph = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a formula object, with the response on the left of a ~
+operator, and the terms on the right. The response must be a survival object
+as returned by the Surv function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data.frame in which to interpret the variables named in the
+formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Case weights; time-fixed or time-varying.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>An optional vector specifying a subset of observations to be
+used in the fitting process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t.offset</code></td>
+<td>
+<p>Case offsets; time-varying.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a missing-data filter function, applied to the model.frame,
+after any subset argument has been used.  Default is
+<code>options()$na.action</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>vector of initial values of the iteration.  Default initial
+value is zero for all variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Method of treating ties, "efron" (default), "breslow", "mppl"
+(maximum partial partial likelihood), or "ml" (maximum likelihood).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list with components <code>eps</code> (convergence criterion),
+<code>maxiter</code> (maximum number of iterations), and <code>silent</code> (logical,
+controlling amount of output). You can change any component without mention
+the other(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>singular.ok</code></td>
+<td>
+<p>Not used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Not used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p>deprecated. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Return the design matrix in the model object?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>return the response in the model object?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hazards</code></td>
+<td>
+<p>deprecated. Was: Calculate baseline hazards? Default is TRUE.
+Calculating hazards is better done separately, after fitting. In most cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot</code></td>
+<td>
+<p>Number of boot replicates. Defaults to FALSE, no boot samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>efrac</code></td>
+<td>
+<p>Upper limit of fraction failures in 'mppl'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geometric</code></td>
+<td>
+<p>If TRUE, forces an 'ml' model with constant riskset
+probability. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rs</code></td>
+<td>
+<p>Risk set?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frailty</code></td>
+<td>
+<p>Grouping variable for frailty analysis. Not in use (yet).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.survs</code></td>
+<td>
+<p>Sampling of risk sets? If given, it should be (the upper
+limit of) the number of survivors in each risk set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coxph</code></td>
+<td>
+<p>Logical, defaults to <code>TRUE</code>. Determines if standard work
+should be passed to <code>coxph</code> via entry points.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The default method, <code>efron</code>, and the alternative, <code>breslow</code>, are
+both the same as in <code>coxph</code> in package
+<code>survival</code>. The methods <code>mppl</code> and <code>ml</code> are maximum
+likelihood, discrete-model, based.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class <code>c("coxreg", "coxph")</code> with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>Fitted parameter estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var</code></td>
+<td>
+<p>Covariance matrix of the estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>Vector of length two; first component is the value at
+the initial parameter values, the second component
+is the maximized value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>score</code></td>
+<td>
+<p>The score test statistic (at the initial value).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linear.predictors</code></td>
+<td>
+<p>The estimated linear predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>The martingale residuals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hazards</code></td>
+<td>
+<p>The estimated baseline hazards, calculated at the value zero of
+the covariates (rather, columns of the design matrix). Is a list,
+with one component per stratum. Each
+component is a matrix with two columns, the first contains risk times, the
+second the corresponding hazard atom.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>means</code></td>
+<td>
+<p>Means of the columns of
+the design matrix corresponding to covariates, if <code>center = TRUE</code>.
+Columns corresponding to factor levels gice a zero in the corresponding
+position in <code>means</code>. If <code>center = FALSE</code>, <code>means</code> are all
+zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w.means</code></td>
+<td>
+<p>Weighted (against exposure time) means of covariates;
+weighted relative frequencies of levels of factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Number of spells in indata (possibly after removal of cases
+with NA's).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.events</code></td>
+<td>
+<p>Number of events in data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terms</code></td>
+<td>
+<p>Used by extractor functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>assign</code></td>
+<td>
+<p>Used by extractor functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The Surv vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>isF</code></td>
+<td>
+<p>Logical vector indicating the covariates that are factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covars</code></td>
+<td>
+<p>The covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ttr</code></td>
+<td>
+<p>Total Time at Risk.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>levels</code></td>
+<td>
+<p>List of levels of factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>The calling formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap</code></td>
+<td>
+<p>The (matrix of) bootstrap replicates, if requested on
+input. It is up to the user to do
+whatever desirable with this sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.strata</code></td>
+<td>
+<p>Number of strata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence</code></td>
+<td>
+<p>Did the optimization converge?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fail</code></td>
+<td>
+<p>Did the optimization fail? (Is <code>NULL</code> if not).</p>
+</td>
+</tr>
+</table>
+<h3>Warning</h3>
+
+<p>The use of <code>rs</code> is dangerous, see note. It can
+however speed up computing time considerably for huge data sets.
+</p>
+
+
+<h3>Note</h3>
+
+<p>This function starts by creating risksets, if no riskset is supplied
+via <code>rs</code>, with the aid of <code>risksets</code>. Supplying output from
+<code>risksets</code> via <code>rs</code> fails if there are any NA's in the data! Note
+also that it depends on stratification, so <code>rs</code> contains information
+about stratification. Giving another strata variable in the formula is an
+error. The same is ok, for instance to supply stratum interactions.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Göran Broström
+</p>
+
+
+<h3>References</h3>
+
+<p>Broström, G. and Lindkvist, M. (2008). Partial partial
+likelihood. Communications in Statistics: Simulation and Computation 37:4,
+679-686.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>coxph</code>, <code>risksets</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+ dat &lt;- data.frame(time=  c(4, 3,1,1,2,2,3),
+                status=c(1,1,1,0,1,1,0),
+                x=     c(0, 2,1,1,1,0,0),
+                sex=   c(0, 0,0,0,1,1,1))
+ coxreg( Surv(time, status) ~ x + strata(sex), data = dat) #stratified model
+ # Same as:
+ rs &lt;- risksets(Surv(dat$time, dat$status), strata = dat$sex)
+ coxreg( Surv(time, status) ~ x, data = dat, rs = rs) #stratified model
+ 
+</code></pre>
+
+
+</div>

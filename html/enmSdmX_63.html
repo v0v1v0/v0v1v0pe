@@ -1,0 +1,368 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trainMaxNet</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calibrate a MaxNet (MaxEnt) model using AICc</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates the "best" MaxNet model using AICc across all possible combinations of a set of master regularization parameters and feature classes. The "best" model has the lowest AICc, with ties broken by number of features (fewer is better), regularization multiplier (higher better), then finally the number of coefficients (fewer better). The function can return the best model (default), a list of models created using all possible combinations of feature classes and regularization multipliers, and/or a data frame with tuning statistics for each model. Models in the list and in the data frame are sorted from best to worst. Its output is any or all of: a table with AICc for all evaluated models; all models evaluated in the "selection" phase; and/or the single model with the lowest AICc.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trainMaxNet(
+  data,
+  resp = names(data)[1],
+  preds = names(data)[2:ncol(data)],
+  regMult = c(seq(0.5, 5, by = 0.5), 7.5, 10),
+  classes = "default",
+  testClasses = TRUE,
+  dropOverparam = TRUE,
+  forceLinear = TRUE,
+  out = "model",
+  cores = 1,
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame or matrix. Contains a column indicating whether each row is a presence (1) or background (0) site, plus columns for environmental predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp</code></td>
+<td>
+<p>Character or integer. Name or column index of response variable. Default is to use the first column in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preds</code></td>
+<td>
+<p>Character list or integer list. Names of columns or column indices of predictors. Default is to use the second and subsequent columns in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>regMult</code></td>
+<td>
+<p>Numeric vector. Values of the master regularization parameters (called <code>beta</code> in some publications) to test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>classes</code></td>
+<td>
+<p>Character list. Names of feature classes to use (either <code>default</code> to use <code>lpqh</code>) or any combination of <code>lpqht</code>, where <code>l</code> ==&gt; linear features, <code>p</code> ==&gt; product features, <code>q</code> ==&gt; quadratic features, <code>h</code> ==&gt; hinge features, and <code>t</code> ==&gt; threshold features.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testClasses</code></td>
+<td>
+<p>Logical.  If <code>TRUE</code> (default) then test all possible combinations of classes (note that all tested models will at least have linear features). If <code>FALSE</code> then use the classes provided (these will not vary between models).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dropOverparam</code></td>
+<td>
+<p>Logical, if <code>TRUE</code> (default), drop models if they have more coefficients than training occurrences. It is possible for no models to fulfill this criterion, in which case no models will be returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forceLinear</code></td>
+<td>
+<p>Logical. If <code>TRUE</code> (default) then require any tested models to include at least linear features.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out</code></td>
+<td>
+<p>Character vector. One or more values:
+</p>
+
+<ul>
+<li>    <p><code>'model'</code>: Model with the lowest AICc.
+</p>
+</li>
+<li>    <p><code>'models'</code>: All models evaluated, sorted from lowest to highest AICc (lowest is best).
+</p>
+</li>
+<li>    <p><code>'tuning'</code>: Data frame with tuning parameters, one row per model, sorted by AICc.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>Number of cores to use. Default is 1. If you have issues when <code>cores</code> &gt; 1, please see the <code>troubleshooting_parallel_operations</code> guide.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. If <code>TRUE</code> report the AICc table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra arguments. Not used.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>If <code>out = 'model'</code> this function returns an object of class <code>MaxEnt</code>. If <code>out = 'tuning'</code> this function returns a data frame with tuning parameters, log likelihood, and AICc for each model tried. If <code>out = c('model', 'tuning'</code> then it returns a list object with the <code>MaxEnt</code> object and the data frame.
+</p>
+
+
+<h3>References</h3>
+
+<p>Phillips, S.J., Anderson, R.P., Dudík, M. Schapire, R.E., and Blair, M.E.  2017.  Opening the black box: An open-source release of Maxent. <em>Ecography</em> 40:887-893. <a href="https://doi.org/10.1111/ecog.03049">doi:10.1111/ecog.03049</a>
+Warren, D.L. and S.N. Siefert. 2011. Ecological niche modeling in Maxent: The importance of model complexity and the performance of model selection criteria. <em>Ecological Applications</em> 21:335-342. <a href="https://doi.org/10.1890/10-1171.1">doi:10.1890/10-1171.1</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>maxnet</code>, <code>MaxEnt</code>, <code>trainMaxEnt</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# NB: The examples below show a very basic modeling workflow. They have been 
+# designed to work fast, not produce accurate, defensible models. They can
+# take a few minutes to run.
+
+library(mgcv)
+library(sf)
+library(terra)
+set.seed(123)
+
+### setup data
+##############
+
+# environmental rasters
+rastFile &lt;- system.file('extdata/madClim.tif', package='enmSdmX')
+madClim &lt;- rast(rastFile)
+
+# coordinate reference system
+wgs84 &lt;- getCRS('WGS84')
+
+# lemur occurrence data
+data(lemurs)
+occs &lt;- lemurs[lemurs$species == 'Eulemur fulvus', ]
+occs &lt;- vect(occs, geom=c('longitude', 'latitude'), crs=wgs84)
+
+occs &lt;- elimCellDuplicates(occs, madClim)
+
+occEnv &lt;- extract(madClim, occs, ID = FALSE)
+occEnv &lt;- occEnv[complete.cases(occEnv), ]
+	
+# create 10000 background sites (or as many as raster can support)
+bgEnv &lt;- terra::spatSample(madClim, 20000)
+bgEnv &lt;- bgEnv[complete.cases(bgEnv), ]
+bgEnv &lt;- bgEnv[1:min(10000, nrow(bgEnv)), ]
+
+# collate occurrences and background sites
+presBg &lt;- data.frame(
+  presBg = c(
+    rep(1, nrow(occEnv)),
+    rep(0, nrow(bgEnv))
+  )
+)
+
+env &lt;- rbind(occEnv, bgEnv)
+env &lt;- cbind(presBg, env)
+
+predictors &lt;- c('bio1', 'bio12')
+
+### calibrate models
+####################
+
+# Note that all of the trainXYZ functions can made to go faster using the
+# "cores" argument (set to just 1, by default). The examples below will not
+# go too much faster using more cores because they are simplified, but
+# you can try!
+cores &lt;- 1
+
+# MaxEnt
+mx &lt;- trainMaxEnt(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# MaxNet
+mn &lt;- trainMaxNet(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	regMult = 1, # too few values for reliable model, but fast
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized linear model (GLM)
+gl &lt;- trainGLM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	verbose = TRUE,
+	cores = cores
+)
+
+# generalized additive model (GAM)
+ga &lt;- trainGAM(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	verbose = TRUE,
+	cores = cores
+)
+
+# natural splines
+ns &lt;- trainNS(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	scale = TRUE, # automatic scaling of predictors
+	df = 1:2, # too few values for reliable model(?)
+	verbose = TRUE,
+	cores = cores
+)
+
+# boosted regression trees
+envSub &lt;- env[1:1049, ] # subsetting data to run faster
+brt &lt;- trainBRT(
+	data = envSub,
+	resp = 'presBg',
+	preds = predictors,
+	learningRate = 0.001, # too few values for reliable model(?)
+	treeComplexity = c(2, 3), # too few values for reliable model, but fast
+	minTrees = 1200, # minimum trees for reliable model(?), but fast
+	maxTrees = 1200, # too small for reliable model(?), but fast
+	tryBy = 'treeComplexity',
+	anyway = TRUE, # return models that did not converge
+	verbose = TRUE,
+	cores = cores
+)
+
+# random forests
+rf &lt;- trainRF(
+	data = env,
+	resp = 'presBg',
+	preds = predictors,
+	numTrees = c(100, 500), # using at least 500 recommended, but fast!
+	verbose = TRUE,
+	cores = cores
+)
+
+### make maps of models
+#######################
+
+# NB We do not have to scale rasters before predicting GLMs and NSs because we
+# used the `scale = TRUE` argument in trainGLM() and trainNS().
+
+mxMap &lt;- predictEnmSdm(mx, madClim)
+mnMap &lt;- predictEnmSdm(mn, madClim) 
+glMap &lt;- predictEnmSdm(gl, madClim)
+gaMap &lt;- predictEnmSdm(ga, madClim)
+nsMap &lt;- predictEnmSdm(ns, madClim)
+brtMap &lt;- predictEnmSdm(brt, madClim)
+rfMap &lt;- predictEnmSdm(rf, madClim)
+
+maps &lt;- c(
+	mxMap,
+	mnMap,
+	glMap,
+	gaMap,
+	nsMap,
+	brtMap,
+	rfMap
+)
+
+names(maps) &lt;- c('MaxEnt', 'MaxNet', 'GLM', 'GAM', 'NSs', 'BRTs', 'RFs')
+fun &lt;- function() plot(occs, col='black', pch=3, add=TRUE)
+plot(maps, fun = fun, nc = 4)
+
+### compare model responses to BIO12 (mean annual precipitation)
+################################################################
+
+# make a data frame holding all other variables at mean across occurrences,
+# varying only BIO12
+occEnvMeans &lt;- colMeans(occEnv, na.rm=TRUE)
+occEnvMeans &lt;- rbind(occEnvMeans)
+occEnvMeans &lt;- as.data.frame(occEnvMeans)
+climFrame &lt;- occEnvMeans[rep(1, 100), ]
+rownames(climFrame) &lt;- NULL
+
+minBio12 &lt;- min(env$bio12)
+maxBio12 &lt;- max(env$bio12)
+climFrame$bio12 &lt;- seq(minBio12, maxBio12, length.out=100)
+
+predMx &lt;- predictEnmSdm(mx, climFrame)
+predMn &lt;- predictEnmSdm(mn, climFrame)
+predGl &lt;- predictEnmSdm(gl, climFrame)
+predGa &lt;- predictEnmSdm(ga, climFrame)
+predNat &lt;- predictEnmSdm(ns, climFrame)
+predBrt &lt;- predictEnmSdm(brt, climFrame)
+predRf &lt;- predictEnmSdm(rf, climFrame)
+
+
+plot(climFrame$bio12, predMx,
+xlab='BIO12', ylab='Prediction', type='l', ylim=c(0, 1))
+
+lines(climFrame$bio12, predMn, lty='solid', col='red')
+lines(climFrame$bio12, predGl, lty='dotted', col='blue')
+lines(climFrame$bio12, predGa, lty='dashed', col='green')
+lines(climFrame$bio12, predNat, lty=4, col='purple')
+lines(climFrame$bio12, predBrt, lty=5, col='orange')
+lines(climFrame$bio12, predRf, lty=6, col='cyan')
+
+legend(
+   'topleft',
+   inset = 0.01,
+   legend = c(
+	'MaxEnt',
+	'MaxNet',
+	'GLM',
+	'GAM',
+	'NS',
+	'BRT',
+	'RF'
+   ),
+   lty = c(1, 1:6),
+   col = c(
+	'black',
+	'red',
+	'blue',
+	'green',
+	'purple',
+	'orange',
+	'cyan'
+   ),
+   bg = 'white'
+)
+
+
+</code></pre>
+
+
+</div>

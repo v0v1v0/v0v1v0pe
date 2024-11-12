@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>el.ltrc.EM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical likelihood ratio for mean 
+with left truncated and right censored data, by EM algorithm</h2>
+
+<h3>Description</h3>
+
+<p>This program uses EM algorithm to compute the maximized 
+(wrt <code class="reqn">p_i</code>) empirical
+log likelihood function for left truncated and right censored data with 
+the MEAN constraint:
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_{d_i=1}  p_i f(x_i)  = \int f(t) dF(t) = \mu ~. </code>
+</p>
+
+<p>Where <code class="reqn">p_i = \Delta F(x_i)</code> is a probability,
+<code class="reqn">d_i</code> is the censoring indicator, 1(uncensored), 0(right censored). 
+The <code class="reqn">d</code> for the largest observation <code class="reqn">x</code>, is always (automatically)
+changed to 1.  <code class="reqn">\mu</code> is a given constant. 
+This function also returns those <code class="reqn">p_i</code>. 
+</p>
+<p>The log empirical likelihood function been maximized is
+</p>
+<p style="text-align: center;"><code class="reqn">\sum_{d_i=1} \log \frac{ \Delta F(x_i)}{1-F(y_i)}  + 
+    \sum_{d_i=0} \log \frac{1-F(x_i)}{1-F(y_i)}.</code>
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">el.ltrc.EM(y,x,d,fun=function(t){t},mu,maxit=30,error=1e-9)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>an optional vector containing the observed left truncation times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector containing the censored survival times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>a vector containing the censoring indicators, 
+1-uncensored; 0-right censored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a continuous (weight) function used to calculate
+the mean as in <code class="reqn">H_0</code>.
+<code>fun(t)</code> must be able to take a vector input <code>t</code>.
+Default to the identity function <code class="reqn">f(t)=t</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>a real number used in the constraint, mean value of <code class="reqn">f(X)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error</code></td>
+<td>
+<p>an optional positive real number specifying the tolerance of
+iteration error. This is the bound of the
+<code class="reqn">L_1</code> norm of the difference of two successive weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>an optional integer, used to control maximum number of
+iterations. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>We return the -2 log likelihood ratio, and the constrained
+NPMLE of CDF.
+The un-constrained NPMLE should be WJT or Lynden-Bell estimator.
+</p>
+<p>When the given constants <code class="reqn">\mu</code> is too far
+away from the NPMLE, there will be no distribution
+satisfy the constraint.
+In this case the computation will stop.
+The -2 Log empirical likelihood ratio
+should be infinite. 
+</p>
+<p>The constant <code>mu</code> must be inside 
+<code class="reqn">( \min f(x_i) , \max f(x_i) ) </code>
+for the computation to continue. 
+It is always true that the NPMLE values are feasible. So when the
+computation stops, try move the <code>mu</code> closer
+to the NPMLE — 
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_{d_i=1} p_i^0 f(x_i) </code>
+</p>
+ 
+<p><code class="reqn">p_i^0</code> taken to be the jumps of the NPMLE of CDF. 
+Or use a different <code>fun</code>. 
+</p>
+<p>This implementation is all in R and have several for-loops in it. 
+A faster version would use C to do the for-loop part.
+(but this version is easier to port to Splus, and seems faster enough).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>locations of CDF that have positive mass.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>the probability of the constrained NPMLE of 
+CDF at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>It is Minus two times the 
+Empirical Log Likelihood Ratio.
+Should be approximate chi-square distributed under Ho.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou </p>
+
+
+<h3>References</h3>
+
+<p>Zhou, M. (2002). 
+Computing censored and truncated empirical likelihood ratio 
+by EM algorithm. 
+<em>Tech Report, Univ. of Kentucky, Dept of Statistics</em>
+</p>
+<p>Tsai, W. Y., Jewell, N. P., and Wang, M. C. (1987). A note on
+product-limit estimator under right censoring and left
+truncation. <em>Biometrika</em>, <b>74</b>, 883-886.
+</p>
+<p>Turnbbull, B. (1976). The empirical distribution 
+function with arbitrarily grouped, censored and 
+truncated data. JRSS B, 290-295.
+</p>
+<p>Zhou, M. (2005). Empirical likelihood ratio with arbitrarily censored/truncated data by EM algorithm. 
+<em>Journal of Computational and Graphical Statistics</em> 
+<b>14</b>, 643-656.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## example with tied observations
+y &lt;- c(0, 0, 0.5, 0, 1, 2, 2, 0, 0, 0, 0, 0 )
+x &lt;- c(1, 1.5, 2, 3, 4, 5, 6, 5, 4, 1, 2, 4.5)
+d &lt;- c(1,   1, 0, 1, 0, 1, 1, 1, 1, 0, 0,   1)
+el.ltrc.EM(y,x,d,mu=3.5)
+ypsy &lt;- c(51, 58, 55, 28, 25, 48, 47, 25, 31, 30, 33, 43, 45, 35, 36)
+xpsy &lt;- c(52, 59, 57, 50, 57, 59, 61, 61, 62, 67, 68, 69, 69, 65, 76)
+dpsy &lt;- c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1 )
+el.ltrc.EM(ypsy,xpsy,dpsy,mu=64)
+</code></pre>
+
+
+</div>

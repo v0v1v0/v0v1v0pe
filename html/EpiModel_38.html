@@ -1,0 +1,458 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>control.net</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Control Settings for Stochastic Network Models</h2>
+
+<h3>Description</h3>
+
+<p>Sets the controls for stochastic network models simulated with
+<code>netsim</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">control.net(
+  type,
+  nsteps,
+  start = 1,
+  nsims = 1,
+  ncores = 1,
+  resimulate.network = FALSE,
+  tergmLite = FALSE,
+  cumulative.edgelist = FALSE,
+  truncate.el.cuml = 0,
+  attr.rules,
+  epi.by,
+  initialize.FUN = initialize.net,
+  resim_nets.FUN = resim_nets,
+  summary_nets.FUN = summary_nets,
+  infection.FUN = NULL,
+  recovery.FUN = NULL,
+  departures.FUN = NULL,
+  arrivals.FUN = NULL,
+  nwupdate.FUN = nwupdate.net,
+  prevalence.FUN = prevalence.net,
+  verbose.FUN = verbose.net,
+  module.order = NULL,
+  save.nwstats = TRUE,
+  nwstats.formula = "formation",
+  save.transmat = TRUE,
+  save.network,
+  save.other,
+  verbose = TRUE,
+  verbose.int = 1,
+  skip.check = FALSE,
+  raw.output = FALSE,
+  tergmLite.track.duration = FALSE,
+  set.control.ergm = control.simulate.formula(MCMC.burnin = 2e+05),
+  set.control.tergm = control.simulate.formula.tergm(),
+  save.diss.stats = TRUE,
+  dat.updates = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Disease type to be modeled, with the choice of <code>"SI"</code> for Susceptible-Infected
+diseases, <code>"SIR"</code> for Susceptible-Infected-Recovered diseases, and <code>"SIS"</code> for
+Susceptible-Infected-Susceptible diseases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsteps</code></td>
+<td>
+<p>Number of time steps to simulate the model over. This must be a positive integer
+that is equal to the final step of a simulation. If a simulation is restarted with <code>start</code>
+argument, this number must be at least one greater than that argument's value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>For models with network resimulation, time point to start up the simulation. For
+restarted simulations, this must be one greater than the final time step in the prior
+simulation and must be less than the value in <code>nsteps</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsims</code></td>
+<td>
+<p>The total number of disease simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+<p>Number of processor cores to run multiple simulations on, using the <code>foreach</code> and
+<code>doParallel</code> implementations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resimulate.network</code></td>
+<td>
+<p>If <code>TRUE</code>, resimulate the network at each time step. This is required
+when the epidemic or demographic processes impact the network structure (e.g., vital
+dynamics).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tergmLite</code></td>
+<td>
+<p>Logical indicating usage of either <code>tergm</code> (<code>tergmLite = FALSE</code>), or <code>tergmLite</code>
+(<code>tergmLite = TRUE</code>). Default of <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cumulative.edgelist</code></td>
+<td>
+<p>If <code>TRUE</code>, calculates a cumulative edgelist within the network
+simulation module. This is used when tergmLite is used and the entire networkDynamic
+object is not used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncate.el.cuml</code></td>
+<td>
+<p>Number of time steps of the cumulative edgelist to retain. See help for
+<code>update_cumulative_edgelist</code> for options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr.rules</code></td>
+<td>
+<p>A list containing the  rules for setting the attributes of incoming nodes, with
+one list element per attribute to be set (see details below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epi.by</code></td>
+<td>
+<p>A character vector of length 1 containing a nodal attribute for which subgroup
+stratified prevalence summary statistics are calculated. This nodal attribute must be
+contained in the network model formation formula, otherwise it is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initialize.FUN</code></td>
+<td>
+<p>Module to initialize the model at time 1, with the default function of
+<code>initialize.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resim_nets.FUN</code></td>
+<td>
+<p>Module to resimulate the network at each time step, with the default
+function of <code>resim_nets</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summary_nets.FUN</code></td>
+<td>
+<p>Module to extract summary statistics of the network
+at each time step, with the default function of <code>summary_nets</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>infection.FUN</code></td>
+<td>
+<p>Module to simulate disease infection, with the default function of
+<code>infection.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recovery.FUN</code></td>
+<td>
+<p>Module to simulate disease recovery, with the default function of
+<code>recovery.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>departures.FUN</code></td>
+<td>
+<p>Module to simulate departure or exit, with the default function of
+<code>departures.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>arrivals.FUN</code></td>
+<td>
+<p>Module to simulate arrivals or entries, with the default function of
+<code>arrivals.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nwupdate.FUN</code></td>
+<td>
+<p>Module to handle updating of network structure and nodal attributes due to
+exogenous epidemic model processes, with the default function of <code>nwupdate.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prevalence.FUN</code></td>
+<td>
+<p>Module to calculate disease prevalence at each time step, with the default
+function of <code>prevalence.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose.FUN</code></td>
+<td>
+<p>Module to print simulation progress to screen, with the default function of
+<code>verbose.net</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>module.order</code></td>
+<td>
+<p>A character vector of module names that lists modules in the order in which
+they should be evaluated within each time step. If <code>NULL</code>, the modules will be evaluated
+as follows: first any new modules supplied through <code>...</code> in the order in which they are
+listed, then the built-in modules in the order in which they are listed as arguments
+above. <code>initialize.FUN</code> will always be run first and <code>verbose.FUN</code> will always be run last.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.nwstats</code></td>
+<td>
+<p>If <code>TRUE</code>, save network statistics in a data frame. The statistics to be
+saved are specified in the <code>nwstats.formula</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nwstats.formula</code></td>
+<td>
+<p>A right-hand sided ERGM formula that includes network statistics of
+interest, with the default to the formation formula terms. Supports <code>multilayer</code>
+specification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.transmat</code></td>
+<td>
+<p>If <code>TRUE</code>, complete transmission matrix is saved at simulation end.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.network</code></td>
+<td>
+<p>If <code>TRUE</code>, networkDynamic or networkLite object is saved at simulation end.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.other</code></td>
+<td>
+<p>A character vector of elements on the <code>netsim_dat</code> main data list to save out
+after each simulation. One example for base models is the attribute list, <code>"attr"</code>, at
+the final time step.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>If <code>TRUE</code>, print model progress to the console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose.int</code></td>
+<td>
+<p>Time step interval for printing progress to console, where <code>0</code> prints
+completion status of entire simulation and positive integer <code>x</code> prints progress after
+every <code>x</code> time steps. The default is to print progress after each time step.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip.check</code></td>
+<td>
+<p>If <code>TRUE</code>, skips the default error checking for the structure and consistency
+of the parameter values, initial conditions, and control settings before running base
+epidemic models. Setting this to <code>FALSE</code> is recommended when running models with new
+modules specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw.output</code></td>
+<td>
+<p>If <code>TRUE</code>, <code>netsim</code> will output a list of raw data (one per simulation) instead
+of a cleaned and formatted <code>netsim</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tergmLite.track.duration</code></td>
+<td>
+<p>If <code>TRUE</code>, track duration information for models in <code>tergmLite</code>
+simulations. Supports <code>multilayer</code> specification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set.control.ergm</code></td>
+<td>
+<p>Control arguments passed to <code>ergm::simulate_formula.network</code>. In <code>netsim</code>,
+this is only used when initializing the network with <code>edapprox = TRUE</code>. All other
+simulations in <code>netsim</code> use <code>tergm</code>. Supports <code>multilayer</code> specification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set.control.tergm</code></td>
+<td>
+<p>Control arguments passed to <code>tergm::simulate_formula.network</code>. See the
+help file for <code>netdx</code> for details and examples on specifying this parameter. Supports
+<code>multilayer</code> specification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.diss.stats</code></td>
+<td>
+<p>If <code>TRUE</code>, <code>netsim</code> will compute and save duration and dissolution
+statistics for plotting and printing, provided <code>save.network</code> is <code>TRUE</code>, <code>tergmLite</code> is
+<code>FALSE</code>, and the dissolution model is homogeneous.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dat.updates</code></td>
+<td>
+<p>Either <code>NULL</code>, a single function taking arguments <code>dat</code>,
+<code>at</code>, and <code>network</code>, or a list of functions of length one greater
+than the number of networks being simulated, with each function in
+the list taking arguments <code>dat</code> and <code>at</code>. Here <code>dat</code> is the main
+<code>netsim_dat</code> class object, <code>at</code> is the current timestep, and <code>network</code>
+is an index indicating the current position within the sequence of
+network (re)simulations on each time step. If a single function is
+passed, it will be called before the first network is simulated and
+after each network is simulated, with <code>network = 0L</code> before the first
+network is simulated and with <code>network = i</code> after the <code>i</code>th network
+is simulated. If a list of functions is passed, the first function
+will be called before the first network is simulated, and the
+<code>i + 1</code>th function will be called after the <code>i</code>th network is
+simulated. (Note that <code>at = 0L</code> is used for initial cross-sectional
+simulations in <code>sim_nets_t1</code>.) The function(s) should return the
+<code>netsim_dat</code> object with any updates needed to correctly represent the
+network states for calls to <code>simulate</code> and/or <code>summary</code>. This can be
+useful if nodal attributes appearing in one network model depend on
+nodal degrees in a different network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional control settings passed to model.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>control.net</code> sets the required control settings for any network model solved with the <code>netsim</code>
+function. Controls are required for both base model types and when passing original process
+modules. For an overview of control settings for base models, consult the
+<a href="http://www.epimodel.org/tut.html">Basic Network Models</a> tutorials. For all base models, the
+<code>type</code> argument is a necessary parameter and it has no default.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An EpiModel object of class <code>control.net</code>.
+</p>
+
+
+<h3>The attr.rules Argument</h3>
+
+<p>The <code>attr.rules</code> parameter is used to specify the rules for how nodal attribute values for
+incoming nodes should be set. These rules are only necessary for models in which there are
+incoming nodes (i.e., arrivals). There are three rules available for each attribute value:
+</p>
+
+<ul>
+<li> <p><strong><code>current</code></strong>: new nodes will be assigned this attribute in proportion to the distribution of
+that attribute among existing nodes at that current time step.
+</p>
+</li>
+<li> <p><strong><code>t1</code></strong>: new nodes will be assigned this attribute in proportion to the distribution of that
+attribute among nodes at time 1 (that is, the proportions set in the original network for
+<code>netest</code>).
+</p>
+</li>
+<li> <p><strong><code>Value</code></strong>: all new nodes will be assigned this specific value, with no variation.
+For example, the rules list <code>attr.rules = list(race = "t1", sex = "current", status = "s")</code>
+specifies how the race, sex, and status attributes should be set for incoming nodes. By default,
+the rule is <code>"current"</code> for all attributes except status, in which case it is <code>"s"</code> (that is, all
+incoming nodes are susceptible).
+</p>
+</li>
+</ul>
+<h3>Checkpointing Simulations</h3>
+
+<p><code>netsim</code> has a built-in checkpoint system to prevent losing computation work if the function is
+interrupted (SIGINT, power loss, time limit exceeded on a computation cluster). When enabled,
+each simulation will be saved every <code>.checkpoint.steps</code> time steps. Then, if a checkpoint enabled
+simulation is launched again with <code>netsim</code>, it will restart at the last checkpoint available in
+the saved data.
+</p>
+<p>To enable the checkpoint capabilities of <code>netsim</code>, two control arguments have to be set:
+<code>.checkpoint.steps</code>, which is a positive number of time steps to be run between each file save;
+and <code>.checkpoint.dir</code>, which is the path to a directory to save the checkpointed data. If
+<code>.checkpoint.dir</code> directory does not exist, <code>netsim</code> will attempt to create it on the first
+checkpoint save. With these two controls defined, one can simply re-run <code>netsim</code> with the same
+arguments to restart a set of simulations that were interrupted.
+</p>
+<p>Simulations are checkpointed individually: for example, if 3 simulations are run on a single core,
+the first 2 are finished, then the interruption occurs during the third, <code>netsim</code> will only
+restart the third one from the last checkpoint.
+</p>
+<p>A <code>.checkpoint.compress</code> argument can be set to overwrite the <code>compress</code> argument in <code>saveRDS</code>
+used to save the checkpointed data. The current default for <code>saveRDS</code> is <code>gunzip (gz)</code>, which
+provides fast compression that usually works well on <code>netsim</code> objects.
+</p>
+<p>By default, if <code>netsim</code> reaches the end of all simulations, the checkpoint data directory and its
+content are removed before returning the <code>netsim</code> object. The <code>.checkpoint.keep</code> argument can be
+set to <code>TRUE</code> to prevent this removal to inspect the raw simulation objects.
+</p>
+
+
+<h3>New Modules</h3>
+
+<p>Base network models use a set of module functions that specify how the individual nodes in the
+network are subjected to infection, recovery, demographics, and other processes. Core modules are
+those listed in the <code>.FUN</code> arguments. For each module, there is a default function used in
+the simulation. The default infection module, for example, is contained in the <code>infection.net</code>
+function.
+</p>
+<p>For original models, one may substitute replacement module functions for any of the default
+functions. New modules may be added to the workflow at each time step by passing a module function
+via the <code>...</code> argument. Consult the <a href="http://www.epimodel.org/tut.html">New Network Models</a>
+tutorials. One may remove existing modules, such as <code>arrivals.FUN</code>, from the workflow by setting
+the parameter value for that argument to <code>NULL</code>.
+</p>
+
+
+<h3>End Horizon</h3>
+
+<p><code>netsim</code> implements an "End Horizon" mechanism, where a set of modules are
+removed from the simulation at a specific time step. This is enabled through
+the <code>end.horizon</code> parameter to <code>control.net</code>.
+</p>
+<p>This parameter must receive a <code>list</code> with fields <code>at</code>, the time step at which
+the end horizon occurs, and <code>modules</code>, a character vector with the names of
+the modules to remove. (e.g 'list(at = 208, modules = c("arrivals.FUN",
+"infections.FUN")))
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Use <code>param.net</code> to specify model parameters and <code>init.net</code> to specify the initial conditions.
+Run the parameterized model with <code>netsim</code>.
+</p>
+
+
+</div>

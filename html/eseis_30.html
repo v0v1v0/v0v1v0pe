@@ -1,0 +1,356 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>model_bedload</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Model the seismic spectrum due to bedload transport in rivers</h2>
+
+<h3>Description</h3>
+
+<p>The function calculates a seismic spectrum as predicted by the model 
+of Tsai et al. (2012) for river bedload transport. The code was written to 
+R by Sophie Lagarde and integrated to the R package 'eseis' by Michael 
+Dietze.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">model_bedload(
+  gsd,
+  d_s,
+  s_s,
+  r_s,
+  q_s,
+  h_w,
+  w_w,
+  a_w,
+  f = c(1, 100),
+  r_0,
+  f_0,
+  q_0,
+  e_0,
+  v_0,
+  x_0,
+  n_0,
+  n_c,
+  res = 100,
+  adjust = TRUE,
+  eseis = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>gsd</code></td>
+<td>
+<p><code>data frame</code> grain-size distribution function. Must be 
+provided as data frame with two variables: grain-size class (in m, first 
+column) and wgt/vol percentage per class (second column). See examples for 
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d_s</code></td>
+<td>
+<p><code>Numeric</code> value, mean sediment grain diameter (m). 
+Alternative to <code>gsd</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s_s</code></td>
+<td>
+<p><code>Numeric</code> value, standard deviation of sediment grain 
+diameter (m). Alternative to <code>gsd</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r_s</code></td>
+<td>
+<p><code>Numeric</code> value, specific sediment density (kg / m^3)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_s</code></td>
+<td>
+<p><code>Numeric</code> value, unit sediment flux (m^2 / s)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h_w</code></td>
+<td>
+<p><code>Numeric</code> value, fluid flow depth (m)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w_w</code></td>
+<td>
+<p><code>Numeric</code> value, fluid flow width (m)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a_w</code></td>
+<td>
+<p><code>Numeric</code> value, fluid flow inclination angle (radians)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p><code>Numeric</code> vector, frequency range to be modelled. 
+If of length two the argument is interpreted as representing the lower and 
+upper limit and the final length of the frequency vector is set by the 
+argument <code>res</code>. If <code>f</code> contains more than two values it is 
+interpreted as the actual frequency vector and the value of <code>res</code> is 
+ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r_0</code></td>
+<td>
+<p><code>Numeric</code> value, distance of seismic station to source</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f_0</code></td>
+<td>
+<p><code>Numeric</code> value, reference frequency (Hz)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_0</code></td>
+<td>
+<p><code>Numeric</code> value, ground quality factor at <code>f_0</code>.
+"Reasonable value may be <code>20</code>" (Tsai et al. 2012).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>e_0</code></td>
+<td>
+<p><code>Numeric</code> value, exponent characterizing quality factor 
+increase with frequency (dimensionless). "Reasonable value may be 
+<code>0</code>" (Tsai et al. 2012).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v_0</code></td>
+<td>
+<p><code>Numeric</code> value, phase speed of the Rayleigh wave at 
+<code>f_0</code> (m/s). Assuming a shear wave velocity of about 2200 m/s, 
+Tsai et al. (2012) yield a value of 1295 m/s for this parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_0</code></td>
+<td>
+<p><code>Numeric</code> value, exponent of the power law variation of 
+Rayleigh wave velocities with frequency</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_0</code></td>
+<td>
+<p><code>Numeric</code> vector of length two, Greens function 
+displacement amplitude coefficients. Cf. N_ij in eq. 36 in Gimbert et 
+al. (2014)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_c</code></td>
+<td>
+<p><code>Numeric</code> value, option to include single particle hops 
+coherent in time, causing spectrum modulation due to secondary effects. 
+Omitted is no value is specified, here. Usual values may be between 2 and 
+4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res</code></td>
+<td>
+<p><code>Numeric</code> value, output resolution, i.e. length of the 
+spectrum vector. Default is 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adjust</code></td>
+<td>
+<p><code>Logical</code> value, option to adjust PSD for wide 
+grain-size distributions, according to implementation by Tsai et al. 
+(2012).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eseis</code></td>
+<td>
+<p><code>Character</code> value, option to return an eseis object 
+instead of a data frame. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to the function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The model uses a set of predefined constants. These can also be changed
+by the user, using the <code>...</code> argument:
+</p>
+
+<ul>
+<li> <p><code>g = 9.81</code>, gravitational acceleration (m/s^2)
+</p>
+</li>
+<li> <p><code>r_w = 1000</code>, fluid specific density (kg/m^3)
+</p>
+</li>
+<li> <p><code>k_s = 3 * d_50</code>, roughness length (m)
+</p>
+</li>
+<li> <p><code>log_lim = c(0.0001, 100), limits of grain-size distribution 
+  function template (m)</code>
+</p>
+</li>
+<li> <p><code>log_length = 10000, length of grain-size distribution 
+  function template</code>
+</p>
+</li>
+<li> <p><code>nu = 10^(-6)</code>, specific density of the fluid (kg/m^3)
+</p>
+</li>
+<li> <p><code>power_d = 3</code>, grain-size power exponent
+</p>
+</li>
+<li> <p><code>gamma = 0.9</code>, gamma parameter, after Parker (1990)
+</p>
+</li>
+<li> <p><code>s_c = 0.8</code>, drag coefficient parameter
+</p>
+</li>
+<li> <p><code>s_p = 3.5</code>, drag coefficient parameter
+</p>
+</li>
+<li> <p><code>c_1 = 2 / 3</code>, inter-impact time scaling, after 
+Sklar &amp; Dietrich (2004)
+</p>
+</li>
+</ul>
+<p>When no user defined grain-size distribution function is provided,the 
+function calculates the raised cosine distribution function as defined 
+in Tsai et al. (2012) using the default range and resolution as specified 
+by <code>log_lim</code> and <code>log_length</code> (see additional arguments list 
+above). These default values are appropriate for mean sediment sizes 
+between 0.001 and 10 m and log standard deivations between 0.05 and 1. 
+When more extreme distributions are to be used, it is necessary to either 
+adjust the arguments <code>log_lim</code> and <code>log_length</code> or use a 
+user defined distribution function.
+</p>
+<p>The adjustment option (implemented with package version 0.6.0) is only 
+relevant for wide grain-size distributions, i.e., <code>s_s</code> &gt; 0.2. In 
+such cases, the unadjusted version tends to underestimate seismic power.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>eseis</code> object containing the modelled spectrum.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sophie Lagarde, Michael Dietze
+</p>
+
+
+<h3>References</h3>
+
+<p>Tsai, V. C., B. Minchew, M. P. Lamb, and J.-P. Ampuero (2012), A 
+physical model for seismic noise generation from sediment transport in 
+rivers, Geophys. Res. Lett., 39, L02404, doi:10.1029/2011GL050255.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## calculate spectrum (i.e., fig. 1b in Tsai et al., 2012)
+p_bedload &lt;- model_bedload(d_s = 0.7,
+                           s_s = 0.1,
+                           r_s = 2650,
+                           q_s = 0.001,
+                           h_w = 4,
+                           w_w = 50,
+                           a_w = 0.005,
+                           f = c(0.1, 20),
+                           r_0 = 600,
+                           f_0 = 1,
+                           q_0 = 20,
+                           e_0 = 0,
+                           v_0 = 1295,
+                           x_0 = 0.374,
+                           n_0 = 1,
+                           res = 100,
+                           eseis = TRUE)
+
+## plot spectrum
+plot_spectrum(data = p_bedload, 
+              ylim = c(-170, -110))
+              
+## define empiric grain-size distribution
+gsd_empiric &lt;- data.frame(d = c(0.70, 0.82, 0.94, 1.06, 1.18, 1.30),
+                          p = c(0.02, 0.25, 0.45, 0.23, 0.04, 0.00))
+                  
+## calculate spectrum
+p_bedload &lt;- model_bedload(gsd = gsd_empiric,
+                           r_s = 2650,
+                           q_s = 0.001,
+                           h_w = 4,
+                           w_w = 50,
+                           a_w = 0.005,
+                           f = c(0.1, 20),
+                           r_0 = 600,
+                           f_0 = 1,
+                           q_0 = 20,
+                           e_0 = 0,
+                           v_0 = 1295,
+                           x_0 = 0.374,
+                           n_0 = 1,
+                           res = 100,
+                           eseis = TRUE)
+                  
+## plot spectrum
+plot_spectrum(data = p_bedload, 
+              ylim = c(-170, -110))
+              
+## define mean and sigma for parametric distribution function
+d_50 &lt;- 1
+sigma &lt;- 0.1
+
+## define raised cosine distribution function following Tsai et al. (2012)
+d_1 &lt;- 10^seq(log10(d_50 - 5 * sigma), 
+              log10(d_50 + 5 * sigma), 
+              length.out = 20)
+
+sigma_star &lt;- sigma / sqrt(1 / 3 - 2 / pi^2)
+
+p_1 &lt;- (1 / (2 * sigma_star) * 
+          (1 + cos(pi * (log(d_1) - log(d_50)) / sigma_star))) / d_1
+p_1[log(d_1) - log(d_50) &gt; sigma_star] &lt;- 0
+p_1[log(d_1) - log(d_50) &lt; -sigma_star] &lt;- 0
+p_1 &lt;- p_1 / sum(p_1)
+
+gsd_raised_cos &lt;- data.frame(d = d_1,
+                             p = p_1)
+             
+</code></pre>
+
+
+</div>

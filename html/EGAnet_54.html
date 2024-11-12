@@ -1,0 +1,315 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>riEGA</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Random-Intercept <code>EGA</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the number of substantive dimensions after controlling
+for wording effects. EGA is applied to a residual correlation matrix after
+subtracting and random intercept factor with equal unstandardized loadings
+from all the regular and unrecoded reversed items in the database
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">riEGA(
+  data,
+  n = NULL,
+  corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
+  uni.method = c("expand", "LE", "louvain"),
+  plot.EGA = TRUE,
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Matrix or data frame.
+Should consist only of variables to be used in the analysis.
+<strong>Must</strong> be raw data and not a correlation matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Numeric (length = 1).
+Sample size if <code>data</code> provided is a correlation matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corr</code></td>
+<td>
+<p>Character (length = 1).
+Method to compute correlations.
+Defaults to <code>"auto"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"auto"</code> — Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use <code>ordinal.categories</code>
+(see <code>polychoric.matrix</code> for more details)
+</p>
+</li>
+<li> <p><code>"cor_auto"</code> — Uses <code>cor_auto</code> to compute correlations.
+Arguments can be passed along to the function
+</p>
+</li>
+<li> <p><code>"cosine"</code> — Uses <code>cosine</code> to compute cosine similarity
+</p>
+</li>
+<li> <p><code>"pearson"</code> — Pearson's correlation is computed for all
+variables regardless of categories
+</p>
+</li>
+<li> <p><code>"spearman"</code> — Spearman's rank-order correlation is computed
+for all variables regardless of categories
+</p>
+</li>
+</ul>
+<p>For other similarity measures, compute them first and input them
+into <code>data</code> with the sample size (<code>n</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.data</code></td>
+<td>
+<p>Character (length = 1).
+How should missing data be handled?
+Defaults to <code>"pairwise"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"pairwise"</code> — Computes correlation for all available cases between
+two variables
+</p>
+</li>
+<li> <p><code>"listwise"</code> — Computes correlation for all complete cases in the dataset
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Character (length = 1).
+Defaults to <code>"glasso"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"BGGM"</code> — Computes the Bayesian Gaussian Graphical Model.
+Set argument <code>ordinal.categories</code> to determine
+levels allowed for a variable to be considered ordinal.
+See <code>?BGGM::estimate</code> for more details
+</p>
+</li>
+<li> <p><code>"glasso"</code> — Computes the GLASSO with EBIC model selection.
+See <code>EBICglasso.qgraph</code> for more details
+</p>
+</li>
+<li> <p><code>"TMFG"</code> — Computes the TMFG method.
+See <code>TMFG</code> for more details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algorithm</code></td>
+<td>
+<p>Character or
+<code>igraph</code> <code>cluster_*</code> function (length = 1).
+Defaults to <code>"walktrap"</code>.
+Three options are listed below but all are available
+(see <code>community.detection</code> for other options):
+</p>
+
+<ul>
+<li> <p><code>"leiden"</code> — See <code>cluster_leiden</code> for more details
+</p>
+</li>
+<li> <p><code>"louvain"</code> — By default, <code>"louvain"</code> will implement the Louvain algorithm using
+the consensus clustering method (see <code>community.consensus</code>
+for more information). This function will implement
+<code>consensus.method = "most_common"</code> and <code>consensus.iter = 1000</code>
+unless specified otherwise
+</p>
+</li>
+<li> <p><code>"walktrap"</code> — See <code>cluster_walktrap</code> for more details
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uni.method</code></td>
+<td>
+<p>Character (length = 1).
+What unidimensionality method should be used?
+Defaults to <code>"louvain"</code>.
+Available options:
+</p>
+
+<ul>
+<li> <p><code>"expand"</code> — Expands the correlation matrix with four variables correlated 0.50.
+If number of dimension returns 2 or less in check, then the data
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This method was used in the Golino et al.'s (2020)
+<em>Psychological Methods</em> simulation
+</p>
+</li>
+<li> <p><code>"LE"</code> — Applies the Leading Eigenvector algorithm
+(<code>cluster_leading_eigen</code>)
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvector solution is used; otherwise, regular EGA
+is used. This method was used in the Christensen et al.'s (2023)
+<em>Behavior Research Methods</em> simulation
+</p>
+</li>
+<li> <p><code>"louvain"</code> — Applies the Louvain algorithm (<code>cluster_louvain</code>)
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
+This method was validated Christensen's (2022) <em>PsyArXiv</em> simulation.
+Consensus clustering can be used by specifying either
+<code>"consensus.method"</code> or <code>"consensus.iter"</code>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.EGA</code></td>
+<td>
+<p>Boolean (length = 1).
+If <code>TRUE</code>, returns a plot of the network and its estimated dimensions.
+Defaults to <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to <code>FALSE</code> (silent calls).
+Set to <code>TRUE</code> to see all messages and warnings for every function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed on to
+<code>auto.correlate</code>,
+<code>network.estimation</code>,
+<code>community.detection</code>,
+<code>community.consensus</code>, and
+<code>EGA</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>EGA</code></td>
+<td>
+<p>Results from <code>EGA</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RI</code></td>
+<td>
+<p>A list containing information about the random-intercept
+model (if the model converged):
+</p>
+
+<ul>
+<li> <p><code>fit</code> — The fit object for the random-intercept model using <code>cfa</code>
+</p>
+</li>
+<li> <p><code>lavaan.args</code> — The arguments used in <code>cfa</code>
+</p>
+</li>
+<li> <p><code>loadings</code> — Standardized loadings from the random-intercept model
+</p>
+</li>
+<li> <p><code>correlation</code> — Residual correlations after accounting for the random-intercept model
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TEFI</code></td>
+<td>
+<p><code>link[EGAnet]{tefi}</code> for the estimated structure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.EGA</code></td>
+<td>
+<p>Plot output if <code>plot.EGA = TRUE</code></p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Alejandro Garcia-Pardina &lt;alejandrogp97@gmail.com&gt;,
+Francisco J. Abad &lt;fjose.abad@uam.es&gt;,
+Alexander P. Christensen &lt;alexpaulchristensen@gmail.com&gt;,
+Hudson Golino &lt;hfg9s at virginia.edu&gt;,
+Luis Eduardo Garrido &lt;luisgarrido@pucmm.edu.do&gt;, and
+Robert Moulder &lt;rgm4fd@virginia.edu&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p><strong>Selection of CFA Estimator</strong> <br>
+Rhemtulla, M., Brosseau-Liard, P. E., &amp; Savalei, V. (2012).
+When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
+<em>Psychological Methods</em>, <em>17</em>, 354-373.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.EGAnet</code> for plot usage in <code>EGAnet</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Obtain example data
+wmt &lt;- wmt2[,7:24]
+
+# riEGA example
+riEGA(data = wmt, plot.EGA = FALSE)
+# no plot for CRAN checks
+
+</code></pre>
+
+
+</div>

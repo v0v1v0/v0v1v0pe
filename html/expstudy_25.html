@@ -1,0 +1,187 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mutate_metrics</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Add common metrics to an experience study</h2>
+
+<h3>Description</h3>
+
+<p><code>mutate_metrics()</code> calculates metrics for an experience study using common
+measures associated with the data. These measures are identified via the
+<code>measure_sets</code> argument which can be provided directly or be guessed using
+regular expressions (<code>regexs</code>). See <code>guess_measure_sets()</code> for additional
+detail on how this guessing is implemented.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mutate_metrics(
+  .data,
+  measure_sets = guess_measure_sets(.data),
+  metrics = list(AVG_OBSRV = avg_observed, AVG_EXPEC = avg_expected, CI_FCTR = ci_fctr,
+    AE_RATIO = ae_ratio, CREDIBILITY = credibility),
+  ...,
+  .by = NULL,
+  .keep = c("all", "used", "unused", "none"),
+  .before = NULL,
+  .after = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>A <code>base::data.frame()</code> that houses an experience study.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>measure_sets</code></td>
+<td>
+<p>A (potentially named) list of measure sets. Only need to specify once if
+chaining multiple <code>expstudy</code> functions as the <code>measure_sets</code> will be
+passed as an attribute in results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metrics</code></td>
+<td>
+<p>A named list of functions to calculate metrics. Each function will be
+applied to each set identified in <code>measure_sets</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional (optional) arguments passed along to each
+(metric function)metrics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.by</code></td>
+<td>
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>
+</p>
+<p>&lt;<code>tidy-select</code>&gt; Optionally, a selection of columns to
+group by for just this operation, functioning as an alternative to <code>group_by()</code>. For
+details and examples, see ?dplyr_by.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.keep</code></td>
+<td>
+<p>Control which columns from <code>.data</code> are retained in the output. Grouping
+columns and columns created by <code>...</code> are always kept.
+</p>
+
+<ul>
+<li> <p><code>"all"</code> retains all columns from <code>.data</code>. This is the default.
+</p>
+</li>
+<li> <p><code>"used"</code> retains only the columns used in <code>...</code> to create new
+columns. This is useful for checking your work, as it displays inputs
+and outputs side-by-side.
+</p>
+</li>
+<li> <p><code>"unused"</code> retains only the columns <em>not</em> used in <code>...</code> to create new
+columns. This is useful if you generate new columns, but no longer need
+the columns used to generate them.
+</p>
+</li>
+<li> <p><code>"none"</code> doesn't retain any extra columns from <code>.data</code>. Only the grouping
+variables and columns created by <code>...</code> are kept.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.before, .after</code></td>
+<td>
+<p>&lt;<code>tidy-select</code>&gt; Optionally, control where new columns
+should appear (the default is to add to the right hand side). See
+<code>relocate()</code> for more details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is structured in a way that uses sets of measures within the
+study as the first function argument of each metric function. The default
+argument uses a set of metric functions, provided by <code>expstudy</code>, which are
+commonly requested metrics used in actuarial analyses. For convenience,
+a vectorized version of these default metric functions have also been
+provided; see metrics for more information.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of the same type as <code>.data</code>. The output has the following
+properties:
+</p>
+
+<ul>
+<li>
+<p> Columns from <code>.data</code> will be preserved according to the <code>.keep</code> argument.
+</p>
+</li>
+<li>
+<p> Existing columns that are modified by <code>...</code> will always be returned in
+their original location.
+</p>
+</li>
+<li>
+<p> New columns created through <code>...</code> will be placed according to the
+<code>.before</code> and <code>.after</code> arguments.
+</p>
+</li>
+<li>
+<p> The number of rows is not affected.
+</p>
+</li>
+<li>
+<p> Columns given the value <code>NULL</code> will be removed.
+</p>
+</li>
+<li>
+<p> Groups will be recomputed if a grouping variable is mutated.
+</p>
+</li>
+<li>
+<p> Data frame attributes are preserved.
+</p>
+</li>
+</ul>
+<h3>Naming convention</h3>
+
+<p><code>expstudy</code> uses a naming convention where some functions are prefixed by the
+underling <code>dplyr</code> verb. The purpose of this is to associate the resulting
+structure of the <code>expstudy</code> function with a very similar output as what the
+<code>dplyr</code> function would produce. Note that the intention here is not replace
+all <code>dplyr</code> use cases but instead add specific functionality to streamline
+routine experience study analyses.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Metrics can be added at a seriatim level, but often are
+# calculated after some aggregation is applied to a cohort:
+mortexp |&gt;
+  dplyr::group_by(
+    GENDER
+  ) |&gt;
+  summarise_measures() |&gt;
+  mutate_metrics()
+
+</code></pre>
+
+
+</div>

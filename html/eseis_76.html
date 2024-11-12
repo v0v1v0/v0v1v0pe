@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spatial_distance</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate topography-corrected distances for seismic waves.</h2>
+
+<h3>Description</h3>
+
+<p>The function calculates topography-corrected distances either between 
+seismic stations or from seismic stations to pixels of an input raster.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spatial_distance(
+  stations,
+  dem,
+  topography = TRUE,
+  maps = TRUE,
+  matrix = TRUE,
+  aoi,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>stations</code></td>
+<td>
+<p><code>Numeric</code> matrix of length two, x- and y-coordinates 
+of the seismic stations to be processed (column-wise orgnaised).The 
+coordinates must be in metric units, such as the UTM system and 
+match with the reference system of the <code>dem</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dem</code></td>
+<td>
+<p><code>SpatRaster</code> object, the digital elevation model (DEM) to 
+be processed. The DEM must be in metric units, such as the UTM system and 
+match with the reference system of the coordinates of <code>stations</code>. 
+See <code>terra</code> for supported types and how to read these to R.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>topography</code></td>
+<td>
+<p><code>Logical</code> scalar, option to enable topography
+correction, default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maps</code></td>
+<td>
+<p><code>Logical</code> scalar, option to enable/disable calculation
+of distance maps. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>matrix</code></td>
+<td>
+<p><code>Logical</code> scalar, option to enable/disable calculation
+of interstation distances. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aoi</code></td>
+<td>
+<p><code>Numeric</code> vector of length four, bounding coordinates of 
+the area of interest to process, in the form <code>c(x0, x1, y0, y1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p><code>Logical</code> value, option to show extended function 
+information as the function is running. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Topography correction is necessary because seismic waves can only travel 
+on the direct path as long as they are within solid matter. When the 
+direct path is through air, the wave can only travel along the surface
+of the landscape. The function accounts for this effect and returns the
+corrected travel distance data set.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>List</code> object with distance maps (list of 
+<code>SpatRaster</code> objects from <code>terra</code> package) and station distance 
+matrix (<code>data.frame</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+
+data("volcano")
+dem &lt;- terra::rast(volcano)
+dem &lt;- dem * 10
+terra::ext(dem) &lt;- terra::ext(dem) * 10
+terra::ext(dem) &lt;-terra::ext(dem) + c(510, 510, 510, 510)
+
+## define example stations
+stations &lt;- cbind(c(200, 700), c(220, 700))
+
+## plot example data
+terra::plot(dem)
+points(stations[,1], stations[,2])
+
+## calculate distance matrices and stations distances
+D &lt;- spatial_distance(stations = stations, 
+                      dem = dem)
+
+terra::plot(D$maps[[1]])
+
+## show station distance matrix
+print(D$matrix)
+
+## calculate with AOI and in verbose mode
+D &lt;- spatial_distance(stations = stations, 
+                      dem = dem, 
+                      verbose = TRUE,
+                      aoi = c(0, 200, 0, 200))
+
+## plot distance map for station 2
+terra::plot(D$maps[[1]])
+
+
+## End(Not run) 
+                                          
+</code></pre>
+
+
+</div>

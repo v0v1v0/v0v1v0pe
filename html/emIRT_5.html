@@ -1,0 +1,111 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dwnom</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Poole-Rosenthal DW-NOMINATE data and scores, 80-110 U.S. Senate
+</h2>
+
+<h3>Description</h3>
+
+<p>This data set contains materials related to the Poole-Rosenthal DW-NOMINATE measure of senator
+ideology.  The software (and other materials) is available at <a href="https://voteview.com/">https://voteview.com/</a>,
+which includes a simpler example of an application to the 80-110 U.S. Senate.  The data set here is
+derived from the data and estimates from that example, but are formatted to be run in <code>hierIRT()</code>.
+In particular, start values for estimation are identical to those provided by the example.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(dwnom)</code></pre>
+
+
+<h3>Format</h3>
+
+<p>list, containing the following elements:
+</p>
+
+<dl>
+<dt>data.in</dt>
+<dd>
+<p> Legislator voting data, formatted for input to <code>hierIRT()</code>.</p>
+</dd>
+<dt>cur</dt>
+<dd>
+<p> Start values, formatted for input to <code>hierIRT()</code>. </p>
+</dd>
+<dt>priors</dt>
+<dd>
+<p> Priors, formatted for input to <code>hierIRT()</code>.</p>
+</dd>
+<dt>legis</dt>
+<dd>
+<p> data frame, containing contextual information about the legislators estimated.</p>
+</dd>
+<dt>nomres</dt>
+<dd>
+<p> data frame, containing estimates from DW-NOMINATE on the same data. These
+are read from the file SL80110C21.DAT. </p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>DW-NOMINATE is described in Keith T. Poole and Howard Rosenthal. 1997. Congress: A Political Economic History
+of Roll Call Voting. Oxford University Press.  See also <a href="https://voteview.com/">https://voteview.com/</a>.
+</p>
+<p>Variational model is described in Kosuke Imai, James Lo, and Jonathan Olmsted (2016). “Fast Estimation
+of Ideal Points with Massive Data.” American Political Science Review, Vol. 110, No. 4 (December), pp. 631-656.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>'hierIRT'.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+### Real data example of US Senate 80-110 (not run)
+### Based on voteview.com example of DW-NOMINATE 
+### We estimate a hierarchical model without noise and a linear time covariate
+### This model corresponds very closely to the DW-NOMINATE model
+
+## Not run: 
+data(dwnom)
+
+## This takes about 10 minutes to run on 8 threads
+## You may need to reduce threads depending on what your machine can support
+lout &lt;- hierIRT(.data = dwnom$data.in,
+                    .starts = dwnom$cur,
+                    .priors = dwnom$priors,
+                    .control = {list(
+                    threads = 8,
+                    verbose = TRUE,
+                    thresh = 1e-4,
+				    maxit=200,
+				    checkfreq=1
+                        )})
+
+## Bind ideal point estimates back to legislator data
+final &lt;- cbind(dwnom$legis, idealpt.hier=lout$means$x_implied)
+
+## These are estimates from DW-NOMINATE as given on the Voteview example
+## From file "SL80110C21.DAT"
+nomres &lt;- dwnom$nomres
+
+## Merge the DW-NOMINATE estimates to model results by legislator ID
+## Check correlation between hierIRT() and DW-NOMINATE scores
+res &lt;- merge(final, nomres, by=c("senate","id"),all.x=TRUE,all.y=FALSE)
+cor(res$idealpt.hier, res$dwnom1d)
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

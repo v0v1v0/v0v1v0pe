@@ -1,0 +1,337 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eqpois</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Estimate Quantiles of a Poisson Distribution
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimate quantiles of an Poisson distribution, and
+optionally contruct a confidence interval for a quantile.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  eqpois(x, p = 0.5, method = "mle/mme/mvue", ci = FALSE, ci.method = "exact",
+    ci.type = "two-sided", conf.level = 0.95, digits = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>a numeric vector of observations, or an object resulting from a call to an
+estimating function that assumes an Poisson distribution
+(e.g., <code>epois</code>).  If <code>ci=TRUE</code> then <code>x</code> must be a
+numeric vector of observations.  If <code>x</code> is a numeric vector,
+missing (<code>NA</code>), undefined (<code>NaN</code>), and infinite (<code>Inf</code>, <code>-Inf</code>)
+values are allowed but will be removed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+
+<p>numeric vector of probabilities for which quantiles will be estimated.
+All values of <code>p</code> must be between 0 and 1.  When <code>ci=TRUE</code>, <code>p</code>
+must be a scalar.  The default value is <code>p=0.5</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>character string specifying the method to use to estimate the mean.  Currently the
+only possible value is <code>"mle/mme/mvue"</code>
+(maximum likelihood/method of moments/minimum variance unbiased;
+the default).  See the DETAILS section of the help file for <code>epois</code> for
+more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+
+<p>logical scalar indicating whether to compute a confidence interval for the
+specified quantile.  The default value is <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.method</code></td>
+<td>
+
+<p>character string indicating what method to use to construct the confidence
+interval for the quantile.  The only possible value is <code>"exact"</code>
+(exact method; the default).  See the DETAILS section for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.type</code></td>
+<td>
+
+<p>character string indicating what kind of confidence interval to compute.  The
+possible values are <code>"two-sided"</code> (the default), <code>"lower"</code>, and
+<code>"upper"</code>.  This argument is ignored if <code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>a scalar between 0 and 1 indicating the confidence level of the confidence interval.
+The default value is <code>conf.level=0.95</code>. This argument is ignored if
+<code>ci=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+
+<p>an integer indicating the number of decimal places to round to when printing out
+the value of <code>100*p</code>. The default value is <code>digits=0</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>eqpois</code> returns estimated quantiles as well as
+the estimate of the mean parameter.
+</p>
+<p><b>Estimation</b> <br>
+Let <code class="reqn">X</code> denote a Poisson random variable with parameter
+<code>lambda=</code><code class="reqn">\lambda</code>.  Let <code class="reqn">x_{p|\lambda}</code> denote the <code class="reqn">p</code>'th
+quantile of the distribution.  That is,
+</p>
+<p style="text-align: center;"><code class="reqn">Pr(X &lt; x_{p|\lambda}) \le p \le Pr(X \le x_{p|\lambda}) \;\;\;\; (1)</code>
+</p>
+
+<p>Note that due to the discrete nature of the Poisson distribution, there will be
+several values of <code class="reqn">p</code> associated with one value of <code class="reqn">X</code>.  For example,
+for <code class="reqn">\lambda=2</code>, the value <code class="reqn">1</code> is the <code class="reqn">p</code>'th quantile for any value of
+<code class="reqn">p</code> between 0.14 and 0.406.
+</p>
+<p>Let <code class="reqn">\underline{x}</code> denote a vector of <code class="reqn">n</code> observations from a Poisson
+distribution with parameter <code>lambda=</code><code class="reqn">\lambda</code>.  The <code class="reqn">p</code>'th quantile
+is estimated as the <code class="reqn">p</code>'th quantile from a Poisson distribution assuming the
+true value of <code class="reqn">\lambda</code> is equal to the estimated value of <code class="reqn">\lambda</code>.
+That is:
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{x}_{p|\lambda} = x_{p|\lambda=\hat{\lambda}} \;\;\;\; (2)</code>
+</p>
+
+<p>where
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{\lambda} = \bar{x} = \frac{1}{n} \sum_{i=1}^n x_i \;\;\;\; (3)</code>
+</p>
+
+<p>Because the estimator in equation (3) is the maximum likelihood estimator of
+<code class="reqn">\lambda</code> (see the help file for <code>epois</code>), the estimated
+quantile is the maximum likelihood estimator.
+</p>
+<p>Quantiles are estimated by 1) estimating the mean parameter by
+calling <code>epois</code>, and then 2) calling the function
+<code>qpois</code> and using the estimated value for
+the mean parameter.
+<br></p>
+<p><b>Confidence Intervals</b> <br>
+It can be shown (e.g., Conover, 1980, pp.119-121) that an upper confidence
+interval for the <code class="reqn">p</code>'th quantile with confidence level <code class="reqn">100(1-\alpha)\%</code>
+is equivalent to an upper <code class="reqn">\beta</code>-content tolerance interval with coverage
+<code class="reqn">100p\%</code> and confidence level <code class="reqn">100(1-\alpha)\%</code>.  Also, a lower
+confidence interval for the <code class="reqn">p</code>'th quantile with confidence level
+<code class="reqn">100(1-\alpha)\%</code> is equivalent to a lower <code class="reqn">\beta</code>-content tolerance
+interval with coverage <code class="reqn">100(1-p)\%</code> and confidence level <code class="reqn">100(1-\alpha)\%</code>.
+</p>
+<p>Thus, based on the theory of tolerance intervals for a Poisson distribution
+(see <code>tolIntPois</code>), if <code>ci.type="upper"</code>, a one-sided upper
+<code class="reqn">100(1-\alpha)\%</code> confidence interval for the <code class="reqn">p</code>'th quantile is constructed
+as:
+</p>
+<p style="text-align: center;"><code class="reqn">[0, x_{p|\lambda=UCL}] \;\;\;\; (4)</code>
+</p>
+
+<p>where <code class="reqn">UCL</code> denotes the upper <code class="reqn">100(1-\alpha)\%</code> confidence limit for
+<code class="reqn">\lambda</code> (see the help file for <code>epois</code> for information on how
+<code class="reqn">UCL</code> is computed).
+</p>
+<p>Similarly, if <code>ci.type="lower"</code>, a one-sided lower <code class="reqn">100(1-\alpha)\%</code>
+confidence interval for the <code class="reqn">p</code>'th quantile is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{p|\lambda=LCL}, \infty] \;\;\;\; (5)</code>
+</p>
+
+<p>where <code class="reqn">LCL</code> denotes the lower <code class="reqn">100(1-\alpha)\%</code> confidence limit for
+<code class="reqn">\lambda</code> (see the help file for <code>epois</code> for information on how
+<code class="reqn">LCL</code> is computed).
+</p>
+<p>Finally, if <code>ci.type="two-sided"</code>, a two-sided <code class="reqn">100(1-\alpha)\%</code>
+confidence interval for the <code class="reqn">p</code>'th quantile is constructed as:
+</p>
+<p style="text-align: center;"><code class="reqn">[x_{p|\lambda=LCL}, x_{p|\lambda=UCL}] \;\;\;\; (6)</code>
+</p>
+
+<p>where <code class="reqn">LCL</code> and <code class="reqn">UCL</code> denote the two-sided lower and upper
+<code class="reqn">100(1-\alpha)\%</code> confidence limits for <code class="reqn">\lambda</code> (see the help file for
+<code>epois</code> for information on how <code class="reqn">LCL</code> and <code class="reqn">UCL</code> are computed).
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>x</code> is a numeric vector, <code>eqpois</code> returns a
+list of class <code>"estimate"</code> containing the estimated quantile(s) and other
+information. See <code>estimate.object</code> for details.
+</p>
+<p>If <code>x</code> is the result of calling an estimation function, <code>eqpois</code>
+returns a list whose class is the same as <code>x</code>.  The list
+contains the same components as <code>x</code>, as well as components called
+<code>quantiles</code> and <code>quantile.method</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Percentiles are sometimes used in environmental standards and regulations.  For
+example, Berthouex and Brown (2002, p.71) state:
+</p>
+<p><em>The U.S. EPA has specifications for air quality monitoring that are,
+in effect, percentile limitations. ... The U.S. EPA has provided guidance for
+setting aquatic standards on toxic chemicals that require estimating 99th
+percentiles and using this statistic to make important decisions about monitoring
+and compliance.  They have also used the 99th percentile to establish maximum
+daily limits for industrial effluents (e.g., pulp and paper).</em>
+</p>
+<p>Given the importance of these quantities, it is essential to characterize the
+amount of uncertainty associated with the estimates of these quantities.  This
+is done with confidence intervals.
+</p>
+<p>The Poisson distribution is named after Poisson, who
+derived this distribution as the limiting distribution of the
+binomial distribution with parameters <code>size=</code><code class="reqn">N</code>
+and <code>prob=</code><code class="reqn">p</code>, where <code class="reqn">N</code> tends to infinity, <code class="reqn">p</code> tends to 0, and
+<code class="reqn">Np</code> stays constant.
+</p>
+<p>In this context, the Poisson distribution was used by Bortkiewicz (1898) to model
+the number of deaths (per annum) from kicks by horses in Prussian Army Corps.  In
+this case, <code class="reqn">p</code>, the probability of death from this cause, was small, but the
+number of soldiers exposed to this risk, <code class="reqn">N</code>, was large.
+</p>
+<p>The Poisson distribution has been applied in a variety of fields, including quality
+control (modeling number of defects produced in a process), ecology (number of
+organisms per unit area), and queueing theory.  Gibbons (1987b) used the Poisson
+distribution to model the number of detected compounds per scan of the 32 volatile
+organic priority pollutants (VOC), and also to model the distribution of chemical
+concentration (in ppb).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Steven P. Millard (<a href="mailto:EnvStats@ProbStatInfo.com">EnvStats@ProbStatInfo.com</a>)
+</p>
+
+
+<h3>References</h3>
+
+<p>Berthouex, P.M., and L.C. Brown. (2002).  <em>Statistics for Environmental
+Engineers</em>.  Second Edition.  Lewis Publishers, Boca Raton, FL.
+</p>
+<p>Berthouex, P.M., and I. Hau. (1991).  Difficulties Related to Using Extreme
+Percentiles for Water Quality Regulations.  <em>Research Journal of the Water
+Pollution Control Federation</em> <b>63</b>(6), 873–879.
+</p>
+<p>Conover, W.J. (1980).  <em>Practical Nonparametric Statistics</em>.  Second Edition.
+John Wiley and Sons, New York, Chapter 3.
+</p>
+<p>Forbes, C., M. Evans, N. Hastings, and B. Peacock. (2011).  Statistical Distributions.
+Fourth Edition. John Wiley and Sons, Hoboken, NJ.
+</p>
+<p>Gibbons, R.D. (1987b).  Statistical Models for the Analysis of Volatile Organic
+Compounds in Waste Disposal Sites.  <em>Ground Water</em> <b>25</b>, 572-580.
+</p>
+<p>Gibbons, R.D., D.K. Bhaumik, and S. Aryal. (2009).
+<em>Statistical Methods for Groundwater Monitoring</em>, Second Edition.
+John Wiley &amp; Sons, Hoboken.
+</p>
+<p>Johnson, N. L., S. Kotz, and A. Kemp. (1992).  <em>Univariate Discrete
+Distributions</em>.  Second Edition.  John Wiley and Sons, New York, Chapter 4.
+</p>
+<p>Pearson, E.S., and H.O. Hartley, eds. (1970).  <em>Biometrika Tables for
+Statisticians, Volume 1</em>.  Cambridge Universtiy Press, New York, p.81.
+</p>
+<p>Zar, J.H. (2010). <em>Biostatistical Analysis</em>.
+Fifth Edition. Prentice-Hall, Upper Saddle River, NJ.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>epois</code>, Poisson, <code>estimate.object</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # Generate 20 observations from a Poisson distribution with parameter
+  # lambda=2.  The true 90'th percentile of this distribution is 4 (actually,
+  # 4 is the p'th quantile for any value of p between 0.86 and 0.947).
+  # Here we will use eqpois to estimate the 90'th percentile and construct a
+  # two-sided 95% confidence interval for this percentile.
+  # (Note: the call to set.seed simply allows you to reproduce this example.)
+
+  set.seed(250)
+  dat &lt;- rpois(20, lambda = 2)
+  eqpois(dat, p = 0.9, ci = TRUE)
+
+  #Results of Distribution Parameter Estimation
+  #--------------------------------------------
+  #
+  #Assumed Distribution:            Poisson
+  #
+  #Estimated Parameter(s):          lambda = 1.8
+  #
+  #Estimation Method:               mle/mme/mvue
+  #
+  #Estimated Quantile(s):           90'th %ile = 4
+  #
+  #Quantile Estimation Method:      mle
+  #
+  #Data:                            dat
+  #
+  #Sample Size:                     20
+  #
+  #Confidence Interval for:         90'th %ile
+  #
+  #Confidence Interval Method:      Exact
+  #
+  #Confidence Interval Type:        two-sided
+  #
+  #Confidence Level:                95%
+  #
+  #Confidence Interval:             LCL = 3
+  #                                 UCL = 5
+
+  # Clean up
+  #---------
+  rm(dat)
+</code></pre>
+
+
+</div>

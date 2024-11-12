@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>postHocGradHess</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Obtain gradient and Hessian, post hoc.
+</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the gradient and Hessian of the log likelihood of
+an extended generalised hidden Markov model, from the components
+of a <code>"eglhmm"</code> object, or in certain circumstances, simply
+extracts these quantities from that object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">postHocGradHess(object,inclTau=TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>An object of class <code>"eglhmm"</code> as returned by <code>eglhmm()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inclTau</code></td>
+<td>
+
+<p>Logical scalar; should the vector of “<code>tau</code>” parameters
+be included in the parameters under consideration?
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>object</code> is the result of fitting a bivariate model (i.e.
+if it inherits from <code>"eglhmm.bivariate"</code> then an error
+is thrown.  (No gradient or Hessian is available in this case.)
+</p>
+<p>If <code>object$method</code> is <code>"lm"</code> and if <code>inclTau</code>
+matches the value used in fitting <code>method</code>, then the
+appropriate gradient and Hessian have already been calculated
+and are simply extracted from <code>object</code>.  If <code>inclTau</code>
+does not match the value used in fitting <code>method</code>, then
+the gradient and Hessian are recalculated (by the undocumented
+function <code>getHgl()</code>) with the value of <code>inclTau</code> being
+that specified by the function argument.
+</p>
+<p>If <code>object$method</code> is <code>"em"</code> or <code>"bf"</code>, then the
+gradient and Hessian are calculated (by the undocumented function
+<code>getHgl()</code>) with the value of <code>inclTau</code> being that
+specified by the function argument.
+</p>
+<p>If <code>object$method</code> is <code>"bf"</code> then the gradient has
+been calculated numerically and the Hessian <em>may</em> have
+been calculated numerically (f the argument <code>hessian</code>
+of <code>eglhmm()</code> was set equal to <code>TRUE</code>).  The
+corresponding value of the gradient will comprise a component,
+named <code>"numGrad"</code>, of the list returned by this function.
+The corresponding value of the Hessian, if this was indeed
+calculated, will comprise a component, named <code>"numHess"</code>,
+of the list returned by this function.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with components
+</p>
+
+<ul>
+<li> <p><code>gradient</code>: The gradient of the log likelihood.
+</p>
+</li>
+<li> <p><code>Hessian</code>: The Hessian of the log likelihood.
+</p>
+</li>
+<li> <p><code>numGrad</code>: The numerically calculated gradient of the log likelihood.
+Present only if <code>object$method</code> is <code>"bf"</code>.
+</p>
+</li>
+<li> <p><code>numHess</code>: The numerically calculated Hessian of the log likelihood.
+Present only if <code>object$method</code> is <code>"bf"</code> and if argument
+<code>hessian</code> was set equal to <code>TRUE</code> in the call to <code>eglhmm()</code>
+that produced <code>object</code>.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:rolfturner@posteo.net">rolfturner@posteo.net</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>R. Nazim Khan, (2002). <em>Statistical modelling and analysis of ion
+channel data based on hidden Markov models and the EM algorithm</em>.
+Ph.D. thesis, the University of Western Australia, Crawley, WA 6009.
+</p>
+<p>David Oakes, Direct calculation of the information matrix via the EM
+algorithm (1999).  <em>Journal of the Royal Statistical Society</em>,
+series B, <b>61</b>, pp. 479 – 482.
+</p>
+<p>Theodore C. Lystig and James P. Hughes (2002). Exact computation
+of the observed information matrix for hidden Markov models.
+<em>Journal of Computational and Graphical Statistics</em>, <b>11</b>
+(3), pp. 678 – 689.
+</p>
+<p>Olivier Cappé and Eric Moulines (July 2005).  Recursive computation
+of the score and observed information matrix in hidden Markov
+models, <em>IEEE Workshop on Statistical Signal Processing</em>,
+Bordeaux.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>eglhmm()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">fit.em &lt;- eglhmm(y~locn+depth,data=SydColCount,distr="P",
+                 cells=c("locn","depth"),K=2,method="em",verb=TRUE)
+gh.em  &lt;- postHocGradHess(fit.em) # Calculates using inclTau=TRUE.
+## Not run: 
+    gh.em.noTau &lt;- postHocGradHess(fit.em,inclTau=FALSE)
+    fit.lm &lt;- eglhmm(y~locn+depth,data=SydColCount,distr="P",
+                     cells=c("locn","depth"),K=2,verb=TRUE)
+    gh.lm  &lt;- postHocGradHess(fit.lm) # Just extracts the relevant components.
+    gh.lm.noTau  &lt;- postHocGradHess(fit.lm,inclTau=FALSE)
+    fit.bf &lt;- eglhmm(y~locn+depth,data=SydColCount,distr="P",
+                     cells=c("locn","depth"),K=2,method="bf",verb=TRUE,
+                     hessian=TRUE)
+    gh.bf  &lt;- postHocGradHess(fit.bf) # Calculates using inclTau=TRUE; also
+                                      # extracts numerically computed quantities.
+    gh.bf.noTau &lt;- postHocGradHess(fit.bf,inclTau=FALSE) # Calculates; also
+                                                         # extracts numerically
+                                                         # computed quantities.
+
+## End(Not run)
+</code></pre>
+
+
+</div>

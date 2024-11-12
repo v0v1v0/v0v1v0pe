@@ -1,0 +1,86 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eode_lossf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate Loss Function</h2>
+
+<h3>Description</h3>
+
+<p>Calculate the quadratic loss function given an ODE system and observed population dynamics.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eode_lossf(x, pdat, step = 0.01)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the ODE system under consideration. An object of "<code>eode</code>" class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pdat</code></td>
+<td>
+<p>observed population dynamics. An object of "<code>pdata</code>" class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step</code></td>
+<td>
+<p>interval of time for each step. Parameter of the function "<code>eode_proj()</code>".</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a value of loss function
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">dX_Cdt &lt;- function(X_C, Y_C, X_A, Y_A, nu = 0.15, beta = 0.1, mu = 0.15, g = 0.04) {
+  nu * (X_A + Y_A) - beta * X_C * (Y_C + Y_A) - (mu + g) * X_C
+}
+
+dY_Cdt &lt;- function(X_C, Y_C, Y_A, beta = 0.1, mu = 0.15, g = 0.04, rho = 0.2) {
+  beta * X_C * (Y_C + Y_A) - (mu + g + rho) * Y_C
+}
+
+dX_Adt &lt;- function(X_C, Y_C, X_A, Y_A, beta = 0.1, g = 0.04) {
+  g * X_C - beta * X_A * (Y_C + Y_A)
+}
+
+dY_Adt &lt;- function(X_A, Y_C, Y_A, beta = 0.1, g = 0.04, rho = 0.2) {
+  beta * X_A * (Y_C + Y_A) + g * Y_C - rho * Y_A
+}
+
+x &lt;- eode(
+  dX_Cdt = dX_Cdt, dY_Cdt = dY_Cdt, dX_Adt = dX_Adt, dY_Adt = dY_Adt,
+  constraint = c("X_C&gt;=0", "Y_C&gt;=0", "X_A&gt;=0", "Y_A&gt;=0")
+)
+training_data &lt;- pdata(x,
+  init = data.frame(
+    X_A = c(9, 19, 29, 39),
+    Y_A = c(1, 1, 1, 1),
+    X_C = c(5, 5, 5, 5),
+    Y_C = c(0, 0, 0, 0)
+  ),
+  t = c(3, 3, 3, 3),
+  lambda = data.frame(incidence = c(0.4, 0.8, 0.9, 0.95)),
+  formula = "incidence = (Y_A + Y_C)/(X_A + X_C + Y_A + Y_C)"
+)
+eode_lossf(x, pdat = training_data)
+</code></pre>
+
+
+</div>

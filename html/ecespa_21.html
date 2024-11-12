@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pc.estK</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Fit the Poisson Cluster Point Process by Minimum Contrast</h2>
+
+<h3>Description</h3>
+
+<p>Fits the Poisson Cluster point process to a point pattern dataset by the Method of Minimum Contrast. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pc.estK(Kobs, r, sigma2 = NULL, rho = NULL)
+Kclust(r, sigma2, rho)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Kobs</code></td>
+<td>
+<p> Empirical <code class="reqn">K</code>-function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p> Sequence of distances at which function <code class="reqn">K</code> has been estimated. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma2</code></td>
+<td>
+<p> Optional. Starting value for the parameter <code class="reqn">sigma2</code> of the Poisson Cluster process. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p> Optional. Starting value for the parameter <code class="reqn">rho</code> of the Poisson Cluster process. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The algorithm fits the Poisson cluster point process to a point pattern, by finding the parameters of the Poisson cluster model
+which give the closest match between the theoretical K function of the Poisson cluster process and the observed
+K function. For a more detailed explanation of the Method of Minimum Contrast, see <code>mincontrast</code>
+in <span class="pkg">spatstat</span> or Diggle (2003: 86). 
+</p>
+<p>The Poisson cluster processes are defined by the following postulates (Diggle 2003):
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+         <em>PCP1</em>
+</td>
+<td style="text-align: left;"> Parent events form a Poisson process with intensity <code class="reqn">rho</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+         <em>PCP2</em>
+</td>
+<td style="text-align: left;"> Each parent produces a random number of offspring, according to a probability distribution </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+	                    </td>
+<td style="text-align: left;"> <code class="reqn">p[s]: s = 0, 1, 2, ...</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+         <em>PCP3</em>
+</td>
+<td style="text-align: left;"> The positions of the offspring relative to their parents are distributed according to a bivariate pdf <code class="reqn">h</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+	 </td>
+</tr>
+</table>
+<p>This implementation asumes that the probability distribution <code class="reqn">p[s]</code> of offspring per parent is a Poisson distribution and 
+that the position of each offspring relative to its parent follows a radially symetric Gaussian distribution with pdf
+</p>
+<p style="text-align: center;"><code class="reqn">h(x, y) = [1/(2*pi*sigma^2)]* exp[-(x^2+y^2)/(2*sigma^2)]</code>
+</p>
+
+<p>The theoretical <code class="reqn">K</code>-function of this Poisson cluster process is (Diggle, 2003):
+</p>
+<p style="text-align: center;"><code class="reqn">pi*r^2 + [1- exp(-r^2/4*sigma^2)]/rho</code>
+</p>
+
+<p>The command <code>Kclust</code> computes the theoretical <code class="reqn">K</code>-function of this Poisson cluster process and 
+can be used to find some initial estimates of <code class="reqn">rho</code> and <code class="reqn">sigma^2</code>. In any case, the optimization usually finds the
+correct parameters even without starting values for these parameters.
+</p>
+<p>This Poisson cluster process can be simulated with <code>sim.poissonc</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sigma2</code></td>
+<td>
+<p>Parameter <code class="reqn">sigma^2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho </code></td>
+<td>
+<p>Parameter <code class="reqn">rho</code>. </p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>The exponents <code class="reqn">p</code> and <code class="reqn">q</code> of the contrast criterion (see <code>mincontrast</code>) are fixed 
+respectively to <code class="reqn">p = 2</code> and <code class="reqn">q = 1/4</code>. The <code class="reqn">rmin</code> and <code class="reqn">rmax</code> limits of integration of the 
+contrast criterion are set up by the sequence of values of <code class="reqn">r</code> and <code class="reqn">Kobs</code> passed to <code>pc.estK</code>.</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Marcelino de la Cruz Rot, inspired by some code of  Philip M. Dixon </p>
+
+
+<h3>References</h3>
+
+<p> Diggle, P. J. 2003. <em>Statistical analysis of spatial point patterns</em>. Arnold, London. </p>
+
+
+<h3>See Also</h3>
+
+ <p><code>ipc.estK</code> for fitting the inhomogeneous Poisson cluster process; some functions in <span class="pkg">spatstat</span>
+( <code>matclust.estK</code> and <code>lgcp.estK</code>) fit other appropriate processes for clustered patterns;
+<code>mincontrast</code> performs a more general implementation of the method of mimimum contrast.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+data(gypsophylous)
+
+
+# set the number of simulations (nsim=199 or larger for real analyses)
+nsim&lt;- 19
+
+## Estimate K function ("Kobs").
+
+gyps.env &lt;- envelope(gypsophylous, Kest, correction="iso", nsim=nsim)
+
+plot(gyps.env, sqrt(./pi)-r~r, legend=FALSE)
+
+## Fit Poisson Cluster Process. The limits of integration 
+## rmin and rmax are setup to 0 and 60, respectively. 
+
+cosa.pc &lt;- pc.estK(Kobs = gyps.env$obs[gyps.env$r&lt;=60],
+		           r = gyps.env$r[gyps.env$r&lt;=60])
+
+## Add fitted Kclust function to the plot.
+
+lines(gyps.env$r,sqrt(Kclust(gyps.env$r, cosa.pc$sigma2,cosa.pc$rho)/pi)-gyps.env$r,
+       lty=2, lwd=3, col="purple")
+
+## A kind of pointwise test of the gypsophylous pattern been a realisation
+## of the fitted model, simulating with sim.poissonc and using function J (Jest).
+
+gyps.env.sim &lt;- envelope(gypsophylous, Jest, nsim=nsim,
+                    simulate=expression(sim.poissonc(gypsophylous,
+		    sigma=sqrt(cosa.pc$sigma2), rho=cosa.pc$rho)))
+
+plot(gyps.env.sim,  main="",legendpos="bottomleft")
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>organise.behavioural.base</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Save RT and Accuracy split by specified columns.</h2>
+
+<h3>Description</h3>
+
+<p>Save RT and Accuracy split by specified columns.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">organise.behavioural.base(
+  fixreport_df,
+  grouping_column_list,
+  response_period_start = ""
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fixreport_df</code></td>
+<td>
+<p>Fixation report.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grouping_column_list</code></td>
+<td>
+<p>List of columns to split by.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response_period_start</code></td>
+<td>
+<p>Message that starts the RT timer.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Summarised behavioural information as a data.table.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(fixationreport)
+data(messagereport)
+
+# REPLACE SPACES IN MESSAGES
+messagereport &lt;- organise.message.replace_spaces(messagereport)
+
+# TAKE A LOOK
+print(organise.message.descriptives(messagereport))
+
+# MARKUP
+fixationreport &lt;- organise.message.markup(message_df=messagereport, 
+fixreport_df = fixationreport, message="DISPLAY_START")
+
+fixationreport &lt;- organise.message.markup(message_df=messagereport, 
+fixreport_df = fixationreport, message="DISPLAY_CHANGE")
+
+# NOW DO ACCURACY AND RT MARKUP
+fixationreport &lt;- organise.responses.markup(fixationreport, "CORRECT_RESPONSE")
+
+# NOW MARK UP FIXATION CONTINGENCIES
+fixationreport&lt;-organise.message.fix_contingencies(fixationreport, 
+list("DISPLAY_START", "DISPLAY_CHANGE", "RESPONSE_TIME"))
+
+# SET UP TRUE RT
+fixationreport[,TRUE_RT:=RESPONSE_TIME-DISPLAY_START,]
+
+behaviouralData &lt;- analyse.behavioural.data(fixationreport,
+     aggregation_column_list = list('TRIALTYPE_TEXT'))
+
+# RANDOM TRIAL TO CHECK THINGS OUT
+print(organise.checks.random_trial(fixationreport))
+
+# FIX CONTINGENCIES
+print(organise.contingencies.descriptives(fixationreport))
+
+# REMOVE MISSING EVENTS - HERE, TRIALS WHICH LACKED A RESPONSE
+messageRemovals &lt;- organise.message.removals(fixreport_df=fixationreport, 
+    required_message_list=list("DISPLAY_CHANGE", "RESPONSE_TIME"))
+
+# LOOK AT MESSAGE REMOVALS
+print(messageRemovals[[1]])
+
+# GRAB THE FIXATION REPORT WITH TRIALS REMOVED
+fixMessagesRemoved &lt;- messageRemovals[[2]]
+
+# THIS SHOWS WE HAVE NO UNCLASSIFIED FIXATIONS, GOOD!
+print(organise.contingencies.descriptives(fixMessagesRemoved))
+
+# GET A BEHAVIOURAL DATASET FOR ANALYSES AND SAVING ETC.
+behavDT&lt;- organise.behavioural.base(fixreport_df = fixMessagesRemoved, 
+   list( 'TRIALTYPE_TEXT'), response_period_start="DISPLAY_START")
+</code></pre>
+
+
+</div>

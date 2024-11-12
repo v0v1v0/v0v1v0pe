@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>xmantel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Cross-Mantel test </h2>
+
+<h3>Description</h3>
+
+<p>Simple and partial cross-Mantel tests, with options for ranked data and permutation tests.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">xmantel(formula = formula(data), data, dims = NA,
+   nperm = 1000, mrank = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p> formula describing the test to be conducted. For this test, y ~ x will perform a simple Mantel test, while y ~ x + z1 + z2 + z3 will do a partial Mantel test of the relationship between x and y given z1, z2, z3. All variables should be either non-symmetric square cross-dissimilary matrices of class xdist, or vector forms thereof. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p> an optional dataframe containing the variables in the model as columns of dissimilarities. By default the variables are taken from the current environment. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dims</code></td>
+<td>
+<p> if the dissimilarity matrices are not square, the dimensions must be provided as <code>c(nrow, ncol)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nperm</code></td>
+<td>
+<p> number of permutations to use. If set to 0, the permutation test will be omitted. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mrank</code></td>
+<td>
+<p> if this is set to FALSE (the default option), Pearson correlations will be used. If
+set to TRUE, the Spearman correlation (correlation ranked distances) will be used. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If only one independent variable is given, the simple Mantel r (r12) is calculated. If more than one independent variable is given, the partial Mantel r  (ryx|x1 ...) is calculated by permuting one of the original dissimilarity matrices.
+Note that the cross-dissimilarity functions are for research purposes, and are not well-tested.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mantelr </code></td>
+<td>
+<p>Mantel coefficient.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval1 </code></td>
+<td>
+<p>one-tailed p-value (null hypothesis: r &lt;= 0).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval2 </code></td>
+<td>
+<p>one-tailed p-value (null hypothesis: r &gt;= 0).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval3 </code></td>
+<td>
+<p>two-tailed p-value (null hypothesis: r = 0).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Sarah Goslee </p>
+
+
+<h3>See Also</h3>
+
+  <p><code>xdistance</code>, <code>xmgram</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(graze)
+
+### EXAMPLE 1: Square matrices
+
+# take two subsets of sites with different dominant grass abundances
+# use cut-offs that produce equal numbers of sites
+dom1 &lt;- subset(graze, POPR &gt; 50 &amp; DAGL &lt; 20) #  8 sites
+dom2 &lt;- subset(graze, POPR &lt; 50 &amp; DAGL &gt; 20) #  8 sites
+
+# first two columns are site info
+dom.xd &lt;- xdistance(dom1[, -c(1,2)], dom2[, -c(1,2)], "bray")
+
+# environmental and spatial distances; preserve rownames
+forest.xd &lt;- xdistance(dom1[, "forestpct", drop=FALSE], 
+    dom2[, "forestpct", drop=FALSE])
+sitelocation.xd &lt;- xdistance(dom1[, "sitelocation", drop=FALSE], 
+    dom2[, "sitelocation", drop=FALSE])
+
+# permutes rows and columns of full nonsymmetric matrix
+xmantel(dom.xd ~ forest.xd)
+xmantel(dom.xd ~ forest.xd + sitelocation.xd)
+
+plot(xmgram(dom.xd, sitelocation.xd))
+
+
+### EXAMPLE 2: Non-square matrices
+
+# take two subsets of sites with different dominant grass abundances
+# this produces a non-square matrix
+
+dom1 &lt;- subset(graze, POPR &gt; 45 &amp; DAGL &lt; 20) # 13 sites
+dom2 &lt;- subset(graze, POPR &lt; 45 &amp; DAGL &gt; 20) #  8 sites
+
+# first two columns are site info
+dom.xd &lt;- xdistance(dom1[, -c(1,2)], dom2[, -c(1,2)], "bray")
+
+# environmental and spatial distances; preserve rownames
+forest.xd &lt;- xdistance(dom1[, "forestpct", drop=FALSE], 
+    dom2[, "forestpct", drop=FALSE])
+sitelocation.xd &lt;- xdistance(dom1[, "sitelocation", drop=FALSE], 
+    dom2[, "sitelocation", drop=FALSE])
+
+# permutes rows and columns of full nonsymmetric matrix
+xmantel(dom.xd ~ forest.xd, dims=c(13, 8))
+xmantel(dom.xd ~ forest.xd + sitelocation.xd, dims=c(13, 8))
+
+plot(xmgram(dom.xd, sitelocation.xd))
+</code></pre>
+
+
+</div>

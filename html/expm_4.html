@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>balance</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Balance a Square Matrix via LAPACK's DGEBAL</h2>
+
+<h3>Description</h3>
+
+<p>Balance a square matrix via LAPACK's <code>DGEBAL</code>.
+This is an <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> interface, mainly used for experimentation.
+</p>
+<p>This LAPACK routine is used internally for Eigenvalue decompositions,
+but also, in Ward(1977)'s algorithm for the matrix exponential.
+</p>
+<p>The name <code>balance()</code> is preferred nowadays, and “dgebal()”
+has been deprecated (finally, after 9 years ...).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">balance(A, job = c("B", "N", "P", "S"))
+## Deprecated now:
+##   dgebal(A, job = c("B", "N", "P", "S"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>a square (<code class="reqn">n\times n</code>) numeric, logical or complex matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>job</code></td>
+<td>
+<p>a one-letter string specifying the ‘job’ for DGEBAL / ZGEBAL.
+</p>
+
+<dl>
+<dt>P</dt>
+<dd>
+<p><b>P</b>ermutation</p>
+</dd>
+<dt>S</dt>
+<dd>
+<p><b>S</b>caling</p>
+</dd>
+<dt>B</dt>
+<dd>
+<p><b>B</b>oth permutation and scaling</p>
+</dd>
+<dt>N</dt>
+<dd>
+<p><b>N</b>one</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>An excerpt of the LAPACK documentation about <code>DGEBAL()</code> or
+<code>ZGEBAL()</code>, respectively, describing the result
+</p>
+
+<dl>
+<dt>i1 ("ILO")</dt>
+<dd>
+<p>(output) integer</p>
+</dd>
+<dt>i2 ("IHI")</dt>
+<dd>
+<p>(output) integer<br><code>i1</code> and <code>i2</code> are set to integers such that on exit
+<code>z[i,j] = 0</code> if <code class="reqn">i &gt; j</code> and <code class="reqn">j = 1,...,i1-1</code> or <code class="reqn">i = i2+1,...,n</code>.
+</p>
+<p>If <code>job = 'N'</code> or <code>'S'</code>, <code>i1 = 1</code> and <code>i2 = n</code>.</p>
+</dd>
+<dt>scale</dt>
+<dd>
+<p>(output) numeric vector of length <code>n</code>.
+Details of the permutations and scaling factors applied to
+<code>A</code>.  If <code>P[j]</code> is the index of the row and column interchanged
+with row and column <code>j</code> and <code>D[j]</code> is the scaling factor
+applied to row and column j, then
+<code>scale[j] = P[j]</code> for <code class="reqn">j = 1,...,i1-1</code><br><code>         = D[j]</code> for <code class="reqn">j = i1,...,i2</code>,<br><code>         = P[j]</code> for <code class="reqn">j = i2+1,...,n</code>.
+</p>
+<p>The order in which the interchanges are made is <code>n</code> to <code>i2+1</code>,
+then <code>1</code> to <code>i1-1</code>.</p>
+</dd>
+</dl>
+<p>Look at the LAPACK documentation for more details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>the transformation of matrix <code>A</code>, after permutation and
+or scaling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>numeric vector of length <code class="reqn">n</code>, containing the
+permutation and/or scale vectors applied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i1,i2</code></td>
+<td>
+<p>integers (length 1) in <code class="reqn">\{1,2,\dots,n\}</code>, denoted by
+<code>ILO</code> and <code>IHI</code> respectively in the LAPACK
+documentation.  Only relevant for <code>"P"</code> or <code>"B"</code>, they
+describe where permutations and where scaling took place; see the
+‘Details’ section.
+</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>LAPACK Reference Manual, <a href="https://netlib.org/lapack/">https://netlib.org/lapack/</a>,
+balancing ‘gebal’, currently at
+<a href="https://www.netlib.org/lapack/explore-html/df/df3/group__gebal.html">https://www.netlib.org/lapack/explore-html/df/df3/group__gebal.html</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>eigen</code>, <code>expm</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">m4 &lt;- rbind(c(-1,-1, 0, 0),
+            c( 0, 0,10,10),
+            c( 0, 0,10, 0),
+            c( 0,10, 0, 0))
+(b4 &lt;- balance(m4))
+
+## --- for testing and didactical reasons : ----
+if(expm:::doExtras()) withAutoprint({
+    sessionInfo()
+    packageDescription("Matrix")
+    "expm installed at"
+    dirname(attr(packageDescription("expm"), "file"))
+})
+
+demo(balanceTst) # also defines the balanceTst() function
+                # which in its tests ``defines'' what
+                # the return value means, notably (i1,i2,scale)
+</code></pre>
+
+
+</div>

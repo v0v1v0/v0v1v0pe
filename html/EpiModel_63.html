@@ -1,0 +1,128 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epi_trackers</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Function to run the user-provided epi trackers</h2>
+
+<h3>Description</h3>
+
+<p>see the "Working with Custom Attributes and Summary Statistics in EpiModel"
+vignette.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epi_trackers(dat)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>Main <code>netsim_dat</code> object containing a <code>networkDynamic</code>
+object and other initialization information passed from
+<code>netsim</code>.</p>
+</td>
+</tr></table>
+<h3>Value</h3>
+
+<p>The updated <code>netsim_dat</code> main list object.
+</p>
+
+
+<h3>The <code>tracker.list</code> list</h3>
+
+<p><code>.tracker.list</code> is a list of NAMED functions stored in the
+<code>control</code> list of the main <code>netsim_dat</code> class object.
+</p>
+
+
+<h3>Tracker Functions</h3>
+
+<p>This function will apply the tracker functions present in the control list
+<code>.tracker.list</code>. Each tracker must be a function with EXACTLY one
+argument: the <code>netsim_dat</code> main list object. They must return a VALUE of
+length one (numeric, logical or character).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>netsim</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+# Create some trackers
+epi_prop_infected &lt;- function(dat) {
+  # we need two attributes for our calculation: `status` and `active`
+  needed_attributes &lt;- c("status", "active")
+  # we use `with` to simplify code
+  output &lt;- with(EpiModel::get_attr_list(dat, needed_attributes), {
+    pop &lt;- active == 1             # we only look at active nodes
+    cond &lt;- status == "i"   # which are infected
+    # how many are `infected` among the `active`
+    sum(cond &amp; pop, na.rm = TRUE) / sum(pop, na.rm = TRUE)
+  })
+  return(output)
+}
+
+epi_s_num &lt;- function(dat) {
+  needed_attributes &lt;- c("status")
+  output &lt;- with(get_attr_list(dat, needed_attributes), {
+    sum(status == "s", na.rm = TRUE)
+  })
+  return(output)
+}
+
+# Store the trackers in a named list. The names will be used as column names
+# for in the `epi` list
+some.trackers &lt;- list(
+  prop_infected = epi_prop_infected,
+  s_num         = epi_s_num
+)
+
+# Make a simple SI model with custom trackers
+control &lt;- EpiModel::control.net(
+  type = "SI",
+  nsims = 1,
+  nsteps = 50,
+  verbose = FALSE,
+  .tracker.list = some.trackers
+)
+
+param &lt;- EpiModel::param.net(
+  inf.prob = 0.3,
+  act.rate = 0.1
+)
+
+nw &lt;- network_initialize(n = 50)
+nw &lt;- set_vertex_attribute(nw, "race", rbinom(50, 1, 0.5))
+est &lt;- EpiModel::netest(
+  nw,
+  formation = ~edges,
+  target.stats = 25,
+  coef.diss = dissolution_coefs(~offset(edges), 10, 0),
+  verbose = FALSE
+)
+
+init &lt;- EpiModel::init.net(i.num = 10)
+sim &lt;- EpiModel::netsim(est, param, init, control)
+
+d &lt;- as.data.frame(sim)
+d
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

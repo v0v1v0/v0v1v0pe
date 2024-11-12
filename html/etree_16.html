@@ -1,0 +1,120 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nodeapply</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Apply functions over nodes</h2>
+
+<h3>Description</h3>
+
+<p>Returns a list of values obtained by applying a function to <code>"etree"</code> or
+<code>"partynode"</code> objects.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nodeapply(obj, ids = 1, FUN = NULL, ...)
+
+## S3 method for class 'partynode'
+nodeapply(obj, ids = 1, FUN = NULL, ...)
+
+## S3 method for class 'etree'
+nodeapply(obj, ids = 1, FUN = NULL, by_node = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>Object of class <code>"etree"</code> or <code>"partynode"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ids</code></td>
+<td>
+<p>Integer vector of node identifiers to apply over.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p>Function to be applied to nodes. By default, the node itself is
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by_node</code></td>
+<td>
+<p>Logical indicating whether FUN should be applied to subsets of
+<code>"partynode"</code> objects (default) or not, in which case it is applied to
+subsets of <code>"etree"</code> objects.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The method for <code>"partynode"</code> objects apply function <code>FUN</code> to all
+nodes with node identifiers in <code>ids</code>. The method for <code>"etree"</code>
+objects by default calls the <code>nodeapply</code> method on the corresponding
+node slot. If <code>by_node</code> is <code>FALSE</code>, it is applied to the
+<code>"etree"</code> object with root node <code>ids</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of results whose length is given by <code>length(ids)</code>.
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>partynode</code>: nodeapply() method for objects of class "partynode".
+</p>
+</li>
+<li> <p><code>etree</code>: nodeapply() method for objects of class "etree".
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+## Covariates
+nobs &lt;- 100
+cov_num &lt;- rnorm(nobs)
+cov_nom &lt;- factor(rbinom(nobs, size = 1, prob = 0.5))
+cov_gph &lt;- lapply(1:nobs, function(j) igraph::sample_gnp(100, 0.2))
+cov_fun &lt;- fda.usc::rproc2fdata(nobs, seq(0, 1, len = 100), sigma = 1)
+cov_list &lt;- list(cov_num, cov_nom, cov_gph, cov_fun)
+
+## Response variable
+resp_reg &lt;- cov_num ^ 2
+
+## Fit
+etree_fit &lt;- etree(response = resp_reg, covariates = cov_list)
+
+## Get pvalues of inner nodes
+tnodes &lt;- nodeids(etree_fit, terminal = TRUE)
+nodes &lt;- 1:max(tnodes)
+inodes &lt;- nodes[-tnodes]
+nodeapply(etree_fit, ids = inodes, FUN = function(n) n$info$pvalue)
+
+</code></pre>
+
+
+</div>

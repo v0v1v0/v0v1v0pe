@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecmave</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build an averaged error correction model</h2>
+
+<h3>Description</h3>
+
+<p>Builds multiple ECM models on subsets of the data and averages them. See the lmave function for more details
+on the methodology and use cases for this approach.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecmave(
+  y,
+  xeq,
+  xtr,
+  includeIntercept = TRUE,
+  k,
+  method = "boot",
+  seed = 5,
+  weights = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The target variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xeq</code></td>
+<td>
+<p>The variables to be used in the equilibrium term of the error correction model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xtr</code></td>
+<td>
+<p>The variables to be used in the transient term of the error correction model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>includeIntercept</code></td>
+<td>
+<p>Boolean whether the y-intercept should be included</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>The number of models or data partitions desired</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Whether to split data by folds ("fold"), nested folds ("nestedfold"), or bootstrapping ("boot")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Seed for reproducibility (only needed if method is "boot")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Optional vector of weights to be passed to the fitting process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to the 'lm' function (careful in that these may need to be modified for ecm or may not be appropriate!)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In some cases, instead of building an ECM on the entire dataset, it may be preferable to build k ECM models on k subsets of the data, each subset containing (k-1)/k*nrow(data)
+observations of the full dataset, and then average their coefficients. Reasons to do this include controlling for overfitting or extending the training sample. For example, 
+in many time series modeling exercises, the holdout test sample is often the latest few months or years worth of data. Ideally, it's desirable to include these data since 
+they likely have more future predictive power than older observations. However, including the entire dataset in the training sample could result in overfitting, or using a 
+different time period as the test sample may be even less representative of future performance. One potential solution is to build multiple ECM models using the entire dataset, 
+each with a different holdout test sample, and then average them to get a final ECM. This approach is somewhat similar to the idea of random forest regression, in which 
+multiple regression trees are built on subsets of the data and then averaged. 
+</p>
+<p>This function only works with the 'lm' linear fitter.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an lm object representing an error correction model
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##Not run
+
+#Use ecm to predict Wilshire 5000 index based on corporate profits, 
+#Federal Reserve funds rate, and unemployment rate
+data(Wilshire)
+
+#Use 2015-12-01 and earlier data to build models
+trn &lt;- Wilshire[Wilshire$date&lt;='2015-12-01',]
+
+#Build five ECM models and average them to get one model
+xeq &lt;- xtr &lt;- trn[c('CorpProfits', 'FedFundsRate', 'UnempRate')]
+model1 &lt;- ecmave(trn$Wilshire5000, xeq, xtr, includeIntercept=TRUE, k=5)
+
+</code></pre>
+
+
+</div>

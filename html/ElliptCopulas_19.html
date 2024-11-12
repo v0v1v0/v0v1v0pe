@@ -1,0 +1,231 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EllDistrEst.adapt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimation of the generator of the elliptical distribution by kernel smoothing
+with adaptive choice of the bandwidth</h2>
+
+<h3>Description</h3>
+
+<p>A continuous elliptical distribution has a density of the form
+</p>
+<p style="text-align: center;"><code class="reqn">f_X(x) = {|\Sigma|}^{-1/2}
+g\left( (x-\mu)^\top \, \Sigma^{-1} \, (x-\mu) \right),
+</code>
+</p>
+
+<p>where <code class="reqn">x \in \mathbb{R}^d</code>,
+<code class="reqn">\mu \in \mathbb{R}^d</code> is the mean,
+<code class="reqn">\Sigma</code> is a <code class="reqn">d \times d</code> positive-definite matrix
+and a function <code class="reqn">g: \mathbb{R}_+ \rightarrow \mathbb{R}_+</code>, called the
+density generator of <code class="reqn">X</code>.
+The goal is to estimate <code class="reqn">g</code> at some point <code class="reqn">\xi</code>, by
+</p>
+<p style="text-align: center;"><code class="reqn">
+\widehat{g}_{n,h,a}(\xi)
+:= \dfrac{\xi^{\frac{-d+2}{2}} \psi_a'(\xi)}{n h s_d}
+\sum_{i=1}^n
+  K\left( \dfrac{ \psi_a(\xi) - \psi_a(\xi_i) }{h} \right)
++ K\left( \dfrac{ \psi_a(\xi) + \psi_a(\xi_i) }{h} \right),
+</code>
+</p>
+
+<p>where
+<code class="reqn">s_d := \pi^{d/2} / \Gamma(d/2)</code>,
+<code class="reqn">\Gamma</code> is the Gamma function,
+<code class="reqn">h</code> and <code class="reqn">a</code> are tuning parameters (respectively the bandwidth and a
+parameter controlling the bias at <code class="reqn">\xi = 0</code>),
+<code class="reqn">\psi_a(\xi) := -a + (a^{d/2} + \xi^{d/2})^{2/d},</code>
+<code class="reqn">\xi \in \mathbb{R}</code>, <code class="reqn">K</code> is a kernel function and
+<code class="reqn">\xi_i := (X_i - \mu)^\top \, \Sigma^{-1} \, (X_i - \mu),
+</code>
+for a sample <code class="reqn">X_1, \dots, X_n</code>.
+This function computes "optimal asymptotic" values for the bandwidth <code class="reqn">h</code>
+and the tuning parameter <code class="reqn">a</code> from a first step bandwidth that the user
+needs to provide.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EllDistrEst.adapt(
+  X,
+  mu = 0,
+  Sigma_m1 = diag(NCOL(X)),
+  grid,
+  h_firstStep,
+  grid_a = NULL,
+  Kernel = "gaussian",
+  mpfr = FALSE,
+  precBits = 100,
+  dopb = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a matrix of size <code class="reqn">n \times d</code>, assumed to be <code class="reqn">n</code> i.i.d. observations
+(rows) of a <code class="reqn">d</code>-dimensional elliptical distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>mean of X. This can be the true value or an estimate. It must be
+a vector of dimension <code class="reqn">d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Sigma_m1</code></td>
+<td>
+<p>inverse of the covariance matrix of X.
+This can be the true value or an estimate. It must be
+a matrix of dimension <code class="reqn">d \times d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>vector containing the values at which we want the generator to be
+estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h_firstStep</code></td>
+<td>
+<p>a vector of size <code>2</code> containing first-step bandwidths
+to be used. The first one is used for the estimation of the asymptotic mean-squared
+error. The second one is used for the first step estimation of <code class="reqn">g</code>.
+From these two estimators, a final value of the bandwidth <code class="reqn">h</code> is determined,
+which is used for the final estimator of <code class="reqn">g</code>.
+</p>
+<p>If <code>h_firstStep</code> is of length <code>1</code>, its value is reused for both purposes
+(estimation of the AMSE and first-step estimation of <code class="reqn">g</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid_a</code></td>
+<td>
+<p>the grid of possible values of <code>a</code> to be used.
+If missing, a default sequence is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Kernel</code></td>
+<td>
+<p>name of the kernel. Possible choices are
+<code>"gaussian"</code>, <code>"epanechnikov"</code>, <code>"triangular"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mpfr</code></td>
+<td>
+<p>if <code>mpfr = TRUE</code>, multiple precision floating point is used
+via the package Rmpfr.
+This allows for a higher (numerical) accuracy, at the expense of computing time.
+It is recommended to use this option for higher dimensions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precBits</code></td>
+<td>
+<p>number of precBits used for floating point precision
+(only used if <code>mpfr = TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dopb</code></td>
+<td>
+<p>a Boolean value.
+If <code>dopb = TRUE</code>, a progress bar is displayed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list with the following elements: </p>
+
+<ul>
+<li> <p><code>g</code> a vector of size <code>n1 = length(grid)</code>.
+Each component of this vector is an estimator of <code class="reqn">g(x[i])</code>
+where <code>x[i]</code> is the <code class="reqn">i</code>-th element of the grid.
+</p>
+</li>
+<li> <p><code>best_a</code> a vector of the same size as <code>grid</code> indicating
+for each value of the grid what is the optimal choice of <code class="reqn">a</code> found by
+our algorithm (which is used to estimate <code class="reqn">g</code>).
+</p>
+</li>
+<li> <p><code>best_h</code> a vector of the same size as <code>grid</code> indicating
+for each value of the grid what is the optimal choice of <code class="reqn">h</code> found by
+our algorithm (which is used to estimate <code class="reqn">g</code>).
+</p>
+</li>
+<li> <p><code>first_step_g</code> first step estimator of <code>g</code>, computed using
+the tuning parameters <code>best_a</code> and <code>h_firstStep[2]</code>.
+</p>
+</li>
+<li> <p><code>AMSE_estimated</code> an estimator of the part of the asymptotic MSE
+that only depends on <code class="reqn">a</code>.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Alexis Derumigny, Victor Ryan
+</p>
+
+
+<h3>References</h3>
+
+<p>Ryan, V., &amp; Derumigny, A. (2024).
+On the choice of the two tuning parameters for nonparametric estimation of an
+elliptical distribution generator
+<a href="https://arxiv.org/abs/2408.17087">arxiv:2408.17087</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>EllDistrEst</code> for the nonparametric estimation of the
+elliptical distribution density generator,
+<code>EllDistrSim</code> for the simulation of elliptical distribution samples.
+</p>
+<p><code>estim_tilde_AMSE</code> which is used in this function. It estimates
+a component of the asymptotic mean-square error (AMSE) of the nonparametric
+estimator of the elliptical density generator assuming <code class="reqn">h</code> has been optimally
+chosen.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">n = 500
+d = 3
+X = matrix(rnorm(n * d), ncol = d)
+grid = seq(0, 5, by = 0.1)
+
+result = EllDistrEst.adapt(X = X, grid = grid, h = 0.05)
+plot(grid, result$g, type = "l")
+lines(grid, result$first_step_g, col = "blue")
+
+# Computation of true values
+g = exp(-grid/2)/(2*pi)^{3/2}
+lines(grid, g, type = "l", col = "red")
+
+plot(grid, result$best_a, type = "l", col = "red")
+plot(grid, result$best_h, type = "l", col = "red")
+
+sum((g - result$g)^2, na.rm = TRUE) &lt; sum((g - result$first_step_g)^2, na.rm = TRUE)
+
+</code></pre>
+
+
+</div>

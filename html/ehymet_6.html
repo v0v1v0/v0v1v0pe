@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EHyClus</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Clustering using Epigraph and Hypograph indices</h2>
+
+<h3>Description</h3>
+
+<p>It creates a multivariate dataset containing
+the epigraph, hypograph and/or its modified versions on the curves and derivatives
+and then perform hierarchical clustering, kmeans, kernel kmeans, and spectral clustering
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EHyClus(
+  curves,
+  vars_combinations,
+  k = 30,
+  n_clusters = 2,
+  bs = "cr",
+  clustering_methods = c("hierarch", "kmeans", "kkmeans", "spc"),
+  l_method_hierarch = c("single", "complete", "average", "centroid", "ward.D2"),
+  l_dist_hierarch = c("euclidean", "manhattan"),
+  l_dist_kmeans = c("euclidean", "mahalanobis"),
+  l_kernel = c("rbfdot", "polydot"),
+  grid,
+  true_labels = NULL,
+  only_best = FALSE,
+  verbose = FALSE,
+  n_cores = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>curves</code></td>
+<td>
+<p>Dataset containing the curves to apply a clustering algorithm.
+The functional dataset can be one dimensional (<code class="reqn">n \times p</code>) where <code class="reqn">n</code> is the number of
+curves and <code>p</code> the number of time points, or multidimensional (<code class="reqn">n \times p \times q</code>) where <code class="reqn">q</code>
+represents the number of dimensions in the data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars_combinations</code></td>
+<td>
+<p>If <code>list</code>,  each element of the list should be an
+atomic <code>vector</code> of strings with the
+names of the variables. Combinations with non-valid variable names will be discarded.
+If the list is non-named, the names of the variables are set to
+vars1, ..., varsk, where k is the number of elements in <code>vars_combinations</code>.
+If not provided, generic combinations of variables will be used. They will not be
+the same for uni-dimensional and multi-dimensional problems.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Number of basis functions for the B-splines. If equals to <code>0</code>, the number
+of basis functions will be automatically selected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_clusters</code></td>
+<td>
+<p>Number of clusters to generate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bs</code></td>
+<td>
+<p>A two letter character string indicating the (penalized) smoothing
+basis to use. See <code>smooth.terms</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clustering_methods</code></td>
+<td>
+<p>character vector specifying at least one of the following
+clustering methods to be computed: "hierarch", "kmeans", "kkmeans" or "spc".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l_method_hierarch</code></td>
+<td>
+<p><code>list</code> of clustering methods for hierarchical
+clustering.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l_dist_hierarch</code></td>
+<td>
+<p><code>list</code> of distances for hierarchical clustering.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l_dist_kmeans</code></td>
+<td>
+<p><code>list</code> of distances for kmeans clustering.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l_kernel</code></td>
+<td>
+<p><code>list</code> of kernels for kkmeans or spc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>Atomic vector of type numeric with two elements: the lower limit and the upper
+limit of the evaluation grid. If not provided, it will be selected automatically.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>true_labels</code></td>
+<td>
+<p>Numeric vector of true labels for validation. If provided,
+evaluation metrics are computed in the final result.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>only_best</code></td>
+<td>
+<p><code>logical</code> value. If <code>TRUE</code> and <code>true_labels</code>
+is provided, the function will return only the result for the best clustering
+method based on the Rand Index. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>If <code>TRUE</code>, the function will print logs for about the execution of
+some clustering methods. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_cores</code></td>
+<td>
+<p>Number of cores to do parallel computation. 1 by default,
+which mean no parallel execution. Must be an integer number greater than 1.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>list</code> containing the clustering partition for each method and indices
+combination and, if <code>true_labels</code> is provided a data frame containing the time elapsed for obtaining a
+clustering partition of the indices dataset for each methodology. Also, the number of
+generated clusters and the combinations of variables used can be seen as attributes
+of this object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># univarariate data without labels
+curves &lt;- sim_model_ex1(n = 10)
+vars_combinations &lt;- list(c("dtaEI", "dtaMEI"), c("dtaHI", "dtaMHI"))
+EHyClus(curves, vars_combinations = vars_combinations)
+
+# multivariate data with labels
+curves &lt;- sim_model_ex2(n = 5)
+true_labels &lt;- c(rep(1, 5), rep(2, 5))
+vars_combinations &lt;- list(c("dtaMEI", "ddtaMEI"), c("dtaMEI", "d2dtaMEI"))
+res &lt;- EHyClus(curves, vars_combinations = vars_combinations, true_labels = true_labels)
+res$cluster # clustering results
+
+# multivariate data and generic (default) vars_combinations
+curves &lt;- sim_model_ex2(n = 5)
+EHyClus(curves)
+
+</code></pre>
+
+
+</div>

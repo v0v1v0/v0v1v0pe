@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>as.phylo.transmat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert transmat Infection Tree into a phylo Object</h2>
+
+<h3>Description</h3>
+
+<p>Converts a transmission matrix from the <code>get_transmat</code>
+function into a <code>phylo</code> class object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'transmat'
+as.phylo(x, vertex.exit.times, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class <code>transmat</code>, the output from
+<code>get_transmat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vertex.exit.times</code></td>
+<td>
+<p>Optional numeric vector providing the time of
+departure of vertices, to be used to scale the lengths of branches
+reaching to the tips. Index position on vector corresponds to network
+id. NA indicates no departure, so branch will extend to the end of the
+tree.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments (unused).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Converts a <code>transmat</code> object containing information about the
+history of a simulated infection into a <code>phylo</code> object
+representation suitable for plotting as a tree with
+<code>plot.phylo</code>. Each infection event becomes a 'node'
+(horizontal branch) in the resulting <code>phylo</code> tree, and each network
+vertex becomes a 'tip' of the tree. The infection events are labeled with the
+vertex ID of the infector to make it possible to trace the path of infection.
+</p>
+<p>The infection timing information is included to position the phylo-nodes,
+with the lines to the tips drawn to the max time value +1 (unless
+<code>vertex.exit.times</code> are passed in it effectively assumes all vertices
+are active until the end of the simulation).
+</p>
+<p>If the <code>transmat</code> contains multiple infection seeds (there are multiple
+trees with separate root nodes), this function will return a list of class
+<code>multiPhylo</code>, each element of which is a <code>phylo</code> object. See
+<code>read.tree</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>phylo</code> class object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(13)
+
+# Fit a random mixing TERGM with mean degree of 1 and mean edge
+# duration of 20 time steps
+nw &lt;- network_initialize(n = 100)
+formation &lt;- ~edges
+target.stats &lt;- 50
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 20)
+est &lt;- netest(nw, formation, target.stats, coef.diss, verbose = FALSE)
+
+# Parameterize the epidemic model as SI with one infected seed
+param &lt;- param.net(inf.prob = 0.5)
+init &lt;- init.net(i.num = 1)
+control &lt;- control.net(type = "SI", nsteps = 40, nsims = 1, verbose = FALSE)
+
+# Simulate the model
+mod1 &lt;- netsim(est, param, init, control)
+
+# Extract the transmission matrix
+tm &lt;- get_transmat(mod1)
+head(tm, 15)
+
+# Convert to phylo object and plot
+tmPhylo &lt;- as.phylo.transmat(tm)
+par(mar = c(1,1,1,1))
+plot(tmPhylo, show.node.label = TRUE,
+              root.edge = TRUE,
+              cex = 0.75)
+
+</code></pre>
+
+
+</div>

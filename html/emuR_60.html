@@ -1,0 +1,237 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>create_itemsInLevel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create new items programmatically</h2>
+
+<h3>Description</h3>
+
+<p>Create annotation items programmatically on a single level.
+You have to pass in a data frame, called <code>itemsToCreate</code>, describing
+the new items. The required columns depend on the type of the level (ITEM,
+EVENT, or SEGMENT).
+</p>
+<p>This function belongs to emuR’s CRUD family of functions, which let the user
+manipulate items programmatically:
+</p>
+
+<ul>
+<li>
+<p> Create items (create_itemsInLevel)
+</p>
+</li>
+<li>
+<p> Read items (query)
+</p>
+</li>
+<li>
+<p> Update items (update_itemsInLevel)
+</p>
+</li>
+<li>
+<p> Delete items (delete_itemsInLevel))
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">create_itemsInLevel(
+  emuDBhandle,
+  itemsToCreate,
+  calculateEndTimeForSegments = TRUE,
+  allowGapsAndOverlaps = FALSE,
+  rewriteAllAnnots = TRUE,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>emuDBhandle</code></td>
+<td>
+<p>emuDB handle as returned by load_emuDB</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itemsToCreate</code></td>
+<td>
+<p>A data frame with the columns:
+</p>
+
+<ul>
+<li> <p><code>session</code> (character)
+</p>
+</li>
+<li> <p><code>bundle</code> (character)
+</p>
+</li>
+<li> <p><code>level</code> (character)
+</p>
+</li>
+<li> <p><code>attribute</code> (character)
+</p>
+</li>
+<li> <p><code>labels</code> (character)
+</p>
+</li>
+<li> <p><code>start_item_seq_idx</code> (numeric; only when <code>level</code> refers to a ITEM-typed
+level)
+</p>
+</li>
+<li> <p><code>start</code> (numeric, milliseconds; only when <code>level</code> refers to an EVENT-typed
+or SEGMENT-typed level)
+</p>
+</li>
+<li> <p><code>end</code> (numeric, milliseconds; only when <code>level</code> refers to a SEGMENT-typed
+level and <code>calculateEndTimeForSegments</code> is <code>FALSE</code>)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>calculateEndTimeForSegments</code></td>
+<td>
+<p><em>Only applicable if the level type is SEGMENT.</em>
+If set to <code>TRUE</code>, then each segment’s end time is automatically aligned
+with the start time of the following segment. In that case, user-provided
+end times are ignored. The last segment’s end time is the end time of the
+annotated media file. If set to <code>FALSE</code>, then the user has to provide
+an end time for each segment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allowGapsAndOverlaps</code></td>
+<td>
+<p><em>Only applicable if the level type is SEGMENT
+and <code>calculateEndTimeForSegments</code> is <code>FALSE</code>.</em>
+If set to <code>FALSE</code>, this function fails when <code>itemsToCreate</code> contains
+gaps or overlaps between segments. The offending segments are returned invisibly.
+You can inspect them by assigning the return value to a variable. The return
+value will include a new column <code>gap_samples</code> that indicates the size
+of the gap (positive values) or overlap (negative values) with the previous
+segment, respectively. It is measured in audio samples, not in milliseconds.
+Setting this to <code>TRUE</code> allows the function to complete even with gaps
+and/or overlaps, but this is <strong>not recommended as it can cause bugs in
+the EMU-webApp</strong>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rewriteAllAnnots</code></td>
+<td>
+<p>should changes be written to file system (_annot.json
+files) (intended for expert use only)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>if set to <code>TRUE</code>, more status messages are printed</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function creates new annotation items on an existing level, in existing
+bundles.
+</p>
+<p>Regardless of the type of level you are creating items on, your input data
+frame <code>itemsToCreate</code> must describe your new items by specifying the columns
+<code>session</code>, <code>bundle</code>, <code>level</code>, <code>attribute</code> and <code>labels</code>. <code>level</code> must have the
+same value for all rows, as we can only create items on one level at a time.
+</p>
+<p><code>attribute</code> must also have the same value for all rows, and it must be an
+existing attribute that belongs to the <code>level</code>.
+</p>
+<p>A major use case for this function is to obtain a segment list using query,
+modify the segment list and feed it to this function. That is why the column
+<code>labels</code> has a plural name: segment lists also have a column <code>labels</code> and
+not <code>label</code>. The same is true for the sequence index columns introduced below.
+</p>
+<p>Creating new items works differently depending on the level type. The three
+types are explained in the following sections.
+</p>
+
+
+<h4>Levels of type ITEM</h4>
+
+<p>In addition to the columns that are always required, ITEM-typed levels require
+a column with a sequence index to be present in the <code>itemsToCreate</code> data
+frame. Its name must be <code>start_item_seq_idx</code>. This name was chosen instead
+of <code>sequence_index</code> because it is present as a column name in segment lists
+obtained with query. That makes it easer to use a segment list as input to
+<code>create_itemsInLevel()</code>.
+</p>
+<p>Along the time axis, there can be multiple annotation items on every level.
+Their order within the level is given by their sequence index. All <em>existing</em>
+items have a natural-valued sequence index and there are no gaps in the
+sequences (i.e. if a level contains N annotation items, they are indexed 1..N).
+</p>
+<p>Any newly created item must be given a sequence index. The sequence index may
+be real-valued (it will automatically be replaced with a natural value). To
+prepend the new item to the existing ones, pass a value lower than one. To
+append it to the existing items, you can either pass <code>NA</code> or any value that
+you know is greater than N (the number of existing items in that level). It
+does not need to be exactly N+1. To place the new item between two existing
+ones, use any real value between the sequence indexes of the existing neighbors.
+</p>
+<p>If you are appending multiple items at the same time, every sequence index
+(including <code>NA</code>) can only be used once per session/bundle/level combination
+(because session/bundle/level/sequence index are the unique identifier of an
+item).
+</p>
+<p>After creating the items, all sequence indexes (which may now be real-valued,
+natural-valued or NA) are sorted in ascending order and then replaced with
+the values 1..N, where N is the number of items on that level. While sorting,
+<code>NA</code> values are placed at the end.
+</p>
+
+
+
+<h4>Levels of type EVENT</h4>
+
+<p>In addition to the columns that are always required, EVENT-typed levels require
+a column with the time of the event to be present in the <code>itemsToCreate</code> data
+frame. Its name must be <code>start</code>. This name was chosen because it is present
+as a column name in segment lists obtained with query. That makes it easer
+to use a segment list as input to <code>create_itemsInLevel()</code>. The <code>end</code> column
+in segment lists is 0 for EVENT-typed levels.
+</p>
+<p>The <code>start</code> column must be given in milliseconds.
+</p>
+<p>You cannot create an EVENT item at a point on the time axis where another
+item already exists on the same level. If you specify such an event, the
+entire function will fail.
+</p>
+
+
+
+<h4>Levels of type SEGMENT</h4>
+
+<p>You can only create SEGMENT-typed items in bundles where the respective level
+is empty.
+</p>
+<p>In addition to the columns that are always required, SEGMENT-typed levels
+require the column <code>start</code> to be present in the <code>itemsToCreate</code> data frame,
+representing the start time of the segment. It must be given in milliseconds.
+</p>
+<p>Segments also need to have an end, and there are two strategies to determine
+the end. Either, you explicitly provide an <code>end</code> column in the <code>itemsToCreate</code>
+data frame. It must be given in milliseconds. If you do that, you have to
+specify the <code>calculateEndTimeForSegments</code> parameter as <code>FALSE</code>.
+</p>
+<p>Alternatively, you can leave <code>calculateEndTimeForSegments</code> at <code>TRUE</code> (which
+is the default) and provide your <code>itemsToCreate</code> data frame without an <code>end</code>
+column. In that case, the end time will be aligned to the next neighbor’s
+start time. The end time of the last segment will be aligned with the end of
+the annotated media file.
+</p>
+
+
+
+</div>

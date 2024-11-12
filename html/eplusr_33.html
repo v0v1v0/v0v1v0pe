@@ -1,0 +1,3008 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Epw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read, and modify an EnergyPlus Weather File (EPW)</h2>
+
+<h3>Description</h3>
+
+<p>Reading an EPW file starts with function <code>read_epw()</code>, which parses an EPW
+file and returns an <code>Epw</code> object. The parsing process is basically the same
+as [EnergyPlus/WeatherManager.cc] in EnergyPlus, with some simplifications.
+</p>
+
+
+<h3>Details</h3>
+
+<p>An EPW file can be divided into two parts, headers and weather data. The
+first eight lines of a standard EPW file are normally headers which contains
+data of location, design conditions, typical/extreme periods, ground
+temperatures, holidays/daylight savings, data periods and other comments.
+<code>Epw</code> class provides methods to directly extract those data. For details on
+the data structure of EPW file, please see "Chapter 2 - Weather Converter
+Program" in EnergyPlus "Auxiliary Programs" documentation. An online version
+can be found <a href="https://bigladdersoftware.com/epx/docs/">here</a>.
+</p>
+<p>There are about 35 variables in the core weather data. However, not all of
+them are used by EnergyPlus. Actually, despite of date and time columns, only
+13 columns are used:
+</p>
+
+<ol>
+<li>
+<p> dry bulb temperature
+</p>
+</li>
+<li>
+<p> dew point temperature
+</p>
+</li>
+<li>
+<p> relative humidity
+</p>
+</li>
+<li>
+<p> atmospheric pressure
+</p>
+</li>
+<li>
+<p> horizontal infrared radiation intensity from sky
+</p>
+</li>
+<li>
+<p> direct normal radiation
+</p>
+</li>
+<li>
+<p> diffuse horizontal radiation
+</p>
+</li>
+<li>
+<p> wind direction
+</p>
+</li>
+<li>
+<p> wind speed
+</p>
+</li>
+<li>
+<p> present weather observation
+</p>
+</li>
+<li>
+<p> present weather codes
+</p>
+</li>
+<li>
+<p> snow depth
+</p>
+</li>
+<li>
+<p> liquid precipitation depth
+</p>
+</li>
+</ol>
+<p><strong>Note</strong> the <code>hour</code> column in the core weather data corresponds to the period
+from <strong>(Hour-1)th</strong> to <strong>(Hour)th</strong>. For instance, if the number of interval
+per hour is 1, hour of 1 on a certain day corresponds to the period between
+00:00:01 to 01:00:00, Hour of 2 corresponds to the period between
+01:00:01 to 02:00:00, and etc. Currently, in EnergyPlus the minute column is
+<strong>not used</strong> to determine currently sub-hour time. For instance, if the
+number of interval per hour is 2, there is no difference between two rows
+with following time columns (a) Hour 1, Minute 0; Hour 1, Minute 30 and (b)
+Hour 1, Minute 30; Hour 1, Minute 60. Only the number of rows count.
+When EnergyPlus reads the EPW file, both (a) and (b) represent the same time
+period: 00:00:00 - 00:30:00 and 00:30:00 - 01:00:00.
+Missing data on the weather file used can be summarized in the eplusout.err
+file, if <code>DisplayWeatherMissingDataWarnings</code> is turned on in
+<code>Output:Diagnostics</code> object. In EnergyPlus, missing data is shown only for
+fields that EnergyPlus will use. EnergyPlus will fill some missing data
+automatically during simulation. Likewise out of range values are counted for
+each occurrence and summarized. However, note that the out of range values
+will <strong>not be changed</strong> by EnergyPlus and could affect your simulation.
+</p>
+<p><code>Epw</code> class provides methods to easily extract and inspect those abnormal
+(missing and out of range) weather data and also to know what kind of actions
+that EnergyPlus will perform on those data.
+</p>
+<p>EnergyPlus energy model calibration often uses actual measured weather data.
+In order to streamline the error-prone process of creating custom EPW file,
+<code>Epw</code> provides methods to direction add, replace the core weather data.
+</p>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-Epw-new"><code>Epw$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-path"><code>Epw$path()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-definition"><code>Epw$definition()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-location"><code>Epw$location()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-design_condition"><code>Epw$design_condition()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-typical_extreme_period"><code>Epw$typical_extreme_period()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-ground_temperature"><code>Epw$ground_temperature()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-holiday"><code>Epw$holiday()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-comment1"><code>Epw$comment1()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-comment2"><code>Epw$comment2()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-num_period"><code>Epw$num_period()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-interval"><code>Epw$interval()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-period"><code>Epw$period()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-missing_code"><code>Epw$missing_code()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-initial_missing_value"><code>Epw$initial_missing_value()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-range_exist"><code>Epw$range_exist()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-range_valid"><code>Epw$range_valid()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-fill_action"><code>Epw$fill_action()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-data"><code>Epw$data()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-abnormal_data"><code>Epw$abnormal_data()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-redundant_data"><code>Epw$redundant_data()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-make_na"><code>Epw$make_na()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-fill_abnormal"><code>Epw$fill_abnormal()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-add_unit"><code>Epw$add_unit()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-drop_unit"><code>Epw$drop_unit()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-purge"><code>Epw$purge()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-add"><code>Epw$add()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-set"><code>Epw$set()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-del"><code>Epw$del()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-is_unsaved"><code>Epw$is_unsaved()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-save"><code>Epw$save()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-print"><code>Epw$print()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Epw-clone"><code>Epw$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-Epw-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create an <code>Epw</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$new(path, encoding = "unknown")</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>path</code></dt>
+<dd>
+<p>Either a path, a connection, or literal data (either a
+single string or a raw vector) to an EnergyPlus Weather File
+(EPW).  If a file path, that file usually has a extension
+<code>.epw</code>.</p>
+</dd>
+<dt><code>encoding</code></dt>
+<dd>
+<p>The file encoding of input IDD. Should be one of
+<code>"unknown"</code>, <code style="white-space: pre;">⁠"Latin-1" and ⁠</code>"UTF-8"<code style="white-space: pre;">⁠. The default is ⁠</code>"unknown"' which means that the file is encoded in the native
+encoding.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>It takes an EnergyPlus Weather File (EPW) as input and returns an
+<code>Epw</code> object.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>An <code>Epw</code> object.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# read an EPW file from EnergyPlus website
+path_base &lt;- "https://energyplus.net/weather-download"
+path_region &lt;- "north_and_central_america_wmo_region_4/USA/CA"
+path_file &lt;- "USA_CA_San.Francisco.Intl.AP.724940_TMY3/USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+path_epw &lt;- file.path(path_base, path_region, path_file)
+epw &lt;- read_epw(path_epw)
+
+# read an EPW file distributed with EnergyPlus
+if (is_avail_eplus(8.8)) {
+    path_epw &lt;- file.path(
+        eplus_config(8.8)$dir,
+        "WeatherData",
+        "USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+    )
+    epw &lt;- read_epw(path_epw)
+}
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-path"></a>
+
+
+
+<h4>Method <code>path()</code>
+</h4>
+
+<p>Get the file path of current <code>Epw</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$path()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$path()⁠</code> returns the full path of current <code>Epw</code> or <code>NULL</code> if the
+<code>Epw</code> object is created using a character vector and not saved
+locally.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p><code>NULL</code> or a single string.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get path
+epw$path()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-definition"></a>
+
+
+
+<h4>Method <code>definition()</code>
+</h4>
+
+<p>Get the IddObject object for specified EPW class.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$definition(class)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>class</code></dt>
+<dd>
+<p>A single string.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$definition()⁠</code> returns an IddObject of given EPW class. IddObject
+contains all data used for parsing that EPW class.
+</p>
+<p>Currently, all supported EPW classes are:
+</p>
+
+<ul>
+<li> <p><code>LOCATION</code>
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠DESIGN CONDITIONS⁠</code>
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠TYPICAL/EXTREME PERIODS⁠</code>
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠GROUND TEMPERATURES⁠</code>
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠HOLIDAYS/DAYLIGHT SAVINGS⁠</code>
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠COMMENTS 1⁠</code>
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠COMMENTS 2⁠</code>
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠DATA PERIODS⁠</code>
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠WEATHER DATA⁠</code>
+</p>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get path
+epw$definition("LOCATION")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-location"></a>
+
+
+
+<h4>Method <code>location()</code>
+</h4>
+
+<p>Get and modify LOCATION header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$location(
+  city,
+  state_province,
+  country,
+  data_source,
+  wmo_number,
+  latitude,
+  longitude,
+  time_zone,
+  elevation
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>city</code></dt>
+<dd>
+<p>A string of city name recorded in the <code>LOCATION</code> header.</p>
+</dd>
+<dt><code>state_province</code></dt>
+<dd>
+<p>A string of state or province name recorded in
+the <code>LOCATION</code> header.</p>
+</dd>
+<dt><code>country</code></dt>
+<dd>
+<p>A string of country name recorded in the <code>LOCATION</code>
+header.</p>
+</dd>
+<dt><code>data_source</code></dt>
+<dd>
+<p>A string of data source recorded in the <code>LOCATION</code>
+header.</p>
+</dd>
+<dt><code>wmo_number</code></dt>
+<dd>
+<p>A string of WMO (World Meteorological Organization)
+number recorded in the <code>LOCATION</code> header.</p>
+</dd>
+<dt><code>latitude</code></dt>
+<dd>
+<p>A number of latitude recorded in the <code>LOCATION</code>
+header. North latitude is positive and south latitude is
+negative. Should in range <code style="white-space: pre;">⁠[-90, +90]⁠</code>.</p>
+</dd>
+<dt><code>longitude</code></dt>
+<dd>
+<p>A number of longitude recorded in the <code>LOCATION</code>
+header. East longitude is positive and west longitude is
+negative. Should in range <code style="white-space: pre;">⁠[-180, +180]⁠</code>.</p>
+</dd>
+<dt><code>time_zone</code></dt>
+<dd>
+<p>A number of time zone recorded in the <code>LOCATION</code>
+header. Usually presented as the offset hours from UTC time.
+Should in range <code style="white-space: pre;">⁠[-12, +14]⁠</code>.</p>
+</dd>
+<dt><code>elevation</code></dt>
+<dd>
+<p>A number of elevation recorded in the <code>LOCATION</code>
+header. Should in range <code style="white-space: pre;">⁠[-1000, 9999.9)⁠</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$location()⁠</code> takes new values for <code>LOCATION</code> header fields and
+returns the parsed values of <code>LOCATION</code> header in a list format. If
+no input is given, current <code>LOCATION</code> header value is returned.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of 9 elements.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$location()
+
+# modify location data
+epw$location(city = "MyCity")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-design_condition"></a>
+
+
+
+<h4>Method <code>design_condition()</code>
+</h4>
+
+<p>Get DESIGN CONDITION header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$design_condition()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$design_condition()⁠</code> returns the parsed values of <code style="white-space: pre;">⁠DESIGN CONDITION⁠</code>
+header in a list format with 4 elements:
+</p>
+
+<ul>
+<li> <p><code>source</code>: A string of source field
+</p>
+</li>
+<li> <p><code>heating</code>: A list, usually of length 16, of the heading design conditions
+</p>
+</li>
+<li> <p><code>cooling</code>: A list, usually of length 32, of the cooling design conditions
+</p>
+</li>
+<li> <p><code>extremes</code>: A list, usually of length 16, of the extreme design conditions
+</p>
+</li>
+</ul>
+<p>For the meaning of each element, please see ASHRAE Handbook of Fundamentals.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of 4 elements.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$design_condition()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-typical_extreme_period"></a>
+
+
+
+<h4>Method <code>typical_extreme_period()</code>
+</h4>
+
+<p>Get TYPICAL/EXTREME header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$typical_extreme_period()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$typical_extreme_period()⁠</code> returns the parsed values of <code style="white-space: pre;">⁠TYPICAL/EXTREME PERIOD⁠</code> header in a data.table format with 6
+columns:
+</p>
+
+<ul>
+<li> <p><code>index</code>: Integer type. The index of typical or extreme period record
+</p>
+</li>
+<li> <p><code>name</code>: Character type. The name of typical or extreme period record
+</p>
+</li>
+<li> <p><code>type</code>: Character type. The type of period. Possible value: <code>typical</code> and
+<code>extreme</code>
+</p>
+</li>
+<li> <p><code>start_day</code>: Date type with customized formatting. The start day of the
+period
+</p>
+</li>
+<li> <p><code>start_day</code>: Date type with customized formatting. The end day of the
+period
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> with 6 columns.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$typical_extreme_period()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-ground_temperature"></a>
+
+
+
+<h4>Method <code>ground_temperature()</code>
+</h4>
+
+<p>Get GROUND TEMPERATURE header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$ground_temperature()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$ground_temperature()⁠</code> returns the parsed values of <code style="white-space: pre;">⁠GROUND TEMPERATURE⁠</code>
+header in a data.table format with 17 columns:
+</p>
+
+<ul>
+<li> <p><code>index</code>: Integer type. The index of ground temperature record
+</p>
+</li>
+<li> <p><code>depth</code>: Numeric type. The depth of the ground temperature is measured
+</p>
+</li>
+<li> <p><code>soil_conductivity</code>: Numeric type. The soil conductivity at measured depth
+</p>
+</li>
+<li> <p><code>soil_density</code>: Numeric type. The soil density at measured depth
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠soil_specific heat⁠</code>: Numeric type. The soil specific heat at measured depth
+</p>
+</li>
+<li> <p><code>January</code> to <code>December</code>: Numeric type. The measured group
+temperature for each month.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> with 17 columns.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$ground_temperature()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-holiday"></a>
+
+
+
+<h4>Method <code>holiday()</code>
+</h4>
+
+<p>Get and modify HOLIDAYS/DAYLIGHT SAVINGS header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$holiday(leapyear, dst, holiday)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>leapyear</code></dt>
+<dd>
+<p>Either <code>TRUE</code> or <code>FALSE</code>.</p>
+</dd>
+<dt><code>dst</code></dt>
+<dd>
+<p>A length 2 EPW date specifications identifying the start
+and end of daylight saving time. For example, <code>c(3.10, 10.3)</code>.</p>
+</dd>
+<dt><code>holiday</code></dt>
+<dd>
+<p>a list or a data.frame containing two elements
+(columns) <code>name</code> and <code>day</code> where <code>name</code> are the holiday names
+and <code>day</code> are valid EPW date specifications. For example:
+</p>
+<div class="sourceCode"><pre>list(name = c("New Year's Day", "Christmas Day"), day = c("1.1", "25 Dec"))
+</pre></div>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$holiday()⁠</code> takes new value for leap year indicator, daylight saving time
+and holiday specifications, set these new values and returns the parsed values
+of <code style="white-space: pre;">⁠HOLIDAYS/DAYLIGHT SAVINGS⁠</code> header. If no input is given, current values
+of <code style="white-space: pre;">⁠HOLIDAYS/DAYLIGHT SAVINGS⁠</code> header is returned. It returns a list of 3
+elements:
+</p>
+
+<ul>
+<li> <p><code>leapyear</code>: A single logical vector. <code>TRUE</code> means that the weather data
+contains leap year data
+</p>
+</li>
+<li> <p><code>dst</code>: A Date vector contains the start and end day of daylight saving time
+</p>
+</li>
+<li> <p><code>holiday</code>: A data.table contains 2 columns. If
+no holiday specified, an empty data.table
+</p>
+
+<ul>
+<li> <p><code>name</code>: Name of the holiday
+</p>
+</li>
+<li> <p><code>day</code>: Date of the holiday
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Validation process below is performed when changing the <code>leapyear</code>
+indicator:
+</p>
+
+<ul>
+<li>
+<p> If current record of <code>leapyear</code> is <code>TRUE</code>, but new input is <code>FALSE</code>, the
+modification is only conducted when all data periods do not cover Feb 29.
+</p>
+</li>
+<li>
+<p> If current record of <code>leapyear</code> is <code>FALSE</code>, but new input is <code>TRUE</code>, the
+modification is only conducted when TMY data periods do not across Feb,
+e.g. [01/02, 02/28], [03/01, 12/31]; for AMY data, it is always OK.
+</p>
+</li>
+</ul>
+<p>The date specifications in <code>dst</code> and <code>holiday</code> should follow the rules of
+<strong>"Table 2.14: Weather File Date File Interpretation"</strong> in
+"AuxiliaryPrograms" documentation. eplusr is able to handle all those kinds of
+formats automatically. Basically, 5 formats are allowed:
+</p>
+
+<ol>
+<li>
+<p> A single integer is interpreted as the Julian day of year. For example,
+<code>1</code>, <code>2</code>, <code>3</code> and <code>4</code> will be parsed and presented as <code style="white-space: pre;">⁠1st day⁠</code>, <code style="white-space: pre;">⁠2nd day⁠</code>, <code style="white-space: pre;">⁠3rd day⁠</code> and <code style="white-space: pre;">⁠4th day⁠</code>.
+</p>
+</li>
+<li>
+<p> A single number is interpreted as <code>Month.Day</code>. For example, <code>1.2</code> and <code>5.6</code>
+will be parsed and presented as <code style="white-space: pre;">⁠Jan 02⁠</code> and <code style="white-space: pre;">⁠May 06⁠</code>.
+</p>
+</li>
+<li>
+<p> A string giving <code>MonthName / DayNumber</code>, <code>DayNumber / MonthName</code>, and
+<code>MonthNumber / DayNumber</code>. A year number can be also included. For
+example, <code>"Jan/1"</code>, <code>"05/Dec"</code>, <code>"7/8"</code>, <code>"02/10/2019"</code>, and
+<code>"2019/04/05"</code> will be parsed and presented as <code style="white-space: pre;">⁠Jan 02⁠</code>, <code style="white-space: pre;">⁠Dec 06⁠</code>, <code style="white-space: pre;">⁠Jul 8⁠</code>, <code>2019-02-10</code> and <code>2019-04-15</code>.
+</p>
+</li>
+<li>
+<p> A string giving <code style="white-space: pre;">⁠number Weekday in Month⁠</code>. For example, <code>"2 Sunday in Jan"</code> will be parsed and presented as <code style="white-space: pre;">⁠2th Sunday in January⁠</code>.
+</p>
+</li>
+<li>
+<p> A string giving <code style="white-space: pre;">⁠Last Weekday in Month⁠</code>. For example, <code>"last Sunday in Dec"</code> will be parsed and presented as <code style="white-space: pre;">⁠Last Sunday in December⁠</code>.
+</p>
+</li>
+</ol>
+<p>For convenience, besides all the formats described above, <code>dst</code> and days in
+<code>holiday</code> also accept standard Dates input. They will be treated as the same
+way as No.3 format described above.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of 3 elements.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$holiday()
+
+# add daylight saving time
+epw$holiday(dst = c(3.10, 11.3))
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-comment1"></a>
+
+
+
+<h4>Method <code>comment1()</code>
+</h4>
+
+<p>Get and modify COMMENT1 header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$comment1(comment)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>comment</code></dt>
+<dd>
+<p>A string of new comments.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$comment1()⁠</code> takes a single string of new comments and replaces the
+old comment with input one. If <code>NULL</code> is given, the comment is
+removed. Empty string or a string that contains only spaces will be
+treated as <code>NULL</code>. If no input is given, current comment is returned.
+If no comments exist, <code>NULL</code> is returned.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single string.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$comment1()
+
+epw$comment1("Comment1")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-comment2"></a>
+
+
+
+<h4>Method <code>comment2()</code>
+</h4>
+
+<p>Get and modify COMMENT2 header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$comment2(comment)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>comment</code></dt>
+<dd>
+<p>A string of new comments.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$comment2()⁠</code> takes a single string of new comments and replaces the
+old comment with input one. If <code>NULL</code> is given, the comment is
+removed. Empty string or a string that contains only spaces will be
+treated as <code>NULL</code>. If no input is given, current comment is returned.
+If no comments exist, <code>NULL</code> is returned.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single string.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$comment2()
+
+epw$comment2("Comment2")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-num_period"></a>
+
+
+
+<h4>Method <code>num_period()</code>
+</h4>
+
+<p>Get number of data periods in DATA PERIODS header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$num_period()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$num_period()⁠</code> returns a single positive integer of how many data
+periods current <code>Epw</code> contains.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single integer.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$num_period()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-interval"></a>
+
+
+
+<h4>Method <code>interval()</code>
+</h4>
+
+<p>Get the time interval in DATA PERIODS header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$interval()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$interval()⁠</code> returns a single positive integer of how many records
+of weather data exist in one hour.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single integer.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$interval()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-period"></a>
+
+
+
+<h4>Method <code>period()</code>
+</h4>
+
+<p>Get and modify data period meta data in DATA PERIODS header
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$period(period, name, start_day_of_week)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>period</code></dt>
+<dd>
+<p>A positive integer vector identifying the data period
+indexes.</p>
+</dd>
+<dt><code>name</code></dt>
+<dd>
+<p>A character vector used as new names for specified data
+periods. Should have the same length as <code>index</code>.</p>
+</dd>
+<dt><code>start_day_of_week</code></dt>
+<dd>
+<p>A character vector or an integer vector used
+as the new start days of week of specified data periods.
+Should have the same length as <code>index</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$period()⁠</code> takes a data period index, a new period name and start
+day of week specification, and uses that input to replace the data
+period's name and start day of week. If no input is given, data
+periods in current <code>Epw</code> is returned.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A data.table with 5 columns:
+</p>
+
+<ul>
+<li> <p><code>index</code>: Integer type. The index of data period.
+</p>
+</li>
+<li> <p><code>name</code>: Character type. The name of data period.
+</p>
+</li>
+<li> <p><code>start_day_of_week</code>: Character type. The start day of week of data period.
+</p>
+</li>
+<li> <p><code>start_day</code>: Date (EpwDate) type. The start day of data period.
+</p>
+</li>
+<li> <p><code>end_day</code>: Date (EpwDate) type. The end day of data period.
+</p>
+</li>
+</ul>
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# modify data period name
+epw$period(1, name = "test")
+
+# change start day of week
+epw$period(1, start_day_of_week = 3)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-missing_code"></a>
+
+
+
+<h4>Method <code>missing_code()</code>
+</h4>
+
+<p>Get missing code for weather data variables
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$missing_code()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$missing_code()⁠</code> returns a list of 29 elements containing the value
+used as missing value identifier for all weather data.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of 29 elements.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$missing_code()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-initial_missing_value"></a>
+
+
+
+<h4>Method <code>initial_missing_value()</code>
+</h4>
+
+<p>Get initial value for missing data of weather data variables
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$initial_missing_value()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$initial_missing_value()⁠</code> returns a list of 16 elements containing
+the initial value used to replace missing values for corresponding
+weather data.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of 16 elements.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$initial_missing_value()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-range_exist"></a>
+
+
+
+<h4>Method <code>range_exist()</code>
+</h4>
+
+<p>Get value ranges for existing values of weather data variables
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$range_exist()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$range_exist()⁠</code> returns a list of 28 elements containing the range
+each numeric weather data should fall in. Any values out of this
+range are treated as missing.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of 28 elements.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$range_exist()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-range_valid"></a>
+
+
+
+<h4>Method <code>range_valid()</code>
+</h4>
+
+<p>Get value ranges for valid values of weather data variables
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$range_valid()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$range_valid()⁠</code> returns a list of 28 elements containing the range
+each numeric weather data should fall in. Any values out of this
+range are treated as invalid.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A named list of 28 elements.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$range_valid()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-fill_action"></a>
+
+
+
+<h4>Method <code>fill_action()</code>
+</h4>
+
+<p>Get fill actions for abnormal values of weather data variables
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$fill_action(type = c("missing", "out_of_range"))</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>type</code></dt>
+<dd>
+<p>What abnormal type of actions to return. Should be one of
+<code>"missing"</code> and <code>"out_of_range"</code>. Default: <code>"missing"</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$fill_action()⁠</code> returns a list containing <code>action</code>s that EnergyPlus
+will perform when certain abnormal data found for corresponding
+weather data. There are 3 types of actions in total:
+</p>
+
+<ul>
+<li> <p><code>do_nothing</code>: All abnormal values are left as they are.
+</p>
+</li>
+<li> <p><code>use_zero</code>: All abnormal values are reset to zeros.
+</p>
+</li>
+<li> <p><code>use_previous</code>: The first abnormal values of variables will be set to the
+initial missing values. All after are set to previous valid one.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>A named list.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$fill_action("missing")
+
+epw$fill_action("out_of_range")
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-data"></a>
+
+
+
+<h4>Method <code>data()</code>
+</h4>
+
+<p>Get weather data
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$data(
+  period = 1L,
+  start_year = NULL,
+  align_wday = TRUE,
+  tz = "UTC",
+  update = FALSE,
+  line = FALSE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>period</code></dt>
+<dd>
+<p>A single positive integer identifying the data period
+index. Data periods information can be obtained using
+<a href="../../eplusr/html/Epw.html#method-period"><code>$period()</code></a>
+described above.</p>
+</dd>
+<dt><code>start_year</code></dt>
+<dd>
+<p>A positive integer identifying the year of first
+date time in specified data period. If <code>NULL</code>, the values in
+the <code>year</code> column are used as years of <code>datetime</code> column.
+Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>align_wday</code></dt>
+<dd>
+<p>Only applicable when <code>start_year</code> is <code>NULL</code>. If
+<code>TRUE</code>, a year value is automatically calculated for specified
+data period that compliance with the start day of week value
+specified in <code style="white-space: pre;">⁠DATA PERIODS⁠</code> header.</p>
+</dd>
+<dt><code>tz</code></dt>
+<dd>
+<p>A valid time zone to be assigned to the <code>datetime</code> column.
+All valid time zone names can be obtained using
+<code>OlsonNames()</code>. Default:<code>"UTC"</code>.</p>
+</dd>
+<dt><code>update</code></dt>
+<dd>
+<p>If <code>TRUE</code>, the <code>year</code> column are updated according to
+the newly created <code>datetime</code> column using <code>start_year</code>. If
+<code>FALSE</code>, original year data in the <code>Epw</code> object is kept.
+Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>line</code></dt>
+<dd>
+<p>If <code>TRUE</code>, a column named <code>line</code> is prepended indicating
+the line numbers where data occur in the actual EPW file.
+Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$data()⁠</code> returns weather data of specific data period.
+</p>
+<p>Usually, EPW file downloaded from <a href="https://energyplus.net/">EnergyPlus website</a>
+contains TMY weather data. As years of weather data is not
+consecutive, it may be more convenient to align the year values to be
+consecutive, which will makes it possible to direct analyze and plot
+weather data. The <code>start_year</code> argument in <code style="white-space: pre;">⁠$data()⁠</code> method can help
+to achieve this. However, randomly setting the <code>year</code> may result in a
+date time series that does not have the same start day of week as
+specified in the <code style="white-space: pre;">⁠DATA PERIODS⁠</code> header.  eplusr provides a simple
+solution for this. By setting <code>year</code> to <code>NULL</code> and <code>align_wday</code> to
+<code>TRUE</code>, eplusr will calculate a year value (from current year
+backwards) for each data period that compliance with the start day of
+week restriction.
+</p>
+<p>Note that if current data period contains AMY data and <code>start_year</code>
+is given, a warning is given because the actual year values will be
+overwritten by input <code>start_year</code>. An error is given if:
+</p>
+
+<ul>
+<li>
+<p> Using input <code>start_year</code> introduces invalid date time. This may
+happen when weather data contains leap year but input <code>start_year</code>
+is not a leap year.
+</p>
+</li>
+<li>
+<p> Applying specified time zone specified using <code>tz</code> introduces
+invalid date time.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> of 36 columns.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get weather data
+str(epw$data())
+
+# get weather data but change the year to 2018
+# the year column is not changed by default, only the returned datetime column
+head(epw$data(start_year = 2018)$datetime)
+str(epw$data(start_year = 2018)$year)
+# you can update the year column too
+head(epw$data(start_year = 2018, update = TRUE)$year)
+
+# change the time zone of datetime column in the returned weather data
+attributes(epw$data()$datetime)
+attributes(epw$data(tz = "Etc/GMT+8")$datetime)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-abnormal_data"></a>
+
+
+
+<h4>Method <code>abnormal_data()</code>
+</h4>
+
+<p>Get abnormal weather data
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$abnormal_data(
+  period = 1L,
+  cols = NULL,
+  keep_all = TRUE,
+  type = c("both", "missing", "out_of_range")
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>period</code></dt>
+<dd>
+<p>A single positive integer identifying the data period
+index. Data periods information can be obtained using
+<a href="../../eplusr/html/Epw.html#method-period"><code>$period()</code></a>
+described above.</p>
+</dd>
+<dt><code>cols</code></dt>
+<dd>
+<p>A character vector identifying what data columns, i.e.
+all columns except <code>datetime</code>, <code>year</code>, <code>month</code>, <code>day</code>, <code>hour</code>
+<code>minute</code>, and character columns, to search abnormal values. If
+<code>NULL</code>, all data columns are used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>keep_all</code></dt>
+<dd>
+<p>If <code>TRUE</code>, all columns are returned. If <code>FALSE</code>, only
+<code>line</code>, <code>datetime</code>, <code>year</code>, <code>month</code>, <code>day</code>, <code>hour</code> and
+<code>minute</code>, together with columns specified in <code>cols</code> are
+returned. Default: <code>TRUE</code></p>
+</dd>
+<dt><code>type</code></dt>
+<dd>
+<p>What abnormal type of data to return. Should be one of
+<code>"all"</code>, <code>"missing"</code> and <code>"out_of_range"</code>. Default: <code>"all"</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$abnormal_data()⁠</code> returns abnormal data of specific data period.
+Basically, there are 2 types of abnormal data in <code>Epw</code>, i.e. missing
+values and out-of-range values. Sometimes, it may be useful to
+extract and inspect those data especially when inserting measured
+weather data. <code style="white-space: pre;">⁠$abnormal_data()⁠</code> does this.
+</p>
+<p>In the returned <code>data.table::data.table()</code>, a column named <code>line</code>
+is created indicating the line numbers where abnormal data occur in
+the actual EPW file.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$abnormal_data()
+
+# only check if there are any abnormal values in air temperature and
+# liquid precipitation rate
+epw$abnormal_data(cols = c("dry_bulb_temperature", "liquid_precip_rate"))
+
+# save as above, but only return date time columns plus those 2 columns
+epw$abnormal_data(cols = c("dry_bulb_temperature", "liquid_precip_rate"),
+    keep_all = FALSE
+)
+
+# same as above, but only check for missing values
+epw$abnormal_data(cols = c("dry_bulb_temperature", "liquid_precip_rate"),
+    type = "missing"
+)
+
+# same as above, but only check for out-of-range values
+epw$abnormal_data(cols = c("dry_bulb_temperature", "liquid_precip_rate"),
+    type = "out_of_range"
+)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-redundant_data"></a>
+
+
+
+<h4>Method <code>redundant_data()</code>
+</h4>
+
+<p>Get redundant weather data
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$redundant_data()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$redundant_data()⁠</code> returns weather data in <code>Epw</code> object that do not
+belong to any data period. This data can be further removed using
+<a href="../../eplusr/html/Epw.html#method-purge"><code>$purge()</code></a>'
+method described below.
+</p>
+<p>In the returned <code>data.table::data.table()</code>, a column named <code>line</code>
+is created indicating the line numbers where redundant data occur in
+the actual EPW file.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>data.table::data.table()</code> of 37 columns.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$redundant_data()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-make_na"></a>
+
+
+
+<h4>Method <code>make_na()</code>
+</h4>
+
+<p>Convert abnormal data into NAs
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$make_na(missing = FALSE, out_of_range = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>missing</code></dt>
+<dd>
+<p>If <code>TRUE</code>, missing values are included. Default:
+<code>FALSE</code>.</p>
+</dd>
+<dt><code>out_of_range</code></dt>
+<dd>
+<p>If <code>TRUE</code>, out-of-range values are included.
+Default: <code>FALSE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$make_na()⁠</code> converts specified abnormal data into <code>NA</code>s in specified
+data period. This makes it easier to find abnormal data directly
+using <code>is.na()</code> instead of using
+<a href="../../eplusr/html/Epw.html#method-missing_code"><code>$missing_code()</code></a>
+</p>
+<p><code style="white-space: pre;">⁠$make_na()⁠</code> and
+<a href="../../eplusr/html/Epw.html#method-fill_abnormal"><code>$fill_abnormal()</code></a>
+are reversible, i.e.
+<code style="white-space: pre;">⁠$make_na()⁠</code> can be used to counteract the effects introduced by
+<a href="../../eplusr/html/Epw.html#method-make_na"><code>$make_na()</code></a>,
+and vise a versa.
+</p>
+<p><strong>Note</strong> that <code style="white-space: pre;">⁠$make_na⁠</code> modify the weather data in-place, meaning
+that the returned data from
+<a href="../../eplusr/html/Epw.html#method-data"><code>$data()</code></a>
+and
+<a href="../../eplusr/html/Epw.html#method-abnormal_data"><code>$abnormal_data()</code></a>
+may be different after calling <code style="white-space: pre;">⁠$make_na()⁠</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Epw</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# turn all missing values into NAs
+summary(epw$data()$liquid_precip_rate)
+epw$make_na(missing = TRUE)
+summary(epw$data()$liquid_precip_rate)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-fill_abnormal"></a>
+
+
+
+<h4>Method <code>fill_abnormal()</code>
+</h4>
+
+<p>Fill abnormal data using prescribed pattern
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$fill_abnormal(missing = FALSE, out_of_range = FALSE, special = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>missing</code></dt>
+<dd>
+<p>If <code>TRUE</code>, missing values are included. Default:
+<code>FALSE</code>.</p>
+</dd>
+<dt><code>out_of_range</code></dt>
+<dd>
+<p>If <code>TRUE</code>, out-of-range values are included.
+Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>special</code></dt>
+<dd>
+<p>If <code>TRUE</code>, abnormal data are filled using
+corresponding actions listed
+<a href="../../eplusr/html/Epw.html#method-fill_action"><code>$fill_action()</code></a>.
+If <code>FALSE</code>, all abnormal data are fill with missing code
+described in
+<a href="../../eplusr/html/Epw.html#method-missing_code"><code>$missing_code()</code></a>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$fill_abnormal()⁠</code> fills specified abnormal data using corresponding
+actions listed in
+<a href="../../eplusr/html/Epw.html#method-fill_action"><code>$fill_action()</code></a>.
+For what kinds of actions to be performed, please see
+<a href="../../eplusr/html/Epw.html#method-fill_action"><code>$fill_action()</code></a>.
+method described above. Note that only if <code>special</code> is <code>TRUE</code>,
+special actions listed in <code style="white-space: pre;">⁠$fill_action()⁠</code> is performed. If <code>special</code>
+is <code>FALSE</code>, all abnormal data, including both missing values and
+out-of-range values, are filled with corresponding missing codes.
+</p>
+<p><a href="../../eplusr/html/Epw.html#method-make_na"><code>$make_na()</code></a>
+and <code style="white-space: pre;">⁠$fill_abnormal()⁠</code> are reversible, i.e.
+<a href="../../eplusr/html/Epw.html#method-make_na"><code>$make_na()</code></a>
+can be used to counteract the effects introduced by
+<code style="white-space: pre;">⁠$fill_abnormal()⁠</code>, and vise a versa.
+</p>
+<p><strong>Note</strong> that <code style="white-space: pre;">⁠$fill_abnormal⁠</code> modify the weather data in-place,
+meaning that the returned data from
+<a href="../../eplusr/html/Epw.html#method-data"><code>$data()</code></a>
+and
+<a href="../../eplusr/html/Epw.html#method-abnormal_data"><code>$abnormal_data()</code></a>
+may be different after calling <code style="white-space: pre;">⁠$fill_abnormal()⁠</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Epw</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# turn all missing values into NAs
+summary(epw$data()$liquid_precip_rate)
+epw$fill_abnormal(missing = TRUE)
+summary(epw$data()$liquid_precip_rate)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-add_unit"></a>
+
+
+
+<h4>Method <code>add_unit()</code>
+</h4>
+
+<p>Add units to weather data variables
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$add_unit()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$add_unit()⁠</code> assigns units to numeric weather data using
+<code>units::set_units()</code> if applicable.
+</p>
+<p><code style="white-space: pre;">⁠$add_unit()⁠</code>
+and
+<a href="../../eplusr/html/Epw.html#method-drop_unit"><code>$drop_unit()</code></a>
+are reversible, i.e.
+<code style="white-space: pre;">⁠$add_unit()⁠</code>
+can be used to counteract the effects introduced by
+<a href="../../eplusr/html/Epw.html#method-drop_unit"><code>$drop_unit()</code></a>,
+and vise a versa.
+</p>
+<p><strong>Note</strong> that <code style="white-space: pre;">⁠$add_unit⁠</code> modify the weather data in-place,
+meaning that the returned data from
+<a href="../../eplusr/html/Epw.html#method-data"><code>$data()</code></a>
+and
+<a href="../../eplusr/html/Epw.html#method-abnormal_data"><code>$abnormal_data()</code></a>
+may be different after calling <code style="white-space: pre;">⁠$add_unit()⁠</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Epw</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# get weather data with units
+epw$add_unit()
+head(epw$data())
+
+# with units specified, you can easily perform unit conversion using units
+# package
+t_dry_bulb &lt;- epw$data()$dry_bulb_temperature
+units(t_dry_bulb) &lt;- with(units::ud_units, "kelvin")
+
+head(t_dry_bulb)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-drop_unit"></a>
+
+
+
+<h4>Method <code>drop_unit()</code>
+</h4>
+
+<p>Remove units in weather data variables
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$drop_unit()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$drop_unit()⁠</code> removes all units of numeric weather data.
+</p>
+<p><a href="../../eplusr/html/Epw.html#method-add_unit"><code>$add_unit()</code></a>
+and
+<code style="white-space: pre;">⁠$drop_unit()⁠</code>
+are reversible, i.e.
+<a href="../../eplusr/html/Epw.html#method-drop_unit"><code>$add_unit()</code></a>
+can be used to counteract the effects introduced by
+<code style="white-space: pre;">⁠$drop_unit()⁠</code>,
+and vise a versa.
+</p>
+<p><strong>Note</strong> that <code style="white-space: pre;">⁠$add_unit⁠</code> modify the weather data in-place,
+meaning that the returned data from
+<a href="../../eplusr/html/Epw.html#method-data"><code>$data()</code></a>
+and
+<a href="../../eplusr/html/Epw.html#method-abnormal_data"><code>$abnormal_data()</code></a>
+may be different after calling <code style="white-space: pre;">⁠$add_unit()⁠</code>.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Epw</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$drop_unit()
+epw$data()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-purge"></a>
+
+
+
+<h4>Method <code>purge()</code>
+</h4>
+
+<p>Delete redundant weather data observations
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$purge()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$purge()⁠</code> deletes weather data in <code>Epw</code> object that do not belong to
+any data period.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Epw</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$purge()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-add"></a>
+
+
+
+<h4>Method <code>add()</code>
+</h4>
+
+<p>Add a data period
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$add(
+  data,
+  realyear = FALSE,
+  name = NULL,
+  start_day_of_week = NULL,
+  after = 0L
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>data</code></dt>
+<dd>
+<p>A <code>data.table::data.table()</code> of new weather data to add
+or set. Validation is performed according to rules described
+above.</p>
+</dd>
+<dt><code>realyear</code></dt>
+<dd>
+<p>Whether input data is AMY data. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>name</code></dt>
+<dd>
+<p>A new string used as name of added or set data period.
+Should not be the same as existing data period names. If
+<code>NULL</code>, it is generated automatically in format <code>Data</code>,
+<code>Data_1</code> and etc., based on existing data period names.
+Default: <code>NULL</code></p>
+</dd>
+<dt><code>start_day_of_week</code></dt>
+<dd>
+<p>A single integer or character specifying
+start day of week of input data period. If <code>NULL</code>, Sunday is
+used for TMY data and the actual start day of week is used for
+AMY data.  Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>after</code></dt>
+<dd>
+<p>A single integer identifying the index of data period
+where input new data period to be inserted after. IF <code>0</code>,
+input new data period will be the first data period. Default:
+<code>0</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$add()⁠</code> adds a new data period into current <code>Epw</code> object at
+specified position.
+</p>
+<p>The validity of input data is checked before adding according to
+rules following:
+</p>
+
+<ul>
+<li>
+<p> Column <code>datetime</code> exists and has type of <code>POSIXct</code>. Note that time
+zone of input date time will be reset to <code>UTC</code>.
+</p>
+</li>
+<li>
+<p> It assumes that input data is already sorted, i.e. no further
+sorting is made during validation. This is because when input data
+is TMY data, there is no way to properly sort input data rows only
+using <code>datetime</code> column.
+</p>
+</li>
+<li>
+<p> Number of data records per hour should be consistent across input
+data.
+</p>
+</li>
+<li>
+<p> Input number of data records per hour should be the same as
+existing data periods.
+</p>
+</li>
+<li>
+<p> The date time of input data should not overlap with existing data
+periods.
+</p>
+</li>
+<li>
+<p> Input data should have all 29 weather data columns with correct
+types. The <code>year</code>, <code>month</code>, <code>day</code>, and <code>minute</code> column are not
+compulsory. They will be created according to values in the
+<code>datetime</code> column. Existing values will be overwritten.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>The modified <code>Epw</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# will fail since date time in input data has already been covered by
+# existing data period
+try(epw$add(epw$data()), silent = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-set"></a>
+
+
+
+<h4>Method <code>set()</code>
+</h4>
+
+<p>Replace a data period
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$set(
+  data,
+  realyear = FALSE,
+  name = NULL,
+  start_day_of_week = NULL,
+  period = 1L
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>data</code></dt>
+<dd>
+<p>A <code>data.table::data.table()</code> of new weather data to add
+or set. Validation is performed according to rules described
+above.</p>
+</dd>
+<dt><code>realyear</code></dt>
+<dd>
+<p>Whether input data is AMY data. Default: <code>FALSE</code>.</p>
+</dd>
+<dt><code>name</code></dt>
+<dd>
+<p>A new string used as name of added or set data period.
+Should not be the same as existing data period names. If
+<code>NULL</code>, it is generated automatically in format <code>Data</code>,
+<code>Data_1</code> and etc., based on existing data period names.
+Default: <code>NULL</code></p>
+</dd>
+<dt><code>start_day_of_week</code></dt>
+<dd>
+<p>A single integer or character specifying
+start day of week of input data period. If <code>NULL</code>, Sunday is
+used for TMY data and the actual start day of week is used for
+AMY data.  Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>period</code></dt>
+<dd>
+<p>A single integer identifying the index of data period
+to set.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$set()⁠</code> replaces existing data period using input new weather data.
+</p>
+<p>The validity of input data is checked before replacing according to
+rules following:
+</p>
+
+<ul>
+<li>
+<p> Column <code>datetime</code> exists and has type of <code>POSIXct</code>. Note that time
+zone of input date time will be reset to <code>UTC</code>.
+</p>
+</li>
+<li>
+<p> It assumes that input data is already sorted, i.e. no further
+sorting is made during validation. This is because when input data
+is TMY data, there is no way to properly sort input data rows only
+using <code>datetime</code> column.
+</p>
+</li>
+<li>
+<p> Number of data records per hour should be consistent across input
+data.
+</p>
+</li>
+<li>
+<p> Input number of data records per hour should be the same as
+existing data periods.
+</p>
+</li>
+<li>
+<p> The date time of input data should not overlap with existing data
+periods.
+</p>
+</li>
+<li>
+<p> Input data should have all 29 weather data columns with right
+types. The <code>year</code>, <code>month</code>, <code>day</code>, and <code>minute</code> column are not
+compulsory. They will be created according to values in the
+<code>datetime</code> column. Existing values will be overwritten.
+</p>
+</li>
+</ul>
+<h5>Returns</h5>
+
+<p>The modified <code>Epw</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# change the weather data
+epw$set(epw$data())
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-del"></a>
+
+
+
+<h4>Method <code>del()</code>
+</h4>
+
+<p>Delete a data period
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$del(period)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>period</code></dt>
+<dd>
+<p>A single integer identifying the index of data period
+to set.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$del()⁠</code> removes a specified data period. Note that an error will be
+given if current <code>Epw</code> only contains one data period.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The modified <code>Epw</code> object itself, invisibly.
+</p>
+
+
+<hr>
+<a id="method-Epw-is_unsaved"></a>
+
+
+
+<h4>Method <code>is_unsaved()</code>
+</h4>
+
+<p>Check if there are unsaved changes in current <code>Epw</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$is_unsaved()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$is_unsaved()⁠</code> returns <code>TRUE</code> if there are modifications on the
+<code>Epw</code> object since it was read or since last time it was saved, and
+returns <code>FALSE</code> otherwise.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A single logical value of <code>TRUE</code> or <code>FALSE</code>.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$is_unsaved()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-save"></a>
+
+
+
+<h4>Method <code>save()</code>
+</h4>
+
+<p>Save <code>Epw</code> object as an EPW file
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$save(path = NULL, overwrite = FALSE, purge = FALSE, format_digit = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>path</code></dt>
+<dd>
+<p>A path where to save the weather file. If <code>NULL</code>, the
+path of the weather file itself is used. Default: <code>NULL</code>.</p>
+</dd>
+<dt><code>overwrite</code></dt>
+<dd>
+<p>Whether to overwrite the file if it already exists.
+Default is <code>FALSE</code>.</p>
+</dd>
+<dt><code>purge</code></dt>
+<dd>
+<p>Whether to remove redundant data when saving. Default:
+<code>FALSE</code>.</p>
+</dd>
+<dt><code>format_digit</code></dt>
+<dd>
+<p>Whether to remove trailing digits in weather
+data. Default: <code>TRUE</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$save()⁠</code> saves current <code>Epw</code> to an EPW file. Note that if missing
+values and out-of-range values are converted to <code>NA</code>s using
+<a href="../../eplusr/html/Epw.html#method-make_na"><code>$make_na()</code></a>,
+they will be filled with corresponding missing codes during saving.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>A length-one character vector, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+# save the weather file
+epw$save(file.path(tempdir(), "weather.epw"), overwrite = TRUE)
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-print"></a>
+
+
+
+<h4>Method <code>print()</code>
+</h4>
+
+<p>Print <code>Idf</code> object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$print()</pre></div>
+
+
+
+<h5>Details</h5>
+
+<p><code style="white-space: pre;">⁠$print()⁠</code> prints the <code>Epw</code> object, including location, elevation,
+data source, WMO station, leap year indicator, interval and data
+periods.
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>The <code>Epw</code> object itself, invisibly.
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+epw$print()
+}
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-Epw-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Epw$clone(deep = TRUE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>Author(s)</h3>
+
+<p>Hongyuan Jia
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## ------------------------------------------------
+## Method `Epw$new`
+## ------------------------------------------------
+
+## Not run: 
+# read an EPW file from EnergyPlus website
+path_base &lt;- "https://energyplus.net/weather-download"
+path_region &lt;- "north_and_central_america_wmo_region_4/USA/CA"
+path_file &lt;- "USA_CA_San.Francisco.Intl.AP.724940_TMY3/USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+path_epw &lt;- file.path(path_base, path_region, path_file)
+epw &lt;- read_epw(path_epw)
+
+# read an EPW file distributed with EnergyPlus
+if (is_avail_eplus(8.8)) {
+    path_epw &lt;- file.path(
+        eplus_config(8.8)$dir,
+        "WeatherData",
+        "USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
+    )
+    epw &lt;- read_epw(path_epw)
+}
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$path`
+## ------------------------------------------------
+
+## Not run: 
+# get path
+epw$path()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$definition`
+## ------------------------------------------------
+
+## Not run: 
+# get path
+epw$definition("LOCATION")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$location`
+## ------------------------------------------------
+
+## Not run: 
+epw$location()
+
+# modify location data
+epw$location(city = "MyCity")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$design_condition`
+## ------------------------------------------------
+
+## Not run: 
+epw$design_condition()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$typical_extreme_period`
+## ------------------------------------------------
+
+## Not run: 
+epw$typical_extreme_period()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$ground_temperature`
+## ------------------------------------------------
+
+## Not run: 
+epw$ground_temperature()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$holiday`
+## ------------------------------------------------
+
+## Not run: 
+epw$holiday()
+
+# add daylight saving time
+epw$holiday(dst = c(3.10, 11.3))
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$comment1`
+## ------------------------------------------------
+
+## Not run: 
+epw$comment1()
+
+epw$comment1("Comment1")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$comment2`
+## ------------------------------------------------
+
+## Not run: 
+epw$comment2()
+
+epw$comment2("Comment2")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$num_period`
+## ------------------------------------------------
+
+## Not run: 
+epw$num_period()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$interval`
+## ------------------------------------------------
+
+## Not run: 
+epw$interval()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$period`
+## ------------------------------------------------
+
+## Not run: 
+# modify data period name
+epw$period(1, name = "test")
+
+# change start day of week
+epw$period(1, start_day_of_week = 3)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$missing_code`
+## ------------------------------------------------
+
+## Not run: 
+epw$missing_code()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$initial_missing_value`
+## ------------------------------------------------
+
+## Not run: 
+epw$initial_missing_value()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$range_exist`
+## ------------------------------------------------
+
+## Not run: 
+epw$range_exist()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$range_valid`
+## ------------------------------------------------
+
+## Not run: 
+epw$range_valid()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$fill_action`
+## ------------------------------------------------
+
+## Not run: 
+epw$fill_action("missing")
+
+epw$fill_action("out_of_range")
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$data`
+## ------------------------------------------------
+
+## Not run: 
+# get weather data
+str(epw$data())
+
+# get weather data but change the year to 2018
+# the year column is not changed by default, only the returned datetime column
+head(epw$data(start_year = 2018)$datetime)
+str(epw$data(start_year = 2018)$year)
+# you can update the year column too
+head(epw$data(start_year = 2018, update = TRUE)$year)
+
+# change the time zone of datetime column in the returned weather data
+attributes(epw$data()$datetime)
+attributes(epw$data(tz = "Etc/GMT+8")$datetime)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$abnormal_data`
+## ------------------------------------------------
+
+## Not run: 
+epw$abnormal_data()
+
+# only check if there are any abnormal values in air temperature and
+# liquid precipitation rate
+epw$abnormal_data(cols = c("dry_bulb_temperature", "liquid_precip_rate"))
+
+# save as above, but only return date time columns plus those 2 columns
+epw$abnormal_data(cols = c("dry_bulb_temperature", "liquid_precip_rate"),
+    keep_all = FALSE
+)
+
+# same as above, but only check for missing values
+epw$abnormal_data(cols = c("dry_bulb_temperature", "liquid_precip_rate"),
+    type = "missing"
+)
+
+# same as above, but only check for out-of-range values
+epw$abnormal_data(cols = c("dry_bulb_temperature", "liquid_precip_rate"),
+    type = "out_of_range"
+)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$redundant_data`
+## ------------------------------------------------
+
+## Not run: 
+epw$redundant_data()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$make_na`
+## ------------------------------------------------
+
+## Not run: 
+# turn all missing values into NAs
+summary(epw$data()$liquid_precip_rate)
+epw$make_na(missing = TRUE)
+summary(epw$data()$liquid_precip_rate)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$fill_abnormal`
+## ------------------------------------------------
+
+## Not run: 
+# turn all missing values into NAs
+summary(epw$data()$liquid_precip_rate)
+epw$fill_abnormal(missing = TRUE)
+summary(epw$data()$liquid_precip_rate)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$add_unit`
+## ------------------------------------------------
+
+## Not run: 
+# get weather data with units
+epw$add_unit()
+head(epw$data())
+
+# with units specified, you can easily perform unit conversion using units
+# package
+t_dry_bulb &lt;- epw$data()$dry_bulb_temperature
+units(t_dry_bulb) &lt;- with(units::ud_units, "kelvin")
+
+head(t_dry_bulb)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$drop_unit`
+## ------------------------------------------------
+
+## Not run: 
+epw$drop_unit()
+epw$data()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$purge`
+## ------------------------------------------------
+
+## Not run: 
+epw$purge()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$add`
+## ------------------------------------------------
+
+## Not run: 
+# will fail since date time in input data has already been covered by
+# existing data period
+try(epw$add(epw$data()), silent = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$set`
+## ------------------------------------------------
+
+## Not run: 
+# change the weather data
+epw$set(epw$data())
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$is_unsaved`
+## ------------------------------------------------
+
+## Not run: 
+epw$is_unsaved()
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$save`
+## ------------------------------------------------
+
+## Not run: 
+# save the weather file
+epw$save(file.path(tempdir(), "weather.epw"), overwrite = TRUE)
+
+## End(Not run)
+
+
+## ------------------------------------------------
+## Method `Epw$print`
+## ------------------------------------------------
+
+## Not run: 
+epw$print()
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

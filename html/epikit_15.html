@@ -1,0 +1,146 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>find_date_cause</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Find the first date beyond a cutoff in several columns</h2>
+
+<h3>Description</h3>
+
+<p>This function will find the first date in an orderd series of columns that
+is either before or after a cutoff date, inclusive.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">find_date_cause(
+  x,
+  ...,
+  period_start = NULL,
+  period_end = NULL,
+  datecol = "start_date",
+  datereason = "start_date_reason",
+  na_fill = "start"
+)
+
+find_start_date(
+  x,
+  ...,
+  period_start = NULL,
+  period_end = NULL,
+  datecol = "start_date",
+  datereason = "start_date_reason"
+)
+
+find_end_date(
+  x,
+  ...,
+  period_start = NULL,
+  period_end = NULL,
+  datecol = "end_date",
+  datereason = "end_date_reason"
+)
+
+constrain_dates(i, period_start, period_end, boundary = "both")
+
+assert_positive_timespan(x, date_start, date_end)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>an ordered series of date columns (i.e. the most important date
+to be considered first).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>period_start, period_end</code></td>
+<td>
+<p>for the find_ functions, this should be the
+name of a column in <code>x</code> that contains the start/end of the recall period.
+For <code>constrain_dates</code>, this should be a vector of dates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>datecol</code></td>
+<td>
+<p>the name of the new column to contain the dates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>datereason</code></td>
+<td>
+<p>the name of the column to contain the name of the column
+from which the date came.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na_fill</code></td>
+<td>
+<p>one of either "before" or "after" indicating that the new
+column should only contain dates before or after the cutoff date.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>a vector of dates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boundary</code></td>
+<td>
+<p>one of "both", "start", or "end". Dates outside of the
+boundary will be set to NA.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date_start, date_end</code></td>
+<td>
+<p>column name of a date vector</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">d &lt;- data.frame(
+  s1 = c(as.Date("2013-01-01") + 0:10, as.Date(c("2012-01-01", "2014-01-01"))),
+  s2 = c(as.Date("2013-02-01") + 0:10, as.Date(c("2012-01-01", "2014-01-01"))),
+  s3 = c(as.Date("2013-01-10") - 0:10, as.Date(c("2012-01-01", "2014-01-01"))),
+  ps = as.Date("2012-12-31"),
+  pe = as.Date("2013-01-09")
+)
+print(dd &lt;- find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe))
+print(bb &lt;- find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe,
+                            na_fill = "end", 
+                            datecol = "enddate",
+                            datereason = "endcause"))
+find_date_cause(d, s3, s2, s1, period_start = ps, period_end = pe)
+
+# works
+assert_positive_timespan(dd, start_date, pe)
+
+# returns a warning because the last date isn't later than the start_date
+assert_positive_timespan(dd, start_date, s2)
+
+
+with(d, constrain_dates(s1, ps, pe))
+with(d, constrain_dates(s2, ps, pe))
+with(d, constrain_dates(s3, ps, pe))
+
+</code></pre>
+
+
+</div>

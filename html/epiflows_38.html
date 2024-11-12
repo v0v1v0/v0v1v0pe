@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>YF_Brazil</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Yellow Fever Data from Brazil; 2016-12 to 2017-05</h2>
+
+<h3>Description</h3>
+
+<p>This data set contains flows to and from five states in Brazil formatted in
+a list with the following items:
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("Brazil_epiflows")
+  data("YF_coordinates")
+  data("YF_locations")
+  data("YF_flows")
+  data("YF_Brazil")
+</code></pre>
+
+
+<h3>Format</h3>
+
+<p>An object of class <code>list</code> of length 4.
+</p>
+
+
+<h3>Details</h3>
+
+
+<ul>
+<li> <p><code style="white-space: pre;">⁠$states⁠</code>: a data frame containing metadata for five Brazilian States:
+Espirito Santo, Minas Gerais, Rio de Janeiro, Sao Paulo, and Southeast
+Brazil
+</p>
+
+<ul>
+<li> <p><code style="white-space: pre;">⁠$location_code⁠</code> : names of the states
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠$location_population⁠</code> : population size for each state
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠$num_cases_time_window⁠</code> : number of cases recorded between 2016-12 and 2017-05
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠$first_date_cases⁠</code> : date of first disease case in the given location in ISO 8601 format
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠$last_date_cases⁠</code> : date of last disease case in the given location in ISO 8601 format
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code style="white-space: pre;">⁠$T_D⁠</code> A matrix containing the number of travellers from the infectious
+location visiting other locations
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠$T_O⁠</code> A matrix containing the number of travellers visiting the infectious location
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠$length_of_stay⁠</code> A named vector containing the average length of stay in
+days of travellers from other locations visiting the infectious locations.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Dorigatti I, Hamlet A, Aguas R, Cattarino L, Cori A, Donnelly CA,
+Garske T, Imai N, Ferguson NM. International risk of yellow fever spread from
+the ongoing outbreak in Brazil, December 2016 to May 2017. Euro Surveill.
+2017;22(28):pii=30572. DOI: <a href="https://doi.org/10.2807/1560-7917.ES.2017.22.28.30572">doi:10.2807/1560-7917.ES.2017.22.28.30572</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>make_epiflows()</code> for transformation to an epiflows object
+<code>estimate_risk_spread()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># This is an example of an epiflows object
+data("Brazil_epiflows")
+Brazil_epiflows
+
+# The above data was constructed from a data frame containing flows and 
+# one containing location metadata
+data("YF_flows")
+data("YF_locations")
+ef &lt;- make_epiflows(flows         = YF_flows, 
+                    locations     = YF_locations, 
+                    pop_size      = "location_population",
+                    duration_stay = "length_of_stay",
+                    num_cases     = "num_cases_time_window",
+                    first_date    = "first_date_cases",
+                    last_date     = "last_date_cases"
+                   )
+
+# Both of the above data frames were constructed like so:
+
+data("YF_Brazil")
+
+# Create the flows data frame
+from  &lt;- as.data.frame.table(YF_Brazil$T_D, stringsAsFactors = FALSE)
+to    &lt;- as.data.frame.table(t(YF_Brazil$T_O), stringsAsFactors = FALSE)
+flows &lt;- rbind(from, to)
+colnames(flows) &lt;- c("from", "to", "n")
+
+## Create the locations data frame
+los &lt;- data.frame(location_code    = names(YF_Brazil$length_of_stay), 
+                  length_of_stay   = YF_Brazil$length_of_stay,
+                  stringsAsFactors = FALSE
+                 )
+locations &lt;- merge(x   = YF_Brazil$states, 
+                   y   = los, 
+                   by  = "location_code", 
+                   all = TRUE)
+
+## Use both to create the epiflows object.
+ef &lt;- make_epiflows(flows, 
+                    locations, 
+                    pop_size = "location_population",
+                    duration_stay = "length_of_stay",
+                    num_cases = "num_cases_time_window",
+                    first_date = "first_date_cases",
+                    last_date = "last_date_cases"
+)
+</code></pre>
+
+
+</div>

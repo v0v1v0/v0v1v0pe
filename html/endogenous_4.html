@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sampselect</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Sample selection model (endogenous probit).
+</h2>
+
+<h3>Description</h3>
+
+<p>James Heckman's Classical Simultaneous Equation Model (also known as the Sample Selection Model). Used to account for endogenous sample selection. Jointly models outcome model with propensity of selection, in which some of the outcomes are unobserved. Can also handle clustered data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class "sampselect"
+sampselect(outcome, probit, init = NULL, id = NULL, se = "R")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>outcome</code></td>
+<td>
+
+<p>an object of class "formula" with a numeric vector on the left hand side, and predictors of interest on the right hand side. Values on the left hand side that correspond to unobserved outcomes should be set to numeric values (to zero, for example, although they can be set to any numeric values).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probit</code></td>
+<td>
+
+<p>an object of class "formula" with a binary <code>(0/1)</code> numeric vector on the left hand side (1 indicating unobserved outcome), and predictors of selection on the right hand side (right hand side permitted to contain variables on the right hand side of the outcome equation).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+
+<p>a vector of initial values. The ordering of subparameters is: <code>alpha</code> (probit model parameters), <code>beta</code> (outcome model parameters), <code>sigmay</code> (outcome error standard deviation), <code>rho</code> (error correlation). If <code>NULL</code>, an initial value will be chosen through OLS linear regression and probit-link GLM without regard to endogeneity.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+
+<p>a numeric vector indicating subject IDs if data are clustered. In the absence of clustered data, this can be left blank (defaults to <code>NULL</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+
+<p>a string, either <code>"M"</code> for model-based standard errors (based on inverse observed Fisher information), or <code>"R"</code> for robust standard errors (based on methods of Huber and White). Defaults to <code>"R"</code>. If <code>id</code> is provided for clustered data, the cluster-robust variance estimator (with working independence) will be used even if the user specifies type <code>"M"</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The model is evaluated with numerical minimization of the negative log-likelihood (the <code>BFGS</code> is used). The probit model and error correlation parameters are weakly identified and hence the error variance is set at unity. The data must be complete (no missing values) and numeric, with the exception of factors, which may be used on the right hand side of equations.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>sampselect</code> prints a summary of the coefficient estimates, standard errors, Wald-based confidence intervals, and p-values for the outcome model and the selection use probit model.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>estimate of the selection probit model parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>estimate of the outcome model parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>estimate of the standard deviation of the outcome error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p>estimate of the correlation between the errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>entire estimated variance-covariance matrix, provided if the user wishes to perform any more specific hypothesis tests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>initial value ultimately used, whether specified by the user or generated through the default approach.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted</code></td>
+<td>
+<p>vector of fitted outcome values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out.form</code></td>
+<td>
+<p>the formula used for the outcome model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob.form</code></td>
+<td>
+<p>the formula used for the selection probit model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sterr</code></td>
+<td>
+<p>the choice of the variance estimate procedure (either model-based or robust).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>labels for predictors to be passed into output.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Andrew J. Spieker, Ph.D.
+</p>
+
+
+<h3>References</h3>
+
+<p>Heckman JJ. Dummy endogenous variables in a simultaneous equation system. <em>Econometrica</em> 46(4), 931-959.
+</p>
+<p>Maddala GS. <em>Limited-dependent and qualitative variables in econometrics.</em> Cambridgeshire: Cambridge University Press; 1983.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#- Generate Data -#
+require(mvtnorm)
+set.seed(1)
+N &lt;- 2000
+X1 &lt;- rnorm(N, 0, 1);
+X2 &lt;- rnorm(N, 0, 1);
+X3 &lt;- rnorm(N, 0, 1);
+errors &lt;- rmvnorm(N, sigma = 50*matrix(c(1, 0.5, 0.5, 1), nrow = 2))
+Y &lt;- 50 + X1 + X2 + errors[,1]
+Z &lt;- rep(0, N)
+Z[(-5 + X1 + X3 + errors[,2]) &gt; 0] &lt;- 1
+Y[Z == 1] &lt;- 0
+
+#- Estimate Model -#
+sampselect(Y ~ X1 + X2, probit = Z ~ X1 + X3)
+
+#- Estimate Model with Model-Based Variance -#
+sampselect(Y ~ X1 + X2, probit = Z ~ X1 + X3, se = "M")
+</code></pre>
+
+
+</div>

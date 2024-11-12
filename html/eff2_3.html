@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimateEffect</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the total causal effect</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the total causal effect of x on y with iterated least squares.
+The resulting estimate has the minimal asymptotic covariance among all least
+squares estimators.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimateEffect(data, x, y, amat, bootstrap = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame consisting of iid observational data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>(integer) positions of treatment variables in the adjacency matrix;
+can be a singleton (single treatment) or a vector (multiple treatments)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>(integer) position of the outcome variable in the adjacency matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amat</code></td>
+<td>
+<p>adjacency matrix representing a DAG, CPDAG or MPDAG</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap</code></td>
+<td>
+<p>If <code>TRUE</code>, will estimate the standard error covariance with
+bootstrap (default: <code>FALSE</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Adjacency matrix <code>amat</code> represents the graphical information of the
+underlying causal DAG (directed acyclic graph). The causal DAG should be
+contained by the graph represented by <code>amat</code>, which can be a DAG, CPDAG
+(essential graph), or more generally, an MPDAG (maximally oriented partially
+directed acyclic graph).
+</p>
+<p>Matrix <code>amat</code> is coded with the convention of <code>amatType</code>:
+</p>
+
+<ul>
+<li> <p><code>amat[i,j]=0</code> and <code>amat[j,i]=1</code> means <code>i-&gt;j</code>
+</p>
+</li>
+<li> <p><code>amat[i,j]=1</code> and <code>amat[j,i]=0</code> means <code>i&lt;-j</code>
+</p>
+</li>
+<li> <p><code>amat[i,j]=1</code> and <code>amat[j,i]=1</code> means <code>i--j</code>
+</p>
+</li>
+<li> <p><code>amat[i,j]=0</code> and <code>amat[j,i]=0</code> means <code>i  j</code>
+</p>
+</li>
+</ul>
+<p><code>amat</code> can be learned from observational data with a structure learning
+algorithm; see <code>pc</code>, <code>ges</code>
+and <code>LINGAM</code>. Additional background knowledge can also be
+incorporated with <code>addBgKnowledge</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector of the same length as <code>x</code>. If <code>bootstrap=TRUE</code>,
+return a list of <code>(effect, se.cov)</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>isIdentified</code> is called for determining if an effect can be
+identified. See also <code>adjustment</code>, <code>ida</code>,
+and <code>jointIda</code> for other estimators.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("ex1")
+result &lt;- estimateEffect(ex1$data, c(5,3), 7, ex1$amat.cpdag, bootstrap=TRUE)
+print(result$effect)
+print(result$effect - 1.96 * sqrt(diag(result$se.cov)))
+print(result$effect + 1.96 * sqrt(diag(result$se.cov)))
+# compare with truth
+print(ex1$true.effects)
+
+## Not run: 
+# throws an error because the effect is not identified
+estimateEffect(ex1$data, 3, 7, ex1$amat.cpdag)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

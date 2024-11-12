@@ -1,0 +1,278 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EntropyMCMC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Kullback and entropy estimation from MCMC simulation output - 
+single and multicore versions</h2>
+
+<h3>Description</h3>
+
+<p>These functions return estimates of the entropy 
+of the density <code class="reqn">p^t</code> of a MCMC algorithm at time <code class="reqn">t</code>, 
+<code class="reqn">E_{p^t}[\log(p^t)]</code>,
+and of the Kullback divergence between <code class="reqn">p^t</code> and the target density,
+for <code class="reqn">t=1</code> up to the number of iterations that have been simulated. 
+The MCMC simulations must be computed before or externally, 
+and passed as a "<code>plMCMC</code>" object 
+in the first argument (see details).
+The target may be known only up to a multiplicative constant (see details).
+</p>
+<p><code>EntropyMCMC.mc</code> is a parallel computing
+version  that uses the
+<span class="pkg">parallel</span> package to split the task between the available (virtual) cores on the computer. This version using socket cluster is not available for Windows computers.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EntropyMCMC(plmc1, method = "A.Nearest.Neighbor", k=1, trim = 0.02, eps=0, 
+        all.f = TRUE, verb = FALSE, EntVect = FALSE,
+        uselogtarget = FALSE, logtarget = NULL)
+
+EntropyMCMC.mc(plmc1, method = "A.Nearest.Neighbor", k = 1, trim = 0.02, eps=0,
+        all.f = TRUE, verb = FALSE, EntVect = FALSE, nbcores=detectCores(), 
+		    uselogtarget = FALSE, logtarget = NULL)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>plmc1</code></td>
+<td>
+<p>an objects of class <code>plMCMC</code> 
+(for parallel MCMC), like the output of <code>MCMCcopies</code>,
+which contains all the simulations plus target <code class="reqn">f</code> definition and parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The method for estimating the entropy <code class="reqn">E_{p^t}[\log(p^t)]</code>. 
+Methods currently  implemented are :
+<code>"NearestNeighbor"</code> as in Kozachenko and Leonenko (1987),  
+<code>"k.NearestNeighbor"</code> as in Leonenko et al. (2005), 
+<code>"A.Nearest.Neighbor"</code> (the default) which is as 
+<code>"k.NearestNeighbor"</code> but uses the <span class="pkg">RANN</span> package for (Approximate) fast computation of nearest neighbors,
+<code>"Gyorfi.trim"</code> subsampling method as defined in Gyorfi and Vander Mulen (1989), 
+plus a tuning parameter <code>trim</code> for trimming the data 
+(see Chauveau and Vandekerkhove (2011)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>The k-nearest neighbor index, the default is <code class="reqn">k=1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trim</code></td>
+<td>
+<p>Parameter controlling the percentage of smallest data from one subsample
+that is removed, only for <code>method = "Gyorfi.trim"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>A parameter controlling precision in the <code>"A.Nearest.Neighbor"</code>" method, 
+the default means no approximation, see the <span class="pkg">RANN</span> package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all.f</code></td>
+<td>
+<p>If <code>TRUE</code> (the default) relative entropy is computed
+over the whole sample. Should be removed in next version.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+<p>Verbose mode</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EntVect</code></td>
+<td>
+<p>If <code>FALSE</code> (the default), the entropy is computed only on the kth-nearest neighbor. If <code>TRUE</code>,  the entropy is computed for all j-NN's for <code class="reqn">j=1</code> to <code class="reqn">k</code> (the latter being mostly for testing purposes).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbcores</code></td>
+<td>
+<p>Number of required (virtual) cores, defaults to all as returned
+by <code>detectCores()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uselogtarget</code></td>
+<td>
+<p>Set to <code>FALSE</code> by default; 
+useful in some cases where <code class="reqn">log(f(\theta))</code> returns <code>-Inf</code> values in 
+Kullback computations because   
+<code class="reqn">f(\theta)</code> itself returns too small values for some <code class="reqn">\theta</code> far from modal regions.
+In these case using a function computing the logarithm of the target 
+can remove the infinity values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logtarget</code></td>
+<td>
+<p>The function defining <code class="reqn">log(f(theta))</code>, <code>NULL</code> by default, 
+required if <code>uselogtarget</code> equals <code>TRUE</code>.
+This option and <code>uselogtarget</code> are currently implemented only for the 
+<code>"A.Nearest.Neighbor"</code> method,
+and for the default <code>EntVect = FALSE</code> option.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Methods based on  Nearest Neighbors (NN) should be preferred since these require less tuning parameters. 
+Some options, as <code>uselogtarget</code> are in testing phase and are not implemented in all the available methods (see Arguments). 
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>KbMCMC</code> (for Kullback MCMC), containing:
+
+
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Kullback</code></td>
+<td>
+<p>A vector of estimated divergences <code class="reqn">K(p^t,f)</code>, 
+for <code class="reqn">t=1</code> up to the number of iterations that have been simulated. 
+This is the convergence/comparison criterion.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Entp</code></td>
+<td>
+<p>A vector of estimated entropies <code class="reqn">E_{p^t}[\log(p^t)]</code>, 
+for <code class="reqn">t=1</code> up to the number of iterations that have been simulated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmc</code></td>
+<td>
+<p>The number of iid copies of each single chain.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dim</code></td>
+<td>
+<p>The state space dimension of the MCMC algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algo</code></td>
+<td>
+<p>The name of the MCMC algorithm that have been used to simulate
+the copies of chains, see <code>MCMCcopies</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>The target density for which the MCMC algorithm is defined; 
+ususally given only up to a multiplicative constant for MCMC in Bayesian models. 
+target must be a function such as the multidimensional gaussian
+<code>target_norm(x,param)</code> with argument and parameters passed 
+like in the example below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The <code>method</code> input parameter (see above).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f_param</code></td>
+<td>
+<p>A list holding all the necessary target parameters, 
+consistent with the target definition.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_param</code></td>
+<td>
+<p>A list holding all the necessary parameters 
+for the proposal density of the MCMC algorithm that have been used.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>The method <code>"Resubst"</code> is implemented for testing, without theoretical guarantee of convergence.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Didier Chauveau, Houssam Alrachid.</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Chauveau, D. and Vandekerkhove, P. (2013), 
+Smoothness of Metropolis-Hastings algorithm and application to entropy estimation.
+<em>ESAIM: Probability and Statistics</em>,  <b>17</b>, 419–431.
+DOI: <a href="http://dx.doi.org/10.1051/ps/2012004">http://dx.doi.org/10.1051/ps/2012004</a>
+</p>
+</li>
+<li>
+<p> Chauveau D. and Vandekerkhove, P. (2014),
+Simulation Based Nearest Neighbor Entropy Estimation for (Adaptive) MCMC Evaluation,
+In <em>JSM Proceedings, Statistical Computing Section</em>.
+Alexandria, VA: American Statistical Association. 2816–2827.
+</p>
+</li>
+<li>
+<p> Chauveau D. and Vandekerkhove, P. (2014),
+The Nearest Neighbor entropy estimate: an adequate tool for adaptive MCMC evaluation.
+<em>Preprint HAL</em> <a href="http://hal.archives-ouvertes.fr/hal-01068081">http://hal.archives-ouvertes.fr/hal-01068081</a>.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>MCMCcopies</code> and 
+<code>MCMCcopies.mc</code> for iid MCMC simulations (single core and multicore),
+<code>EntropyParallel</code> and <code>EntropyParallel.cl</code>
+for simultaneous simulation and entropy estimation (single core and multicore).</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Toy example using the bivariate gaussian target
+## with default parameters value, see target_norm_param
+n = 150; nmc = 50; d=2 # bivariate example
+varq=0.1 # variance of the proposal (chosen too small)
+q_param=list(mean=rep(0,d),v=varq*diag(d))
+## initial distribution, located in (2,2), "far" from target center (0,0)
+Ptheta0 &lt;- DrawInit(nmc, d, initpdf = "rnorm", mean = 2, sd = 1) 
+# simulation of the nmc iid chains, singlecore 
+s1 &lt;- MCMCcopies(RWHM, n, nmc, Ptheta0, target_norm,
+                 target_norm_param, q_param, verb = FALSE)
+summary(s1) # method for "plMCMC" object
+e1 &lt;- EntropyMCMC(s1) # computes Entropy and Kullback divergence estimates
+par(mfrow=c(1,2))
+plot(e1) # default plot.plMCMC method, convergence after about 80 iterations
+plot(e1, Kullback = FALSE) # Plot Entropy estimates over time
+abline(normEntropy(target_norm_param), 0, col=8, lty=2) # true E_f[log(f)]
+</code></pre>
+
+
+</div>

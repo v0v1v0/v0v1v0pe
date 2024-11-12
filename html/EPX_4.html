@@ -1,0 +1,148 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cv.epx</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Balanced K-fold cross-validation for an "<code>epx</code>" object</h2>
+
+<h3>Description</h3>
+
+<p>Balanced K-fold cross-validation based on an "<code>epx</code>" object.
+Hence, we have biased cross-validation as we do not re-run the
+phalanx-formation algorithm for each fold.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cv.epx(
+  epx,
+  folds = NULL,
+  K = 10,
+  folds.out = FALSE,
+  classifier.args = list(),
+  performance.args = list(),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>epx</code></td>
+<td>
+<p>Object of class "<code>epx</code>".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>folds</code></td>
+<td>
+<p>Optional vector specifying to which fold each observation belongs. Must be an <code class="reqn">n</code>-length vector (<code class="reqn">n</code> being the number of
+observations) with integer values only in the range from 1 to <code class="reqn">K</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>Number of folds; default is 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>folds.out</code></td>
+<td>
+<p>Indicates whether a vector indicating fold membership for
+each of the observations will be output; default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>classifier.args</code></td>
+<td>
+<p>Arguments for the base classifier specified by
+<code>epx</code>; default is that used in <code>epx</code> formation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>performance.args</code></td>
+<td>
+<p>Arguments for the performance measure specified by
+<code>epx</code>; default is that used in <code>epx</code> formation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to or from other methods.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An <code class="reqn">(n + 1)</code> by <code class="reqn">(p + 1)</code> matrix, where <code class="reqn">n</code> is the number
+of observations used to train <code>epx</code> and <code class="reqn">p</code> is the number of
+(final) phalanxes. Column <code class="reqn">p + 1</code> of the matrix contains the predicted
+probabilities of relevance from the ensemble of phalanxes,
+and row <code class="reqn">n + 1</code> is the performance (choice of performance measure determined by the
+"<code>epx</code>" object) of the corresponding column.
+</p>
+<p>Setting <code>folds.out</code> as <code>TRUE</code> changes the output of
+<code>cv.epx</code> into a list of two elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>EPX.CV</code></td>
+<td>
+<p>The <code class="reqn">(n + 1)</code> by <code class="reqn">(p + 1)</code> matrix returned by
+default when <code>folds.out = FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FOLDS.USED</code></td>
+<td>
+<p>A vector of length <code class="reqn">n</code> with integer values only
+in the range from 1 to <code>K</code> indicating to which fold
+each observation was randomly assigned for cross-validation.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example with data(harvest)
+
+## Phalanx-formation using a base classifier with 50 trees (default = 500)
+ 
+set.seed(761)
+model &lt;- epx(x = harvest[, -4], y = harvest[, 4],
+            classifier.args = list(ntree = 50))
+
+## 10-fold balanced cross-validation (different base classifier settings)
+## Not run: 
+set.seed(761)
+cv.100 &lt;- cv.epx(model, classifier.args = list(ntree = 100))
+tail(cv.100) # see performance (here, AHR) for all phalanxes and the ensemble
+
+
+## Option to output the vector assigning observations to the K folds
+## (Commented out for speed.)
+set.seed(761)
+cv.folds &lt;- cv.epx(model, folds.out = TRUE)
+tail(cv.folds[[1]])  # same as first example
+table(cv.folds[[2]])  # number of observations in each of the 10 folds
+
+## 10 runs of 10-fold balanced cross-validation (using default settings)
+set.seed(761)
+cv.ahr &lt;- NULL  # store AHR of each ensemble
+for (i in 1:10) {
+  cv.i &lt;- cv.epx(model)
+  cv.ahr &lt;- c(cv.ahr, cv.i[nrow(cv.i), ncol(cv.i)])
+}
+boxplot(cv.ahr)  # to see variation in AHR
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

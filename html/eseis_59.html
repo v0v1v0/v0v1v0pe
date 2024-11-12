@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>signal_hvratio</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate h-v-ratio of seismic components</h2>
+
+<h3>Description</h3>
+
+<p>This function uses three components of a seismic signal, evaluates 
+their spectra and builds the ratio of horizontal to vertical power. 
+For details see http://www.geopsy.org/documentation/geopsy/hv.html.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">signal_hvratio(
+  data,
+  dt,
+  log = FALSE,
+  method = "periodogram",
+  kernel,
+  order = "xyz"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>List</code>, <code>data frame</code> or <code>matrix</code>, seismic
+componenents to be processed. If <code>data</code> is a matrix, the components 
+must be organised as columns. Also, <code>data</code> can be a list of 
+<code>eseis</code> objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p><code>Numeric</code> value, sampling period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p><code>Logical</code> value, unit of spectral power. If set to 
+<code>TRUE</code> power will be used in dB, if set to <code>FALSE</code>, power 
+is used in amplitude squared. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p><code>Character</code> value, method for calculating the spectra. 
+One out of <code>"periodogram"</code> , <code>"autoregressive"</code> and 
+<code>"multitaper"</code>, default is <code>"periodogram"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p><code>Numeric</code> value, window size (number of samples) of 
+the moving window used for smoothing the spectra. By default no smoothing 
+is performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p><code>Character</code> value, order of the seismic components. 
+Describtion must contain the letters <code>"x"</code>,<code>"y"</code> and
+<code>"z"</code> in the order according to the input data set. Default is 
+<code>"xyz"</code> (EW-SN-vertical).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The spectra should be smoothed. This can either be done directly 
+during their calculation or before the calculation of the ratio. For 
+the former case set <code>method = "autoregressive"</code>. For the latter 
+case provide a value for <code>"kernel"</code>, which is the smoothing 
+window size. Smoothing is performed with the logarithms of the spectral 
+power data, using <code>caTools::runmean()</code> with the 
+<code>endrule = "NA"</code>. After smoothing the data is re-linearised.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>data frame</code> with the h-v-frequency ratio.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load example data set
+data(earthquake)
+
+## ATTENTION, THIS EXAMPLE DATA SET IS FAR FROM IDEAL FOR THIS PURPOSE
+
+## detrend data
+s &lt;- signal_detrend(data = s)
+
+## calculate h-v-ratio, will be very rugged
+hv &lt;- signal_hvratio(data = s, 
+                     dt = 1 / 200)
+plot(hv$ratio, 
+     type = "l")
+
+## calculate h-v-ratio using the autogressive spectrum method
+hv &lt;- signal_hvratio(data = s, 
+                     dt = 1 / 200, 
+                     method = "autoregressive")
+plot(hv, type = "l")
+
+## calculate h-v-ratio with a smoothing window equivalent to dt
+hv &lt;- signal_hvratio(data = s, 
+                     dt = 1 / 200,
+                     kernel = 200)
+plot(hv, type = "l")
+
+</code></pre>
+
+
+</div>

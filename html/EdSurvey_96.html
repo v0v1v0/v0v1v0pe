@@ -1,0 +1,96 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rebindAttributes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Copy Data Frame Attributes</h2>
+
+<h3>Description</h3>
+
+<p>Many R functions strip attributes from data frame objects. This
+function assigns the attributes from the <code>attributeData</code> argument
+to the data frame in the <code>data</code> argument.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rebindAttributes(data, attributeData)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a <code>data.frame</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attributeData</code></td>
+<td>
+<p>an <code>edsurvey.data.frame</code> or <code>light.edsurvey.data.frame</code>
+that contains the desired attributes</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a <code>data.frame</code> with a class of a <code>light.edsurvey.data.frame</code> containing
+all elements of data and the attributes (except
+<code>names</code> and <code>row.names</code>) from <code>attributeData</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Paul Bailey and Trang Nguyen
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+require(dplyr)
+PISA2012 &lt;- readPISA(path = paste0(edsurveyHome, "PISA/2012"),
+                     database = "INT",
+                     countries = "ALB", verbose=TRUE)
+ledf &lt;- getData(data = PISA2012, varnames = c("cnt", "oecd", "w_fstuwt",
+                                              "st62q04", "st62q11",
+                                              "st62q13", "math"),
+                dropOmittedLevels = FALSE, addAttributes = TRUE)
+
+omittedLevels &lt;- c('Invalid', 'N/A', 'Missing', 'Miss', 'NA', '(Missing)')
+for (i in c("st62q04", "st62q11", "st62q13")) {
+  ledf[,i] &lt;- factor(ledf[,i], exclude=omittedLevels)
+  ledf[,i] &lt;- as.numeric(ledf[,i])
+}
+
+# after applying some dplyr functions, the "light.edsurvey.data.frame" becomes just "data.frame"
+PISA2012_ledf &lt;- ledf %&gt;%        
+  rowwise() %&gt;% 
+  mutate(avg_3 = mean(c(st62q04, st62q11, st62q13), na.rm = TRUE)) %&gt;% 
+  ungroup() %&gt;%
+  rebindAttributes(data=PISA2012) # could also be called with ledf
+class(PISA2012_ledf) 
+# again, a light.edsurvey.data.frame
+lma &lt;- lm.sdf(formula=math ~ avg_3, data=PISA2012_ledf)
+summary(lma)
+
+PISA2012_ledf &lt;- ledf %&gt;%        
+  rowwise() %&gt;% 
+  mutate(avg_3 = mean(c(st62q04, st62q11, st62q13), na.rm = TRUE)) %&gt;% 
+  ungroup() %&gt;%
+  rebindAttributes(data=ledf) # return attributes and make a light.edsurvey.data.frame 
+# again a light.edsurvey.data.frame
+lma &lt;- lm.sdf(formula=math ~ avg_3, data=PISA2012_ledf)
+summary(lma)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

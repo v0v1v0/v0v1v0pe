@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>clean_labels</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Standardise labels</h2>
+
+<h3>Description</h3>
+
+<p>This function standardises labels e.g. used as variable names or character
+string values, removing non-ascii characters, replacing diacritics (e.g. é,
+ô) with their closest ascii equivalents, and standardises separating
+characters. See details for more information on label transformation.<br></p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">clean_labels(
+  x,
+  sep = "_",
+  transformation = "Any-Latin; Latin-ASCII",
+  protect = ""
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A vector of labels, normally provided as characters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+<p>A character string used as separator, defaulting to '_'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transformation</code></td>
+<td>
+<p>a string to be passed on to <code>stringi::stri_trans_general()</code>
+for conversion. Default is "Any-Latin; Latin-ASCII", which will convert
+any non-latin characters to latin and then converts all accented
+characters to ASCII characters. See <code>stringi::stri_trans_list()</code> for a
+full list of options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>protect</code></td>
+<td>
+<p>a character string defining the punctuation that should be
+protected. This helps prevent meaninful symbols like &gt; and &lt; from being
+removed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The following changes are performed:
+</p>
+
+<ul>
+<li>
+<p> all non-ascii characters are removed
+</p>
+</li>
+<li>
+<p> all diacritics are replaced with their non-accentuated equivalents,
+e.g. 'é', 'ê' and 'è' become 'e'.
+</p>
+</li>
+<li>
+<p> all characters are set to lower case
+</p>
+</li>
+<li>
+<p> separators are standardised to the use of a single character provided
+in <code>sep</code> (defaults to '_'); heading and trailing separators are removed.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>Because of differences between the underlying transliteration engine
+(ICU), the default transformations will not transilierate German umlaute
+correctly. You can add them by specifying "de-ASCII" in the <code>transformation</code>
+string after "Any-Latin".
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thibaut Jombart <a href="mailto:thibautjombart@gmail.com">thibautjombart@gmail.com</a>, Zhian N. Kamvar
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+clean_labels("-_-This is; A    WeÏrD**./sêntënce...")
+clean_labels("-_-This is; A    WeÏrD**./sêntënce...", sep = ".")
+input &lt;- c("Peter and stëven",
+           "peter-and.stëven",
+           "pëtêr and stëven  _-")
+input
+clean_labels(input)
+
+# Don't transliterate non-latin words
+clean_labels(input, transformation = "Latin-ASCII")
+
+# protect useful symbols
+clean_labels(c("energy &gt; 9000", "energy &lt; 9000"), protect = "&gt;&lt;")
+
+# if you only want to clean accents, transform to lower, and transliterate,
+# you can specify "[:punct:][:space:]" for protect:
+clean_labels(input, protect = "[:punct:][:space:]")
+
+# appropriately transliterate Germanic umlaute
+if (stringi::stri_info()$ICU.system) {
+  # This will only be true if you have the correct version of ICU installed
+
+  clean_labels("'é', 'ê' and 'è' become 'e', 'ö' becomes 'oe', etc.", 
+               transformation = "Any-Latin; de-ASCII; Latin-ASCII")
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

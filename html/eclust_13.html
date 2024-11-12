@@ -1,0 +1,342 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>s_pen_separate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit Penalized Regression Models on Simulated Data</h2>
+
+<h3>Description</h3>
+
+<p>This function can run penalized regression models on the
+untransformed design matrix. To be used with simulated data where the
+'truth' is known i.e., you know which features are associated with the
+response. This function was used to produce the simulation results in
+Bhatnagar et al. 2016. Can run lasso, elasticnet, SCAD or MCP models
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">s_pen_separate(x_train, x_test, y_train, y_test, s0,
+  exp_family = c("gaussian", "binomial"), model = c("lasso", "elasticnet",
+  "scad", "mcp"), topgenes = NULL, stability = F, filter = F,
+  include_E = T, include_interaction = F)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x_train</code></td>
+<td>
+<p><code>ntrain x p</code> matrix of simulated training set where
+<code>ntrain</code> is the number of training observations  and <code>p</code> is total
+number of predictors. This matrix needs to have named columns representing
+the feature names or the gene names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_test</code></td>
+<td>
+<p><code>ntest x p</code> matrix of simulated training set where
+<code>ntest</code> is the number of training observations  and <code>p</code> is total
+number of predictors. This matrix needs to have named columns representing
+the feature names or the gene names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_train</code></td>
+<td>
+<p>numeric vector of length <code>ntrain</code> representing the
+responses for the training subjects. If continuous then you must set
+<code>exp_family = "gaussion"</code>. For <code>exp_family="binomial"</code> should be
+either a factor with two levels, or a two-column matrix of counts or
+proportions (the second column is treated as the target class; for a
+factor, the last level in alphabetical order is the target class)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_test</code></td>
+<td>
+<p>numeric vector of length <code>ntest</code> representing the
+responses for the test subjects. If continuous then you must set
+<code>exp_family = "gaussion"</code>. For <code>exp_family="binomial"</code> should be
+either a factor with two levels, or a two-column matrix of counts or
+proportions (the second column is treated as the target class; for a
+factor, the last level in alphabetical order is the target class).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s0</code></td>
+<td>
+<p>chracter vector of the active feature names, i.e., the features in
+<code>x_train</code> that are truly associated with the response.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exp_family</code></td>
+<td>
+<p>Response type. See details for <code>y_train</code> argument
+above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Regression model to be fit on cluster summaries. Default is
+<code>model="lasso"</code> which corresponds to glmnet mixing parameter
+<code>alpha=1</code>. <code>model="elasticnet"</code> corresponds to glmnet mixing
+parameter <code>alpha=0.5</code>, <code>model="mcp"</code> and <code>model="scad"</code> are
+the non-convex models from the <code>ncvreg</code> package</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>topgenes</code></td>
+<td>
+<p>List of features to keep if <code>filter=TRUE</code>. Default is
+<code>topgenes = NULL</code> which means all features are kept for the analysis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stability</code></td>
+<td>
+<p>Should stability measures be calculated. Default is
+<code>stability=FALSE</code>. See details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filter</code></td>
+<td>
+<p>Should analysis be run on a subset of features. Default is
+<code>filter = FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_E</code></td>
+<td>
+<p>Should the environment variable be included in the
+regression analysis. Default is <code>include_E = TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_interaction</code></td>
+<td>
+<p>Should interaction effects between the features in
+<code>x_train</code> and the environment variable be fit. Default is
+<code>include_interaction=TRUE</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The stability of feature importance is defined as the variability of
+feature weights under perturbations of the training set, i.e., small
+modifications in the training set should not lead to considerable changes
+in the set of important covariates (Toloşi, L., &amp; Lengauer, T. (2011)). A
+feature selection algorithm produces a weight, a ranking, and a subset of
+features. In the CLUST and ECLUST methods, we defined a predictor to be
+non-zero if its corresponding cluster representative weight was non-zero.
+Using 10-fold cross validation (CV), we evaluated the similarity between
+two features and their rankings using Pearson and Spearman correlation,
+respectively. For each CV fold we re-ran the models and took the average
+Pearson/Spearman correlation of the 10 choose 2 combinations of estimated
+coefficients vectors. To measure the similarity between two subsets of
+features we took the average of the Jaccard distance in each fold. A
+Jaccard distance of 1 indicates perfect agreement between two sets while no
+agreement will result in a distance of 0.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function has two different outputs depending on whether
+<code>stability = TRUE</code> or <code>stability = FALSE</code>
+</p>
+<p>If <code>stability = TRUE</code> then this function returns a <code>p x 2</code>
+data.frame or data.table of regression coefficients without the intercept.
+The output of this is used for subsequent calculations of stability.
+</p>
+<p>If <code>stability = FALSE</code> then returns a vector with the following
+elements (See Table 3: Measures of Performance in Bhatnagar et al (2016+)
+for definitions of each measure of performance): </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mse or AUC</code></td>
+<td>
+<p>Test set
+mean squared error if <code>exp_family = "gaussion"</code> or test set Area under
+the curve if <code>exp_family = "binomial"</code> calculated using the
+<code>roc</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RMSE</code></td>
+<td>
+<p>Square root of the mse. Only
+applicable if <code>exp_family = "gaussion"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Shat</code></td>
+<td>
+<p>Number of
+non-zero estimated regression coefficients. The non-zero estimated
+regression coefficients are referred to as being selected by the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TPR</code></td>
+<td>
+<p>true positive rate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FPR</code></td>
+<td>
+<p>false positive rate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Correct Sparsity</code></td>
+<td>
+<p>Correct true positives + correct true negative
+coefficients divided by the total number of features</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CorrectZeroMain</code></td>
+<td>
+<p>Proportion of correct true negative main effects</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CorrectZeroInter</code></td>
+<td>
+<p>Proportion of correct true negative interactions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IncorrectZeroMain</code></td>
+<td>
+<p>Proportion of incorrect true negative main
+effects</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IncorrectZeroInter</code></td>
+<td>
+<p>Proportion of incorrect true negative
+interaction effects</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Toloşi, L., &amp; Lengauer, T. (2011). <em>Classification with
+correlated features: unreliability of feature ranking and solutions.
+Bioinformatics, 27(14), 1986-1994.</em>
+</p>
+<p>Bhatnagar, SR., Yang, Y., Blanchette, M., Bouchard, L.,
+Khundrakpam, B., Evans, A., Greenwood, CMT. (2016+). <em>An analytic
+approach for interpretable predictive models in high dimensional data, in
+the presence of interactions with exposures
+<a href="http://sahirbhatnagar.com/slides/manuscript1_SB_v4.pdf">Preprint</a></em>
+</p>
+<p>Langfelder, P., Zhang, B., &amp; Horvath, S. (2008). <em>Defining
+clusters from a hierarchical cluster tree: the Dynamic Tree Cut package for
+R. Bioinformatics, 24(5), 719-720.</em>
+</p>
+<p>Friedman, J., Hastie, T. and Tibshirani, R. (2008)
+<em>Regularization Paths for Generalized Linear Models via Coordinate
+Descent, <a href="http://www.stanford.edu/~hastie/Papers/glmnet.pdf">http://www.stanford.edu/~hastie/Papers/glmnet.pdf</a></em>
+</p>
+<p>Breheny, P. and Huang, J. (2011) <em>Coordinate descent
+algorithms for nonconvex penalized regression, with applications to
+biological feature selection. Ann. Appl. Statist., 5: 232-253.</em>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(magrittr)
+
+# simulation parameters
+rho = 0.90; p = 500 ;SNR = 1 ; n = 200; n0 = n1 = 100 ; nActive = p*0.10 ; cluster_distance = "tom";
+Ecluster_distance = "difftom"; rhoOther = 0.6; betaMean = 2;
+alphaMean = 1; betaE = 3; distanceMethod = "euclidean"; clustMethod = "hclust";
+cutMethod = "dynamic"; agglomerationMethod = "average"
+
+#in this simulation its blocks 3 and 4 that are important
+#leaveOut:  optional specification of modules that should be left out
+#of the simulation, that is their genes will be simulated as unrelated
+#("grey"). This can be useful when simulating several sets, in some which a module
+#is present while in others it is absent.
+d0 &lt;- s_modules(n = n0, p = p, rho = 0, exposed = FALSE,
+                modProportions = c(0.15,0.15,0.15,0.15,0.15,0.25),
+                minCor = 0.01,
+                maxCor = 1,
+                corPower = 1,
+                propNegativeCor = 0.3,
+                backgroundNoise = 0.5,
+                signed = FALSE,
+                leaveOut = 1:4)
+
+d1 &lt;- s_modules(n = n1, p = p, rho = rho, exposed = TRUE,
+                modProportions = c(0.15,0.15,0.15,0.15,0.15,0.25),
+                minCor = 0.4,
+                maxCor = 1,
+                corPower = 0.3,
+                propNegativeCor = 0.3,
+                backgroundNoise = 0.5,
+                signed = FALSE)
+
+truemodule1 &lt;- d1$setLabels
+
+X &lt;- rbind(d0$datExpr, d1$datExpr) %&gt;%
+  magrittr::set_colnames(paste0("Gene", 1:p)) %&gt;%
+  magrittr::set_rownames(paste0("Subject",1:n))
+
+betaMainEffect &lt;- vector("double", length = p)
+betaMainInteractions &lt;- vector("double", length = p)
+
+# the first nActive/2 in the 3rd block are active
+betaMainEffect[which(truemodule1 %in% 3)[1:(nActive/2)]] &lt;- runif(
+  nActive/2, betaMean - 0.1, betaMean + 0.1)
+
+# the first nActive/2 in the 4th block are active
+betaMainEffect[which(truemodule1 %in% 4)[1:(nActive/2)]] &lt;- runif(
+  nActive/2, betaMean+2 - 0.1, betaMean+2 + 0.1)
+betaMainInteractions[which(betaMainEffect!=0)] &lt;- runif(nActive, alphaMean - 0.1, alphaMean + 0.1)
+beta &lt;- c(betaMainEffect, betaE, betaMainInteractions)
+
+result &lt;- s_generate_data(p = p, X = X,
+                          beta = beta,
+                          include_interaction = TRUE,
+                          cluster_distance = cluster_distance,
+                          n = n, n0 = n0,
+                          eclust_distance = Ecluster_distance,
+                          signal_to_noise_ratio = SNR,
+                          distance_method = distanceMethod,
+                          cluster_method = clustMethod,
+                          cut_method = cutMethod,
+                          agglomeration_method = agglomerationMethod,
+                          nPC = 1)
+
+pen_res &lt;- s_pen_separate(x_train = result[["X_train"]],
+                          x_test = result[["X_test"]],
+                          y_train = result[["Y_train"]],
+                          y_test = result[["Y_test"]],
+                          s0 = result[["S0"]],
+                          model = "lasso",
+                          exp_family = "gaussian",
+                          include_interaction = TRUE)
+unlist(pen_res)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

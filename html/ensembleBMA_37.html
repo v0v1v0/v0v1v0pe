@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>crps</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Continuous Ranked Probability Score
+</h2>
+
+<h3>Description</h3>
+
+<p>Computes the continuous ranked probability score (CRPS)
+for univariate ensemble forecasting models. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">crps( fit, ensembleData, dates=NULL, nSamples=NULL, seed=NULL, ...)
+CRPS( fit, ensembleData, dates=NULL, nSamples=NULL, seed=NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+
+<p>A model fit to ensemble forecasting data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ensembleData</code></td>
+<td>
+
+<p>An <code>ensembleData</code> object that includes ensemble forecasts,
+verification observations and possibly dates. 
+Missing values (indicated by <code>NA</code>) are allowed. \
+This need not be the data used for the model <code>fit</code>, 
+although it must include the same ensemble members. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nSamples</code></td>
+<td>
+
+<p>The number of simulation samples for CRPS via simulation.
+For the normal model, the default is analytic computation of the CRPS.
+For the gamma model with a point mass at 0 (precipitation), 
+the CRPS is always computed by simulation,
+with default <code>nSamples = 10000</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Argument to <code>set.seed</code> for random number generation in simulation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+
+<p>The dates for which the CRPS will be computed.
+These dates must be consistent with <code>fit</code> and <code>ensembleData</code>.
+The default is to use all of the dates in <code>fit</code>.
+The dates are ignored if <code>fit</code> originates from <code>fitBMA</code>, 
+which also ignores date information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Included for generic function compatibility.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>These methods are generic, and can be applied to all ensemble forecasting
+models. <br>
+For <code>gamma0</code> model for precipitation and the <code>gamma</code> model
+for wind speed the CRPS is only available through simulation.
+The default number of simulation samples is 10,000. <br>
+Note that the <code>gamma0</code> model for precipitation and the
+<code>gamma</code> model for wind speed may have been applied to a power
+transformation of the data. <br>
+For normal models for temperature and pressure, analytic computation 
+of the CRPS is the default. CRPS will be computed via simulation for
+normal models only if <code>nSamples</code> is set to a positive value. <br>
+For the bivariate normal model for wind speed and direction, the
+CRPS is computed for the marginal wind speed distribution.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>crps</code> is a matrix giving the CRPS for each instance in the data
+for both the raw ensemble and the median probabilistic forecast. <br><code>CRPS</code> is a vector giving the mean of the CRPS over all
+instances for the raw ensemble and the median probabilistic forecast.
+</p>
+
+
+<h3>References</h3>
+
+<p>T. Gneiting and A. E. Raftery,
+Strictly proper scoring rules, prediction and estimation,
+<em>Journal of the American Statistical Association 102:359–378, 2007</em>.
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting and J. M. Sloughter,
+<code>ensembleBMA</code>: An <code>R</code> Package for Probabilistic Forecasting
+using Ensembles and Bayesian Model Averaging,
+Technical Report No. 516R, Department of Statistics, University of
+Washington, 2007 (revised 2010).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleBMA</code>,
+<code>fitBMA</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(ensBMAtest)
+
+  ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+  obs &lt;- paste("T2","obs", sep = ".")
+  ens &lt;- paste("T2", ensMemNames, sep = ".")
+
+  tempTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"],
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+## Not run: # R check
+  tempTestFit &lt;- ensembleBMAnormal( tempTestData, trainingDays = 30)
+
+## End(Not run)
+
+# for quick run only; use more training days for forecasting
+  tempTestFit &lt;- ensembleBMAnormal( tempTestData[1:20,], trainingDays = 8)
+
+  crpsValues &lt;- crps( tempTestFit, tempTestData)
+  colMeans(crpsValues)
+
+  CRPS( tempTestFit, tempTestData)
+</code></pre>
+
+
+</div>

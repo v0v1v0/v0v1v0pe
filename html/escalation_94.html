@@ -1,0 +1,109 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>stop_when_too_toxic</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Stop trial and recommend no dose when a dose is too toxic.</h2>
+
+<h3>Description</h3>
+
+<p>This method stops a dose-finding trial and recommends no dose when sufficient
+probabilistic confidence is reached that the rate of toxicity at a dose
+exceeds some threshold. In other words, it stops when it is likely that a
+dose is too toxic. It can stop when the rule is triggered at the recommended
+dose, at a particular dose, or at any dose. See Details.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">stop_when_too_toxic(parent_selector_factory, dose, tox_threshold, confidence)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>Object of type <code>selector_factory</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dose</code></td>
+<td>
+<p><code>'any'</code> to stop when any dose is too toxic;
+<code>'recommended'</code> to stop when the recommended dose is too toxic; or an
+integer to stop when a particular dose-level is too toxic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tox_threshold</code></td>
+<td>
+<p>We are interested in toxicity probabilities greater than
+this threshold.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confidence</code></td>
+<td>
+<p>Stop when there is this much total probability mass
+supporting that the toxicity rate exceeds the threshold.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The method for calculating probability mass for toxicity rates will
+ultimately be determined by the dose-finding model used and the attendant
+inferential mechanism. For instance, the <code>crm</code> function in
+the dfcrm package calculates the posterior expected mean and variance of the
+slope parameter in a CRM model. It does not use MCMC to draw samples from the
+posterior distribution. Thus, to perform inference on the posterior
+probability of toxicity, this package assumes the dfcrm slope parameter
+follows a normal distribution with the mean and variance calculated by dfcrm.
+In contrast, the <code>stan_crm</code> function in the <code>trialr</code> package needs
+no such assumption because it samples from the posterior parameter
+distribution and uses those samples to infer on the posterior probability of
+toxicity at each dose, dependent on the chosen model for the dose-toxicity
+curve.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code> that can fit a
+dose-finding model to outcomes.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">skeleton &lt;- c(0.05, 0.1, 0.25, 0.4, 0.6)
+target &lt;- 0.25
+
+# We compare a CRM model without a toxicity stopping rule to one with it:
+model1 &lt;- get_dfcrm(skeleton = skeleton, target = target)
+model2 &lt;- get_dfcrm(skeleton = skeleton, target = target) %&gt;%
+  stop_when_too_toxic(dose = 'any', tox_threshold = 0.5, confidence = 0.7)
+
+outcomes &lt;- '1NNN 2NNN 3NNT 3NNN 3TNT 2NNN'
+fit1 &lt;- model1 %&gt;% fit(outcomes)
+fit2 &lt;- model2 %&gt;% fit(outcomes)
+
+# Naturally the first does not advocate stopping:
+fit1 %&gt;% recommended_dose()
+fit1 %&gt;% continue()
+
+# However, after the material toxicity at dose 3, ithe rule is fired:
+fit2 %&gt;% recommended_dose()
+fit2 %&gt;% continue()
+# To verify the requirement to stop, let's calculate the probability that the
+# toxicity rate exceeds 50%
+fit2 %&gt;% prob_tox_exceeds(0.5)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,187 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ebnm_unimodal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Solve the EBNM problem using unimodal distributions</h2>
+
+<h3>Description</h3>
+
+<p>Solves the empirical Bayes normal means (EBNM) problem using the family of
+all unimodal distributions. Identical to function <code>ebnm</code>
+with argument <code>prior_family = "unimodal"</code>. For details
+about the model, see <code>ebnm</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ebnm_unimodal(
+  x,
+  s = 1,
+  mode = 0,
+  scale = "estimate",
+  g_init = NULL,
+  fix_g = FALSE,
+  output = ebnm_output_default(),
+  control = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A vector of observations. Missing observations (<code>NA</code>s) are
+not allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>A vector of standard errors (or a scalar if all are equal).
+Standard errors may not be exactly zero, and missing standard errors are
+not allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>A scalar specifying the mode of the prior <code class="reqn">g</code> or
+<code>"estimate"</code> if the mode is to be estimated from the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>The nonparametric family of unimodal distributions is
+approximated via a finite mixture of uniform distributions
+</p>
+<p style="text-align: center;"><code class="reqn">\pi_1^l \mathrm{Unif}(\mu - a_1, \mu) + \pi_1^u \mathrm{Unif}(\mu, \mu + a_1)
++ \ldots + \pi_K^l \mathrm{Unif}(\mu - a_K, \mu) + \pi_K^u \mathrm{Unif}(\mu, \mu + a_K),</code>
+</p>
+
+<p>where parameters <code class="reqn">\pi_k^l</code> and <code class="reqn">\pi_k^u</code> are estimated and the grid
+of lengths <code class="reqn">(a_1, \ldots, a_K)</code> is fixed in advance. By
+making the grid sufficiently dense, one can obtain an arbitrarily good
+approximation. The grid can be specified by the user via parameter
+<code>scale</code>, in which case the argument should be the vector of
+lengths <code class="reqn">(a_1, \ldots, a_K)</code>; alternatively, if
+<code>scale = "estimate"</code>, then <code>ebnm</code> sets the grid via function
+<code>ebnm_scale_unimix</code>.
+Note that <code>ebnm</code> sets the grid differently from
+function <code>ash</code>. To use the <code>ash</code> grid, set
+<code>scale = "estimate"</code> and pass in <code>gridmult</code> as an additional
+parameter. See <code>ash</code> for defaults and details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g_init</code></td>
+<td>
+<p>The prior distribution <code class="reqn">g</code>. Usually this is left
+unspecified (<code>NULL</code>) and estimated from the data. However, it can be
+used in conjuction with <code>fix_g = TRUE</code> to fix the prior (useful, for
+example, to do computations with the "true" <code class="reqn">g</code> in simulations). If
+<code>g_init</code> is specified but <code>fix_g = FALSE</code>, <code>g_init</code>
+specifies the initial value of <code class="reqn">g</code> used during optimization. This has
+the side effect of fixing the <code>mode</code> and <code>scale</code> parameters. When
+supplied, <code>g_init</code> should be an object of class
+<code>unimix</code> or an <code>ebnm</code> object in which the fitted
+prior is an object of class <code>unimix</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fix_g</code></td>
+<td>
+<p>If <code>TRUE</code>, fix the prior <code class="reqn">g</code> at <code>g_init</code> instead
+of estimating it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>A character vector indicating which values are to be returned.
+Function <code>ebnm_output_default()</code> provides the default return values, while
+<code>ebnm_output_all()</code> lists all possible return values. See <strong>Value</strong>
+below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters to be passed to optimization
+function <code>mixsqp</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters to be passed to function
+<code>ash</code> in package <code>ashr</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An <code>ebnm</code> object. Depending on the argument to <code>output</code>, the
+object is a list containing elements:
+</p>
+
+<dl>
+<dt><code>data</code></dt>
+<dd>
+<p>A data frame containing the observations <code>x</code>
+and standard errors <code>s</code>.</p>
+</dd>
+<dt><code>posterior</code></dt>
+<dd>
+<p>A data frame of summary results (posterior
+means, standard deviations, second moments, and local false sign
+rates).</p>
+</dd>
+<dt><code>fitted_g</code></dt>
+<dd>
+<p>The fitted prior <code class="reqn">\hat{g}</code>.</p>
+</dd>
+<dt><code>log_likelihood</code></dt>
+<dd>
+<p>The optimal log likelihood attained,
+<code class="reqn">L(\hat{g})</code>.</p>
+</dd>
+<dt><code>posterior_sampler</code></dt>
+<dd>
+<p>A function that can be used to
+produce samples from the posterior. The sampler takes a single
+parameter <code>nsamp</code>, the number of posterior samples to return per
+observation.</p>
+</dd>
+</dl>
+<p>S3 methods <code>coef</code>, <code>confint</code>, <code>fitted</code>, <code>logLik</code>,
+<code>nobs</code>, <code>plot</code>, <code>predict</code>, <code>print</code>, <code>quantile</code>,
+<code>residuals</code>, <code>simulate</code>, <code>summary</code>, and <code>vcov</code>
+have been implemented for <code>ebnm</code> objects. For details, see the
+respective help pages, linked below under <strong>See Also</strong>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>ebnm</code> for examples of usage and model details.
+</p>
+<p>Available S3 methods include <code>coef.ebnm</code>,
+<code>confint.ebnm</code>,
+<code>fitted.ebnm</code>, <code>logLik.ebnm</code>,
+<code>nobs.ebnm</code>, <code>plot.ebnm</code>,
+<code>predict.ebnm</code>, <code>print.ebnm</code>,
+<code>print.summary.ebnm</code>, <code>quantile.ebnm</code>,
+<code>residuals.ebnm</code>, <code>simulate.ebnm</code>,
+<code>summary.ebnm</code>, and <code>vcov.ebnm</code>.
+</p>
+
+
+</div>

@@ -1,0 +1,77 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lik_GaussianPIC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Helper Function - generate likelihood for pair (L,R) and mean gr</h2>
+
+<h3>Description</h3>
+
+<p>Compute P(L_i, R_i | theta = t_k) for observations (L_i, R_i) and grid of
+mean t_k.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lik_GaussianPIC(L, R, gr, s1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>numeric vector of lower bounds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>numeric vector of upper bounds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gr</code></td>
+<td>
+<p>numeric vector of means</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s1</code></td>
+<td>
+<p>numeric vector of standard deviations</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the likelihood under partial interval censoring
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># set-up
+p = 15
+gr = stats::rnorm(p)
+L = R = stats::rnorm(p)
+missing.idx = sample.int(n = p, size = p/5)
+L[missing.idx] = L[missing.idx] - stats::runif(length(missing.idx), 0, 1)
+R[missing.idx] = R[missing.idx] + stats::runif(length(missing.idx), 0, 1)
+
+# R solution
+lik = prod(ifelse(
+           L == R,
+           stats::dnorm(L-gr),
+           stats::pnorm(R-gr) - stats::pnorm(L-gr)))
+
+# Compare R to RcppParallel method
+all.equal(lik, lik_GaussianPIC(L, R, gr, rep(1,p)))
+</code></pre>
+
+
+</div>

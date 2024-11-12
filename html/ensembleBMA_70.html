@@ -1,0 +1,202 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fitBMA</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+BMA model fit to a training set
+</h2>
+
+<h3>Description</h3>
+
+<p>Fits a Bayesian Modeling Averaging mixture model to a given training set.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fitBMA( ensembleData, control = NULL, model = NULL, exchangeable = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ensembleData</code></td>
+<td>
+
+<p>An <code>ensembleData</code> object including ensemble forecasts and 
+verification observations.
+Missing values (indicated by <code>NA</code>) are allowed. Dates are ignored
+if they are included.  This is the training set for the model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+
+<p>A list of control values for the fitting functions. 
+The default is <code>controlBMAnormal()</code> for normal models
+and <code>controlBMAgamma0()</code> for gamma models with a point mass at 0.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+<p>A character string describing the BMA model to be fit. 
+Current choices are <code>"normal"</code> for temperature or pressure data,
+and <code>"gamma0"</code> for precipitation data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exchangeable</code></td>
+<td>
+
+<p>A numeric or character vector or factor indicating groups of
+ensemble members that are exchangeable (indistinguishable).
+The model fit will have equal weights and parameters 
+within each group.
+The default determines exchangeability from <code>ensembleData</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function fits a BMA model to a training data set. <br>
+Methods available for <code>fitBMA</code> objects (the output of <code>fitBMA</code>)
+include: <code>cdf</code>, <code>quantileForecast</code>, and
+<code>modelParameters</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following output components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>One or more components corresponding to the coeffcients of the model.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+<p>The fitted BMA weights for the mixture components for each ensemble member.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nIter</code></td>
+<td>
+
+<p>The number of EM iterations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>power</code></td>
+<td>
+
+<p>A scalar value giving the power (if any) by which the data was transformed
+for modeling.
+The untransformed forecast is used to fit the variance model.
+This is input as part of <code>control</code>,
+and applies only to certain models.
+</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>A. E. Raftery, T. Gneiting, F. Balabdaoui and M. Polakowski,
+Using Bayesian model averaging to calibrate forecast ensembles,
+<em>Monthly Weather Review 133:1155–1174, 2005</em>.
+</p>
+<p>J. M. Sloughter, A. E. Raftery, T. Gneiting and C. Fraley,
+Probabilistic quantitative precipitation forecasting
+using Bayesian model averaging,
+<em>Monthly Weather Review 135:3209–3220, 2007</em>.
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting and J. M. Sloughter,
+<code>ensembleBMA</code>: An <code>R</code> Package for Probabilistic Forecasting
+using Ensembles and Bayesian Model Averaging,
+Technical Report No. 516R, Department of Statistics, University of
+Washington, 2007 (revised 2010).
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting,
+Calibrating Multi-Model Forecast Ensembles
+with Exchangeable and Missing Members using Bayesian Model Averaging,
+<em>Monthly Weather Review 138:190–202, 2010</em>.
+</p>
+<p>J. M. Sloughter, T. Gneiting and A. E. Raftery, 
+Probabilistic wind speed forecasting 
+using ensembles and Bayesian model averaging,
+<em>Journal of the American Statistical Association, 105:25–35, 2010</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleData</code>, 
+<code>ensembleBMA</code>,
+<code>fitBMAgamma</code>, 
+<code>fitBMAgamma0</code>, 
+<code>fitBMAnormal</code>, 
+<code>cdf</code>, 
+<code>quantileForecast</code>, 
+<code>modelParameters</code>, 
+<code>controlBMAgamma</code>,
+<code>controlBMAgamma0</code>,
+<code>controlBMAnormal</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(ensBMAtest)
+
+  ensNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+  obs &lt;- paste("T2","obs", sep = ".")
+  ens &lt;- paste("T2", ensNames, sep = ".")
+
+  tempTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                dates = ensBMAtest[,"vdate"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+  tempTrain &lt;- trainingData( tempTestData, trainingDays = 30,
+                             date  = "2008010100")
+
+  tempTrainFit &lt;- fitBMA( tempTrain, model = "normal")
+
+## equivalent to
+##    tempTrainFit &lt;- fitBMAnormal( tempTrain)
+
+  set.seed(0); exch &lt;- sample(1:length(ens),replace=TRUE)
+  
+  tempTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                exchangeable = exch,
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                dates = ensBMAtest[,"vdate"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+</code></pre>
+
+
+</div>

@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tsd_MHmcmc_p</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generates set of parameters to be used with tsd_MHmcmc()</h2>
+
+<h3>Description</h3>
+
+<p>Interactive script used to generate set of parameters to be
+used with tsd_MHmcmc().
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tsd_MHmcmc_p(
+  result = stop("An output from tsd() must be provided"),
+  default = "dnorm",
+  accept = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>result</code></td>
+<td>
+<p>An object obtained after a tsd fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>default</code></td>
+<td>
+<p>The default distribution for priors; can be dnorm only at that time</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>accept</code></td>
+<td>
+<p>If TRUE, the script does not wait user information</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>tsd_MHmcmc_p generates set of parameters to be used with tsd_MHmcmc()
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix with the parameters
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Marc Girondot
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other Functions for temperature-dependent sex determination: 
+<code>DatabaseTSD</code>,
+<code>DatabaseTSD.version()</code>,
+<code>P_TRT()</code>,
+<code>ROSIE</code>,
+<code>ROSIE.version()</code>,
+<code>TSP.list</code>,
+<code>plot.tsd()</code>,
+<code>predict.tsd()</code>,
+<code>stages</code>,
+<code>tsd()</code>,
+<code>tsd_MHmcmc()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(embryogrowth)
+eo &lt;- subset(DatabaseTSD, Species=="Emys orbicularis", c("Males", "Females", 
+                                       "Incubation.temperature"))
+eo_logistic &lt;- with(eo, tsd(males=Males, females=Females, 
+                                 temperatures=Incubation.temperature))
+pMCMC &lt;- tsd_MHmcmc_p(eo_logistic, accept=TRUE)
+# Take care, it can be very long
+result_mcmc_tsd &lt;- tsd_MHmcmc(result=eo_logistic, 
+		parametersMCMC=pMCMC, n.iter=10000, n.chains = 1,  
+		n.adapt = 0, thin=1, trace=FALSE, adaptive=TRUE)
+# summary() permits to get rapidly the standard errors for parameters
+summary(result_mcmc_tsd)
+plot(result_mcmc_tsd, parameters="S", scale.prior=TRUE, xlim=c(-3, 3), las=1)
+plot(result_mcmc_tsd, parameters="P", scale.prior=TRUE, xlim=c(25, 35), las=1)
+
+eo_flexit &lt;- with(eo, tsd(males=Males, females=Females,
+                                 parameters.initial=c(eo_logistic$par["P"], 
+                                 1/(4*eo_logistic$par["S"]), 
+                                 K1=1, K2=1), 
+                                 temperatures=Incubation.temperature,
+                                 equation="flexit", replicate.CI=NULL))
+pMCMC &lt;- tsd_MHmcmc_p(eo_flexit, accept=TRUE)
+result_mcmc_tsd &lt;- tsd_MHmcmc(result=eo_flexit, 
+		parametersMCMC=pMCMC, n.iter=10000, n.chains = 1,  
+		n.adapt = 0, thin=1, trace=FALSE, adaptive=TRUE)
+# summary() permits to get rapidly the standard errors for parameters
+summary(result_mcmc_tsd)
+plot(result_mcmc_tsd, parameters="S", scale.prior=TRUE, xlim=c(-3, 3), las=1)
+plot(result_mcmc_tsd, parameters="P", scale.prior=TRUE, xlim=c(25, 35), las=1)
+plot(result_mcmc_tsd, parameters="K1", scale.prior=TRUE, xlim=c(-10, 10), las=1)
+plot(result_mcmc_tsd, parameters="K2", scale.prior=TRUE, xlim=c(-10, 10), las=1)
+
+plot(eo_flexit, resultmcmc = result_mcmc_tsd)
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

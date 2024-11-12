@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>splitLexis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Split follow-up time in a Lexis object</h2>
+
+<h3>Description</h3>
+
+<p>The <code>splitLexis</code> function divides each row of a <code>Lexis</code>
+object into disjoint follow-up intervals according to the supplied
+break points.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">splitLexis(lex, breaks, time.scale, tol=.Machine$double.eps^0.5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lex</code></td>
+<td>
+<p>an object of class <code>Lexis</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>a vector of break points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time.scale</code></td>
+<td>
+<p>the name or number of the time scale to be split</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>numeric value &gt;= 0. Intervals shorter than this value are
+dropped</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>Lexis</code> with multiple rows for each row of
+the argument <code>lex</code>. Each row of the new <code>Lexis</code> object
+contains the part of the follow-up interval that falls inside one of
+the time bands defined by the break points.
+</p>
+<p>The variables representing the various time scales, are appropriately
+updated in the new <code>Lexis</code> object. The entry and exit status
+variables are also updated according to the rule that the entry status
+is retained until the end of follow-up. All other variables are
+considered to represent variables that are constant in time, and so
+are replicated across all rows having the same id value.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The <code>splitLexis()</code> function divides follow-up time into intervals
+using breakpoints that are common to all rows of the <code>Lexis</code> object.
+To split a <code>Lexis</code> object by break points that are unique to each
+row, use the <code>cut.Lexis</code> function.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martyn Plummer</p>
+
+
+<h3>See Also</h3>
+
+<p><code>timeBand</code>,
+<code>cutLexis</code>,
+<code>mcutLexis</code>,
+<code>summary.Lexis</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># A small bogus cohort
+xcoh &lt;- structure( list( id = c("A", "B", "C"),
+                      birth = c("14/07/1952", "01/04/1954", "10/06/1987"),
+                      entry = c("04/08/1965", "08/09/1972", "23/12/1991"),
+                       exit = c("27/06/1997", "23/05/1995", "24/07/1998"),
+                       fail = c(1, 0, 1) ),
+                     .Names = c("id", "birth", "entry", "exit", "fail"),
+                  row.names = c("1", "2", "3"),
+                      class = "data.frame" )
+
+# Convert the character dates into numerical variables (fractional years)
+xcoh$bt &lt;- cal.yr( xcoh$birth, format="%d/%m/%Y" )
+xcoh$en &lt;- cal.yr( xcoh$entry, format="%d/%m/%Y" )
+xcoh$ex &lt;- cal.yr( xcoh$exit , format="%d/%m/%Y" )
+
+# See how it looks
+xcoh
+
+# Define as Lexis object with timescales calendar time and age
+Lcoh &lt;- Lexis( entry = list( per=en ),
+                exit = list( per=ex, age=ex-bt ),
+         exit.status = fail,
+                data = xcoh )
+
+# Default plot of follow-up
+plot( Lcoh )
+
+# With a grid and deaths as endpoints
+plot( Lcoh, grid=0:10*10, col="black" )
+points( Lcoh, pch=c(NA,16)[Lcoh$lex.Xst+1] )
+
+# With a lot of bells and whistles:
+plot( Lcoh, grid=0:20*5, col="black", xaxs="i", yaxs="i",
+      xlim=c(1960,2010), ylim=c(0,50), lwd=3, las=1 )
+points( Lcoh, pch=c(NA,16)[Lcoh$lex.Xst+1], col="red", cex=1.5 )
+
+# Split time along two time-axes
+( x2 &lt;- splitLexis( Lcoh, breaks = seq(1900,2000,5), time.scale="per") )
+( x2 &lt;- splitLexis( x2, breaks = seq(0,80,5), time.scale="age" ) )
+str( x2 )
+
+# Tabulate the cases and the person-years
+summary( x2 )
+tapply( status(x2,"exit")==1, list( timeBand(x2,"age","left"),
+                                    timeBand(x2,"per","left") ), sum )
+tapply( dur(x2),  list( timeBand(x2,"age","left"),
+                        timeBand(x2,"per","left") ), sum )
+</code></pre>
+
+
+</div>

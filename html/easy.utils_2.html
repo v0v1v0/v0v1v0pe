@@ -1,0 +1,160 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>checkAlignedDims</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Check whether some dimensions of two arrays are aligned</h2>
+
+<h3>Description</h3>
+
+<p>Check whether some dimensions of two arrays are aligned
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">checkAlignedDims(
+  incoming,
+  reference,
+  align.dims,
+  in.name = NULL,
+  ref.name = NULL,
+  withDimnames = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>incoming</code></td>
+<td>
+<p>The array-like object to check</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>The array-like object to be aligned with</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>align.dims</code></td>
+<td>
+<p>A integer vector indicating which dimensions of
+<code>reference</code> should be used for alignment. The length must be equal to
+the dimension numbers of <code>incoming</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>in.name</code></td>
+<td>
+<p>The name of <code>incoming</code>. Only use for verbose.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref.name</code></td>
+<td>
+<p>The name of <code>reference</code>. Only use for verbose.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>withDimnames</code></td>
+<td>
+<p>Logical. Whether to also align the dimension names.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Some examples for <code>align.dims</code>:
+</p>
+
+<ul>
+<li> <p><code>c(1, 1)</code>: The dim[1] of <code>incoming</code> must align with the
+dim[1] of <code>reference</code>, and the dim[2] of <code>incoming</code> must align with
+the dim[1] of <code>reference</code>.
+</p>
+</li>
+<li> <p><code>c(2, 1)</code>: The dim[1] of <code>incoming</code> must align with the
+dim[2] of <code>reference</code>, and the dim[2] of <code>incoming</code> must align with
+the dim[1] of <code>reference</code>.
+</p>
+</li>
+<li> <p><code>c(NA, 1)</code>: The dim[1] of <code>incoming</code> doesn't need to align
+with any dimension of <code>reference</code>, but the dim[2] of <code>incoming</code>
+must align with the dim[1] of <code>reference</code>.
+</p>
+</li>
+<li> <p><code>c(2, NA)</code>: The dim[1] of <code>incoming</code> must align with the
+dim[2] of <code>reference</code>, but the dim[2] of <code>incoming</code> doesn't need to
+align with any dimension of <code>reference</code>.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>If any dimension is not aligned, raise an error.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Get some expression matrices ----
+exp1 &lt;- matrix(0, 10, 20)
+colnames(exp1) &lt;- paste0("cell_", 1:ncol(exp1))
+rownames(exp1) &lt;- paste0("gene_", 1:nrow(exp1))
+
+exp2 &lt;- matrix(0, 10, 15)
+colnames(exp2) &lt;- paste0("cell_", 1:ncol(exp2))
+rownames(exp2) &lt;- paste0("gene_", 1:nrow(exp2))
+
+exp3 &lt;- matrix(0, 10, 20)
+colnames(exp3) &lt;- paste0("c_", 1:ncol(exp3))
+rownames(exp3) &lt;- paste0("g_", 1:nrow(exp3))
+
+# Get some PCA embbeding matrices ----
+pca1 &lt;- matrix(0, 10, 5)
+rownames(pca1) &lt;- paste0("cell_", 1:nrow(pca1))
+colnames(pca1) &lt;- paste0("PC_", 1:ncol(pca1))
+
+pca2 &lt;- matrix(0, 20, 5)
+rownames(pca2) &lt;- paste0("cell_", 1:nrow(pca2))
+colnames(pca2) &lt;- paste0("PC_", 1:ncol(pca2))
+
+pca3 &lt;- matrix(0, 20, 5)
+rownames(pca3) &lt;- paste0("c_", 1:nrow(pca3))
+colnames(pca3) &lt;- paste0("PC_", 1:ncol(pca3))
+
+# Error: The Dim 2 of exp1 is not aligned with the Dim 2 of exp2!
+try(checkAlignedDims(exp2, exp1, c(1, 2)))
+
+checkAlignedDims(exp3, exp1, c(1, 2))
+
+# Error: The Dim 1 of exp3 is not aligned with the Dim 1 of exp1!
+try(checkAlignedDims(exp3, exp1, c(1, 2), withDimnames = TRUE))
+
+checkAlignedDims(exp3, exp1, c(NA, 2)) # Don't check the rows of exp3
+
+# Error: The Dim 2 of exp3 is not aligned with the Dim 2 of exp1!
+try(checkAlignedDims(exp3, exp1, c(NA, 2), withDimnames = TRUE))
+
+# Error: The Dim 1 of pca1 is not aligned with the Dim 2 of exp1!
+# Don't check the columns of pca1
+try(checkAlignedDims(pca1, exp1, c(2, NA)))
+
+checkAlignedDims(pca2, exp1, c(2, NA))
+checkAlignedDims(pca2, exp1, c(2, NA), withDimnames = TRUE)
+checkAlignedDims(pca3, exp1, c(2, NA))
+
+# Error: The Dim 1 of pca3 is not aligned with the Dim 2 of exp1!
+try(checkAlignedDims(pca3, exp1, c(2, NA), withDimnames = TRUE))
+
+
+</code></pre>
+
+
+</div>

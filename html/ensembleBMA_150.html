@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ensembleBMAgamma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+BMA wind speed modeling 
+</h2>
+
+<h3>Description</h3>
+
+<p>Fits a Bayesian Model Averaging mixture of gammas
+to ensemble forecasts. Intended for predicting wind speed. 
+Allows specification of a training period and forecasting dates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ensembleBMAgamma( ensembleData, trainingDays, dates = NULL, 
+                   control = controlBMAgamma(), exchangeable = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ensembleData</code></td>
+<td>
+
+<p>An <code>ensembleData</code> object including ensemble forecasts 
+with the corresponding verifying observations and their dates.
+Missing values (indicated by <code>NA</code>) are allowed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainingDays</code></td>
+<td>
+
+<p>An integer giving the number of time steps (e.g. days)
+in the training period. There is no default.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+
+<p>The dates for which forecasting models are desired. 
+By default, this will be all dates in <code>ensembleBMA</code> for which
+modeling is allowed given the training rule.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+
+<p>A list of control values for the fitting functions. The defaults are
+given by the function <code>controlBMAgamma0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exchangeable</code></td>
+<td>
+
+<p>A numeric or character vector or factor indicating groups of
+ensemble members that are exchangeable (indistinguishable).
+The models fit will have equal weights and parameters within each group.
+The default determines exchangeability from <code>ensembleData</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The output is for all of the <code>dates</code> in <code>ensembleBMA</code>, so there
+will be missing entries denoted by <code>NA</code> for dates that are too recent 
+to be forecast with  the training rule. <br>
+The following methods are available for <code>ensembleBMAgamma0</code> objects:
+<code>cdf</code>, <code>quantileForecast</code>,   <code>modelParameters</code>, 
+<code>brierScore</code>, <code>crps</code>, <code>CRPS</code> and <code>MAE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following output components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>training</code></td>
+<td>
+
+<p>A list containing information on the training length and lag and
+the number of instances used for training for each modeling day.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob0coefs</code></td>
+<td>
+
+<p>The fitted coefficients in the model for the point mass at 0 
+(probability of zero precipitaion) for each member of the ensemble 
+at each date. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>biasCoefs</code></td>
+<td>
+
+<p>The fitted coefficients in the model for the mean of the gamma components
+for each member of the ensemble at each date (bias correction).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varCoefs</code></td>
+<td>
+
+<p>The fitted coefficients for the model for the variance of gamma
+components for each date.
+The coefficients are the same for all members of the ensemble.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+<p>The fitted BMA weights for the gamma components for each ensemble member at each date.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>power</code></td>
+<td>
+
+<p>A scalar value giving to the power by which the data was transformed
+to fit the models for the  point mass at 0 and the bias model. 
+The untransformed forecast is used to fit the variance model.
+This is input as part of <code>control</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>J. M. Sloughter, T. Gneiting and A. E. Raftery, 
+Probabilistic wind speed forecasting 
+using ensembles and Bayesian model averaging,
+<em>Journal of the American Statistical Association, 105:25–35, 2010</em>.
+</p>
+<p>C. Fraley, A. E. Raftery, T. Gneiting and J. M. Sloughter,
+<code>ensembleBMA</code>: An <code>R</code> Package for Probabilistic Forecasting
+using Ensembles and Bayesian Model Averaging,
+Technical Report No. 516R, Department of Statistics, University of
+Washington, 2007 (revised 2010).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleData</code>, 
+<code>controlBMAgamma</code>, 
+<code>fitBMAgamma</code>,
+<code>cdf</code>,
+<code>quantileForecast</code>,
+<code>modelParameters</code>,
+<code>brierScore</code>,
+<code>crps</code>,
+<code>MAE</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(ensBMAtest)
+
+  ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+  
+  obs &lt;- paste("MAXWSP10","obs", sep = ".")
+  ens &lt;- paste("MAXWSP10", ensMemNames, sep = ".")
+
+  winsTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"], 
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+## Not run:  # R check
+  winsTestFit &lt;- ensembleBMAgamma(winsTestData, trainingDays = 30, 
+                                  control = controlBMAgamma(startupSpeed = 1))
+
+## equivalent to
+##     winsTestFit &lt;- ensembleBMA(winsTestData, trainingDays = 30,
+##                                model = "gamma")
+
+## End(Not run)
+
+# for quick run only; use more training days for forecasting
+   winsTestFit &lt;- ensembleBMAgamma(winsTestData[1:14,], trainingDays = 5,
+                            control = controlBMAgamma(startupSpeed = 1))
+</code></pre>
+
+
+</div>

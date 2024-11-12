@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidyst_kdde</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tidy and geospatial kernel density derivative estimates</h2>
+
+<h3>Description</h3>
+
+<p>Tidy and geospatial versions of kernel density derivative estimates for 1- and 2-dimensional data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_kdde(data, deriv_order=1, ...)
+st_kdde(x, deriv_order=1, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame/tibble of data values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deriv_order</code></td>
+<td>
+<p>derivative order. Default is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>sf object with point geometry</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters in <code>ks::kdde</code> function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The output from <code>*_kdde</code> have the same structure as the kernel density estimate from <code>*_kde</code>, except that <code>estimate</code> is the kernel density derivative values at the grid points, and the additional derived grouping variable <code>deriv_group</code> is the index of the partial derivative, e.g. "deriv (1,0)" and "deriv (0,1)" for a first order derivative for 2-d data. The output is a grouped tibble, grouped by the input grouping variable (if it exists) and by <code>deriv_group</code>.
+</p>
+<p>For details of the computation of the kernel density derivative estimate and the bandwidth selector procedure, see <code>?ks::kdde</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>–For <code>tidy_kdde</code>, the output is an object of class <code>tidy_ks</code>, which is a tibble with columns: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>evaluation points in x-axis (name is taken from 1st input variable in <code>data</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>evaluation points in y-axis (2-d) (name is taken from 2nd input variable in <code>data</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>kernel density derivative estimate values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deriv_order</code></td>
+<td>
+<p>derivative order (same as input)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deriv_ind</code></td>
+<td>
+<p>index of partial derivative</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ks</code></td>
+<td>
+<p>first row (within each <code>group</code>) contains the untidy kernel estimate from <code>ks::kde</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tks</code></td>
+<td>
+<p>short object class label derived from the <code>ks</code> object class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>long object class label</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>grouping variable (if grouped input) (name is taken from grouping variable in <code>data</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deriv_group</code></td>
+<td>
+<p>additional derived grouping variable on partial derivative indices.</p>
+</td>
+</tr>
+</table>
+<p>–For <code>st_kdde</code>, the output is an object of class <code>st_ks</code>, which is a list with fields:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>tidy_ks</code></td>
+<td>
+<p>tibble of simplified output (<code>deriv_ind</code>, <code>ks</code>, <code>tks</code>, <code>label</code>, <code>group</code>, <code>deriv_group</code>) from <code>tidy_kdde</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>sf object of grid of kernel density derivative estimate values, as polygons, with attributes <code>estimate</code>, <code>deriv_ind</code>, <code>group</code>, <code>deriv_group</code> copied from the <code>tidy_ks</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sf</code></td>
+<td>
+<p>sf object of 1% to 99% contour regions of the kernel density derivative estimate, as multipolygons, with attributes <code>contlabel</code> derived from the contour level; and <code>estimate</code>, <code>deriv_ind</code>, <code>group</code>, <code>deriv_group</code> copied from the <code>tidy_ks</code> object.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(ggplot2)
+data(crabs, package="MASS")
+## 1-d density curvature estimate
+crabs1 &lt;- dplyr::select(crabs, FL)
+t1 &lt;- tidy_kdde(crabs1, deriv_order=2)
+gt1 &lt;- ggplot(t1, aes(x=FL))
+gt1 + geom_line(colour=1) + geom_rug_ks(colour=4)
+
+## 2-d density gradient estimate
+crabs2 &lt;- dplyr::select(crabs, FL, CW)
+t2 &lt;- tidy_kdde(crabs2, deriv_order=1) 
+gt2 &lt;- ggplot(t2, aes(x=FL, y=CW)) + 
+    scale_transparent(colorspace::scale_fill_discrete_diverging())
+gt2 + geom_contour_ks(aes(group=deriv_group, colour=after_stat(level))) +
+    colorspace::scale_colour_discrete_diverging() + facet_wrap(~deriv_group)
+gt2 + geom_contour_filled_ks(colour=1) + facet_wrap(~deriv_group)
+## second partial derivative f^(0,1) only
+gt2 + geom_contour_filled_ks(data=dplyr::filter(t2, deriv_ind==2), colour=1)
+
+## geospatial density derivative estimate
+data(wa)
+data(grevilleasf)
+hakeoides &lt;- dplyr::filter(grevilleasf, species=="hakeoides")
+s1 &lt;- st_kdde(hakeoides, deriv_order=1)
+s1_cont &lt;- st_get_contour(s1, which_deriv_ind=1)
+s1_cont2 &lt;- st_get_contour(s1, which_deriv_ind=2, cont=c(25,50,75, 97.5))
+s1_cont3 &lt;- st_get_contour(s1, breaks=contour_breaks(s1))
+
+## base R filled contour plot
+xlim &lt;- c(1.2e5, 1.1e6); ylim &lt;- c(6.1e6, 7.2e6)
+plot(wa, xlim=xlim, ylim=ylim)
+plot(s1, add=TRUE, which_deriv_ind=1)
+
+## geom_sf filled contour plot
+gs &lt;- ggplot(s1) + geom_sf(data=wa, fill=NA) +
+    colorspace::scale_fill_discrete_diverging() + ggthemes::theme_map()
+gs + geom_sf(data=s1_cont, aes(fill=label_percent(contlabel)))  +
+    coord_sf(xlim=xlim, ylim=ylim)
+gs + geom_sf(data=s1_cont2, aes(fill=label_percent(contlabel))) +
+    coord_sf(xlim=xlim, ylim=ylim)
+
+## facet wrapped geom_sf filled contour plot
+## each facet = each partial derivative 
+gs + geom_sf(data=s1_cont3, aes(fill=contlabel)) +
+    coord_sf(xlim=xlim, ylim=ylim) + facet_wrap(~deriv_group)
+</code></pre>
+
+
+</div>

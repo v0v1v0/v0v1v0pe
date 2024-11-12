@@ -1,0 +1,458 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>OMEGA</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>McDonald's omega</h2>
+
+<h3>Description</h3>
+
+<p>This function finds omega total, hierarchical, and subscale, as well as additional
+model-based indices of interpretive relevance (H index, ECV, PUC)
+from a Schmid-Leiman (SL) solution or lavaan single factor, second-order (see below),
+or bifactor solution. The SL-based omegas can either be found from a
+<code>psych::schmid</code>, <code>SL</code>, or,
+in a more flexible way, by leaving
+<code>model = NULL</code> and specifying additional arguments. By setting the
+<code>type</code> argument, results from <code>psych::omega</code>
+can be reproduced.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">OMEGA(
+  model = NULL,
+  type = c("EFAtools", "psych"),
+  g_name = "g",
+  group_names = NULL,
+  add_ind = TRUE,
+  factor_corres = NULL,
+  var_names = NULL,
+  fac_names = NULL,
+  g_load = NULL,
+  s_load = NULL,
+  u2 = NULL,
+  cormat = NULL,
+  pattern = NULL,
+  Phi = NULL,
+  variance = c("correlation", "sums_load")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>class <code>SL</code>, class <code>schmid</code>, or class
+<code>lavaan</code> object. That is, an output object from <code>SL</code> or
+<code>psych::schmid</code>, or a <code>lavaan</code> fit object with a
+single factor, second-order, or bifactor solution. If of class <code>lavaan</code>,
+only <code>g_name</code> needs to be specified additionally. If of class
+<code>SL</code> or <code>schmid</code>, only the arguments <code>factor_corres</code>
+and <code>cormat</code> need to be specified additionally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character. Either <code>"EFAtools"</code> (default) or <code>"psych"</code>
+(see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g_name</code></td>
+<td>
+<p>character. The name of the general factor from the lavaan solution.
+This needs only be specified if <code>model</code> is a <code>lavaan</code> second-order
+or bifactor solution. Default is "g".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_names</code></td>
+<td>
+<p>character. An optional vector of group names. The length
+must correspond to the number of groups for which the <code>lavaan</code> model
+was fitted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add_ind</code></td>
+<td>
+<p>logical. Whether additional indices (H index, ECV, PUC) should
+be calculated or not (see details for these indices). If FALSE, only omegas
+are returned. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factor_corres</code></td>
+<td>
+<p>matrix. A logical matrix or a numeric matrix containing
+0's and 1's that indicates which variable corresponds to which group factor.
+Must have the same dimensions as the matrix of group factor loadings from the
+SL solution. Cross-loadings are allowed here. See examples for use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var_names</code></td>
+<td>
+<p>character. A vector with subtest names in the order
+of the rows from the SL solution. This needs only be specified if <code>model</code>
+is left <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fac_names</code></td>
+<td>
+<p>character. An optional vector of group factor names in the
+order of the columns of the SL solution. If left <code>NULL</code>, names of the
+group factors from the entered solution are taken.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g_load</code></td>
+<td>
+<p>numeric. A vector of general factor loadings from an SL solution.
+This needs only be specified if <code>model</code> is left <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s_load</code></td>
+<td>
+<p>matrix. A matrix of group factor loadings from an SL solution.
+This needs only be specified if <code>model</code> is left <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u2</code></td>
+<td>
+<p>numeric. A vector of uniquenesses from an SL solution. This needs
+only be specified if <code>model</code> is left <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cormat</code></td>
+<td>
+<p>matrix. A correlation matrix to be used when
+<code>variance = "correlation"</code>. If left <code>NULL</code> and an <code>SL</code>
+output is entered in <code>model</code>, the correlation matrix is taken from the
+output. If left <code>NULL</code> and a <code>psych::schmid</code>
+output is entered, the correlation matrix will be found based on the pattern
+matrix and Phi from the <code>psych::schmid</code> output
+using <code>psych::factor.model</code>.
+If left <code>NULL</code> and model is also left <code>NULL</code>, the correlation matrix
+is found based on the pattern matrix and Phi entered. However, if the
+correlation matrix is available, <code>cormat</code> should be specified instead
+of <code>Phi</code> and <code>pattern</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pattern</code></td>
+<td>
+<p>matrix. Pattern coefficients from an oblique factor solution.
+This needs only be specified if <code>model</code> is left <code>NULL</code>,
+<code>variance = "correlation"</code> and <code>cormat</code> is also left <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Phi</code></td>
+<td>
+<p>matrix. Factor intercorrelations from an oblique factor solution.
+This needs only be specified if <code>model</code> is left <code>NULL</code>,
+<code>variance = "correlation"</code> and <code>cormat</code> is also left <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variance</code></td>
+<td>
+<p>character. If <code>"correlation"</code> (default), then total
+variances for the whole scale as well as for the subscale composites are
+calculated based on the correlation
+matrix. If <code>"sums_load"</code>, then total variances are calculated using the
+squared sums of general factor loadings and group factor loadings and
+the sum of uniquenesses (see details).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>## What this function does
+</p>
+<p>This function calculates McDonald's omegas (McDonald, 1978, 1985, 1999),
+the H index (Hancock &amp; Mueller, 2001), the explained common variance (ECV;
+Sijtsma, 2009), and the percent of uncontaminated correlations (PUC; Bonifay
+et al., 2015; Reise et al., 2013).
+</p>
+<p>All types of omegas (total, hierarchical, and subscale) are calculated for
+the general factor as well as for the subscales / group factors (see, e.g.,
+Gignac, 2014; Rodriguez et al., 2016a, 2016b). Omegas refer to the correlation
+between a factor and a unit-weighted composite score and thus the
+true score variance in a unit-weighted composite based on the respective
+indicators. Omega total is the total true score variance in a composite.
+Omega hierarchical is the true score variance in a composite that is attributable
+to the general factor, and omega subscale is the true score variance in a
+composite attributable to all subscales / group factors (for the whole scale)
+or to the specific subscale / group factor (for subscale composites).
+</p>
+<p>The H index (also construct reliability or replicability index) is the
+correlation between an optimally-weighted composite score
+and a factor (Hancock &amp; Mueller, 2001; Rodriguez et al., 2016a, 2016b). It, too,
+can be calculated for the whole scale / general factor as well as for the
+subscales / grouup factors. Low values indicate that a latent variable is not well
+defined by its indicators.
+</p>
+<p>The ECV (Sijtsma, 2009, Rodriguez et al., 2016a, 2016b) is the ratio of the
+variance explained by the general factor and the variance explained by the
+general factor and the group factors.
+</p>
+<p>The PUC (Bonifay et al., 2015; Reise et al., 2013, Rodriguez et al., 2016a,
+2016b) refers to the proportion
+of correlations in the underlying correlation matrix that is not contaminated
+by variance of both the general factor and the group factors (i.e., correlations
+between indicators from different group factors, which reflect only general
+factor variance). The higher the PUC, the more similar a general factor from
+a multidimensional model will be to the single factor from a unidimensional
+model.
+</p>
+<p>## How to use this function
+</p>
+<p>If <code>model</code> is a <code>lavaan</code> second-order or bifactor solution,
+only the name of the general factor from the lavaan model needs to be specified
+additionally with the <code>g_name</code> argument. It is then determined whether this
+general factor is a second-order factor (second-order model with one second-order
+factor assumed) or a breadth factor (bifactor model assumed). Please note that
+this function only works for second-order models if they contain no more than
+one second-order factor. In case of a second-order solution, a
+Schmid-Leiman transformation is performed on the first- and second-order loadings
+and omega coefficents are obtained from the transformed (orthogonalized) solution
+(see <code>SL</code> for more information on Schmid-Leiman transformation).
+There is also the possibility to enter a <code>lavaan</code> single factor solution.
+In this case, <code>g_name</code> is not needed. Finally, if a solution from a
+<code>lavaan</code> multiple group analysis is entered, the indices are computed for
+each group.
+The type argument is not evaluated if <code>model</code> is of class
+<code>lavaan</code>.
+</p>
+<p>If <code>model</code> is of class <code>SL</code> or
+<code>psych::schmid</code> only the
+<code>type</code> and, depending on the type (see below), the <code>factor_corres</code>
+arguments need to be specified additionally. If model is of class
+<code>psych::schmid</code> and <code>variance = "correlation"</code>
+(default), it is
+recommended to also provide the original correlation matrix in <code>cormat</code>
+to get more accurate results. Otherwise, the correlation matrix will be found
+based on the pattern matrix and Phi from the
+<code>psych::schmid</code> output
+using the <code>psych::factor.model</code> function.
+</p>
+<p>If <code>model = NULL</code>, the arguments <code>type</code>, <code>factor_corres</code>
+(depending on the type, see below), <code>var_names</code>, <code>g_load</code>, <code>s_load</code>,
+and <code>u2</code> and either <code>cormat</code> (recommended) or <code>Phi</code> and
+<code>pattern</code> need to be specified. If <code>Phi</code> and <code>pattern</code> are
+specified instead of <code>cormat</code>, the correlation matrix is found using
+the <code>psych::factor.model</code> function.
+</p>
+<p>The only difference between <code>type = "EFAtools"</code> and <code>type = "psych"</code>
+is the determination of variable-to-factor correspondences. <code>type = "psych"</code>
+reproduces the <code>psych::omega</code> results, where
+variable-to-factor correspondences are found by taking the highest
+group factor loading for each variable as the relevant group factor loading.
+To do this, <code>factor_corres</code> must be left <code>NULL</code>.
+</p>
+<p>The calculation of the total variance (for the whole scale as well as the
+subscale composites) can also be controlled in this function using the
+<code>variance</code> argument. For both types—<code>"EFAtools"</code> and <code>"psych"</code>
+—<code>variance</code> is set to <code>"correlation"</code> by default, which means that
+total variances are found using the correlation matrix. If
+<code>variance = "sums_load"</code> the total variance is calculated using the
+squared sums of general loadings and group factor loadings and the sum of the
+uniquenesses. This will only get comparable results to
+<code>variance = "correlation"</code> if no cross-loadings are present and simple
+structure is well-achieved in general with the SL solution (i.e., the
+uniquenesses should capture almost all of the variance not explained by the
+general factor and the variable's allocated group factor).
+</p>
+
+
+<h3>Value</h3>
+
+<p>If found for an SL or <code>lavaan</code> second-order of bifactor solution
+without multiple groups:
+A matrix with omegas for the whole scale and for the subscales and (only if
+<code>add_ind = TRUE</code>) with the H index, ECV, and PUC.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>tot</code></td>
+<td>
+<p>Omega total.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hier</code></td>
+<td>
+<p>Omega hierarchical.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sub</code></td>
+<td>
+<p>Omega subscale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>H index.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ECV</code></td>
+<td>
+<p>Explained common variance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PUC</code></td>
+<td>
+<p>Percent of uncontaminated correlations.</p>
+</td>
+</tr>
+</table>
+<p>If found for a <code>lavaan</code> single factor solution without multiple groups:
+A (named) vector with omega total and (if <code>add_ind = TRUE</code>) the H index
+for the single factor.
+</p>
+<p>If found for a <code>lavaan</code> output from a multiple group analysis: A list
+containing the output described above for each group.
+</p>
+
+
+<h3>Source</h3>
+
+<p>McDonald, R. P. (1978). Generalizability in factorable domains: ‘‘Domain
+validity and generalizability’’. Educational and Psychological Measurement,
+38, 75–79.
+</p>
+<p>McDonald, R. P. (1985). Factor analysis and related methods. Hillsdale,
+NJ: Erlbaum.
+</p>
+<p>McDonald, R. P. (1999). Test theory: A unified treatment. Mahwah,
+NJ: Erlbaum.
+</p>
+<p>Rodriguez, A., Reise, S. P., &amp; Haviland, M. G. (2016a). Applying bifactor
+statistical indices in the evaluation of psychological measures. Journal of
+Personality Assessment, 98, 223-237.
+</p>
+<p>Rodriguez, A., Reise, S. P., &amp; Haviland, M. G. (2016b). Evaluating
+bifactor models: Calculating and interpreting statistical indices.
+Psychological Methods, 21, 137-150.
+</p>
+<p>Hancock, G. R., &amp; Mueller, R. O. (2001). Rethinking construct reliability
+within latent variable systems. In R. Cudeck, S. du Toit, &amp; D. Sörbom (Eds.),
+Structural equation modeling: Present and future—A Festschrift in honor of Karl
+Jöreskog (pp. 195–216). Lincolnwood, IL: Scientific Software International.
+</p>
+<p>Sijtsma, K. (2009). On the use, the misuse, and the very limited usefulness
+of Cronbach’s alpha. Psychometrika, 74, 107–120.
+</p>
+<p>Reise, S. P., Scheines, R., Widaman, K. F., &amp; Haviland, M. G. (2013).
+Multidimensionality and structural coefficient bias in structural equation
+modeling: A bifactor perspective. Educational and Psychological Measurement,
+73, 5–26.
+</p>
+<p>Bonifay, W. E., Reise, S. P., Scheines, R., &amp; Meijer, R. R. (2015).
+When are multidimensional data unidimensional enough for structural equation
+modeling?: An evaluation of the DETECT multidimensionality index. Structural
+Equation Modeling, 22, 504—516.
+</p>
+<p>Gignac, G. E. (2014). On the Inappropriateness of Using Items to
+Calculate Total Scale Score Reliability via Coefficient Alpha for Multidimensional
+Scales. European Journal of Psychological Assessment, 30, 130-139.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Use with lavaan outputs
+
+# Create and fit bifactor model in lavaan (assume all variables have SDs of 1)
+mod &lt;- 'F1 =~ V1 + V2 + V3 + V4 + V5 + V6
+        F2 =~ V7 + V8 + V9 + V10 + V11 + V12
+        F3 =~ V13 + V14 + V15 + V16 + V17 + V18
+        g =~ V1 + V2 + V3 + V4 + V5 + V6 + V7 + V8 + V9 + V10 + V11 + V12 +
+             V13 + V14 + V15 + V16 + V17 + V18'
+fit_bi &lt;- lavaan::cfa(mod, sample.cov = test_models$baseline$cormat,
+                      sample.nobs = 500, estimator = "ml", orthogonal = TRUE)
+
+# Compute omegas and additional indices for bifactor solution
+OMEGA(fit_bi, g_name = "g")
+
+# Compute only omegas
+OMEGA(fit_bi, g_name = "g", add_ind = FALSE)
+
+# Create and fit second-order model in lavaan (assume all variables have SDs of 1)
+mod &lt;- 'F1 =~ V1 + V2 + V3 + V4 + V5 + V6
+        F2 =~ V7 + V8 + V9 + V10 + V11 + V12
+        F3 =~ V13 + V14 + V15 + V16 + V17 + V18
+        g =~ F1 + F2 + F3'
+fit_ho &lt;- lavaan::cfa(mod, sample.cov = test_models$baseline$cormat,
+                      sample.nobs = 500, estimator = "ml")
+
+# Compute omegas and additional indices for second-order solution
+OMEGA(fit_ho, g_name = "g")
+
+
+## Use with an output from the SL function, with type EFAtools
+efa_mod &lt;- EFA(test_models$baseline$cormat, N = 500, n_factors = 3,
+               type = "EFAtools", method = "PAF", rotation = "promax")
+sl_mod &lt;- SL(efa_mod, type = "EFAtools", method = "PAF")
+
+# Two examples how to specify the indicator-to-factor correspondences:
+
+# Based on a specific salience threshold for the loadings (here: .20):
+factor_corres_1 &lt;- sl_mod$sl[, c("F1", "F2", "F3")] &gt;= .2
+
+# Or more flexibly (could also be TRUE and FALSE instead of 0 and 1):
+factor_corres_2 &lt;- matrix(c(rep(0, 12), rep(1, 6), rep(0, 6), rep(1, 6),
+                         rep(0, 6), rep(1, 6), rep(0, 12)), ncol = 3,
+                         byrow = FALSE)
+
+OMEGA(sl_mod, type = "EFAtools", factor_corres = factor_corres_1)
+
+## Use with an output from the psych::schmid function, with type psych for
+## OMEGA
+schmid_mod &lt;- psych::schmid(test_models$baseline$cormat, nfactors = 3,
+                            n.obs = 500, fm = "pa", rotate = "Promax")
+# Find correlation matrix from phi and pattern matrix from psych::schmid output
+OMEGA(schmid_mod, type = "psych")
+# Use specified correlation matrix
+OMEGA(schmid_mod, type = "psych", cormat = test_models$baseline$cormat)
+
+## Manually specify components (useful if omegas should be computed for a SL
+## or bifactor solution found with another program)
+## As an example, we extract the elements from an SL output here. This gives
+## the same results as in the second example above.
+
+efa_mod &lt;- EFA(test_models$baseline$cormat, N = 500, n_factors = 3,
+               type = "EFAtools", method = "PAF", rotation = "promax")
+sl_mod &lt;- SL(efa_mod, type = "EFAtools", method = "PAF")
+
+factor_corres &lt;- matrix(c(rep(0, 12), rep(1, 6), rep(0, 6), rep(1, 6),
+                        rep(0, 6), rep(1, 6), rep(0, 12)), ncol = 3,
+                        byrow = FALSE)
+
+OMEGA(model = NULL, type = "EFAtools", var_names = rownames(sl_mod$sl),
+      g_load = sl_mod$sl[, "g"], s_load = sl_mod$sl[, c("F1", "F2", "F3")],
+      u2 = sl_mod$sl[, "u2"], cormat = test_models$baseline$cormat,
+      factor_corres = factor_corres)
+
+</code></pre>
+
+
+</div>

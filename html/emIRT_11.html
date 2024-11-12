@@ -1,0 +1,107 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mq_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Martin-Quinn Judicial Ideology Scores
+</h2>
+
+<h3>Description</h3>
+
+<p>This data set contains materials related to the Martin-Quinn measures of judicial ideology,
+estimated for every justice serving from October 1937 to October 2013.  The materials are
+based on the July 23, 2014 (2014 Release 01) release of the Supreme Court Database, which
+contain the votes of each Supreme Court justice on each case heard in the court.  The
+data is set up for input to <code>dynIRT()</code>, and also includes point estimates of the same
+model obtained using standard MCMC techniques.  Start values and priors input to this model
+are identical to those used in the MCMC estimates, and were provided by Kevin Quinn. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(mq_data)</code></pre>
+
+
+<h3>Format</h3>
+
+<p>list, containing the following elements:
+</p>
+
+<dl>
+<dt>data.mq</dt>
+<dd>
+<p> Justice voting data, formatted for input to <code>dynIRT()</code>.</p>
+</dd>
+<dt>cur.mq</dt>
+<dd>
+<p> Start values, formatted for input to <code>dynIRT()</code>. </p>
+</dd>
+<dt>priors.mq</dt>
+<dd>
+<p> Priors, formatted for input to <code>dynIRT()</code>.</p>
+</dd>
+<dt>mq_mcmc</dt>
+<dd>
+<p> Ideal point estimates with data via MCMC.</p>
+</dd>
+<dt>justiceName</dt>
+<dd>
+<p> A vector of names identifying the justice that goes with each estimated ideal point.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Original model and the example is based off of Andrew Martin and Kevin Quinn, “Dynamic Ideal
+Point Estimation via Markov Chain Monte Carlo for the U.S. Supreme Court, 1953-1999.” Political
+Analysis 10(2) 134-153.
+</p>
+<p>Variational model is described in Kosuke Imai, James Lo, and Jonathan Olmsted (2016). “Fast Estimation
+of Ideal Points with Massive Data.” American Political Science Review, Vol. 110, No. 4 (December), pp. 631-656.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>'dynIRT'.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+### Replication of Martin-Quinn Judicial Ideology Scores
+### Based on July 23, 2014 (2014 Release 01) release of the Supreme Court Database
+### Start values and priors based on replication code provided by Kevin Quinn
+
+data(mq_data)
+
+## Estimate dynamic variational model using dynIRT()
+lout &lt;- dynIRT(.data = mq_data$data.mq,
+                    .starts = mq_data$cur.mq,
+                    .priors = mq_data$priors.mq,
+                    .control = {list(
+                    threads = 1,
+                    verbose = TRUE,
+                    thresh = 1e-6,
+		    maxit=500
+                    )})
+
+## Extract estimate from variational model
+## Delete point estimates of 0, which are justices missing from that session
+vi.out &lt;- c(t(lout$means$x))
+vi.out[vi.out==0] &lt;- NA
+vi.out &lt;- na.omit(vi.out)
+
+## Compare correlation against MCMC-estimated result
+## Correlates at r=0.93 overall, and 0.96 when excluding Douglas
+cor(vi.out, mq_data$mq_mcmc)	
+cor(vi.out[mq_data$justiceName != "Douglas"],
+ mq_data$mq_mcmc[mq_data$justiceName != "Douglas"])	
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,296 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ABC_rejection</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Rejection sampling scheme for ABC</h2>
+
+<h3>Description</h3>
+
+<p>This function launches a series of <code>nb_simul</code> model simulations with model parameters drawn in the prior distribution specified in <code>prior_matrix</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  ABC_rejection(model, prior, nb_simul, prior_test=NULL, summary_stat_target=NULL,
+  tol=NULL, use_seed=FALSE, seed_count=0, n_cluster=1, verbose=FALSE, progress_bar=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+<p>a <code>R</code> function implementing the model to be simulated. It must take as arguments a vector of model parameter values and it must return a vector of summary statistics. When using the option <code>use_seed=TRUE</code>, <code>model</code> must take as arguments a vector containing a seed value and the model parameter values.
+A tutorial is provided in the package's vignette to dynamically link a binary code to a <code>R</code> function.  Users may alternatively wish to wrap their binary executables using the provided functions <code>binary_model</code> and <code>binary_model_cluster</code>. The use of these functions is associated with slightly different constraints on the design of the binary code (see <code>binary_model</code> and <code>binary_model_cluster</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+
+<p>a list of prior information. Each element of the list corresponds to a model parameter. The list element must be a vector whose first argument determines the type of prior distribution: possible values are <code>"unif"</code> for a uniform distribution on a segment, <code>"normal"</code> for a normal distribution, <code>"lognormal"</code> for a lognormal distribution or <code>"exponential"</code> for an exponential distribution.
+The following arguments of the list elements contain the characteritiscs of the prior distribution chosen: for <code>"unif"</code>, two numbers must be given: the minimum and maximum values of the uniform distribution; for <code>"normal"</code>, two numbers must be given: the mean and standard deviation of the normal distribution; for <code>"lognormal"</code>, two numbers must be given: the mean and standard deviation on the log scale of the lognormal distribution; for <code>"exponential"</code>, one number must be given: the rate of the exponential distribution. User-defined prior distributions can also be provided. See the vignette for additional information on this topic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nb_simul</code></td>
+<td>
+
+<p>a positive integer equal to the desired number of simulations of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_test</code></td>
+<td>
+
+<p>a string expressing the constraints between model parameters.
+This expression will be evaluated as a logical expression, you can use all the logical operators including <code>"&lt;"</code>, <code>"&gt;"</code>, ...
+Each parameter should be designated with <code>"X1"</code>, <code>"X2"</code>, ... in the same order as in the prior definition.
+If not provided, no constraint will be applied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summary_stat_target</code></td>
+<td>
+
+<p>a vector containing the targeted (observed) summary statistics.
+If not provided, <code>ABC_rejection</code> only launches the simulations and outputs the simulation results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+
+<p>tolerance, a strictly positive number (between 0 and 1) indicating the proportion of simulations retained nearest the targeted summary statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_seed</code></td>
+<td>
+
+<p>logical. If <code>FALSE</code> (default), <code>ABC_rejection</code> provides as input to the function <code>model</code> a vector containing the model parameters used for the simulation.
+If <code>TRUE</code>, <code>ABC_rejection</code> provides as input to the function <code>model</code> a vector containing an integer seed value and the model parameters used for the simulation.
+In this last case, the seed value should be used by <code>model</code> to initialize its pseudo-random number generators (if <code>model</code> is stochastic).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed_count</code></td>
+<td>
+
+<p>a positive integer, the initial seed value provided to the function <code>model</code> (if <code>use_seed=TRUE</code>). This value is incremented by 1 at each call of the function <code>model</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_cluster</code></td>
+<td>
+
+<p>a positive integer. If larger than 1 (the default value), <code>ABC_rejection</code> will launch <code>model</code> simulations in parallel on <code>n_cluster</code> cores of the computer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>logical. <code>FALSE</code> by default. If <code>TRUE</code>, <code>ABC_rejection</code> writes in the current directory intermediary results at the end of each step of the algorithm in the file "output".
+These outputs have a matrix format, in wich each raw is a different simulation, the first columns are the parameters used for this simulation, and the last columns are the summary statistics of this simulation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress_bar</code></td>
+<td>
+
+<p>logical, <code>FALSE</code> by default. If <code>TRUE</code>, <code>ABC_rejection</code> will output a bar of progression with the estimated remaining computing time. Option not available with multiple cores.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The returned value is a list containing the following components: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+
+<p>The model parameters used in the <code>model</code> simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stats</code></td>
+<td>
+
+<p>The summary statistics obtained at the end of the <code>model</code> simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+<p>The weights of the different <code>model</code> simulations. In the standard rejection scheme, all <code>model</code> simulations have the same weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stats_normalization</code></td>
+<td>
+
+<p>The standard deviation of the summary statistics across the <code>model</code> simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+
+<p>The number of <code>model</code> simulations performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrec</code></td>
+<td>
+
+<p>The number of retained simulations (if targeted summary statistics are provided).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>computime</code></td>
+<td>
+
+<p>The computing time to perform the simulations.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Franck Jabot, Thierry Faure and Nicolas Dumoulin</p>
+
+
+<h3>References</h3>
+
+<p>Pritchard, J.K., and M.T. Seielstad and A. Perez-Lezaun and
+M.W. Feldman (1999) Population growth of human Y chromosomes: a study
+of Y chromosome microsatellites. <em>Molecular Biology and
+Evolution</em>, <b>16</b>, 1791–1798.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>binary_model</code>, <code>binary_model_cluster</code>, <code>ABC_sequential</code>, <code>ABC_mcmc</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">    ##### EXAMPLE 1 #####
+    #####################
+    set.seed(1)
+
+    ## artificial example to show how to use the 'ABC_rejection' function.
+    ## defining a simple toy model:
+    toy_model&lt;-function(x){ 2 * x + 5 + rnorm(1,0,0.1) }
+
+    ## define prior information
+    toy_prior=list(c("unif",0,1)) # a uniform prior distribution between 0 and 1
+
+    ## only launching simulations with parameters drawn in the prior distributions
+    set.seed(1)
+    n=10
+    ABC_sim&lt;-ABC_rejection(model=toy_model, prior=toy_prior, nb_simul=n)
+    ABC_sim
+
+    ## launching simulations with parameters drawn in the prior distributions
+    # and performing the rejection step
+    sum_stat_obs=6.5
+    tolerance=0.2
+    ABC_rej&lt;-ABC_rejection(model=toy_model, prior=toy_prior, nb_simul=n,
+      summary_stat_target=sum_stat_obs, tol=tolerance)
+
+    ## NB: see the package's vignette to see how to pipeline 'ABC_rejection' with the function
+    # 'abc' of the package 'abc' to perform other rejection schemes.
+ ## Not run:  
+
+    ##### EXAMPLE 2 #####
+    #####################
+
+    ## this time, the model has two parameters and outputs two summary statistics.
+    ## defining a simple toy model:
+    toy_model2&lt;-function(x){ c( x[1] + x[2] + rnorm(1,0,0.1) , x[1] * x[2] + rnorm(1,0,0.1) ) }
+
+    ## define prior information
+    toy_prior2=list(c("unif",0,1),c("normal",1,2))
+    # a uniform prior distribution between 0 and 1 for parameter 1, and a normal distribution
+    # of mean 1 and standard deviation of 2 for parameter 2.
+
+    ## only launching simulations with parameters drawn in the prior distributions
+    set.seed(1)
+    n=10
+    ABC_sim&lt;-ABC_rejection(model=toy_model2, prior=toy_prior2, nb_simul=n)
+    ABC_sim
+
+    ## launching simulations with parameters drawn in the prior distributions
+    # and performing the rejection step
+    sum_stat_obs2=c(1.5,0.5)
+    tolerance=0.2
+    ABC_rej&lt;-ABC_rejection(model=toy_model2, prior=toy_prior2, nb_simul=n,
+      summary_stat_target=sum_stat_obs2, tol=tolerance)
+
+    ## NB: see the package's vignette to see how to pipeline 'ABC_rejection' with the function
+    # 'abc' of the package 'abc' to perform other rejection schemes.
+
+
+    ##### EXAMPLE 3 #####
+    #####################
+
+    ## this time, the model is a C++ function packed into a R function -- this time, the option
+    # 'use_seed' must be turned to TRUE.
+    n=10
+    trait_prior=list(c("unif",3,5),c("unif",-2.3,1.6),c("unif",-25,125),c("unif",-0.7,3.2))
+    trait_prior
+
+    ## only launching simulations with parameters drawn in the prior distributions
+    ABC_sim&lt;-ABC_rejection(model=trait_model, prior=trait_prior, nb_simul=n, use_seed=TRUE)
+    ABC_sim
+
+    ## launching simulations with parameters drawn in the prior distributions and performing
+    # the rejection step
+    sum_stat_obs=c(100,2.5,20,30000)
+    tolerance=0.2
+    ABC_rej&lt;-ABC_rejection(model=trait_model, prior=trait_prior, nb_simul=n,
+      summary_stat_target=sum_stat_obs, tol=tolerance, use_seed=TRUE)
+
+    ## NB: see the package's vignette to see how to pipeline 'ABC_rejection' with the function
+    # 'abc' of the package 'abc' to perform other rejection schemes.
+
+
+    ##### EXAMPLE 4 - Parallel implementations #####
+    ################################################
+
+    ## NB: the option use_seed must be turned to TRUE.
+
+    ## For models already running with the option use_seed=TRUE, simply change
+    # the value of n_cluster:
+    sum_stat_obs=c(100,2.5,20,30000)
+    ABC_simb&lt;-ABC_rejection(model=trait_model, prior=trait_prior, nb_simul=n,
+      use_seed=TRUE, n_cluster=2)
+
+    ## For other models, change the value of n_cluster and modify the model so that the first
+    # parameter becomes a seed information value:
+    toy_model_parallel&lt;-function(x){ 
+	set.seed(x[1])
+	2 * x[2] + 5 + rnorm(1,0,0.1) }
+    sum_stat_obs=6.5
+
+    ABC_simb&lt;-ABC_rejection(model=toy_model_parallel, prior=toy_prior, nb_simul=n,
+      use_seed=TRUE, n_cluster=2)
+ 
+## End(Not run)
+</code></pre>
+
+
+</div>

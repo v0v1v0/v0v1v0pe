@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>logLik.ergm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A <code>logLik()</code> method for <code>ergm</code> fits.</h2>
+
+<h3>Description</h3>
+
+<p>A function to return the log-likelihood associated with an
+<code>ergm</code> fit, evaluating it if
+necessary. If the log-likelihood was not computed for
+<code>object</code>, produces an error unless <code>eval.loglik=TRUE</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'ergm'
+logLik(
+  object,
+  add = FALSE,
+  force.reeval = FALSE,
+  eval.loglik = add || force.reeval,
+  control = control.logLik.ergm(),
+  ...,
+  verbose = FALSE
+)
+
+## S3 method for class 'ergm'
+deviance(object, ...)
+
+## S3 method for class 'ergm'
+AIC(object, ..., k = 2)
+
+## S3 method for class 'ergm'
+BIC(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An <code>ergm</code> fit, returned by
+<code>ergm()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add</code></td>
+<td>
+<p>Logical: If <code>TRUE</code>, instead of returning the
+log-likelihood, return <code>object</code> with log-likelihood value
+(and the null likelihood value) set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force.reeval</code></td>
+<td>
+<p>Logical: If <code>TRUE</code>, reestimate the
+log-likelihood even if <code>object</code> already has an estiamte.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eval.loglik</code></td>
+<td>
+<p>Logical: If <code>TRUE</code>, evaluate the log-likelihood
+if not set on <code>object</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters for algorithm tuning,
+typically constructed with <code>control.logLik.ergm()</code>. Its documentation
+gives the the list of recognized control parameters and their
+meaning. The more generic utility <code>snctrl()</code> (StatNet ConTRoL)
+also provides argument completion for the available control
+functions and limited argument name checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments to the likelihood functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>see help for <code>AIC()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The form of the output of <code>logLik.ergm</code> depends on
+<code>add</code>: <code>add=FALSE</code> (the default), a
+<code>logLik</code> object. If <code>add=TRUE</code> (the default), an
+<code>ergm</code> object with the log-likelihood
+set.
+</p>
+<p>As of version 3.1, all likelihoods for which <code>logLikNull</code> is
+not implemented are computed relative to the reference
+measure. (I.e., a null model, with no terms, is defined to have
+likelihood of 0, and all other models are defined relative to
+that.)
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>deviance(ergm)</code>: A <code>deviance()</code> method.
+</p>
+</li>
+<li> <p><code>AIC(ergm)</code>: An <code>AIC()</code> method.
+</p>
+</li>
+<li> <p><code>BIC(ergm)</code>: A <code>BIC()</code> method.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Hunter, D. R. and Handcock, M. S. (2006)
+<em>Inference in curved exponential family models for
+networks</em>, Journal of Computational and Graphical Statistics.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>logLik()</code>, <code>logLikNull()</code>, <code>ergm.bridge.llr()</code>,
+<code>ergm.bridge.dindstart.llk()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# See help(ergm) for a description of this model. The likelihood will
+# not be evaluated.
+data(florentine)
+## Not run: 
+# The default maximum number of iterations is currently 20. We'll only
+# use 2 here for speed's sake.
+gest &lt;- ergm(flomarriage ~ kstar(1:2) + absdiff("wealth") + triangle, eval.loglik=FALSE)
+
+gest &lt;- ergm(flomarriage ~ kstar(1:2) + absdiff("wealth") + triangle, eval.loglik=FALSE,
+             control=control.ergm(MCMLE.maxit=2))
+# Log-likelihood is not evaluated, so no deviance, AIC, or BIC:
+summary(gest)
+# Evaluate the log-likelihood and attach it to the object.
+
+# The default number of bridges is currently 20. We'll only use 3 here
+# for speed's sake.
+gest.logLik &lt;- logLik(gest, add=TRUE)
+
+gest.logLik &lt;- logLik(gest, add=TRUE, control=control.logLik.ergm(bridge.nsteps=3))
+# Deviances, AIC, and BIC are now shown:
+summary(gest.logLik)
+# Null model likelihood can also be evaluated, but not for all constraints:
+logLikNull(gest) # == network.dyadcount(flomarriage)*log(1/2)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

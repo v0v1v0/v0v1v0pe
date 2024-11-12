@@ -1,0 +1,113 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm_preprocess_response</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Update the network and the response argument.</h2>
+
+<h3>Description</h3>
+
+<p>Update the network and the response argument.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm_preprocess_response(nw, response)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nw</code></td>
+<td>
+<p>a <code>network</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>Either a character string, a formula, or <code>NULL</code> (the default), to specify the response attributes and whether the ERGM is binary or valued. Interpreted as follows: </p>
+
+<dl>
+<dt><code>NULL</code></dt>
+<dd>
+<p>Model simple presence or absence, via a binary ERGM.</p>
+</dd>
+<dt>character string</dt>
+<dd>
+<p>The name of the edge attribute whose value is to be modeled. Type of ERGM will be determined by whether the attribute is <code>logical</code> (<code>TRUE</code>/<code>FALSE</code>) for binary or <code>numeric</code> for valued.</p>
+</dd>
+<dt>a formula</dt>
+<dd>
+<p>must be of the form <code>NAME~EXPR|TYPE</code> (with <code>|</code> being literal). <code>EXPR</code> is evaluated in the formula's environment with the network's edge attributes accessible as variables. The optional <code>NAME</code> specifies the name of the edge attribute into which the results should be stored, with the default being a concise version of <code>EXPR</code>. Normally, the type of ERGM is determined by whether the result of evaluating <code>EXPR</code> is logical or numeric, but the optional <code>TYPE</code> can be used to override by specifying a scalar of the type involved (e.g., <code>TRUE</code> for binary and <code>1</code> for valued).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<ol>
+<li>
+<p> If <code>response</code> is <code>NULL</code> or <code>logical</code>, drop all edge attributes except for <code>na</code> and return the network and the response as they are.
+</p>
+</li>
+<li>
+<p> If <code>response</code> is a character vector of length 1, drop all edge attributes in <code>nw</code> except for the one corresponding to <code>response</code>.
+</p>
+</li>
+<li>
+<p> If <code>response</code> is a formula, construct a name for it and assign to that name (as an edge attribute) the result of evaluating the formula environment; drop all other edge attributes. Return as response the name (possibly with the attribute for the formula attached). If the formula's RHS is of the form a|b use the logicalness of b in Step 4.
+</p>
+</li>
+<li>
+<p> Test if the resulting edge attribute is of mode <code>logical</code>. If so set <code>attr(response,'valued')</code> to <code>FALSE</code>, otherwise to <code>TRUE</code>.
+</p>
+</li>
+</ol>
+<p>If both <code>nw</code> and <code>response</code> are ordinary variables (i.e., not expressions) in the parent frame, <code>nw</code> (whatever it was named) is overwritten with the updated network and <code>response</code> (again, whatever it was named) is deleted. This is for convenience and for making outdated code that relies on <code>response</code> fail immediately rather than introduce subtle bugs. Otherwise, the updated network is returned.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+preproc_check_print &lt;- function(nw, response){
+  ergm_preprocess_response(nw, response) 
+  str(list(
+       valued = is.valued(nw),
+       el = head(as.edgelist(nw, attrname=nw%ergmlhs%"response", output="tibble"),3)
+  ))
+}
+
+data(florentine)
+preproc_check_print(flomarriage, NULL)
+
+flomarriage %e% "w" &lt;- runif(network.edgecount(flomarriage))
+flomarriage %e% "s" &lt;- rep(c(-1,1), length.out=network.edgecount(flomarriage))
+
+# Edge attribute expression
+preproc_check_print(flomarriage, ~w*s)
+
+# Named
+preproc_check_print(flomarriage, wsprod~w*s)
+
+# Binary from valued
+preproc_check_print(flomarriage, ~s&gt;0)
+
+# Default edge attribute mode is valued
+flomarriage[,] &lt;- 0 # Empty network
+preproc_check_print(flomarriage, ~w*s)
+
+# Force default edge attribute mode to binary
+preproc_check_print(flomarriage, ~w|TRUE)
+
+</code></pre>
+
+
+</div>

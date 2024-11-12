@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>analyze_time_bins</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>analyze_time_bins()</h2>
+
+<h3>Description</h3>
+
+<p>Runs a test on each time-bin of <code>time_sequence_data</code>. Supports <code>t.test</code>,
+<code>wilcox.test</code>, <code>(g)lm</code>, and <code>(g)lmer</code>. Also includes support for
+the "bootstrapped-splines" test (see <code>?make_boot_splines_data</code> and
+<a href="http://www.eyetracking-r.com/vignettes/divergence">the divergence vignette</a> for more info).
+By default, this function uses 'proportion-looking' (<code>Prop</code>) as the DV, which can be changed
+by manually specifying the formula. Results can be plotted to see how test-results or parameters
+estimates vary over time. P-values can be adjusted for multiple comparisons with <code>p_adjust_method</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">analyze_time_bins(data, ...)
+
+## S3 method for class 'time_sequence_data'
+analyze_time_bins(
+  data,
+  predictor_column,
+  test,
+  threshold = NULL,
+  alpha = NULL,
+  aoi = NULL,
+  formula = NULL,
+  treatment_level = NULL,
+  p_adjust_method = "none",
+  quiet = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The output of the 'make_time_sequence_data' function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any other arguments to be passed to the selected 'test' function (e.g.,
+paired, var.equal, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor_column</code></td>
+<td>
+<p>The variable whose test statistic you are interested in. If you are not
+interested in a predictor, but the intercept, you can enter "intercept" for this argument.
+Interaction terms are not currently supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+<p>What type of test should be performed in each time bin? Supports
+<code>t.test</code>, <code>wilcox.test</code>, <code>(g)lm</code>, and <code>(g)lmer</code>. Also includes support for
+the "bootstrapped-splines" test (see <code>?make_boot_splines_data</code> and
+<a href="http://www.eyetracking-r.com/vignettes/divergence">the divergence vignette</a> for more info).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>Value of statistic used in determining significance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Alpha value for determining significance, ignored if threshold is given</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aoi</code></td>
+<td>
+<p>Which AOI should be analyzed? If not specified (and dataframe has multiple AOIs),
+then AOI should be a predictor/covariate in your model (so 'formula' needs
+to be specified).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>What formula should be used for the test? Optional for all but
+<code>(g)lmer</code>, if unset will use <code>Prop ~ [predictor_column]</code>. Change this if you want to use a custom DV.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatment_level</code></td>
+<td>
+<p>If your predictor is a factor, regression functions like 'lm' and 'lmer' by default will
+treatment-code it. One option is to sum-code this predictor yourself before entering it
+into this function. Another is to use the 'treatment_level' argument, which specifies the
+level of the predictor. For example, you are testing a model where 'Target' is a predictor,
+which has two levels, 'Animate' and 'Inanimate'. R will code 'Animate' as the reference
+level, and code 'Inanimate' as the treatment level. You'd therefore want to set
+'treatment_level = Inanimate'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_adjust_method</code></td>
+<td>
+<p>Method to adjust p.values for multiple corrections (default="none").
+See <code>p.adjust.methods</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>Should messages and progress bars be suppressed? Default is to show</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A dataframe indicating the results of the test at each time-bin.
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul><li> <p><code>analyze_time_bins(time_sequence_data)</code>: 
+</p>
+</li></ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+data(word_recognition)
+data &lt;- make_eyetrackingr_data(word_recognition,
+                               participant_column = "ParticipantName",
+                               trial_column = "Trial",
+                               time_column = "TimeFromTrialOnset",
+                               trackloss_column = "TrackLoss",
+                               aoi_columns = c('Animate','Inanimate'),
+                               treat_non_aoi_looks_as_missing = TRUE
+)
+response_time &lt;- make_time_sequence_data(data, time_bin_size = 250,
+                                         predictor_columns = c("MCDI_Total"),
+                                         aois = "Animate", summarize_by = "ParticipantName")
+tb_analysis &lt;- analyze_time_bins(response_time, predictor_column = "MCDI_Total",
+                                 test = "lm", threshold = 2)
+summary(tb_analysis)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EllCopEst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the density generator of a (meta-)elliptical copula</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the density generator of a (meta-)elliptical copula
+using the iterative procedure described in (Derumigny and Fermanian, 2022).
+This iterative procedure consists in alternating a step of estimating the data
+via Liebscher's procedure <code>EllDistrEst()</code> and estimating the quantile function
+of the underlying elliptical distribution to transform the data back to the unit cube.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EllCopEst(
+  dataU,
+  Sigma_m1,
+  h,
+  grid = seq(0, 10, by = 0.01),
+  niter = 10,
+  a = 1,
+  Kernel = "epanechnikov",
+  verbose = 1,
+  startPoint = "identity",
+  prenormalization = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataU</code></td>
+<td>
+<p>the data matrix on the <code class="reqn">[0,1]</code> scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Sigma_m1</code></td>
+<td>
+<p>the inverse of the correlation matrix of the components of data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>bandwidth of the kernel for Liebscher's procedure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>the grid at which the density generator is estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>niter</code></td>
+<td>
+<p>the number of iterations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>tuning parameter to improve the performance at 0.
+See Liebscher (2005), Example p.210</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Kernel</code></td>
+<td>
+<p>kernel used for the smoothing.
+Possible choices are <code>gaussian</code>, <code>epanechnikov</code> and <code>triangular</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>if 1, prints the progress of the iterations.
+If 2, prints the normalization constants used at each iteration,
+as computed by <code>DensityGenerator.normalize</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startPoint</code></td>
+<td>
+<p>is the given starting point of the procedure </p>
+
+<ul>
+<li> <p><code>startPoint = "gaussian"</code> for using the gaussian generator as starting point ;
+</p>
+</li>
+<li> <p><code>startPoint = "identity"</code> for a data-driven starting point ;
+</p>
+</li>
+<li> <p><code>startPoint = "A~Phi^{-1}"</code> for another data-driven starting point using
+the Gaussian quantile function.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prenormalization</code></td>
+<td>
+<p>if <code>TRUE</code>, the procedure will normalize the variables
+at each iteration so that the variance is <code class="reqn">1</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list of two elements:
+</p>
+
+<ul>
+<li> <p><code>g_d_norm</code>: the estimated elliptical copula generator at each point of the grid;
+</p>
+</li>
+<li> <p><code>list_path_gdh</code>: the list of estimated elliptical copula generator at each iteration.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Derumigny, A., &amp; Fermanian, J. D. (2022).
+Identifiability and estimation of meta-elliptical copula generators.
+Journal of Multivariate Analysis, article 104962.
+<a href="https://doi.org/10.1016/j.jmva.2022.104962">doi:10.1016/j.jmva.2022.104962</a>.
+</p>
+<p>Liebscher, E. (2005).
+A semiparametric density estimator based on elliptical distributions.
+Journal of Multivariate Analysis, 92(1), 205.
+<a href="https://doi.org/10.1016/j.jmva.2003.09.007">doi:10.1016/j.jmva.2003.09.007</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>EllDistrEst</code> for the estimation of elliptical distributions,
+<code>EllCopSim</code> for the simulation of elliptical copula samples,
+<code>EllCopLikelihood</code> for the computation of the likelihood of a given generator,
+<code>DensityGenerator.normalize</code> to compute the normalized version of a given generator.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Simulation from a Gaussian copula
+grid = seq(0,10,by = 0.01)
+g_d = DensityGenerator.normalize(grid, grid_g = exp(-grid), d = 3)
+n = 10
+# To have a nice estimation, we suggest to use rather n=200
+# (around 20s of computation time)
+U = EllCopSim(n = n, d = 3, grid = grid, g_d = g_d)
+result = EllCopEst(dataU = U, grid, Sigma_m1 = diag(3),
+                   h = 0.1, a = 0.5)
+plot(grid, g_d, type = "l", xlim = c(0,2))
+lines(grid, result$g_d_norm, col = "red", xlim = c(0,2))
+
+# Adding missing observations
+n_NA = 2
+U_NA = U
+for (i in 1:n_NA){
+  U_NA[sample.int(n,1), sample.int(3,1)] = NA
+}
+resultNA = EllCopEst(dataU = U_NA, grid, Sigma_m1 = diag(3),
+                     h = 0.1, a = 0.5)
+lines(grid, resultNA$g_d_norm, col = "blue", xlim = c(0,2))
+
+
+</code></pre>
+
+
+</div>

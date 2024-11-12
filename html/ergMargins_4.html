@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ergm.mma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Function to conduct marginal effects mediation analysis in ERGM.
+</h2>
+
+<h3>Description</h3>
+
+<p>ergm.mma is a function to conduct mediation analysis in ERGM using marginal effects. It computes the total, direct, and indirect average marginal effects for two nested ERGMs fit to the same data. Can be used with discrete or continuous mediators and for multiple mediator analyses. Currently accepts <code>ergm</code>, <code>btergm</code>, <code>mtergm</code>, <code>ergm.count</code>, <code>mlergm</code>, and <code>ergm.multi</code> objects.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ergm.mma(restricted.model,full.model,direct.effect,mediator,
+                  at.controls=NULL, control_vals=NULL,ME="AME")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>restricted.model</code></td>
+<td>
+<p>the ergm without the mediator variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>full.model</code></td>
+<td>
+<p>the ergm including the mediator variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mediator</code></td>
+<td>
+<p>a character string containing the name of the mediator variable. When examining joint mediation with multiple mediators, this is a vector with each entry containing the character strings for each mediator variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direct.effect</code></td>
+<td>
+<p>a character string containing the name of the direct effect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>at.controls</code></td>
+<td>
+<p>a vector of character strings containing the names of control variables to hold at prespecified values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control_vals</code></td>
+<td>
+<p>a vector of numeric values to hold at.controls at during estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ME</code></td>
+<td>
+<p>the type of marginal effect to calculate. Currently accepts either "AME" or "MEM". Defaul it "AME"</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>ergm.mma conducts marginal effects mediation analysis for nested ERGMs fit to the same network by computing the change in average marginal effects between models. The AMEs are estimated on the scale of tie probabilities, not the linear component (log-odds). Standard errors are computed using the Delta method.
+</p>
+<p>A few notes on using ergm.mma:
+</p>
+
+<ul>
+<li>
+<p> ergm.mma default specification uses the AME, which can be computationally intensive in large networks or high dimensional models. If run times are an issue, try specifying ME="MEM".
+</p>
+</li>
+<li>
+<p> ergm.mma can be applied to discrete mediators or multiple mediator analysis.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>Returns a table including the point estimates and standard errors for total, direct, and indirect effects. A single indirect effect is reported for joint mediation analyses. All marginal effects are computed on the scale of tie probabilities, not the linear component (log-odds).
+</p>
+
+
+<h3>Note</h3>
+
+<p>Note that ergm.mma may have restrictive run times in large networks or high dimensional models.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Scott Duxbury, Assistant Professor, University of North Carolina–Chapel Hill, Department of Sociology.
+</p>
+
+
+<h3>References</h3>
+
+<p>Duxbury, Scott W. Forthcoming. "The Problem of Scaling in Exponential Random Graph Models." <em>Sociological Methods &amp; Research</em>.
+</p>
+<p>Karlson, Kristian Bernt, Holm, Anders, and Richard Breen. 2012. "Comparing Regression Coefficients Between Same-sample Nested Models Using Logit and Probit: A New Method." <em>Sociological Methodology</em> 42: 286 - 313.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ergm.AME</code>
+<code>ergm.mod.mma</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+library(ergm)
+
+
+data("faux.mesa.high")
+
+faux.mesa.high
+
+set.seed(21093)
+
+my.ergm1&lt;-ergm(faux.mesa.high~edges+
+            nodecov("Grade")+
+            nodefactor("Race")+
+            nodefactor("Sex")+
+            nodematch("Grade")+
+            nodematch("Sex")+
+            nodematch("Race"),
+            estimate = "MLE")
+
+
+set.seed(21093)
+
+my.ergm2&lt;-ergm(faux.mesa.high~edges+
+                nodecov("Grade")+
+                nodefactor("Race")+
+                nodefactor("Sex")+
+                nodematch("Grade")+
+                nodematch("Sex")+
+                nodematch("Race")+
+               gwesp(.5,fixed=TRUE))
+
+
+###gwesp as single mediator
+ergm.mma(my.ergm1,my.ergm2,mediator="gwesp.fixed.0.5",
+             direct.effect="nodecov.Grade")
+
+
+###multiple mediators
+
+set.seed(21093)
+
+my.ergm3&lt;-ergm(faux.mesa.high~edges+
+                 nodecov("Grade")+
+                 nodefactor("Race")+
+                 nodefactor("Sex")+
+                 nodematch("Grade")+
+                 nodematch("Sex")+
+                 nodematch("Race")+
+                 gwdsp(1,fixed=TRUE)+
+                 gwesp(.5,fixed=TRUE),
+                 #increase MC sample to facilitate convergence
+               control = control.ergm(MCMC.samplesize=5000)
+)
+
+##joint mediation for gwdsp and gwesp
+ergm.mma(my.ergm2,my.ergm3,mediator=c("gwdsp.fixed.1","gwesp.fixed.0.5"),
+         direct.effect=names(my.ergm3$coef[8]))
+
+
+</code></pre>
+
+
+</div>

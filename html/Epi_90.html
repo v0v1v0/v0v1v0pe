@@ -1,0 +1,365 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gen.exp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Generate covariates for drug-exposure follow-up from drug purchase records.
+</h2>
+
+<h3>Description</h3>
+
+<p>From records of drug purchase and possibly known treatment intensity,
+the time since first drug use and cumulative dose at prespecified times
+is computed. Optionally, lagged exposures are computed too,
+i.e. cumulative exposure a prespecified time ago.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gen.exp( purchase, id="id", dop="dop", amt="amt", dpt="dpt",
+               fu, doe="doe", dox="dox",
+           breaks,
+          use.dpt = ( dpt %in% names(purchase) ),
+         push.max = Inf,
+          rm.dose = FALSE,
+             lags = NULL,
+          lag.dec = 1,
+          lag.pre = "lag.",
+         pred.win = Inf )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>purchase</code></td>
+<td>
+<p>Data frame with columns <code>id</code>-person id,
+<code>dop</code> - <code>d</code>ate <code>o</code>f <code>p</code>urchase, <code>amt</code> -
+<code>am</code>oun<code>t</code> purchased, and optionally <code>dpt</code> -
+(<code>d</code>ose <code>p</code>er <code>t</code>ime) ("defined daily dose", DDD,
+that is), how much is assumed to be ingested per unit time. The
+units used for <code>dpt</code> is assumed to be units of <code>amt</code> per
+units of <code>dop</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Character. Name of the id variable in the data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dop</code></td>
+<td>
+<p>Character. Name of the <code>d</code>ate <code>o</code>f
+<code>p</code>urchase variable in the data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>amt</code></td>
+<td>
+<p>Character. Name of the <code>am</code>oun<code>t</code> purchased
+variable in the data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dpt</code></td>
+<td>
+<p>Character. Name of the <code>d</code>ose-<code>p</code>er-<code>t</code>ime
+variable in the data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fu</code></td>
+<td>
+<p>Data frame with <code>f</code>ollow-<code>u</code>p period for each
+person, the person id variable must have the same name as in the
+<code>purchase</code> data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doe</code></td>
+<td>
+<p>Character. Name of the <code>d</code>ate <code>o</code>f <code>e</code>ntry
+variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dox</code></td>
+<td>
+<p>Character. Name of the <code>d</code>ate <code>o</code>f e<code>x</code>it
+variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>Numerical vector of dates at which the time since first
+exposure, cumulative dose etc. are computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.dpt</code></td>
+<td>
+<p>Logical: should we use information on dose per time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>push.max</code></td>
+<td>
+<p>Numerical. How much can purchases maximally be pushed
+forward in time. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rm.dose</code></td>
+<td>
+<p>Logical. Should the dose from omitted period of
+exposure (due to the setting of <code>push.max</code>) be ignored. If
+<code>FALSE</code>, the cumulative dose will be the cumulation of the
+actually purchased amounts, regardless of how far the inception
+dates have been pushed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lags</code></td>
+<td>
+<p>Numerical vector of lag-times used in computing lagged
+cumulative doses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag.dec</code></td>
+<td>
+<p>How many decimals to use in the construction of names
+for the lagged exposure variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag.pre</code></td>
+<td>
+<p>Character string used for prefixing names of lagged
+exposure variables. Aimed to facilitate the use of <code>gen.exp</code>
+for different drugs with the aim of merging information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pred.win</code></td>
+<td>
+<p>The length of the window used for constructing the
+average dose per time used to compute the duration of the last
+purchase. Only used when <code>use.dpt=FALSE</code>. The default value
+<code>Inf</code> corresponds to using the time between first and last
+purchase of drug as the interval for computing average consumption
+per time, and thus the termination of use.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The intention of this function is to generate covariates for a
+particular drug for the entire follow-up of each person. The reason
+that the follow-up prior to first drug purchase and post-exposure is
+included is that the covariates must be defined for all follow-up for
+each person in order to be useful for analysis of disease outcomes.
+</p>
+<p>The functionality is described in terms of calendar time as underlying
+time scale, because this will normally be the time scale for drug
+purchases and for entry and exit for persons. In principle the
+variables termed as dates might equally well refer to say the age
+scale, but this would then have to be true <em>both</em> for the
+purchase data, the follow-up data and the <code>breaks</code> argument.  
+</p>
+<p>Drug purchase records (in <code>purchase</code>) are used to construct
+measures of drug exposure at prespecified timepoints (in
+<code>breaks</code>) in follow-up intervals (in <code>fu</code>). Each person may
+have more than one follow-up interval. They should be disjoint, but
+this is not checked.
+</p>
+<p>If <code>use.dpt</code> is <code>TRUE</code> then the dose per time information is
+used to compute the exposure interval associated with each purchase.
+Exposure intervals are stacked, that is each interval is put after any
+previous. This means that the start of exposure to a given purchase
+can be pushed into the future. The parameter <code>push.max</code> indicates
+the maximally tolerated push. If this is reached by a person, the
+assumption is that some of the purchased drug may not be counted in
+the exposure calculations — see <code>rm.dose</code>.
+</p>
+<p>The <code>dpt</code> can either be a constant, basically translating each
+purchased amount into exposure time the same way for all persons, or
+it can be a vector with different treatment intensities for each
+purchase. In any case the cumulative dose is computed taking
+<code>dpt</code> into account, unless <code>rm.dose</code> is <code>FALSE</code> in
+which case the actual purchased amount is cumulated. The latter is
+slightly counter-intuitive because we are using the <code>dpt</code> to push
+the intervals, and then disregard it when computing the cumulative
+dose. The counter argument is that if the limit <code>push.max</code> is
+reached, the actual dosage may be larger than indicated the
+<code>dpt</code>, and is essentially what this allows for.
+</p>
+<p>If <code>use.dpt</code> is <code>FALSE</code> then the exposure from one purchase
+is assumed to stretch over the time to the next purchase, so we are
+effectively allowing different dosing rates (dose per time) between
+purchases. Formally this approach conditions on the future, because
+the rate of consumption (the accumulation of cumulative exposure) is
+computed based on knowledge of when next purchase is made. Moreover,
+with this approach, periods of non-exposure does not exist, except
+after the last purchase where the future consumption rate is taken to
+be the average over the period of use (or a period of length
+<code>pred.win</code>), and hence defines a date of cessation of drug.
+</p>
+<p>Finally, if <code>use.dpt</code> is <code>FALSE</code>, at least two purchase
+records are required to compute the measures. Therefore persons with
+only one drug purchase record are ignored in calculations.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame with one record per person and follow-up date
+(<code>breaks</code>). Date of entry and date of exit are included too; but
+only follow-up in the intersetion of <code>range(breaks)</code> and
+<code>range(fu$doe,fu$dox)</code> is output.
+</p>
+
+<dl>
+<dt><code>id</code></dt>
+<dd>
+<p>person id.</p>
+</dd>
+<dt><code>dof</code></dt>
+<dd>
+<p>date of follow up, i.e. start of interval. Apart
+from possibly the first interval for each person, this will assume
+values in the set of the values in <code>breaks</code>. All other variables
+refer to status as of this date.</p>
+</dd>
+<dt><code>dur</code></dt>
+<dd>
+<p>the length (<code>dur</code>ation) of interval.</p>
+</dd>
+<dt><code>tfi</code></dt>
+<dd>
+<p><code>t</code>ime <code>f</code>rom first <code>i</code>nitiation of drug.</p>
+</dd>
+<dt><code>off</code></dt>
+<dd>
+<p>Logical, indicating whether the person is
+<code>off</code> drug. So it is <code>FALSE</code> if the person is exposed at <code>dof</code>.</p>
+</dd> 
+<dt><code>doff</code></dt>
+<dd>
+<p><code>d</code>ate of latest transition to <code>off</code>
+drug. Note that tis defined also at dates after drug exposure has been
+resumed.</p>
+</dd>
+<dt><code>tfc</code></dt>
+<dd>
+<p><code>t</code>ime <code>f</code>rom latest <code>c</code>essation of drug.</p>
+</dd>
+<dt><code>ctim</code></dt>
+<dd>
+<p><code>c</code>umulative <code>tim</code>e on the drug.</p>
+</dd>
+<dt><code>cdos</code></dt>
+<dd>
+<p><code>c</code>umulative <code>dos</code>e.</p>
+</dd>
+<dt><code>ldos</code></dt>
+<dd>
+<p>suffixed with one value per element in
+<code>lags</code>, the latter giving the cumulative doses <code>lags</code> before
+<code>dof</code>. </p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Bendix Carstensen, <a href="mailto:b@bxc.dk">b@bxc.dk</a>.  The development of
+this function was supported partly through a grant from the EFSD
+(European Foundation for the Study of Diabetes)</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Lexis</code>, 
+<code>cutLexis</code>,
+<code>mcutLexis</code>,
+<code>addCov.Lexis</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example data for drug purchases in 3 persons --- dates (dop) are
+# measured in years, amount purchased (amt) in no. pills and dose per
+# time (dpt) consequently given in units of pills/year. Note we also
+# include a person (id=4) with one purchase record only.
+n &lt;- c( 10, 18, 8, 1 )
+hole &lt;- rep(0,n[2])
+hole[10] &lt;- 2 # to create a hole of 2 years in purchase dates
+# dates of drug purchase
+dop &lt;- c( 1995.278+cumsum(sample(1:4/10,n[1],replace=TRUE)),
+          1992.351+cumsum(sample(1:4/10,n[2],replace=TRUE)+hole),
+          1997.320+cumsum(sample(1:4/10,n[3],replace=TRUE)),
+          1996.470 )
+# purchased amounts mesured in no. pills
+amt &lt;- sample( 1:3*50 , sum(n), replace=TRUE )
+# prescribed dosage therefore necessarily as pills per year 
+dpt &lt;- sample( 4:1*365, sum(n), replace=TRUE )
+# collect to purchase data frame
+dfr &lt;- data.frame( id = rep(1:4,n),
+                  dop,
+                  amt = amt,
+                  dpt = dpt )
+head( dfr, 3 )
+
+# a simple dataframe for follow-up periods for these 4 persons
+fu &lt;- data.frame( id = 1:4,
+                 doe = c(1995,1992,1996,1997)+1:4/4,
+                 dox = c(2001,2003,2002,2010)+1:4/5 )
+fu
+
+# Note that the following use of gen.exp relies on the fact that the
+# purchase dataframe dfr has variable names "id", "dop", "amt" and
+# "dpt"" and the follow-up data frame fu has variable names "id",
+# "doe" and "dox"
+
+# 1: using the dosage information
+dposx &lt;- gen.exp( dfr,
+                   fu = fu,
+              use.dpt = TRUE,
+               breaks = seq(1990,2015,0.5),
+                 lags = 2:4/4,
+              lag.pre = "l_" )
+format( dposx, digits=5 )
+
+# 2: ignoring the dosage information,
+#    hence person 4 with only one purchase is omitted
+xposx &lt;- gen.exp( dfr,
+                   fu = fu,
+              use.dpt = FALSE,
+               breaks = seq(1990,2015,0.5),
+                 lags = 2:3/5 )
+format( xposx, digits=5 )
+
+# It is possible to have disjoint follow-up periods for the same person:
+fu &lt;- fu[c(1,2,2,3),]
+fu$dox[2] &lt;- 1996.2
+fu$doe[3] &lt;- 1998.3
+fu
+
+# Note that drug purchase information for the period not at risk *is* used
+dposx &lt;- gen.exp( dfr,
+                   fu = fu,
+              use.dpt = TRUE,
+               breaks = seq(1990,2015,0.1),
+                 lags = 2:4/4 )
+format( dposx, digits=5 )
+</code></pre>
+
+
+</div>

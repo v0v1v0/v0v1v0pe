@@ -1,0 +1,111 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>starprep</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prepare model fits for stargazer</h2>
+
+<h3>Description</h3>
+
+<p>Prepare model fits for stargazer
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">starprep(
+  ...,
+  stat = c("std.error", "statistic", "p.value", "ci", "df"),
+  se_type = NULL,
+  clusters = NULL,
+  alpha = 0.05
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>a list of lm_robust or lm objects</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat</code></td>
+<td>
+<p>either "std.error" (the default), "statistic" (the t-statistic), "p.value", "ci", or "df"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_type</code></td>
+<td>
+<p>(optional) if any of the objects are lm objects, what standard
+errors should be used. Must only be one type and will be used for all lm
+objects passed to starprep. See <code>commarobust</code> for more.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+<p>(optional) if any of the objects are lm objects, what clusters
+should be used, if clusters should be used. Must only be one vector and will
+be used for all lm objects passed to starprep. See <code>commarobust</code> for more.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>(optional) if any of the objects are lm objects, what significance level
+should be used for the p-values or confidence intervals</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Used to help extract statistics from lists of model fits for stargazer.
+Prefers lm_robust objects, but because <code>stargazer</code> does not work with <code>lm_robust</code>
+objects, <code>starprep</code> can also take <code>lm</code> objects and calls <code>commarobust</code> to get
+the preferred, robust statistics.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list of vectors of extracted statistics for stargazers
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(stargazer)
+
+lm1 &lt;- lm(mpg ~ hp, data = mtcars)
+lm2 &lt;- lm(mpg ~ hp + wt, data = mtcars)
+
+# Use default "HC2" standard errors
+stargazer(lm1, lm2,
+          se = starprep(lm1, lm2),
+          p = starprep(lm1, lm2, stat = "p.value"),
+          omit.stat = "f")
+# NB: We remove the F-stat because stargazer only can use original F-stat
+# which uses classical SEs
+
+# Use default "CR2" standard errors with clusters
+stargazer(lm1, lm2,
+          se = starprep(lm1, lm2, clusters = mtcars$carb),
+          p = starprep(lm1, lm2, clusters = mtcars$carb, stat = "p.value"),
+          omit.stat = "f")
+
+# Can also specify significance levels and different standard errors
+stargazer(lm1, lm2,
+          ci.custom = starprep(lm1, lm2, se_type = "HC3", alpha = 0.1, stat = "ci"),
+          omit.stat = "f")
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,158 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pick_kurtosis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Kutosis based event picking</h2>
+
+<h3>Description</h3>
+
+<p>The function picks (identifies) events from continuous data using the 
+kurtosis of the signal, and when it reaches beyond a defined threshold 
+value. The end of an event is determined by the signal-to-noise ratio 
+(SNR)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pick_kurtosis(
+  data,
+  on,
+  off = 1,
+  dur_min = 0,
+  dur_max,
+  window_kurt,
+  window_amp,
+  time,
+  dt
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>eseis</code> object, <code>numeric</code> vector or list of 
+objects, data set to be processed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>on</code></td>
+<td>
+<p><code>Numeric</code> value, kurtosis threshold that defines the 
+onset of an event.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>off</code></td>
+<td>
+<p><code>Numeric</code> value, ratio of average post and pre event
+signal amplitude inside a running window. Default is <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dur_min</code></td>
+<td>
+<p><code>Numeric</code> value, minimum duration of the event. This 
+is required as the kurtosis routine tends to identify multipe picks in 
+the beginning of an event.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dur_max</code></td>
+<td>
+<p><code>Numeric</code> value, maximum duration of the event. This
+value can be omitted but would increase computational speed as it 
+determines the length of samples to look for the amplitude ratio that 
+signals the end of an event</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window_kurt</code></td>
+<td>
+<p><code>Numeric</code> value, size of the running window (in
+number of samples) in which the kurtosis is calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window_amp</code></td>
+<td>
+<p><code>Numeric</code> value, size of the running window (in
+number of samples) in which the running mean is calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p><code>POSIXct</code> vector, time vector of the signal(s). If not 
+provided, a synthetic time vector will be created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p><code>Numeric</code> value, sampling period. If omitted, either 
+estimated from <code>time</code> or set to 0.01 s (i.e., f = 100 Hz).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Further reading: 
+</p>
+<p>Baillard, C., Crawford, W.C., Ballu, V., Hibert, C., Mangeney, A., 2014. 
+An automatic kurtosis-based p- and s-phase picker designed for local 
+seismic networks. Bull. Seismol. Soc. Am. 104 (1), 394–409.
+</p>
+<p>Hibert, C., Mangeney, A., Grandjean, G., Baillard, C., Rivet, D., 
+Shapiro, N.M., Satriano, C., Maggi, A., Boissier, P., Ferrazzini, V., 
+Crawford, W., 2014. Automated identification, location, and volume 
+estimation of rockfalls at Piton de la Fournaise Volcano. J. Geophys. 
+Res. Earth Surf. 119 (5), 
+1082–1105. http://dx.doi.org/10.1002/2013JF002970.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>data.frame</code>, picked events.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## load example data set
+data(rockfall)
+
+## preprocess signal (aggregate to increase speed, filter, envelope)
+s &lt;- signal_aggregate(data = rockfall_eseis, n = 4)
+s &lt;- signal_filter(data = s, f = c(5, 20), lazy = TRUE)
+e &lt;- signal_envelope(data = s)
+
+## pick events based on signal kurtosis
+p &lt;- eseis::pick_kurtosis(data = e, 
+                          window_kurt = 200, 
+                          on = 15, 
+                          off = 5, 
+                          dur_min = 10, 
+                          dur_max = 90, 
+                          window_amp = 300)
+
+p$picks
+                     
+</code></pre>
+
+
+</div>

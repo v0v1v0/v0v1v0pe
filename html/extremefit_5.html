@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bootCI.ts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pointwise confidence intervals by bootstrap</h2>
+
+<h3>Description</h3>
+
+<p>Pointwise quantiles and survival probabilities confidence intervals using bootstrap.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bootCI.ts(X, t, Tgrid, h, kernel = TruncGauss.kernel, kpar = NULL,
+  prob = 0.99, threshold = quantile(X, 0.99), B = 100,
+  alpha = 0.05, type = "quantile", CritVal = 3.6, initprop = 1/10,
+  gridlen = 100, r1 = 1/4, r2 = 1/20, plot = F)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a vector of the observed values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>a vector of time covariates which should have the same length as X.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tgrid</code></td>
+<td>
+<p>a sequence of times used to perform the cross validation (can be any sequence in the interval <code>[min(t) , max(t)]</code> ).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>a bandwidth value (vector values are not admitted).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p>a kernel function used to compute the weights in the time domain, with default the truncated gaussian kernel.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kpar</code></td>
+<td>
+<p>a value for the kernel function parameter, with no default value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>used if type = "quantile", a scalar value in <code class="reqn">[0,1]</code> which determines the quantile order (vector values are not admitted).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>used if type = "survival", a scalar value in the domain of X.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>an integer giving the number of bootstrap iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>the type 1 error of the bootstrap (1-<code class="reqn">alpha</code>)-confidence interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>type is either "quantile" or "survival".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CritVal</code></td>
+<td>
+<p>a critical value associated to the kernel function given by <code>CriticalValue</code>. The default value is 3.6 corresponding to the truncated Gaussian kernel.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gridlen, initprop, r1, r2</code></td>
+<td>
+<p>parameters used in the function hill.adapt (see <code>hill.adapt</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>If <code>TRUE</code>, the bootstrap confidence interval is plotted.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each point in <code class="reqn">Tgrid</code>, generate B samples of <code class="reqn">X</code> with replacement to estimate the quantile of order <code class="reqn">prob</code> or the survival probability beyond <code class="reqn">threshold</code>. Determine the bootstrap pointwise (1-<code class="reqn">alpha</code>)-confidence interval for the quantiles or the survival probabilities.
+</p>
+<p>The kernel implemented in this packages are : Biweight kernel, Epanechnikov kernel, Rectangular kernel, Triangular kernel and the truncated Gaussian kernel.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>LowBound</code></td>
+<td>
+<p>the lower bound of the bootstrap (1-<code class="reqn">alpha</code>)-confidence interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>UppBound</code></td>
+<td>
+<p>the upper bound of the bootstrap (1-<code class="reqn">alpha</code>)-confidence interval of level.</p>
+</td>
+</tr>
+</table>
+<h3>Warning</h3>
+
+<p>The executing time of the function can be time consuming if the B parameter or the sample size are high (B=100 and the sample size = 5000 for example) .
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>hill.ts</code>,<code>predict.hill.ts</code>, <code>Biweight.kernel</code>, <code>Epa.kernel</code>, <code>Rectangular.kernel</code>, <code>Triang.kernel</code>, <code>TruncGauss.kernel</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">theta &lt;- function(t){
+   0.5+0.25*sin(2*pi*t)
+ }
+n &lt;- 5000
+t &lt;- 1:n/n
+Theta &lt;- theta(t)
+set.seed(123)
+Data &lt;- NULL
+for(i in 1:n){
+   Data[i] &lt;- rparetomix(1, a = 1/Theta[i], b = 1/Theta[i]+5, c = 0.75)
+ }
+Tgrid &lt;- seq(1, length(Data)-1, length = 20)/n
+h &lt;- 0.1
+## Not run:  #For computing time purpose
+  bootCI.ts(Data, t, Tgrid, h, kernel = TruncGauss.kernel, kpar = c(sigma = 1),
+            CritVal = 3.6, threshold = 2, type = "survival", B = 100, plot = TRUE)
+  true.p &lt;- NULL
+  for(i in 1:n){
+     true.p[i] &lt;- 1-pparetomix(2, a = 1/Theta[i], b = 1/Theta[i]+5, c = 0.75)
+   }
+  lines(t, true.p, col = "red")
+  bootCI.ts(Data, t, Tgrid, h, kernel = TruncGauss.kernel, kpar = c(sigma = 1),
+ prob = 0.999, type = "quantile", B = 100, plot = TRUE)
+  true.quantile &lt;- NULL
+  for(i in 1:n){
+     true.quantile[i] &lt;- qparetomix(0.999, a = 1/Theta[i], b = 1/Theta[i]+5, c = 0.75)
+   }
+  lines(t, log(true.quantile), col = "red")
+
+## End(Not run)
+
+
+</code></pre>
+
+
+</div>

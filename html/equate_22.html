@@ -1,0 +1,394 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>presmoothing</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Frequency Distribution Presmoothing</h2>
+
+<h3>Description</h3>
+
+<p>These functions are used to smooth frequency distributions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">presmoothing(x, ...)
+
+## Default S3 method:
+presmoothing(
+  x,
+  smoothmethod = c("none", "average", "bump", "loglinear"),
+  jmin,
+  asfreqtab = TRUE,
+  ...
+)
+
+## S3 method for class 'formula'
+presmoothing(x, data, ...)
+
+loglinear(
+  x,
+  scorefun,
+  degrees = list(4, 2, 2),
+  grid,
+  rmimpossible,
+  asfreqtab = TRUE,
+  models,
+  stepup = !missing(models),
+  compare = FALSE,
+  choose = FALSE,
+  choosemethod = c("chi", "aic", "bic"),
+  chip,
+  verbose = FALSE,
+  ...
+)
+
+freqbump(x, jmin = 1e-06, asfreqtab = FALSE, ...)
+
+freqavg(x, jmin = 1, asfreqtab = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>either an object of class “<code>freqtab</code>” specifying a
+univariate or multivariate score distribution, or a “<code>formula</code>”
+object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to other methods. For
+<code>presmoothing</code>, these are passed to <code>loglinear</code> and include those
+listed above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smoothmethod</code></td>
+<td>
+<p>character string indicating the smoothing method to be
+used by <code>presmoothing</code>. <code>"none"</code> returns unsmoothed frequencies,
+<code>"bump"</code> adds a small frequency to each score value, <code>"average"</code>
+imputes small frequencies with average values, and <code>"loglinear"</code> fits
+loglinear models. See below for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jmin</code></td>
+<td>
+<p>for <code>smoothmethod = "average"</code>, the minimum frequency, as
+an integer, below which frequencies will be replaced (default is 1). for
+<code>smoothmethod = "bump"</code>, the value to be added to each score point (as
+a probability, with default 1e-6).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asfreqtab</code></td>
+<td>
+<p>logical, with default <code>TRUE</code>, indicating whether or
+not a frequency table should be returned. For <code>smoothmethod =
+"average"</code> and <code>smoothmethod = "bump"</code>, the alternative is a vector of
+frequencies. For <code>loglinear</code>, there are other options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an object of class “<code>freqtab</code>”.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scorefun</code></td>
+<td>
+<p>matrix of score functions used in loglinear presmoothing,
+where each column includes a transformation of the score scale or
+interactions between score scales. If missing, <code>degrees</code> and
+<code>xdegree</code> will be used to construct polynomial score functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degrees</code></td>
+<td>
+<p>list of integer vectors, each one indicating the maximum
+polynomial score transformations to be computed for each variable at a given
+order of interactions. Defaults (<code>degrees = list(4, 2, 2)</code>) are
+provided for up to trivariate interactions. <code>degrees</code> are ignored if
+<code>scorefun</code> or <code>grid</code> are provided. See below for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>matrix with one column per margin in <code>x</code> and one row per
+term in the model. See below for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rmimpossible</code></td>
+<td>
+<p>integer vector indicating columns in <code>x</code> to be used
+in removing impossible scores before smoothing, assuming internal anchor
+variables. Impossible scores are kept by default. See below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>integer vector indicating which model terms should be grouped
+together when fitting multiple nested models. E.g., <code>models = c(1, 1,
+2, 3)</code> will compare three models, with the first two terms in model one, the
+third term added in model two, and the fourth in model three.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stepup</code></td>
+<td>
+<p>logical, with default <code>FALSE</code>, indicating whether or not
+multiple nested models should be automatically fit. If <code>TRUE</code> and
+<code>models</code> is missing, an attempt will be made to create it using
+<code>grid</code> and/or <code>degrees</code>. Otherwise, in the absence of
+<code>models</code>, each column in <code>scorefun</code> will define a new sequential
+model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compare</code></td>
+<td>
+<p>logical, with default <code>FALSE</code>, indicating whether or not
+fit for nested models should be compared. If <code>TRUE</code>, <code>stepup</code> is
+also set to <code>TRUE</code> and only results from the model fit comparison are
+returned, that is, <code>verbose</code> is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>choose</code></td>
+<td>
+<p>logical, with default <code>FALSE</code>, indicating whether or not
+the best-fitting model should be returned after comparing fit of nested
+models. Useful for automating model selection in simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>choosemethod</code></td>
+<td>
+<p>string, indicating the method for selecting a
+best-fitting model when <code>choose = TRUE</code>. <code>"chi"</code>
+selects the most complex model with chi-square p-value below the criterion
+in <code>chip</code>. Remaining methods choose the model with lowest value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chip</code></td>
+<td>
+<p>proportion specifying the type-I error rate for model selection
+based on <code>choosemethod = "chi"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical, with default <code>FALSE</code>, indicating whether or not
+full <code>glm</code> output should be returned.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Loglinear smoothing is a flexible procedure for reducing irregularities in a
+frequency distribution prior to equating, where the degree of each
+polynomial term determines the specific moment of the observed distribution
+that is preserved in the fitted distribution (see below for examples). The
+<code>loglinear</code> function is a wrapper for <code>glm</code>, and is used to
+simplify the creation of polynomial score functions and the fitting and
+comparing of multiple loglinear models.
+</p>
+<p><code>scorefun</code>, if supplied, must contain at least one score function of
+the scale score values. Specifying a list to <code>degrees</code> is an
+alternative to supplying <code>scorefun</code>. Each list element in
+<code>degrees</code> should be a vector equal in length to the number of variables
+contained in <code>x</code>; there should also be one such vector for each
+possible level of interaction between the variables in <code>x</code>.
+</p>
+<p>For example, the default <code>degrees = list(4, 2, 2)</code> is recycled to
+produce <code>list(c(4, 4, 4), c(2, 2, 2), c(2, 2, 2))</code>, resulting in
+polynomials to the fourth power for each univariate distribution, to the
+second power for each two-way interaction, and to the second power for the
+three-way interaction.
+</p>
+<p>Terms can also be specified with <code>grid</code>, which is a matrix with each
+row containing integers specifying the powers for each variable at each
+interaction term, including main effects. For example, the main effect to
+the first power for the total score in a bivariate distribution would be
+<code>c(1, 0)</code>; the interaction to the second power would be <code>c(2, 2)</code>.
+</p>
+<p><code>stepup</code> is used to run nested models based on subsets of the columns
+in <code>scorefun</code>. Output will correspond to models based on columns 1 and
+2, 1 through 3, 1 through 4, to 1 through <code>ncol(scorefun)</code>. This list
+of polynomial terms is then used to create a <code>grid</code> using
+<code>expand.grid</code>. The <code>grid</code> can also be supplied directly, in which
+case <code>degrees</code> will be ignored.
+</p>
+<p><code>compare</code> returns output as an <code>anova</code> table, comparing model fit
+for all the models run with <code>stepup = TRUE</code>, or by specifying more than
+one model in <code>models</code>. When <code>choose = TRUE</code>, the arguments
+<code>choosemethod</code> and <code>chip</code> are used to automatically select the
+best-fitting model based on the <code>anova</code> table from running
+<code>compare</code>.
+</p>
+<p>The remaining smoothing methods make adjustments to scores with low or zero
+frequencies. <code>smoothmethod = "bump"</code> adds the proportion <code>jmin</code> to
+each score point and then adjusts the probabilities to sum to 1.
+<code>smoothmethod = "average"</code> replaces frequencies falling below the
+minimum <code>jmin</code> with averages of adjacent values.
+</p>
+
+
+<h3>Value</h3>
+
+<p>When <code>smoothmethod = "average"</code> or <code>smoothmethod =
+"bump"</code>, either a smoothed frequency vector or table is returned. Otherwise,
+<code>loglinear</code> returns the following: </p>
+<ul>
+<li>
+<p>when <code>compare = TRUE</code>,
+an anova table for model fit </p>
+</li>
+<li>
+<p>when <code>asfreqtab = TRUE</code>, a
+smoothed frequency table </p>
+</li>
+<li>
+<p>when <code>choose = TRUE</code>, a smoothed
+frequency table with attribute "anova" containing the model fit table for
+all models compared </p>
+</li>
+<li>
+<p>when <code>verbose = TRUE</code>, full <code>glm</code>
+output, for all nested models when <code>stepup = TRUE</code> </p>
+</li>
+<li>
+<p>when
+<code>stepup = TRUE</code> and <code>verbose = FALSE</code>, a <code>data.frame</code> of
+fitted frequencies, with one column per model</p>
+</li>
+</ul>
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>default</code>: Default method for frequency tables.
+</p>
+</li>
+<li> <p><code>formula</code>: Method for “<code>formula</code>” objects.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Anthony Albano <a href="mailto:tony.d.albano@gmail.com">tony.d.albano@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Holland, P. W., and Thayer, D. T. (1987). <em>Notes on the use
+of log-linear models for fitting discrete probability distributions</em> (PSR
+Technical Rep. No. 87-79; ETS RR-87-31). Princeton, NJ: ETS.
+</p>
+<p>Holland, P. W., and Thayer, D. T. (2000). Univariate and bivariate loglinear
+models for discrete test score distributions. <em>Journal of Educational
+and Behavioral Statistics, 25</em>, 133–183.
+</p>
+<p>Moses, T., and Holland, P. W. (2008). <em>Notes on a general framework for
+observed score equating</em> (ETS Research Rep. No. RR-08-59). Princeton, NJ:
+ETS.
+</p>
+<p>Moses, T., and Holland, P. W. (2009). Selection strategies for
+univariate loglinear smoothing models and their effect on
+equating function accuracy. <em>Journal of Educational Measurement, 46</em>, 159–176.
+ETS.
+</p>
+<p>Wang, T. (2009). Standard errors of equating for the percentile rank-based
+equipercentile equating with log-linear presmoothing. <em>Journal of
+Educational and Behavioral Statistics, 34</em>, 7–23.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>glm</code>, <code>loglin</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(2010)
+x &lt;- round(rnorm(1000, 100, 15))
+xscale &lt;- 50:150
+xtab &lt;- freqtab(x, scales = xscale)
+
+# Adjust frequencies
+plot(xtab, y = cbind(average = freqavg(xtab),
+  bump = freqbump(xtab)))
+
+# Smooth x up to 8 degrees and choose best fitting model
+# based on aic minimization
+xlog1 &lt;- loglinear(xtab, degrees = 8,
+  choose = TRUE, choosemethod = "aic")
+plot(xtab, as.data.frame(xlog1)[, 2],
+  legendtext = "degree = 3")
+
+# Add "teeth" and "gaps" to x
+# Smooth with formula interface
+teeth &lt;- c(.5, rep(c(1, 1, 1, 1, .5), 20))
+xttab &lt;- as.freqtab(cbind(xscale, c(xtab) * teeth))
+xlog2 &lt;- presmoothing(~ poly(total, 3, raw = TRUE),
+  xttab, showWarnings = FALSE)
+
+# Smooth xt using score functions that preserve 
+# the teeth structure (also 3 moments)
+teeth2 &lt;- c(1, rep(c(0, 0, 0, 0, 1), 20))
+xt.fun &lt;- cbind(xscale, xscale^2, xscale^3)
+xt.fun &lt;- cbind(xt.fun, teeth2, xt.fun * teeth2)
+xlog3 &lt;- loglinear(xttab, xt.fun, showWarnings = FALSE)
+
+# Plot to compare teeth versus no teeth
+op &lt;- par(no.readonly = TRUE)
+par(mfrow = c(3, 1))
+plot(xttab, main = "unsmoothed", ylim = c(0, 30))
+plot(xlog2, main = "ignoring teeth", ylim = c(0, 30))
+plot(xlog3, main = "preserving teeth", ylim = c(0, 30))
+par(op)
+
+# Bivariate example, preserving first 3 moments of total
+# and anchor for x and y, and the covariance
+# between anchor and total
+# see equated scores in Wang (2009), Table 4
+xvtab &lt;- freqtab(KBneat$x, scales = list(0:36, 0:12))
+yvtab &lt;- freqtab(KBneat$y, scales = list(0:36, 0:12))
+Y &lt;- as.data.frame(yvtab)[, 1]
+V &lt;- as.data.frame(yvtab)[, 2]
+scorefun &lt;- cbind(Y, Y^2, Y^3, V, V^2, V^3, V*Y)
+wang09 &lt;- equate(xvtab, yvtab, type = "equip",
+  method = "chained", smooth = "loglin",
+  scorefun = scorefun)
+wang09$concordance
+
+# Removing impossible scores has essentially no impact
+xvlog1 &lt;- loglinear(xvtab, scorefun, asfreqtab = FALSE)
+xvlog2 &lt;- loglinear(xvtab, scorefun, rmimpossible = 1:2)
+plot(xvtab, cbind(xvlog1,
+	xvlog2 = as.data.frame(xvlog2)[, 3]))
+
+</code></pre>
+
+
+</div>

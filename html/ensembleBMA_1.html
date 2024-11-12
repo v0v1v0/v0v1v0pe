@@ -1,0 +1,202 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plotProbcast</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Surface plots for forecast information.
+</h2>
+
+<h3>Description</h3>
+
+<p>Produces contour, image, or perspective plot of a forecast
+using loess prediction on a grid.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plotProbcast( forecast, longitude, latitude, nGrid = 65,
+                 type = c("image", "contour", "persp"), ..., 
+                 interpolate = FALSE, span = 0.75, maps = NULL) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>forecast</code></td>
+<td>
+
+<p>Numeric vector of forecasts.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>longitude</code></td>
+<td>
+
+<p>Numeric vector giving the longitude of each forecast location.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>latitude</code></td>
+<td>
+
+<p>Numeric vector giving the latitude of each forecast location.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nGrid</code></td>
+<td>
+
+<p>Number of grid points for <code>loess</code> interpolation. 
+(Binning and interpolation are done on an <code>nGrid</code> by <code>nGrid</code> grid).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>A character string indicating the desired plot type.
+Should be one of either <code>"contour"</code>, <code>"image"</code>, or
+<code>"persp"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Additional arguments to be passed to the plotting method.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interpolate</code></td>
+<td>
+
+<p>A logical variable indicating whether or not a <code>loess</code>
+fit should be used to interpolate the data to points on 
+a grid. The default is to determine grid values by binning,
+rather than interpolation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>span</code></td>
+<td>
+
+<p>Smoothing parameter for <code>loess</code> (used only when
+<code>interpolate = TRUE</code>).
+The default value is <code>0.75</code>, which is 
+the default for <code>loess</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maps</code></td>
+<td>
+
+<p>A logical value indicating whether or not to include
+a map outline. The default is to include an outline
+if <code>type = "image"</code> and the <code>fields</code> library 
+is loaded.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the <code>fields</code> library is loaded, a legend (and optionally
+a map outline) will be included in image plots.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An image, contour, or perspective plot of the forecast.
+</p>
+
+
+<h3>References</h3>
+
+<p>C. Fraley, A. E. Raftery, T. Gneiting and J. M. Sloughter,
+<code>ensembleBMA</code>: An <code>R</code> Package for Probabilistic Forecasting
+using Ensembles and Bayesian Model Averaging,
+Technical Report No. 516R, Department of Statistics, University of
+Washington, 2007 (revised 2010).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>quantileForecast</code> 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(srft)
+
+  labels &lt;- c("CMCG","ETA","GASP","GFS","JMA","NGPS","TCWB","UKMO")
+
+  srftData &lt;- ensembleData( forecasts = srft[,labels],
+                            dates = srft$date, observations = srft$obs,
+                            latitude = srft$lat, longitude = srft$lon,
+                            forecastHour = 48, initializationTime = "00")
+
+## Not run:  # R check
+
+  bmaFit &lt;- ensembleBMA( srftData, date = "2004012900", trainingDays = 25,
+                         model = "normal")
+
+  bmaForc &lt;- quantileForecast( bmaFit, srftData, date = "2004012900",  
+                                  quantiles = c(.1, .5, .9))
+
+  obs &lt;- srftData$date == "2004012900"
+  lat &lt;- srftData$latitude[obs]
+  lon &lt;- srftData$longitude[obs]
+
+  plotProbcast( bmaForc[,"0.5"], lat, lon, 
+                   type = "contour", interpolate = TRUE)
+  title("Median Forecast")
+
+  plotProbcast( srftData$obs[obs], lat, lon, 
+                  type = "contour", interpolate = TRUE)
+  title("Observed Surface Temperature")
+
+  data(srftGrid)
+
+  memberLabels &lt;- c("CMCG","ETA","GASP","GFS","JMA","NGPS","TCWB","UKMO")
+ 
+  srftGridData &lt;- ensembleData(forecasts = srftGrid[,memberLabels],
+      latitude = srftGrid[,"latitude"], longitude = srftGrid[,"longitude"],
+                            forecastHour = 48, initializationTime = "00")
+
+  gridForc &lt;- quantileForecast( bmaFit, srftGridData, 
+                    date = "2004021400", quantiles = c( .1, .5, .9))
+
+  library(fields)
+
+  plotProbcast(gridForc[,"0.5"],lon=srftGridData$lon,
+     lat=srftGridData$lat,type="image",col=rev(rainbow(100,start=0,end=0.85)))
+  title("Median Grid Forecast for Surface Temperature", cex = 0.5)
+
+  probFreeze &lt;- cdf( bmaFit, srftGridData,  date = "2004021400", 
+                             value = 273.15)
+
+  plotProbcast(probFreeze, lon=srftGridData$lon, lat=srftGridData$lat,
+                   type="image",col=gray((32:0)/32))
+  title("Probability of Freezing", cex = 0.5)
+
+
+## End(Not run)</code></pre>
+
+
+</div>

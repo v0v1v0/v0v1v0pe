@@ -1,0 +1,151 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>as.data.frame.icm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract Model Data for Stochastic Models</h2>
+
+<h3>Description</h3>
+
+<p>This function extracts model simulations for objects of classes
+<code>icm</code> and <code>netsim</code> into a data frame using
+the generic <code>as.data.frame</code> function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'icm'
+as.data.frame(
+  x,
+  row.names = NULL,
+  optional = FALSE,
+  out = "vals",
+  sim,
+  qval,
+  ...
+)
+
+## S3 method for class 'netsim'
+as.data.frame(x, row.names = NULL, optional = FALSE, out = "vals", sim, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An <code>EpiModel</code> object of class <code>icm</code> or <code>netsim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row.names</code></td>
+<td>
+<p>See <code>as.data.frame.default</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optional</code></td>
+<td>
+<p>See <code>as.data.frame.default</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out</code></td>
+<td>
+<p>Data output to data frame: <code>"mean"</code> for row means across
+simulations, <code>"sd"</code> for row standard deviations across
+simulations, <code>"qnt"</code> for row quantiles at the level specified in
+<code>qval</code>, or <code>"vals"</code> for values from individual simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sim</code></td>
+<td>
+<p>If <code>out="vals"</code>, the simulation number to output. If not
+specified, then data from all simulations will be output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qval</code></td>
+<td>
+<p>Quantile value required when <code>out="qnt"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>See <code>as.data.frame.default</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>These methods work for both <code>icm</code> and <code>netsim</code> class models. The
+available output includes time-specific means, standard deviations,
+quantiles, and simulation values (compartment and flow sizes) from these
+stochastic model classes. Means, standard deviations, and quantiles are
+calculated by taking the row summary (i.e., each row of data is corresponds
+to a time step) across all simulations in the model output.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame containing the data from <code>x</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Stochastic ICM SIS model
+param &lt;- param.icm(inf.prob = 0.8, act.rate = 2, rec.rate = 0.1)
+init &lt;- init.icm(s.num = 500, i.num = 1)
+control &lt;- control.icm(type = "SIS", nsteps = 10,
+                       nsims = 3, verbose = FALSE)
+mod &lt;- icm(param, init, control)
+
+# Default output all simulation runs, default to all in stacked data.frame
+as.data.frame(mod)
+as.data.frame(mod, sim = 2)
+
+# Time-specific means across simulations
+as.data.frame(mod, out = "mean")
+
+# Time-specific standard deviations across simulations
+as.data.frame(mod, out = "sd")
+
+# Time-specific quantile values across simulations
+as.data.frame(mod, out = "qnt", qval = 0.25)
+as.data.frame(mod, out = "qnt", qval = 0.75)
+
+## Not run: 
+## Stochastic SI Network Model
+nw &lt;- network_initialize(n = 100)
+formation &lt;- ~edges
+target.stats &lt;- 50
+coef.diss &lt;- dissolution_coefs(dissolution = ~offset(edges), duration = 20)
+est &lt;- netest(nw, formation, target.stats, coef.diss, verbose = FALSE)
+
+param &lt;- param.net(inf.prob = 0.5)
+init &lt;- init.net(i.num = 10)
+control &lt;- control.net(type = "SI", nsteps = 10, nsims = 3, verbose = FALSE)
+mod &lt;- netsim(est, param, init, control)
+
+# Same data extraction methods as with ICMs
+as.data.frame(mod)
+as.data.frame(mod, sim = 2)
+as.data.frame(mod, out = "mean")
+as.data.frame(mod, out = "sd")
+as.data.frame(mod, out = "qnt", qval = 0.25)
+as.data.frame(mod, out = "qnt", qval = 0.75)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

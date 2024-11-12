@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>evalue</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute an E-value for unmeasured confounding</h2>
+
+<h3>Description</h3>
+
+<p>Returns a data frame containing point estimates, the lower confidence limit,
+and the upper confidence limit on the risk ratio scale (possibly through an
+approximate conversion) as well as E-values for the point estimate and the
+confidence interval limit closer to the null.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">evalue(est, lo = NA, hi = NA, se = NA, delta = 1, true = c(0, 1), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>est</code></td>
+<td>
+<p>The effect estimate that was observed but which is suspected to be
+biased. A number of class "estimate" (constructed with <code>RR()</code>, <code>OR()</code>,
+<code>HR()</code>, <code>OLS()</code>, or <code>MD()</code>; for E-values for risk differences,
+see <code>evalues.RD()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lo</code></td>
+<td>
+<p>Optional. Lower bound of the confidence interval. If not an object
+of class "estimate", assumed to be on the same scale as <code>est</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hi</code></td>
+<td>
+<p>Optional. Upper bound of the confidence interval. If not an object
+of class "estimate", assumed to be on the same scale as <code>est</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>The standard error of the point estimate, for <code>est</code> of class "OLS"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>The contrast of interest in the exposure, for <code>est</code> of class "OLS"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>true</code></td>
+<td>
+<p>A number to which to shift the observed estimate to. Defaults to
+1 for ratio measures (<code>RR()</code>, <code>OR()</code>, <code>HR()</code>) and 0 for additive measures
+(<code>OLS()</code>, <code>MD()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed to other methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>An E-value for unmeasured confounding is minimum strength of
+association, on the risk ratio scale, that unmeasured confounder(s) would
+need to have with both the treatment and the outcome to fully explain away
+a specific treatment–outcome association, conditional on the measured
+covariates.
+</p>
+<p>The estimate is converted appropriately before the E-value is calculated.
+See conversion functions for more details. The point
+estimate and confidence limits after conversion are returned, as is the
+E-value for the point estimate and the confidence limit closest to the
+proposed "true" value (by default, the null value.)
+</p>
+<p>For an <code>OLS()</code> estimate, the E-value is for linear regression with a
+continuous exposure and outcome. Regarding the continuous exposure, the
+choice of <code>delta</code> defines essentially a dichotomization in the
+exposure between hypothetical groups of subjects with exposures equal to an
+arbitrary value <em>c</em> versus to another hypothetical group with
+exposures equal to <em>c</em> + <code>delta</code>.
+</p>
+<p>For example, if resulting E-value is 2, this means that unmeasured
+confounder(s) would need to double the probability of a subject's having
+exposure equal to <em>c</em> + <code>delta</code> instead of <em>c</em>, and would
+also need to double the probability of being high versus low on the
+outcome, in which the cutoff for "high" versus "low" is arbitrary subject
+to some distributional assumptions (Chinn, 2000).
+</p>
+
+
+<h3>References</h3>
+
+
+<ol>
+<li>
+<p> Ding &amp; VanderWeele (2016). Sensitivity analysis without assumptions. <em>Epidemiology.</em> 27(3), 368.
+</p>
+</li>
+<li>
+<p> VanderWeele &amp; Ding (2017). Sensitivity analysis in observational research: Introducing the E-value. <em>Annals of Internal Medicine.</em> 27(3), 368.
+</p>
+</li>
+</ol>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># compute E-value for leukemia example in VanderWeele and Ding (2017)
+evalue(RR(0.80), 0.71, 0.91)
+
+# you can also pass just the point estimate
+# and return just the E-value for the point estimate with summary()
+summary(evalue(RR(0.80)))
+
+# demonstrate symmetry of E-value
+# this apparently causative association has same E-value as the above
+summary(evalue(RR(1 / 0.80)))
+
+# E-value for a non-null true value
+summary(evalue(RR(2), true = 1.5))
+
+## Hsu and Small (2013 Biometrics) Data
+## sensitivity analysis after log-linear or logistic regression
+head(lead)
+
+## log linear model -- obtain the conditional risk ratio
+lead.loglinear = glm(lead ~ ., family = binomial(link = "log"),
+                         data = lead[,-1])
+est_se = summary(lead.loglinear)$coef["smoking", c(1, 2)]
+
+est      = RR(exp(est_se[1]))
+lowerRR  = exp(est_se[1] - 1.96*est_se[2])
+upperRR  = exp(est_se[1] + 1.96*est_se[2])
+evalue(est, lowerRR, upperRR)
+
+## logistic regression -- obtain the conditional odds ratio
+lead.logistic = glm(lead ~ ., family = binomial(link = "logit"),
+                        data = lead[,-1])
+est_se = summary(lead.logistic)$coef["smoking", c(1, 2)]
+
+est      = OR(exp(est_se[1]), rare = FALSE)
+lowerOR  = exp(est_se[1] - 1.96*est_se[2])
+upperOR  = exp(est_se[1] + 1.96*est_se[2])
+evalue(est, lowerOR, upperOR)
+
+## linear regression
+# standardizing conservatively by SD(Y)
+ols = lm(age ~ income, data = lead)
+est = OLS(ols$coefficients[2], sd = sd(lead$age))
+
+# for a 1-unit increase in income 
+evalue(est = est, 
+       se = summary(ols)$coefficients['income', 'Std. Error'])
+
+# for a 0.5-unit increase in income
+evalue(est = est,
+       se = summary(ols)$coefficients['income', 'Std. Error'],
+       delta = 0.5)
+
+# E-value for Cohen's d = 0.5 with SE = 0.25
+evalue(est = MD(.5), se = .25)
+
+# compute E-value for HR = 0.56 with CI: [0.46, 0.69]
+# for a common outcome
+evalue(HR(0.56, rare = FALSE), lo = 0.46, hi = 0.69)
+# for a rare outcome
+evalue(HR(0.56, rare = TRUE), lo = 0.46, hi = 0.69)
+</code></pre>
+
+
+</div>

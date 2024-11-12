@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>signal_deconvolve</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Deconvolve a signal vector.</h2>
+
+<h3>Description</h3>
+
+<p>The function removes the instrument response from a signal vector.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">signal_deconvolve(
+  data,
+  sensor = "TC120s",
+  logger = "Cube3BOB",
+  gain = 1,
+  use_metadata = FALSE,
+  dt,
+  p = 10^-6,
+  waterlevel = 10^-6,
+  na.replace = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>eseis</code> object, <code>numeric</code> vector or list of 
+objects, data set to be processed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sensor</code></td>
+<td>
+<p><code>Character</code> value or <code>list</code> object, 
+seismic sensor name. Must be present in the sensor library 
+(<code>list_sensor</code>) or parameters must be added manually (see 
+examples). Default is <code>"TC120s"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logger</code></td>
+<td>
+<p><code>Character</code> value, seismic logger name. Must be 
+present in the logger library (<code>list_logger</code>) or parameters must be
+added manually. Default is <code>"Cube3extBOB"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gain</code></td>
+<td>
+<p><code>Numeric</code> value, signal gain level of the logger. Default 
+is <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_metadata</code></td>
+<td>
+<p><code>Logical</code> value, option to take keywords for 
+<code>sensor</code>, <code>logger</code> and <code>gain</code> from eseis object meta data
+element instead of using explicitly provided arguments. Default is 
+<code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p><code>Numeric</code> value, sampling rate. Only needed if <code>data</code> 
+is not an <code>eseis</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p><code>Numeric</code> value, proportion of signal to be tapered. Default
+is<code>10^-6</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>waterlevel</code></td>
+<td>
+<p><code>Numeric</code> value, waterlevel value for frequency
+division, default is <code>10^-6</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.replace</code></td>
+<td>
+<p><code>Logical</code> value, option to replace NA values in the 
+data set by zeros. Default is <code>FALSE</code>. Attention, the zeros will 
+create artifacts in the deconvolved data set. However, <code>NA</code> values will 
+result in no deconvolution at all.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function requires a set of input parameters, apart from the signal 
+vector. These parameters are contained in and read from the function 
+<code>list_sensor()</code> and <code>list_logger()</code>. Poles and zeros are used 
+to build the transfer function. The value s is the generator constant in 
+Vs/m. The value k is the normalisation factor. AD is the analogue-digital 
+conversion factor. If the signal was recorded with a gain value other than 
+1, the resulting signal needs to be corrected for this, as well.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>Numeric</code> vector or list of vectors, deconvolved signal.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## load example data set
+data(rockfall)
+
+## deconvolve signal with minimum effort
+rockfall_decon &lt;- signal_deconvolve(data = rockfall_eseis)
+
+## plot time series
+plot_signal(data = rockfall_decon, 
+     main = "Rockfall, deconvolved signal", 
+     ylab = "m/s")
+ 
+## add new logger manually
+logger_new &lt;- list_logger()[[1]]
+
+## add logger data
+logger_new$ID &lt;- "logger_new"
+logger_new$name &lt;- "logger_new"
+logger_new$AD &lt;- 2.4414e-07
+
+## deconvolve signal with new logger
+rockfall_decon &lt;- signal_deconvolve(data = rockfall_eseis,
+                                    sensor = "TC120s", 
+                                    logger = logger_new)
+                                    
+## Change the setup of a logger, here: Centaur AD is changed due to 
+## other than default Vpp value, according to AD = V / (2^24).
+
+## extract default Centaur logger
+Centaur_10V &lt;- list_logger()[[2]]
+
+## replace AD value
+Centaur_10V$AD &lt;- 20/(2^24)
+                                    
+</code></pre>
+
+
+</div>

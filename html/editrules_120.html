@@ -1,0 +1,290 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>localizeErrors</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Localize errors on records in a data.frame.</h2>
+
+<h3>Description</h3>
+
+<p>For each record in a <code>data.frame</code>, the least (weighted) number of fields is
+determined which can be adapted or imputed so that no edit in <code>E</code> is violated. Anymore.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">localizeErrors(
+  E,
+  dat,
+  verbose = FALSE,
+  weight = rep(1, ncol(dat)),
+  maxduration = 600,
+  method = c("bb", "mip", "localizer"),
+  useBlocks = TRUE,
+  retrieve = c("best", "first"),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>an object of class <code>editset</code> <code>editmatrix</code> or <code>editarray</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>a <code>data.frame</code> with variables in E.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>print progress to screen?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>Vector of positive weights for every variable in <code>dat</code>, or 
+an <code>array</code> or <code>data.frame</code> of weights with the same dimensions as <code>dat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxduration</code></td>
+<td>
+<p>maximum time for <code>$searchBest()</code> to find the best solution for a single record.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>should errorlocalizer ("bb") or mix integer programming ("mip") be used?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useBlocks</code></td>
+<td>
+<p><code>DEPRECATED</code>. Process error localization seperatly for independent blocks in <code>E</code> (always <code>TRUE</code>)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>retrieve</code></td>
+<td>
+<p>Return the first found solution or the best solution? ("bb" method only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further options to be passed to <code>errorLocalizer</code> or <code>errorLocalizer_mip</code>. Specifically, when
+<code>method='mip'</code>, the parameter <code>lpcontrol</code> is a list of options passed to <code>lpSolveAPI</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For performance purposes, the edits are split in independent <code>blocks</code> which are processed
+separately. Also, a quick vectorized check with <code>checkDatamodel</code> is performed first to
+exclude variables violating their one-dimensional bounds from further calculations. 
+</p>
+<p>By default, all weights are set equal to one (each variable is considered equally reliable). If a vector 
+of weights is passed, the weights are assumed to be in the same order as the columns of <code>dat</code>. By passing
+an array of weights (of same dimensions as <code>dat</code>) separate weights can be specified for each record.
+</p>
+<p>In general, the solution to an error localization problem need not be unique, especially when no weights 
+are defined. In such cases, <code>localizeErrors</code> chooses a solution randomly. See <code>errorLocalizer</code>
+for more control options.
+</p>
+<p>Error localization can be performed by the Branch and Bound method of De Waal (2003) (option <code>method="localizer"</code>, the default) 
+or by rewriting the problem as a mixed-integer programming (MIP) problem (<code>method="mip"</code>) which is parsed to
+the <code>lpsolve</code> library. The former case uses <code>errorLocalizer</code> and is very reliable in terms
+of numerical stability, but may be slower in some cases (see note below). The MIP approach is much faster, 
+but requires that upper and lower bounds are set on each numerical variable. Sensible bounds are derived
+automatically (see the vignette on error localization as MIP), but could cause instabilities in very rare cases.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of class <code>errorLocation</code>
+</p>
+
+
+<h3>Note</h3>
+
+<p>As of version 2.8.1 method 'bb' is not available for conditional numeric (e.g: <code>if (x&gt;0) y&gt;0</code>)
+or conditional edits of mixed type (e.g. <code>if (A=='a') x&gt;0</code>).
+</p>
+
+
+<h3>References</h3>
+
+<p>T. De Waal (2003) Processing of Erroneous and Unsafe Data. PhD thesis, University of Rotterdam.
+</p>
+<p>E. De Jonge and Van der Loo, M. (2012) Error localization as a mixed-integer program in 
+editrules (included with the package)
+</p>
+<p>lp_solve and Kjell Konis. (2011). lpSolveAPI: R Interface for
+lp_solve version 5.5.2.0. R package version 5.5.2.0-5.
+http://CRAN.R-project.org/package=lpSolveAPI
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>errorLocalizer</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# an editmatrix and some data:
+E &lt;- editmatrix(c(
+    "x + y == z",
+    "x &gt; 0",
+    "y &gt; 0",
+    "z &gt; 0"))
+
+dat &lt;- data.frame(
+    x = c(1,-1,1),
+    y = c(-1,1,1),
+    z = c(2,0,2))
+
+# localize all errors in the data
+err &lt;- localizeErrors(E,dat)
+
+summary(err)
+
+# what has to be adapted:
+err$adapt
+# weight, number of equivalent solutions, timings,
+err$status
+
+
+## Not run
+
+# Demonstration of verbose processing
+# construct 2-block editmatrix
+F &lt;- editmatrix(c(
+    "x + y == z",
+    "x &gt; 0",
+    "y &gt; 0",
+    "z &gt; 0",
+    "w &gt; 10"))
+# Using 'dat' as defined above, generate some extra records
+dd &lt;- dat
+for ( i in 1:5 ) dd &lt;- rbind(dd,dd)
+dd$w &lt;- sample(12,nrow(dd),replace=TRUE)
+
+# localize errors verbosely
+(err &lt;- localizeErrors(F,dd,verbose=TRUE))
+
+# printing is cut off, use summary for an overview
+summary(err)
+
+# or plot (not very informative in this artificial example)
+plot(err)
+
+## End(Not run)
+
+for ( d in dir("../pkg/R",full.names=TRUE)) dmp &lt;- source(d)
+# Example with different weights for each record
+E &lt;- editmatrix('x + y == z')
+dat &lt;- data.frame(
+    x = c(1,1),
+    y = c(1,1),
+    z = c(1,1))
+
+# At equal weights, both records have three solutions (degeneracy): adapt x, y
+# or z:
+localizeErrors(E,dat)$status
+
+# Set different weights per record (lower weight means lower reliability):
+w &lt;- matrix(c(
+    1,2,2,
+    2,2,1),nrow=2,byrow=TRUE)
+
+localizeErrors(E,dat,weight=w)
+
+
+# an example with categorical variables
+E &lt;- editarray(expression(
+    age %in% c('under aged','adult'),
+    maritalStatus %in% c('unmarried','married','widowed','divorced'),
+    positionInHousehold %in% c('marriage partner', 'child', 'other'),
+    if( age == 'under aged' ) maritalStatus == 'unmarried',
+    if( maritalStatus %in% c('married','widowed','divorced')) 
+      !positionInHousehold %in% c('marriage partner','child')
+    )
+)
+E
+
+#
+dat &lt;- data.frame(
+    age = c('under aged','adult','adult' ),
+    maritalStatus=c('married','unmarried','widowed' ), 
+    positionInHousehold=c('child','other','marriage partner')
+)
+dat
+localizeErrors(E,dat)
+# the last record of dat has 2 degenerate solutions. Running  the last command
+# a few times demonstrates that one of those solutions is chosen at random.
+
+# Increasing the weight of  'positionInHousehold' for example, makes the best
+# solution unique again
+localizeErrors(E,dat,weight=c(1,1,2))
+
+
+# an example with mixed data:
+
+E &lt;- editset(expression(
+    x + y == z,
+    2*u  + 0.5*v == 3*w,
+    w &gt;= 0,
+    if ( x &gt; 0 ) y &gt; 0,
+    x &gt;= 0,
+    y &gt;= 0,
+    z &gt;= 0,
+    A %in% letters[1:4],
+    B %in% letters[1:4],
+    C %in% c(TRUE,FALSE),
+    D %in% letters[5:8],
+    if ( A %in% c('a','b') ) y &gt; 0,
+    if ( A == 'c' ) B %in% letters[1:3],
+    if ( !C == TRUE) D %in% c('e','f')
+))
+
+set.seed(1)
+dat &lt;- data.frame(
+    x = sample(-1:8),
+    y = sample(-1:8),
+    z = sample(10),
+    u = sample(-1:8),
+    v = sample(-1:8),
+    w = sample(10),
+    A = sample(letters[1:4],10,replace=TRUE),
+    B = sample(letters[1:4],10,replace=TRUE),
+    C = sample(c(TRUE,FALSE),10,replace=TRUE),
+    D = sample(letters[5:9],10,replace=TRUE),
+    stringsAsFactors=FALSE
+)
+
+(el &lt;-localizeErrors(E,dat,verbose=TRUE))
+
+
+
+
+
+</code></pre>
+
+
+</div>

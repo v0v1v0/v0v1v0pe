@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>aic.maxent</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate AICc from Maxent model prediction</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates AICc for Maxent models based on Warren 
+and Seifert (2011).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">aic.maxent(p.occs, ncoefs, p = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p.occs</code></td>
+<td>
+<p>data frame: raw (maxent.jar) or exponential (maxnet) predictions for
+the occurrence localities based on one or more models</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncoefs</code></td>
+<td>
+<p>numeric: number of non-zero model coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>RasterStack: raw (maxent.jar) or exponential (maxnet) model predictions;
+if NULL, AICc will be calculated based on the background points, which already
+have predictions that sum to 1 and thus need no correction – this assumes that
+the background points represent a good sample of the study extent</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>As motivated by Warren and Seifert (2011) and implemented in ENMTools (Warren 
+<em>et al.</em> 2010), this function calculates the small sample size version of Akaike 
+Information Criterion for ENMs (Akaike 1974). We use AICc (instead of AIC) regardless of 
+sample size based on the recommendation of Burnham and Anderson (1998, 2004).  The number of 
+coefficients is determined by counting the number of non-zero coefficients in the 
+<code>maxent</code> lambda file (<code>m@lambdas</code> for maxent.jar and <code>m$betas</code> for maxnet.  
+See Warren <em>et al.</em> (2014) for limitations of this approach, namely that the number of 
+non-zero coefficients is an estimate of the true degrees of freedom. For Maxent ENMs, AICc 
+is calculated by first standardizing the raw predictions such that all cells in the study 
+extent sum to 1, then extracting the occurrence record predictions. The predictions of the
+study extent may not sum to 1 if the background does not cover every grid cell – as the 
+background predictions sum to 1 by definition, extra predictions for grid cells not in 
+the training data will add to this sum. When no raster data is provided, the raw predictions 
+of the occurrence records are used to calculate AICc without standardization, with the 
+assumption that the background records have adequately represented the occurrence records. 
+The standardization is not necessary here because the background predictions sum to 1 
+already, and the occurrence data is a subset of the background. This will not be true if 
+the background does not adequately represent the occurrence records, in which case the 
+occurrences are not a subset of the background and the raster approach should be used 
+instead. The likelihood of the data for a given model is then calculated by taking the 
+product of the raw occurrence predictions (Warren and Seifert 2011), or the sum of their 
+logs, as is implemented here.
+</p>
+
+
+<h3>Value</h3>
+
+<p>data frame with three columns:
+<code>AICc</code> is the Akaike Information Criterion corrected for small sample
+sizes calculated as:
+</p>
+<p style="text-align: center;"><code class="reqn"> (2 * K - 2 * logLikelihood) + (2 * K) * (K+1) / (n - K - 1)</code>
+</p>
+
+<p>where <em>K</em> is the number of non-zero coefficients in the model and <em>n</em> is the number of
+occurrence localities.  The <em>logLikelihood</em> is calculated as:
+</p>
+<p style="text-align: center;"><code class="reqn"> sum(log(vals))</code>
+</p>
+
+<p>where <em>vals</em> is a vector of Maxent raw/exponential values at occurrence localities
+and the sum of these values across the study extent is equal to 1.
+<code>delta.AICc</code> is the difference between the AICc of a given model and
+the AICc of the model with the lowest AICc.
+<code>w.AICc</code> is the Akaike weight (calculated as the relative likelihood of
+a model (exp(-0.5 * <code>delta.AICc</code>)) divided by the sum of the likelihood
+values of all models included in a run.  These can be used for model
+averaging (Burnham and Anderson 2002).
+</p>
+
+
+<h3>Note</h3>
+
+<p>Returns all <code>NA</code>s if the number of non-zero coefficients is larger than the
+number of observations (occurrence localities).
+</p>
+
+
+<h3>References</h3>
+
+<p>Akaike, H. (1974) A new look at the statistical model identification. <em>IEEE Transactions on Automatic Control</em>, <b>19</b>: 716-723. <a href="https://doi.org/10.1109/TAC.1974.1100705">doi:10.1109/TAC.1974.1100705</a>
+</p>
+<p>Burnham, K. P. and Anderson, D. R. (1998) Model selection and multimodel inference: a practical information-theoretic approach. Springer, New York.
+</p>
+<p>Burnham, K. P. and Anderson, D. R. (2004) Multimodel inference: understanding AIC and BIC in model selection. <em>Sociological Methods and Research</em>, <b>33</b>: 261-304. <a href="https://doi.org/10.1177/0049124104268644">doi:10.1177/0049124104268644</a>
+</p>
+<p>Warren, D. L., Glor, R. E, and Turelli, M. (2010) ENMTools: a toolbox for comparative studies of environmental niche models. <em>Ecography</em>, <b>33</b>: 607-611. <a href="https://doi.org/10.1111/j.1600-0587.2009.06142.x">doi:10.1111/j.1600-0587.2009.06142.x</a>
+</p>
+<p>Warren, D. L., &amp; Seifert, S. N. (2011). Ecological niche modeling in Maxent: the importance of model complexity and the performance of model selection criteria. <em>Ecological Applications</em>, <b>21</b>: 335-342. <a href="https://doi.org/10.1890/10-1171.1">doi:10.1890/10-1171.1</a>
+</p>
+<p>Warren, D. L., Wright, A. N., Seifert, S. N., and Shaffer, H. B. (2014). Incorporating model complexity and sampling bias into ecological niche models of climate change risks faced by 90 California vertebrate species of concern. <em>Diversity and Distributions</em>, <b>20</b>: 334-343. <a href="https://doi.org/10.1111/ddi.12160">doi:10.1111/ddi.12160</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>maxent</code> in the <span class="pkg">dismo</span> package.
+</p>
+
+
+</div>

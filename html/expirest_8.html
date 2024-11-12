@@ -1,0 +1,761 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>expirest_wisle</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>What-if (approach for) shelf life estimation (wisle)</h2>
+
+<h3>Description</h3>
+
+<p>Based on a linear regression model fitted to a stability data set the
+function <code>expirest_wisle()</code> estimates the shelf life, or retest period,
+for the specified release and specification limit following the ARGPM
+guidance “Stability testing for prescription medicines”. The
+abbreviation “wisle” stands for “what-if shelf life estimation”
+(because it estimates the shelf life (“what”) for a given release
+limit (“if”)).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">expirest_wisle(
+  data,
+  response_vbl,
+  time_vbl,
+  batch_vbl,
+  rl,
+  rl_sf,
+  sl,
+  sl_sf,
+  srch_range,
+  alpha = 0.05,
+  alpha_pool = 0.25,
+  xform = c("no", "no"),
+  shift = c(0, 0),
+  sf_option = "tight",
+  ivl = "confidence",
+  ivl_type = "one.sided",
+  ivl_side = "lower",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame with the columns specified by <code>response_vbl</code>,
+<code>time_vbl</code> and <code>batch_vbl</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response_vbl</code></td>
+<td>
+<p>A character string that specifies the response variable
+name that must be a column of <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_vbl</code></td>
+<td>
+<p>A character string that specifies the time variable name
+that must be a column of <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>batch_vbl</code></td>
+<td>
+<p>A character string that specifies the column in <code>data</code>
+with the grouping information (i.e. a factorial variable) for the
+differentiation of the observations of the various batches.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rl</code></td>
+<td>
+<p>A numeric value or a numeric vector that specifies the release
+specification limit(s) for which the corresponding expiry should be
+estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rl_sf</code></td>
+<td>
+<p>A positive integer or a vector of positive integers that
+specifies the number of “significant figures” (sf) of <code>rl</code>.
+It must have the same length as <code>rl</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sl</code></td>
+<td>
+<p>A numeric value or a numeric vector of length <code>2</code> that
+specifies the specification limit or limits. If a vector is provided it
+must be of the form <code>c(lower limit, upper limit)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sl_sf</code></td>
+<td>
+<p>A positive integer or a vector of positive integers that
+specifies the number of “significant figures” (sf) of <code>sl</code>.
+It must have the same length as <code>sl</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>srch_range</code></td>
+<td>
+<p>A vector of length <code>2</code> that specifies the end-points
+of the (time) range that is supposed to contain the shelf life or retest
+period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>A numeric value between 0 and 1 that specifies the significance
+level for the calculation of confidence or prediction intervals. The
+default is <code>0.05</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha_pool</code></td>
+<td>
+<p>A numeric value between 0 and 1 that specifies the type I
+error rate for the test of the poolability of the batches. The default
+is <code>0.25</code>, following ICH Q1E guideline. The value should not be
+changed unless supported by well-founded reasons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xform</code></td>
+<td>
+<p>A vector of two character strings that specifies the
+transformation of the response and the time variable. The default is
+“no” transformation, i.e. <code>c("no", "no")</code>, where the first
+element specifies the transformation of the <code class="reqn">x</code> variable and the
+second element the transformation of the <code class="reqn">y</code> variable. Valid
+alternatives for <code class="reqn">x</code> and/or <code class="reqn">y</code> variable transformation are
+<code>"log"</code> (natural logarithm), <code>"sqrt"</code> (square root) and
+<code>"sq"</code> (square).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shift</code></td>
+<td>
+<p>A vector of two values which will be added to the variables
+<code class="reqn">x</code> and/or <code class="reqn">y</code> before they are transformed as specified by the
+<code>xform</code> parameter, where the first element will be added to the
+<code class="reqn">x</code> variable and the second element to the <code class="reqn">y</code> variable. The
+purpose is to prevent an undefined state which could arise when variables
+with values of <code class="reqn">\leq 0</code> are log or square root transformed. The
+default is <code>c(0, 0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sf_option</code></td>
+<td>
+<p>A character string that specifies if the limits (<code>rl</code>
+or <code>sl</code>) should be regarded as “tight” or “loose”, i.e.
+either <code>"tight"</code> or <code>"loose"</code>, respectively. The default is
+<code>"tight"</code>. The option <code>"tight"</code> means that the limits are
+rounded to the number of significant digits specified by the parameters
+<code>rl_sf</code> and <code>sl_sf</code>. If <code>sf_option = "loose"</code>, four on
+the order of the last significant digit + 1 is added if
+<code>ivl_side = "upper"</code> or five on the order of the last significant
+digit + 1 is subtracted if <code>ivl_side = "upper"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl</code></td>
+<td>
+<p>A character string of either <code>"confidence"</code> or
+<code>"prediction"</code> that specifies the type of interval of interest.
+The default is <code>"confidence"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl_type</code></td>
+<td>
+<p>A character string that specifies if a “one sided”
+or a “two sided” interval should be calculated, i.e. either
+<code>"one.sided"</code> or <code>"two.sided"</code>, respectively. The default is
+<code>"one.sided"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl_side</code></td>
+<td>
+<p>A character string that specifies if the “upper” or
+the “lower” limit is the relevant limit, i.e. either <code>"upper"</code>
+or <code>"lower"</code>, respectively. The default is <code>"lower"</code>. Since this
+parameter additionally specifies the relationship of <code>rl</code> with
+<code>sl</code>, i.e. which of the two sides of <code>sl</code> the <code>rl</code> is
+compared to, only either either <code>"upper"</code> or <code>"lower"</code> is
+possible. In this respect, the usage of <code>ivl_side</code> differs from its
+usage in the <code>expirest_osle()</code> function where <code>ivl_side</code> in
+addition can be <code>"both"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional named or unnamed arguments passed on to
+<code>uniroot()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For the shelf life estimation for submissions in Australia the
+Australian Regulatory Guidelines for Prescription Medicines (ARGPM), i.e.
+the guidance “Stability testing for prescription medicines”, is
+binding. In chapter 14.3.1, “Predicting shelf life from stability
+data”, it is described how the estimation should be done. It recommends
+to take the worst case situation at batch release into account. The
+following examples are listed:
+</p>
+
+<dl>
+<dt>1a)</dt>
+<dd>
+<p>For medicine that has a lower Assay release limit of 95 per cent
+and a lower assay expiry limit of 90 per cent, the maximum decrease in
+assay allowed over the shelf-life is 5 per cent.</p>
+</dd>
+<dt>2a)</dt>
+<dd>
+<p>Similarly, for a medicine that has a release limit for an
+individual impurity of 0.2 per cent and an expiry limit of 0.5 per cent,
+the maximum increase in the impurity allowed over the shelf life is
+0.3 per cent.</p>
+</dd>
+<dt>1b)</dt>
+<dd>
+<p>For the same medicine, if the actual release assay result is
+101 per cent, then the shelf life should be determined at the time the
+medicine (or confidence interval of the regression line) decreases by
+5 per cent and reaches 96 per cent, rather than the expiry limit
+(90 per cent). This takes into account the possibility of batches being
+released at the lower release limit (i.e. 95 per cent) and ensures they
+will comply with the expiry limit throughout the shelf life.</p>
+</dd>
+<dt>2b)</dt>
+<dd>
+<p>Similarly, if the actual impurity content is 0.1 per cent at
+batch release, the shelf life should be determined as the time the
+95 per cent confidence interval reaches 0.4 per cent (i.e. increases by
+0.3 per cent).</p>
+</dd>
+</dl>
+<p>Consequently, it is necessary to define
+</p>
+
+<ul>
+<li>
+<p> a release limit and
+</p>
+</li>
+<li>
+<p> an expiry limit or shelf life limit (usually the specification limit).
+</p>
+</li>
+</ul>
+<p>If both of these limits were the same the shelf life would be zero, i.e. no
+change allowed. <br></p>
+<p>For the estimation of the shelf life or expiry limit it is necessary to find
+the point where the upper or lower 95% confidence interval limit of the
+linear model fitted to the data (by aid of <code>lm</code>) intersects the
+“worst case scenario limit” (WCSL), which is defined by the ARGPM
+guidance “Stability testing for prescription medicines” as the
+intercept <code class="reqn">\pm</code> difference between the specification limit and the
+release limit, where this differences is added (<code class="reqn">+</code>) if the upper limit
+is relevant or it is subtracted (<code class="reqn">-</code>) if the lower limit is relevant.
+In this package, this point is called the “point of intersection” or
+“point of interest”, abbreviated POI.
+</p>
+<p>Before performing the retest period or shelf life estimation the most
+suitable model should be determined. It should particularly be verified
+if data of all test batches are poolable or not. Details on this are
+described in section “Checking batch poolability” below.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class ‘<code>expirest_wisle</code>’ is returned,
+containing the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>Data frame of the original data including new columns with
+transformed variables, if applicable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Parameters</code></td>
+<td>
+<p>A list of the parameters with the elements <code>alpha</code>,
+<code>alpha.pool</code>, <code>ivl</code>, <code>ivl.type</code> and <code>ivl.side</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Variables</code></td>
+<td>
+<p>A list of the variable names, i.e. the original names of
+<code>batch_vbl</code>, <code>time_vbl</code> and <code>response_vbl</code> and, if
+applicable, of the transformed variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Model.Type</code></td>
+<td>
+<p>A list of two elements that specifies which model, based
+on the ANCOVA analysis, suits best. The first element (<code>type.spec</code>)
+is a numeric vector of length 2 that specifies the best model accepted at
+the significance level specified by <code>alpha.pool</code>. The first number
+represents the decision on the intercept and the second on the slope,
+where <code>1</code> stands for “common” and <code>2</code> stands for
+“different”. The second element (<code>type.acronym</code>) is an acronym
+representing the first item.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Models</code></td>
+<td>
+<p>A list of four elements named <code>cics</code>, <code>dics</code>,
+<code>dids.pmse</code> and <code>dids</code>. The first three elements contain the
+‘<code>lm</code>’ objects of the “common intercept / common slope”
+(<code>cics</code>), “different intercept / common slope” (<code>dics</code>)
+and “different intercept / different slope” (<code>dids</code>) models.
+The fourth element is a list of the ‘<code>lm</code>’ objects that is
+obtained from fitting a regression model to the data of each level of the
+categorical variable separately. The <code>cics</code>, <code>dics</code> and
+<code>dids.pmse</code> elements are <code>NA</code> if data of only a single batch
+is available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AIC</code></td>
+<td>
+<p>A numeric named vector of the Akaike Information Criterion (AIC)
+values of the <code>cics</code>, <code>dics</code> and <code>dids.pmse</code> models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BIC</code></td>
+<td>
+<p>A numeric named vector of the Bayesian Information Criterion (BIC)
+values of each of the <code>cics</code>, <code>dics</code> and <code>dids.pmse</code>
+models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wc.icpt</code></td>
+<td>
+<p>A data frame of the worst case intercepts of each of the
+four fitted models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wc.batch</code></td>
+<td>
+<p>A list of numeric value(s) of the worst case batch(es) per
+model type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Limits</code></td>
+<td>
+<p>A list of all limits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>POI</code></td>
+<td>
+<p>A data frame of the intercepts, the differences between release
+and shelf life limits, the WCSLs, the expiry and release specification
+limits, the shelf lives and POI values.</p>
+</td>
+</tr>
+</table>
+<p>Structure of the <code>POI</code> data frame:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Intercept.cics</code></td>
+<td>
+<p>The intercept of the worst case batch of the cics
+model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Intercept.dics</code></td>
+<td>
+<p>The intercept of the worst case batch of the dics
+model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Intercept.dids.pmse</code></td>
+<td>
+<p>The intercept of the worst case batch of the dids
+model with pooled mean square error (pmse).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Intercept.dids</code></td>
+<td>
+<p>The intercept of the worst case batch of the dids
+model obtained by fitting individual models to the data of each batch.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Delta.cics</code></td>
+<td>
+<p>Absolute difference between the release and and the shelf
+life specification of the cics model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Delta.dics</code></td>
+<td>
+<p>Absolute difference between the release and and the shelf
+life specification of the dics model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Delta.dids.pmse</code></td>
+<td>
+<p>Absolute difference between the release and and the
+shelf life specification of the dids model with pooled mean square error
+(pmse).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Delta.dids</code></td>
+<td>
+<p>Absolute difference between the release and and the shelf
+life specification of the dids model obtained by fitting individual
+models to the data of each batch.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>WCSL.cics</code></td>
+<td>
+<p>WCSL of the cics model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>WCSL.dics</code></td>
+<td>
+<p>WCSL of the dics model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>WCSL.dids.pmse</code></td>
+<td>
+<p>WCSL of the dids model with pooled mean square error
+(pmse).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>WCSL.dids</code></td>
+<td>
+<p>WCSL of the dids model obtained by fitting individual
+models to the data of each batch.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Exp.Spec</code></td>
+<td>
+<p>The (expiry) specification, i.e. the specification which is
+relevant for the determination of the expiry.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Rel.Spec</code></td>
+<td>
+<p>The calculated release specification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Shelf.Life.cics</code></td>
+<td>
+<p>The estimated shelf life of the cics model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Shelf.Life.dics</code></td>
+<td>
+<p>The estimated shelf life of the dics model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Shelf.Life.dids.pmse</code></td>
+<td>
+<p>The estimated shelf life of the dids model with
+pooled mean square error (pmse).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Shelf.Life.dids</code></td>
+<td>
+<p>The estimated shelf life of the dids model obtained
+by fitting individual models to the data of each batch.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>POI.Model.cics</code></td>
+<td>
+<p>The POI of the cics model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>POI.Model.dics</code></td>
+<td>
+<p>The POI of the dics model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>POI.Model.dids.pmse</code></td>
+<td>
+<p>The POI of the dids model with pooled mean
+square error (pmse).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>POI.Model.dids</code></td>
+<td>
+<p>The POI of the dids model obtained by fitting
+individual models to the data of each batch.</p>
+</td>
+</tr>
+</table>
+<h3>Checking batch poolability</h3>
+
+<p>According to ICH Q1E guideline, construction of the 95% confidence interval
+on the basis of the combined data of all test batches is allowed only if it
+has been confirmed by aid of a statistical test whether the regression lines
+from the different batches have a common slope and a common intercept. A
+significance level of <code>alpha_pool = 0.25</code> should to be used for both
+batch-related terms, and the test of the slopes has to precede the test of
+the intercepts. From these tests, three possible models may be appropriate,
+i.e.
+</p>
+
+<ul>
+<li>
+<p> a <em>common intercept / common slope</em> model (cics),
+</p>
+</li>
+<li>
+<p> a <em>different intercept / common slope</em> model (dics) or
+</p>
+</li>
+<li>
+<p> a <em>different intercept / different slope</em> model (dids).
+</p>
+</li>
+</ul>
+<p>The <em>common intercept / different slope</em> model is not of practical
+relevance because the corresponding model is missing an effect. If the
+slopes are significantly different, there is no point comparing intercepts.
+The dids model has individual intercepts and individual slopes, and the
+calculation of confidence intervals is based on the corresponding individual
+mean square errors. The <em>different intercept / different slope</em> model
+where the mean square error is pooled across batches is reported as
+dids.pmse.
+</p>
+<p>These requirements can be checked by aid of an “ANalysis of
+COVAriance” (ANCOVA) including the batch variable as main effect and as
+<code class="reqn">batch \times time</code> interaction term. The full ANCOVA model
+simultaneously tests all the effects, and non-significant effects can be
+identified and removed for fitting of the final regression model that is
+used for the estimation of the shelf life or retest period.
+</p>
+<p>The significance level (<code>alpha_pool = 0.25</code>, Type I error) is used to
+increase the power of the test to detect cases where the data should not be
+pooled. Setting <code>alpha_pool = 0.25</code> decreases the probability of
+incorrectly concluding that stability data from multiple batches can be
+pooled. On the other hand, though, it increases the probability of using a
+single batch to determine expiry when pooling batches would be more
+appropriate.
+</p>
+
+
+<h3>References</h3>
+
+<p>Therapeutic Goods Administration (TGA) of the Department of Health of the
+Australian Government, Australian Regulatory Guidelines for Prescription
+Medicines (ARGPM), Stability testing for prescription medicines,
+Version 1.1, March 2017
+</p>
+<p>International Council for Harmonisation of Technical Requirements for
+Registration of Pharmaceuticals for Human (ICH), Harmonised Tripartite
+Guideline, Evaluation of Stability Data Q1E, step 4, February 2003
+(CPMP/ICH/420/02).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>expirest_osle</code>, <code>uniroot</code>,
+<code>lm</code>, <code>AIC</code>, <code>BIC</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Successful estimations
+# A model with common intercepts / common slopes (cics)
+res1 &lt;-
+  expirest_wisle(data = exp1[exp1$Batch %in% c("b2", "b5", "b7"), ],
+                 response_vbl = "Potency", time_vbl = "Month",
+                 batch_vbl = "Batch", rl = 98, rl_sf = 3, sl = 95,
+                 sl_sf = 3, srch_range = c(0, 500), sf_option = "loose")
+res1$Model.Type
+res1$POI
+
+# Expected results in res1$Model.Type
+# $type.spec
+# common.icpt  common.slp
+#           1           1
+#
+# $type.acronym
+# [1] "cics"
+
+# (Expected) results in res1$POI
+# Intercept.cics Intercept.dics Intercept.dids Intercept.dids.pmse Delta.cics
+#       100.5669       100.3638       100.2491            100.2491          3
+# Delta.dics Delta.dids Delta.dids.pmse WCSL.cics WCSL.dics WCSL.dids
+#          3          3               3  97.56688  97.36375  97.24914
+# WCSL.dids.pmse Exp.Spec.Report Exp.Spec Rel.Spec.Report Rel.Spec
+#       97.24914              95    94.95              98    97.95
+# Shelf.Life.cics Shelf.Life.dics Shelf.Life.dids Shelf.Life.dids.pmse
+#        14.07398        13.23176        13.34561             13.80695
+# POI.Model.cics POI.Model.dics POI.Model.dids POI.Model.dids.pmse
+#        26.2241        24.8003       23.34184            23.66724
+
+# The parameter settings sf_option = "loose" and ivl_side = "lower" (the
+# default setting of ivl_side) cause the specification limit of 95.0
+# (sl_sf = 3, i.e. 3 significant digits) to be reduced by 0.05, i.e. the
+# actual specification limit is 94.95. Analogously, the release limit of 98.0
+# is reduced to 97.95.
+
+# A model with different intercepts / different slopes (dids)
+res2 &lt;-
+  expirest_wisle(data = exp1[exp1$Batch %in% c("b4", "b5", "b8"), ],
+                 response_vbl = "Potency", time_vbl = "Month",
+                 batch_vbl = "Batch", rl = 98, rl_sf = 3, sl = 95,
+                 sl_sf = 3, srch_range = c(0, 500), sf_option = "loose")
+res2$Model.Type
+res2$POI
+
+# Expected results in res2$Model.Type
+# $type.spec
+# common.icpt  common.slp
+#           0           0
+#
+# $type.acronym
+# [1] "dids"
+
+# (Expected) results in res2$POI
+# Intercept.cics Intercept.dics Intercept.dids Intercept.dids.pmse Delta.cics
+#       101.5498       100.4882       101.2594            101.2594          3
+# Delta.dics Delta.dids Delta.dids.pmse WCSL.cics WCSL.dics WCSL.dids
+#          3          3               3  98.54976  97.48822  98.25938
+# WCSL.dids.pmse Exp.Spec.Report Exp.Spec Rel.Spec.Report Rel.Spec
+#       98.25938              95    94.95              98    97.95
+# Shelf.Life.cics Shelf.Life.dics Shelf.Life.dids Shelf.Life.dids.pmse
+#        13.03332        11.42141        7.619661             7.483223
+# POI.Model.cics POI.Model.dics POI.Model.dids POI.Model.dids.pmse
+#       28.12518       22.47939       15.96453            15.72348
+
+# Analysis with a single batch (i.e. the worst case batch of res2 above)
+res3 &lt;-
+  expirest_wisle(data = exp1[exp1$Batch == "b8", ],
+                 response_vbl = "Potency", time_vbl = "Month",
+                 batch_vbl = "Batch", rl = 98, rl_sf = 3, sl = 95,
+                 sl_sf = 3, srch_range = c(0, 500), sf_option = "loose")
+res3$Model.Type
+res3$POI
+
+# Since only one batch is involved there is no model type. Nevertheless, the
+# result is reported under the dids model name.
+
+# Expected results in res3$Model.Type
+# $type.spec
+# common.icpt  common.slp
+#         NA           NA
+#
+# $type.acronym
+# [1] "n.a."
+
+# (Expected) results in res3$POI
+# Intercept.cics Intercept.dics Intercept.dids Intercept.dids.pmse Delta.cics
+#             NA             NA       101.2594                  NA         NA
+# Delta.dics Delta.dids Delta.dids.pmse WCSL.cics WCSL.dics WCSL.dids
+#         NA          3              NA        NA        NA  98.25938
+# WCSL.dids.pmse Exp.Spec.Report Exp.Spec Rel.Spec.Report Rel.Spec
+#             NA              95    94.95              98    97.95
+# Shelf.Life.cics Shelf.Life.dics Shelf.Life.dids Shelf.Life.dids.pmse
+#              NA              NA        7.619661                   NA
+# POI.Model.cics POI.Model.dics POI.Model.dids POI.Model.dids.pmse
+#             NA             NA       15.96453                  NA
+
+# Unsuccessful estimation
+## Not run: 
+  # The interval does not cross the limit (i.e. not within srch_range).
+  res4 &lt;-
+    expirest_wisle(data = exp1[exp1$Batch %in% c("b2", "b5", "b7"), ],
+                   response_vbl = "Potency", time_vbl = "Month",
+                   batch_vbl = "Batch", rl = 98, rl_sf = 3, sl = 105,
+                   sl_sf = 4, srch_range = c(0, 500), sf_option = "loose",
+                   ivl_side = "upper")
+  res4$POI
+
+  # (Expected) results in res3$POI
+  # Intercept.cics Intercept.dics Intercept.dids Intercept.dids.pmse Delta.cics
+  #       100.5669             NA             NA                  NA          3
+  # Delta.dics Delta.dids Delta.dids.pmse WCSL.cics WCSL.dics WCSL.dids
+  #         NA         NA              NA  107.5669        NA        NA
+  # WCSL.dids.pmse Exp.Spec.Report Exp.Spec Rel.Spec.Report Rel.Spec
+  #             NA             105   105.04              98    98.04
+  # Shelf.Life.cics Shelf.Life.dics Shelf.Life.dids Shelf.Life.dids.pmse
+  #              NA              NA              NA                   NA
+  # POI.Model.cics POI.Model.dics POI.Model.dids POI.Model.dids.pmse
+  #             NA             NA             NA                  NA
+
+  # Estimation may also fail because of an inappropriate 'srch_range' setting.
+  res5 &lt;-
+    expirest_wisle(data = exp1[exp1$Batch %in% c("b2", "b5", "b7"), ],
+                   response_vbl = "Potency", time_vbl = "Month",
+                   batch_vbl = "Batch", rl = 98, rl_sf = 3, sl = 95,
+                   sl_sf = 3, srch_range = c(0, 5), sf_option = "loose")
+  res5$POI
+
+  # (Expected) results in res4$POI
+  # Intercept.cics Intercept.dics Intercept.dids Intercept.dids.pmse Delta.cics
+  #       100.5669             NA             NA                  NA          3
+  # Delta.dics Delta.dids Delta.dids.pmse WCSL.cics WCSL.dics WCSL.dids
+  #         NA         NA              NA  97.56688        NA        NA
+  # WCSL.dids.pmse Exp.Spec.Report Exp.Spec Rel.Spec.Report Rel.Spec
+  #             NA              95    94.95              98    97.95
+  # Shelf.Life.cics Shelf.Life.dics Shelf.Life.dids Shelf.Life.dids.pmse
+  #              NA              NA              NA                   NA
+  # POI.Model.cics POI.Model.dics POI.Model.dids POI.Model.dids.pmse
+  #             NA             NA             NA                  NA
+
+## End(Not run)
+</code></pre>
+
+
+</div>

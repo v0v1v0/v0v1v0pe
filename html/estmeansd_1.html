@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bc.mean.sd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Box-Cox method for estimating the sample mean and standard deviation</h2>
+
+<h3>Description</h3>
+
+<p>This function applies the Box-Cox (BC) method to estimate the sample mean and standard deviation from a study that presents one of the following sets of summary statistics: </p>
+
+<ul>
+<li>
+<p> S1: median, minimum and maximum values, and sample size
+</p>
+</li>
+<li>
+<p> S2: median, first and third quartiles, and sample size
+</p>
+</li>
+<li>
+<p> S3: median, minimum and maximum values, first and third quartiles, and sample size
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">bc.mean.sd(
+  min.val,
+  q1.val,
+  med.val,
+  q3.val,
+  max.val,
+  n,
+  preserve.tail = FALSE,
+  avoid.mc = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>min.val</code></td>
+<td>
+<p>numeric value giving the sample minimum.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q1.val</code></td>
+<td>
+<p>numeric value giving the sample first quartile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>med.val</code></td>
+<td>
+<p>numeric value giving the sample median.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q3.val</code></td>
+<td>
+<p>numeric value giving the sample third quartile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.val</code></td>
+<td>
+<p>numeric value giving the sample maximum.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>numeric value giving the sample size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preserve.tail</code></td>
+<td>
+<p>logical scalar indicating whether to preserve or remove (if applicable) the negative-domain left suppport (and the corresponding right support to maintain the symmetry of the underlying normal distribution) of the Box-Cox cumulative distribution function. The classical Box-Cox transformation only takes positive numbers as input, so this parameter has a default value of <code>FALSE</code>. It is not possible to avoid Monte Carlo simulation when this parameter is set to <code>TRUE</code>. When this parameter is set to <code>TRUE</code>, the data-modeling distribution corresponding to the inverse Box-Cox transformation of the underlying normal distribution can have a value of infinity for its mean and/or variance. In this case, the average of the corresponding mean and/or variance produced by this function does not converge.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>avoid.mc</code></td>
+<td>
+<p>logical scalar indicating whether to avoid Monte Carlo simulation (if possible) when performing the inverse Box-Cox transformation (the default is <code>FALSE</code>). See 'Details'.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The BC method incorporates the Box-Cox power transformation into the sample mean estimators of Luo et al. (2016) and the sample standard deviation estimators of Wan et al. (2014) so that their assumption of normality is more tenable. The BC method consists of the following steps, outlined below.
+</p>
+<p>First, an optimal value of the power parameter <code class="reqn">\lambda</code> is found so that the distribution of the Box-Cox transformed data is approximately normal. Then, the methods of Luo et al. and Wan et al. are applied to estimate the mean and standard deviation of the distribution of the transformed data. Finally, the inverse transformation is applied to estimate the sample mean and standard deviation of the original, untransformed data.
+</p>
+<p>To perform the inverse transformation, either numerical integration or Monte Carlo simulation can be applied, which is controlled by the <code>avoid.mc</code> argument. When the estimated mean of the Box-Cox transformed data is negative or close to zero (i.e., below 0.01), numerical integration often does not converge. Therefore, Monte Carlo simulation is automatically used in this case.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A object of class <code>bc.mean.sd</code>. The object is a list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>est.mean</code></td>
+<td>
+<p>Estimated sample mean.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est.sd</code></td>
+<td>
+<p>Estimated sample standard deviation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>location</code></td>
+<td>
+<p>Estimated mean of the Box-Cox transformed data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>Estimated standard deviation of the Box-Cox transformed data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape</code></td>
+<td>
+<p>Estimated transformation parameter <code class="reqn">\lambda</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bc.norm.rvs</code></td>
+<td>
+<p>The random variables generated by the Box-Cox (or, equivalently, power-normal) distribution during the Monte Carlo simulation. If Monte Carlo simulation is not used, a value of <code>NA</code> is given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Some additional elements.</p>
+</td>
+</tr>
+</table>
+<p>The results are printed with the <code>print.bc.mean.sd</code> function.
+</p>
+
+
+<h3>References</h3>
+
+<p>McGrath S., Zhao X., Steele R., Thombs B.D., Benedetti A., and the DEPRESsion Screening Data (DEPRESSD) Collaboration. (2020). Estimating the sample mean and standard deviation from commonly reported quantiles in meta-analysis. <em>Statistical Methods in Medical Research</em>. <strong>29</strong>(9):2520-2537.
+</p>
+<p>Box G.E.P., and D.R. Cox. (1964). An analysis of transformations. <em>Journal of the Royal Statistical Society Series B</em>. <strong>26</strong>(2):211-52.
+</p>
+<p>Luo D., Wan X., Liu J., and Tong T. (2016). Optimally estimating the sample mean from the sample size, median, mid-range, and/or mid-quartile range. <em>Statistical Methods in Medical Research</em>. <strong>27</strong>(6):1785-805
+</p>
+<p>Wan X., Wang W., Liu J., and Tong T. (2014). Estimating the sample mean and standard deviation from the sample size, median, range and/or interquartile range. <em>BMC Medical Research Methodology</em>. <strong>14</strong>:135.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Generate S2 summary data
+set.seed(1)
+n &lt;- 100
+x &lt;- stats::rlnorm(n, 2.5, 1)
+quants &lt;- stats::quantile(x, probs = c(0.25, 0.5, 0.75))
+obs.mean &lt;- mean(x)
+obs.sd &lt;- stats::sd(x)
+
+## Estimate the sample mean and standard deviation using the BC method
+bc.mean.sd(q1.val = quants[1], med.val = quants[2], q3.val = quants[3],
+    n = n)
+
+</code></pre>
+
+
+</div>

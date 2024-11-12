@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>computeTargetValues</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute target values based on the item pool.</h2>
+
+<h3>Description</h3>
+
+<p>Compute target values for item values/categories based on the number
+of items in the item pool, the number of test forms to assemble and the number
+of items in each test form (i.e., test length).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">computeTargetValues(
+  itemValues,
+  nForms,
+  testLength = NULL,
+  allowedDeviation = NULL,
+  relative = FALSE
+)
+
+## Default S3 method:
+computeTargetValues(
+  itemValues,
+  nForms,
+  testLength = NULL,
+  allowedDeviation = NULL,
+  relative = FALSE
+)
+
+## S3 method for class 'factor'
+computeTargetValues(
+  itemValues,
+  nForms,
+  testLength = NULL,
+  allowedDeviation = NULL,
+  relative = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>itemValues</code></td>
+<td>
+<p>Item parameter/values for which the sum per test form should be constrained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nForms</code></td>
+<td>
+<p>Number of forms to be created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testLength</code></td>
+<td>
+<p>to be documented.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allowedDeviation</code></td>
+<td>
+<p>Numeric value of length 1. How much deviance is allowed from target values?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relative</code></td>
+<td>
+<p>Is the <code>allowedDeviation</code> expressed as a proportion?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Both for numerical and categorical item values, the target values are the item
+pool average scaled by the ratio of items in the forms and items in the item
+pool. The behavior of the function changes depending on the class of
+<code>itemValues</code>.
+</p>
+<p>When <code>itemValues</code> is a numerical vector, an when <code>allowedDeviation</code>
+is <code>NULL</code> (the default), only one target value is computed. This value
+could be used in the <code>targetConstraint</code>-function. Otherwise (i.e.,
+<code>allowedDeviation</code> is a numerical value), the target is computed, but a
+minimal and a maximal (target)value are returned, based on the allowed
+deviation. When <code>relative == TRUE</code> the allowed deviation should be
+expressed as a proportion. In that case the minimal and maximal values are
+a computed proportionally.
+</p>
+<p>When <code>itemValues</code> is a <code>factor</code>, it is assumed that the item values
+are item categories, and hence only whole valued frequencies are returned.
+To be more precise, a matrix with the minimal and maximal target frequencies
+for every level of the factor are returned. When <code>allowedDeviation</code>
+is <code>NULL</code>, the difference between the minimal and maximal value is
+one (or zero). As a consequence, dummy-item values are best specified as a
+factor (see examples).
+</p>
+
+
+<h3>Value</h3>
+
+<p>a vector or a matrix with target values (see details)
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>computeTargetValues(default)</code>: compute target values
+</p>
+</li>
+<li> <p><code>computeTargetValues(factor)</code>: compute target frequencies for item categories
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Assume an item pool with 50 items with random item information values (iif) for
+## a given ability value.
+set.seed(50)
+itemInformations &lt;- runif(50, 0.5, 3)
+
+## The target value for the test information value (i.e., sum of the item
+## informations) when three test forms of 10 items are assembled is:
+computeTargetValues(itemInformations, nForms = 3, testLength = 10)
+
+## The minimum and maximum test iformation values for an allowed deviation of
+## 10 percent are:
+computeTargetValues(itemInformations, nForms = 3, allowedDeviation = .10,
+   relative = TRUE, testLength = 10)
+
+
+## items_vera$MC is dummy variable indication which items in the pool are multiple choise
+str(items_vera$MC)
+
+## when used as a numerical vector, the dummy is not treated as a categorical
+## indicator, but rather as a numerical value.
+computeTargetValues(items_vera$MC, nForms = 14)
+computeTargetValues(items_vera$MC, nForms = 14, allowedDeviation = 1)
+
+## Therefore, it is best to convert dummy variables into a factor, so that
+## automatically freqyencies are returned
+MC_factor &lt;- factor(items_vera$MC, labels = c("not MC", "MC"))
+computeTargetValues(MC_factor, nForms = 14)
+computeTargetValues(MC_factor, nForms = 3)
+
+## The computed minimum and maximum frequencies can be used to create contstraints.
+MC_ranges &lt;- computeTargetValues(MC_factor, nForms = 3)
+itemCategoryRangeConstraint(3, MC_factor, range = MC_ranges)
+
+## When desired, the automatically computed range can be adjusted by hand. This
+##  can be of use when only a limited set of the categories should be constrained.
+##  For instance, when only the multiple-choice items should be constrained, and
+##  the non-multiple-choice items should not be constrained, the minimum and
+##  maximum value can be set to a very small and a very high value, respectively.
+##  Or to other sensible values.
+MC_ranges["not MC", ] &lt;- c(0, 40)
+MC_ranges
+itemCategoryRangeConstraint(3, MC_factor, range = MC_ranges)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,104 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>select_boin12_obd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Select dose by BOIN12's OBD-choosing algorithm.</h2>
+
+<h3>Description</h3>
+
+<p>This method selects dose by the algorithm for identifying the optimal
+biological dose (OBD) described in Lin et al. (2020). This class is intended
+to be used when a BOIN12 trial has reached its maximum sample size. Thus, it
+intends to make the final dose recommendation after the regular BOIN12 dose
+selection algorithm, as implemented by <code>get_boin12</code>, has
+gracefully concluded a dose-finding trial. However, the class can be used in
+any scenario where there is a limit toxicity rate. See Examples.
+Note - this class will not override the parent dose selector when the parent
+is advocating no dose. Thus this class will not reinstate a dangerous dose.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">select_boin12_obd(
+  parent_selector_factory,
+  when = c("finally", "always"),
+  tox_limit = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>Object of type <code>selector_factory</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>when</code></td>
+<td>
+<p>Either of: 'finally' to select dose only when the parent
+dose-selector has finished, by returning continue() == FALSE; or 'always'
+to use this dose-selection algorithm for every dose decision. As per the
+authors' original intentions, the default is 'finally'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tox_limit</code></td>
+<td>
+<p>We seek a dose with toxicity probability no greater than.
+If not provided, the value will be sought from the parent dose-selector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra args are ignored.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Lin, R., Zhou, Y., Yan, F., Li, D., &amp; Yuan, Y. (2020).
+BOIN12: Bayesian optimal interval phase I/II trial design for utility-based
+dose finding in immunotherapy and targeted therapies.
+JCO precision oncology, 4, 1393-1402.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># This class is intended to make the final dose selection in a BOIN12 trial:
+tox_limit &lt;- 0.35
+model &lt;- get_boin12(num_doses = 5, phi_t = 0.35, phi_e = 0.25,
+                    u2 = 40, u3 = 60, n_star = 6) %&gt;%
+  stop_at_n(n = 12) %&gt;%
+  select_boin12_obd()
+
+outcomes &lt;- '1NNN 2NTN 2NNN 3NTT'
+model %&gt;% fit(outcomes) %&gt;% recommended_dose()
+
+# However, since behaviour is modular in this package, we can use this method
+# to select dose at every dose decision:
+model2 &lt;- get_boin12(num_doses = 5, phi_t = 0.35, phi_e = 0.25,
+                    u2 = 40, u3 = 60, n_star = 6) %&gt;%
+  select_boin12_obd(when = 'always')
+model2 %&gt;% fit('1NNT') %&gt;% recommended_dose()
+model2 %&gt;% fit('1NNN 2NNT') %&gt;% recommended_dose()
+
+</code></pre>
+
+
+</div>

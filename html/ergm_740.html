@@ -1,0 +1,376 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>san</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate networks with a given set of network statistics</h2>
+
+<h3>Description</h3>
+
+<p>This function attempts to find a network or networks whose statistics match
+those passed in via the <code>target.stats</code> vector.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">san(object, ...)
+
+## S3 method for class 'formula'
+san(
+  object,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  target.stats = NULL,
+  nsim = NULL,
+  basis = NULL,
+  output = c("network", "edgelist", "ergm_state"),
+  only.last = TRUE,
+  control = control.san(),
+  verbose = FALSE,
+  offset.coef = NULL,
+  ...
+)
+
+## S3 method for class 'ergm_model'
+san(
+  object,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  target.stats = NULL,
+  nsim = NULL,
+  basis = NULL,
+  output = c("network", "edgelist", "ergm_state"),
+  only.last = TRUE,
+  control = control.san(),
+  verbose = FALSE,
+  offset.coef = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>Either a <code>formula</code> or some other supported
+representation of an ERGM, such as an <code>ergm_model</code> object.
+<code>formula</code> should be of the form <code>y ~ &lt;model terms&gt;</code>, where
+<code>y</code> is a network object or a matrix that can be coerced to a
+<code>network</code> object.  For the details on the possible <code>&lt;model
+  terms&gt;</code>, see <code>ergmTerm</code>.  To create a
+<code>network</code> object in , use the
+<code>network()</code> function, then add nodal attributes to it using
+the <code>%v%</code> operator if necessary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to other functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>Either a character string, a formula, or <code>NULL</code> (the default), to specify the response attributes and whether the ERGM is binary or valued. Interpreted as follows: </p>
+
+<dl>
+<dt><code>NULL</code></dt>
+<dd>
+<p>Model simple presence or absence, via a binary ERGM.</p>
+</dd>
+<dt>character string</dt>
+<dd>
+<p>The name of the edge attribute whose value is to be modeled. Type of ERGM will be determined by whether the attribute is <code>logical</code> (<code>TRUE</code>/<code>FALSE</code>) for binary or <code>numeric</code> for valued.</p>
+</dd>
+<dt>a formula</dt>
+<dd>
+<p>must be of the form <code>NAME~EXPR|TYPE</code> (with <code>|</code> being literal). <code>EXPR</code> is evaluated in the formula's environment with the network's edge attributes accessible as variables. The optional <code>NAME</code> specifies the name of the edge attribute into which the results should be stored, with the default being a concise version of <code>EXPR</code>. Normally, the type of ERGM is determined by whether the result of evaluating <code>EXPR</code> is logical or numeric, but the optional <code>TYPE</code> can be used to override by specifying a scalar of the type involved (e.g., <code>TRUE</code> for binary and <code>1</code> for valued).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>A one-sided formula specifying
+the reference measure (<code class="reqn">h(y)</code>) to be used.
+See help for ERGM reference measures implemented in the
+<strong>ergm</strong> package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraints</code></td>
+<td>
+<p>A formula specifying one or more constraints
+on the support of the distribution of the networks being modeled. Multiple constraints
+may be given, separated by “+” and “-” operators. See
+<code>ergmConstraint</code> for the detailed explanation of
+their semantics and also for an indexed list of the constraints visible to the <span class="pkg">ergm</span> package.
+</p>
+<p>The default is to have no constraints except those provided through
+the <code>ergmlhs</code> API.
+</p>
+<p>Together with the model terms in the formula and the reference measure, the constraints
+define the distribution of networks being modeled.
+</p>
+<p>It is also possible to specify a proposal function directly either
+by passing a string with the function's name (in which case,
+arguments to the proposal should be specified through the
+<code>MCMC.prop.args</code> argument to the relevant control function, or
+by giving it on the LHS of the hints formula to <code>MCMC.prop</code>
+argument to the control function. This will override
+the one chosen automatically.
+</p>
+<p>Note that not all possible combinations of constraints and reference
+measures are supported. However, for relatively simple constraints
+(i.e., those that simply permit or forbid specific dyads or sets of
+dyads from changing), arbitrary combinations should be possible.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target.stats</code></td>
+<td>
+<p>A vector of the same length as the number of non-offset statistics
+implied by the formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>Number of networks to generate. Deprecated: just use <code>replicate()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>basis</code></td>
+<td>
+<p>If not NULL, a <code>network</code> object used to start the Markov
+chain.  If NULL, this is taken to be the network named in the formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>Character, one of <code>"network"</code> (default),
+<code>"edgelist"</code>, or <code>"ergm_state"</code>: determines the
+output format. Partial matching is performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>only.last</code></td>
+<td>
+<p>if <code>TRUE</code>, only return the last network generated;
+otherwise, return a <code>network.list</code> with <code>nsim</code> networks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters for algorithm tuning,
+typically constructed with <code>control.san()</code>. Its documentation
+gives the the list of recognized control parameters and their
+meaning. The more generic utility <code>snctrl()</code> (StatNet ConTRoL)
+also provides argument completion for the available control
+functions and limited argument name checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset.coef</code></td>
+<td>
+<p>A vector of offset coefficients; these must be passed in by the user.
+Note that these should be the same set of coefficients one would pass to <code>ergm</code> via
+its <code>offset.coef</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>(By default, the <code>formula</code> is taken from the <code>ergm</code>
+object.  If a different <code>formula</code> object is wanted, specify it here.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The following description is an exegesis of section 4 of Krivitsky
+et al. (2022).
+</p>
+<p>Let <code class="reqn">\mathbf{g}</code> be a vector of target statistics for the
+network we wish to construct. That is, we are given an arbitrary network
+<code class="reqn">\mathbf{y}^0 \in \mathcal{Y}</code>, and we seek a network
+<code class="reqn">\mathbf{y} \in \mathcal{Y}</code> such that
+<code class="reqn">\mathbf{g}(\mathbf{y}) \approx \mathbf{g}</code> – ideally equality is achieved,
+but in practice we may have to settle for a close approximation. The
+variant of simulated annealing is as follows.
+</p>
+<p>The energy function is defined
+</p>
+<p style="text-align: center;"><code class="reqn">E_W (\mathbf{y}) = (\mathbf{g}(\mathbf{y}) - \mathbf{g})^\mathsf{T} W (\mathbf{g}(\mathbf{y}) - \mathbf{g}),</code>
+</p>
+
+<p>with <code class="reqn">W</code> a symmetric positive (barring multicollinearity in statistics)
+definite matrix of weights. This function achieves 0 only if the target is
+reached. A good choice of this matrix yields a more efficient search.
+</p>
+<p>A standard simulated annealing loop is used, as described below, with some
+modifications. In particular, we allow the user to specify a vector of
+offsets <code class="reqn">\eta</code> to bias the annealing, with <code class="reqn">\eta_k = 0</code> 
+denoting no offset. Offsets can be used with SAN to forbid certain
+statistics from ever increasing or decreasing. As with <code>ergm()</code>, offset
+terms are specified using the <code>offset()</code> decorator and their coefficients
+specified with the <code>offset.coef</code> argument. By default, finite offsets are
+ignored by, but this can be overridden by setting the <code>control.san()</code>
+argument <code>SAN.ignore.finite.offsets = FALSE</code>.
+</p>
+<p>The number of simulated annealing runs is specified by the <code>SAN.maxit</code>
+control parameter and the initial value of the temperature <code class="reqn">T</code> is set
+to <code>SAN.tau</code>. The value of <code class="reqn">T</code> decreases linearly until <code class="reqn">T = 0</code>
+at the last run, which implies that all proposals that increase
+<code class="reqn">E_W (\mathbf{y})</code> are rejected. The weight matrix <code class="reqn">W</code>
+is initially set to <code class="reqn">I_p / p</code>, where <code class="reqn">I_p</code> is the identity matrix
+of an appropriate dimension. For weight <code class="reqn">W</code> and temperature <code class="reqn">T</code>,
+the simulated annealing iteration proceeds as follows:
+</p>
+
+<ol>
+<li>
+<p> Test if <code class="reqn">E_W(\mathbf{y}) = 0</code>. If so, then exit.
+</p>
+</li>
+<li>
+<p> Generate a perturbed network <code class="reqn">\mathbf{y^*}</code> from a proposal that
+respects the model constraints. (This is typically the same proposal as
+that used for MCMC.)
+</p>
+</li>
+<li>
+<p> Store the quantity
+<code class="reqn">\mathbf{g}(\mathbf{y^*}) - \mathbf{g}(\mathbf{y})</code>
+for later use.
+</p>
+</li>
+<li>
+<p> Calculate acceptance probability
+</p>
+<p style="text-align: center;"><code class="reqn">\alpha = \exp[ - (E_W (\mathbf{y^*}) - E_W (\mathbf{y})) / T + \eta^\mathsf{T} (\mathbf{g}(\mathbf{y^*}) - \mathbf{g}(\mathbf{y}))]</code>
+</p>
+
+<p>(If <code class="reqn">|\eta_k| = \infty</code> and <code class="reqn">g_k (\mathbf{y^*}) - g_k (\mathbf{y}) = 0</code>, their product is defined to be 0.)
+</p>
+</li>
+<li>
+<p> Replace <code class="reqn">\mathbf{y}</code> with <code class="reqn">\mathbf{y^*}</code> with probability
+<code class="reqn">\min(1, \alpha)</code>.
+</p>
+</li>
+</ol>
+<p>After the specified number of iterations, <code class="reqn">T</code> is updated as described
+above, and <code class="reqn">W</code> is recalculated by first computing a matrix <code class="reqn">S</code>, the
+sample covariance matrix of the proposed differences stored in Step 3
+(i.e., whether or not they were rejected), then
+<code class="reqn">W = S^+ / tr(S^+)</code>, where <code class="reqn">S^+</code> is the
+Moore–Penrose pseudoinverse of <code class="reqn">S</code> and <code class="reqn">tr(S^+)</code> is the
+trace of <code class="reqn">S^+</code>. The differences in Step 3 closely reflect the
+relative variances and correlations among the network statistics.
+</p>
+<p>In Step 2, the many options for MCMC proposals can provide for effective
+means of speeding the SAN algorithm's search for a viable network.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A network or list of networks that hopefully have network
+statistics close to the <code>target.stats</code> vector. No guarantees
+are provided about their probability distribution. Additionally,
+<code>attr()</code>-style attributes <code>formula</code> and <code>stats</code> are included.
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>san(formula)</code>: Sufficient statistics are specified by a <code>formula</code>.
+</p>
+</li>
+<li> <p><code>san(ergm_model)</code>: A lower-level function that expects a pre-initialized <code>ergm_model</code>.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Krivitsky, P. N., Hunter, D. R., Morris, M., &amp; Klumb, C. (2022).
+ergm 4: Computational Improvements. arXiv preprint arXiv:2203.08198.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# initialize x to a random undirected network with 50 nodes and a density of 0.1
+x &lt;- network(50, density = 0.05, directed = FALSE)
+ 
+# try to find a network on 50 nodes with 300 edges, 150 triangles,
+# and 1250 4-cycles, starting from the network x
+y &lt;- san(x ~ edges + triangles + cycle(4), target.stats = c(300, 150, 1250))
+
+# check results
+summary(y ~ edges + triangles + cycle(4))
+
+# initialize x to a random directed network with 50 nodes
+x &lt;- network(50)
+
+# add vertex attributes
+x %v% 'give' &lt;- runif(50, 0, 1)
+x %v% 'take' &lt;- runif(50, 0, 1)
+
+# try to find a set of 100 directed edges making the outward sum of
+# 'give' and the inward sum of 'take' both equal to 62.5, so in
+# edges (i,j) the node i tends to have above average 'give' and j
+# tends to have above average 'take'
+y &lt;- san(x ~ edges + nodeocov('give') + nodeicov('take'), target.stats = c(100, 62.5, 62.5))
+
+# check results
+summary(y ~ edges + nodeocov('give') + nodeicov('take'))
+
+
+# initialize x to a random undirected network with 50 nodes
+x &lt;- network(50, directed = FALSE)
+
+# add a vertex attribute
+x %v% 'popularity' &lt;- runif(50, 0, 1)
+
+# try to find a set of 100 edges making the total sum of
+# popularity(i) and popularity(j) over all edges (i,j) equal to
+# 125, so nodes with higher popularity are more likely to be
+# connected to other nodes
+y &lt;- san(x ~ edges + nodecov('popularity'), target.stats = c(100, 125))
+ 
+# check results
+summary(y ~ edges + nodecov('popularity'))
+
+# creates a network with denser "core" spreading out to sparser
+# "periphery"
+plot(y)
+
+</code></pre>
+
+
+</div>

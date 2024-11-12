@@ -1,0 +1,115 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lh_robust</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Linear Hypothesis for Ordinary Least Squares with Robust Standard Errors</h2>
+
+<h3>Description</h3>
+
+<p>This function fits a linear model with robust standard errors and performs linear hypothesis test.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lh_robust(..., data, linear_hypothesis)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments to be passed to  <code>lm_robust</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>data.frame</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linear_hypothesis</code></td>
+<td>
+<p>A character string or a matrix specifying combination, to be passed to the hypothesis.matrix argument of car::linearHypothesis
+See <code>linearHypothesis</code> for more details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is a wrapper for <code>lm_robust</code> and for
+<code>linearHypothesis</code>. It first runs <code>lm_robust</code> and
+next passes <code>"lm_robust"</code> object as an argument to <code>linearHypothesis</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"lh_robust"</code> containing the two following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>lm_robust</code></td>
+<td>
+<p>an object as returned by <code>lm_robust</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lh</code></td>
+<td>
+<p>A data frame with most of its columns pulled from <code>linearHypothesis</code>' output.</p>
+</td>
+</tr>
+</table>
+<p>The only analyis directly performed by <code>lh_robust</code> is a <code>t-test</code> for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
+All other output components are either extracted from <code>linearHypothesis</code> or <code>lm_robust</code>.
+</p>
+<p>The original output returned by <code>linearHypothesis</code> is added as an attribute under the <code>"linear_hypothesis"</code> attribute.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(fabricatr)
+dat &lt;- fabricate(
+  N = 40,
+  y = rpois(N, lambda = 4),
+  x = rnorm(N),
+  z = rbinom(N, 1, prob = 0.4),
+  clusterID = sample(1:4, 40, replace = TRUE)
+)
+
+# Default variance estimator is HC2 robust standard errors
+lhro &lt;- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
+
+# The linear hypothesis argument can be specified equivalently as:
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z = 2x")
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "2*x +1*z")
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
+
+# Also recovers other sorts of standard erorrs just as specified in \code{\link{lm_robust}}
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0", se_type = "classical")
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0", se_type =  "HC1")
+
+#  Can tidy() main output and subcomponents in to a data.frame
+lhro &lt;- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
+tidy(lhro )
+tidy(lhro$lm_robust)
+tidy(lhro$lh)
+
+# Can use summary() to get more statistics on the main output and subcomponents.
+summary(lhro)
+summary(lhro$lm_robust)
+summary(lhro$lh)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>etl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Initialize an <code>etl</code> object</h2>
+
+<h3>Description</h3>
+
+<p>Initialize an <code>etl</code> object
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">etl(x, db = NULL, dir = tempdir(), ...)
+
+## Default S3 method:
+etl(x, db = NULL, dir = tempdir(), ...)
+
+## S3 method for class 'etl'
+summary(object, ...)
+
+is.etl(object)
+
+## S3 method for class 'etl'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the name of the <code>etl</code> package that you wish to populate with data.
+This determines the class of the resulting <code>etl</code> object, which
+determines method dispatch of <code>etl_*()</code> functions. There is no default,
+but you can use <code>mtcars</code> as an test example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>db</code></td>
+<td>
+<p>a database connection that inherits from <code>src_dbi</code>.
+It is NULL by default, which results in a <code>SQLite</code> connection
+being created in <code>dir</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>a directory to store the raw and processed data files</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed to methods (currently ignored)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object for which a summary is desired.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A constructor function that instantiates an <code>etl</code> object.
+An <code>etl</code> object extends a <code>src_dbi</code> object.
+It also has attributes for:
+</p>
+
+<dl>
+<dt>pkg</dt>
+<dd>
+<p>the name of the <code>etl</code> package corresponding to the data source</p>
+</dd>
+<dt>dir</dt>
+<dd>
+<p>the directory where the raw and processed data are stored</p>
+</dd>
+<dt>raw_dir</dt>
+<dd>
+<p>the directory where the raw data files are stored</p>
+</dd>
+<dt>load_dir</dt>
+<dd>
+<p>the directory where the processed data files are stored</p>
+</dd>
+</dl>
+<p>Just like any <code>src_dbi</code> object, an <code>etl</code> object
+is a data source backed by an SQL database. However, an <code>etl</code> object
+has additional functionality based on the presumption that the SQL database
+will be populated from data files stored on the local hard disk. The ETL functions
+documented in <code>etl_create</code> provide the necessary functionality
+for <strong>extract</strong>ing data from the Internet to <code>raw_dir</code>,
+<strong>transform</strong>ing those data
+and placing the cleaned up data (usually in CSV format) into <code>load_dir</code>,
+and finally <strong>load</strong>ing the clean data into the SQL database.
+</p>
+
+
+<h3>Value</h3>
+
+<p>For <code>etl</code>, an object of class <code>etl_x</code> and
+<code>etl</code> that inherits
+from <code>src_dbi</code>
+</p>
+<p>For <code>is.etl</code>, <code>TRUE</code> or <code>FALSE</code>,
+depending on whether <code>x</code> has class <code>etl</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>etl_create</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Instantiate the etl object
+cars &lt;- etl("mtcars")
+str(cars)
+is.etl(cars)
+summary(cars)
+
+## Not run: 
+# connect to a PostgreSQL server
+if (require(RPostgreSQL)) {
+  db &lt;- src_postgres("mtcars", user = "postgres", host = "localhost")
+  cars &lt;- etl("mtcars", db)
+}
+
+## End(Not run)
+
+# Do it step-by-step
+cars %&gt;%
+  etl_extract() %&gt;%
+  etl_transform() %&gt;%
+  etl_load()
+src_tbls(cars)
+cars %&gt;%
+  tbl("mtcars") %&gt;%
+  group_by(cyl) %&gt;%
+  summarize(N = n(), mean_mpg = mean(mpg))
+
+# Do it all in one step
+cars2 &lt;- etl("mtcars")
+cars2 %&gt;%
+  etl_update()
+src_tbls(cars2)
+
+
+# generic summary function provides information about the object
+cars &lt;- etl("mtcars")
+summary(cars)
+cars &lt;- etl("mtcars")
+# returns TRUE
+is.etl(cars)
+
+# returns FALSE
+is.etl("hello world")
+cars &lt;- etl("mtcars") %&gt;%
+  etl_create()
+cars
+</code></pre>
+
+
+</div>

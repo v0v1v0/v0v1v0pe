@@ -1,0 +1,308 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exams2pdf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of Exams in PDF Format</h2>
+
+<h3>Description</h3>
+
+<p>Automatic generation of exams in PDF format.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  exams2pdf(file, n = 1L, nsamp = NULL, dir = ".", template = "plain", 
+    inputs = NULL, header = list(Date = Sys.Date()), name = NULL, 
+    control = NULL, encoding = "UTF-8", quiet = TRUE, transform = NULL,
+    edir = NULL, tdir = NULL, sdir = NULL, texdir = NULL, texengine = "pdflatex",
+    verbose = FALSE, rds = FALSE, points = NULL, seed = NULL, 
+    attachfile = FALSE, exshuffle = NULL, ...)
+  
+  make_exams_write_pdf(template = "plain", inputs = NULL,
+    header = list(Date = Sys.Date()), name = NULL, encoding = "UTF-8",
+    quiet = TRUE, control = NULL, texdir = NULL, texengine = "pdflatex")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>character. A specification of a (list of) exercise files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of copies to be compiled from <code>file</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsamp</code></td>
+<td>
+<p>integer. The number(s) of exercise files sampled from each
+list element of <code>file</code>. Sampling without replacement is used
+if possible. (Only if some element of <code>nsamp</code> is larger than
+the length of the corresponding element in <code>file</code>, sampling
+with replacement is used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character specifying the output directory (default:
+current working directory). If only a single PDF file is produced
+and no <code>dir</code> is explicitly specified, the file is displayed on the
+screen rather than saved in <code>dir</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>character. A specification of a LaTeX template. The package
+currently provides <code>"exam"</code>, <code>"solution"</code>, <code>"plain"</code>,
+among others. The default is to use the <code>"plain.tex"</code> file unless
+there are Rmd exercises in <code>file</code> for which <code>"plain8.tex"</code>
+is used. For further details see below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inputs</code></td>
+<td>
+<p>character. Names of files that are needed as inputs during
+LaTeX compilation (e.g., style files, headers). Either the full path
+must be given or the file needs to be in <code>edir</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>header</code></td>
+<td>
+<p>list. A list of further options to be passed to
+the LaTeX files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>character. A name prefix for resulting exercises, of the same
+length as <code>template</code>. By default (if <code>name</code> is <code>NULL</code>)
+the base name of <code>template</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control arguments for the appearance of
+multiple choice results (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>character, ignored. The encoding is always assumed to be UTF-8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>logical. Should output be suppressed when calling
+<code>xweave</code> and <code>texi2dvi</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transform</code></td>
+<td>
+<p>function. An optional transform driver passed to
+<code>xexams</code> (by default no transformation is used).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edir</code></td>
+<td>
+<p>character specifying the path of the directory (along with its
+sub-directories) in which the files in <code>file</code> are stored
+(see also <code>xexams</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdir</code></td>
+<td>
+<p>character specifying a temporary directory, by default
+this is chosen via <code>tempfile</code>. Note that this
+is cleaned up (i.e., existing files are deleted) and only certain
+temporary files are preserved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdir</code></td>
+<td>
+<p>character specifying a directory for storing supplements, by
+default this is chosen via <code>tempfile</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>texdir</code></td>
+<td>
+<p>character specifying a directory for running <code>texi2dvi</code>
+in. By default this is chosen via <code>tempfile</code> (and deleted
+again) but, if specified by the user, the temporary LaTeX files from the last
+iteration are preserved and not deleted. This is intended especially for debugging purposes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>texengine</code></td>
+<td>
+<p>character. Passed to <code>latexmk</code> if <code>tinytex</code> is available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical. Should information on progress of exam generation
+be reported?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rds</code></td>
+<td>
+<p>logical indicating whether the return list should also be
+saved as an RDS data file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>integer. How many points should be assigned to each exercise? Note that this
+argument overules any exercise points that are provided within the <code>expoints</code> tags
+of the exercise files (if any). The vector of points supplied should either have
+length 1 or the number of exercises in the exam.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>integer matrix or logical. Either <code>NULL</code> (default), logical, or a
+matrix of random seeds for each possible exercise to be set prior to calling
+<code>driver@sweave</code>. If <code>NULL</code> no random seeds are set. If a matrix,
+the number of rows must be <code>n</code> and the number of columns must
+correspond to <code>unlist(file)</code>. If <code>TRUE</code> a suitable matrix of seeds
+is sampled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attachfile</code></td>
+<td>
+<p>logical. Should the LaTeX commands <code>url</code> and <code>href</code>
+be replaced by <code>attachfile</code> commends when used for supplementary files?
+This enables embedding these supplementary files directly into the PDF when
+<code>template</code> loads the <code>attachfile</code> LaTeX package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exshuffle</code></td>
+<td>
+<p>logical or integer. If the <code>exshuffle</code>
+argument is non-<code>NULL</code> it is used to overrule the <code>exshuffle</code>
+tag from the <code>file</code> (e.g., <code>exshuffle = FALSE</code> can be used
+to keep all available answers without permutation).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed on to <code>xweave</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>exams2pdf</code> is a more flexible re-implementation of the old (version 1)
+<code>exams</code> function (Gruen and Zeileis 2009), using the new extensible
+<code>xexams</code> framework (Zeileis et al. 2014). A detailed
+introduction is provided in <code>vignette("exams", package = "exams")</code>, also
+pointing out relative advantages of the new interface.
+</p>
+<p><code>exams2pdf</code> proceeds by using <code>make_exams_write_pdf</code> to set up a custom
+<code>driver$write</code> function on the fly before calling <code>xexams</code>.
+This custom driver combines each exams with the desired <code>template</code>
+(and <code>inputs</code> etc.) and then calls <code>texi2dvi</code>
+on the resulting LaTeX file to produce PDF output.  
+For a single exam (<code>n = 1</code>) the resulting PDF is displayed on
+screen (unless <code>dir</code> is explicitly specified) while for <code>n &gt; 1</code> 
+the PDF files are stored in the output directory <code>dir</code>.
+</p>
+<p>The argument <code>control</code> is specified by a named list, currently with elements
+<code>mchoice.symbol</code> and <code>cloze.collapse</code>. <code>mchoice.symbol</code>
+has to be a character vector with elements <code>True</code> and <code>False</code>,
+specifying the symbol used for the questionnaire output in the final PDF file.
+<code>cloze.collapse</code> specifies the character used for collapsing mchoice/schoice
+alternatives within a cloze exercise. By default, these are separated by <code>" / "</code>
+but with <code>cloze.collapse = "\\\\"</code> each alternative would be in a new line.
+Finally, <code>cloze.collapse = "enumerate"</code> can also be used which employs a nested
+enumerate environment. In the latter case, the questionnaire uses <code>exclozechoice</code>
+rather than <code>exmchoice</code> (see <code>exam.tex</code> or <code>solution.tex</code> for an
+illustration.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>exams2pdf</code> returns a list of exams as generated by <code>xexams</code>.
+</p>
+<p><code>make_exams_write_pdf</code> returns a function that is suitable for being
+supplied as <code>driver$write</code> to <code>xexams</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Gruen B, Zeileis A (2009). Automatic Generation of Exams in R.
+<em>Journal of Statistical Software</em>, <b>29</b>(10), 1–14.
+<a href="https://doi.org/10.18637/jss.v029.i10">doi:10.18637/jss.v029.i10</a>.
+</p>
+<p>Zeileis A, Umlauf N, Leisch F (2014).
+Flexible Generation of E-Learning Exams in R: Moodle Quizzes, OLAT Assessments, and Beyond.
+<em>Journal of Statistical Software</em>, <b>58</b>(1), 1–36.
+<a href="https://doi.org/10.18637/jss.v058.i01">doi:10.18637/jss.v058.i01</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>xexams</code>,
+<code>exams</code>,
+<code>texi2dvi</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## load package and enforce par(ask = FALSE)
+##
+## additionally, for simplicity, enforce using the basic
+## tools::texi2dvi() LaTeX interface instead of the more
+## flexible/robust tinytex::latexmk()
+library("exams")
+oopt &lt;- options(device.ask.default = FALSE, exams_tex = "tools")
+
+if(interactive()) {
+## compile a single random exam (displayed on screen)
+exams2pdf(list(
+  "boxplots.Rmd",
+  c("tstat.Rmd", "ttest.Rmd", "confint.Rmd"),
+  c("regression.Rmd", "anova.Rmd"),
+  "scatterplot.Rmd",
+  "relfreq.Rmd"
+))
+}
+
+options(exams_tex = oopt$exams_tex)
+</code></pre>
+
+
+</div>

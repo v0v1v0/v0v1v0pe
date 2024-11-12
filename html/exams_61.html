@@ -1,0 +1,120 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>moodle2exams</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert Moodle XML Quizzes to R/exams Exercises</h2>
+
+<h3>Description</h3>
+
+<p>Function to convert Moodle quiz exercises of type numerical, multichoice, shortanswer, and essay
+to R/exams exercises of type num, schoice/mchoice, and string.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">moodle2exams(x, markup = c("markdown", "latex"), dir = ".",
+  exshuffle = TRUE, names = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>character. Path to a Moodle XML file. If a character vector with more than
+one element is provided, it is assumed to be an XML file as read with <code>readLines</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>markup</code></td>
+<td>
+<p>character. Markup language to convert to, i.e., <code>"markdown"</code> (default)
+corresponds to Rmd exercises and <code>"latex"</code> to Rnw exercises.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>character. Directory where the converted exercises should be saved.
+If set to <code>NULL</code> no files are saved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exshuffle</code></td>
+<td>
+<p>logical or numeric. Meta-information tag used for single-choice and
+multiple-choice items.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+<p>character. Optional file names (without suffix) that should be used for the
+R/exams exercise files. The default is to use the name tags from the Moodle XML file
+(with some fix-ups, avoiding certain special characters). Alternatively, names can also
+be supplied and will then be used for both the file names and the  <code>exname</code>
+meta-information tag, thus overwriting other names specified in the Moodle XML file.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function aims to facilitate converting an existing Moodle question pool to R/exams exercises.
+The resulting exercise files can subsequently be edited further, e.g., for making them dynamic.
+</p>
+<p>The function takes a Moodle XML quiz and converts each exercise into a R/Markdown (Rmd) or
+R/LaTeX (Rnw) R/exams exercise. The HTML answers and questions from the Moodle XML are converted using
+pandoc (via <code>pandoc_convert</code>). It is recommended to check the outcome
+in case certain HTML markup, or mathematical equations, etc., cannot be converted fully automatically.
+Currently only the Moodle XML exercise types numerical, multichoice, shortanswer, and essay 
+are properly supported.
+</p>
+<p>There is limited support for cloze exercises, but the resulting meta-information needed by
+R/exams will be incorrect. Hence, a warning is issued when converting cloze exercises.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of character vectors containing the R/exams exercise code with one element per exercise.
+If <code>dir</code> is specified (default), these character vectors are saved in one file per exercise
+(using <code>writeLines</code>). In this case the list is returned invisibly. If <code>dir = NULL</code>
+no files are saved and the list is returned visibly.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>exams2moodle</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(requireNamespace("xml2")) {
+## path to a Moodle XML quiz file (provided in the package)
+moodle_xml &lt;- file.path(find.package("exams"), "xml", "moodlequiz.xml")
+
+## create a temporary directory for R/exams exercise files
+dir.create(tdir &lt;- tempfile())
+
+## convert all exercises from the Moodle XML to R/Markdown files
+ex_converted &lt;- moodle2exams(moodle_xml, dir = tdir)
+print(dir(tdir))
+
+## additionally the source code of the Rmd files is also return invisible
+## in 'ex_converted' and can be inspected manually, e.g., via writeLines()
+names(ex_converted)
+writeLines(ex_converted[[1]])
+
+## clean up temporary directory
+unlink(tdir)
+}
+</code></pre>
+
+
+</div>

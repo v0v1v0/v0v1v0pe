@@ -1,0 +1,263 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make_epiflows</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create an epiflows object</h2>
+
+<h3>Description</h3>
+
+<p>An epiflows object contains a pair of data frames that provide information
+about locations and flows between locations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">make_epiflows(...)
+
+## S3 method for class 'data.frame'
+make_epiflows(
+  flows,
+  locations = NULL,
+  from = 1L,
+  to = 2L,
+  n = 3L,
+  id = 1L,
+  ...
+)
+
+## S3 method for class 'integer'
+make_epiflows(inflow, outflow, focus, locations, id = 1L, ...)
+
+## S3 method for class 'numeric'
+make_epiflows(inflow, outflow, focus, locations, id = 1L, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any number of varaibles that can be used for mapping or modelling.
+See <code>global_vars()</code> and <code>get_vars()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flows</code></td>
+<td>
+<p>a data frame where each row represents a flow from one location
+to the next. This must have at least three columns:
+</p>
+
+<ul>
+<li>
+<p> Where the flow started (as specified in <code>from</code>, below)
+</p>
+</li>
+<li>
+<p> Where the flow ended (as specified in <code>to</code>, below)
+</p>
+</li>
+<li>
+<p> How many cases were involved (as specified in <code>n</code>, below)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>locations</code></td>
+<td>
+<p>a data frame where each row represents a location. This can
+have any number of columns specifying useful metadata about the location,
+but it must contain at least one column specifying the location ID used in
+the <code>flows</code> data frame (as specified by the <code>id</code> argument, below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from</code></td>
+<td>
+<p>the column in the <code>flows</code> data frame indicating where the flow
+started. This can be an integer or character. Default is the first column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>to</code></td>
+<td>
+<p>the column in the <code>flows</code> data frame indicating where the flow
+terminated. This can be an integer or character. Default is the second column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the column in the <code>flows</code> data frame indicating how many cases were
+contained in the flow. This can be an integer or character. Default is the
+third column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>The column to use for the identifier in the <code>locations</code> data frame.
+This defaults to the first column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inflow</code></td>
+<td>
+<p>a <strong>named</strong> integer or numeric vector specifying the number of
+cases flowing into a location specified by <code>focus</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outflow</code></td>
+<td>
+<p>a <strong>named</strong> integer or numeric vector specifying the number of
+cases flowing from a location specified by <code>focus</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focus</code></td>
+<td>
+<p>a character vector specifying the focal location for integer
+input. This is necessary for integer input to make clear what "outflow" and
+"inflow" are relative to.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>epiflows</code> object can be constructed using simply a list of locations with
+optional metadata (similar to a linelist) and a list of flows that describes
+the number of cases flowing from one location to another. Optional metadata
+such as coordinates and duration of stay can be included in the linelist for
+use in <code>estimate_risk_spread()</code> or <code>map_epiflows()</code>.
+</p>
+
+
+<h4>Developer note: object structure</h4>
+
+<p>Because a flow of cases from one location to another can be thought of as a
+contact with a wider scope, the <code>epiflows</code> object inherits from the
+<code>epicontacts</code> object, constructed via <code>epicontacts::make_epicontacts()</code>.
+This means that all the methods for subsetting an object of class
+<code>epicontacts</code> also applies to <code>epiflows</code>, including the use of the function
+<code>epicontacts::thin()</code>. One caveat is that, internally, the names of the
+elements within the object do not match the terminology used in <em>epiflows</em>.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>An <code>epiflows</code> object in list format with four elements:
+</p>
+
+<ul>
+<li> <p><strong>locations</strong> (accessible via <code>get_locations()</code>): a data frame of
+locations with first column 'id' containing character vector of unique
+identifiers.
+</p>
+</li>
+<li> <p><strong>flows</strong> (accessible via <code>get_flows()</code>): data.frame of flows with first
+two columns named 'from' and 'to' indicating directed flows between two
+locations, and a third column named 'n', specifying the number of cases in
+each
+</p>
+</li>
+<li> <p><strong>vars</strong> (accessible via <code>get_vars()</code>). This contains a named list of
+available variables that can be used in further plotting and/or modelling.
+Default variables are found in <code>global_vars()</code>:
+</p>
+
+<ul>
+<li> <p><code>coordinates</code>: two columns specifying the lon and lat coordinates
+</p>
+</li>
+<li> <p><code>pop_size</code>: population size of each location
+</p>
+</li>
+<li> <p><code>duration_stay</code>: the average duration of stay for each location
+</p>
+</li>
+<li> <p><code>first_date</code>: the date of first recorded case
+</p>
+</li>
+<li> <p><code>last_date</code>: the date of the last recorded case
+</p>
+</li>
+<li> <p><code>num_cases</code>: the number of cases between the first and last date
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Zhian Kamvar, Thibaut Jombart
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>global_vars()</code> for definitions of global variables,
+<code>estimate_risk_spread()</code> for modelling, <code>plot.epiflows()</code> for plotting,
+<code>add_coordinates()</code> for adding coordinates, <code>get_vars()</code> for accession of
+metadata, <code>get_locations()</code> to access the locations data frame,
+<code>get_flows()</code> to access the flows data frame.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Load data
+data(YF_flows)
+data(YF_locations)
+YF_flows
+YF_locations
+## Use both to create the epiflows object.
+ef &lt;- make_epiflows(flows         = YF_flows, 
+                    locations     = YF_locations, 
+                    pop_size      = "location_population",
+                    duration_stay = "length_of_stay",
+                    num_cases     = "num_cases_time_window",
+                    first_date    = "first_date_cases",
+                    last_date     = "last_date_cases"
+                   )
+ef
+# Access variable information
+get_pop_size(ef)
+get_vars(ef, "duration_stay")
+get_vars(ef, "num_cases")
+data(YF_Brazil)
+(inflows   &lt;- YF_Brazil$T_O["Espirito Santo", , drop = TRUE])
+(outflows  &lt;- YF_Brazil$T_D["Espirito Santo", , drop = TRUE])
+(locations &lt;- subset(YF_Brazil$states, location_code == "Espirito Santo", drop = FALSE))
+los &lt;- data.frame(location_code    = names(YF_Brazil$length_of_stay), 
+                  length_of_stay   = YF_Brazil$length_of_stay,
+                  stringsAsFactors = FALSE
+                 )
+locations &lt;- merge(x   = locations, 
+                   y   = los, 
+                   by  = "location_code", 
+                   all = TRUE)
+ef &lt;- make_epiflows(inflow = inflows, 
+                    outflow = outflows, 
+                    focus = "Espirito Santo", 
+                    locations = locations,
+                    pop_size = "location_population",
+                    duration_stay = "length_of_stay",
+                    num_cases = "num_cases_time_window",
+                    first_date = "first_date_cases",
+                    last_date = "last_date_cases"
+                   )
+ef
+</code></pre>
+
+
+</div>

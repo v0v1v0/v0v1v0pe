@@ -1,0 +1,171 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>attachEpiNet</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Attach epistatic network to population.</h2>
+
+<h3>Description</h3>
+
+<p>Constructs and attaches a new epistatic network between QTLs to a given
+<code>Population</code> object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">attachEpiNet(pop, scaleFree = FALSE, k = 2, m = 1, additive = 0, incmat = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pop</code></td>
+<td>
+<p>the <code>Population</code> object to which the epistatic network will
+be attached</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaleFree</code></td>
+<td>
+<p>an optional logical value indicating whether to construct
+a network using the Barabasi-Albert model for generating scale-free
+networks</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>an optional vector listing orders of interaction to include</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>an optional integer indicating the minimum number of interactions
+for each QTL; see details below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>additive</code></td>
+<td>
+<p>an optional integer indicating the number of QTLs which
+will remain purely additive</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>incmat</code></td>
+<td>
+<p>an optional incidence matrix specifying a user-defined
+network</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>attachEpiNet()</code> can be used to construct a new epistatic network based
+either on stochastic processes or by adapting a user-supplied incidence
+matrix.
+</p>
+<p>If <code>scaleFree</code> is <code>FALSE</code>, a network is constructed at random; if
+it is <code>TRUE</code>, however, a scale-free network is constructed between QTLs
+using the Barabasi-Albert model. (The random network is constructed using
+the same algorithm but without preferential attachment.)
+</p>
+<p>A minimal initial network of randomly selected QTLs is first constructed,
+before then growing the network using randomly selected QTLs, preferentially
+attaching each QTL to at least <code>m</code> other QTLs (in the scale-free case).
+For increasing orders of interaction, degrees from lower orders of
+interaction are used when determining preferential attachment.
+</p>
+<p>If a user-supplied incidence matrix is given via the <code>incmat</code>
+argument, the <code>scaleFree</code>, <code>k</code> and <code>m</code> arguments are ignored,
+and the network structure is instead derived from the incidence matrix. The
+matrix should be such that the rows represent QTLs and the columns represent
+interactions between QTLs: a <code>1</code> at both <code>incmat[i1,j]</code> and
+<code>incmat[i2,j]</code> means there is an interaction between the QTLs
+<code>i1</code> and <code>i2</code>.
+</p>
+<p>The contributions that interactions make towards the phenotypic value are
+generated randomly when this function is called, based on a normal
+distribution. By default, each order of interaction has the same variance;
+however, using the <code>varfun</code> argument, a function can be supplied to
+alter the variance per order of interaction.
+</p>
+<p>Internally, each QTL is assigned a randomly generated value per
+interaction per genotype (i.e. the heterozygous genotype and the two
+homozygous genotypes), and these values are summed according to the value
+of the genotype.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A copy of the supplied <code>Population</code> is returned, with the new
+epistatic network attached.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Dion Detterer, Paul Kwan, Cedric Gondro
+</p>
+
+
+<h3>References</h3>
+
+<p>Barabasi AL, Albert R, 'Emergence of scaling in random networks,'
+<em>Science</em> 286(5439): 509-12, 15 October 1999.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Population</code>, <code>getEpiNet</code>,
+<code>plot.EpiNet</code>, <code>addEffects</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Generate a population and attach additive effects
+pop &lt;- Population(
+  popSize = 200, map = map100snp, QTL = 20,
+  alleleFrequencies = runif(100),
+  broadH2 = 0.9, narrowh2 = 0.6, traitVar = 40
+)
+pop &lt;- addEffects(pop)
+
+# Attach a random epistatic network with two- to four-way
+# interactions between QTLs
+popRnd &lt;- attachEpiNet(pop, k = 2:4)
+
+# Plot random network
+plot(getEpiNet(popRnd))
+
+# Attach a scale-free epistatic network with two-way interactions
+# between QTLs and a minimum of three interactions per QTL
+popSF &lt;- attachEpiNet(pop, scaleFree = TRUE, m = 3)
+
+# Plot scale-free network
+plot(getEpiNet(popSF))
+
+# Attach user-defined epistatic network
+popUser &lt;- attachEpiNet(pop, incmat = rincmat100snp)
+
+# Plot user-defined network
+plot(getEpiNet(popUser))
+
+# Attach a random epistatic network with two- to ten-way
+# interactions between QTLs and decaying variance
+popDecay &lt;- attachEpiNet(pop, k = 2:10)
+
+</code></pre>
+
+
+</div>

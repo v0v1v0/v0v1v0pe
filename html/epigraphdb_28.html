@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>query_epigraphdb</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Send data request to an EpiGraphDB API endpoint</h2>
+
+<h3>Description</h3>
+
+<p>This is a general purpose function to send data request
+which can be used when there has not been an R equivalent package function
+to an API endpoint.
+Underneath this is a wrapper around <code>httr</code> functions with better handling of
+returned status.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">query_epigraphdb(
+  route,
+  params = NULL,
+  mode = c("raw", "table"),
+  method = c("GET", "POST"),
+  retry_times = 3,
+  retry_pause_min = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>route</code></td>
+<td>
+<p>An EpiGraphDB API endpoint route, e.g. <code>"/mr"</code> or <code>"/confounder"</code>.
+Consult the <a href="https://api.epigraphdb.org">EpiGraphDB API documentation</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p>A list of parameters associated with the query endpoint.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p><code>c("raw", "table")</code>, if <code>"table"</code> then the query handler will try
+to convert the returned data to a tibble dataframe.
+NOTE: The default mode is "raw" which will NOT convert the returned response to
+a dataframe.
+This is different to functions that query topic endpoints which
+default to return a dataframe.
+Explicitly specify <code>mode = "table"</code> when needed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Type of HTTP (GET, POST, PUT, etc.) method.
+</p>
+<p>NOTE: When sending a POST request where a specific parameter is specified as a list on the API,
+and if the equivalent in R is a vector of length 1, you should wrap this parameter
+in <code>I()</code>, e.g. I(c("APOE")) to avoid auto unboxing.
+For details, please refer to <a href="https://httr.r-lib.org/reference/POST.html"><code>httr::POST</code></a></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>retry_times</code></td>
+<td>
+<p>Number of times the function will retry the request to the API.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>retry_pause_min</code></td>
+<td>
+<p>Minimum number of seconds to wait for the next retry.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Data from an EpiGraphDB API endpoint.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># GET /mr
+# equivalent to `mr(exposure_trait = "Body mass index", outcome_trait = "Coronary heart disease")`
+## Not run: 
+query_epigraphdb(
+  route = "/mr",
+  params = list(
+    exposure_trait = "Body mass index",
+    outcome_trait = "Coronary heart disease"
+  ),
+  mode = "table"
+)
+
+## End(Not run)
+
+# GET /meta/nodes/Gwas/list
+## Not run: 
+query_epigraphdb(
+  route = "/meta/nodes/Gwas/list",
+  params = list(
+    limit = 5,
+    offset = 0
+  )
+) %&gt;% str(1)
+
+## End(Not run)
+
+# POST /protein/ppi
+## Not run: 
+query_epigraphdb(
+  route = "/protein/ppi",
+  params = list(
+    uniprot_id_list = c("P30793", "Q9NZM1", "O95236")
+  ),
+  method = "POST"
+)
+
+## End(Not run)
+
+# error handling
+## Not run: 
+tryCatch(
+  query_epigraphdb(
+    route = "/mr",
+    params = list(
+      exposure_trait = NULL,
+      outcome_trait = NULL
+    ),
+    retry_times = 0
+  ),
+  error = function(e) {
+    message(e)
+  }
+)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

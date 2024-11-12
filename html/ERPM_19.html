@@ -1,0 +1,217 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimate_logL</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate log likelihood</h2>
+
+<h3>Description</h3>
+
+<p>Function to estimate the log likelihood of a model for an observed partition
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimate_logL(
+  partition,
+  nodes,
+  effects,
+  objects,
+  theta,
+  theta_0,
+  M,
+  num.steps,
+  burnin,
+  thining,
+  neighborhoods = c(0.7, 0.3, 0),
+  numgroups.allowed = NULL,
+  numgroups.simulated = NULL,
+  sizes.allowed = NULL,
+  sizes.simulated = NULL,
+  logL_0 = NULL,
+  parallel = FALSE,
+  cpus = 1,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>partition</code></td>
+<td>
+<p>observed partition</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nodes</code></td>
+<td>
+<p>node set (data frame)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effects</code></td>
+<td>
+<p>effects/sufficient statistics (list with a vector "names", and a vector "objects")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>objects</code></td>
+<td>
+<p>objects used for statistics calculation (list with a vector "name", and a vector "object")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>estimated model parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta_0</code></td>
+<td>
+<p>model parameters if all other effects than "num-groups" are fixed to 0 (basic Dirichlet partition model)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>number of steps in the path-sampling algorithm</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.steps</code></td>
+<td>
+<p>number of samples in each step</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>integer for the number of burn-in steps before sampling</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thining</code></td>
+<td>
+<p>integer for the number of thining steps between sampling</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neighborhoods</code></td>
+<td>
+<p>= c(0.7,0.3,0) way of choosing partitions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numgroups.allowed</code></td>
+<td>
+<p>= NULL, # vector containing the number of groups allowed in the partition (now, it only works with vectors like num_min:num_max)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numgroups.simulated</code></td>
+<td>
+<p>= NULL, # vector containing the number of groups simulated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sizes.allowed</code></td>
+<td>
+<p>= NULL,   vector of group sizes allowed in sampling (now, it only works for vectors like size_min:size_max)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sizes.simulated</code></td>
+<td>
+<p>= NULL,  vector of group sizes allowed in the Markov chain but not necessraily sampled (now, it only works for vectors like size_min:size_max)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logL_0</code></td>
+<td>
+<p>= NULL, if known, the value of the log likelihood of the basic dirichlet model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>= FALSE, indicating whether the code should be run in parallel</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cpus</code></td>
+<td>
+<p>= 1, number of cpus required for the parallelization</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>= FALSE, to print the current step the algorithm is in</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List with the log likelihood , AIC, lambda and the draws
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># estimate the log-likelihood and AIC of an estimated model (e.g. useful to compare two models)
+
+# define an arbitrary set of n = 6 nodes with attributes, and an arbitrary covariate matrix
+n &lt;- 6
+nodes &lt;- data.frame(label = c("A","B","C","D","E","F"),
+                    gender = c(1,1,2,1,2,2),
+                    age = c(20,22,25,30,30,31)) 
+friendship &lt;- matrix(c(0, 1, 1, 1, 0, 0,
+                       1, 0, 0, 0, 1, 0,
+                       1, 0, 0, 0, 1, 0,
+                       1, 0, 0, 0, 0, 0,
+                       0, 1, 1, 0, 0, 1,
+                       0, 0, 0, 0, 1, 0), 6, 6, TRUE)
+
+# choose the effects to be included (see manual for all effect names)
+effects &lt;- list(names = c("num_groups","same","diff","tie"),
+objects = c("partition","gender","age","friendship"))
+objects &lt;- list()
+objects[[1]] &lt;- list(name = "friendship", object = friendship)
+
+# define observed partition 
+partition &lt;- c(1,1,2,2,2,3)
+# (an exemplary estimation is internally stored in order to save time)
+
+# first: estimate the ML estimates of a simple model with only one parameter 
+# for number of groups (this parameter should be in the model!)
+likelihood_function &lt;- function(x){ exp(x*max(partition)) / compute_numgroups_denominator(n,x)}
+curve(likelihood_function, from=-2, to=0)
+parameter_base &lt;- optimize(likelihood_function, interval=c(-2, 0), maximum=TRUE)
+parameters_basemodel &lt;- c(parameter_base$maximum,0,0,0)
+
+
+# estimate logL and AIC
+logL_AIC &lt;- estimate_logL(partition,
+                          nodes,
+                          effects, 
+                          objects,
+                          theta = estimation$results$est,
+                          theta_0 = parameters_basemodel,
+                          M = 3,
+                          num.steps = 200,
+                          burnin = 100,
+                          thining = 20)
+logL_AIC$logL
+logL_AIC$AIC
+
+
+</code></pre>
+
+
+</div>

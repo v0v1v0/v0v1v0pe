@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>effect_alt.manyglm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Specify multivariate effect sizes</h2>
+
+<h3>Description</h3>
+
+<p><code>effect_alt</code> returns a coefficient matrix to be parsed to <code>extend</code>, <code>powersim</code>
+and <code>equivtest</code> to specify an effect size of interest.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'manyglm'
+effect_alt(object, effect_size, increasers, decreasers, term, K = NULL)
+
+effect_alt(object, effect_size, increasers, decreasers, term, K = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>objects of class <code>manyglm</code>, typically the result of a call to <code>manyglm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effect_size</code></td>
+<td>
+<p>An effect size of interest, see details for interpretation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>increasers</code></td>
+<td>
+<p>A vector list of responses which increase relative to the control group/intercept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>decreasers</code></td>
+<td>
+<p>A vector list of responses which decrease relative to the control group/intercept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term</code></td>
+<td>
+<p>Name of predictor of interest in quotes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>A vector of length <code>nlevels - 1</code>. If <code>NULL</code>, the effect size will increase by its exponent according to
+the order of factor variables. Alternatively, specify a vector <code>K</code> that corresponds to the exponent of the
+<code>effect_size</code> for each level of a factor variable. Defaults to <code>NULL</code>, see details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>effect_alt</code> helps users to create interpretable multivariate effect sizes to be parsed into <code>extend</code>,
+<code>powersim</code> and <code>equivtest</code>, so that researchers can investigate the relationship between effect size, power and
+sample size in a complicated multivariate abundance setting.
+</p>
+<p><code>effect_alt</code> creates an effect of size <code>log(effect_size)</code> for a predictor of interest (<code>term</code>), for responses
+who have been specified to increase (<code>increasers</code>) and <code>-log(effect_size)</code> for responses who have been specified
+to decrease (<code>decreasers</code>). Responses that have not been specified in the <code>increasers</code> or <code>decreasers</code> vectors
+are specified to have no effect with a coefficient of 0. The effect has been logged to make the effect size
+interpretable within the coefficient matrix.
+</p>
+<p>For poisson regression <code>family=poisson()</code> and negative binomial regression <code>family="negative.binomial"</code> the effect
+size is interpreted for a categorical variable as the multiplicative change in mean abundance in the treatment
+group relative to the control group, whilst for a continuous variable it is interpreted as the multiplicative
+change in abundance for a 1 unit increase in the predictor of interest.
+</p>
+<p>For logit regression <code>family=binomial("logit")</code> the effect size is interpreted as an odds ratio. For a categorical
+variable this is the change in odds of obtaining outcome <code>1</code> when being in the treatment group relative to the
+control group. Whilst for continuous variables, this is interpreted as the change in odds of obtaining outcome <code>1</code>
+with a 1 unit increase in the predictor of interest.
+</p>
+<p>For cloglog regression <code>family=binomial("cloglog")</code> the effect size is interpreted similarly to poisson and
+negative binomial regression. For a categorical variable it is interpreted as the multiplicative change in
+the mean of the underlying count in the treatment group relative to the control. Whilst for a continuous
+variable it is interpreted as the multiplicative change in the mean of the underlying count for a 1 unit
+increase in the predictor of interest.
+</p>
+<p>For categorical variables, the intercept is also changed to be the group mean intercept by taking the
+intercept of a model without the categorical predictor of interest. This is done to avoid messy comparisons
+of null control groups.
+</p>
+<p>For categorical variables with more than two levels, effect size is changed to <code>effect_size^K[i]</code> where K defaults
+to be <code>c(1,2,...,nlevels - 1)</code>, where <code>nlevels</code> are the number of levels of the categorical variable and is
+specified along the order of the levels. To change this, specify a vector <code>K</code> with length of <code>nlevels - 1</code>. 
+To change the control group, this must be done prior to specifying the <code>manyglm</code> object
+using <code>relevel</code> (which can also change the order of the levels).
+</p>
+<p>Note that if the predictor of interest is a categorical variable it must be classed either as a factor or
+character otherwise results may be misleading.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A coefficient matrix with the specified effect size.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul><li> <p><code>effect_alt()</code>: Specify multivariate effect sizes
+</p>
+</li></ul>
+<h3>See Also</h3>
+
+<p><code>extend</code>, <code>equivtest</code>, <code>powersim</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(mvabund)
+data(spider)
+spiddat = mvabund(spider$abund)
+X = data.frame(spider$x)
+
+# Specify increasers and decreasers
+increasers = c("Alopacce", "Arctlute", "Arctperi", "Pardnigr", "Pardpull")
+decreasers = c("Alopcune", "Alopfabr", "Zoraspin")
+
+# Obtain an effect matrix of effect_size=3
+spid.glm = manyglm(spiddat~soil.dry, family="negative.binomial", data=X)
+effect_mat = effect_alt(spid.glm, effect_size=3,
+         increasers, decreasers, term="soil.dry")
+
+# Obtain an effect matrix of effect_size=1.5
+X$Treatment = rep(c("A","B","C","D"),each=7)
+spid.glm = manyglm(spiddat~Treatment, family="negative.binomial", data=X)
+effect_mat = effect_alt(spid.glm, effect_size=1.5,
+         increasers, decreasers, term="Treatment")
+
+# Change effect size parameterisation
+effect_mat = effect_alt(spid.glm, effect_size=1.5,
+                         increasers, decreasers, term="Treatment",
+                         K=c(3,1,2))
+</code></pre>
+
+
+</div>

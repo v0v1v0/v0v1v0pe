@@ -1,0 +1,195 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>varianceFamily</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Variance Family Class For The EQL-Method</h2>
+
+<h3>Description</h3>
+
+<p><code>varianceFamily</code> provides a class for a parameterized family of
+variance functions to be used with <code>eql</code>.
+</p>
+<p>The predefined functions <code>powerVarianceFamily</code> and
+<code>extBinomialVarianceFamily</code> compute the variance family defined
+by the parametric variance functions <code class="reqn">V_\theta(\mu) =
+  \mu^\theta</code> and <code class="reqn">V_{k,l}(\mu) =
+  \mu^k(1-\mu)^l</code>, respectively.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">varianceFamily(varf, devf = NULL, link = "log", initf = NULL,
+               validmuf = NULL, name = "default")
+
+powerVarianceFamily(link = "log")
+extBinomialVarianceFamily(link = "logit")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>varf</code></td>
+<td>
+<p>the parameterized variance function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>devf</code></td>
+<td>
+<p>the deviance function. If <code>NULL</code> (the default) it
+will be determined numerically from the variance function <code>varf</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>link</code></td>
+<td>
+<p>the link function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initf</code></td>
+<td>
+<p>a function returning an object of class
+<code>expression</code>. The <code>expression</code> object should give a
+sequence of initializing commands for the <code>glm</code> routine
+such as setting the  starting values. If <code>NULL</code> (the default),
+a very rudimentary initialize function is  chosen, which may not be
+appropriate. See <code>family</code> for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>validmuf</code></td>
+<td>
+<p>a function giving <code>TRUE</code> if its argument is a
+valid value for <code class="reqn">\mu</code> and <code>FALSE</code> otherwise. If
+<code>NULL</code> (the default), all <code class="reqn">\mu</code> are supposed to be
+valid.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>a character string giving the name of the variance family.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The purpose of the function <code>varianceFamily</code> is to provide a
+convenient way to specify families of variance functions. An extended
+glm <code>family</code> object for a particular choice of a parameter
+vector can be obtained via the class member <code>family</code>.
+</p>
+<p>The minimal specification for a <code>varianceFamily</code> object is the
+variance function <code class="reqn">V_\theta(\mu)</code> with
+<code class="reqn">\theta</code> describing the vector of family
+parameters. If not given explicitly, the deviance function is
+determined numerically.
+</p>
+<p>The family parameter of <code>powerVarianceFamily</code> is ‘theta’,
+while the names of the parameters of <code>extBinomialVarianceFamily</code> are
+‘k’ and ‘l’.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>varianceFamily</code> returns an object of class <code>varianceFamily</code>
+containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>a function which computes an <code>extFamily</code> object,
+which is an extension of the <code>family</code> object known from
+classical <code>glm</code>. <code>extFamily</code> inherits from class
+<code>family</code> and contains an additional field holding the
+value of the particular parameters at which the family was evaluated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>a character string giving the name of the variance
+family.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p>a list of the parameters of the variance family.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type.dev</code></td>
+<td>
+<p>a character string. Equals either “explicit” or
+“numerical” depending on how the deviance function was determined.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Those arguments passed to <code>varianceFunction</code> that are functions,
+are supposed to accept the variance family's parameter as an
+argument. The idea is that any of these functions may give different
+results for different values of the family's parameters. Even if any
+of these functions do not depend on these parameters, they must be
+contained in the function's argument list.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thorn Thaler</p>
+
+
+<h3>References</h3>
+
+<p>Nelder, J.A. and Pregibon, D. (1987).  An Extended Quasi-Likelihood
+Function. <em>Biometrika</em>, <b>74</b>, 221–232.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>family</code>, <code>eql</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># The extended binomial variance family
+# (the deviance is determined numerically)
+
+# init does not depend on k and l but it must accept
+# these parameters anyways
+init &lt;- function(k, l) {
+  return(expression({
+    mustart &lt;- (weights * y + 0.5)/(weights + 1)
+    n &lt;- rep.int(1, nobs)}))
+}
+validmuf &lt;- function(mu, k, l) {
+  return(all(mu &gt; 0) &amp;&amp; all(mu &lt; 1))
+}
+varf &lt;- function(y, k, l)  y^k*(1-y)^l
+suppressWarnings(vf &lt;- varianceFamily(varf=varf, link="log", initf=init, 
+                        validmuf=validmuf,
+                        name="Extended-Binomial-Family"))
+vf$family(1,1) # corresponds to binomial()
+
+y &lt;- runif(10, 0, 1)
+mu &lt;- runif(10, 0, 1)
+
+all.equal(vf$family(1,1)$dev.resids(y,mu,1),     # TRUE
+          binomial()$dev.resids(y,mu,1))    
+
+</code></pre>
+
+
+</div>

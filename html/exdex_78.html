@@ -1,0 +1,323 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Semiparametric maxima estimator of the extremal index</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the extremal index <code class="reqn">\theta</code> using a semiparametric block
+maxima estimator of Northrop (2015) (<code>"N2015"</code>) and a variant of this
+estimator studied by Berghaus and Bucher (2018) (<code>"BB2018"</code>), using
+both sliding (overlapping) block maxima and disjoint (non-overlapping) block
+maxima.  A simple modification (subtraction of <code class="reqn">1 / b</code>, where <code class="reqn">b</code> is
+the block size) of the Berghaus and Bucher (2018) estimator
+(<code>"BB2018b"</code>) is also calculated.  Estimates of uncertainty are
+calculated using the asymptotic theory developed by Berghaus and Bucher
+(2018).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spm(
+  data,
+  b,
+  bias_adjust = c("BB3", "BB1", "N", "none"),
+  constrain = TRUE,
+  varN = TRUE,
+  which_dj = c("last", "first")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A numeric vector of raw data.  No missing values are allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>A numeric scalar.  The block size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bias_adjust</code></td>
+<td>
+<p>A character scalar.  Is bias-adjustment of the
+raw estimate of <code class="reqn">\theta</code> performed using the bias-reduced
+estimator (<code>bias_adjust = "BB3"</code>), derived in Section 5 of
+Berghaus and Bucher (2018); or a simpler version
+(<code>bias_adjust = "BB1"</code>), in which the raw estimate is multiplied by
+<code class="reqn">(k-1) / k</code>, where <code class="reqn">k</code> is the number of blocks; or the
+bias-adjustment of the empirical distribution function used to calculate
+the estimate, as detailed in Section 2 of Northrop (2015).  When disjoint
+maxima are used <code>bias_adjust = "BB1"</code> and <code>bias_adjust = "N"</code>
+give identical estimates of the Berghaus and Bucher (2018) variant,
+as explained at the end of Section 5 of Berghaus and Bucher (2018).
+If <code>bias_adjust = "none"</code> then no bias-adjustment is performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constrain</code></td>
+<td>
+<p>A logical scalar.  If <code>constrain = TRUE</code> then
+any estimates that are greater than 1 are set to 1,
+that is, they are constrained to lie in (0, 1].  This is carried out
+<em>after</em> any bias-adjustment.  Otherwise,
+estimates that are greater than 1 may be obtained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varN</code></td>
+<td>
+<p>A logical scalar.  If <code>varN = TRUE</code> then the estimation
+of the sampling variance of the Northrop (2015) estimator is tailored
+to that estimator.  Otherwise, the sampling variance derived in
+Berghaus and Bucher (2018) is used.
+See <strong>Details</strong> for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which_dj</code></td>
+<td>
+<p>A character scalar.  Determines which set of disjoint
+maxima are used to calculate an estimate of <code class="reqn">\theta</code>: <code>"first"</code>,
+only the set whose first block starts on the first observation in
+<code>x</code>; <code>"last"</code>, only the set whose last block ends on the last
+observation in <code>x</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The extremal index <code class="reqn">\theta</code> is estimated using the
+semiparametric maxima estimator of Northrop (2015) and variant
+of this studied by Berghaus and Bucher (2018).  In each case a sample
+of 'data' is derived from the input data <code>data</code>, based on the
+empirical distribution function of these data evaluated at the
+maximum values of  of blocks of <code>b</code> contiguous values in <code>data</code>.
+</p>
+<p>The estimators are based on an assumption that these 'data' are sampled
+approximately from an exponential distribution with mean <code class="reqn">1/\theta</code>.
+For details see page 2309 of Berghaus and Bucher (2018), where the
+'data' for the Northrop (2015) estimator are denoted <code class="reqn">Y</code> and
+those for the Berghaus and Bucher (2018) are denoted <code class="reqn">Z</code>.
+For convenience, we will refer to these values as the
+<code class="reqn">Y</code>-data and the <code class="reqn">Z</code>-data.
+</p>
+<p>The approximate nature of the model for the <code class="reqn">Y</code>-data arises from the
+estimation of the distribution function <code class="reqn">F</code>.  A further
+approximation motivates the use of the <code class="reqn">Z</code>-data.  If <code class="reqn">F</code> is known
+then the variable <code class="reqn">Z / b</code> has a beta(1, <code class="reqn">b\theta</code>) distribution,
+so that that is, <code class="reqn">Z</code> has mean <code class="reqn">1 / (\theta + 1/b)</code>.
+Therefore, an exponential distribution with mean <code class="reqn">1 / (\theta + 1/b)</code>
+may provide a better approximate model, which provides the motivation for
+subtracting <code class="reqn">1 / b</code> from the Berghaus and Bucher (2018) estimator.
+Indeed, the resulting estimates are typically close to those
+of the Northrop (2015) estimator.
+</p>
+<p>If <code>sliding = TRUE</code> then the function uses sliding block maxima,
+that is, the largest value observed in <em>all</em>
+(<code>length(data) - b + 1</code>) blocks of <code>b</code> observations.
+If <code>sliding = FALSE</code> then disjoint block maxima, that is, the
+largest values in (<code>floor(n / b)</code>) disjoint blocks of <code>b</code>
+observations, are used.
+</p>
+<p>Estimation of the sampling variances of the estimators is based
+on Proposition 4.1 on page 2319 of Berghaus and Bucher (2018).
+For the Northrop (2015) variant the user has the choice either to
+use the sampling variance based on the Berghaus and Bucher (2018)
+estimator, i.e. the <code class="reqn">Z</code>-data (<code>varN = FALSE</code>) or an analogous
+version tailored to the Northrop (2015) estimator that uses the
+<code class="reqn">Y</code>-data (<code>varN = TRUE</code>).
+</p>
+<p>The estimates of the sampling variances of the sliding blocks estimators
+are inferred from those of the disjoint blocks estimators (see page 2319
+of Berhaus and Bucher (2018)).  The calculation of the latter uses a set
+of disjoint block maxima.  If <code>length(data)</code> is not an integer
+multiple of <code>b</code> then there will be more than one set of these, and
+all are equally valid.  In this event we perform the calculation for all
+such sets and use the mean of the resulting estimates.  This reduces the
+sampling variability of the estimates at the expense of slowing down
+the calculation somewhat, particularly if <code>b</code> is small.  This may
+become apparent when calling <code>spm</code> repeatedly in
+<code>choose_b</code>.
+</p>
+<p>This estimator of the sampling variance of the sliding blocks estimator is
+not constrained to be positive: a negative estimate may result if the
+block size is small.  In this event
+<strong>no warning will be given until the returned object is printed</strong> and,
+for the affected estimator (<code>"N2015"</code> or <code>"BB2018/BB2018b"</code>),
+</p>
+
+<ul>
+<li>
+<p> the corresponding estimated standard errors using sliding
+blocks will be missing in <code>se_sl</code> in the returned object,
+</p>
+</li>
+<li>
+<p> if <code>bias_adjust == "BB3"</code> then bias-adjustment
+based on <code>bias_adjust == "BB1"</code> will instead be performed
+when using sliding blocks, because the former relies on the
+estimated variances of the estimators.
+</p>
+</li>
+</ul>
+<p>Similarly, bias adjustment under <code>adjust = "BB3"</code> and/or subtraction
+of <code class="reqn">1 / b</code> in the <code>"BB2018b"</code> case may, rare cases, produce a
+negative estimate of <code class="reqn">\theta</code>.  In these instances an estimate of
+zero is returned, but the values returned in <code>bias_dj</code> and
+<code>bias_sl</code> are not changed.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class <code>c("spm", "exdex")</code> containing the
+components listed below.  The components that are vectors are
+labelled to indicate the estimator to which the constituent values
+relate: <code>"N2015"</code> for Northrop (2015), <code>"BB2018"</code> for
+Berghaus and Bucher (2018) and <code>"BB2018b"</code> for the modified version.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>theta_sl, theta_dj</code></td>
+<td>
+<p> Vectors containing the estimates of
+<code class="reqn">\theta</code> resulting from sliding maxima and disjoint maxima
+respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_sl, se_dj</code></td>
+<td>
+<p>The estimated standard errors associated
+with the estimates in <code>theta_sl</code> and <code>theta_dj</code>.
+The values for <code>"BB2018"</code> and <code>"BB2018b"</code> are identical.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bias_sl, bias_dj</code></td>
+<td>
+<p>The respective values of the
+bias-adjustment applied to the raw estimates, that is, the values
+subtracted from the raw estimates.  For estimator
+<code>BB2018b</code> this includes a contribution for the subtraction
+of <code>1 / b</code>.
+If <code>bias_adjust = "N"</code> or <code>"none"</code> then
+<code>bias_sl</code> and <code>bias_dj</code> are <code>c(0, 0, 1 / b)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw_theta_sl, raw_theta_dj</code></td>
+<td>
+<p> Vectors containing the raw estimates
+of <code class="reqn">\theta</code>, prior to any bias_adjustment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uncon_theta_sl, uncon_theta_dj</code></td>
+<td>
+<p>The (bias_adjusted) estimates of
+<code class="reqn">\theta</code> before the constraint that they lie in (0, 1] has been
+applied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_sl, data_dj</code></td>
+<td>
+<p>Matrices containing the <code class="reqn">Y</code>-data and
+<code class="reqn">Z</code>-data for the sliding an disjoint maxima respectively.
+The first columns are the <code class="reqn">Y</code>-data, the second columns the
+<code class="reqn">Z</code>-data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma2dj, sigma2dj_for_sl</code></td>
+<td>
+<p>Estimates of the variance
+<code class="reqn">\sigma_{{\rm dj}}^2</code>
+defined on pages 2314-2315 of Berghaus and Bucher (2018).
+The form of the estimates is given on page 2319.
+<code>sigma2dj</code> is used in estimating the standard error <code>se_dj</code>,
+<code>sigma2dj_for_sl</code> in estimating the standard error <code>se_sl</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma2sl</code></td>
+<td>
+<p>Estimates of the variance
+<code class="reqn">\sigma_{{\rm sl}}^2</code>.
+defined on pages 2314-2315 of Berghaus and Bucher (2018).
+The form of the estimates is given on page 2319.
+<code>sigma2dj_for_sl</code> is used to estimate
+<code class="reqn">\sigma_{{\rm dj}}^2</code> for this purpose.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>The input value of <code>b</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bias_adjust</code></td>
+<td>
+<p>The input value of <code>bias_adjust</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call to <code>spm</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Northrop, P. J. (2015) An efficient semiparametric maxima
+estimator of the extremal index. <em>Extremes</em> <strong>18</strong>(4), 585-603.
+<a href="https://doi.org/10.1007/s10687-015-0221-5">doi:10.1007/s10687-015-0221-5</a>
+</p>
+<p>Berghaus, B., Bucher, A. (2018) Weak convergence of a pseudo
+maximum likelihood estimator for the extremal index. <em>Ann. Statist.</em>
+<strong>46</strong>(5), 2307-2335. <a href="https://doi.org/10.1214/17-AOS1621">doi:10.1214/17-AOS1621</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>spm_confint</code> to estimate confidence intervals
+for <code class="reqn">\theta</code>.
+</p>
+<p><code>spm_methods</code> for S3 methods for <code>"spm"</code> objects.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### Newlyn sea surges
+theta &lt;- spm(newlyn, 20)
+theta
+summary(theta)
+coef(theta)
+nobs(theta)
+vcov(theta)
+
+### S&amp;P 500 index
+theta &lt;- spm(sp500, 100)
+theta
+summary(theta)
+</code></pre>
+
+
+</div>

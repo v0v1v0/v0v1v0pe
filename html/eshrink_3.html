@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>check_CIbound</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Confidence intervals for 'fLoss' estimators</h2>
+
+<h3>Description</h3>
+
+<p>Compute confidence intervals by 'inverting the test' to determine if a given value should lie in the confidence region.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">check_CIbound(
+  testBeta,
+  obsEst,
+  type = c("ridge", "lasso"),
+  postParam,
+  lambdaseq,
+  X,
+  nPost,
+  ind = 1,
+  Bstar = 100,
+  B = 500,
+  loss = "fMBV",
+  lowerBound = TRUE,
+  reproducible = TRUE,
+  alpha = 0.025,
+  returnDist = FALSE,
+  ...
+)
+
+invertTest(
+  interval,
+  type = "ridge",
+  lower.interval = interval,
+  upper.interval = interval,
+  ...,
+  tol = 0.005,
+  fulldetail = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>testBeta</code></td>
+<td>
+<p>Candidate value of beta to test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obsEst</code></td>
+<td>
+<p>Estimate of beta from the observed data for which a confidence interval is desired</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>String indicating "ridge" or "LASSO".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>postParam</code></td>
+<td>
+<p>List of parameters for the posterior distribution of beta. See <code>samplePosterior</code> for expected names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdaseq</code></td>
+<td>
+<p>Sequence of penalty values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>deisgn matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nPost</code></td>
+<td>
+<p>Number of posterior samples to use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ind</code></td>
+<td>
+<p>Index of parameter to test. Defaults to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Bstar</code></td>
+<td>
+<p>Number of estimators to compute for comparison distribution. Larger values improve the precision of the procedure but increase computational cost.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>Passed to <code>festLASSO</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss</code></td>
+<td>
+<p>Either <code>"fMBV"</code> or <code>"fMSE"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lowerBound</code></td>
+<td>
+<p>Logical indicating that the test is for a lower bound</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reproducible</code></td>
+<td>
+<p>Should the simulated datasets be reproducible?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Percentile of the distribution to compare against. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnDist</code></td>
+<td>
+<p>If TRUE, then distribution of estimates generated is returned
+instead of comparison against <code>alpha</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>In <code>invertTest</code>, these are passed to <code>check_CIbound</code>. In 
+<code>check_CIbound</code>, these arguments are passed to <code>samplePosterior</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval</code></td>
+<td>
+<p>Interval to check. Used for both upper and lower bound, if they are not provided</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.interval, upper.interval</code></td>
+<td>
+<p>Bounding intervals over which to check for lower and upper endpoints of CI</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>Passed to <code>uniroot</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fulldetail</code></td>
+<td>
+<p>If TRUE, then output from <code>uniroot</code> is included.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is used as part of an 'inverting the test' approach to generate confidence intervals for estimators from <code>festRidge</code>. <code>Bstar</code> datasets are generated from slices of the posterior distribution of the model parameters where beta (or other parameter indicated by <code>ind</code>) is fixed at the value <code>testBeta</code>. For each dataset, beta is estimated via <code>festRidge</code> or <code>festLASSO</code>, and the resulting distribution of estimators is compared against the estimate from the observed data (<code>obsEst</code>).
+</p>
+<p>The values of <code>lambdaseq</code>, <code>X</code>, <code>nPost</code>, and <code>loss</code> are passed to <code>festRidge</code> or <code>festLASSO</code> and typically match the values that were used to compute <code>obsEst</code>.
+</p>
+<p>The computational cost of this function is most affected by the values of
+<code>nPost</code> and <code>Bstar</code>. Large values of the latter are important for 
+adequately representing the distribution of parameter estimates. In some
+settings, <code>nPost</code> can be reduced without substantially impacting
+the results. However, each dataset is likely to be different.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Joshua Keller
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>festRidge</code>
+</p>
+
+
+</div>

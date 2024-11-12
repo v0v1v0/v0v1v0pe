@@ -1,0 +1,273 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_Build_PK_IV</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build-PK-IV Module</h2>
+
+<h3>Description</h3>
+
+<p>This module builds PK data for intravenously (IV) administered medications.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_Build_PK_IV(
+  conc,
+  conc.columns = list(),
+  dose,
+  dose.columns = list(),
+  censor = NULL,
+  censor.columns = list(),
+  demo.list = NULL,
+  demo.columns = list(),
+  lab.list = NULL,
+  lab.columns = list(),
+  dosePriorWindow = 7,
+  labPriorWindow = 7,
+  postWindow = NA,
+  pk.vars = NULL,
+  drugname = NULL,
+  check.path = NULL,
+  missdemo_fn = "-missing-demo",
+  faildupbol_fn = "DuplicateBolus-",
+  date.format = "%m/%d/%y %H:%M:%S",
+  date.tz = "America/Chicago",
+  isStrict = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conc</code></td>
+<td>
+<p>concentration data, the output of <code>run_DrugLevel</code>, 
+a filename (CSV, RData, RDS), or a correctly formatted data.frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conc.columns</code></td>
+<td>
+<p>a named list that should specify columns in concentration
+data; ‘id’, ‘datetime’, ‘druglevel’ are required.
+‘idvisit’ may also be specified; ‘idvisit’ can be used when there are multiple visits 
+(i.e., several occasions) for the same subject. ‘datetime’ is date and time for
+concentration measurement, which can refer to a single date-time variable
+(datetime = ‘date_time’) or two variables holding date and time
+separately (e.g., datetime = c(‘Date’, ‘Time’)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dose</code></td>
+<td>
+<p>dose data, the output of <code>run_MedStrI</code>, a filename
+(CSV, RData, RDS), or a correctly formatted data.frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dose.columns</code></td>
+<td>
+<p>a named list that should specify columns in dose data;
+‘id’ is required. ‘infuseDatetime’ and ‘infuseDose’
+should be set if infusion dose data is present. ‘infuseTimeExact’
+may also be specified for infusion data – this variable represents an
+precise time, if for example the ‘infuseDatetime’ variable is rounded.
+‘bolusDatetime’ and ‘bolusDose’ should be set if bolus dose
+data is present. A generic ‘date’ variable may be provided, agnostic
+to either infusion or bolus dosing. ‘gap’ and ‘weight’ column
+names may also be set. Any of the date-time variables can be specified as a
+single date-time variable (infuseDatetime = ‘date_time’) or two variables
+holding date and time separately (e.g., infuseDatetime = c(‘Date’, ‘Time’)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censor</code></td>
+<td>
+<p>censoring information, if available; this will censor concentration
+and dose data for dates occuring after the censor datetime variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censor.columns</code></td>
+<td>
+<p>a named list that should specify columns in censoring data; ‘id’,
+and ‘datetime’ are required. ‘datetime’ is the date and time when
+data should be censored. This can refer to a single date-time variable
+(datetime = ‘date_time’) or two variables holding date and time separately
+(e.g., datetime = c(‘Date’, ‘Time’)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>demo.list</code></td>
+<td>
+<p>demographic information, if available; the output from 
+<code>run_Demo</code> or a correctly formatted data.frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>demo.columns</code></td>
+<td>
+<p>a named list that should specify columns in demographic data;
+‘id’ is required. ‘weight’ and ‘idvisit’
+may also be used to specify columns for weight or the unique idvisit. Any other columns
+present in the demographic data are treated as covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lab.list</code></td>
+<td>
+<p>lab data, if available; the output from <code>run_Labs</code> or 
+a correctly formatted list</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lab.columns</code></td>
+<td>
+<p>a named list that should specify columns in lab data; ‘id’,
+and ‘datetime’ are required. ‘datetime’ is the date and time when
+the lab data was obtained, which can refer to a single date-time variable
+(datetime = ‘date_time’) or two variables holding date and time separately
+(e.g., datetime = c(‘Date’, ‘Time’)). Any other columns present in lab
+data are treated as lab values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dosePriorWindow</code></td>
+<td>
+<p>Dose data is merged with drug level data. This value sets the
+time frame window with the number of days prior to the first drug level data; defaults to 7.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labPriorWindow</code></td>
+<td>
+<p>Lab data is merged with drug level data. This value sets the
+time frame window with the number of days prior to the first drug level data; defaults to 7.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>postWindow</code></td>
+<td>
+<p>Data is merged with drug level data. This postWindow can set the end time
+for the drug level data, being the number of days after the first drug level data. The
+default (NA) will use the date of the last drug level data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pk.vars</code></td>
+<td>
+<p>variables to include in the returned PK data. The variable ‘date’
+is a special case; when included, it maps the ‘time’ offset to its original date-time.
+Other named variables will be merged from the concentration data set. For example,
+rather than being separate data sets, labs or demographics may already be present in
+the concentration data. These columns should be named here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drugname</code></td>
+<td>
+<p>drug of interest, included in filename of check files. The default (NULL)
+will produce filenames without drugname included.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check.path</code></td>
+<td>
+<p>path to ‘check’ directory, where check files are
+created. The default (NULL) will not produce any check files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missdemo_fn</code></td>
+<td>
+<p>filename for checking NA frequency among demographic data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>faildupbol_fn</code></td>
+<td>
+<p>filename for duplicate bolus data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date.format</code></td>
+<td>
+<p>output format for ‘date’ variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date.tz</code></td>
+<td>
+<p>output time zone for ‘date’ variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>isStrict</code></td>
+<td>
+<p>logical; when TRUE dose amount totals are strictly summed rather than repeated
+hourly until stopped</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See EHR Vignette for Structured Data.
+</p>
+<p>Regarding the ‘gap’ variable in the dose dataset, if ‘gap’ is specified in ‘dose.columns’, 
+it allows a continuous infusion given when there are missing records 
+between infusion dosing records. For example, suppose that ‘gap’ = 60 is defined 
+(which is typical gap size when infusion dosing is supposed to be recorded hourly for inpatients) 
+and time between two records (i.e., gap) are greater than 1 hour (i.e., missing records). If the gap 
+between the two records is less or equal to twice of the gap (i.e., 2*60 = 120 min), a continuous infusion 
+is assumed until the 2nd dose record; otherwise, the first infusion is assumed to be stopped 
+(i.e., add zero doses) after 60 min (i.e., equal to the gap size)  and a new infusion (the 2nd record) starts at its recorded time.
+</p>
+
+
+<h3>Value</h3>
+
+<p>PK data set
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># make fake data
+set.seed(6543)
+
+build_date &lt;- function(x) format(seq(x, length.out=5, by="1 hour"), "%Y-%m-%d %H:%M")
+dates &lt;- unlist(lapply(rep(Sys.time(),3), build_date))
+
+plconc &lt;- data.frame(mod_id = rep(1:3,each=5),
+                   mod_id_visit = rep(1:3,each=5)+0.1,
+                   event = rep(1:5,times=3),
+                   conc.level = 15*exp(-1*rep(1:5,times=3))+rnorm(15,0,0.1),
+                   date.time = as.POSIXct(dates))
+
+ivdose &lt;- data.frame(mod_id = 1:3,
+                     date.dose = substr(dates[seq(1,15,by=5)],1,10),
+                     infuse.time.real = NA, infuse.time = NA, infuse.dose = NA,
+                     bolus.time = as.POSIXct(dates[seq(1,15,by=5)])-300,
+                     bolus.dose = 90,
+                     maxint = 0L,
+                     weight = 45)
+
+
+run_Build_PK_IV(conc = plconc,
+                conc.columns = list(id = 'mod_id', datetime = 'date.time',
+                  druglevel = 'conc.level', idvisit = 'mod_id_visit'),
+                dose = ivdose,
+                dose.columns = list(id = 'mod_id', date = 'date.dose',
+                  bolusDatetime = 'bolus.time', bolusDose = 'bolus.dose',
+                  gap = 'maxint', weight = 'weight'),
+                pk.vars = 'date')
+
+</code></pre>
+
+
+</div>

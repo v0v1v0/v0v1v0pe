@@ -1,0 +1,239 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rmeanglm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generalized linear models for the restricted mean survival</h2>
+
+<h3>Description</h3>
+
+<p>Using pseudo observations for the restricted mean, or the restricted mean
+lifetime lost in the competing risks case, this function then runs a
+generalized linear model to estimate associations of the restricted
+mean/lifetime lost up to a particular time (specified by the <code>time</code>
+argument) with covariates. The link function can be "identity" for estimating
+differences in the restricted mean, "log" for estimating ratios, and any of
+the other link functions supported by quasi.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rmeanglm(
+  formula,
+  time,
+  cause = 1,
+  link = "identity",
+  model.censoring = "independent",
+  formula.censoring = NULL,
+  ipcw.method = "binder",
+  data,
+  weights,
+  subset,
+  na.action,
+  offset,
+  control = list(...),
+  model = FALSE,
+  x = TRUE,
+  y = TRUE,
+  singular.ok = TRUE,
+  contrasts = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula specifying the model. The left hand side must be a
+Surv object specifying a right censored survival or
+competing risks outcome. The status indicator, normally 0=alive, 1=dead.
+Other choices are TRUE/FALSE (TRUE = death) or 1/2 (2=death). For competing
+risks, the event variable will be a factor, whose first level is treated as
+censoring. The right hand side is the usual linear combination of
+covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>Numeric constant specifying the time up to which the restricted
+mean effect estimates are desired.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cause</code></td>
+<td>
+<p>Numeric or character constant specifying the cause indicator of
+interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>link</code></td>
+<td>
+<p>Link function for the restricted mean regression model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.censoring</code></td>
+<td>
+<p>Type of model for the censoring distribution. Options
+are "stratified", which computes the pseudo-observations stratified on a
+set of categorical covariates, "aareg" for Aalen's additive hazards model,
+and "coxph" for Cox's proportional hazards model. With those options, we
+assume that the time to event and event indicator are conditionally
+independent of the censoring time, and that the censoring model is
+correctly specified. If "independent", we assume completely independent
+censoring, i.e., that the time to event and covariates are independent of
+the censoring time. the censoring time is independent of the covariates in
+the model. Can also be a custom function, see Details and the
+"Extending eventglm" vignette.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula.censoring</code></td>
+<td>
+<p>A one sided formula (e.g., <code>~ x1 + x2</code>)
+specifying the model for the censoring distribution. If NULL, uses the same
+mean model as for the outcome.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ipcw.method</code></td>
+<td>
+<p>Which method to use for calculation of inverse
+probability of censoring weighted pseudo observations. "binder" the
+default, uses the number of observations as the denominator, while the
+"hajek" method uses the sum of the weights as the denominator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame in which all variables of formula can be interpreted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>an optional vector of 'prior weights' to be used in the
+fitting process. Should be NULL or a numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations to be
+used in the fitting process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function which indicates what should happen when the data
+contain <code>NA</code>s. The default is set by the <code>na.action</code> setting of
+options, and is na.fail if that is unset. The
+'factory-fresh' default is na.omit. Another possible value is
+NULL, no action. Value na.exclude can be useful.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+<p>this can be used to specify an a priori known component to be
+included in the linear predictor during fitting. This should be NULL or a
+numeric vector of length equal to the number of cases. One or more
+offset terms can be included in the formula instead or as
+well, and if more than one is specified their sum is used. See
+model.offset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list of parameters for controlling the fitting process. This
+is passed to glm.control.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>a logical value indicating whether model frame should be
+included as a component of the returned value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>logical value indicating whether the model matrix used in the
+fitting process should be returned as components of the returned value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>logical value indicating whether the response vector
+(pseudo-observations) used in the fitting process should be returned as
+components of the returned value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>singular.ok</code></td>
+<td>
+<p>logical; if FALSE a singular fit is an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrasts</code></td>
+<td>
+<p>an optional list. See the contrasts.arg of
+model.matrix.default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments passed to glm.fit</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The argument "model.censoring" determines how the pseudo observations
+are calculated. This can be the name of a function or the function itself, which
+must have arguments "formula", "time", "cause", "data", "type",
+"formula.censoring", and "ipcw.method". If it is the name of a function, this code
+will look for a function with the prefix "pseudo_" first, to avoid clashes with
+related methods such as coxph. The function then must return a vector
+of pseudo observations, one for each subject in data which are used in subsequent
+calculations. For examples of the implementation, see the "pseudo-modules.R"
+file, or the vignette "Extending eventglm".
+</p>
+
+
+<h3>Value</h3>
+
+<p>A pseudoglm object, with its own methods for print, summary, and
+vcov. It inherits from glm, so predict and other glm methods are supported.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">    cumincipcw &lt;- rmeanglm(Surv(etime, event) ~ age + sex,
+         time = 200, cause = "pcm", link = "identity",
+         model.censoring = "independent", data = mgus2)
+# stratified on only the categorical covariate
+     cumincipcw2 &lt;- rmeanglm(Surv(etime, event) ~ age + sex,
+                         time = 200, cause = "pcm", link = "identity",
+                         model.censoring = "stratified",
+                         formula.censoring = ~ sex, data = mgus2)
+</code></pre>
+
+
+</div>

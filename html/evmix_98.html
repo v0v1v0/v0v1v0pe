@@ -1,0 +1,542 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fmgammagpdcon</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>MLE Fitting of Mixture of Gammas Bulk and GPD Tail Extreme Value Mixture Model
+with Single Continuity Constraint using the EM algorithm.</h2>
+
+<h3>Description</h3>
+
+<p>Maximum likelihood estimation for fitting the extreme value 
+mixture model with mixture of gammas for bulk distribution upto the threshold and conditional
+GPD above threshold with continuity at threshold. With options for profile likelihood estimation for threshold and
+fixed threshold approach.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fmgammagpdcon(x, M, phiu = TRUE, useq = NULL, fixedu = FALSE,
+  pvector = NULL, std.err = TRUE, method = "BFGS",
+  control = list(maxit = 10000), finitelik = TRUE, ...)
+
+lmgammagpdcon(x, mgshape, mgscale, mgweight, u, xi, phiu = TRUE,
+  log = TRUE)
+
+nlmgammagpdcon(pvector, x, M, phiu = TRUE, finitelik = FALSE)
+
+nlumgammagpdcon(pvector, u, x, M, phiu = TRUE, finitelik = FALSE)
+
+nlEMmgammagpdcon(pvector, tau, mgweight, x, M, phiu = TRUE,
+  finitelik = FALSE)
+
+proflumgammagpdcon(u, pvector, x, M, phiu = TRUE, method = "BFGS",
+  control = list(maxit = 10000), finitelik = TRUE, ...)
+
+nluEMmgammagpdcon(pvector, u, tau, mgweight, x, M, phiu = TRUE,
+  finitelik = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector of sample data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>number of gamma components in mixture</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phiu</code></td>
+<td>
+<p>probability of being above threshold <code class="reqn">(0, 1)</code> or logical, see Details in 
+help for <code>fnormgpd</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useq</code></td>
+<td>
+<p>vector of thresholds (or scalar) to be considered in profile likelihood or
+<code>NULL</code> for no profile likelihood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixedu</code></td>
+<td>
+<p>logical, should threshold be fixed (at either scalar value in <code>useq</code>,
+or estimated from maximum of profile likelihood evaluated at
+sequence of thresholds in <code>useq</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvector</code></td>
+<td>
+<p>vector of initial values of parameters or <code>NULL</code> for default
+values, see below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std.err</code></td>
+<td>
+<p>logical, should standard errors be calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>optimisation method (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optimisation control list (see <code>optim</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>finitelik</code></td>
+<td>
+<p>logical, should log-likelihood return finite value for invalid parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional inputs passed to <code>optim</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mgshape</code></td>
+<td>
+<p>mgamma shape (positive) as vector of length <code>M</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mgscale</code></td>
+<td>
+<p>mgamma scale (positive) as vector of length <code>M</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mgweight</code></td>
+<td>
+<p>mgamma weights (positive) as vector of length <code>M</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>scalar threshold value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>scalar shape parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical, if <code>TRUE</code> then log-likelihood rather than likelihood is output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>matrix of posterior probability of being in each component
+(<code>nxM</code> where <code>n</code> is <code>length(x)</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The extreme value mixture model with weighted mixture of gammas bulk and GPD tail with continuity at threshold is 
+fitted to the entire dataset using maximum likelihood estimation using the EM algorithm. The estimated
+parameters, variance-covariance matrix and their standard errors are automatically
+output.
+</p>
+<p>See help for <code>fnormgpd</code> for details, type <code>help fnormgpd</code>. 
+Only the different features are outlined below for brevity.
+</p>
+<p>The expectation step estimates the expected probability of being in each component
+conditional on gamma component parameters. The maximisation step optimizes the
+negative log-likelihood conditional on posterior probabilities of each observation
+being in each component.
+</p>
+<p>The optimisation of the likelihood for these mixture models can be very sensitive to
+the initial parameter vector, as often there are numerous local modes. This is an
+inherent feature of such models and the EM algorithm. The EM algorithm is guaranteed
+to reach the maximum of the local mode. Multiple initial values should be considered
+to find the global maximum. If the <code>pvector</code> is input as <code>NULL</code> then 
+random component probabilities are simulated as the initial values, so multiple such runs
+should be run to check the sensitivity to initial values. Alternatives to black-box
+likelihood optimisers (e.g. simulated annealing), or moving to computational Bayesian
+inference, are also worth considering.
+</p>
+<p>The log-likelihood functions are provided for wider usage, e.g. constructing profile
+likelihood functions. The parameter vector <code>pvector</code> must be specified in the
+negative log-likelihood functions <code>nlmgammagpdcon</code> and
+<code>nlEMmgammagpdcon</code>.
+</p>
+<p>Log-likelihood calculations are carried out in <code>lmgammagpdcon</code>,
+which takes parameters as inputs in the same form as the distribution functions. The
+negative log-likelihood function <code>nlmgammagpdcon</code> is a wrapper
+for <code>lmgammagpdcon</code> designed towards making it useable for optimisation,
+i.e. <code>nlmgammagpdcon</code> has complete parameter vector as first input.
+Though it is not directly used for optimisation here, as the EM algorithm due to mixture of
+gammas for the bulk component of this model
+</p>
+<p>The EM algorithm for the mixture of gammas utilises the
+negative log-likelihood function <code>nlEMmgammagpdcon</code>
+which takes the posterior probabilities <code class="reqn">tau</code> and component probabilities
+<code>mgweight</code> as secondary inputs.
+</p>
+<p>The profile likelihood for the threshold <code>proflumgammagpdcon</code>
+also implements the EM algorithm for the mixture of gammas, utilising the negative
+log-likelihood function <code>nluEMmgammagpdcon</code> which takes
+the threshold, posterior probabilities <code class="reqn">tau</code> and component probabilities
+<code>mgweight</code> as secondary inputs. 
+</p>
+<p>Missing values (<code>NA</code> and <code>NaN</code>) are assumed to be invalid data so are ignored.
+</p>
+<p>Suppose there are <code class="reqn">M</code> gamma components with (scalar) shape and scale parameters and
+weight for each component. Only <code class="reqn">M-1</code> are to be provided in the initial parameter
+vector, as the <code class="reqn">M</code>th components weight is uniquely determined from the others.
+</p>
+<p>The initial parameter vector <code>pvector</code> always has the <code class="reqn">M</code> gamma component
+shape parameters followed by the corresponding <code class="reqn">M</code> gamma scale parameters. However,
+subsets of the other parameters are needed depending on which function is being used:
+</p>
+
+<ul>
+<li> <p>fmgammagpdcon - <code>c(mgshape, mgscale, mgweight[1:(M-1)], u, xi)</code>
+</p>
+</li>
+<li> <p>nlmgammagpdcon - <code>c(mgshape, mgscale, mgweight[1:(M-1)], u, xi)</code>
+</p>
+</li>
+<li> <p>nlumgammagpdcon and proflumgammagpdcon - <code>c(mgshape, mgscale, mgweight[1:(M-1)], xi)</code>
+</p>
+</li>
+<li> <p>nlEMmgammagpdcon - <code>c(mgshape, mgscale, u, xi)</code>
+</p>
+</li>
+<li> <p>nluEMmgammagpdcon - <code>c(mgshape, mgscale, xi)</code>
+</p>
+</li>
+</ul>
+<p>Notice that when the component probability weights are included only the first <code class="reqn">M-1</code> 
+are specified, as the remaining one can be uniquely determined from these. Where some
+parameters are left out, they are always taken as secondary inputs to the functions.
+</p>
+<p>For identifiability purposes the mean of each gamma component must be in ascending in order. 
+If the initial parameter vector does not satisfy this constraint then an error is given. 
+</p>
+<p>Non-positive data are ignored as likelihood is infinite, except for <code>gshape=1</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Log-likelihood is given by <code>lmgammagpdcon</code> and it's
+wrappers for negative log-likelihood from <code>nlmgammagpdcon</code>
+and <code>nlumgammagpdcon</code>. The conditional negative log-likelihoods
+using the posterior probabilities are  <code>nlEMmgammagpdcon</code>
+and <code>nluEMmgammagpdcon</code>. Profile likelihood for single
+threshold given by <code>proflumgammagpdcon</code> using EM algorithm. Fitting function
+<code>fmgammagpdcon</code> using EM algorithm returns a simple list with the
+following elements
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+ <code>call</code>:      </td>
+<td style="text-align: left;"> <code>optim</code> call</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>x</code>:         </td>
+<td style="text-align: left;"> data vector <code>x</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>init</code>:      </td>
+<td style="text-align: left;"> <code>pvector</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>fixedu</code>:    </td>
+<td style="text-align: left;"> fixed threshold, logical</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>useq</code>:      </td>
+<td style="text-align: left;"> threshold vector for profile likelihood or scalar for fixed threshold</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nllhuseq</code>:  </td>
+<td style="text-align: left;"> profile negative log-likelihood at each threshold in useq</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>optim</code>:     </td>
+<td style="text-align: left;"> complete <code>optim</code> output</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>mle</code>:       </td>
+<td style="text-align: left;"> vector of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>cov</code>:       </td>
+<td style="text-align: left;"> variance-covariance matrix of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>se</code>:        </td>
+<td style="text-align: left;"> vector of standard errors of MLE of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>rate</code>:      </td>
+<td style="text-align: left;"> <code>phiu</code> to be consistent with <code>evd</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>nllh</code>:      </td>
+<td style="text-align: left;"> minimum negative log-likelihood</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>n</code>:         </td>
+<td style="text-align: left;"> total sample size</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>M</code>:         </td>
+<td style="text-align: left;"> number of gamma components</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>mgshape</code>:   </td>
+<td style="text-align: left;"> MLE of gamma shapes</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>mgscale</code>:   </td>
+<td style="text-align: left;"> MLE of gamma scales</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>mgweight</code>:  </td>
+<td style="text-align: left;"> MLE of gamma weights</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>u</code>:         </td>
+<td style="text-align: left;"> threshold (fixed or MLE)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>sigmau</code>:    </td>
+<td style="text-align: left;"> MLE of GPD scale</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>xi</code>:        </td>
+<td style="text-align: left;"> MLE of GPD shape</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>phiu</code>:      </td>
+<td style="text-align: left;"> MLE of tail fraction (bulk model or parameterised approach)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>se.phiu</code>:   </td>
+<td style="text-align: left;"> standard error of MLE of tail fraction</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>EMresults</code>: </td>
+<td style="text-align: left;"> EM results giving complete negative log-likelihood, estimated parameters
+                        and conditional "maximisation step" negative log-likelihood and convergence result</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ <code>posterior</code>: </td>
+<td style="text-align: left;"> posterior probabilites</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Acknowledgments</h3>
+
+<p>Thanks to Daniela Laas, University of St Gallen, Switzerland for reporting various bugs in these functions.
+</p>
+<p>See Acknowledgments in
+<code>fnormgpd</code>, type <code>help fnormgpd</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>In the fitting and profile likelihood functions, when <code>pvector=NULL</code> then the
+default initial values are obtained under the following scheme:
+</p>
+
+<ul>
+<li>
+<p> number of sample from each component is simulated from symmetric multinomial distribution;
+</p>
+</li>
+<li>
+<p> sample data is then sorted and split into groups of this size (works well when components
+have modes which are well separated);
+</p>
+</li>
+<li>
+<p> for data within each component approximate MLE's for the
+gamma shape and scale parameters are estimated;
+</p>
+</li>
+<li>
+<p> threshold is specified as sample 90% quantile; and 
+</p>
+</li>
+<li>
+<p> MLE of GPD shape parameter above threshold. 
+</p>
+</li>
+</ul>
+<p>The other likelihood functions <code>lmgammagpdcon</code>,
+<code>nlmgammagpdcon</code>, <code>nlumgammagpdcon</code> and
+<code>nlEMmgammagpdcon</code> and <code>nluEMmgammagpdcon</code>
+have no defaults.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Carl Scarrott <a href="mailto:carl.scarrott@canterbury.ac.nz">carl.scarrott@canterbury.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="http://www.math.canterbury.ac.nz/~c.scarrott/evmix">http://www.math.canterbury.ac.nz/~c.scarrott/evmix</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Gamma_distribution">http://en.wikipedia.org/wiki/Gamma_distribution</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Mixture_model">http://en.wikipedia.org/wiki/Mixture_model</a>
+</p>
+<p><a href="http://en.wikipedia.org/wiki/Generalized_Pareto_distribution">http://en.wikipedia.org/wiki/Generalized_Pareto_distribution</a>
+</p>
+<p>McLachlan, G.J. and Peel, D. (2000). Finite Mixture Models. Wiley.
+</p>
+<p>Scarrott, C.J. and MacDonald, A. (2012). A review of extreme value
+threshold estimation and uncertainty quantification. REVSTAT - Statistical
+Journal 10(1), 33-59. Available from <a href="http://www.ine.pt/revstat/pdf/rs120102.pdf">http://www.ine.pt/revstat/pdf/rs120102.pdf</a>
+</p>
+<p>Hu, Y. (2013). Extreme value mixture modelling: An R package and simulation study.
+MSc (Hons) thesis, University of Canterbury, New Zealand.
+<a href="http://ir.canterbury.ac.nz/simple-search?query=extreme&amp;submit=Go">http://ir.canterbury.ac.nz/simple-search?query=extreme&amp;submit=Go</a>
+</p>
+<p>do Nascimento, F.F., Gamerman, D. and Lopes, H.F. (2011). A semiparametric
+Bayesian approach to extreme value estimation. Statistical Computing, 22(2), 661-675.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dgamma</code>,
+<code>fgpd</code> and <code>gpd</code>
+</p>
+<p>Other gammagpdcon: <code>fgammagpdcon</code>,
+<code>fgammagpd</code>, <code>gammagpdcon</code>,
+<code>gammagpd</code>, <code>mgammagpdcon</code>
+</p>
+<p>Other mgamma: <code>fmgammagpd</code>,
+<code>fmgamma</code>, <code>mgammagpdcon</code>,
+<code>mgammagpd</code>, <code>mgamma</code>
+</p>
+<p>Other mgammagpd: <code>fgammagpd</code>,
+<code>fmgammagpd</code>, <code>fmgamma</code>,
+<code>gammagpd</code>, <code>mgammagpdcon</code>,
+<code>mgammagpd</code>, <code>mgamma</code>
+</p>
+<p>Other mgammagpdcon: <code>fgammagpdcon</code>,
+<code>fmgammagpd</code>, <code>fmgamma</code>,
+<code>gammagpdcon</code>, <code>mgammagpdcon</code>,
+<code>mgammagpd</code>, <code>mgamma</code>
+</p>
+<p>Other fmgammagpdcon: <code>mgammagpdcon</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(1)
+par(mfrow = c(2, 1))
+
+n=1000
+x = c(rgamma(n*0.25, shape = 1, scale = 1), rgamma(n*0.75, shape = 6, scale = 2))
+xx = seq(-1, 40, 0.01)
+y = (0.25*dgamma(xx, shape = 1, scale = 1) + 0.75 * dgamma(xx, shape = 6, scale = 2))
+
+# Bulk model based tail fraction
+# very sensitive to initial values, so best to provide sensible ones
+fit.noinit = fmgammagpdcon(x, M = 2)
+fit.withinit = fmgammagpdcon(x, M = 2, pvector = c(1, 6, 1, 2, 0.5, 15, 0.1))
+hist(x, breaks = 100, freq = FALSE, xlim = c(-1, 40))
+lines(xx, y)
+with(fit.noinit, lines(xx, dmgammagpdcon(xx, mgshape, mgscale, mgweight, u, xi), col="red"))
+abline(v = fit.noinit$u, col = "red")
+with(fit.withinit, lines(xx, dmgammagpdcon(xx, mgshape, mgscale, mgweight, u, xi), col="green"))
+abline(v = fit.withinit$u, col = "green")
+  
+# Parameterised tail fraction
+fit2 = fmgammagpdcon(x, M = 2, phiu = FALSE, pvector = c(1, 6, 1, 2, 0.5, 15, 0.1))
+with(fit2, lines(xx, dmgammagpdcon(xx, mgshape, mgscale, mgweight, u, xi, phiu), col="blue"))
+abline(v = fit2$u, col = "blue")
+legend("topright", c("True Density","Default pvector", "Sensible pvector",
+ "Parameterised Tail Fraction"), col=c("black", "red", "green", "blue"), lty = 1)
+  
+# Fixed threshold approach
+fitfix = fmgammagpdcon(x, M = 2, useq = 15, fixedu = TRUE,
+   pvector = c(1, 6, 1, 2, 0.5, 0.1))
+
+hist(x, breaks = 100, freq = FALSE, xlim = c(-1, 40))
+lines(xx, y)
+with(fit.withinit, lines(xx, dmgammagpdcon(xx, mgshape, mgscale, mgweight, u, xi), col="red"))
+abline(v = fit.withinit$u, col = "red")
+with(fitfix, lines(xx, dmgammagpdcon(xx,mgshape, mgscale, mgweight, u, xi), col="darkgreen"))
+abline(v = fitfix$u, col = "darkgreen")
+legend("topright", c("True Density", "Default initial value (90% quantile)",
+ "Fixed threshold approach"), col=c("black", "red", "darkgreen"), lty = 1)
+
+## End(Not run)
+  
+</code></pre>
+
+
+</div>

@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nesting</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Add nested data</h2>
+
+<h3>Description</h3>
+
+<p>Utility function to add data where the original JavaScript library expects nested data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">e_add(e, param, ..., .serie = NULL, .data = NULL)
+
+e_add_nested(e, param, ..., .serie = NULL, .data = NULL)
+
+e_add_unnested(e, param, value, .serie = NULL, .data = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>e</code></td>
+<td>
+<p>An <code>echarts4r</code> object as returned by <code>e_charts</code> or
+a proxy as returned by <code>echarts4rProxy</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>The nested parameter to add data to.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any other option to pass, check See Also section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.serie</code></td>
+<td>
+<p>Serie's index to add the data to, if
+'NULL' then it is added to all.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>A dataset to use, if none are specified than
+the original dataset passed to 'e_charts' is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>The column to map to the parameter.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For instance, <code>e_funnel</code> lets you pass <code>values</code> and <code>labels</code>
+(from your initial data.frame) which corresponds to <code>name</code> and <code>value</code> in the
+<a href="https://echarts.apache.org/en/option.html#series-heatmap.data">original library</a>.
+However the latter also takes, <code>label</code>, <code>itemStyle</code>, and <code>emphasis</code> but being JSON arrays
+they translate to lists in R and dealing with nested data.frames is not ideal. <code>e_add</code> remedies to that.
+It allows adding those nested data points, see the examples below.
+</p>
+
+
+<h3>Functions</h3>
+
+<p>- 'e_add_nested': Adds nested data, e.g.: 
+'e_add_nested("itemStyle", color, fontBold)' creates
+'itemStyle: color: 'red', fontBold: 'bold''.
+- 'e_add_unnested': Adds unnested data, e.g.:
+'e_add_unnested("symbolSize", size)' creates
+'symbolSize: 4'.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># funnel can take nested itemStyle
+# https://echarts.apache.org/en/option.html#series-funnel.data
+funnel &lt;- data.frame(
+  stage = c("View", "Click", "Purchase"),
+  value = c(80, 30, 20),
+  color = c("blue", "red", "green")
+)
+
+funnel |&gt;
+  e_charts() |&gt;
+  e_funnel(value, stage) |&gt;
+  e_add_nested("itemStyle", color)
+
+# Heatmap can take nested label
+# https://echarts.apache.org/en/option.html#series-heatmap.data
+v &lt;- LETTERS[1:10]
+matrix &lt;- data.frame(
+  x = sample(v, 300, replace = TRUE),
+  y = sample(v, 300, replace = TRUE),
+  z = rnorm(300, 10, 1),
+  stringsAsFactors = FALSE
+) |&gt;
+  dplyr::group_by(x, y) |&gt;
+  dplyr::summarise(z = sum(z)) |&gt;
+  dplyr::ungroup() |&gt;
+  dplyr::mutate(
+    show = TRUE,
+    fontStyle = round(runif(dplyr::n(), 5, 12))
+  )
+
+matrix |&gt;
+  e_charts(x) |&gt;
+  e_heatmap(y, z) |&gt;
+  e_visual_map(z) |&gt;
+  e_add_nested(
+    "label",
+    show,
+    fontStyle
+  )
+
+</code></pre>
+
+
+</div>

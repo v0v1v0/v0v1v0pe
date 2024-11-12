@@ -1,0 +1,197 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>el.cen.test</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical likelihood ratio for mean
+with right censored data, by QP.</h2>
+
+<h3>Description</h3>
+
+<p>This program computes the maximized (wrt <code class="reqn">p_i</code>) empirical
+log likelihood function for right censored data with 
+the MEAN constraint:
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_i [ d_i p_i g(x_i) ] = \int g(t) dF(t) = \mu  </code>
+</p>
+ 
+<p>where <code class="reqn">p_i = \Delta F(x_i)</code> is a probability,
+<code class="reqn">d_i</code> is the censoring indicator. 
+The <code class="reqn">d</code> for the largest observation is always taken to be 1.
+It then computes the -2 log 
+empirical likelihood ratio which should be approximately chi-square
+distributed if the constraint is true.
+Here <code class="reqn">F(t)</code> is the (unknown) CDF; 
+<code class="reqn">g(t)</code> can be any given left
+continuous function in <code class="reqn">t</code>.
+<code class="reqn">\mu</code> is a given constant. 
+The data must contain some right censored observations.
+If there is no censoring or the only censoring is the largest 
+observation, the code will stop and we should use 
+<code>el.test( )</code> which is for uncensored data.  
+</p>
+<p>The log empirical likelihood been maximized is
+</p>
+<p style="text-align: center;"><code class="reqn"> \sum_{d_i=1} \log \Delta F(x_i) + \sum_{d_i=0} \log [ 1-F(x_i) ].</code>
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">el.cen.test(x,d,fun=function(x){x},mu,error=1e-8,maxit=15)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector containing the observed survival times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>a vector containing the censoring indicators, 
+1-uncensor; 0-censor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a left continuous (weight) function used to calculate
+the mean as in <code class="reqn">H_0</code>. 
+<code>fun(t)</code> must be able to take a vector input <code>t</code>. 
+Default to the identity function <code class="reqn">f(t)=t</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>a real number used in the constraint, sum to this value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error</code></td>
+<td>
+<p>an optional positive real number specifying the tolerance of
+iteration error in the QP. This is the bound of the
+<code class="reqn">L_1</code> norm of the difference of two successive weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>an optional integer, used to control maximum number of
+iterations. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When the given constants <code class="reqn">\mu</code> is too far
+away from the NPMLE, there will be no distribution
+satisfy the constraint.
+In this case the computation will stop.
+The -2 Log empirical likelihood ratio
+should be infinite. 
+</p>
+<p>The constant <code>mu</code> must be inside 
+<code class="reqn">( \min f(x_i) , \max f(x_i) ) </code>
+for the computation to continue. 
+It is always true that the NPMLE values are feasible. So when the
+computation cannot continue, try move the <code>mu</code> closer
+to the NPMLE, or use a different <code>fun</code>. 
+</p>
+<p>This function depends on Wdataclean2(), WKM() and solve3.QP() 
+</p>
+<p>This function uses sequential Quadratic Programming to find the
+maximum. Unlike other functions in this package,
+it can be slow for larger sample sizes.
+It took about one minute for a sample of size 2000 with 20% censoring
+on a 1GHz, 256MB PC, about 19 seconds on a 3 GHz 512MB PC.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>"-2LLR"</code></td>
+<td>
+<p>The -2Log Likelihood ratio.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xtimes</code></td>
+<td>
+<p>the location of the CDF jumps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>the jump size of CDF at those locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pval</code></td>
+<td>
+<p>P-value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error</code></td>
+<td>
+<p>the <code class="reqn">L_1</code> norm between the last two <code>wts</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iteration</code></td>
+<td>
+<p>number of iterations carried out</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p> Mai Zhou, Kun Chen </p>
+
+
+<h3>References</h3>
+
+<p>Pan, X. and Zhou, M. (1999). Using 1-parameter sub-family 
+of distributions in empirical likelihood ratio with 
+censored data.
+<em>J. Statist. Plann. Inference</em>. <b>75</b>, 379-392.
+</p>
+<p>Chen, K. and Zhou, M. (2000). 
+Computing censored empirical likelihood ratio 
+using Quadratic Programming. 
+<em>Tech Report, Univ. of Kentucky, Dept of Statistics</em>
+</p>
+<p>Zhou, M. and Chen, K. (2007). Computation of the empirical
+likelihood ratio from censored data.
+<em>Journal of Statistical Computing and Simulation</em>, 
+<b>77</b>, 1033-1042. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">el.cen.test(rexp(100), c(rep(0,25),rep(1,75)), mu=1.5)
+## second example with tied observations
+x &lt;- c(1, 1.5, 2, 3, 4, 5, 6, 5, 4, 1, 2, 4.5)
+d &lt;- c(1,   1, 0, 1, 0, 1, 1, 1, 1, 0, 0,   1)
+el.cen.test(x,d,mu=3.5)
+# we should get  "-2LLR" = 1.246634  etc. 
+</code></pre>
+
+
+</div>

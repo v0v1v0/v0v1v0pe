@@ -1,0 +1,279 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_MedStrI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run Str Data I</h2>
+
+<h3>Description</h3>
+
+<p>This module will load and modify structured intravenous (IV) infusion and 
+bolus medication data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_MedStrI(
+  mar.path,
+  mar.columns = list(),
+  medGivenReq = FALSE,
+  flow.path = NULL,
+  flow.columns = list(),
+  medchk.path = NULL,
+  demo.list = NULL,
+  demo.columns = list(),
+  missing.wgt.path = NULL,
+  wgt.columns = list(),
+  check.path = NULL,
+  failflow_fn = "FailFlow",
+  failnounit_fn = "NoUnit",
+  failunit_fn = "Unit",
+  failnowgt_fn = "NoWgt",
+  censor_date_fn = "CensorTime",
+  infusion.unit = "mcg/kg/hr",
+  bolus.unit = "mcg",
+  bol.rate.thresh = Inf,
+  rateunit = "mcg/hr",
+  ratewgtunit = "mcg/kg/hr",
+  weightunit = "kg",
+  drugname = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mar.path</code></td>
+<td>
+<p>filename of MAR data (CSV, RData, RDS), or data.frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mar.columns</code></td>
+<td>
+<p>a named list that should specify columns in MAR data; ‘id’,
+‘datetime’ and ‘dose’ are required. ‘drug’, ‘weight’,
+‘given’ may also be specified. ‘datetime’ is date and time for data
+measurement, which can refer to a single date-time variable (datetime = ‘date_time’)
+or two variables holding date and time separately (e.g., datetime = c(‘Date’, ‘Time’)).
+‘dose’ can also be given as a single variable or two variables. If given as a single column,
+the column's values should contain dose and units such as ‘25 mcg’. If given as
+two column names, the dose column should come before the unit column
+(e.g., dose = c(‘doseamt’, ‘unit’)). ‘drug’ can provide list of acceptable drug names.
+If ‘drug’ is present, the ‘medchk.path’ argument should also be provided.
+The ‘given’ is a variable that flags whether the medication (inpatient) was given. When it is given, 
+values shoule be “Given”; should be used in conjunction with the ‘medGivenReq’ argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>medGivenReq</code></td>
+<td>
+<p>if TRUE, values in ‘given’ column in MAR data should equal “Given”; 
+if this is FALSE (the default), NA values are also acceptable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flow.path</code></td>
+<td>
+<p>filename of flow data (CSV, RData, RDS), or data.frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flow.columns</code></td>
+<td>
+<p>a named list that should specify columns in flow data; ‘id’,
+‘datetime’, ‘finalunits’, ‘unit’, ‘rate’, ‘weight’
+are required. ‘idvisit’ may also be specified. ‘datetime’ is date and time
+for data measurement, which can refer to a single date-time variable
+(datetime = ‘date_time’) or two variables holding date and time separately
+(e.g., datetime = c(‘Date’, ‘Time’)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>medchk.path</code></td>
+<td>
+<p>filename containing data set (CSV, RData, RDS), or data.frame; should have
+the column ‘medname’ with list of acceptable drug names (e.g., brand and generic name, abbreviations)
+to subset drugs of interest using ‘drug’ column in MAR data. This argument can be used when MAR data 
+contains different drugs that should be excluded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>demo.list</code></td>
+<td>
+<p>demographic information; if available, the output from 'run_Demo' or 
+a correctly formatted data.frame, which can be used to impute weight when missing</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>demo.columns</code></td>
+<td>
+<p>a named list that should specify columns in demographic data; ‘id’,
+‘datetime’, and ‘weight’ are required. ‘datetime’ is the date
+and time when the demographic data were obtained, which can refer to a single date-time
+variable (datetime = ‘date_time’) or two variables holding date and time separately
+(e.g., datetime = c(‘Date’, ‘Time’)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missing.wgt.path</code></td>
+<td>
+<p>filename containing additional weight data (CSV, RData, RDS), or data.frame. 
+The variables in this file should be defined in the ‘wgt.columns’ argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wgt.columns</code></td>
+<td>
+<p>a named list that should specify columns in additional weight data; ‘id’,
+‘datetime’, and ‘weight’ are required. ‘datetime’ is date
+and time for weight measurement, which can refer to a single date-time variable
+(datetime = ‘date_time’) or two variables holding date and time separately
+(e.g., datetime = c(‘Date’, ‘Time’)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check.path</code></td>
+<td>
+<p>path to ‘check’ directory, where check files are
+created. The default (NULL) will not produce any check files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>failflow_fn</code></td>
+<td>
+<p>filename for duplicate flow data with rate zero</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>failnounit_fn</code></td>
+<td>
+<p>filename for MAR data with missing unit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>failunit_fn</code></td>
+<td>
+<p>filename for MAR data with invalid unit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>failnowgt_fn</code></td>
+<td>
+<p>filename for infusion data with missing weight where unit
+indicates weight is required</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censor_date_fn</code></td>
+<td>
+<p>filename containing censor times created with invalid dose data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>infusion.unit</code></td>
+<td>
+<p>acceptable unit for infusion data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bolus.unit</code></td>
+<td>
+<p>acceptable unit for bolus data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bol.rate.thresh</code></td>
+<td>
+<p>upper limit for bolus rate; values above this are invalid</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rateunit</code></td>
+<td>
+<p>acceptable unit for hourly rate; defaults to ‘mcg/hr’</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ratewgtunit</code></td>
+<td>
+<p>acceptable unit for hourly rate by weight; defaults to ‘mcg/kg/hr’</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weightunit</code></td>
+<td>
+<p>acceptable unit for weight; defaults to ‘kg’</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drugname</code></td>
+<td>
+<p>drug of interest, included in filename of check files. The default (NULL)
+will produce filenames without drugname included.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See EHR Vignette for Structured Data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>structured data set
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># flow data for 'Fakedrug1'
+flow &lt;- data.frame(mod_id=c(1,1,2,2,2),
+                   mod_id_visit=c(46723,46723,84935,84935,84935),
+                   record.date=c("07/05/2019 5:25","07/05/2019 6:01",
+                                 "09/04/2020 3:21", "09/04/2020 4:39",
+                                 "09/04/2020 5:32"),
+                   Final.Weight=c(6.75,6.75,4.5,4.5,4.5),
+                   Final.Rate=c(rep("1 mcg/kg/hr",2),
+                                rep("0.5 mcg/kg/hr",3)),
+                   Final.Units=c("3.375","6.5",
+                                 "2.25","2.25","2.25"))
+flow[,'Perform.Date'] &lt;- pkdata::parse_dates(flow[,'record.date'])
+flow[,'unit'] &lt;- sub('.*[ ]', '', flow[,'Final.Rate'])
+flow[,'rate'] &lt;- as.numeric(sub('([0-9.]+).*', '\\1', flow[,'Final.Rate']))
+
+# mar data for 4 fake drugs
+mar &lt;- data.frame(mod_id=rep(1,5),
+                  Date=rep("2019-07-05",5),
+                  Time=c("07:12","07:31","08:47","09:16","10:22"),
+                  `med:mDrug`=c("Fakedrug2","Fakedrug1","Fakedrug2",
+                                "Fakedrug3","Fakedrug4"),
+                  `med:dosage`=c("30 mg","0.5 mcg","1 mg",
+                                 "20 mg","3 mcg/kg/min"),
+                  `med:route`=rep("IV",5),
+                  `med:given`=rep("Given",5),
+                  check.names=FALSE)
+
+# medcheck file for drug of interest ('Fakedrug1')
+medcheck &lt;- data.frame(medname="Fakedrug1",freq=4672)
+
+run_MedStrI(mar.path = mar,
+            mar.columns = list(id = 'mod_id', datetime = c('Date','Time'),
+                               dose = 'med:dosage', drug = 'med:mDrug', given = 'med:given'),
+            flow.path = flow,
+            flow.columns = list(id = 'mod_id', datetime = 'Perform.Date',
+                                finalunits = 'Final.Units', unit = 'unit',
+                                rate = 'rate', weight = 'Final.Weight'),
+            medchk.path = medcheck,
+            check.path = tempdir(),
+            drugname = 'fakedrg1')
+
+</code></pre>
+
+
+</div>

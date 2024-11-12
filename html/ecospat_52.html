@@ -1,0 +1,127 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecospat.occupied.patch</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Extract occupied patches of a species in geographic space.)
+</h2>
+
+<h3>Description</h3>
+
+<p>This function determines the occupied patch of a species using standard IUCN criteria (AOO, EOO) or predictive binary maps from Species Distribution Models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecospat.occupied.patch (bin.map, Sp.occ.xy, buffer = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+ 
+<table>
+<tr style="vertical-align: top;">
+<td><code>bin.map</code></td>
+<td>
+<p>Binary map (a SpatRaster) from a Species Distribution Model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Sp.occ.xy</code></td>
+<td>
+<p>xy-coordinates of the species presence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>buffer</code></td>
+<td>
+<p>numeric. Calculate occupied patch models from the binary map using a buffer (predicted area occupied by the species or within a buffer around the species, for details see ?extract).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Predictive maps derived from SDMs inform about the potential distribution (or habitat suitability) of a species. Often it is useful to get information about the area of the potential distribution which is occupied by a species, e.g. for Red List assessments.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a SpatRaster with value 1.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Frank Breiner <a href="mailto:frank.breiner@wsl.ch">frank.breiner@wsl.ch</a> with the contribution of Flavien Collart
+</p>
+
+
+<h3>References</h3>
+
+<p>IUCN Standards and Petitions Subcommittee. 2016. Guidelines for Using the IUCN Red List Categories and Criteria. Version 12. Prepared by the Standards and Petitions Subcommittee. Downloadable from http://www.iucnredlist.org/documents/RedListGuidelines.pdf
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ecospat.rangesize</code>, <code>ecospat.mpa</code>, <code>ecospat.binary.model</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(terra)
+library(dismo)
+
+# coordinates of the plots
+xy &lt;- ecospat.testData[,2:3]
+
+# environmental data
+predictors &lt;- terra::rast(system.file("extdata","ecospat.testEnv.tif",package="ecospat"))
+env &lt;- terra::extract(predictors,xy,ID=FALSE)  
+spData &lt;- cbind.data.frame(occ=ecospat.testData$Veronica_alpina,env)
+mod &lt;- glm(occ~ddeg0+I(ddeg0^2)+srad68+I(srad68^2),data=spData,family = binomial())
+
+# predict to entire dataset
+pred &lt;- terra::predict(predictors,mod,type="response") 
+plot(pred)
+points(xy[spData$occ==1,])
+  
+### make binary maps
+#arbitratry threshold
+pred.bin.arbitrary &lt;- ecospat.binary.model(pred,0.3)
+names(pred.bin.arbitrary) &lt;- "me.arbitrary"
+# use MPA to convert suitability to binary map
+mpa.cutoff &lt;- ecospat.mpa(pred,xy[spData$occ==1,])
+pred.bin.mpa &lt;- ecospat.binary.model(pred,mpa.cutoff)
+names(pred.bin.mpa) &lt;- "me.mpa"
+
+mpa.ocp  &lt;- ecospat.occupied.patch(pred.bin.mpa,xy[spData$occ==1,])
+arbitrary.ocp  &lt;- ecospat.occupied.patch(pred.bin.arbitrary,xy[spData$occ==1,])
+par(mfrow=c(1,2))
+plot(mpa.ocp) ## occupied patches: green area
+points(xy[spData$occ==1,],col="red",cex=0.5,pch=19)
+plot(arbitrary.ocp)
+points(xy[spData$occ==1,],col="red",cex=0.5,pch=19)
+
+
+## with buffer:
+mpa.ocp  &lt;- ecospat.occupied.patch(pred.bin.mpa,xy[spData$occ==1,], buffer=5000)
+arbitrary.ocp  &lt;- ecospat.occupied.patch(pred.bin.arbitrary,xy[spData$occ==1,], buffer=5000)
+
+plot(mpa.ocp) ## occupied patches: green area
+points(xy[spData$occ==1,],col="red",cex=0.5,pch=19)
+plot(arbitrary.ocp)
+points(xy[spData$occ==1,],col="red",cex=0.5,pch=19)
+
+</code></pre>
+
+
+</div>

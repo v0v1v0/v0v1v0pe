@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rotpole_nc_point_to_dt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract time series of a single grid cell of a rot-pole daily netcdf to
+data.table</h2>
+
+<h3>Description</h3>
+
+<p>Creates a <code>data.table</code> from a rotated pole netcdf (as
+usually found in RCMs), which includes values and date. Useful for extracting
+e.g. the series for a station. Requires that dimension variables in netcdf
+file contain rlon and rlat, and that it contains daily data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rotpole_nc_point_to_dt(
+  filename,
+  variable,
+  point_lon,
+  point_lat,
+  interpolate_to_standard_calendar = FALSE,
+  verbose = FALSE,
+  add_grid_coord = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>Complete path to .nc file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variable</code></td>
+<td>
+<p>Name of the variable to extract from <code>filename</code>
+(character).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>point_lon</code></td>
+<td>
+<p>Numeric longitude of the point to extract (decimal degrees).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>point_lat</code></td>
+<td>
+<p>Numeric latitude of the point to extract (decimal degrees).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interpolate_to_standard_calendar</code></td>
+<td>
+<p>Boolean, if <code>TRUE</code> will use
+<code>map_non_standard_calendar</code> to interpolate values to a standard
+calendar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean, if <code>TRUE</code>, will print more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add_grid_coord</code></td>
+<td>
+<p>Boolean, if <code>TRUE</code>, will add columns to the result
+which give the longitude and latitude of the underlying grid.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Calculates the euclidean distance, and takes the grid cell with minimal
+distance to <code>point_lon</code> and <code>point_lat</code>. Requires that the .nc file
+contains variables lon[rlon, rlat] and lat[rlon, rlat].
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>data.table</code> with two columns: the dates in
+date, and the values in a variable named after input <code>variable</code>. The
+date column is of class <code>Date</code>, unless the .nc
+file has a non-standard calendar (360, noleap) and
+<code>interpolate_to_standard_calendar</code> is set to <code>FALSE</code>, in which it
+will be character. If <code>add_grid_coord</code> is set to <code>TRUE</code>, then
+two more columns named grid_lon and grid_lat.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># example data from EURO-CORDEX (cropped for size)
+
+# standard calendar
+fn1 &lt;- system.file("extdata", "test1.nc", package = "eurocordexr")
+dt1 &lt;- rotpole_nc_point_to_dt(
+  filename = fn1,
+  variable = "tasmin",
+  point_lon = 11.31,
+  point_lat = 46.5,
+  verbose = TRUE
+)
+
+# non-standard calendar (360)
+fn2 &lt;- system.file("extdata", "test2.nc", package = "eurocordexr")
+
+# read as is
+dt2 &lt;- rotpole_nc_point_to_dt(fn2, "tasmin", 11.31, 46.5)
+str(dt2) # chr date
+dt2[86:94, ] # e.g. 30th of February in 360 calendar
+
+# interpolate to standard
+dt3 &lt;- rotpole_nc_point_to_dt(fn2, "tasmin", 11.31, 46.5,
+                              interpolate_to_standard_calendar = TRUE)
+str(dt3) # class Date
+dt3[86:94, ] # standard calender
+
+</code></pre>
+
+
+</div>

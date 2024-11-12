@@ -1,0 +1,300 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>epitab</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Epidemiologic tabulation for a cohort or case-control study</h2>
+
+<h3>Description</h3>
+
+<p>Calculates risks, risk ratio, odds ratio, and confidence intervals for
+epidemiologic data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epitab(x, y = NULL,
+       method = c("oddsratio", "riskratio", "rateratio"),
+       conf.level = 0.95,
+       rev = c("neither", "rows", "columns", "both"),           
+       oddsratio = c("wald", "fisher", "midp", "small"),
+       riskratio = c("wald", "boot", "small"),
+       rateratio = c("wald", "midp"),
+       pvalue = c("fisher.exact", "midp.exact", "chi2"),
+       correction = FALSE,
+       verbose = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>For odds ratio or risk ratio, input data can be one of the
+following: r x 2 table, vector of numbers from a contigency table
+(will be transformed into r x 2 table in row-wise order), or single
+factor or character vector that will be combined with <code>y</code> into
+a table.
+</p>
+<p>For rate ratio, input data can be one of the following: r x 2 table
+where first column contains disease counts and second column
+contains person time at risk; a single numeric vector of counts
+followed by person time at risk; a single numeric vector of counts
+combined with <code>y</code> which would be a numeric vector of
+corresponding person time at risk 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+
+<p>For odds ratio or risk ratio, a single factor or character vector
+that will be combined with <code>x</code> into a table (default is NULL)
+</p>
+<p>For rate ratio, a numeric vector of person-time at risk; if
+provided, <code>x</code> must be a numeric vector of disease counts
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>select measure of association: "oddsratio" (default), "riskratio",
+or "rateratio"
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>confidence level (default is 0.95)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rev</code></td>
+<td>
+
+<p>reverse order of "rows", "colums", "both", or "neither" (default)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oddsratio</code></td>
+<td>
+
+<p>selection estimation method: "wald" (default), "fisher", "midp",
+"small"   
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>riskratio</code></td>
+<td>
+
+<p>selection estimation method: "wald" (default), "boot", "small"
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rateratio</code></td>
+<td>
+
+<p>"wald" (default), "midp"
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvalue</code></td>
+<td>
+
+<p>"fisher.exact" (default), "midp.exact", "chi2" (normal
+approximation); for rate ratio, "fisher.exact" not calculated 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correction</code></td>
+<td>
+
+<p>set to TRUE for Yate's continuity correction (default is FALSE)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>set to TRUE to return more detailed results (default is
+FALSE)
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>epitab</code> calculates odds ratios, risk ratios, or rate
+ratios for rx2 tables. The odds ratios are estimated using
+unconditional maximum likelihood (Wald), conditional maximum
+likelihood (Fisher), median-unbiased method (mid-p), or small-sample
+adjusted. The confidence intervals are estimated using a normal
+approximation (Wald), hypergeometric exact (Fisher), mid-p exact, or
+small sample adjusted method.
+</p>
+<p>The risk ratios are estimated using unconditional maximum
+likelihood (Wald), or small-sample adjusted. The confidence intervals
+are estimated using a normal approximation (Wald), or bootstrap
+estimation.
+</p>
+<p>The rate ratios are estimated using unconditional maximum likelihood
+estimation (Wald), or median unbiased method (mid-p). The confidence
+intervals are estimated using normal approximation, or mid-p exact
+method.
+</p>
+<p>Notice the expected structure of the data to be given to 'epitab':
+</p>
+<pre>
+                 Disease
+  Exposure       No (ref)  Yes
+   Level 1 (ref)  a         b
+   Level 2        c         d
+   Level 3        e         f   
+   </pre>
+<p>This function expects the following table struture for rate ratios:
+</p>
+<pre>
+                    counts   person-time
+    exposed=0 (ref)   n00        t01
+    exposed=1         n10        t11	
+    exposed=2         n20        t21
+    exposed=3         n30        t31
+  </pre>
+<p>If the table you want to provide to this function is not in the
+preferred form, just use the <code>rev</code> option to "reverse" the rows,
+columns, or both. If you are providing categorical variables (factors
+or character vectors), the first level of the "exposure" variable is
+treated as the reference. However, you can set the reference of a
+factor using the <code>relevel</code> function.
+</p>
+<p>Likewise, each row of the rx2 table is compared to the exposure
+reference level and test of independence two-sided p values are
+calculated using fisher exact, mid-p exact, or normal approximation
+method. 
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>tab</code></td>
+<td>
+<p>primary table</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>measure</code></td>
+<td>
+<p>odds ratio, risk ratio, or rate ratio</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+<p>confidence level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvalue</code></td>
+<td>
+<p>p value method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>data input</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data with margin totals</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.exposed</code></td>
+<td>
+<p>proportion exposed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.outcome</code></td>
+<td>
+<p>proportion outcome</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>p value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correction</code></td>
+<td>
+<p>TRUE if Yate's continuity correction was used</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Tomas Aragon, <a href="mailto:aragon@berkeley.edu">aragon@berkeley.edu</a>,
+<a href="http://www.phdata.science">http://www.phdata.science</a></p>
+
+
+<h3>References</h3>
+
+<p>Nicolas P Jewell, Statistics for Epidemiology, 1st Edition, 2004,
+Chapman &amp; Hall 
+</p>
+<p>Kenneth J. Rothman and Sander Greenland (1998), Modern Epidemiology,
+Lippincott-Raven Publishers
+</p>
+<p>Kenneth J. Rothman (2002), Epidemiology: An Introduction, Oxford
+University Press
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>riskratio</code>, <code>oddsratio</code>, <code>rateratio</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">r243 &lt;- matrix(c(12,2,7,9), 2, 2)
+dimnames(r243) &lt;- list(Diarrhea = c("Yes", "No"),
+                      "Antibody level" = c("Low", "High")
+                      )
+r243
+r243b &lt;- t(r243)
+r243b
+epitab(r243, rev = "b", verbose = TRUE)
+epitab(r243, method="riskratio",rev = "b", verbose = TRUE)
+epitab(matrix(c(41, 15, 28010, 19017),2,2)[2:1,],
+       method="rateratio", verbose = TRUE)
+
+</code></pre>
+
+
+</div>

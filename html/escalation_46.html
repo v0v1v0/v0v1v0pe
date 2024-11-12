@@ -1,0 +1,143 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_wages_and_tait</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get an object to fit Wages &amp; Tait's model for phase I/II dose-finding.</h2>
+
+<h3>Description</h3>
+
+<p>This function returns an object that can be used to fit Wages &amp; Taits model
+for phase I/II dose-finding, i.e. it selects doses according to efficacy and
+toxicity outcomes. This function delegates prior-to-posterior calculations to
+the dfcrm package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_wages_and_tait(
+  parent_selector_factory = NULL,
+  tox_skeleton,
+  eff_skeletons,
+  eff_skeleton_weights = rep(1, nrow(eff_skeletons)),
+  tox_limit,
+  eff_limit,
+  num_randomise,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parent_selector_factory</code></td>
+<td>
+<p>optional object of type
+<code>selector_factory</code> that is in charge of dose selection before
+this class gets involved. Leave NULL to just use this model from the start.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tox_skeleton</code></td>
+<td>
+<p>Dose-toxicity skeleton, a non-decreasing vector of
+probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eff_skeletons</code></td>
+<td>
+<p>Matrix of dose-efficacy skeletons, with the skeletons in
+rows. I.e. number of cols is equal to number of doses, and number of rows is
+equal to number of efficacy skeletons under consideration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eff_skeleton_weights</code></td>
+<td>
+<p>numerical vector, prior weights to efficacy
+skeletons. Should have length equal to number of rows in
+<code>eff_skeletons</code>. Default is equal weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tox_limit</code></td>
+<td>
+<p>We seek a dose with probability of toxicity no greater than
+this. Value determines the admissible set. See Wages &amp; Tait (2015).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eff_limit</code></td>
+<td>
+<p>We seek a dose with probability of efficacy no less than
+this.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_randomise</code></td>
+<td>
+<p>integer, maximum number of patients to use in the
+adaptive randomisation phase of the trial.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra args are passed onwards.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of type <code>selector_factory</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Wages, N. A., &amp; Tait, C. (2015).
+Seamless Phase I/II Adaptive Design for Oncology Trials of Molecularly
+Targeted Agents.
+Journal of Biopharmaceutical Statistics, 25(5), 903–920.
+https://doi.org/10.1080/10543406.2014.920873
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example in Wages &amp; Tait (2015)
+tox_skeleton = c(0.01, 0.08, 0.15, 0.22, 0.29, 0.36)
+eff_skeletons = matrix(nrow=11, ncol=6)
+eff_skeletons[1,] &lt;- c(0.60, 0.50, 0.40, 0.30, 0.20, 0.10)
+eff_skeletons[2,] &lt;- c(0.50, 0.60, 0.50, 0.40, 0.30, 0.20)
+eff_skeletons[3,] &lt;- c(0.40, 0.50, 0.60, 0.50, 0.40, 0.30)
+eff_skeletons[4,] &lt;- c(0.30, 0.40, 0.50, 0.60, 0.50, 0.40)
+eff_skeletons[5,] &lt;- c(0.20, 0.30, 0.40, 0.50, 0.60, 0.50)
+eff_skeletons[6,] &lt;- c(0.10, 0.20, 0.30, 0.40, 0.50, 0.60)
+eff_skeletons[7,] &lt;- c(0.20, 0.30, 0.40, 0.50, 0.60, 0.60)
+eff_skeletons[8,] &lt;- c(0.30, 0.40, 0.50, 0.60, 0.60, 0.60)
+eff_skeletons[9,] &lt;- c(0.40, 0.50, 0.60, 0.60, 0.60, 0.60)
+eff_skeletons[10,] &lt;- c(0.50, 0.60, 0.60, 0.60, 0.60, 0.60)
+eff_skeletons[11,] &lt;- c(rep(0.60, 6))
+eff_skeleton_weights = rep(1, nrow(eff_skeletons))
+tox_limit = 0.33
+eff_limit = 0.05
+model &lt;- get_wages_and_tait(tox_skeleton = tox_skeleton,
+                            eff_skeletons = eff_skeletons,
+                            tox_limit = tox_limit, eff_limit = eff_limit,
+                            num_randomise = 20)
+fit &lt;- model %&gt;% fit('1NN 2EN 3BE')
+fit %&gt;% recommended_dose()
+fit %&gt;% is_randomising()
+fit %&gt;% dose_admissible()
+fit %&gt;% prob_administer()
+
+</code></pre>
+
+
+</div>

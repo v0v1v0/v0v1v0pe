@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataOyster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+High-frequency noninvasive valvometry data
+</h2>
+
+<h3>Description</h3>
+
+<p>The data frame provides the opening amplitude of one oyster's shells (in mm) with respect to the time (in hours). The opening velocity of the oyster's shells is also given.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("dataOyster")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A list of 2 elements.
+</p>
+
+<dl>
+<dt><code>$data : a data frame with 54000 observations for 3 variables</code></dt>
+<dd>
+<dl>
+<dt><code>time</code></dt>
+<dd>
+<p>Time of measurement (in hours).</p>
+</dd>
+<dt><code>opening</code></dt>
+<dd>
+<p>opening amplitude between the two shells (in mm).</p>
+</dd>
+<dt><code>velocity</code></dt>
+<dd>
+<p>a numeric vector (in mm/s). Negative values correspond to the opening velocity of the shells and positive values to the closing velocity of the shells.</p>
+</dd>
+</dl>
+</dd>
+<dt><code>$Tgrid : A grid of time to perform the procedure.</code></dt>
+<dd></dd>
+</dl>
+<h3>References</h3>
+
+<p>Durrieu, G., Grama, I., Pham, Q. &amp; Tricot, J.- M (2015). Nonparametric adaptive estimator of extreme conditional tail probabilities quantiles. Extremes, 18, 437-478.
+</p>
+<p>Azais, R., Coudret R. &amp; Durrieu G. (2014). A hidden renewal model for monitoring aquatic systems biosensors. Environmetrics, 25.3, 189-199.
+</p>
+<p>Schmitt, F. G., De Rosa, M., Durrieu, G., Sow, M., Ciret, P., Tran, D., &amp; Massabuau, J. C. (2011). Statistical study of bivalve high frequency microclosing behavior: Scaling properties and shot noise analysis. International Journal of Bifurcation and Chaos, 21(12), 3565-3576.
+</p>
+<p>Sow, M., Durrieu, G., Briollais, L., Ciret, P., &amp; Massabuau, J. C. (2011). Water quality assessment by means of HFNI valvometry and high-frequency data modeling. Environmental monitoring and assessment, 182(1-4), 155-170.
+</p>
+<p>website : http://molluscan-eye.epoc.u-bordeaux1.fr/
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data("dataOyster")
+Velocity &lt;- dataOyster$data[, 3]
+time &lt;- dataOyster$data[, 1]
+plot(time, Velocity, type = "l", xlab = "time (hour)",
+      ylab = "Velocity (mm/s)")
+
+Tgrid &lt;- seq(0, 24, 0.05) 
+#Grid with positive velocity
+new.Tgrid &lt;- dataOyster$Tgrid
+
+X &lt;- Velocity + (-min(Velocity)) #We shift the data to be positive
+
+## Not run:  #For computing time purpose
+#We find the h by minimizing the cross validation function 
+
+hgrid &lt;- bandwidth.grid(0.05, 0.5, 50, type = "geometric")
+
+
+#H &lt;- bandwidth.CV(X, time, new.Tgrid, hgrid,
+#                 TruncGauss.kernel, kpar = c(sigma = 1),
+#                 pcv = 0.99, CritVal = 3.4, plot = TRUE)
+#hcv &lt;- H$h.cv
+
+hcv &lt;- 0.2981812
+#we use our method with the h found previously
+TS.Oyster &lt;- hill.ts(X, t = time, new.Tgrid, h = hcv, 
+                   TruncGauss.kernel, kpar = c(sigma = 1),
+                   CritVal = 3.4)
+          
+plot(time, Velocity, type = "l", ylim = c(-0.6, 1),
+    main = "Extreme quantiles estimator",
+    xlab = "Time (hour)", ylab = "Velocity (mm/s)")
+pgrid &lt;- c(0.999)
+pred.quant.Oyster &lt;- predict(TS.Oyster, newdata = pgrid, type = "quantile")
+
+quant0.999 &lt;- rep(0, length(Tgrid))
+quant0.999[match(new.Tgrid, Tgrid)] &lt;- 
+          as.numeric(pred.quant.Oyster$y)-
+          (-min(Velocity))
+lines(Tgrid, quant0.999, col = "magenta")   
+
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

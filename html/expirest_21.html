@@ -1,0 +1,239 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_osle_poi_list</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compile information on worst case batches for ordinary shelf life estimation</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>get_osle_poi_list()</code> prepares a list of points of
+intersection (POI) for multiple regression models using the
+<code>find_poi()</code> function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_osle_poi_list(
+  data,
+  batch_vbl,
+  icpt_list,
+  model_list,
+  sl,
+  srch_range,
+  alpha = 0.05,
+  xform = c("no", "no"),
+  shift = c(0, 0),
+  ivl = "confidence",
+  ivl_type = "one.sided",
+  ivl_side = "lower",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame with the columns specified by <code>response_vbl</code>,
+<code>time_vbl</code> and <code>batch_vbl</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>batch_vbl</code></td>
+<td>
+<p>A character string that specifies the column in <code>data</code>
+with the grouping information (i.e. a factorial variable) for the
+differentiation of the observations of the various batches.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>icpt_list</code></td>
+<td>
+<p>A list of four elements named <code>cics</code>, <code>dics</code>,
+<code>dids.pmse</code> and <code>dids</code> with the intercepts of each linear
+regression model and batch. The <code>cics</code>, <code>dics</code> and
+<code>dids.pmse</code> elements are <code>NA</code> if data of only a single batch
+is available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_list</code></td>
+<td>
+<p>A list of regression models of different type. Usually,
+it is a list of four elements named <code>cics</code>, <code>dics</code>,
+<code>dids.pmse</code> and <code>dids</code>, where the first three elements contain
+‘<code>lm</code>’ objects of the “common intercept / common slope”
+(<code>cics</code>), “different intercept / common slope” (<code>dics</code>)
+and “different intercept / different slope” (<code>dids.pmse</code>) type.
+The fourth element with the label <code>dids</code> is usually a list of the
+‘<code>lm</code>’ objects that is obtained from fitting a regression
+model to the data of each level of the categorical variable separately.
+The <code>dids.pmse</code> model differs from the <code>dids</code> model in that it
+is a model with the categorical variable as a fixed main effect and with
+an interaction term of the categorical variable with the time variable,
+i.e. a model where the mean square error is pooled across batches (thus
+the “pmse” suffix meaning “pooled mean square error”). The
+<code>cics</code>, <code>dics</code> and <code>dids.pmse</code> elements are <code>NA</code> if
+data of only a single batch is available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sl</code></td>
+<td>
+<p>A numeric value or a numeric vector of length <code>2</code> that
+specifies the specification limit or limits. If a vector is provided it
+must be of the form <code>c(lower limit, upper limit)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>srch_range</code></td>
+<td>
+<p>A vector of length <code>2</code> that specifies the end-points
+of the (time) range that is supposed to contain the shelf life or retest
+period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>A numeric value between 0 and 1 that specifies the significance
+level for the calculation of confidence or prediction intervals. The
+default is <code>0.05</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xform</code></td>
+<td>
+<p>A vector of two character strings that specifies the
+transformation of the response and the time variable. The default is
+“no” transformation, i.e. <code>c("no", "no")</code>, where the first
+element specifies the transformation of the <code class="reqn">x</code> variable and the
+second element the transformation of the <code class="reqn">y</code> variable. Valid
+alternatives for <code class="reqn">x</code> and/or <code class="reqn">y</code> variable transformation are
+<code>"log"</code> (natural logarithm), <code>"sqrt"</code> (square root) and
+<code>"sq"</code> (square).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shift</code></td>
+<td>
+<p>A vector of two values which will be added to the variables
+<code class="reqn">x</code> and/or <code class="reqn">y</code> before they are transformed as specified by the
+<code>xform</code> parameter, where the first element will be added to the
+<code class="reqn">x</code> variable and the second element to the <code class="reqn">y</code> variable. The
+purpose is to prevent an undefined state which could arise when variables
+with values of <code class="reqn">\leq 0</code> are log or square root transformed. The
+default is <code>c(0, 0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl</code></td>
+<td>
+<p>A character string of either <code>"confidence"</code> or
+<code>"prediction"</code> that specifies the type of interval of interest.
+The default is <code>"confidence"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl_type</code></td>
+<td>
+<p>A character string that specifies if a “one sided”
+or a “two sided” interval should be calculated, i.e. either
+<code>"one.sided"</code> or <code>"two.sided"</code>, respectively. The default is
+<code>"one.sided"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ivl_side</code></td>
+<td>
+<p>A character string that specifies if the specification
+limit, given that the limit has only one side, is an “upper” or a
+“lower” bound, i.e. it is specified as either <code>"upper"</code> or
+<code>"lower"</code>, respectively. The default is <code>"lower"</code>. If the
+specification has two boundaries, then this parameter specifies the
+preferred side. If no side is preferred over the other, <code>"both"</code> can
+be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional named or unnamed arguments passed on to
+<code>uniroot()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>get_osle_poi_list()</code> applies the
+<code>find_poi()</code> function (find the “point of intersection”) on
+all the models and for each release limit (<code>rl</code>) provided. With respect
+to the latter it differs from the <code>get_poi_list()</code> function.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following elements is returned:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>all.poi</code></td>
+<td>
+<p>A list of the POI values, i.e. a list with one or two list
+elements for the side (i.e. <code>lower</code> or <code>upper</code>) of the
+corresponding specification limit, each containing a list returned by the
+<code>get_poi_list()</code> function, containing of four elements named
+<code>cics</code>, <code>dics</code>, <code>dids.pmse</code> and <code>dids</code>. Each of them
+contains a named vector of the POI values estimated for each batch and
+named accordingly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>poi</code></td>
+<td>
+<p>A named vector of the worst case POI values of each model, i.e.
+named <code>cics</code>, <code>dics</code>, <code>dids.pmse</code> and <code>dids</code>. In
+addition, the vector has an attribute called <code>side</code> that specifies
+the side of the specification limit which is crossed by the confidence or
+prediction interval at the corresponding POI value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wc.icpt</code></td>
+<td>
+<p>A named vector of the intercepts of the worst case batches of
+each model, i.e. named <code>cics</code>, <code>dics</code>, <code>dids.pmse</code> and
+<code>dids</code>. In addition, the vector has an attribute called <code>side</code>
+that specifies the side of the specification limit which is crossed by the
+confidence or prediction interval at the POI value of the corresponding
+worst case batch.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which.wc.batch</code></td>
+<td>
+<p>A named vector of the indices of the worst case
+batches of each model, i.e. named <code>cics</code>, <code>dics</code>,
+<code>dids.pmse</code> and <code>dids</code>. In addition, the vector has an attribute
+called <code>side</code> that specifies the side of the specification limit
+which is crossed by the confidence or prediction interval at the POI value
+of the corresponding worst case batch.</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>get_icpt_list</code>, <code>get_model_list</code>,
+<code>get_poi_list</code>, <code>get_wc_icpt</code>,
+<code>expirest_osle</code>, <code>expirest_wisle</code>.
+</p>
+
+
+</div>

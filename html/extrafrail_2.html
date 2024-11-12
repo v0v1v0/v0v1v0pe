@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>frailty.fit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Fitted different shared frailty models
+</h2>
+
+<h3>Description</h3>
+
+<p>frailty.fit computes the maximum likelihood estimates based on the EM algorithm for the
+shared gamma, inverse gaussian, weighted Lindley, Birnbaum-Saunders, truncated normal,
+mixture of inverse gaussian and mixture of Birbaum-Saunders frailty models. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">frailty.fit(formula, data, dist.frail="gamma", dist = "np", prec = 1e-04, 
+        max.iter = 1000, part=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>A formula that contains on the left hand side an object of the type Surv and on the right hand side a 
++cluster(id) statement, possibly with the covariates definition.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A data.frame in which the formula argument can be evaluated
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.frail</code></td>
+<td>
+
+<p>the distribution assumed for the frailty. Supported values: gamma (GA also is valid), IG (inverse gaussian), WL
+(weighted Lindley), BS (Birnbaum-Saunders), TN (truncated normal), MIG (mixture of IG) and MBS (mixture of BS).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+
+<p>the distribution assumed for the basal model. Supported values: weibull, pe (piecewise exponential),
+exponential and np (non-parametric).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prec</code></td>
+<td>
+
+<p>The convergence tolerance for parameters.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.iter</code></td>
+<td>
+
+<p>The maximum number of iterations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>part</code></td>
+<td>
+
+<p>partition time (only for piecewise exponential distribution).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For the weibull, exponential and piecewise exponential distributions as the basal model, the M1-step is performed 
+using the optim function. For the non-parametric case, the M1-step is based on the coxph function 
+from the survival package.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of class "extrafrail" is returned. The object returned for this functions is a list containing the following
+components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>A named vector of coefficients</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>A named vector of the standard errors for the estimated coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>The vector of times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>The failure indicators.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A variable indicating the cluster which belongs each observation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The regressor matrix based on cov.formula (without intercept term).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>The distribution assumed for the basal model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.frail</code></td>
+<td>
+<p>The distribution assumed for the frailty variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>The Kendall's tau coefficient.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logLik</code></td>
+<td>
+<p>The log-likelihood function (only when the Weibull model is specified for the basal distribution).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Lambda0</code></td>
+<td>
+<p>The observed times and the associated cumulative hazard function (only when the non-parametric
+option is specified for the basal distribution)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>part</code></td>
+<td>
+<p>the partition time (only for piecewise exponential model).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Diego Gallardo and Marcelo Bourguignon.
+</p>
+
+
+<h3>References</h3>
+
+<p>Gallardo, D.I., Bourguignon, M. (2022) The shared weighted Lindley frailty model for
+cluster failure time data. Submitted.
+</p>
+<p>Gallardo, D.I., Bourguignon, M., Romeo, J. (2024) Birnbaum-Saunders frailty regression 
+models for clustered survival data. Statistics and Computing, 34, 141.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+require(survival)
+#require(frailtyHL)
+data(rats, package="frailtyHL")
+#Fit for WL frailty model
+fit.WL &lt;- frailty.fit(survival::Surv(time, status)~ rx+ survival::cluster(litter), 
+dist.frail="WL", data = rats)
+summary(fit.WL)
+#Fit for gamma frailty model
+fit.GA &lt;- frailty.fit(survival::Surv(time, status) ~ rx + survival::cluster(litter), 
+dist.frail="gamma", data = rats)
+summary(fit.GA)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,324 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nearestGeogPoints</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Minimum convex polygon from a set of spatial polygons and/or points</h2>
+
+<h3>Description</h3>
+
+<p>This function implements the "nearest geographic point" method (Smith et al. 2023) to enable the use of occurrence records geolocated only to a general place (e.g., a country or province), along with occurrences georeferenced with little error. The function returns a minimum convex polygon (MCP) constructed from a set of spatial polygons and/or points.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nearestGeogPoints(
+  pts = NULL,
+  polys = NULL,
+  centerFrom = "pts",
+  return = "mcp",
+  terra = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pts</code></td>
+<td>
+<p>Either <code>NULL</code> (default) or a set of spatial points. This can be either a <code>SpatVector</code> (<code>terra</code> package) or <code>POINTS</code> or <code>MULTIPOINTS</code> <code>sf</code> object (<code>sf</code> package). <em>These must be in an equal-area projection!</em> This can also be a <code>Spatial</code> object (e.g., <code>SpatialPoints</code> or <code>SpatialPointsDataFrame</code>) from the <span class="pkg">sp</span> package, but <em>the <code>sp</code> package will be deprecated in 2023</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>polys</code></td>
+<td>
+<p>Either <code>NULL</code> (default), or an object representing spatial polygons of (for example) counties in which a species is known to reside. <em>This must be in an equal-area projection!</em>. This object can be either a <code>SpatVector</code> (<span class="pkg">terra</span> package)), or <code>POLYGON</code>, <code>MULTIPOLYGON</code>, <code>LINESTRING</code>, or <code>MULTILINESTRING</code> <code>sf</code> object (<span class="pkg">sf</span> package). This can also be a <code>Spatial</code> object (e.g., <code>SpatialPolygons</code> or <code>SpatialPolygonsDataFrame</code>) from the <span class="pkg">sp</span> package, <em>the <code>sp</code> package will be deprecated in 2023</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>centerFrom</code></td>
+<td>
+<p>Indicates how to locate the "reference" centroid used to identify points on each polygon. This is only relevant if both <code>pts</code> and <code>polys</code> are not <code>NULL</code>.
+</p>
+
+<ul>
+<li> <p><code>'pts'</code>: The default is to use the centroid of <code>pts</code>, which finds the centroid of <code>pts</code>, then finds the location on the border of each polygon closest to this centroid.
+</p>
+</li>
+<li> <p><code>'polys'</code>: This option will first calculate the centroid of each polygon, then the centroid of these points, and then find the location on the border of each polygon closest to this point.
+</p>
+</li>
+<li> <p><code>'both'</code>: This option first calculates the centroid of each polygon, then finds the joint centroid of these points plus of <code>pts</code>, and lastly locates on the border of each polygon the point closest to this grand centroid.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return</code></td>
+<td>
+<p>Determines what is returned:
+</p>
+
+<ul>
+<li> <p><code>'mcp'</code> (default): The minimum convex polygon
+</p>
+</li>
+<li> <p><code>'mcpPoints'</code>: Points of the vertices of the minimum convex polygon
+</p>
+</li>
+<li> <p><code>'polyPoints'</code>: The point on each <code>poly</code> polygon closest to the given center
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terra</code></td>
+<td>
+<p>If <code>TRUE</code> (default), the return an object of class <code>SpatVector</code>. Otherwise, return an object of class <code>sf</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function constructs a minimum convex polygon (MCP) from a set of spatial points and/or spatial polygons. The manner in which this is done depends on whether <code>polys</code> and/or <code>pts</code> are specified:
+</p>
+
+<ul>
+<li>
+<p> Only <code>pts</code> is supplied: The MCP is constructed directly from the points.
+</p>
+</li>
+<li>
+<p> Only <code>polys</code> is supplied: The MCP is constructed from the point on each polygon closest to the centroid of the centroids of the polygons.
+</p>
+</li>
+<li>
+<p> Both <code>pts</code> and <code>polys</code> are supplied: The MCP is constructed from the combined set of <code>pts</code> <em>and</em> from the point on each polygon closest to the centroid of <code>pts</code>. By default, the function uses the centroid of the precise occurrences in step (1), but this can be changed to the centroid of the centroids of the polygons or the centroid of the points defined by the union of precise occurrence points plus the centroids of the polygons.
+</p>
+</li>
+</ul>
+<p>The function can alternatively return the points on the vertices of the MCP, or points on the input polygons closest to the reference centroid.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>SpatVector</code>, or <code>sf POLYGON</code> representing a minimum convex polygon.
+</p>
+
+
+<h3>References</h3>
+
+<p>Smith, A.B., Murphy, S.J., Henderson, D., and Erickson, K.D. 2023. Including imprecisely georeferenced specimens improves accuracy of species distribution models and estimates of niche breadth.  <em>Global Ecology and Biogeography</em> 32:342-355. <a href="https://doi.org/10.1111/geb.13628">doi:10.1111/geb.13628</a> Open access pre-print: <a href="https://doi.org/10.1101/2021.06.10.447988">doi:10.1101/2021.06.10.447988</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>nearestEnvPoints</code> for the "nearest environmental point" method, a related application for estimating niche breadth in environmental space.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(sf)
+library(terra)
+
+#######################################################
+### example using SpatVector inputs (terra package) ###
+#######################################################
+
+### prepare data
+################
+
+# Get coordinate reference systems:
+# * WGS84
+# * Tananarive (Paris) / Laborde Grid - EPSG:29701
+wgs84 &lt;- getCRS('WGS84')
+madProj &lt;- getCRS('Madagascar Albers')
+
+# outline of Madagascar faritras
+data(mad1)
+mad1 &lt;- vect(mad1)
+mad1 &lt;- project(mad1, madProj)
+
+# lemur point data
+data(lemurs)
+redBelly &lt;- lemurs[lemurs$species == 'Eulemur rubriventer', ]
+ll &lt;- c('longitude', 'latitude')
+redBelly &lt;- vect(redBelly, geom=ll, crs=wgs84)
+redBelly &lt;- project(redBelly, madProj)
+
+# *fake* lemur farita-level data
+faritras &lt;- c('Toamasina', 'Atsimo-Atsinana',
+'Amoron\'i mania', 'Sava', 'Itasy')
+polys &lt;- mad1[mad1$NAME_2 %in% faritras, ]
+
+### apply Nearest Geographic Point method
+#########################################
+
+# get three kinds of minimum convex polygons (MCPs):
+
+# MCP using just polygons
+mcpPolys &lt;- nearestGeogPoints(polys = polys)
+
+# MCP using just points
+mcpPts &lt;- nearestGeogPoints(pts = redBelly)
+
+# MCP using points &amp; polys
+mcpPolysPoints &lt;- nearestGeogPoints(pts = redBelly, polys = polys)
+
+# compare extent of occurrence (EOO) in m2
+expanse(mcpPolys)
+expanse(mcpPts)
+expanse(mcpPolysPoints)
+
+### plot minimum convex polygons
+################################
+
+# MCP from precise occurrences only
+plot(mad1, border='gray', main='MCP points only')
+plot(polys, col='gray80', add=TRUE)
+plot(mcpPts, col=scales::alpha('red', 0.4), add=TRUE)
+plot(redBelly, pch=21, bg='red', add=TRUE)
+
+legend('topleft', 
+legend=c('Precise occurrence', 'Imprecise occurrence', 'MCP'),
+fill=c(NA, 'gray', scales::alpha('red', 0.4)),
+pch=c(21, NA, NA),
+pt.bg=c('red', NA, NA),
+border=c(NA, 'black', 'black'))
+
+# MCP from imprecise occurrences only
+plot(mad1, border='gray', main='MCP polys only')
+plot(polys, col='gray80', add=TRUE)
+plot(mcpPolys, col=scales::alpha('orange', 0.4), add=TRUE)
+plot(redBelly, pch=21, bg='red', add=TRUE)
+
+legend('topleft', 
+legend=c('Precise occurrence', 'Imprecise occurrence', 'MCP'),
+fill=c(NA, 'gray', scales::alpha('orange', 0.4)),
+pch=c(21, NA, NA),
+pt.bg=c('red', NA, NA),
+border=c(NA, 'black', 'black'))
+
+# MCP from precise and imprecise occurrences
+plot(mad1, border='gray', main='MCP polys + points')
+plot(polys, col='gray80', add=TRUE)
+plot(mcpPolysPoints, col=scales::alpha('green', 0.4), add=TRUE)
+plot(redBelly, pch=21, bg='red', add=TRUE)
+
+legend('topleft', 
+legend=c('Precise occurrence', 'Imprecise occurrence', 'MCP'),
+fill=c(NA, 'gray', scales::alpha('green', 0.4)),
+pch=c(21, NA, NA),
+pt.bg=c('red', NA, NA),
+border=c(NA, 'black', 'black'))
+
+############################################
+### example using sf inputs (sf package) ###
+############################################
+
+### prepare data
+################
+
+# Get coordinate reference systems:
+# * WGS84
+# * Tananarive (Paris) / Laborde Grid - EPSG:29701
+madProj &lt;- sf::st_crs(getCRS('Madagascar Albers'))
+wgs84 &lt;- getCRS('WGS84')
+
+# outline of Madagascar faritras
+data(mad1)
+mad1 &lt;- sf::st_transform(mad1, madProj)
+
+# lemur point occurrence data
+data(lemurs)
+redBelly &lt;- lemurs[lemurs$species == 'Eulemur rubriventer', ]
+ll &lt;- c('longitude', 'latitude')
+redBelly &lt;- sf::st_as_sf(redBelly[ , ll], crs=wgs84, coords=ll)
+redBelly &lt;- sf::st_transform(redBelly, madProj)
+
+# *fake* farita-level occurrences
+faritras &lt;- c('Toamasina', 'Atsimo-Atsinana',
+'Amoron\'i mania', 'Sava', 'Itasy')
+polys &lt;- mad1[mad1$NAME_2 %in% faritras, ]
+
+### apply Nearest Geographic Point method
+#########################################
+
+# get three kinds of minimum convex polygons (MCPs):
+
+# MCP using just polygons
+mcpPolys &lt;- nearestGeogPoints(polys = polys, terra = FALSE)
+
+# MCP using just points
+mcpPts &lt;- nearestGeogPoints(pts = redBelly, terra = FALSE)
+
+# MCP using points &amp; polys
+mcpPolysPoints &lt;- nearestGeogPoints(pts = redBelly, polys = polys,
+terra = FALSE)
+
+# extent of occurrence (EOO) in m2
+sf::st_area(mcpPolys)
+sf::st_area(mcpPts)
+sf::st_area(mcpPolysPoints)
+
+### plot minimum convex polygons
+################################
+
+# MCP from precise occurrences only
+plot(st_geometry(mad1), border='gray', main='MCP points only')
+plot(st_geometry(polys), col='gray80', add=TRUE)
+plot(st_geometry(mcpPts), col=scales::alpha('red', 0.4), add=TRUE)
+plot(st_geometry(redBelly), pch=21, bg='red', add=TRUE)
+
+legend('topleft', 
+legend=c('Precise occurrence', 'Imprecise occurrence', 'MCP'),
+fill=c(NA, 'gray', scales::alpha('red', 0.4)),
+pch=c(21, NA, NA),
+pt.bg=c('red', NA, NA),
+border=c(NA, 'black', 'black'))
+
+# MCP from imprecise occurrences only
+plot(st_geometry(mad1), border='gray', main='MCP points only')
+plot(st_geometry(polys), col='gray80', add=TRUE)
+plot(st_geometry(mcpPolys), col=scales::alpha('orange', 0.4), add=TRUE)
+plot(st_geometry(redBelly), pch=21, bg='red', add=TRUE)
+
+legend('topleft', 
+legend=c('Precise occurrence', 'Imprecise occurrence', 'MCP'),
+fill=c(NA, 'gray', scales::alpha('orange', 0.4)),
+pch=c(21, NA, NA),
+pt.bg=c('red', NA, NA),
+border=c(NA, 'black', 'black'))
+
+# MCP from precise and imprecise occurrences
+plot(st_geometry(mad1), border='gray', main='MCP points only')
+plot(st_geometry(polys), col='gray80', add=TRUE)
+plot(st_geometry(mcpPolysPoints), col=scales::alpha('green', 0.4), add=TRUE)
+plot(st_geometry(redBelly), pch=21, bg='red', add=TRUE)
+
+legend('topleft', 
+legend=c('Precise occurrence', 'Imprecise occurrence', 'MCP'),
+fill=c(NA, 'gray', scales::alpha('green', 0.4)),
+pch=c(21, NA, NA),
+pt.bg=c('red', NA, NA),
+border=c(NA, 'black', 'black'))
+
+### NOTE
+# Using SpatVector input (terra package) yields EOOs that are slightly
+# larger than using Spatial* (sp) or sf (sf) objects (by about 0.03-0.07%
+# in this example). The difference arises because terra::expanse() yields a
+# different value than sf::st_area.
+</code></pre>
+
+
+</div>

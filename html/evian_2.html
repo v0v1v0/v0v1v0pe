@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calculateEvianMLE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Profile likelihood calculation using regression models</h2>
+
+<h3>Description</h3>
+
+<p>This is the function that calculates profileLikelihood for a single SNP. The main function <code>evian</code> calls this function repeatedly to obtain results for multiple SNPs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  calculateEvianMLE(snp, formula_tofit, model, data, bim, lolim, hilim,
+                    m, bse, k, robust, family, plinkCC)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>snp</code></td>
+<td>
+<p>a string specifying the SNP of interests to be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula_tofit</code></td>
+<td>
+<p>a formula object of the genetic model. The model should be formatted as <code>y~nuisance parameters</code>. The parameter of interest should not be included here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>a string specifying the mode of inheritance parameterization: <br><code>additive, dominant, recessive, or overdominance</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame; read from the argument <code>data</code> in the main function <code>evian</code>. It should contain the SNP ID specified in the <code>snp</code> argument as a column name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bim</code></td>
+<td>
+<p>data frame; read from from the argument <code>bim</code> in the main function <code>evian</code>. Provides allele information (base pair, effect/reference alleles) for the SNP of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lolim</code></td>
+<td>
+<p>numeric; the lower limit for the grid or the minimum value of the regression parameter <code class="reqn">\beta</code> used to calculate the likelihood function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hilim</code></td>
+<td>
+<p>numeric; the upper limit for the grid or the maximum value of the regression parameter <code class="reqn">\beta</code> used to calculate the likelihood funciton. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>numeric; the density of the grid at which to compute the standardized likelihood function. A beta grid is defined as the grid of values for the SNP parameter used to evaluate the likelihood function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bse</code></td>
+<td>
+<p>numeric; the number of beta standard errors to utilize in constraining the beta grid limits. Beta grid is evaluated at <code class="reqn">\beta</code> +/- <code>bse</code>*s.e.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>numeric or numeric vector; The strength of evidence criterion k. Reads from the input of <code>kcutoff</code> from the main <code>evian</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>robust</code></td>
+<td>
+<p>logical; if <code>TRUE</code>, then a robust adjustment is applied to the likelihood function to account for the cluster nature in the data. See robust_forCluster.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>the link function for <code>glm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plinkCC</code></td>
+<td>
+<p>A boolean type that specifies how case/control are coded. case/control were coded 1/0 if it is FALSE, and were coded 2/1 if TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>calculateEvianMLE</code> calculates the profile likelihood for a single SNP. A proper grid range is first established for <code class="reqn">\beta</code> then the standardized profile likelihood is evaluated at each of the <code>m</code> cuts uniformly spread across the grid. Based on the standardized profile likelihood, the MLE for <code class="reqn">\beta</code> is computed as well as the likelihood intervals for each value of <code>k</code> provided. <br>
+For different genetic models, their coding schemes are shown as below:
+</p>
+<pre>
+   Additive
+ AA  0
+ AB  1
+ BB  2
+
+   Dominant
+ AA  0
+ AB  1
+ BB  1
+
+   Recessive
+ AA  0
+ AB  0
+ BB  1
+
+ Overdominance model
+        A  D
+    AA  0  0
+    AB  1  1
+    BB  2  0
+</pre>
+<p>Specifically for the overdominance model, the column of interest is the D column.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function outputs a list containg 4 elements that can be directly accessed using '<code>$</code>' operator.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>numeric vector; It stores all <code>m</code> <code class="reqn">\beta</code> values that used to estimate the standardized profile likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>profile.lik.norm</code></td>
+<td>
+<p>numeric vector; the corresponding <code>m</code> standardized profile likelihood value at each of the <code class="reqn">\beta</code> values in <code>theta</code>. If <code>robust</code>=<code>TRUE</code>, then the values will be adjusted by the robust factor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k_cutoff</code></td>
+<td>
+<p>numeric vector; It specifies which k-cutoff had been used in the calculation, ordered from the smallest k to the largest k.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SummaryStats</code></td>
+<td>
+<p>data frame; contains the summary statistics of the profile likelihood calculation. It contains the following columns:
+</p>
+
+<ul>
+<li> <p><code>mle</code>: the estimates for SNP effect with respect to the effective allele
+</p>
+</li>
+<li> <p><code>maxlr</code>: maximum likelihood ratio in the beta grid defined by <code>lolim</code> and <code>hilim</code>
+</p>
+</li>
+<li> <p><code>AF</code>: allele frequency for the effective allele
+</p>
+</li>
+<li> <p><code>SNP</code>: SNP ID
+</p>
+</li>
+<li> <p><code>bp</code>: base pair position from the <code>bim</code> input
+</p>
+</li>
+<li> <p><code>effect</code>, <code>ref</code>: the effective allele and the other allele from the <code>bim</code> input
+</p>
+</li>
+<li> <p><code>robustFactor</code>: robust factor calculated, set to 1 if <code>robust</code>=<code>FALSE</code>.
+</p>
+</li>
+<li> <p><code>lo_1</code>, <code>hi_1</code>, <code>lo_2</code>, <code>hi_2</code>...: the lower and upper bound of the likelihood intervals for the kth cut-off in <code>k_cutoff</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>When <code>lolim</code> or <code>hilim</code> are NOT defined, then the boundaries of the beta grid will be determined by the default <code>bse=5</code>, or a <code>bse</code> defined by the user. Otherwise, the user can define the exact beta grid boundaries using <code>lolim</code> and <code>hilim</code>.
+</p>
+<p>In some cases the beta grid (using <code>bse</code> or <code>lolim</code>,<code>hilim</code>) may need to be increased substantially (<code>bse</code> as large as 15) if covariates are present in the formula. This is automatically dealt by the current function, but contributes to longer computation time to find the appropriate ranges. Estimation may become inaccurate with large number of correlated covariates, which is a known limitation of profile likelihoods.
+</p>
+
+
+<h3>References</h3>
+
+<p>Strug, L. J., Hodge, S. E., Chiang, T., Pal, D. K., Corey, P. N., &amp; Rohde, C. (2010). A pure likelihood approach to the analysis of genetic association data: an alternative to Bayesian and frequentist analysis. Eur J Hum Genet, 18(8), 933-941. doi:10.1038/ejhg.2010.47
+</p>
+<p>Strug, L. J., &amp; Hodge, S. E. (2006). An alternative foundation for the planning and evaluation of linkage analysis. I. Decoupling "error probabilities" from "measures of evidence". Hum Hered, 61(3), 166-188. doi:10.1159/000094709
+</p>
+<p>Royall, R. (1997). Statistical Evidence: A Likelihood Paradigm. London, Chapman and Hall.
+</p>
+
+
+</div>

@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>buildDose</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Combine Dose Data</h2>
+
+<h3>Description</h3>
+
+<p>Output from parse process is taken and converted into a wide format, grouping drug entity
+information together based on various steps and rules.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">buildDose(
+  dat,
+  dn = NULL,
+  preserve = NULL,
+  dist_method,
+  na_penalty,
+  neg_penalty,
+  greedy_threshold,
+  checkForRare = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>data.table object from the output of <code>parseMedExtractR</code>,
+<code>parseMedXN</code>, <code>parseMedEx</code>, or <code>parseCLAMP</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dn</code></td>
+<td>
+<p>Regular expression specifying drug name(s) of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preserve</code></td>
+<td>
+<p>Column names to include in output, whose values should not be combined with other rows.
+If present, dosechange is always preserved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist_method</code></td>
+<td>
+<p>Distance method to use for calculating distance of various paths. Alternatively set the
+‘ehr.dist_method’ option, which defaults to ‘minEntEnd’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na_penalty</code></td>
+<td>
+<p>Penalty for matching extracted entities with NA. Alternatively set the<br>
+‘ehr.na_penalty’ option, which defaults to 32.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neg_penalty</code></td>
+<td>
+<p>Penalty for negative distances between frequency/intake time and dose amounts. Alternatively
+set the ‘ehr.neg_penalty’ option, which defaults to 0.5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>greedy_threshold</code></td>
+<td>
+<p>Threshold to use greedy matching; increasing this value too high could lead to the
+algorithm taking a long time to finish. Alternatively set the<br>
+‘ehr.greedy_threshold’ option, which defaults to 1e8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>checkForRare</code></td>
+<td>
+<p>Indicate if rare values for each entity should be found and displayed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>buildDose</code> function takes as its main input (<code>dat</code>), a data.table object that
+is the output of a parse process function (<code>parseMedExtractR</code>, <code>parseMedXN</code>,
+<code>parseMedEx</code>, or <code>parseCLAMP</code>). Broadly, the parsed extractions are grouped
+together to form wide, more complete drug regimen information. This reformatting facilitates
+calculation of dose given intake and daily dose in the <code>collapseDose</code> process.
+</p>
+<p>The process of creating this output is broken down into multiple steps:
+</p>
+
+<ol>
+<li>
+<p> Removing rows for any drugs not of interest. Drugs of interest are specified with the <code>dn</code> argument.
+</p>
+</li>
+<li>
+<p> Determining whether extractions are "simple" (only one drug mention and at most one extraction per entity) or
+complex. Complex cases can be more straightforward if they contain at most one extraction per entity, or require a
+pairing algorithm to determine the best pairing if there are multiple extractions for one or more entities.
+</p>
+</li>
+<li>
+<p> Drug entities are anchored by drug name mention within the parse process. For complex cases, drug entities are
+further grouped together anchored at each strength (and dose with medExtractR) extraction.
+</p>
+</li>
+<li>
+<p> For strength groups with multiple extractions for at least one entity, these groups go through a path searching
+algorithm, which computes the cost for each path (based on a chosen distance method) and chooses the path with the
+lowest cost.
+</p>
+</li>
+<li>
+<p> The chosen paths for each strength group are returned as the final pairings. If route is unique within a strength
+group, it is standardized and added to all entries for that strength group.
+</p>
+</li>
+</ol>
+<p>The user can specify additional arguments including:
+</p>
+
+<ul>
+<li> <p><code>dist_method</code>: The distance method is the metric used to determine which entity path is the most likely to
+be correct based on minimum cost.
+</p>
+</li>
+<li> <p><code>na_penalty</code>: NA penalties are incurred when extractions are paired with nothing (i.e., an NA), requiring that
+entities be sufficiently far apart from one another before being left unpaired.
+</p>
+</li>
+<li> <p><code>neg_penalty</code>: When working with dose amount (DA) and frequency/intake time (FIT), it is much more common
+for the ordering to be DA followed by FIT. Thus, when we observe FIT followed by DA, we apply a negative penalty to make such pairings
+less likely.
+</p>
+</li>
+<li> <p><code>greedy threshold</code>: When there are many extractions from a clinical note, the number of possible combinations for paths
+can get exponentially large, particularly when the medication extraction natural language processing system is incorrect. The greedy
+threshold puts an upper bound on the number of entity pairings to prevent the function from stalling in such cases.
+</p>
+</li>
+</ul>
+<p>If none of the optional arguments are specified, then the <code>buildDose</code> process uses the default option values specified in the EHR
+package documentation. 
+See EHR Vignette for Extract-Med and Pro-Med-NLP as well as Dose Building Using Example Vanderbilt EHR Data for details. For additional details, see McNeer, et al. 2020.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data.frame object that contains columns for filename (of the clinical note, inherited from the
+parse output object <code>dat</code>), drugname, strength, dose, route, freq, duration, and drugname_start.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(lam_mxr_parsed)
+
+buildDose(lam_mxr_parsed)
+</code></pre>
+
+
+</div>

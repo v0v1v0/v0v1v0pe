@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EllDistrDerivEst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the derivatives of a generator</h2>
+
+<h3>Description</h3>
+
+<p>A continuous elliptical distribution has a density of the form
+</p>
+<p style="text-align: center;"><code class="reqn">f_X(x) = {|\Sigma|}^{-1/2}
+g\left( (x-\mu)^\top \, \Sigma^{-1} \, (x-\mu) \right),
+</code>
+</p>
+
+<p>where <code class="reqn">x \in \mathbb{R}^d</code>,
+<code class="reqn">\mu \in \mathbb{R}^d</code> is the mean,
+<code class="reqn">\Sigma</code> is a <code class="reqn">d \times d</code> positive-definite matrix
+and a function <code class="reqn">g: \mathbb{R}_+ \rightarrow \mathbb{R}_+</code>, called the
+density generator of <code class="reqn">X</code>.
+The goal is to estimate the derivatives of <code class="reqn">g</code> at some point <code class="reqn">\xi</code>,
+by kernel smoothing, following Section 3 of (Ryan and Derumigny, 2024).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EllDistrDerivEst(
+  X,
+  mu = 0,
+  Sigma_m1 = diag(NCOL(X)),
+  grid,
+  h,
+  Kernel = "gaussian",
+  a = 1,
+  k,
+  mpfr = FALSE,
+  precBits = 100,
+  dopb = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a matrix of size <code class="reqn">n \times d</code>, assumed to be <code class="reqn">n</code> i.i.d. observations
+(rows) of a <code class="reqn">d</code>-dimensional elliptical distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>mean of X. This can be the true value or an estimate. It must be
+a vector of dimension <code class="reqn">d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Sigma_m1</code></td>
+<td>
+<p>inverse of the covariance matrix of X.
+This can be the true value or an estimate. It must be
+a matrix of dimension <code class="reqn">d \times d</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>grid of values on which to estimate the density generator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>bandwidth of the kernel. Can be either a number or a vector of the
+size <code>length(grid)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Kernel</code></td>
+<td>
+<p>name of the kernel. Possible choices are
+<code>"gaussian"</code>, <code>"epanechnikov"</code>, <code>"triangular"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>tuning parameter to improve the performance at 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>highest order of the derivative of the generator that is to be
+estimated. For example, <code>k = 1</code> corresponds to the estimation of the
+generator and of its derivative. <code>k = 2</code> corresponds to the estimation
+of the generator as well as its first and second derivatives.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mpfr</code></td>
+<td>
+<p>if <code>mpfr = TRUE</code>, multiple precision floating point is used
+via the package Rmpfr.
+This allows for a higher (numerical) accuracy, at the expense of computing time.
+It is recommended to use this option for higher dimensions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precBits</code></td>
+<td>
+<p>number of precBits used for floating point precision
+(only used if <code>mpfr = TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dopb</code></td>
+<td>
+<p>a Boolean value.
+If <code>dopb = TRUE</code>, a progress bar is displayed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that this function may be rather slow for higher-order derivatives.
+Furthermore, it is likely that the number of observations needs to be quite
+high for the higher-order derivatives to be estimated well enough.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a matrix of size <code>length(grid) * (kmax + 1)</code>
+with the estimated value of the generator and all its derivatives
+at all orders until and including <code>kmax</code>, at all points of the grid.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alexis Derumigny, Victor Ryan
+</p>
+<p>Victor Ryan, Alexis Derumigny
+</p>
+
+
+<h3>References</h3>
+
+<p>Ryan, V., &amp; Derumigny, A. (2024).
+On the choice of the two tuning parameters for nonparametric estimation of an
+elliptical distribution generator
+<a href="https://arxiv.org/abs/2408.17087">arxiv:2408.17087</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>EllDistrEst</code> for the nonparametric estimation of the
+elliptical distribution density generator itself,
+<code>EllDistrSim</code> for the simulation of elliptical distribution samples.
+</p>
+<p>This function uses the internal functions <code>compute_etahat</code>
+and <code>compute_matrix_alpha</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Comparison between the estimated and true generator of the Gaussian distribution
+n = 50000
+d = 3
+X = matrix(rnorm(n * d), ncol = d)
+grid = seq(0, 5, by = 0.1)
+a = 1.5
+
+gprimeEst = EllDistrDerivEst(X = X, grid = grid, a = a, h = 0.09, k = 1)[,2]
+plot(grid, gprimeEst, type = "l")
+
+# Computation of true values
+g = exp(-grid/2)/(2*pi)^{3/2}
+gprime = (-1/2) * exp(-grid/2)/(2*pi)^{3/2}
+
+lines(grid, gprime, col = "red")
+
+</code></pre>
+
+
+</div>

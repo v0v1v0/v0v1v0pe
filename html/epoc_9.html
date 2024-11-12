@@ -1,0 +1,314 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EPoC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>EPoC</h2>
+
+<h3>Description</h3>
+
+<p>EPoC (Endogenous Perturbation analysis of Cancer)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">epocA(Y, U=NULL, lambdas=NULL, thr=1.0e-10, trace=0, ...)
+epocG(Y, U, lambdas=NULL, thr=1.0e-10, trace=0, ...)
+epoc.lambdamax(X, Y, getall=F, predictorix=NULL)
+as.graph.EPOCA(model,k=1)
+as.graph.EPOCG(model,k=1)
+write.sif(model, k=1, file="", append=F)
+## S3 method for class 'EPOCA'
+print(x,...)
+## S3 method for class 'EPOCG'
+print(x,...)
+## S3 method for class 'EPOCA'
+summary(object, k=NULL, ...)
+## S3 method for class 'EPOCG'
+summary(object, k=NULL,...)
+## S3 method for class 'EPOCA'
+coef(object, k=1, ...)
+## S3 method for class 'EPOCG'
+coef(object, k=1, ...)
+## S3 method for class 'EPOCA'
+predict(object, newdata,k=1,trace=0, ...)
+## S3 method for class 'EPOCG'
+predict(object, newdata,k=1,trace=0, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>N x p matrix of mRNA transcript levels for p genes and N samples for epocA and epocG. For <code>epoc.lambdamax</code> <code>Y</code> is a multi-response matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>U</code></td>
+<td>
+<p>N x p matrix of DNA copy number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdas</code></td>
+<td>
+<p>Non-negative vector of relative regularization parameters for lasso. <code class="reqn">\lambda=0</code> means no regularization which give dense solutions (and takes longer to compute). Default=NULL means let EPoC create a vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thr</code></td>
+<td>
+<p>Threshold for convergence. Default value is 1e-10.  Iterations stop when max absolute parameter change is less than thr</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Level of detail for printing out information as iterations proceed.
+Default 0 – no information</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>In <code>epoc.lambdamax</code> <code>X</code> is the design matrix, i.e. predictors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictorix</code></td>
+<td>
+<p>For <code>epoc.lambdamax</code> when using a multi-response matrix <code>Y</code> predictors are set to zero for each corresponding response. <code>predictorix</code> tells which of the responses that have a corresponding predictor in the network case</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>getall</code></td>
+<td>
+<p>Logical. For <code>epoc.lambdamax</code> get a vector of all inf-norms instead of a single maximum</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>either a character string naming a file or a connection open for writing. <code>""</code> indicates output to the console</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>append</code></td>
+<td>
+<p>logical. Only relevant if <code>file</code> is a character string.  If <code>TRUE</code>, the output is appended to the file.  If <code>FALSE</code>, any existing file of the name is destroyed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Model set from epocA or epocG</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Select a model of sparsity level k in [1,K]. In <code>summary</code> default (NULL) means all. In <code>plot</code> default is first model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>List of Y and U matrices required for prediction. <code>epocG</code> requires just U.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Model parameter to <code>print</code> and <code>plot</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>Model parameter to <code>summary</code>, <code>coef</code> and <code>predict</code></p>
+</td>
+</tr>
+</table>
+<table><tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Parameters passed down to underlying function, e.g. <code>print.default</code>.  For <code>epocA</code> and <code>epocG</code> <code>...</code> are reserved for experimental options.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p><code>epocA</code> and <code>epocG</code> estimates sparse matrices <code class="reqn">A</code> or <code class="reqn">G</code> using fast lasso regression from mRNA transcript levels <code class="reqn">Y</code> and CNA profiles <code class="reqn">U</code>. Two models are provided, EPoC A where
+</p>
+<p style="text-align: center;"><code class="reqn">AY + U + R = 0</code>
+</p>
+
+<p>and EPoC G where
+</p>
+<p style="text-align: center;"><code class="reqn">Y = GU + E.</code>
+</p>
+
+<p>The matrices <code class="reqn">R</code> and <code class="reqn">E</code> are so far treated as noise. For details see the reference section and the manual page of <code>lassoshooting</code>.
+</p>
+<p>If you have different sizes of U and Y you need to sort your Y such that the U-columns correspond to the first Y-columns. Example: <code>Y.new &lt;- cbind(Y[,haveCNA], Y[, -haveCNA])</code>
+CHANGES: <code>predictorix</code> used to be a parameter with a vector of a subset of the variables <code>1:p</code> of U corresponding to transcripts in Y, Default was to use all which mean that Y and U must have same size.
+</p>
+<p><code>epoc.lambdamax</code> returns the maximal <code class="reqn">\lambda</code> value in a series of lasso regression models such that all coefficients are zero.
+</p>
+<p><code>plot</code> if <code>type='graph'</code> (default) plot graph of model using the <code>Rgraphviz</code> package
+arrows only tell direction, not inhibit or stimulate. If <code>type='modelsel'</code> see <code>modelselPlot</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>epocA</code> and <code>epocG</code> returns an object of <code>class</code> ‘"epocA"’ and ‘"epocG"’ respectively.
+</p>
+<p>The methods <code>summary</code>, <code>print</code>, <code>coef</code>, <code>predict</code> can be used as with other models. <code>coef</code> and <code>predict</code> take an extra optional integer parameter <code>k</code> (default 1) which gives the model at the given density level.
+</p>
+<p>An object of these classes is a list containing at least the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>list of t(A) or t(G) matrices for the different <code class="reqn">\lambda</code>s</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>links</code></td>
+<td>
+<p>the number of links for the different <code class="reqn">\lambda</code>s</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdas</code></td>
+<td>
+<p>the <code class="reqn">\lambda</code>s used for this model</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>R2</code></td>
+<td>
+<p>R², coefficient of determination</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Cp</code></td>
+<td>
+<p>Mallows Cp</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>s2</code></td>
+<td>
+<p>Estimate of the error variance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RSS</code></td>
+<td>
+<p>Residual Sum of Squares (SSreg)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SS.tot</code></td>
+<td>
+<p>Total sum of squares of the response</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inorms</code></td>
+<td>
+<p>the infinity norm of predictors transposed times response for the different responses</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Direct effects of CNA to corresponding gene</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>The <code>coef</code> function returns transposed versions of the matrices <code class="reqn">A</code> and <code class="reqn">G</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Tobias Abenius
+</p>
+
+
+<h3>References</h3>
+
+<p>Rebecka Jörnsten, Tobias Abenius, Teresia Kling, Linnéa Schmidt, Erik Johansson, Torbjörn Nordling, Bodil Nordlander, Chris Sander, Peter Gennemark, Keiko Funa, Björn Nilsson, Linda Lindahl, Sven Nelander. (2011)  Network modeling of the transcriptional effects of copy number aberrations in glioblastoma.   Molecular Systems Biology 7 (to appear)
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>print</code>, <code>modelselPlot</code>,
+<code>epoc.validation</code>,
+<code>epoc.bootstrap</code>,
+<code>plot.EPoC.validation.pred</code>,
+<code>plot.EPoC.validation.W</code>,
+<code>coef</code>, <code>predict</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+modelA &lt;- epocA(X,U)
+modelG &lt;- epocG(X,U)
+
+# plot sparsest A and G models using the igraph package
+# arrows only tell direction, not inhibit or stimulate
+par(mfrow=c(1,2))
+plot(modelA)
+plot(modelG)
+
+# OpenGL 3D plot on sphere using the igraph and rgl packages
+plot(modelA,threed=T)
+
+# Write the graph to a file in SIF format for import in e.g. Cytoscape
+write.sif(modelA,file="modelA.sif")
+
+# plot graph in Cytoscape using Cytoscape XMLRPC plugin and 
+# R packages RCytoscape, bioconductor graph, XMLRPC
+require('graph')
+require('RCytoscape')
+g &lt;- as.graph.EPOCA(modelA,k=5)
+cw &lt;- CytoscapeWindow("EPoC", graph = g)
+displayGraph(cw)
+
+# prediction
+N &lt;- dim(X)[1]
+ii &lt;- sample(1:N, N/3)
+
+modelG &lt;- epocG(X[ii,], U[ii,])
+K &lt;- length(modelA$lambda) # densest model index index
+newdata &lt;- list(U=U[-ii,])
+e &lt;- X[-ii,] - predict(modelA, newdata, k=K)
+RSS &lt;- sum(e^2)
+cat("RMSD:", sqrt(RSS/N), "\n")
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

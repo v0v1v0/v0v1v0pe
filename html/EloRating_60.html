@@ -1,0 +1,152 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>seqcheck</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>runs raw data diagnostics for Elo rating</h2>
+
+<h3>Description</h3>
+
+<p>runs some diagnostics on the data supplied to elo.seq, to check whether elo.seq will run without errors
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">seqcheck(winner, loser, Date, draw = NULL, presence = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>winner</code></td>
+<td>
+<p>either a factor or character vector with winner IDs of dyadic dominance interactions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loser</code></td>
+<td>
+<p>either a factor or character vector with loser IDs of dyadic dominance interactions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Date</code></td>
+<td>
+<p>character vector of form "YYYY-MM-DD" with the date of the respective interaction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>draw</code></td>
+<td>
+<p>logical, which interactions ended undecided (i.e. drawn or tied)? By default all <code>FALSE</code>, i.e. no undecided interactions occurred. Note that in this case, <code>winner</code>/<code>loser</code> values can be interchanged</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>presence</code></td>
+<td>
+<p>optional data.frame, to supply data about presence and absence of individuals for part of the time the data collection covered. see details</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>calender dates (for the sequence as well as in the first column of <code>presence</code>, if supplied) need to be in "YYYY-MM-DD" format!
+</p>
+<p><code>seqcheck</code> will return two types of messages: warnings and errors. Errors will result in the data NOT working when supplied to <code>elo.seq</code>, and need to be fixed. Warning message do not necessarily lead to failure of executing <code>elo.seq</code>. Note that by default <code>seqcheck</code> is part of <code>elo.seq</code>. If any error or warning is produced by <code>seqcheck</code>, these data will not work in <code>elo.seq</code>. Some warning (but not error) messages can be ignored (see below) and if the <code>runcheck</code> argument in <code>elo.seq</code> is set to <code>FALSE</code> Elo-ratings will be calculated properly in such cases.
+</p>
+<p>The actual checks (and corresponding messages) that are performed are described in more detail here:
+</p>
+<p>Most likely (i.e. in our experience), problems are caused by mismatches between the interaction data and the corresponding presence data.
+</p>
+<p>Errors:<br><code>Presence starts AFTER data</code>: indicates that during interactions at the beginning of the sequence, no corresponding information was found in the presence data. Solution: augment presence data, or remove interactions until the date on which presence data starts
+</p>
+<p><code>Presence stops BEFORE data</code>: refers to the corresponding problem towards the end of interaction and presence data
+</p>
+<p><code>During the following interactions, IDs were absent...</code>: indicates that according to the presence data, IDs were absent (i.e. "0"), but interactions with them occured on the very date(s) according to the interaction data
+</p>
+<p><code>The following IDs occur in the data sequence but NOT...</code>: there is/are no columns corresponding to the listed IDs in the presence data
+</p>
+<p><code>There appear to be gaps in your presence (days missing?)...</code>: check whether your presence data includes a line for <em>each date</em> starting from the date of the first interaction through to the date of the last interaction
+</p>
+<p>Warnings:
+</p>
+<p><code>Presence continues beyond data</code>: indicates that presence and interaction data do not end on the same date.
+</p>
+<p><code>Presence starts earlier than data</code>: indicates that presence and interaction data do not start on the same date.
+</p>
+<p><code>The following IDs occur in the presence data but NOT...</code>: there are more ID columns in the presence data than IDs occuring in the interaction data
+</p>
+<p><code>Date column is not ordered</code>: The dates are not supplied in ascending order. <code>elo.seq</code> will still work but the results won't be reliable because the interactions were not in the correct sequence.
+</p>
+<p>Other warnings/errors can result from inconsistencies in either the presence or sequence data, or be of a more general nature:
+</p>
+<p>Errors:
+</p>
+<p><code>No 'Date' column found</code>: in the presence data, no column exists with the name/header "Date". Please rename (or add) the necessary column named "Date" to your presence data.
+</p>
+<p><code>At least one presence entry is not 1 or 0</code>: presence data must come in binary form, i.e. an ID was either present ("1") or absent ("0") on a given date. No <code>NA</code>s or other values are allowed.
+</p>
+<p><code>Your data vectors do not match in length</code>: at least one of the three mandatory arguments (winner, loser, Date) differs from one other in length. Consider handling your data in a data.frame, which avoids this error.
+</p>
+<p>Warnings:
+</p>
+<p><code>IDs occur in the data with inconsistent capitalization</code>: because <code>R</code> is case-sensitive, "A" and "a" are considered different individuals. If such labelling of IDs is on purpose, ignore the warning and set <code>runcheck=FALSE</code> when calling <code>elo.seq()</code>
+</p>
+<p><code>There is (are) X case(s) in which loser ID equals winner ID</code>: winner and loser represent the same ID
+</p>
+<p><code>The following individuals were observed only on one day</code>: while not per se a problem for the calculation of Elo ratings, individuals that were observed only on one day (irrespective of the number of interactions on that day) cannot be plotted. <code>eloplot</code> will give a warning in such cases, too.
+</p>
+
+
+<h3>Value</h3>
+
+<p>returns textual information about possible issues with the supplied data set, or states that data are fine for running with <code>elo.seq</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Christof Neumann
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(adv)
+seqcheck(winner = adv$winner, loser = adv$loser, Date = adv$Date)
+data(advpres)
+seqcheck(winner = adv$winner, loser = adv$loser, Date = adv$Date,
+         presence = advpres)
+
+# create faulty presence data
+# remove one line from presence data
+faultypres &lt;- advpres[-1, ]
+# make all individuals absent on one day
+faultypres[5, 2:8] &lt;- 0
+# run check
+seqcheck(winner = adv$winner, loser = adv$loser, Date = adv$Date,
+         presence = faultypres)
+
+# fix first error
+faultypres &lt;- rbind(faultypres[1, ], faultypres)
+faultypres$Date[1] &lt;- "2010-01-01"
+
+# run check again
+seqcheck(winner = adv$winner, loser = adv$loser, Date = adv$Date,
+         presence = faultypres)
+
+# fix presence on date for interaction number 6
+faultypres[6, 2:8] &lt;- 1
+
+# run check again
+seqcheck(winner = adv$winner, loser = adv$loser, Date = adv$Date,
+         presence = faultypres)
+# all good now
+</code></pre>
+
+
+</div>

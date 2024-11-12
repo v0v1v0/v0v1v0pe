@@ -1,0 +1,140 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_model</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run the EcoDiet model</h2>
+
+<h3>Description</h3>
+
+<p>This function runs the EcoDiet model using a Markov chain Monte Carlo approximation 
+through the 'jagsUI' package to provide an approximated distribution for the variables of interest.
+</p>
+<p>Depending on the <code>nb_iter</code> entered, this function may take hours, or even days 
+to run. We advise you to first test whether your model is compiling properly with the by-default parameters,
+as this should take 1-2 min to run depending on your data size.
+</p>
+<p>To save time, this function can solicit several cores (if available) to parallelize chains. Note that progress bars
+won't be displayed if chains are parallelized. 
+</p>
+<p>A warning message is printed if the model has not converged in the end (if the Gelman-Rubin diagnostic
+of at least one variable is &gt; 1.1). For each run, the default 'jagsUI' package messages summarize
+the '.txt' file used for the definition of the BUGS model, the configuration of the model (iteration, adaptation, 
+burnin, thin rate), the time required to run the model, and main statistics for the variables.
+</p>
+<p>You need to have run the <code>preprocess_data</code> and the <code>write_model</code> functions 
+before using this function, as their outputs are used as the inputs for <code>run_model</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_model(
+  model_file,
+  data,
+  inits = NULL,
+  run_param = "test",
+  variables_to_save = c("eta", "PI"),
+  parallelize = FALSE,
+  DIC.out = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model_file</code></td>
+<td>
+<p>The file containing the BUGS definition of the EcoDiet model 
+output by the <code>write_model</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The preprocessed data list output by the preprocess_data() function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inits</code></td>
+<td>
+<p>A list containing the initial values of the variables.
+By default the initialisation values are NULL, which means that the chain initial values
+are drawn from the prior distributions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>run_param</code></td>
+<td>
+<p>A object that can be a list of the parameters to configure the JAGS model or a string acting as
+a shortcut characterizing the overall length of the run requested (e.g. "short" or "long"). If run_param is 
+provided as a list, the user should provide at least nb_iter, i.e. the number of iterations to run (the more
+iterations, the better are the chances that the model will converge; very small by default to test if the model
+compiles properly), and nb_burnin, i.e. the number of burn-in steps to run (so that the variable approximations
+are not too influenced by the first initial random values). nb_thin, the thinning rate, is by default defined by
+the function. The number of adaptation steps nb_adapt can be specified but is not required (see jasgUI documentation 
+for more details). If set manually, it should be at least set at 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variables_to_save</code></td>
+<td>
+<p>A vector of variable names defining the variables to output. 
+The number has a big number of variables but by default we only save the variables of interest
+that are the trophic link probabilities <code>eta</code> and the diet proportions <code>PI</code>.
+Only these saved variables are used to compute the Gelman-Rubin statistics that indicate whether
+the model has converged or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallelize</code></td>
+<td>
+<p>Indicates whether chains should be parallelized using several cores. Recommended in case of complex models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DIC.out</code></td>
+<td>
+<p>Indicates whether the DIC (Deviance Information Criterion) should be reported.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A MCMC output formatted as a jagsUI object.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>preprocess_data</code> to preprocess the data, and 
+<code>write_model</code> to define the model.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+realistic_biotracer_data &lt;- read.csv(system.file("extdata", "realistic_biotracer_data.csv",
+                                               package = "EcoDiet"))
+realistic_stomach_data &lt;- read.csv(system.file("extdata", "realistic_stomach_data.csv",
+                                             package = "EcoDiet"))
+
+data &lt;- preprocess_data(biotracer_data = realistic_biotracer_data,
+                        trophic_discrimination_factor = c(0.8, 3.4),
+                        literature_configuration = FALSE,
+                        stomach_data = realistic_stomach_data)
+                        
+write_model(literature_configuration = FALSE)
+
+mcmc_output &lt;- run_model("EcoDiet_model.txt", data, run_param="test")
+
+
+</code></pre>
+
+
+</div>

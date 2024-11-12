@@ -1,0 +1,218 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ensembleData</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Create an ensembleData object
+</h2>
+
+<h3>Description</h3>
+
+<p>Creates an <code>ensembleData</code> object including ensemble forecasts along
+with dates and (optionally) observations. Other descriptive information
+such as latitude, longitude, and station type may be included as well.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ensembleData( forecasts, dates = NULL, observations = NULL, ...,
+              forecastHour, initializationTime,
+              startupSpeed = NULL, exchangeable = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>forecasts</code></td>
+<td>
+
+<p>A matrix or array (for vector quantities) 
+with columns corresponding to forecasts from individual members 
+of an ensemble and rows corresponding to forecasts for the same date.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+
+<p>A numeric or character vector or factor specifying the valid dates
+for the forecasts. If numeric, it is interpreted as a Julian date
+if it has an <code>origin</code> attribute specifying
+the month, day, and year, e.g. <code>c(month = 1, day = 1, year = 2000)</code>.
+Otherwise the character form of each date must be a string with format
+format YYYYMMDDHH or YYYYMMDD, where YYYY is the year,
+MM the monthn, DD the day, and (optionally) HH the hour.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>observations</code></td>
+<td>
+
+<p>Optional vector (or matrix for vector quantities) of observed weather 
+conditions corresponding 
+to the forecasts. Must be supplied if the data is to be
+used for BMA modeling. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>A named list of additional attributes such as latitude,
+longitude, and startupSpeed for wind speed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forecastHour</code></td>
+<td>
+
+<p>A number giving the <em>forecast hour</em>, the time interval 
+between the initialization and forecast times, in units of hours.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initializationTime</code></td>
+<td>
+
+<p>A number or character string giving the initialization time.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startupSpeed</code></td>
+<td>
+
+<p>A numeric value specifying a value  below which the anemometer
+readings for wind speed will be recorded as zero. This value
+is used for all stations when the startup speed is not explicity
+specified as part of the data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exchangeable</code></td>
+<td>
+
+<p>A numeric or character vector or factor indicating groups of 
+ensemble members that are exchangeable (indistinguishable).
+The models fit will have equal weights and parameters
+within each group.
+The same names/labels should be used as for the forecasts.     
+The default assumes that none of the ensemble members are
+exhangeable.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For use with  batch processing modeling functions (<code>ensembleBMA</code>
+etc), instances <code>ensembleData</code> object are assumed
+the same forecast hour and initialization time, which should be
+specified as part of the object. <br>  
+Methods for <code>ensembleData</code> objects include <code>ensembleSize</code>,
+<code>ensembleForecasts</code>, <code>ensembleValidDates</code>. <br>
+Subsetting is possible, but in the case of columns it applies only to
+the ensemble forecasts. <br>
+For vector wind computations, the velocity should be in the first 
+column and the direction in the second.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>ensembleData</code> object, incorporating forecasts and
+(optionally) observations with the associated valid dates.
+</p>
+
+
+<h3>References</h3>
+
+<p>C. Fraley, A. E. Raftery, T. Gneiting and J. M. Sloughter,
+<code>ensembleBMA</code>: An <code>R</code> Package for Probabilistic Forecasting
+using Ensembles and Bayesian Model Averaging,
+Technical Report No. 516R, Department of Statistics, University of
+Washington, 2007 (revised 2010).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ensembleBMA</code>, 
+<code>ensembleBMAgamma</code>, 
+<code>ensembleBMAgamma0</code>, 
+<code>ensembleBMAnormal</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  data(ensBMAtest)
+
+  ensMemNames &lt;- c("gfs","cmcg","eta","gasp","jma","ngps","tcwb","ukmo")
+
+  obs &lt;- paste("T2","obs", sep = ".")
+  ens &lt;- paste("T2", ensMemNames, sep = ".")
+
+
+  tempTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"],
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+## Not run:  # R check
+
+  tempTestFit &lt;- ensembleBMAnormal( tempTestData, trainingDays = 30)
+
+
+## End(Not run)
+
+  obs &lt;- paste("PCP24","obs", sep = ".")
+  ens &lt;- paste("PCP24", ensMemNames, sep = ".")
+
+  prcpTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"], 
+                                observations = ensBMAtest[,obs], 
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+## Not run:  # R check
+
+  prcpTestFit &lt;- ensembleBMAgamma0( prcpTestData, trainingDays = 30)
+
+
+## End(Not run)
+
+  obs &lt;- paste("MAXWSP10","obs", sep = ".")
+  ens &lt;- paste("MAXWSP10", ensMemNames, sep = ".")
+
+  winsTestData &lt;- ensembleData( forecasts = ensBMAtest[,ens],
+                                dates = ensBMAtest[,"vdate"], 
+                                observations = ensBMAtest[,obs],
+                                station = ensBMAtest[,"station"],
+                                forecastHour = 48,
+                                initializationTime = "00")
+
+## Not run:  # R check
+
+ winsTestFit &lt;- ensembleBMAgamma(winsTestData, trainingDays = 30)
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

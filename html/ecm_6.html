@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ecmback</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Backwards selection to build an error correction model</h2>
+
+<h3>Description</h3>
+
+<p>Much like the ecm function, this builds an error correction model.
+However, it uses backwards selection to select the optimal predictors based on lowest AIC or BIC, or highest adjusted R-squared, rather than using all predictors.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ecmback(
+  y,
+  xeq,
+  xtr,
+  includeIntercept = T,
+  criterion = "AIC",
+  weights = NULL,
+  keep = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The target variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xeq</code></td>
+<td>
+<p>The variables to be used in the equilibrium term of the error correction model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xtr</code></td>
+<td>
+<p>The variables to be used in the transient term of the error correction model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>includeIntercept</code></td>
+<td>
+<p>Boolean whether the y-intercept should be included</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>Whether AIC (default), BIC, or adjustedR2 should be used to select variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Optional vector of weights to be passed to the fitting process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+<p>Optional character vector of variables to forcibly retain</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to the 'lm' function (careful in that these may need to be modified for ecm or may not be appropriate!)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When inputting a single variable for xeq or xtr, it is important to input it in the format "xeq=df['col1']" in order to retain the data frame class. Inputting such as "xeq=df[,'col1']" or "xeq=df$col1" will result in errors in the ecm function.
+</p>
+<p>If using weights, the length of weights should be one less than the number of rows in xeq or xtr. 
+</p>
+<p>This function only works with the 'lm' linear fitter. The 'earth' linear fitter already does some variable selection, so one can use that via that 'ecm' function.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an lm object representing an error correction model using backwards selection
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##Not run
+
+#Use ecm to predict Wilshire 5000 index based on corporate profits, 
+#Federal Reserve funds rate, and unemployment rate
+data(Wilshire)
+
+#Use 2015-12-01 and earlier data to build models
+trn &lt;- Wilshire[Wilshire$date&lt;='2015-12-01',]
+
+#Use backwards selection to choose which predictors are needed 
+xeq &lt;- xtr &lt;- trn[c('CorpProfits', 'FedFundsRate', 'UnempRate')]
+modelback &lt;- ecmback(trn$Wilshire5000, xeq, xtr)
+print(modelback)
+#Backwards selection chose CorpProfits and FedFundsRate in the equilibrium term, 
+#CorpProfits and UnempRate in the transient term.
+
+modelbackFFR &lt;- ecmback(trn$Wilshire5000, xeq, xtr, keep = 'UnempRate')
+print(modelbackFFR)
+#Backwards selection was forced to retain UnempRate in both terms.
+
+</code></pre>
+
+
+</div>

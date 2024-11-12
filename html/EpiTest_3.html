@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EpiTest.fit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Inference and Test</h2>
+
+<h3>Description</h3>
+
+<p>This function fits the EpiTest model on a bi-parental population
+dataset, then outputs the estimates of the fixed and random effects, along
+with their associated test results.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EpiTest.fit(Ancestry, Pheno, Trait, ParentName, Parents = NULL, Weight = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Ancestry</code></td>
+<td>
+<p>a numeric matrix with 0/1 entries representing the allele ancestries
+of a bi-parental population at a set of markers (0: homozygous for parent A alleles and
+1: homozygous for parent B alleles)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pheno</code></td>
+<td>
+<p>a data.frame with a <code>Genotype</code> character column indicating the names
+of individuals, a numeric column for each trait to be analyzed, and possibly
+a <code>Weight</code> numeric column indicating the number of observation for each
+individual. Missing values are discarded if present for a trait</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Trait</code></td>
+<td>
+<p>a string indicating the name of the phenotypic trait</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ParentName</code></td>
+<td>
+<p>a character vector of length 2 providing the parent names where the
+first element should be named P0 (parent whose allele ancestries are coded 0) and
+the second element should be named P1 (parent whose allele ancestries are coded 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Parents</code></td>
+<td>
+<p>(optional) a data.frame with a <code>Genotype</code> character column indicating
+the names of parents, a <code>Family</code> character column indicating the names of
+families/populations, a numeric column for each trait to be analyzed, and possibly
+a <code>Weight</code> numeric column indicating the number of observation for each parent
+(see Details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Weight</code></td>
+<td>
+<p>a boolean indicating whether weights indicating the number of
+observations should be used for the inference. If TRUE, a column <code>Weight</code>
+should be found in Pheno and Parents (see Details)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Depending on cases, the data may be organized in two different ways.
+</p>
+<p>In Case 1, the <code>Ancestry</code> matrix and the <code>Pheno</code> data.frame respectively provide
+the whole ancestry and phenotypic data, including the parental data.
+</p>
+<p>In Case 2, the phenotypic data are split into two parts, the parental data being included
+in a separate <code>Parents</code> data.frame.
+</p>
+<p>In both cases, one may provide a set of weights associated to each individual by including
+a <code>Weight</code> column in the <code>Pheno</code> and <code>Parents</code> data.frames. These weights
+correspond to the number of observations that where used to compute the parental BLUPS/mean values.
+These weights must be provided as a <code>Weight</code> column in the <code>Parents</code> and <code>Pheno</code>
+data.frame.
+</p>
+<p>The fitted EpiTest model includes three variance components: the segregation variance,
+the (segregation <code>x</code> segregation) variance and the error variance.
+For each genetic variance a likelihood ratio test is performed.
+</p>
+<p>The fitted EpiTest model includes three fixed parameters: the intercept,
+the linear regression coefficient (beta) on parent proportions and the quadratic
+regression coefficient (delta) on parent proportions  that only involves epistatic effects.
+Each fixed parameter is tested using a Wald test.
+</p>
+<p>Additionally, epistasis can be tested by testing that both the (segregation <code>x</code> segregation) variance component
+and the quadratic mean component (delta) are null through a likelihood ratio test. Note that in this
+case the LRT is based on the full (i.e. unrestricted) likelihoods.
+</p>
+<p>The function outputs a list of five items: Beta is the vector of estimated
+fixed effects, Sigma2 is the vector of estimated variances, Test_full, Test_fixed,
+Text_random are 3 data.table that provide the results of the tests for no epistasis (jointly tested on fixed and variance
+components), and for the fixed and
+random effects, respectively.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of four items: Beta, Sigma2, Test_fixed, Test_random
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## One bi-parental population, no weighting and no parental phenotypes
+data(Pheno.list)
+data(Ancestry.list)
+Ancestry &lt;- Ancestry.list[[1]]
+Pheno &lt;- Pheno.list[[1]]
+ParentName &lt;- c(P0 = 'B73',P1 = 'B97')
+ETest.1 &lt;- EpiTest.fit(Ancestry = Ancestry,
+                       Pheno = Pheno,
+                       ParentName = ParentName,
+                       Trait = "GDD_DTA")
+
+## One bi-parental population, with weights and parental phenotypes
+data(Parents)
+ETest.2 &lt;- EpiTest.fit(Ancestry = Ancestry,
+                       Pheno = Pheno,
+                       ParentName = ParentName,
+                       Trait = "GDD_DTA",
+                       Parents = Parents,
+                       Weight=TRUE)
+
+## Full NAM analysis, with weights and parental phenotypes
+Parent.list &lt;- Parents$Genotype[-1]
+names(Parent.list) &lt;- Parents$Family[-1]
+ETest.nam &lt;- purrr::imap(Parent.list, ~ EpiTest.fit(Ancestry = Ancestry.list[[.y]],
+                                                    Pheno = Pheno.list[[.y]],
+                                                    ParentName=c(P0 = 'B73',P1 = .x),
+                                                    Parents = Parents,
+                                                    Trait = 'GDD_DTA',
+                                                    Weight = TRUE))
+</code></pre>
+
+
+</div>

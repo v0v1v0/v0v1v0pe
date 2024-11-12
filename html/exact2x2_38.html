@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mcnemarExactDP</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Exact McNemar (Paired Binary) Test with Difference in Proportions</h2>
+
+<h3>Description</h3>
+
+<p>Gives a valid (i.e., exact) test of paired binary responses, with compatible confidence intervals on the difference in proportions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mcnemarExactDP(x, m, n, nullparm = 0, alternative = c("two.sided", "less", "greater"), 
+    conf.level = 0.95, nmc = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+
+<p>number of pairs with mismatched responses  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>number of pairs with response of 1 for treatment and 0 for control
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>total number of pairs
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nullparm</code></td>
+<td>
+
+<p>null parameter value for the difference in proportions: proportion with events on treatment minus proportion with events on control
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+
+<p>alternative hypothesis, must be one of "two.sided", "greater" or "less"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+
+<p>confidence level for the returned confidence interval
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmc</code></td>
+<td>
+
+<p>number of Monte Carlo replications, nmc=0 (default) uses numeric integration instead
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For paired binary responses, a simple test is McNemars test, which conditions on the number of discordant pairs. 
+The <code>mcnemar.exact</code> function gives results in terms of odds ratios. This function gives results in terms 
+of the difference in proportions. The p-values will be identical between the two functions, but the estimates and 
+confidence intervals will be different.
+</p>
+<p>For this function, we use the melding idea (Fay, et al, 2015), to create compatable confidence intervals
+with exact versions of McNemars test. For details see Fay and Lumbard (2021).
+See Fagerland, et al (2013) for other parameters and methods related to paired binary responses. 
+The advantage of this version is that it is exact, and faster than the unconditional exact methods (which may be more powerful). 
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with class <code>"htest"</code> containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>the p-value of the test</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.int</code></td>
+<td>
+<p>a confidence interval for the difference in proportions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>sample proportions and their difference</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>null.value</code></td>
+<td>
+<p>difference in proportions under the null</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>a character string describing the alternative
+hypothesis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>a character string describing the test</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name</code></td>
+<td>
+<p>a character string giving the names of the data</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Michael P. Fay, Keith Lumbard
+</p>
+
+
+<h3>References</h3>
+
+<p>Fay, MP, Proschan, MA, and Brittain, E (2015). Combining one-sample confidence procedures for inference in the two-sample case. Biometrics,71(1),146-156.
+</p>
+<p>Fay MP, and Lumbard, K (2021). Confidence Intervals for Difference in Proportions for Matched Pairs Compatible with Exact McNemars or Sign Tests. Statistics in Medicine, 40(5): 1147-1159.
+</p>
+<p>Fagerland, Lydersen and Laake (2013), Recommended tests and confidence
+intervals for paired binomial proportions. Statitics in Medicine, 33:2850-2875.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>mcnemar.exact</code> or <code>exact2x2</code> with paired=TRUE for confidence intervals on the odds ratio.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># For test on contingency table of the pairs
+# From Bentur, et al (2009) Pediatric Pulmonology 44:845-850.
+# see also Table II of Fagerland, Lydersen and Laake 
+# (2013, Stat in Med, 33: 2850-2875)
+# 
+#                 After SCT
+#                 AHR       No AHR
+#              ----------------- 
+# Before SCT  |    
+#         AHR |    1         1 
+#      No AHR |    7        12
+#              -----------------
+
+ahr&lt;-matrix(c(1,7,1,12),2,2,
+            dimnames=list(paste("Before SCT,",c("AHR","No AHR")),
+                          paste("After SCT,",c("AHR","No AHR"))))
+mcnemarExactDP(n=sum(ahr),m=ahr[1,2]+ahr[2,1], x=ahr[1,2])
+# compare to mcnemar.exact
+# same p-value, but mcnemar.exact gives conf int on odds ratio 
+mcnemar.exact(ahr)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,106 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>build_ecotox_sqlite</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build an SQLite database from zip archived tables downloaded from EPA website</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a> This function is called automatically after <code>download_ecotox_data()</code>. The database
+files can also be downloaded manually from the <a href="https://cfpub.epa.gov/ecotox/">EPA website</a> from which a local
+database can be build using this function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">build_ecotox_sqlite(source, destination = get_ecotox_path(), write_log = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>source</code></td>
+<td>
+<p>A <code>character</code> string pointing to the directory path where the text files with the raw
+tables are located. These can be obtained by extracting the zip archive from <a href="https://cfpub.epa.gov/ecotox/">https://cfpub.epa.gov/ecotox/</a>
+and look for 'Download ASCII Data'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>destination</code></td>
+<td>
+<p>A <code>character</code> string representing the destination path for the SQLite file. By default
+this is <code>get_ecotox_path()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>write_log</code></td>
+<td>
+<p>A <code>logical</code> value indicating whether a log file should be written in the destination path
+<code>TRUE</code>. The log contains information on the source and destination path, the version of this package,
+the creation date, and the operating system on which the database was created.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Raw data downloaded from the EPA website is in itself not very efficient to work with in R. The files are large
+and would put a large strain on R when loading completely into the system's memory. Instead use this function
+to build an SQLite database from the tables. That way, the data can be queried without having to load it all into
+memory.
+</p>
+<p>EPA provides the raw table from the <a href="https://cfpub.epa.gov/ecotox/">ECOTOX database</a> as text files with
+pipe-characters ('|') as table column separators. Although not documented, the tables appear not to contain comment
+or quotation characters. There are records containing the reserved pipe-character that will confuse the table parser.
+For these records, the pipe-character is replaced with a dash character ('-').
+</p>
+<p>In addition, while reading the tables as text files, this package attempts to decode the text as UTF8. Unfortunately,
+this process appears to be platform-dependent, and may therefore result in different end-results on different platforms.
+This problem only seems to occur for characters that are listed as 'control characters' under UTF8. This will have
+consequences for reproducibility, but only if you build search queries that look for such special characters. It is
+therefore advised to stick to common (non-accented) alpha-numerical characters in your searches, for the sake of
+reproducibility.
+</p>
+<p>Use '<code>suppressMessages()</code>' to suppress the progress report.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns <code>NULL</code> invisibly.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Pepijn de Vries
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## This example will only work properly if 'dir' points to an existing directory
+## with the raw tables from the ECOTOX database. This function will be called
+## automatically after a call to 'download_ecotox_data()'.
+test &lt;- check_ecotox_availability()
+if (test) {
+  files   &lt;- attributes(test)$files[1,]
+  dir     &lt;- gsub(".sqlite", "", files$database, fixed = T)
+  path    &lt;- files$path
+  if (dir.exists(file.path(path, dir))) {
+    ## This will build the database in your temp directory:
+    build_ecotox_sqlite(source = file.path(path, dir), destination = tempdir())
+  }
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

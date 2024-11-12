@@ -1,0 +1,105 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>enrich.betareg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Enrich objects of class betareg</h2>
+
+<h3>Description</h3>
+
+<p>Enrich objects of class <code>betareg</code> with any or all of a
+set of auxiliary functions, the expected information at the maximum
+likelihood estimator, and the first term in the expansion of the
+bias of the maximum likelihood estimator.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'betareg'
+enrich(object, with = "all", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object of class <code>betareg</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>with</code></td>
+<td>
+<p>a character vector of options for the enrichment of <code>object</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>extra arguments to be passed to the
+<code>compute_*</code> functions</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>auxiliary_functions</code> component consists of any or all of the following functions:
+</p>
+
+<ul>
+<li> <p><code>score</code>: the log-likelihood derivatives as a function of the model parameters; see <code>get_score_function.betareg</code>
+</p>
+</li>
+<li> <p><code>information</code>: the expected information as a function of the model parameters; see <code>get_information_function.betareg</code>
+</p>
+</li>
+<li> <p><code>bias</code>: the first-order term in the expansion of the bias of the maximum likelihood estimator as a function of the model parameters; see <code>get_bias_function.betareg</code>
+</p>
+</li>
+<li> <p><code>simulate</code>: a <code>simulate</code> function for <code>betareg</code> objects that can simulate variates from the model at user-supplied parameter values for the regression parameters (default is the maximum likelihood estimates); see <code>get_simulate_function.betareg</code>
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>The object <code>object</code> of class <code>betareg</code>
+with extra components. <code>get_enrichment_options.betareg()</code>
+returns the components and their descriptions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+if (require("betareg")) {
+
+   data("GasolineYield", package = "betareg")
+   gy &lt;- betareg(yield ~ batch + temp, data = GasolineYield)
+
+   # Get a function that evaluates the expected information for gy at supplied parameter values
+   gy_info &lt;- get_information_function(gy)
+.   # compare standard errors with what `summary` returns
+   all.equal(sqrt(diag(solve(gy_info())))[1:11],
+             coef(summary(gy))$mean[, 2], check.attributes = FALSE)
+.   # evaluating at different parameter values
+   gy_info(rep(1, length = 12))
+
+   # Get a function that evaluates the first-order bias of gy at supplied parameter values
+   gy_bias &lt;- get_bias_function(gy)
+   # compare with internal betareg implementation of bias correction
+   gy_bc &lt;- update(gy, type = "BC")
+   all.equal(gy_bias(coef(gy)), gy_bc$bias, check.attributes = FALSE)
+
+ }
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

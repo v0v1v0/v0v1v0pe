@@ -1,0 +1,283 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tune.enm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Iterate tuning of ENMs</h2>
+
+<h3>Description</h3>
+
+<p>Internal functions to tune and summarize results for ecological niche models (ENMs) iteratively across a range of user-specified tuning settings. 
+See ENMevaluate for descriptions of shared arguments.
+Function <code>tune.parallel()</code> tunes ENMs with parallelization. Function <code>cv.enm()</code> calculates training and validation evaluation statistics for one set of specified tuning parameters.
+</p>
+<p>Validation CBI is calculated here with background values, not raster data, in order
+to standardize the methodology for both training and validation data for spatial partitions, as ENMeval
+does not mask rasters to partition areas and hence does not have partitioned raster data. Further, 
+predictions for occurrence and background localities are combined as input for the parameter "fit" in 
+<code>ecospat::ecospat_boyce()</code> because the interval is determined from "fit" only, and if test occurrences 
+all have higher predictions than the background, the interval will be cut short.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tune.train(
+  enm,
+  occs.z,
+  bg.z,
+  mod.full,
+  envs,
+  tune.tbl.i,
+  other.settings,
+  partitions,
+  quiet
+)
+
+tune.validate(
+  enm,
+  occs.train.z,
+  occs.val.z,
+  bg.train.z,
+  bg.val.z,
+  mod.k,
+  nk,
+  tune.tbl.i,
+  other.settings,
+  partitions,
+  user.eval,
+  quiet
+)
+
+tune.parallel(
+  d,
+  envs,
+  enm,
+  partitions,
+  tune.tbl,
+  doClamp,
+  other.settings,
+  partition.settings,
+  user.val.grps,
+  occs.testing.z,
+  numCores,
+  parallelType,
+  user.eval,
+  algorithm,
+  quiet
+)
+
+tune.regular(
+  d,
+  envs,
+  enm,
+  partitions,
+  tune.tbl,
+  doClamp,
+  other.settings,
+  partition.settings,
+  user.val.grps,
+  occs.testing.z,
+  updateProgress,
+  user.eval,
+  algorithm,
+  quiet
+)
+
+cv.enm(
+  d,
+  envs,
+  enm,
+  partitions,
+  tune.tbl.i,
+  doClamp,
+  other.settings,
+  partition.settings,
+  user.val.grps,
+  occs.testing.z,
+  user.eval,
+  algorithm,
+  quiet
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>enm</code></td>
+<td>
+<p>ENMdetails object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>occs.z</code></td>
+<td>
+<p>data.frame: the envs values for the coordinates at the full dataset occurrence records</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bg.z</code></td>
+<td>
+<p>data.frame: the envs values for the coordinates at the full dataset background records</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod.full</code></td>
+<td>
+<p>model object: the model trained on the full dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envs</code></td>
+<td>
+<p>RasterStack: environmental predictor variables. These should be in same geographic projection as occurrence data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune.tbl.i</code></td>
+<td>
+<p>vector: single set of tuning parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>other.settings</code></td>
+<td>
+<p>named list: used to specify extra settings for the analysis. 
+All of these settings have internal defaults, so if they are not specified the analysis will be run 
+with default settings. See Details for descriptions of these settings, including how to specify arguments
+for maxent.jar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partitions</code></td>
+<td>
+<p>character: name of partitioning technique (see <code>?partitions</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>boolean: if TRUE, silence all function messages (but not errors).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>occs.train.z</code></td>
+<td>
+<p>data.frame: the envs values for the coordinates at the training occurrence records</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>occs.val.z</code></td>
+<td>
+<p>data.frame: the envs values for the coordinates at the validation occurrence records</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bg.train.z</code></td>
+<td>
+<p>data.frame: the envs values for the coordinates at the training background records</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bg.val.z</code></td>
+<td>
+<p>data.frame: the envs values for the coordinates at the validation background records</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod.k</code></td>
+<td>
+<p>model object: the model trained on the training dataset that becomes evaluated on the validation data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nk</code></td>
+<td>
+<p>numeric: the number of folds (i.e., partitions) – will be equal to <code>kfolds</code> for random partitions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user.eval</code></td>
+<td>
+<p>function: custom function for specifying performance metrics not included in <span class="pkg">ENMeval</span>.
+The function must first be defined and then input as the argument <code>user.eval</code>. 
+This function should have a single argument called <code>vars</code>, which is a list that includes different data 
+that can be used to calculate the metric. See Details below and the vignette for a worked example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>data frame: data frame from <code>ENMevaluate()</code> with occurrence and background coordinates (or coordinates plus predictor variable values) and partition group values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune.tbl</code></td>
+<td>
+<p>data frame: all combinations of tuning parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doClamp</code></td>
+<td>
+<p>boolean: if TRUE (default), model prediction extrapolations will be restricted to the upper and lower
+bounds of the predictor variables. Clamping avoids extreme predictions for environment values outside
+the range of the training data. If free extrapolation is a study aim, this should be set to FALSE, but
+for most applications leaving this at the default of TRUE is advisable to avoid unrealistic predictions. 
+When predictor variables are input, they are clamped internally before making model predictions when clamping is on.
+When no predictor variables are input and data frames of variable values are used instead (SWD format),
+validation data is clamped before making model predictions when clamping is on.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partition.settings</code></td>
+<td>
+<p>named list: used to specify certain settings for partitioning schema.
+See Details and ?partitions for descriptions of these settings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user.val.grps</code></td>
+<td>
+<p>matrix / data frame: user-defined validation record coordinates and predictor variable values. 
+This is used internally by <code>ENMnulls()</code> to force each null model to evaluate with empirical validation data,
+and does not have any current use when running <code>ENMevaluate()</code> independently.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>occs.testing.z</code></td>
+<td>
+<p>data.frame: when fully withheld testing data is provided, the envs values for the 
+coordinates at the testing occurrence records</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numCores</code></td>
+<td>
+<p>numeric: number of cores to use for parallel processing. If NULL, all available cores will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallelType</code></td>
+<td>
+<p>character: either "doParallel" or "doSNOW" (default: "doSNOW") .</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algorithm</code></td>
+<td>
+<p>character: name of the algorithm used to build models. Currently one of "maxnet",
+"maxent.jar", or "bioclim", else the name from a custom ENMdetails implementation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>updateProgress</code></td>
+<td>
+<p>boolean: if TRUE, use shiny progress bar. This is only for use in shiny apps.</p>
+</td>
+</tr>
+</table>
+</div>

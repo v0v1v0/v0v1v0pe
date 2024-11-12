@@ -1,0 +1,346 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>aftreg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Accelerated Failure Time Regression</h2>
+
+<h3>Description</h3>
+
+<p>The accelerated failure time model with parametric baseline hazard(s).
+Allows for stratification with different scale and shape in each stratum,
+and left truncated and right censored data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">aftreg(
+  formula = formula(data),
+  data = parent.frame(),
+  na.action = getOption("na.action"),
+  dist = "weibull",
+  init,
+  shape = 0,
+  id,
+  param = c("lifeAcc", "lifeExp"),
+  control = list(eps = 1e-08, maxiter = 20, trace = FALSE),
+  singular.ok = TRUE,
+  model = FALSE,
+  x = FALSE,
+  y = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a formula object, with the response on the left of a ~
+operator, and the terms on the right.  The response must be a survival
+object as returned by the Surv function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data.frame in which to interpret the variables named in the
+formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a missing-data filter function, applied to the model.frame,
+after any subset argument has been used.  Default is
+<code>options()$na.action</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>Which distribution? Default is "weibull", with the alternatives
+"gompertz", "ev", "loglogistic" and "lognormal". A special case like the
+<code>exponential</code> can be obtained by choosing "weibull" in combination with
+<code>shape = 1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>vector of initial values of the iteration.  Default initial
+value is zero for all variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape</code></td>
+<td>
+<p>If positive, the shape parameter is fixed at that value.  If
+zero or negative, the shape parameter is estimated. Stratification is now
+regarded as a meaningful option even if <code>shape</code> is fixed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>If there are more than one spell per individual, it is essential
+to keep spells together by the id argument. This allows for time-varying
+covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>Which parametrization should be used? The <code>lifeAcc</code> uses
+the parametrization given in the vignette, while the <code>lifeExp</code> uses the
+same as in the <code>survreg</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list with components <code>eps</code> (convergence criterion),
+<code>maxiter</code> (maximum number of iterations), and <code>trace</code> (logical,
+debug output if <code>TRUE</code>).  You can change any component without mention
+the other(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>singular.ok</code></td>
+<td>
+<p>Not used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Not used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Return the design matrix in the model object?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Return the response in the model object?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The parameterization is different from the one used by
+<code>survreg</code>, when <code>param = "lifeAcc"</code>. The result
+is then true acceleration of time. Then the model is 
+</p>
+<p style="text-align: center;"><code class="reqn">S(t; a, b, \beta, z) = S_0((t / \exp(b - z\beta))^{\exp(a)})</code>
+</p>
+
+<p>where <code class="reqn">S_0</code> is some standardized
+survivor function. The baseline parameters <code class="reqn">a</code> and <code class="reqn">b</code> are log shape
+and log scale, respectively. This is for the <code>default</code> parametrization.
+With the <code>lifeExp</code> parametrization, some signs are changed: </p>
+<p style="text-align: center;"><code class="reqn">b - z
+beta</code>
+</p>
+<p> is changed to </p>
+<p style="text-align: center;"><code class="reqn">b + z beta</code>
+</p>
+<p>. For the Gompertz distribution, the
+base parametrization is <code>canonical</code>, a necessity for consistency with
+the shape/scale paradigm (this is new in 2.3).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class <code>"aftreg"</code> with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>Fitted parameter estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var</code></td>
+<td>
+<p>Covariance
+matrix of the estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>Vector of length two; first
+component is the value at the initial parameter values, the second componet
+is the maximized value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>score</code></td>
+<td>
+<p>The score test statistic (at the
+initial value).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linear.predictors</code></td>
+<td>
+<p>The estimated linear predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>means</code></td>
+<td>
+<p>Means of the columns of the design matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w.means</code></td>
+<td>
+<p>Weighted (against exposure time) means of covariates;
+weighted relative frequencies of levels of factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Number of
+spells in indata (possibly after removal of cases with NA's).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.events</code></td>
+<td>
+<p>Number of events in data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terms</code></td>
+<td>
+<p>Used by extractor
+functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>assign</code></td>
+<td>
+<p>Used by extractor functions.</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>wald.test</code></td>
+<td>
+<p>The Wald test statistic (at the initial value).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The Surv vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>isF</code></td>
+<td>
+<p>Logical vector indicating the
+covariates that are factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covars</code></td>
+<td>
+<p>The covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ttr</code></td>
+<td>
+<p>Total Time at Risk.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>levels</code></td>
+<td>
+<p>List of levels of factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>The calling formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence</code></td>
+<td>
+<p>Did the optimization
+converge?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fail</code></td>
+<td>
+<p>Did the optimization fail? (Is <code>NULL</code> if not).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pfixed</code></td>
+<td>
+<p>TRUE if shape was fixed in the estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>The
+parametrization.  </p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Göran Broström
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>coxreg</code>, <code>phreg</code>,
+<code>survreg</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(mort)
+aftreg(Surv(enter, exit, event) ~ ses, param = "lifeExp", data = mort)
+
+</code></pre>
+
+
+</div>

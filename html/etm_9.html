@@ -1,0 +1,197 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>etmprep</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Data transformation function for using etm
+</h2>
+
+<h3>Description</h3>
+
+<p>The function transforms a data set in the wide format (i.e., one raw
+per subject) into the long format (i.e., one raw per transition, and
+possibly several raws per subjects) in a suitable way for using the
+<code>etm</code> function
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">etmprep(time, status, data, tra, state.names, cens.name = NULL,
+start = NULL, id = NULL, keep)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>A character vector giving the name of the columns
+containing the transition times or last follow-up times. The
+length of <code>time</code> have to be equal to the number of states, some
+elements may be NA. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>status</code></td>
+<td>
+<p>A character vector giving the name of the columns
+indicating whether a state has been visited (0 if not, 1
+otherwise).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame in which to look for the columns specified in
+<code>time</code> and <code>status</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tra</code></td>
+<td>
+<p>A quadratic matrix of logical values describing the
+possible transitions within the multistate model. The <code class="reqn">(i,
+      j)</code>th element of <code>tra</code> is TRUE if a transition from
+state <code class="reqn">i</code> to state <code class="reqn">j</code> is possible, FALSE
+otherwise. The diagonal must be set to FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>state.names</code></td>
+<td>
+<p>A vector of characters giving the states names. If
+missing, state names are set to be 0:(number of states).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cens.name</code></td>
+<td>
+<p>A character string specifying how censored
+observations will be indicated in the new data set. Default is NULL,
+i.e., no censored observation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>A list containing two elements, <code>state</code> and
+<code>time</code>, giving the starting states and times for all
+individuals. Default is NULL, in which case all individuals are
+considered to start in the initial state at time 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>A character string specifying in which column of <code>data</code>
+the user ids are. Default is NULL, and the ids will be <code>1:n</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+<p>A character vector indicating the column names of the
+covariate one might want to keep in the new data.frame.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function only works for irreversible acyclic Markov processes. 
+Therefore, the multistate model will have initial
+states, into which no transition are possible. For these, NAs are
+allowed in <code>time</code> and <code>status</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns a data.frame suitable for using the <code>etm</code>
+function. The data frame contains the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Individual id number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>entry</code></td>
+<td>
+<p>Entry time into a state</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exit</code></td>
+<td>
+<p>Exit time from a state</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from</code></td>
+<td>
+<p>State from which a transition occurs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>to</code></td>
+<td>
+<p>State into which a transition occurs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further columns specified in <code>keep</code></p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Arthur Allignol, <a href="mailto:arthur.allignol@gmail.com">arthur.allignol@gmail.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>etm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### creation of fake data in the wild format, following an illness-death model
+## transition times
+tdisease &lt;- c(3, 4, 3, 6, 8, 9)
+tdeath &lt;- c(6, 9, 8, 6, 8, 9)
+
+## transition status
+stat.disease &lt;- c(1, 1, 1, 0, 0, 0)
+stat.death &lt;- c(1, 1, 1, 1, 1, 0)
+
+## a covariate that we want to keep in the new data
+cova &lt;- rbinom(6, 1, 0.5)
+
+dat &lt;- data.frame(tdisease, tdeath,
+                  stat.disease, stat.death,
+                  cova, stringsAsFactors = TRUE)
+
+## Possible transitions
+tra &lt;- matrix(FALSE, 3, 3)
+tra[1, 2:3] &lt;- TRUE
+tra[2, 3] &lt;- TRUE
+
+## data preparation
+newdat &lt;- etmprep(c(NA, "tdisease", "tdeath"),
+                  c(NA, "stat.disease", "stat.death"),
+                  data = dat, tra = tra, cens.name = "cens")
+</code></pre>
+
+
+</div>

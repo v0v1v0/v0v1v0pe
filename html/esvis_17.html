@@ -1,0 +1,206 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pp_plot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Produces the paired probability plot for two groups</h2>
+
+<h3>Description</h3>
+
+<p>The paired probability plot maps the probability of obtaining a specific
+score for each of two groups. The area under the curve 
+(<code>auc</code>) corresponds to the probability that a randomly
+selected observation from the x-axis group will have a higher score than
+a randomly selected observation from the y-axis group. This function
+extends the basic pp-plot by allowing multiple curves and faceting to
+facilitate a variety of comparisons. Note that because the plotting is
+built on top of ggplot2, additional customization can 
+be made on top of the plots, as illustrated in the examples.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pp_plot(
+  data,
+  formula,
+  ref_group = NULL,
+  cuts = NULL,
+  cut_labels = TRUE,
+  cut_label_x = 0.02,
+  cut_label_size = 3,
+  lines = TRUE,
+  linetype = "solid",
+  linewidth = 1.1,
+  shade = TRUE,
+  shade_alpha = 0.2,
+  refline = TRUE,
+  refline_col = "gray40",
+  refline_type = "dashed",
+  refline_width = 1.1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The data frame to be plotted</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula of the type <code>out ~ group</code> where <code>out</code> is
+the outcome variable and <code>group</code> is the grouping variable. Note this
+variable can include any arbitrary number of groups. Additional variables 
+can be included with <code>+</code> to produce separate plots by the secondary or
+tertiary variable of interest (e.g., <code>out ~ group + characteristic1 + 
+characteristic2</code>). No more than two additional characteristics can be 
+supplied at this time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref_group</code></td>
+<td>
+<p>Optional character vector (of length 1) naming the
+reference group. Defaults to the group with the highest mean score.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cuts</code></td>
+<td>
+<p>Integer. Optional vector (or single number) of scores used to 
+annotate the plot. If supplied, line segments will extend from the 
+corresponding x and y axes and meet at the PP curve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut_labels</code></td>
+<td>
+<p>Logical. Should the reference lines corresponding to
+<code>cuts</code> be labeled? Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut_label_x</code></td>
+<td>
+<p>The x-axis location of the cut labels. Defaults to 0.02.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut_label_size</code></td>
+<td>
+<p>The size of the cut labels. Defaults to 3.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lines</code></td>
+<td>
+<p>Logical. Should the PP Lines be plotted? Defaults to 
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linetype</code></td>
+<td>
+<p>The linetype for the PP lines. Defaults to 
+"solid".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linewidth</code></td>
+<td>
+<p>The width of the PP lines. Defaults to 1.1 (just
+marginally larger than the default ggplot2 lines).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shade</code></td>
+<td>
+<p>Logical. Should the area under the curve be shaded? Defaults to
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shade_alpha</code></td>
+<td>
+<p>Transparency of the shading. Defaults to 0.2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refline</code></td>
+<td>
+<p>Logical. Should a diagonal reference line be plotted, 
+representing the value at which no difference is observed between the
+reference and focal distributions? Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refline_col</code></td>
+<td>
+<p>Color of the reference line. Defaults to a dark gray.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refline_type</code></td>
+<td>
+<p>The linetype for the reference line.
+Defaults to "dashed".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refline_width</code></td>
+<td>
+<p>The width of the reference line. Defaults to 1, or 
+just slightly thinner than the PP lines.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A ggplot2 object displaying the specified PP plot.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># PP plot examining differences by condition
+pp_plot(star, math ~ condition)
+
+# The sample size gets very small in the above within cells (e.g., wild 
+# changes within the "other" group in particular). Overall, the effect doesn't
+# seem to change much by condition.
+
+# Look at something a little more interesting
+## Not run: 
+pp_plot(benchmarks, math ~ ell + season + frl)
+
+## End(Not run)
+# Add some cut scores
+pp_plot(benchmarks, math ~ ell, cuts = c(190, 210, 215))
+
+## Make another interesting plot. Use ggplot to customize
+## Not run: 
+library(tidyr)
+library(ggplot2)
+benchmarks %&gt;% 
+  gather(subject, score, reading, math) %&gt;% 
+  pp_plot(score ~ ell + subject + season,
+          ref_group = "Non-ELL") +
+  scale_fill_brewer(name = "ELL Status", palette = "Pastel2") +
+  scale_color_brewer(name = "ELL Status", palette = "Pastel2") +
+  labs(title = "Differences among English Language Learning Groups",
+       subtitle = "Note crossing of reference line") +
+  theme_minimal()
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

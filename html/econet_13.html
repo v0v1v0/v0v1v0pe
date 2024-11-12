@@ -1,0 +1,105 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>quantify</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>quantify: quantification of marginal effects in linear-in-means models.</h2>
+
+<h3>Description</h3>
+
+<p>quantify: quantification of marginal effects in linear-in-means models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'econet'
+quantify(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>first object in the list of outcomes returned by <code>net_dep</code> (available only if the argument <code>model</code> is set to <code>"model_B"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other arguments</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>quantify</code> returns marginal effects for <code>net_dep</code> objects when <code>model = "model_B"</code> and <code>hypothesis = "lim"</code>.
+For additional details, see the vignette (doi:10.18637/jss.v102.i08).
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of class <code>data.frame</code> listing direct and indirect variable effects (mean, standard deviation, max, min).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>net_dep</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Load data
+data("db_cosponsor")
+data("G_alumni_111")
+db_model_B &lt;- db_cosponsor
+G_model_B &lt;- G_cosponsor_111
+G_exclusion_restriction &lt;- G_alumni_111
+are_factors &lt;- c("party", "gender", "nchair")
+db_model_B[are_factors] &lt;- lapply(db_model_B[are_factors], factor)
+
+# Specify formula
+f_model_B &lt;- formula("les ~gender + party + nchair")
+
+# Specify starting values
+starting &lt;- c(alpha = 0.23952,
+              beta_gender1 = -0.22024,
+              beta_party1 = 0.42947,
+              beta_nchair1 = 3.09615,
+              phi = 0.40038,
+              unobservables = 0.07714)
+
+# Fit Linear-in-means model
+lim_model_B &lt;- net_dep(formula = f_model_B, data = db_model_B,
+                       G = G_model_B, model = "model_B", estimation = "NLLS",
+                       hypothesis = "lim", endogeneity = TRUE, correction = "heckman",
+                       first_step = "standard",
+                       exclusion_restriction = G_exclusion_restriction,
+                       start.val = starting)
+quantify(lim_model_B)
+
+# WARNING, This toy example is provided only for runtime execution.
+# Please refer to previous examples for sensible calculations.
+data("db_alumni_test")
+data("G_model_A_test")
+db_model &lt;- db_alumni_test
+G_model &lt;- G_model_A_test
+f_model &lt;- formula("les ~ dw")
+lim_model_test &lt;- net_dep(formula = f_model, data = db_model,
+                       G = G_model, model = "model_B", estimation = "NLLS",
+                       hypothesis = "lim", start.val = c(alpha = 0.4553039,
+                                                         beta_dw = -0.7514903,
+                                                         phi = 1.6170539))
+quantify(lim_model_test)
+</code></pre>
+
+
+</div>

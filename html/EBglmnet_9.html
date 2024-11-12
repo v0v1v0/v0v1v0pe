@@ -1,0 +1,247 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EBglmnet</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Main Function for the EBglmnet Algorithms</h2>
+
+<h3>Description</h3>
+
+<p>EBglmnet is the main function to fit a generalized linear model via the empirical Bayesian methods with lasso and elastic net hierarchical priors.
+It features with <code>p&gt;&gt;n</code> capability, produces a sparse outcome for the 
+regression coefficients, and performs significance test for nonzero effects 
+in both  linear and logistic regression models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EBglmnet(x, y, family=c("gaussian","binomial"),prior= c("lassoNEG","lasso","elastic net"),
+	hyperparameters, verbose = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>input matrix of dimension <code>n</code> x <code>p</code>; each row is an
+observation vector, and each column is a variable. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>response variable. Continuous for <code>family="gaussian"</code>, and binary for 
+<code>family="binomial"</code>. For binary response variable, y can be a Boolean or numeric vector, or factor type
+array.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>model type taking values of "gaussian" (default) or "binomial". </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>prior distribution to be used. It takes values of "lassoNEG"(default), "lasso", and "elastic net". 
+All priors will produce a sparse outcome of the regression coefficients; see Details for choosing priors. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hyperparameters</code></td>
+<td>
+<p>the optimal hyperparameters in the prior distribution. Similar as <code class="reqn">\lambda</code> in lasso
+method, the hyperparameters control the number of nonzero elements in the regression coefficients. Hyperparameters 
+are most oftenly determined by CV. See <code>cv.EBglmnet</code> for the method in determining their values. 
+While <code>cv.EBglmnet</code> already provides the model fitting results using the hyperparameters determined in CV,
+users can use this function to obtain the results under other parameter selection criteria such as Akaike information criterion
+(AIC) or Bayesian information criterion (BIC). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>parameter that controls the level of message output from EBglment. It takes values from 0 to 5; larger verbose displays more messages. small values are recommended to avoid excessive outputs. Default value for <code>verbose</code> is minimum message output.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>EBglmnet implements three set of hierarchical prior distributions for the regression parameters <code class="reqn">\beta</code>: <br><br><b>lasso prior</b>:
+</p>
+<p style="text-align: center;"><code class="reqn">\beta_j  \sim N(0,\sigma_j^2),</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\sigma_j^2  \sim exp(\lambda), j = 1, \dots, p.</code>
+</p>
+
+<p><b>lasso-NEG prior</b>:
+</p>
+<p style="text-align: center;"><code class="reqn">\beta_j  \sim N(0,\sigma_j^2),</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\sigma_j^2  \sim exp(\lambda),</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\lambda  \sim gamma(a,b), j = 1, \dots, p.</code>
+</p>
+
+<p><b>elastic net prior</b>:
+</p>
+<p style="text-align: center;"><code class="reqn">\beta_j  \sim N[0,(\lambda_1 + \tilde{\sigma_j}^{-2})^{-2}],</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\tilde{\sigma_j}^{2}  \sim generalized-gamma(\lambda_1, \lambda_2), j = 1, \dots,p.</code>
+</p>
+
+<p>The prior distributions are peak zero and flat tail probability distributions that assign a high prior 
+probability mass to zero and still allow heavy probability on the two tails, which reflect the prior 
+belief that a sparse solution exists: most of the variables will have no effects on the response variable,
+and only some of the variables will have non-zero effects in contributing the outcome in <code>y</code>. <br></p>
+<p>The three priors all contains hyperparameters that control how heavy the tail probability is, 
+and different values of them will yield different number of non-zero effects retained in the model. 
+Appropriate selection of their values is required for obtaining optimal results, 
+and CV is the most oftenly used method. See <code>cv.EBglmnet</code> for details for determining the 
+optimal hyperparameters in each priors under different GLM families. <br><br><em>lassoNEG prior</em><br><code>"lassoNEG"</code> prior has two hyperparameters (a,b), with <code class="reqn">a \ge -1</code> and <code>b&gt;0</code>. Although
+<code>a</code> is allowed to be greater than -1.5, it is not encouraged to choose values in (-1.5, -1) unless the signal-to-noise 
+ratio in the explanatory variables are very small.
+</p>
+<p><em>lasso prior</em><br><code>"lasso"</code> prior has one hyperparameter  <code class="reqn">\lambda</code>, with <code class="reqn">\lambda \ge 0</code>.  <code class="reqn">\lambda</code> is similar as 
+the shrinkage parameter in <code>lasso</code> except that even for <code>p&gt;&gt;n</code>, <code class="reqn">\lambda</code> is allowed to be zero, and <code>EBlasso</code>
+can still provide a sparse solution thanks to the implicit constraint that <code class="reqn">\sigma^2 \ge 0</code>.
+</p>
+<p><em>elastic net prior</em><br>
+Similar as the elastic net in package <span class="pkg">glmnet</span>, EBglmnet transforms the two hyperparameters <code class="reqn">\lambda_1</code> 
+and <code class="reqn">\lambda_2</code> in the <code>"elastic net"</code> prior in terms of other two parameters <code class="reqn">\alpha (0\le \alpha \le 1)</code>
+and <code class="reqn">\lambda (\lambda &gt;0)</code>.  Therefore, users are asked to specify <code>hyperparameters=c</code>(<code class="reqn">\alpha, \lambda</code>). 
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>the model fit using the hyperparameters provided. EBglmnet selects the variables having nonzero regression 
+coefficients and estimates their posterior distributions. With the posterior mean and variance, a <code>t-test</code> 
+is performed and the <code>p-value</code> is calculated. Result in fit is a matrix with rows corresponding to the 
+variables having nonzero effects, and columns having the following values: <br><br>
+column1: (predictor index in X) denoting the column number in the input matrix <code>x</code>. <br><br>
+column2: beta. It is the posterior mean of the nonzero regression coefficients. <br><br>
+column3: posterior variance.  It is the diagonal element of the posterior covariance matrix among the nonzero regression coefficients. <br><br>
+column4: t-value calculated using column 3-4. <br><br>
+column5: p-value from t-test.	
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>WaldScore</code></td>
+<td>
+<p>the Wald Score for the posterior distribution. It is computed as <code class="reqn">\beta^T\Sigma^{-1}\beta</code>. 
+See (Huang A, 2014b) for using Wald Score to identify significant effect set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Intercept</code></td>
+<td>
+<p>the intercept in the linear regression model. This parameter is not shrunk.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residual variance</code></td>
+<td>
+<p>the residual variance if the Gaussian family is assumed in the GLM</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logLikelihood</code></td>
+<td>
+<p>the log Likelihood if the Binomial family is assumed in the GLM</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hyperparameters</code></td>
+<td>
+<p>the hyperparameter used to fit the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>the GLM family specified in this function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>the prior used in this function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the call that produced this object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nobs</code></td>
+<td>
+<p>number of observations</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Anhui Huang and Dianting Liu <br></p>
+
+
+<h3>References</h3>
+
+<p>	Cai, X., Huang, A., and Xu, S. (2011). Fast empirical Bayesian LASSO for multiple quantitative trait locus mapping. BMC Bioinformatics 12, 211.<br><br>
+Huang A, Xu S, Cai X. (2013). Empirical Bayesian LASSO-logistic regression for multiple binary trait locus mapping. BMC genetics  14(1):5. <br><br>
+Huang, A., Xu, S., and Cai, X. (2014a). Empirical Bayesian elastic net for multiple quantitative trait locus mapping. Heredity 10.1038/hdy.2014.79 <br></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+rm(list = ls())
+library(EBglmnet)
+#Use R built-in data set state.x77
+y= state.x77[,"Life Exp"]
+xNames = c("Population","Income","Illiteracy", "Murder","HS Grad","Frost","Area")
+x = state.x77[,xNames]
+#
+#Gaussian Model
+#lassoNEG prior as default
+out = EBglmnet(x,y,hyperparameters=c(0.5,0.5))
+out$fit
+#lasso prior
+out = EBglmnet(x,y,prior= "lasso",hyperparameters=0.5)
+out$fit
+#elastic net prior
+out = EBglmnet(x,y,prior= "elastic net",hyperparameters=c(0.5,0.5))
+out$fit
+#residual variance
+out$res
+#intercept
+out$Intercept
+#
+#Binomial Model
+#create a binary response variable
+yy = y&gt;mean(y);
+out = EBglmnet(x,yy,family="binomial",hyperparameters=c(0.5,0.5))
+out$fit
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,558 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>funnel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Funnel plot for benchmarking health units</h2>
+
+<h3>Description</h3>
+
+<p>Produces a variety of funnel plots comparing health units or ICUs (intensive care units) making easy to identify those units which deviate from the group. There is a function that calculates all the values required and returns the values for all units and the funnel, and there is a function that calls graphical parameters from the former values. The options of funnels available are the funnel for rate, for ratio of rates, for proportions, for difference of proportions and for ratio of proportions.
+</p>
+<p>The funnel for rates are usually plots of either SMR or SRU at vertical axis. If the direct method is chosen, the horizontal axis will display the number of admissions. If the indirect method is chosen instead, the expected number of deaths will be displayed for SMR or the expected length of stay for SRU. As consequence of this differentiation, the interpretation regarding the clssification of the points displayed will be the same in every case.
+</p>
+<p>The funnel for ratio of rates are usually plots of ratios of SMRs (or SRUs) within the same units. These two SMRs are, for example, from the same units in different time periods. Therefore, it expresses how the SMR changed over time. If the number of expected deaths is different in both periods, the plot will return at the horizontal axis a parametrization of the geometric mean of the expected number of deaths in both periods for each unit. If the number of expected deaths is identical in both periods, the plot will return at the horizontal axis the arithmetic mean of the observed number of deaths in both periods for each unit.
+</p>
+<p>The funnel for proportions plots on the vertical axis the percentage of observed deaths of the units and on the horizontal axis the number (volume) of admissions. The funnel for ratio of proportions and for difference of proportions are usually used to express the fraction of deaths of the same units in different time period. Therefore, they express how the fraction of deaths changed over time in each unit. If one picks the difference of proportions, the horizontal axis will display a parametrization of the arithmetic mean of the number of admissions in both periods. If one picks the ratio of proportions, the horizontal axis will display a parametrization of the geometric mean of the number of admissions in both periods.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">funnel(
+  unit,
+  y,
+  n,
+  n1,
+  n2,
+  o,
+  o1,
+  o2,
+  e,
+  e1,
+  e2,
+  lambda1 = sum(o1)/sum(n1),
+  lambda2 = sum(o2)/sum(n2),
+  pi1 = sum(o1)/sum(n1),
+  pi2 = sum(o2)/sum(n2),
+  y.type = c("SMR", "SRU"),
+  p = c(0.95, 0.998),
+  theta,
+  method = c("normal", "exact"),
+  direct = FALSE,
+  myunits = rep(0, length(unit)),
+  option = c("rate", "ratioRates", "prop", "diffProp", "ratioProp"),
+  printUnits = TRUE,
+  plot = TRUE,
+  digits = 5,
+  overdispersion = FALSE,
+  ...
+)
+
+## S3 method for class 'funnel'
+print(x, ...)
+
+## S3 method for class 'funnel'
+plot(
+  x,
+  ...,
+  col = c("darkblue", "paleturquoise3", "gray26"),
+  lwd = 2,
+  lty = c(2, 6, 1),
+  bty = "n",
+  pch = 21,
+  pt.col = "white",
+  bg = "orange",
+  pt.cex = 1.5,
+  auto.legend = TRUE,
+  text.cex = 0.7,
+  text.pos = NULL,
+  mypts.col = "darkblue",
+  printUnits = x$printUnits,
+  xlab = x$xlab,
+  ylab = x$ylab,
+  xlim = x$xlim,
+  ylim = x$ylim
+)
+
+rateFunnel(
+  unit,
+  y,
+  n,
+  o,
+  e,
+  y.type,
+  p,
+  theta = 1,
+  method = c("exact", "normal"),
+  direct,
+  ...,
+  printUnits,
+  auto.xlab = TRUE,
+  xlab = c("Volume of cases", "Expected values"),
+  ylab = y.type[1],
+  xlim = c(0, max(rho)),
+  ylim = c(min(lowerCI[[which(p == max(p))]]), max(upperCI[[which(p == max(p))]])),
+  myunits,
+  digits,
+  overdispersion
+)
+
+changeRateFunnel(
+  unit,
+  n1,
+  n2,
+  o1,
+  e1,
+  o2,
+  e2,
+  lambda1,
+  lambda2,
+  y.type,
+  p,
+  ...,
+  printUnits,
+  auto.xlab = TRUE,
+  xlab = c("Average observed count", "Expectation per period"),
+  auto.ylab = TRUE,
+  ylab = c(paste0(y.type[1], "'s Ratio"), paste0("Log(", y.type[1], "'s Ratio)")),
+  ylim = c(max(lowerCI[[which(p == max(p))]]) - 1.5 * theta, min(upperCI[[which(p ==
+    max(p))]]) + 1.5 * theta),
+  xlim = c(0, max(rho)),
+  myunits,
+  digits,
+  overdispersion
+)
+
+propFunnel(
+  unit,
+  o,
+  n,
+  theta,
+  p,
+  method = c("exact", "normal"),
+  ...,
+  printUnits,
+  ylab = "%",
+  xlab = "Volume",
+  ylim = c(0, min(upperCI[[which(p == max(p))]]) + 2.5 * theta),
+  xlim = c(0, max(n)),
+  myunits,
+  digits,
+  overdispersion
+)
+
+changePropFunnel(
+  unit,
+  o1,
+  o2,
+  n1,
+  n2,
+  p,
+  pi1,
+  pi2,
+  method = c("diff", "ratio"),
+  ...,
+  printUnits,
+  xlab = "Sample size per period",
+  auto.ylab = TRUE,
+  ylab = c("Proportions difference", "Proportions ratio log"),
+  ylim = c(max(lowerCI[[which(p == max(p))]]) - 6 * theta, min(upperCI[[which(p ==
+    max(p))]]) + 6 * theta),
+  xlim = c(0, max(rho)),
+  myunits,
+  digits,
+  overdispersion
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>unit</code></td>
+<td>
+<p>A factor vector representing the unit names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A numeric vector representing the "Standardized rate" for each unit, usually the SMR (Standardized Mortality Ratio), or possibly the SRU (Standardized Resource Use), accordind to <code>y.type</code> . It's also called "indicator".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>A numeric vector representing the case volume, or number of admissions, for each unit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n1, n2</code></td>
+<td>
+<p>If one picks <code>option = "ratioRates"</code> or <code>option = "diffProp"</code> or <code>option = "ratioProp"</code>, then <code>n1</code> and <code>n2</code> are numeric vectors representing the total of admissions at 1st and 2nd periods, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>o</code></td>
+<td>
+<p>A numeric vector representing the observed death. Acceptable values are 0 (absence) or 1 (presence).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>o1, o2</code></td>
+<td>
+<p>If one picks <code>option = "ratioRates"</code> or <code>option = "diffProp"</code> or <code>option = "ratioProp"</code>, then <code>o1</code> and <code>o2</code> are numeric vectors representing the observed deaths at 1st and 2nd periods, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>e</code></td>
+<td>
+<p>Used only when <code>option = "rate"</code> and <code>direct = FALSE</code>. This is a numeric vector representing the expected number of deaths.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>e1, e2</code></td>
+<td>
+<p>If one picks <code>option = "ratioRates"</code>, <code>e1</code> and <code>e2</code> are numeric vectors representing the expected number of deaths at 1st and 2nd periods, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda1, lambda2</code></td>
+<td>
+<p>Values correponding to the rate at which a death occurs in the institutions at the 1st and 2nd periods, respectively. It is assumed that the parameters <code>o1</code> and <code>o2</code> are distributed as <code>oi</code> ~ Poisson(<code>lambdai</code>) when <code>option = "ratioRates"</code>. The default value for <code>lambdai</code> is <code>lambdai = sum(oi)/sum(ni)</code>, where ni is the value of the parameter <code>n1</code> or <code>n2</code> when i equals 1 or 2. <code>lambdai</code> is the estimate for the mean of the poisson distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi1, pi2</code></td>
+<td>
+<p>Values correponding to the probability for the occurrence of a death in the institutions at the 1st and 2nd periods, respectively. Its assumed that the paramenters <code>o1</code> and <code>o2</code> are distributed as <code>oi</code> ~ Bin(<code>pii,ni</code>) when <code>option = "diffProp"</code> or <code>option = "ratioProp"</code>. <code>ni</code> is the value of the parameter n1 or n2 when i equals 1 or 2. The default value for <code>pii</code> is <code>sum(oi)/sum(ni)</code>, the estimate for the mean of the poisson distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y.type</code></td>
+<td>
+<p>A character vector representing the indicator type. It is used to name the vertical axis if <code>option = "rate"</code> or <code>option = "ratioRate"</code> and ignored otherwise. It usually is 'SMR' or 'SRU'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>A confidence level numeric vector. The function will return a confidence interval for each value in p. The default is 2 and 3 standard deviations (<code>p = c(.95, 998)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>The target value which specifies the desired expectation for institutions considered "in control". Used when <code>option = "prop"</code> or <code>option = "rate"</code>. Usually, this function internally estimates a theta to represent a central tendency of the group. However, one may want to set a pre-specified value for theta to indicate a "baseline" parameter for comparison (e.g 1 for <code>option = "rate"</code> or .20 for <code>option = "prop"</code>). If this is the case, the horizontal line representing theta may not be centralized in the funnel or may be even outside the funnel, making the plot look unusual.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>There are two kinds of approximations for the CI, as mentioned in <code>direct</code> parameter. The one from the exact distribuition (binomial or poisson) and the one from the normal distribution. So, <code>method</code> is a character vector representing the kind of approximation desired, being <code>"exact"</code> (default) or <code>"normal"</code> the two options. It is used when <code>option = "rate"</code> or <code>option = "prop"</code>. The original report makes no formal comparison of which method is best, however it is mentioned that the funnels from different methods should look identical or very similar if all units have 100 or more observations. If any unit has less, the funnel from the normal approximation may mislead the interpretation. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direct</code></td>
+<td>
+<p>Logical (default = <code>FALSE</code>); Used when <code>option = "rate"</code>. If <code>TRUE</code>, we assume the vector of rates "y" is being reported as a rate per (say) 1000 individuals, and that it has been transformed to a proportion between 0 and 1. The associated error (horizontal axis) will be measured accordingly to the size of the populations <code>n</code>. The CI - confidence interval - is calculated by a binomial distribution. If <code>FALSE</code>, the associated error will be measured accordingly to the expected number of deaths <code>e</code>. The CI is calculated by a poisson distribution instead. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>myunits</code></td>
+<td>
+<p>A numeric vector coded with 0 and 1 indicating which units one would like to benchmark among all units. These will be highlighted with dots of different collors in the plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>option</code></td>
+<td>
+<p>A character specifying the type of funnel plot one wants to produce. It can assume <code>"rate"</code>, <code>"ratioRates"</code>, <code>"prop"</code>, <code>"diffProp"</code> or <code>"ratioProp"</code>. If <code>option = "rate"</code>, <code>funnel</code> plots a standardized rate y versus the expected number of deaths or case volume (number of unit admissions) for all units. If <code>option = "ratioRate"</code>, <code>funnel</code> can be used to compare units at two diferent periods. It plots a ratio of rates y versus a precision parameter rho. If <code>option = "prop"</code>, <code>funnel</code> plots a proportion y versus its case volume (number of admissions). If <code>option = "ratioProp"</code> or <code>option = "diffProp"</code>, <code>funnel</code> can be used to compare units at two diferent periods. It plots a ratio (or difference) of proportions y versus a precision parameter rho. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>printUnits</code></td>
+<td>
+<p>Logical (default = <code>TRUE</code>); If <code>TRUE</code>, the units are identified in the plot and printed in de console. The numbers plotted correspond to the row numbers printed in the console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>Logical; If <code>TRUE</code> (default), the correspondent graphic is plotted with the standard options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>Integer indicating the number of decimals to be used in the output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overdispersion</code></td>
+<td>
+<p>Logical (default = FALSE); If TRUE, introduces an multiplicative over-dispersion factor phi that will inflate the CI null variance. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to <code>plot</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class 'funnel'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col</code></td>
+<td>
+<p>A character vector representing the colors for the CI funnel lines. Must have same length of <code>p</code> + 1 with the target line color in the last position.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lwd</code></td>
+<td>
+<p>A positive number specifying the lines width. It's the same for all lines in the plot. See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lty</code></td>
+<td>
+<p>A numeric vector representing the CI lines types. See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bty</code></td>
+<td>
+<p>A character string which represents the type of <code>box</code> which is drawn around plots. See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pch</code></td>
+<td>
+<p>Either an integer or a single character specifying a symbol to be used as the default in plotting points. See <code>points</code> for possible values and their interpretation. Note that only integers and single-character strings can be set as a graphics parameter (and not NA nor NULL).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pt.col</code></td>
+<td>
+<p>A character specifying the points colors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bg</code></td>
+<td>
+<p>A character specifying the color to be used for the points background when <code>pch = 21</code> (default). See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pt.cex</code></td>
+<td>
+<p>A numerical value giving the amount by which plotting points should be magnified relative to the default.  See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>auto.legend</code></td>
+<td>
+<p>Logical; If <code>TRUE</code> (default), prints a legend with default arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>text.cex</code></td>
+<td>
+<p>A numerical value giving the amount by which plotting text should be magnified relative to the default.  See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>text.pos</code></td>
+<td>
+<p>A position specifier for numbers that correspond to the units in the plot. Values of 1, 2, 3 and 4, respectively indicate positions below, to the left of, above and to the right of the points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mypts.col</code></td>
+<td>
+<p>A character representing the color used to benchmark the units specified in <code>myunits</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab, ylab</code></td>
+<td>
+<p>A title for the x and y axis. See <code>title</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlim, ylim</code></td>
+<td>
+<p>Limits of horizontal and vertical axis. These limits are defined in the funnel plot and passed to <code>plot.funnel</code>. The user may redefine the limits in <code>plot.funnel</code>. Ultimately, these arguments are passed to <code>plot.default</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>auto.xlab, auto.ylab</code></td>
+<td>
+<p>Logical. If <code>TRUE</code>, one is not able to change x and y axis labels, respectively.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<ul>
+<li>
+<p> For every possible value of <code>option</code>, if <code>overdispersion = TRUE</code>, the CI can be inflated by a overdispersion parameter phi. There is a test for overdispersion which inflates the funnel if it's necessary. An "Winsorized" over-dispersion parameter is estimated and is used to inflate the funnel limits if it is significantly greater than 1. The parameter phi is returned as an funnel object.
+</p>
+</li>
+<li>
+<p> If <code>option = "rate"</code>, <code>funnel</code> plots a standardized rate y versus the expected number of deaths or volume value for several units.
+</p>
+<p>To choose the <code>direct</code> argument, one should pay attention if one wants to use a Direct or Indirect Standardized Rate. If direct, we assume the rate is reported as a rate per (say) 1000 individuals, then it is treated as a proportion. If indirect, we assume it is a cross-sectional data that leads to a standardized event ratio.
+</p>
+<p>In many circumstances we can assume an exact or approximate normal distribution for the data. Using the <code>method</code> argument, one could choose between <code>"exact"</code> or  <code>"normal"</code>. For direct standardized rates, the exact distribuition is binomial and for indirect standardized rates, the exact distribuition is poisson. Assume rho is the precision parameter (volume, for direct rates; expected value, for indirect rates). The original report claims that, for rho &gt; 100, the normal and exact curves almost coincide. So, one could perfectly use  normal approximation if ones data parameter precision is greater than 100, in general.
+</p>
+<p>The console warns if there are units with volume/expected value less than 100.
+</p>
+<p>phi = (1/total) * sum((y - theta) ^ 2 * rho)/g(theta)
+</p>
+<p>var(y|theta,rho) = (phi * g(theta))/rho
+</p>
+</li>
+<li>
+<p> If <code>option = "ratioRate"</code>, <code>funnel</code> can be used to compare units at two diferent periods. It plots a ratio of rates y versus a precision parameter rho.
+</p>
+<p>Suppose we have two measures for each institution: O1; E1 in a baseline period and O2; E2 in a subsequent period, and we wish to assess the change in the underlying rate (SMR or SRU). We shall only consider the ratio of rates option. The exact method will automatically be applied if E1 = E2, and the indirect method, of normal approximations, otherwise. On this second method, for low (especially zero) counts the <code>funnel</code> function adds 0.5 to all parameters O and E in order to stabilize the estimates.
+</p>
+<p>Y = (O1/E1)/(O2/E2) and the target theta =	lambda2/lambda1.
+</p>
+<p>When E1 = E2, y is plotted versus the average observed count (rho).
+</p>
+<p>When E1 is different of E2, i.e., it is used normal approximation. It is convenient to work on a logarithmic scale so that log(theta) is a target for log(Y). Y is plotted versus a different rho depending on the chosen rate.
+</p>
+</li>
+<li>
+<p> If <code>option = "prop"</code>, <code>funnel</code> plots a proportion y versus its volume.
+It is used for cross-sectional data. Suppose in each institution that O events are observed out of a sample size of N:
+</p>
+<p>The indicator is the observed proportion y = O/N
+</p>
+<p>Assume <code>N</code> is the precision parameter (volume). Similarly to when <code>option = "rate"</code>, for <code>N</code> &gt; 100 the normal and exact curves almost coincide. So, one could perfectly use normal approximation on the parameter <code>method</code> if ones data parameter precision is greater than 100, in general.
+</p>
+<p>phi = (1/total) * sum((y - theta) ^ 2 * N)/g(theta)
+</p>
+<p>var(y|theta,N) = (phi * g(theta))/N
+</p>
+</li>
+<li>
+<p> If <code>option = "ratioProp"</code> or <code>option = "diffProp"</code>, <code>funnel</code> can be used to compare units at two diferent periods. It plots a ratio (or difference) of proportions y versus a precision parameter rho to assess the change in the underlying proportion from pi1 to pi2. Normal approximations are used throughout, and for low (especially zero) counts, the function adds 0.5 to all arguments r and 1 to all arguments n in order to stabilize the estimates.
+</p>
+<p>In the case <code>option = "diffProp"</code>, the indicator is Y = (O2/N2 - O1/N1) and theta = pi2 - pi1. If <code>option = "ratioProp"</code>, the indicator is Y = (O2/N2)/(O1/N1) and theta = pi2/pi1. It is convenient to work on a logarithmic scale, so that log(theta) is a target for log(Y) in this case as well.
+</p>
+<p>For these two parameter options, the precision parameter (plotted at horizontal axis) can be interpreted as approximately the sample size per period.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>A table with unit names, y, observed (Obs), expected (Exp) and admissions (N) for each unit, a binary column showing which units one would like to highlight in the plot (myunits) and final columns show which units are out of control.
+</p>
+
+
+<h3>References</h3>
+
+<p>Spiegelhalter, David J. "Funnel plots for comparing institutional performance." Statistics in medicine 24.8 (2005): 1185-1202.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>SMR</code>, <code>SRU</code>, <code>reclass</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Loading data
+data(icu)
+
+# Some edition
+icu$Saps3DeathProbabilityStandardEquation &lt;- icu$Saps3DeathProbabilityStandardEquation / 100
+icu &lt;- icu[-which(icu$Unit == "F"),]
+icu$myunits &lt;- ifelse(icu$Unit == "A",1,0) #my units
+icu &lt;- droplevels(icu)
+
+# Getting the cross-sectional arguments to use in funnel
+x &lt;- SMR.table(data = icu, group.var = "Unit",
+              obs.var = "UnitDischargeName", pred.var = "Saps3DeathProbabilityStandardEquation")
+myunit_names &lt;- unique(icu$Unit[which(icu$myunits == 1)])
+x$myunits &lt;- ifelse(x$Levels %in% myunit_names, 1,0)
+
+# Analysis of proportions
+f1 &lt;- funnel(unit = x$Levels[-1], o = x[-1,]$Observed, theta = x$Observed[1] / x$N[1],
+            n = x[-1,]$N, method = "exact", myunits = x$myunits[-1], option = "prop", plot = FALSE)
+f1
+plot(f1, main = "Cross-sectional proportions")
+
+# To analyze rates (SMR)
+f2 &lt;- funnel(unit = x$Levels[-1], y = x[-1,]$SMR, method = "exact", direct = TRUE,
+            theta = x$SMR[1], e = x[-1,]$Expected, n = x[-1,]$N, o = x[-1,]$Observed,
+            option = "rate", plot = FALSE)
+f2
+plot(f2, main = "Cross-sectional rate (SMR)")
+
+# Creating a variable containing month information about each admission
+icu$month &lt;- as.numeric(format(as.Date(icu$UnitAdmissionDateTime),"%m"))
+
+# First quarter
+dt1 &lt;- icu[which(icu$month %in% c(1,2,3)),]
+
+# Second quarter
+dt2 &lt;- icu[which(icu$month %in% c(4,5,6)),]
+
+# Getting the two period arguments to use in funnel
+z &lt;- SMR.table(data = dt1, group.var = "Unit", obs.var = "UnitDischargeName",
+              pred.var = "Saps3DeathProbabilityStandardEquation")
+w &lt;- SMR.table(data = dt2, group.var = "Unit", obs.var = "UnitDischargeName",
+              pred.var = "Saps3DeathProbabilityStandardEquation")
+
+z$myunits &lt;- ifelse(z$Levels %in% myunit_names, 1,0)
+w$myunits &lt;- ifelse(w$Levels %in% myunit_names, 1,0)
+# To analyze periods using ratio rates with e1 = e1
+f3 &lt;- funnel(unit = z$Levels[-1], n1 = z$N[-1], o1 = z$Observed[-1],
+            e1 = z$Expected[-1],
+            n2 = w$N[-1], o2 = w$Observed[-1], e2 = z$Expected[-1],
+            myunits = z$myunits[-1], option = "ratioRates", plot = FALSE)
+f3
+plot(f3, main = "Ratio of SMRs of periods with same expectation of death")
+
+
+# To analyze periods using ratio rates with e1 =! e1
+f4 &lt;- funnel(unit &lt;- z$Levels[-1], n1 = z$N[-1], o1 = z$Observed[-1],
+            e1 = z$Expected[-1], n2 = w$N[-1], o2 = w$Observed[-1], e2 = w$Expected[-1],
+            option = "ratioRates", plot = FALSE)
+f4
+plot(f4, main = "Ratio of SMRs of periods with different expectation of death",
+    ylim = c(-1.5,1.5), xlim = c(0,200))
+
+# To analyze periods by difference in proportions
+f5 &lt;- funnel(unit &lt;- z$Levels[-1], n1 = z$N[-1], o1 = z$Observed[-1],
+            n2 = w$N[-1], o2 = w$Observed[-1], option = "diffProp", plot = FALSE)
+f5
+plot(f5, main = "Difference in proportions of death for two periods")
+
+# To analyze periods by ratio of proportions
+f6 &lt;- funnel(unit &lt;- z$Levels[-1], n1 = z$N[-1], o1 = z$Observed[-1],
+            n2 = w$N[-1], o2 = w$Observed[-1], option = "ratioProp", plot = FALSE)
+f6
+plot(f6, main = "Ratio of proportions of death for two periods")
+
+rm(icu, x, z, w, dt1, dt2, unit, f1, f2, f3, f4, f5, f6)
+
+</code></pre>
+
+
+</div>

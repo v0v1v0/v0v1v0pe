@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>generate_edgelist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Export null modelling results</h2>
+
+<h3>Description</h3>
+
+<p>Exports the observed network alongside the mean interaction strengths
+calculated from the null model and the significance test results in a
+standard format that can be imported into other network analysis packages
+e.g. <code>igraph</code> (Csardi &amp; Nepusz 2006) or <code>cheddar</code> (Hudson
+<em>et al</em>. 2013).  This provides access to a wide range of plotting and
+analysis tools, especially for non-bipartite networks.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">generate_edgelist(
+  nullnet,
+  signif.level = 0.95,
+  export.null = FALSE,
+  edge.cols = c("#67A9CF", "#F7F7F7", "#EF8A62")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nullnet</code></td>
+<td>
+<p>An object of class nullnet from <code>generate_null_net</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>signif.level</code></td>
+<td>
+<p>An optional value specifying the threshold used for
+testing for 'significant' deviations from the null model.  Defaults to 0.95</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>export.null</code></td>
+<td>
+<p>An optional logical value specifying whether export should
+be limited to those interactions that were present in the observed network
+or should include any additional interactions present across iterations
+of the null network.  Depending upon the data and any forbidden links
+specified, additional interactions may be present in the modelled networks.
+Defaults to FALSE (only observed interactions are exported).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edge.cols</code></td>
+<td>
+<p>An optional character vector of length three specifying
+potential colours for network links when used with a suitable plotting
+function: in sequence, these should represent i) interactions that are
+weaker than expected, ii) consistent with the null model and iii) stronger
+than expected. The default is a colourblind friendly blue, white and red
+scheme, using Colorbrewer's Red-Blue colour scheme (Brewer 2017).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame where each row represents the interaction observed
+between a pair of consumer and resource species, and with the following
+column headings:
+</p>
+
+<dl>
+<dt><code>Consumer</code></dt>
+<dd>
+<p>Name of the consumer species (node)</p>
+</dd>
+<dt><code>Resource</code></dt>
+<dd>
+<p>Name of the resource species (node)</p>
+</dd>
+<dt><code>Observed</code></dt>
+<dd>
+<p>Strength of the observed interaction</p>
+</dd>
+<dt><code>Null</code></dt>
+<dd>
+<p>Mean strength of the interaction across the iterations
+of the null model</p>
+</dd>
+<dt><code>SES</code></dt>
+<dd>
+<p>The standardised effect size for the interaction</p>
+</dd>
+<dt><code>Test</code></dt>
+<dd>
+<p>Whether the observed interaction is significantly
+<strong>stronger</strong> than expected under the null model, <strong>weaker</strong>
+or consistent with the null model <strong>ns</strong></p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Brewer, C.A. (2017) <a href="https://colorbrewer2.org/">https://colorbrewer2.org/</a>
+</p>
+<p>Csardi, G. &amp; Nepusz, T. (2006) The igraph software package for complex
+network research. <em>InterJournal, Complex Systems</em>, <strong>1695</strong>.
+</p>
+<p>Vaughan, I.P., Gotelli, N.J., Memmott, J., Pearson, C.E., Woodward, G. &amp;
+Symondson, W.O.C. (2018) econullnetr: an R package using null models to
+analyse the structure of ecological networks and identify resource
+selection. <em>Methods in Ecology and Evolution</em>, <strong>9</strong>, 728–733.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>generate_null_net</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(1234)
+bs.null &lt;- generate_null_net(Broadstone, Broadstone.prey,
+                             data.type = "counts", sims = 10,
+                             r.weights = Broadstone.fl)
+BS.export &lt;- generate_edgelist(bs.null, signif.level = 0.95,
+                               edge.cols = c("#67A9CF", "black", "#EF8A62"))
+
+if (requireNamespace("igraph", quietly = TRUE)) {
+ net.1 &lt;- igraph::graph_from_edgelist(as.matrix(BS.export[, c("Resource",
+                                                              "Consumer")]),
+                                      directed = TRUE)
+
+ # Add in the null modelling results
+ igraph::E(net.1)$obs.str &lt;- BS.export$Observed
+ igraph::E(net.1)$test.res &lt;- BS.export$Test
+ igraph::E(net.1)$edge.cols &lt;- BS.export$edge.col
+
+ igraph::plot.igraph(net.1, layout = igraph::layout_in_circle,
+                     edge.color = igraph::E(net.1)$edge.cols,
+                     edge.width = sqrt(igraph::E(net.1)$obs.str),
+                     edge.arrow.size = .4)
+}
+
+</code></pre>
+
+
+</div>

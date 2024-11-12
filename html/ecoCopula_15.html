@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>stackedsdm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Stacked species regression models, possibly fitted in parallel</h2>
+
+<h3>Description</h3>
+
+<p>Stacked species regression models, possibly fitted in parallel
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">stackedsdm(
+  y,
+  formula_X = ~1,
+  data = NULL,
+  family = "negative.binomial",
+  trial_size = 1,
+  do_parallel = FALSE,
+  ncores = NULL,
+  trace = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A matrix of species responses</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula_X</code></td>
+<td>
+<p>An object of class <code>formula</code> representing the relationship to the covariates to be fitted. There should be nothing to the left hand side of the "~" sign.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame of the covariates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>Either a single character vector, in which case all responses are assumed to be from this family, or a vector of character strings of the same length as the number of columns of y. Families as strings and not actual <code>family</code> class objects. This could be changed though if desired in the future e.g., for custom link functions. Currently, the following families are supported (hopefully properly!): "gaussian", "negative.binomial" (with quadratic mean-variance relationship), "poisson", "binomial" (with logit link), "tweedie", "Gamma" (with log link), "exponential", "beta" (with logit link), "ordinal" (cumulative logit model), "ztpoisson", "ztnegative.binomial", "zipoisson", "zinegative.binomial".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trial_size</code></td>
+<td>
+<p>The trial size if any of the responses are binomial. Is either a single number or a matrix with the same dimension as y. If the latter, then all columns that do not correspond to binomial responses are ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do_parallel</code></td>
+<td>
+<p>Do the separate species model fits in parallel? Defaults to <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+<p>The number of cores to use if separate the species model fits are done in parallel. If <code>do_parallel = TRUE</code>, then it defaults to <code>detectCores() - 2</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Print information. This is not actually used currently</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A object of class <code>stackedsdm</code> with the following components:
+<code>call</code> The function call;
+<code>fits</code> A list where the j-th element corresponds to the to the fitted model for species j i.e., the j-th column in <code>y</code>;
+<code>linear_predictor</code> A matrix of the fitted linear predictors
+<code>fitted</code> A matrix of the fitted values
+</p>
+
+
+<h3>Details</h3>
+
+<p><code>stackedsdm</code> behaves somewhat like the <code>manyglm</code> or <code>manyany</code> function in the package <code>mvabund</code>, in the sense that it fits a separate regression to each species response i.e., column of <code>y</code>. The main difference is that different families can be permitted for each species, which thus allows for mixed responses types.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Francis K.C. Hui &lt;francis.hui@anu.edu.au&gt;.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(spider)
+X &lt;- spider$x
+abund &lt;- spider$abund
+
+# Example 1: Simple example
+myfamily &lt;- "negative.binomial"
+# Example 1: Funkier example where Species are assumed to have different distributions
+# Fit models including all covariates are linear terms, but exclude for bare sand
+fit0 &lt;- stackedsdm(abund, formula_X = ~. -bare.sand, data = X, family = myfamily, ncores = 2) 
+
+# Example 2: Funkier example where Species are assumed to have different distributions
+abund[,1:3] &lt;- (abund[,1:3]&gt;0)*1 # First three columns for presence absence
+myfamily &lt;- c(rep(c("binomial"), 3),
+              rep(c("negative.binomial"), (ncol(abund)-3)))
+fit0 &lt;- stackedsdm(abund, formula_X = ~ bare.sand, data = X, family = myfamily, ncores = 2)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,445 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>maxEquivTest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Equivalence Test for Pre-trends based on the Maximum Absolute Placebo Coefficient</h2>
+
+<h3>Description</h3>
+
+<p>This function performs an equivalence test for pre-trends based on the maximum absolute placebo coefficient from Dette &amp; Schumann (2024). The test can be performed using the intersection-union approach (IU), a bootstrap procedure for spherical errors (Boot) and a wild bootstrap procedure (Wild).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">maxEquivTest(
+  Y,
+  ID,
+  G,
+  period,
+  X = NULL,
+  data = NULL,
+  equiv_threshold = NULL,
+  pretreatment_period = NULL,
+  base_period = NULL,
+  type = c("IU", "Boot", "Wild"),
+  vcov = NULL,
+  cluster = NULL,
+  alpha = 0.05,
+  B = 1000
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>A numeric vector with the variable of interest. If <code>data</code> is supplied, <code>Y</code> should be a scalar indicating the column number or column-name character string that corresponds to the numeric dependent (outcome) variable in ’data’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ID</code></td>
+<td>
+<p>A numeric vector identifying the different cross-sectional units in the dataset. If <code>data</code> is supplied, <code>ID</code> should be a scalar indicating the column number or column-name character string that corresponds to the cross-sectional units identifier in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G</code></td>
+<td>
+<p>A binary or logic vector (of the same dimension as <code>Y</code> and <code>ID</code>) indicating if the individual (e.g. as indicated by <code>ID</code>) receives treatment (e.g. 1 or TRUE) or not (0 or FALSE). If 'data' is supplied, <code>G</code> should be a scalar identifying the column number or column-name character string associated to <code>G</code> in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>period</code></td>
+<td>
+<p>A numeric vector (of the same dimension as Y) indicating time. If <code>data</code> is supplied, <code>period</code> should be a scalar indicating the column number or column-name character string that corresponds to the time identifier in <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>A vector, matrix, or data.frame containing the control variables. If <code>data</code> is supplied, <code>X</code> must be a vector of column numbers or column-name character strings that identifies the control variables’ columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An optional <code>data.frame</code> object containing the variables in Y, ID, G, T and, if supplied, X and cluster as its columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>equiv_threshold</code></td>
+<td>
+<p>The scalar equivalence threshold (must be positive). The default is NULL, implying that the function must look for the minimum value for which the null hypothesis of ”non-negligible differences” can still be rejected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pretreatment_period</code></td>
+<td>
+<p>A numeric vector identifying the pre-treatment periods that should be used for testing. <code>pretreatment_period</code> must be a subset of the periods included through <code>period</code>. The default is to use all periods that are included in <code>period</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base_period</code></td>
+<td>
+<p>The pre-treatment period to compare the post-treatment observation to. The default is to take the last period of the pre-treatment period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>The type of maximum test that should be performed. "IU" for the intersection-union test, "Boot" for the regular bootstrap procedure from Dette &amp; Schumann (2024) and "Wild" for the Wild bootstrap procedure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>If <code>type = "IU"</code>, the variance-covariance matrix that needs to be used. See <em>Details</em> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster</code></td>
+<td>
+<p>If <code>vcov = "CL"</code>, a vector indicating which observations belong to the same cluster. <code>cluster</code> must be of the same length as the panel. If <code>data</code> is supplied, <code>cluster</code> must be either the column index or column name of this vector in the data.frame/matrix. The default (<code>cluster=NULL</code>) assumes every unit in ID is its own cluster. Only required if <code>vcov = "CL"</code> and <code>type = "IU"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Significance level of the test. The default is 0.05. Only required if <code>equiv_threshold</code> is not specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>If type = Boot or type = Wild, the number of bootstrap samples used. The default is 1000.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>vcov</code> parameter specifies the variance-covariance matrix to be used in the function for <code>type = "IU"</code>. 
+This parameter can take two types of inputs:
+</p>
+
+<ol>
+<li>
+<p> A character string specifying the type of variance-covariance matrix estimation. The options are:</p>
+
+<ul>
+<li> <p><code>NULL</code>: The default variance-covariance matrix estimated by the plm function is used.
+</p>
+</li>
+<li> <p><code>"HC"</code>: A heteroscedasticity-robust (HC) covariance matrix is estimated using the <code>vcovHC</code> function from the <code>plm</code> package, vcovHC, with type <code>"HC1"</code> and method <code>"white1"</code> (see White, 1980).
+</p>
+</li>
+<li> <p><code>"HAC"</code>: A heteroscedasticity and autocorrelation robust (HAC) covariance matrix is estimated using the <code>vcovHC</code> function from the <code>plm</code> package, vcovHC, with type <code>"HC3"</code> and method <code>"arellano"</code> (see Arellano, 1987).
+</p>
+</li>
+<li> <p><code>"CL"</code>: A cluster-robust covariance matrix is estimated using the <code>vcovCR</code> function from the <code>clubSandwich</code> package with type <code>"CR0"</code> (see Lian &amp; Zegers (1986)). The cluster variable is either <code>"ID"</code> or a custom cluster variable provided in the <code>data</code> dataframe.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> A function that takes an plm object as input and returns a variance-covariance matrix. 
+This allows for custom variance-covariance matrix estimation methods. For example, you could 
+use the <code>vcovHC</code> function from the <code>sandwich</code> package with a specific method and type:
+</p>
+<pre>function(x) {vcovHC(x, method = "white1", type = "HC2")}</pre>
+</li>
+</ol>
+<p>If no <code>vcov</code> parameter is provided, the function defaults to using the variance-covariance matrix 
+estimated by the plm::plm() function.
+</p>
+<p>One should note that rows containing <code>NA</code> values are removed from the panel before the testing procedure is performed.
+</p>
+<p>NOTE: Please be aware that including control variables (X) might lead to higher computation times for type = "Boot" and type = "Wild", due to unconstrained parameters in the optimization problem that estimates the constrained placebo coefficients.
+</p>
+<p>On top of that, please be aware that the bootstrap procedures for the equivalence test based on the maximum absolute placebo coefficient apply a bootstrap procedure (as described by Dette &amp; Schumann (2024)), leading to a stochastic critical value and minimum equivalence threshold. Therefore, the results may vary slightly between different runs of the function. For reproducibility of the bootstrap procedures, it is recommended to set a seed before using the function.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>type = "IU"</code>, an object of class <code>maxEquivTestIU</code>  with </p>
+
+<ul>
+<li>
+<p><code>placebo_coefficients</code>: A numeric vector of the estimated placebo coefficients,
+</p>
+</li>
+<li>
+<p><code>abs_placebo_coefficients</code>: a numeric vector with the absolute values of estimated placebo coefficients,
+</p>
+</li>
+<li>
+<p><code>placebo_coefficients_se</code>: a numeric vector with the standard errors of the placebo coefficients,
+</p>
+</li>
+<li>
+<p><code>significance_level</code>: the chosen significance level of the test,
+</p>
+</li>
+<li>
+<p><code>base_period</code>: the base period used in the testing procedure,
+</p>
+</li>
+<li>
+<p><code>placebo_names</code>: the names corresponding to the placebo coefficients,
+</p>
+</li>
+<li>
+<p><code>num_individuals</code>: the number of cross-sectional individuals in the panel used for testing,
+</p>
+</li>
+<li>
+<p><code>num_periods</code>: the number of periods in the panel used for testing (if the panel is unbalanced, <code>num_periods</code> indicates the range of time periods across all individuals),
+</p>
+</li>
+<li>
+<p><code>num_observations</code>: the total number of observations in the panel used for testing,
+</p>
+</li>
+<li>
+<p><code>is_panel_balanced</code>: a logical value indicating whether the panel is balanced,
+</p>
+</li>
+<li>
+<p><code>equiv_threshold_specified</code>: a logical value indicating whether an equivalence threshold was specified.
+</p>
+</li>
+<li>
+<p>if <code>equiv_threshold_specified = TRUE</code>, then additionally</p>
+
+<ul>
+<li>
+<p><code>IU_critical_values</code>: a numeric vector with the individual critical values for each of the placebo coefficients,
+</p>
+</li>
+<li>
+<p><code>reject_null_hypothesis</code>: a logical value indicating whether the null hypothesis of negligible pre-trend differences can be rejected at the specified significance level <code>alpha</code>,
+</p>
+</li>
+<li>
+<p><code>equiv_threshold</code>: the equivalence threshold employed.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p>if <code>equiv_threshold_specified = FALSE</code>, then additionally</p>
+
+<ul>
+<li>
+<p><code>minimum_equiv_thresholds</code>: a numeric vector including for each placebo coefficient the minimum equivalence threshold for which the null hypothesis of negligible pre-trend differences can be rejected for the corresponding placebo coefficient individually,
+</p>
+</li>
+<li>
+<p><code>minimum_equiv_threshold</code>: a numeric scalar minimum equivalence threshold for which the null hypothesis of negligible pre-trend differences can be rejected for all placebo coefficients individually.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>if <code>type = "Boot"</code> or <code>type = "Wild"</code>, an object of class "maxEquivTestBoot"  with </p>
+
+<ul>
+<li>
+<p><code>placebo_coefficients</code>: a numeric vector of the estimated placebo coefficients,
+</p>
+</li>
+<li>
+<p><code>abs_placebo_coefficients</code>: a numeric vector with the absolute values of estimated placebo coefficients,
+</p>
+</li>
+<li>
+<p><code>max_abs_coefficient</code>: the maximum absolute estimated placebo coefficient,
+</p>
+</li>
+<li>
+<p><code>B</code>: the number of bootstrap samples used to find the critical value,
+</p>
+</li>
+<li>
+<p><code>significance_level</code>: the chosen significance level of the test <code>alpha</code>,
+</p>
+</li>
+<li>
+<p><code>base_period</code>: the base period used in the testing procedure,
+</p>
+</li>
+<li>
+<p><code>placebo_names</code>: the names corresponding to the placebo coefficients,
+</p>
+</li>
+<li>
+<p><code>equiv_threshold_specified</code>: a logical value indicating whether an equivalence threshold was specified.
+</p>
+</li>
+<li>
+<p><code>num_individuals</code>: the number of cross-sectional individuals in the panel used for testing,
+</p>
+</li>
+<li>
+<p><code>num_periods</code>: the number of pre-treatment periods in the panel used for testing (if the panel is unbalanced, <code>num_periods</code> represents the range in the number of time periods covered by different individuals),
+</p>
+</li>
+<li>
+<p><code>num_observations</code>: the total number of observations in the panel used for testing,
+</p>
+</li>
+<li>
+<p><code>is_panel_balanced</code>: a logical value indicating whether the panel is balanced.
+</p>
+</li>
+<li>
+<p>if <code>equiv_threshold_specified = TRUE</code>, then additionally</p>
+
+<ul>
+<li>
+<p><code>bootstrap_critical_value</code>: the by bootstrap found critical value for the equivalence test based on the maximum absolute placebo coefficient,
+</p>
+</li>
+<li>
+<p><code>reject_null_hypothesis</code>: a logical value indicating whether the null hypothesis of negligible pre-trend differences can be rejected at the specified significance level <code>alpha</code>,</p>
+</li>
+</ul>
+</li>
+<li>
+<p>if <code>equiv_threshold_specified = FALSE</code>, then additionally</p>
+
+<ul><li>
+<p><code>minimum_equiv_threshold</code>: a numeric scalar minimum equivalence threshold for which the null hypothesis of negligible pre-trend differences can be rejected for the bootstrap procedure. 
+</p>
+</li></ul>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Ties Bos
+</p>
+
+
+<h3>References</h3>
+
+<p>Arellano M (1987). “Computing Robust Standard Errors for Within-groups Estimators.” <em>Oxford bulletin of Economics and Statistics</em>, 49(4), 431–434.
+</p>
+<p>Dette, H., &amp; Schumann, M. (2024). "Testing for Equivalence of Pre-Trends in Difference-in-Differences Estimation." <em>Journal of Business &amp; Economic Statistics</em>, 1–13. DOI: <a href="https://doi.org/10.1080/07350015.2024.2308121">doi:10.1080/07350015.2024.2308121</a>
+</p>
+<p>Liang, K.-Y., &amp; Zeger, S. L. (1986). "Longitudinal data analysis using generalized linear models." <em>Biometrika</em>, 73(1), 13-22. <a href="doi:10.1093/biomet/73.1.13">doi:10.1093/biomet/73.1.13</a>
+</p>
+<p>White H (1980). “A heteroskedasticity-consistent covariance matrix estimator and a direct test for heteroskedasticity.” <em>Econometrica</em>, 48(4), 817–838.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>print.maxEquivTestBoot</code> <code>print.maxEquivTestIU</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Generate a balanced panel dataset with 500 cross-sectional units (individuals), 
+# 5 time periods (labeled 1-5), a binary variable indicating which individual 
+# receives treatment and 2 control variables ("X_1" and "X_2") The error-terms are generated without 
+# heteroscedasticity,  autocorrelation, or any significant clusters. 
+# Furthermore, there are no fixed effects (lambda and eta are both vectors 
+# containing only 0) and no pre-trends present in the data (all values in 
+# beta are 0). See sim_paneldata() for more details.
+
+sim_data &lt;- sim_paneldata(N = 500, tt = 5, p = 2, beta = rep(0, 5), 
+                          gamma = rep(1, 2), het = 0, phi = 0, sd = 1, 
+                          burnins = 50)
+
+# -----------------  IU Approach -----------------
+# Perform the test with equivalent threshold specified as 1 based on 
+# pre-treatment periods 1-4 and homoscedastic error-terms:
+  # To select variables, one can use the column names / numbers in the panel data
+maxEquivTest(Y = "Y", ID = "ID", G = "G", period = 2, X= c(5,6),
+              data = sim_data, equiv_threshold = 1, pretreatment_period = 1:4,
+              base_period = 4, type = "IU")
+  # Alternatively, one can enter the variables separately:
+data_Y &lt;- sim_data$Y
+data_ID &lt;- sim_data$ID
+data_G &lt;- sim_data$G
+data_period &lt;- sim_data$period
+data_X &lt;- sim_data[, c(5, 6)]
+maxEquivTest(Y = data_Y, ID = data_ID, G = data_G, period = data_period, X = data_X,
+             equiv_threshold = 1, pretreatment_period = 1:4,
+             base_period = 4, type = "IU")
+             
+# Perform the test without specifying the equivalence threshold with heteroscedastic 
+# and autocorrelation robust variance-covariance matrix estimator:
+maxEquivTest(Y = 3, ID = 1, G = 4, period = 2, 
+             data = sim_data, equiv_threshold = NULL, pretreatment_period = 1:4,
+             base_period = 4, type = "IU", vcov = "HAC")
+
+# Perform the test without specifying the equivalence threshold with a custom
+# variance-covariance matrix estimator:
+vcov_func &lt;- function(x) {plm::vcovHC(x, method = "white1", type = "HC2")}
+maxEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", 
+             data = sim_data, equiv_threshold = 1, pretreatment_period = 1:4,
+             base_period = 4, type = "IU", vcov = vcov_func)
+ 
+# Perform the test using clustered standard errors based on a vector indicating 
+# the cluster. For instance, two clusters with the following rule: all
+# individuals with an ID below 250 are in the same cluster.
+cluster_ind &lt;- ifelse(sim_data$ID &lt; 250, 1, 2)
+maxEquivTest(Y = data_Y, ID = data_ID, G = data_G, period = data_period, X = data_X,
+               equiv_threshold = 1, pretreatment_period = 1:4,
+               base_period = 4, type = "IU", vcov = "CL", cluster = cluster_ind)
+
+# Note that the testing procedure can also handle unbalanced panels. 
+# Finally, one should note that the test procedure also works for unbalanced panels.
+# To illustrate this, we generate an unbalanced panel dataset by randomly selecting
+# 70% of the observations from the balanced panel dataset:
+random_indeces &lt;- sample(nrow(sim_data), 0.7*nrow(sim_data))
+unbalanced_sim_data &lt;- sim_data[random_indeces, ]
+maxEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", X = c(5, 6),
+              data = unbalanced_sim_data, equiv_threshold = 1, pretreatment_period = 1:4,
+              base_period = 4, type = "IU", vcov = "HAC")
+
+#-----------------  Bootstrap Approach -----------------
+ 
+ # Perform the test with equivalence threshold specified as 1 based on 
+ # pre-treatment periods 1:4 (with base period 4) with the general bootstrap procedure:
+ maxEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", 
+             data = sim_data, equiv_threshold = 1, pretreatment_period = 1:4,
+             base_period = 4, type = "Boot")
+
+ # Perform the test with the equivalence threshold specified as 1 based on 
+ # pre-treatment periods 1:4 (with base period 4) with the wild bootstrap procedure:
+ maxEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", 
+             data = sim_data, equiv_threshold = 1, pretreatment_period = 1:4,
+             base_period = 4, type = "Wild")
+ 
+ # The bootstrap procedures can handle unbalanced panels:
+ maxEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", 
+             data = unbalanced_sim_data, equiv_threshold = 1, 
+             pretreatment_period = 1:4,
+             base_period = 4, type = "Boot")
+ maxEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", 
+             data = unbalanced_sim_data, equiv_threshold = 1, 
+             pretreatment_period = 1:4,
+             base_period = 4, type = "Wild") 
+ 
+ # Performing the test without specifying the equivalence threshold:
+ maxEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", 
+             data = sim_data, equiv_threshold = NULL, pretreatment_period = 1:4,
+             base_period = 4, type = "Boot")
+
+ maxEquivTest(Y = "Y", ID = "ID", G = "G", period = "period", 
+             data = sim_data, equiv_threshold = NULL, pretreatment_period = 1:4,
+             base_period = 4, type = "Wild")           
+
+</code></pre>
+
+
+</div>

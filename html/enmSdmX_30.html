@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>geoThin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Thin geographic points deterministically or randomly</h2>
+
+<h3>Description</h3>
+
+<p>This function thins geographic points such that none have nearest neighbors closer than some user-specified distance. For a given set of points that fall within this distance, thinning can be conducted in two ways.  Both begin by first calculating all pairwise distances between points. Then, clusters of points are found based on proximity using the "single-linkage" method (i.e., based on minimum distance between groups). Then, either a deterministic or random method is used to select the retained points:
+</p>
+
+<ul>
+<li>
+<p> Deterministic: For each cluster, distances between each point in the cluster and all points outside of the cluster are calculated. The point retained in each cluster is the one with the greatest minimum pairwise distance to any points in any other cluster. This point will this be maximally isolated from any other point.
+</p>
+</li>
+<li>
+<p> Random: For each cluster, a random point is chosen.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">geoThin(x, minDist, random = FALSE, longLat = 1:2, method = "single", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A "spatial points" object of class <code>SpatVector</code>, <code>sf</code>, <code>data.frame</code>, or <code>matrix</code>. If <code>x</code> is a <code>data.frame</code> or <code>matrix</code>, then the points will be assumed to have the WGS84 coordinate system (i.e., unprojected).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minDist</code></td>
+<td>
+<p>Minimum distance (in meters) needed between points to retain them. Points falling closer than this distance will be candidates for being discarded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random</code></td>
+<td>
+<p>Logical: If <code>FALSE</code> (default), then use the deterministic method for thinning. If <code>TRUE</code>, then use the random method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>longLat</code></td>
+<td>
+<p>Numeric or integer vector: This is ignored if <code>x</code> is a <code>SpatVector</code> or <code>sf</code> object. However, if <code>x</code> is a <code>data.frame</code> or <code>matrix</code>, then this should be a character or integer vector specifying the columns in <code>x</code> corresponding to longitude and latitude (in that order). For example, <code>c('long', 'lat')</code> or <code>c(1, 2)</code>. The default is to assume that the first two columns in <code>x</code> represent coordinates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Character: Method used by <code>hclust</code> to cluster points. By default, this is <code>'single'</code>, but in some cases this may result in strange clustering (especially when there is a large number of points). The <code>'complete'</code> method (or others) may give more reasonable results in these cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments. Not used.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Object of class <code>x</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(sf)
+
+# lemur occurrence data
+data(mad0)
+data(lemurs)
+crs &lt;- getCRS('WGS84')
+occs &lt;- lemurs[lemurs$species == 'Eulemur fulvus', ]
+ll &lt;- c('longitude', 'latitude')
+occs &lt;- st_as_sf(occs, coords = ll, crs = getCRS('WGS84'))
+
+# deterministically thin
+det &lt;- geoThin(x = occs, minDist = 30000)
+
+# randomly thin
+set.seed(123)
+rand &lt;- geoThin(x = occs, minDist = 30000, random = TRUE)
+
+# map
+oldPar &lt;- par(mfrow = c(1, 2))
+
+plot(st_geometry(occs), cex = 1.4, main = 'Deterministic')
+plot(st_geometry(det), pch = 21, cex = 1.4, bg = 1:nrow(det), add = TRUE)
+plot(st_geometry(mad0), add = TRUE)
+
+plot(st_geometry(occs), cex = 1.4, main = 'Random')
+plot(st_geometry(rand), pch = 21, cex = 1.4, bg = 1:nrow(rand), add = TRUE)
+plot(st_geometry(mad0), add = TRUE)
+
+par(oldPar)
+
+</code></pre>
+
+
+</div>

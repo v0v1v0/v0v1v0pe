@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidyst_kde</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tidy and geospatial kernel density estimates</h2>
+
+<h3>Description</h3>
+
+<p>Tidy and geospatial versions of kernel density estimates for 1- and 2-dimensional data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_kde(data, ...)
+st_kde(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame/tibble of data values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>sf object with point geometry</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters in <code>ks::kde</code> function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For <code>tidy_kde</code>, the first columns of the output tibble are copied from <code>aes(x)</code> (1-d) or <code>aes(x,y)</code> (2-d). These columns are the evaluation grid points. The <code>estimate</code> column is the kernel density values at these grid points. The <code>group</code> column is a copy of the grouping variable of the input data. The <code>ks</code> column is a copy of the untidy kernel estimate from <code>ks::kde</code>, since the calculations for the layer functions <code>geom_contour_ks</code>, <code>geom_contour_filled_ks</code> require both the observations <code>data</code> and the kernel estimate as a <code>kde</code> object. For this reason, it is advised to compute a tidy kernel estimate first and then to create a <code>ggplot</code> with this tidy kernel estimate as the default <code>data</code> in the layer. 
+</p>
+<p>For <code>st_kde</code>, the output list contains the field <code>tidy_ks</code> which is the output from <code>tidy_ks</code>. The field <code>grid</code> is the kernel estimate values, with rectangular polygons. The field <code>sf</code> is the 1% to 99% probability contour regions as multipolygons, with the derived attribute <code>contlabel = 100%-cont</code>.
+</p>
+<p>The structure of the <code>tidy_kde</code> output is inherited from the input, i.e. if the input is a data frame/ (grouped) tibble then the output is a data frame/(grouped) tibble. Likewise for the <code>sf</code> object outputs for <code>st_kde</code>.
+</p>
+<p>The default bandwidth matrix is the unconstrained plug-in selector <code>ks::Hpi</code>, which is suitable for a wide range of data sets, since it is not restrained to smoothing along the coordinate axes. This produces a kernel estimate which is more representative of the data than with the default bandwidth in <code>geom_density_2d</code> and <code>geom_density_2d_filled</code>. For further details of the computation of the kernel density estimate and the bandwidth selector procedure, see <code>?ks::kde</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>–For <code>tidy_kde</code>, the output is an object of class <code>tidy_ks</code>, which is a tibble with columns:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>evaluation points in x-axis (name is taken from 1st input variable in <code>data</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>evaluation points in y-axis (2-d) (name is taken from 2nd input variable in <code>data</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>kernel estimate values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ks</code></td>
+<td>
+<p>first row (within each <code>group</code>) contains the untidy kernel estimate from <code>ks::kde</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tks</code></td>
+<td>
+<p>short object class label derived from the <code>ks</code> object class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>long object class label</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>grouping variable (if grouped input) (name is taken from grouping variable in <code>data</code>).</p>
+</td>
+</tr>
+</table>
+<p>–For <code>st_kde</code>, the output is an object of class <code>st_ks</code>, which is a list with fields:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>tidy_ks</code></td>
+<td>
+<p>tibble of simplified output (<code>ks</code>, <code>tks</code>, <code>label</code>, <code>group</code>) from <code>tidy_kde</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>sf object of grid of kernel density estimate values, as polygons, with attributes <code>estimate</code>, <code>group</code> copied from the <code>tidy_ks</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sf</code></td>
+<td>
+<p>sf object of 1% to 99% contour regions of kernel density estimate, as multipolygons, with attributes <code>contlabel</code> derived from the contour level; and <code>estimate</code>, <code>group</code> copied from the <code>tidy_ks</code> object.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## tidy density estimates
+library(ggplot2)
+data(crabs, package="MASS")
+## tidy 1-d density estimate per species
+crabs1 &lt;- dplyr::select(crabs, FL, sp)
+crabs1 &lt;- dplyr::group_by(crabs1, sp)
+t1 &lt;- tidy_kde(crabs1)
+gt1 &lt;- ggplot(t1, aes(x=FL)) 
+gt1 + geom_line(colour=1) + geom_rug_ks(colour=4) + facet_wrap(~sp)
+
+## tidy 2-d density estimate
+## suitable smoothing matrix gives bimodal estimate
+crabs2 &lt;- dplyr::select(crabs, FL, CW)
+t2 &lt;- tidy_kde(crabs2)
+gt2 &lt;- ggplot(t2, aes(x=FL, y=CW)) 
+gt2 + geom_contour_filled_ks(colour=1) + 
+    colorspace::scale_fill_discrete_sequential()
+
+## default smoothing matrix in geom_density_2d_filled() gives unimodal estimate
+gt3 &lt;- ggplot(crabs2, aes(x=FL, y=CW)) 
+gt3 + geom_density_2d_filled(bins=4, colour=1) +
+    colorspace::scale_fill_discrete_sequential() +
+    guides(fill=guide_legend(title="Density", reverse=TRUE))
+
+## facet wrapped geom_sf plot with fixed contour levels for all facets
+crabs3 &lt;- dplyr::select(crabs, FL, CW, sex)
+t3 &lt;- tidy_kde(dplyr::group_by(crabs3, sex))
+b &lt;- contour_breaks(t3)
+gt3 &lt;- ggplot(t3, aes(x=FL, y=CW)) 
+gt3 + geom_contour_filled_ks(colour=1, breaks=b) + 
+    colorspace::scale_fill_discrete_sequential() + facet_wrap(~sex)
+
+## geospatial density estimate
+data(wa)
+data(grevilleasf)
+hakeoides &lt;- dplyr::filter(grevilleasf, species=="hakeoides")
+hakeoides_coord &lt;- data.frame(sf::st_coordinates(hakeoides))
+s1 &lt;- st_kde(hakeoides)
+
+## base R plot
+xlim &lt;- c(1.2e5, 1.1e6); ylim &lt;- c(6.1e6, 7.2e6)
+plot(wa, xlim=xlim, ylim=ylim)
+plot(s1, add=TRUE)
+
+## geom_sf plot
+## suitable smoothing matrix gives optimally smoothed contours
+gs1 &lt;- ggplot(s1) + geom_sf(data=wa, fill=NA) + ggthemes::theme_map() +
+    colorspace::scale_fill_discrete_sequential(palette="Heat2") 
+gs1 + geom_sf(data=st_get_contour(s1), aes(fill=label_percent(contlabel))) +
+    coord_sf(xlim=xlim, ylim=ylim) 
+
+## default smoothing matrix in geom_density_2d_filled() is oversmoothed
+gs2 &lt;- ggplot(hakeoides_coord) + geom_sf(data=wa, fill=NA) + 
+    ggthemes::theme_map()
+gs2 + geom_density_2d_filled(aes(x=X, y=Y), bins=4, colour=1) +
+    colorspace::scale_fill_discrete_sequential(palette="Heat2") +
+    guides(fill=guide_legend(title="Density", reverse=TRUE)) +
+    coord_sf(xlim=xlim, ylim=ylim) 
+
+## Not run: ## export as geopackage for external GIS software
+sf::write_sf(wa, dsn="grevillea.gpkg", layer="wa")
+sf::write_sf(hakeoides, dsn="grevillea.gpkg", layer="hakeoides")
+sf::write_sf(gs1_cont, dsn="grevillea.gpkg", layer="hakeoides_cont")
+sf::write_sf(s1$grid, dsn="grevillea.gpkg", layer="hakeoides_grid")
+## End(Not run)
+</code></pre>
+
+
+</div>

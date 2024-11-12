@@ -1,0 +1,210 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>as.dichotomy</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert variable (possibly multiple choice question) to data.frame/matrix of dummy variables.</h2>
+
+<h3>Description</h3>
+
+<p>This function converts variable/multiple response
+variable (vector/matrix/data.frame) with category encoding into
+data.frame/matrix with dichotomy encoding (0/1) suited for most statistical
+analysis, e. g. clustering, factor analysis, linear regression and so on.
+</p>
+ 
+<ul>
+<li>
+<p><code>as.dichotomy</code> returns data.frame of class 'dichotomy' with 0, 1
+and possibly NA.
+</p>
+</li>
+<li>
+<p><code>dummy</code> returns matrix of class 'dichotomy' with 0, 1 and possibly NA.
+</p>
+</li>
+<li>
+<p><code>dummy1</code> drops last column in dichotomy matrix. It is useful in many cases
+because any column of such matrix usually is linear combinations of other columns.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">as.dichotomy(
+  x,
+  prefix = "v",
+  keep_unused = FALSE,
+  use_na = TRUE,
+  keep_values = NULL,
+  keep_labels = NULL,
+  drop_values = NULL,
+  drop_labels = NULL,
+  presence = 1,
+  absence = 0
+)
+
+dummy(
+  x,
+  keep_unused = FALSE,
+  use_na = TRUE,
+  keep_values = NULL,
+  keep_labels = NULL,
+  drop_values = NULL,
+  drop_labels = NULL,
+  presence = 1,
+  absence = 0
+)
+
+dummy1(
+  x,
+  keep_unused = FALSE,
+  use_na = TRUE,
+  keep_values = NULL,
+  keep_labels = NULL,
+  drop_values = NULL,
+  drop_labels = NULL,
+  presence = 1,
+  absence = 0
+)
+
+is.dichotomy(x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector/factor/matrix/data.frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prefix</code></td>
+<td>
+<p>character. By default "v".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_unused</code></td>
+<td>
+<p>Logical. Should we create columns for unused value
+labels/factor levels? FALSE by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_na</code></td>
+<td>
+<p>Logical. Should we use NA for rows with all NA or use 0's
+instead. TRUE by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_values</code></td>
+<td>
+<p>Numeric/character. Values that should be kept. By default
+all values will be kept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_labels</code></td>
+<td>
+<p>Numeric/character. Labels/levels that should be kept. By
+default all labels/levels will be kept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop_values</code></td>
+<td>
+<p>Numeric/character. Values that should be dropped. By default
+all values will be kept. Ignored if keep_values/keep_labels are provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop_labels</code></td>
+<td>
+<p>Numeric/character. Labels/levels that should be dropped. By
+default all labels/levels will be kept. Ignored if keep_values/keep_labels are provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>presence</code></td>
+<td>
+<p>numeric value which will code presence of the level. By
+default it is 1. Note that all tables functions need that <code>presence</code>
+and <code>absence</code> will be 1 and 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>absence</code></td>
+<td>
+<p>numeric value which will code absence of the level. By default
+it is 0. Note that all tables functions need that <code>presence</code> and
+<code>absence</code> will be 1 and 0.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>as.dichotomy</code> returns data.frame of class <code>dichotomy</code> 
+with 0,1. Columns of this data.frame have variable labels according to
+value labels of original data. If label doesn't exist for particular value
+then this value will be used as variable label. <code>dummy</code> returns matrix
+of class <code>dichotomy</code>. Column names of this matrix are value labels of
+original data.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>as.category</code> for reverse conversion, mrset,
+mdset for usage multiple-response variables with tables.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data.table::setDTthreads(2)
+# toy example
+# brands - multiple response question
+# Which brands do you use during last three months? 
+set.seed(123)
+brands = as.sheet(t(replicate(20,sample(c(1:5,NA),4,replace = FALSE))))
+# score - evaluation of tested product
+score = sample(-1:1,20,replace = TRUE)
+var_lab(brands) = "Used brands"
+val_lab(brands) = autonum("
+                              Brand A
+                              Brand B
+                              Brand C
+                              Brand D
+                              Brand E
+                              ")
+
+var_lab(score) = "Evaluation of tested brand"
+val_lab(score) = make_labels("
+                             -1 Dislike it
+                              0 So-so
+                              1 Like it    
+                             ")
+
+cro_cpct(as.dichotomy(brands), score)
+# the same as
+cro_cpct(mrset(brands), score)
+
+# customer segmentation by used brands
+kmeans(dummy(brands), 3)
+
+# model of influence of used brands on evaluation of tested product 
+summary(lm(score ~ dummy(brands)))
+
+# prefixed data.frame 
+as.dichotomy(brands, prefix = "brand_")
+
+</code></pre>
+
+
+</div>

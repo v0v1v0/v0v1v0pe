@@ -1,0 +1,115 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>durations</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Obtain Edge Spell Durations from an ERGM Generating Process Trajectory
+</h2>
+
+<h3>Description</h3>
+
+<p>Given an input trajectory (in networkDynamic form, or network form with additional attributes), return the set of all edge durations (along with censoring information, if desired).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">durations(net, censor = c("obs", "omit"), return.censoring = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>net</code></td>
+<td>
+
+<p>a <code>network</code> or <code>networkDynamic</code> object containing the trajectory information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censor</code></td>
+<td>
+
+<p>how should censoring be handled?  (Currently, only returning observed spell lengths and omitting censored spells are supported.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.censoring</code></td>
+<td>
+
+<p>logical; return censoring information?
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function extracts information on edge spells (periods of time in which edges are present) from the input network, and returns the spell durations (optionally, together with censoring information).  The durations should not be assumed to be in any particular order; this function is generally invoked to examine duration distributions.
+</p>
+<p>If <code>net</code> is a <code>networkDynamic</code> object, both spell and censoring information are extracted from its edge activities.  If <code>net</code> is a <code>network</code> object, then its <code>"LastChangeTime"</code> network attribute is used to obtain spell information.  (Both can be obtained from <code>simEGP</code> with appropriate settings.)  Currently, <code>network</code> objects with <code>"EventHistory"</code> attributes are not supported - use the <code>networkDynamic</code> output type to examine complete event histories.  For the <code>network</code> case, the observation period is assumed to span the interval from 0 to <code>net%n%"Time"</code> (so be sure that temporal offsets were not used if employing that data type).
+</p>
+<p>Spells may be left-censored, right-censored, or both.  <code>censor=="obs"</code> results in lengths being reported as-is (subject to truncation to the observation period), and <code>censor=="omit"</code> results in censored spells being omitted.  Censoring indicators are also included when <code>return.censoring==TRUE</code>.  Note that if <code>"LastChangeTime"</code> information is being used, all spells are censored (we see only the onset times for edges that were present when the simulation was terminated), so the <code>"omit"</code> option will return a zero-length vector.  
+</p>
+<p>When using <code>durations</code> to estimate equilibrium duration distributions, it is important to bear in mind that EGP trajectories stopped by event count are not terminated at a random time, and hence will provide biased estimates.  Consider using <code>EGPRateEst</code> to calibrate a reasonable simulation time, and sampling with a temporal stopping rule.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector of spell durations (order not guaranteed), or a matrix containing said durations and censoring indicators (0=uncensored, 1=right-censored, 2=left-censored, and 3=interval censored).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Carter T. Butts <a href="mailto:buttsc@uci.edu">buttsc@uci.edu</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>simEGP</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  #Examples are a bit slow, so not automatically run
+
+#Generate a simple CD-CSTERGM trajectory; equilibrium mean outdegree
+#is 2, dissolution rate is 1/3
+set.seed(1331)
+n &lt;- 25
+net &lt;- simulate(network.initialize(n)~edges, coef=log(2/(n-3)))
+traj &lt;- simEGP(net~edges, coef=list(formation=log(2/(n-3)*1/3),
+    dissolution=log(1/3)), time=5000, process="CDCSTERGM", 
+    return.changetime=TRUE, verbose=FALSE)
+network.edgecount(traj)/(n-1)             #Mean degree apx 2
+dur &lt;- durations(traj)                    #Get durations
+head(dur)                                 #All are right-censored
+mean(dur[,1])                             #Apx 3 (despite censoring)
+
+#Repeat, but now using a networkDynamic object
+set.seed(1331)
+net &lt;- simulate(network.initialize(n)~edges, coef=log(2/(n-3)))
+traj &lt;- simEGP(net~edges, coef=list(formation=log(2/(n-3)*1/3),
+    dissolution=log(1/3)), time=500, process="CDCSTERGM", 
+    return.networkDynamic=TRUE, verbose=FALSE)
+slice &lt;- traj %t% 499                     #Take a slice near the end
+network.edgecount(slice)/(n-1)            #Mean degree apx 2
+dur &lt;- durations(traj)                    #Get durations
+head(dur)                                 #More of a mix
+mean(dur[,1])                             #Apx 3
+hist(dur[,1], xlab="Time", main="Duration Distribution")  #Visualize
+
+
+</code></pre>
+
+
+</div>

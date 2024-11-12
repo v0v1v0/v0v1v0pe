@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>isowrap</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Combined (batch) calculation of isotope pattern, envelope and centroids/intensoids/valleys on
+interpolated resolutions.
+</h2>
+
+<h3>Description</h3>
+
+<p>Wrapper combining the functions <code>getR</code>, <code>isopattern</code>, <code>envelope</code> and
+<code>vdetect</code>.
+</p>
+<p>Uses chemical formulas from <code>check_chemform</code> as argument.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">isowrap(isotopes, checked, resmass, resolution = FALSE, nknots = 6, 
+spar = 0.2, threshold = 0.1, charge = 1, emass = 0.00054858, algo=2, 
+ppm = FALSE, dmz = "get", frac = 1/4, env = "Gaussian", 
+detect = "centroid", plotit = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>isotopes</code></td>
+<td>
+<p>Dataframe listing all relevant isotopes, such as <code>isotopes</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>checked</code></td>
+<td>
+<p>Output dataframe from <code>check_chemform</code> with correct chemical formulas.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resmass</code></td>
+<td>
+<p>For resolution interpolation: dataframe with two columns, resolution and mass; see <code>getR</code>. 
+Otherwise, set to <code>FALSE</code> and use argument <code>resolution</code> to utilize a single resolution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>Single resolution value. Only used if argument <code>resmass</code> is set to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nknots</code></td>
+<td>
+<p>Number of knots, see <code>getR</code>. Ignored if argument <code>resmass</code> set to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spar</code></td>
+<td>
+<p>Smoothing parameter, see <code>getR</code>. Ignored if argument <code>resmass</code> set to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>Abundance below which isotope peaks are omitted, see <code>isopattern</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>charge</code></td>
+<td>
+<p>z in m/z, see <code>isopattern</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>emass</code></td>
+<td>
+<p>Electrone mass. Only relevant if <code>charge</code> is not set to <code>FALSE</code>, see <code>isopattern</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algo</code></td>
+<td>
+<p>Which algorithm to use? Type <code>1</code> or <code>2</code>. See details section in <code>isopattern</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ppm</code></td>
+<td>
+<p>Set stick discretization, see details section of <code>envelope</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dmz</code></td>
+<td>
+<p>Set stick discretization, see details section of <code>envelope</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frac</code></td>
+<td>
+<p>Set stick discretization, see details section of <code>envelope</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>Peak shape function, see <code>envelope</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>detect</code></td>
+<td>
+<p>Return either <code>"centroid"</code>, <code>"intensoid"</code> or <code>"valley"</code>. See <code>vdetect</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plotit</code></td>
+<td>
+<p>Should results be plotted, <code>TRUE/FALSE</code>?</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List with length equal to length of list <code>profiles</code>, with equal names of list entries.
+Each entry in that list contains the centroids, intensoids or valley of the envelope in two columns:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>m/z</code></td>
+<td>
+<p>m/z</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>abundance</code></td>
+<td>
+<p>area(centroid) or abundance (intensoid, valley)</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Martin Loos, Christian Gerber
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>vdetect</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(isotopes);
+data(resolution_list);
+data(chemforms);
+chemforms&lt;-chemforms[1:10];
+
+checked&lt;-check_chemform(
+    isotopes,
+    chemforms
+  );
+
+resmass&lt;-resolution_list[[1]]
+
+centro&lt;-isowrap(
+  isotopes,
+  checked,
+  resmass=resolution_list[[4]],
+  resolution=FALSE,
+  nknots=4,
+  spar=0.2,
+  threshold=0.1,
+  charge=1,
+  emass=0.00054858,
+  algo=2,
+  ppm=FALSE,
+  dmz="get",   # retrieve dm from R=m/dm
+  frac=1/4,
+  env="Gaussian",
+  detect="centroid",
+  plotit=TRUE
+)
+
+
+</code></pre>
+
+
+</div>

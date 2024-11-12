@@ -1,0 +1,557 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate.ergm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Draw from the distribution of an Exponential Family Random Graph Model</h2>
+
+<h3>Description</h3>
+
+<p><code>simulate</code> is used to draw from exponential
+family random network models.  See <code>ergm()</code> for more
+information on these models.
+</p>
+<p>The method for <code>ergm</code> objects inherits the model,
+the coefficients, the response attribute, the reference, the
+constraints, and most simulation parameters from the model fit,
+unless overridden by passing them explicitly. Unless overridden,
+the simulation is initialized with either a random draw from near
+the fitted model saved by <code>ergm()</code> or, if unavailable, the
+network to which the ERGM was fit.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'formula_lhs_network'
+simulate(object, nsim = 1, seed = NULL, ...)
+
+simulate_formula(object, ..., basis = eval_lhs.formula(object))
+
+## S3 method for class 'network'
+simulate_formula(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  observational = FALSE,
+  monitor = NULL,
+  statsonly = FALSE,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "ergm_state"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.formula(),
+  verbose = FALSE,
+  ...,
+  basis = ergm.getnetwork(object),
+  do.sim = NULL,
+  return.args = NULL
+)
+
+## S3 method for class 'ergm_state'
+simulate_formula(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  observational = FALSE,
+  monitor = NULL,
+  statsonly = FALSE,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "ergm_state"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.formula(),
+  verbose = FALSE,
+  ...,
+  basis = ergm.getnetwork(object),
+  do.sim = NULL,
+  return.args = NULL
+)
+
+## S3 method for class 'ergm_model'
+simulate(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef,
+  reference = if (is(constraints, "ergm_proposal")) NULL else trim_env(~Bernoulli),
+  constraints = trim_env(~.),
+  observational = FALSE,
+  monitor = NULL,
+  basis = NULL,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "ergm_state"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.formula(),
+  verbose = FALSE,
+  ...,
+  do.sim = NULL,
+  return.args = NULL
+)
+
+## S3 method for class 'ergm_state_full'
+simulate(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "ergm_state"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.formula(),
+  verbose = FALSE,
+  ...,
+  return.args = NULL
+)
+
+## S3 method for class 'ergm'
+simulate(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef = coefficients(object),
+  response = object$network %ergmlhs% "response",
+  reference = object$reference,
+  constraints = list(object$constraints, object$obs.constraints),
+  observational = FALSE,
+  monitor = NULL,
+  basis = if (observational) object$network else NVL(object$newnetwork, object$network),
+  statsonly = FALSE,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "ergm_state"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.ergm(),
+  verbose = FALSE,
+  ...,
+  return.args = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>Either a <code>formula</code> or an
+<code>ergm</code> object.  The <code>formula</code> should be of the form
+<code>y ~ &lt;model terms&gt;</code>, where <code>y</code> is a network object or a matrix
+that can be coerced to a <code>network</code> object.  For the
+details on the possible <code>&lt;model terms&gt;</code>, see <code>ergmTerm</code>.
+To create a <code>network</code> object in , use the
+<code>network()</code> function, then add nodal attributes to it using the
+<code>%v%</code> operator if necessary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>Number of networks to be randomly drawn from the given
+distribution on the set of all networks, returned by the Metropolis-Hastings
+algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Seed value (integer) for the random number generator.  See
+<code>set.seed()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to or used by methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>basis</code></td>
+<td>
+<p>a value (usually a <code>network</code>) to override the LHS of the formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef</code></td>
+<td>
+<p>Vector of parameter values for the model from which the
+sample is to be drawn.  If <code>object</code> is of class <code>ergm</code>,
+the default value is the vector of estimated coefficients. Can be
+set to <code>NULL</code> to bypass, but only if <code>return.args</code> below is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>Either a character string, a formula, or <code>NULL</code> (the default), to specify the response attributes and whether the ERGM is binary or valued. Interpreted as follows: </p>
+
+<dl>
+<dt><code>NULL</code></dt>
+<dd>
+<p>Model simple presence or absence, via a binary ERGM.</p>
+</dd>
+<dt>character string</dt>
+<dd>
+<p>The name of the edge attribute whose value is to be modeled. Type of ERGM will be determined by whether the attribute is <code>logical</code> (<code>TRUE</code>/<code>FALSE</code>) for binary or <code>numeric</code> for valued.</p>
+</dd>
+<dt>a formula</dt>
+<dd>
+<p>must be of the form <code>NAME~EXPR|TYPE</code> (with <code>|</code> being literal). <code>EXPR</code> is evaluated in the formula's environment with the network's edge attributes accessible as variables. The optional <code>NAME</code> specifies the name of the edge attribute into which the results should be stored, with the default being a concise version of <code>EXPR</code>. Normally, the type of ERGM is determined by whether the result of evaluating <code>EXPR</code> is logical or numeric, but the optional <code>TYPE</code> can be used to override by specifying a scalar of the type involved (e.g., <code>TRUE</code> for binary and <code>1</code> for valued).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>A one-sided formula specifying
+the reference measure (<code class="reqn">h(y)</code>) to be used.
+See help for ERGM reference measures implemented in the
+<strong>ergm</strong> package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraints</code></td>
+<td>
+<p>A formula specifying one or more constraints
+on the support of the distribution of the networks being modeled. Multiple constraints
+may be given, separated by “+” and “-” operators. See
+<code>ergmConstraint</code> for the detailed explanation of
+their semantics and also for an indexed list of the constraints visible to the <span class="pkg">ergm</span> package.
+</p>
+<p>The default is to have no constraints except those provided through
+the <code>ergmlhs</code> API.
+</p>
+<p>Together with the model terms in the formula and the reference measure, the constraints
+define the distribution of networks being modeled.
+</p>
+<p>It is also possible to specify a proposal function directly either
+by passing a string with the function's name (in which case,
+arguments to the proposal should be specified through the
+<code>MCMC.prop.args</code> argument to the relevant control function, or
+by giving it on the LHS of the hints formula to <code>MCMC.prop</code>
+argument to the control function. This will override
+the one chosen automatically.
+</p>
+<p>Note that not all possible combinations of constraints and reference
+measures are supported. However, for relatively simple constraints
+(i.e., those that simply permit or forbid specific dyads or sets of
+dyads from changing), arbitrary combinations should be possible.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>observational</code></td>
+<td>
+<p>Inherit observational constraints rather than model
+constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>monitor</code></td>
+<td>
+<p>A one-sided formula specifying one or more terms
+whose value is to be monitored. These terms are appended to the
+model, along with a coefficient of 0, so their statistics are
+returned. An <code>ergm_model</code> objectcan be passed as well.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statsonly</code></td>
+<td>
+<p>Logical: If TRUE, return only the network statistics, not
+the network(s) themselves. Deprecated in favor of <code style="white-space: pre;">⁠output=⁠</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>esteq</code></td>
+<td>
+<p>Logical: If TRUE, compute the sample estimating equations of an
+ERGM: if the model is non-curved, all non-offset statistics are returned
+either way, but if the model is curved, the score estimating function values
+(3.1) by Hunter and Handcock (2006) are returned instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>Normally character, one of <code>"network"</code> (default),
+<code>"stats"</code>, <code>"edgelist"</code>, or <code>"ergm_state"</code>: determines the output
+format. Partial matching is performed.
+</p>
+<p>Alternatively, a function with prototype
+<code style="white-space: pre;">⁠function(ergm_state, chain, iter, ...)⁠</code> that is
+called for each returned network, and its return value, rather
+than the network itself, is stored. This can be used to, for
+example, store the simulated networks to disk without storing
+them in memory or compute network statistics not implemented
+using the ERGM API, without having to store the networks
+themselves.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplify</code></td>
+<td>
+<p>Logical: If <code>TRUE</code> the output is "simplified":
+sampled networks are returned in a single list, statistics from
+multiple parallel chains are stacked, etc.. This makes it
+consistent with behavior prior to <code>ergm</code> 3.10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sequential</code></td>
+<td>
+<p>Logical: If FALSE, each of the <code>nsim</code> simulated
+Markov chains begins at the initial network.  If TRUE, the end of one
+simulation is used as the start of the next.  Irrelevant when <code>nsim=1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters for algorithm tuning,
+typically constructed with <code>control.simulate.ergm()</code> or <code>control.simulate.formula()</code>, which have different
+defaults. Their documentation gives the the list of recognized
+control parameters and their meaning. The more generic utility
+<code>snctrl()</code> (StatNet ConTRoL) also provides argument completion
+for the available control functions and limited argument name
+checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical or an integer to control the amount of
+progress and diagnostic information to be printed. <code>FALSE</code>/<code>0</code>
+produces minimal output, with higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do.sim</code></td>
+<td>
+<p>Logical; a deprecated interface superseded by <code>return.args</code>,
+that saves the inputs to the next level of the function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.args</code></td>
+<td>
+<p>Character; if not <code>NULL</code>, the <code>simulate</code> method
+for that particular class will, instead of proceeding for
+simulation, instead return its arguments as a list that can be
+passed as a second argument to <code>do.call()</code> or a lower-level
+function such as <code>ergm_MCMC_sample()</code>. This can be useful if, for
+example, one wants to run several simulations with varying
+coefficients and does not want to reinitialize the model and the
+proposal every time. Valid inputs at this time are <code>"formula"</code>,
+"ergm_model", and one of the <code>"ergm_state"</code> classes, for the three
+respective stopping points.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A sample of networks is randomly drawn from the specified model.  The model
+is specified by the first argument of the function.  If the first argument
+is a <code>formula</code> then this defines the model.  If the first
+argument is the output of a call to <code>ergm()</code> then the model used
+for that call is the one fit – and unless <code>coef</code> is specified, the
+sample is from the MLE of the parameters.  If neither of those are given as
+the first argument then a Bernoulli network is generated with the
+probability of ties defined by <code>prob</code> or <code>coef</code>.
+</p>
+<p>Note that the first network is sampled after <code>burnin</code> steps,
+and any subsequent networks are sampled each <code>interval</code> steps
+after the first.
+</p>
+<p>More information can be found by looking at the documentation of
+<code>ergm()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>output=="stats"</code> an <code>mcmc</code> object containing the
+simulated network statistics. If <code>control$parallel&gt;0</code>, an
+<code>mcmc.list</code> object. If <code>simplify=TRUE</code> (the default), these
+would then be "stacked" and converted to a standard <code>matrix</code>. A
+logical vector indicating whether or not the term had come from
+the <code style="white-space: pre;">⁠monitor=⁠</code> formula is stored in <code>attr()</code>-style attribute
+<code>"monitored"</code>.
+</p>
+<p>Otherwise, a representation of the simulated network is returned,
+in the form specified by <code>output</code>. In addition to a network
+representation or a list thereof, they have the following
+<code>attr()</code>-style attributes: </p>
+
+<dl>
+<dt><code>formula</code></dt>
+<dd>
+<p>The <code>formula</code> used to generate the
+sample.</p>
+</dd>
+<dt><code>stats</code></dt>
+<dd>
+<p>An <code>mcmc</code> or <code>mcmc.list</code> object as above.</p>
+</dd>
+<dt><code>control</code></dt>
+<dd>
+<p>Control parameters used to generate the sample.</p>
+</dd>
+<dt><code>constraints</code></dt>
+<dd>
+<p>Constraints used to generate the sample.</p>
+</dd>
+<dt><code>reference</code></dt>
+<dd>
+<p>The reference measure for the sample.</p>
+</dd>
+<dt><code>monitor</code></dt>
+<dd>
+<p>The monitoring formula.</p>
+</dd>
+<dt><code>response</code></dt>
+<dd>
+<p>The edge attribute used as a response.</p>
+</dd>
+</dl>
+<p>The following are the permitted network formats: </p>
+
+<dl>
+<dt><code>"network"</code></dt>
+<dd>
+<p>If <code>nsim==1</code>, an object of class
+<code>network</code>.  If <code>nsim&gt;1</code>, it returns an object of class
+<code>network.list</code> (a list of networks) with the
+above-listed additional attributes.</p>
+</dd>
+<dt><code>"edgelist"</code></dt>
+<dd>
+<p>An <code>edgelist</code> representation of the network,
+or a list thereof, depending on <code>nsim</code>.</p>
+</dd>
+<dt><code>"ergm_state"</code></dt>
+<dd>
+<p>A semi-internal representation of
+a network consisting of a <code>network</code> object emptied of edges, with
+an attached edgelist matrix, or a list thereof, depending on
+<code>nsim</code>.</p>
+</dd>
+</dl>
+<p>If <code>simplify==FALSE</code>, the networks are returned as a nested list,
+with outer list being the parallel chain (including 1 for no
+parallelism) and inner list being the samples within that chains
+(including 1, if one network per chain). If <code>TRUE</code>, they are
+concatenated, and if a total of one network had been simulated, the
+network itself will be returned.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul><li> <p><code>simulate(ergm_state_full)</code>: a low-level function to simulate from an <code>ergm_state</code> object.
+</p>
+</li></ul>
+<h3>Note</h3>
+
+<p>The actual <code>network</code> method for <code>simulate_formula()</code> is
+actually called <code>.simulate_formula.network()</code> and is also
+exported as an object. This allows it to be overridden by
+extension packages, such as <code>tergm</code>, but also accessed directly
+when needed.
+</p>
+<p><code>simulate.ergm_model()</code> is a lower-level interface, providing
+a <code>simulate()</code> method for <code>ergm_model</code> class. The <code>basis</code>
+argument is required; <code>monitor</code>, if passed, must be an
+<code>ergm_model</code> as well; and <code>constraints</code> can be an
+<code>ergm_proposal</code> object instead.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ergm()</code>, <code>network</code>,
+<code>ergm_MCMC_sample()</code> for a demonstration of <code style="white-space: pre;">⁠return.args=⁠</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#
+# Let's draw from a Bernoulli model with 16 nodes
+# and density 0.5 (i.e., coef = c(0,0))
+#
+g.sim &lt;- simulate(network(16) ~ edges + mutual, coef=c(0, 0))
+#
+# What are the statistics like?
+#
+summary(g.sim ~ edges + mutual)
+#
+# Now simulate a network with higher mutuality
+#
+g.sim &lt;- simulate(network(16) ~ edges + mutual, coef=c(0,2))
+#
+# How do the statistics look?
+#
+summary(g.sim ~ edges + mutual)
+#
+# Let's draw from a Bernoulli model with 16 nodes
+# and tie probability 0.1
+#
+g.use &lt;- network(16,density=0.1,directed=FALSE)
+#
+# Starting from this network let's draw 3 realizations
+# of a edges and 2-star network
+#
+g.sim &lt;- simulate(~edges+kstar(2), nsim=3, coef=c(-1.8,0.03),
+               basis=g.use, control=control.simulate(
+                 MCMC.burnin=1000,
+                 MCMC.interval=100))
+g.sim
+summary(g.sim)
+#
+# attach the Florentine Marriage data
+#
+data(florentine)
+#
+# fit an edges and 2-star model using the ergm function
+#
+gest &lt;- ergm(flomarriage ~ edges + kstar(2))
+summary(gest)
+#
+# Draw from the fitted model (statistics only), and observe the number
+# of triangles as well.
+#
+g.sim &lt;- simulate(gest, nsim=10, 
+            monitor=~triangles, output="stats",
+            control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
+g.sim
+
+# Custom output: store the edgecount (computed in R), iteration index, and chain index.
+output.f &lt;- function(x, iter, chain, ...){
+  list(nedges = network.edgecount(as.network(x)),
+       chain = chain, iter = iter)
+}
+g.sim &lt;- simulate(gest, nsim=3,
+            output=output.f, simplify=FALSE,
+            control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
+unclass(g.sim)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deviant_update</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>This function is used after first running the deviant function</h2>
+
+<h3>Description</h3>
+
+<p>Once the <code>deviant()</code> function has been used to analyze the already observed time series,
+the deviant_update() function is used to obtain the EVI output and early warnings for the new cases that are recorded.
+After running the deviant_update() function the output of the deviant function is also updated with a new row of data for each newly observed time point.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">deviant_update(
+  all_cases = NA,
+  new_cases = NA,
+  EVI_input,
+  cum = FALSE,
+  r_a = 7,
+  r = 0.2,
+  lag_max = 30,
+  method = "EVI",
+  past = 364/2
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>all_cases</code></td>
+<td>
+<p>the time series of the previous and newly observed cases per unit of time (ideally per day).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new_cases</code></td>
+<td>
+<p>the time series of the newly observed cases per unit of time (ideally per day).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EVI_input</code></td>
+<td>
+<p>the previous EVI function output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cum</code></td>
+<td>
+<p>TRUE if the time series is recorded as the cumulative number of the reported cases and FALSE (the default) if newly reported cases per unit of time are recorded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r_a</code></td>
+<td>
+<p>The window size for the moving average that will be analyzed. If set to 1 the actual observations are analyzed. However, due to the variability of the reported cases between working days and weekends it is recommended that the 7-day moving average is analyzed (i.e. r_a = 7), which is the default for this argument. Users could prefer a longer interval of 14 days or one month (i.e., r_a=14 or 30, respectively).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>Definition for the minimum difference in the mean number of cases, one week before and after each time point that, if present, should be detected. This is the case definition and the default is 0.2 (with 0 &lt;= r &lt;= 1). A value of r=0.2 means that we have a case when the mean number of the newly observed cases in the next 7 days is at least 20% higher than the mean number of the newly observed cases in the past 7 days.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag_max</code></td>
+<td>
+<p>Integer. Restriction of the maximum window size for the rolling window size. The default is set to one month (lag_max=30) to prevent excess volatility of past epidemic waves from affecting the most recent volatility estimates and the ability of EVI to warn for upcoming waves that may be smaller and of lower volatility than previous ones.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>either "EVI" or "cEVI", default equals to "EVI".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>past</code></td>
+<td>
+<p>Integer. Default the full length of the input data series. Restriction on the historical data that EVI/cEVI will use. This is fixed and equal to the index used in the deviant function.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Pateras K, Meletis E, Denwood M, et al. The convergence epidemic index (cEVI) an early warning tool for identifying waves in an epidemic. Inf Dis Mod, (2023). <a href="https://doi.org/10.1016/j.idm.2023.05.001">doi:10.1016/j.idm.2023.05.001</a>
+Kostoulas P, Meletis E, Pateras K, et al. The epidemic volatility index, a novel early warning tool for identifying new waves in an epidemic. Sci Rep 11, 23775 (2021). <a href="https://doi.org/10.1038/s41598-021-02622-3">doi:10.1038/s41598-021-02622-3</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Single update ##
+# If we have first observed only the 148 cases from the 
+# Italian data we run the deviant function on these cases:
+
+data("Italy")
+EVI_output0&lt;-deviant(new_cases=Italy$Cases[20:35], cum=FALSE, r_a=7, r=0.2, lag_max=30)
+# EVI_output0&lt;-deviant(new_cases=Italy$Cases[1:148], cum=FALSE, r_a=7, r=0.2, lag_max=30)
+# When the number of cases for the next day is observed we want to obtain 
+# the estimates for this day without having to reanalyze the entire time series.
+ 
+# This is done by using the deviant_update function:
+
+EVI_output0&lt;-deviant_update(new_cases=Italy$Cases[36], 
+                            EVI_input=EVI_output0,
+                            cum=FALSE, r_a=7, r=0.2, lag_max=30)
+
+# EVI_output0&lt;-deviant_update(new_cases=Italy$Cases[149], 
+#                             EVI_input=EVI_output0,
+#                             cum=FALSE, r_a=7, r=0.2, lag_max=30)
+# The result of running the deviant_update function is to update the output of 
+# the deviant_function by adding an additional row with estimates for the new data.
+
+# In this example the EVI_output file will now have 149 rows. If two additional 
+# days are analyzed two additional rows will be added and so on.
+
+
+
+# Multiple update steps when new data come using either an EVI or cEVI updater ##
+data("Italy")
+EVI_output&lt;-deviant(new_cases=Italy$Cases[1:20], cum=FALSE, 
+                   r_a=7, r=0.2, lag_max=30,method = "EVI")
+
+EVI_output2&lt;-deviant_update(new_cases = c(100,93,80,54,12), 
+                           EVI_input=EVI_output,method = "EVI")
+
+#EVI_output2
+
+# Same as above EVI_output2
+
+#EVI_output2&lt;-deviant_update(all_cases = c(Italy$Cases[1:20],100,93,80,54,12),
+#EVI_input=EVI_output,method = "EVI")
+
+#EVI_output2
+
+#EVI_output3&lt;-deviant_update(new_cases = c(2,2,10,1,0),EVI_input=EVI_output2, 
+#method = "cEVI")
+
+#EVI_output3
+
+# Even though EVI and cEVI can be used interchangeably, we suggest users to 
+# stick to the initial method.
+
+</code></pre>
+
+
+</div>

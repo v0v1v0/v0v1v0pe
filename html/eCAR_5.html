@@ -1,0 +1,219 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>semipar.eCAR.Leroux</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>R wrapper that accesses 'INLA' to fit semi-parametric Leroux CAR spatial regression model that accounts for spatial confounding.</h2>
+
+<h3>Description</h3>
+
+<p><code>semipar.eCAR.Leroux</code> is the main function used to fit the semi-parametric Leroux CAR model specified in the spectral domain.  This function calls 'INLA'.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">semipar.eCAR.Leroux(y, x, W,
+                       E,
+                       C=NULL,
+                       names.covariates=NULL,
+                       model="Gaussian",
+                       L=10,
+                       pcprior.sd=c(0.1,1),
+                       s2=10,
+                       method = "spectral",
+                       num.threads.inla = NULL,
+                       verbose=FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>response vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>covariate vector for which casual effect is desired</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>W</code></td>
+<td>
+<p>neighborhood matrix comprised of zeros and ones</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>Offset value whose specification depends on the data model selected such that for
+</p>
+<p>* Poisson - E is vector that contains expected counts
+</p>
+<p>* Binomial - E is vector that contains number of trials
+</p>
+<p>* Negative Binomial - E is vector that contains an offset.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p>design matrix for the covariates that are included as controls</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names.covariates</code></td>
+<td>
+<p>Specifies the names of the covariates inside C</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Specifies the likelihood or data model.  Options are "Gaussian", "Poisson", "Binomial", "Negative Binomial"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>Number of basis functions for the spline model on the (spatial scale)-varying beta. The smoothing method applied here is a Bayesian version of the P-spline approach by Eilers and Marx (1996), assuming a random walk on the spline coefficients and a PC-prior on the precision parameter of the random walk.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pcprior.sd</code></td>
+<td>
+<p>Vector of length 2 specifying the scaling parameters for the PC-priors assumed on the precision of the (spatial scale)-varying beta and the data y, respectively. Each of the scaling parameters can be interpreted as a guess on the marginal standard deviation (default are 0.1 and 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s2</code></td>
+<td>
+<p>Prior variance for the log of the dispersion parameter (only used for model="Negative Binomial", default equal to 10).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character defining the type of adjustment; either "spectral" (default choice) which implements the model assuming (spatial scale)-varying beta, or "naive" which implements the standard method with constant beta hence no spectral adjustment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; if TRUE the verbose output from the "inla" call is printed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.threads.inla</code></td>
+<td>
+<p>Argument that indicates the number of computing cores that the INLA call will occupy.  For syntax, see “inla.setOption"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to be passed to the "inla" call; for instance control.inla=list(strategy="laplace")</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A eCAR object which is a list containing the following
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>data_model</code></td>
+<td>
+<p>Character indicating which model was fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta_omega</code></td>
+<td>
+<p>Matrix that contains respectively, the posterior mean lower and upper quantiles of the (spatial scale)-varying beta at each omega value (for the non Gaussian cases it is the exponentiated beta).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>posterior_draws</code></td>
+<td>
+<p>List containing posterior draws of the following parameters
+</p>
+
+<ol>
+<li>
+<p>postsample.beta: matrix of dim Lx1000, containing drawns from the posterior distribution of the L spline coefficients
+</p>
+</li>
+<li>
+<p>postsample.prec.beta: vector of length 1000, containing drawns from the posterior distribution of the precision of the random walk on the spline coefficients
+</p>
+</li>
+<li>
+<p>postsample.prec.z: vector of length 1000, containing drawns from the posterior distribution of prec.z
+</p>
+</li>
+<li>
+<p>postsample.lambda.z: vector of length 1000, containing drawns from the posterior distribution of lambda.z
+</p>
+</li>
+<li>
+<p>postsample.c.beta: vector of length 1000, containing drawns from the posterior distribution of the bias corrected beta (i.e. beta evaluated at the largest eigenvalue)
+</p>
+</li>
+</ol>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DIC</code></td>
+<td>
+<p>Deviance information criterion computed by 'INLA'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>regrcoef</code></td>
+<td>
+<p>posterior summaries (mean, sd, 0.025quant, 0.975quant) for the regression coefs associated to the covariates inside 'C' (if model is Binomial, Poisson or Negative binomial, the posterior summaries refer to the exponentiated coef)</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Guan, Y; Page, G.L.; Reich, B.J.; Ventrucci, M.; Yang, S; "A spectral adjustment for spatial confounding" &lt;arXiv:2012.11767&gt;
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Our R-package
+library(eCAR)
+
+data(lipcancer)
+W &lt;- lipcancer$neighborhood.Matrix
+Y &lt;- lipcancer$data$observed
+X &lt;- lipcancer$data$pcaff
+E &lt;- lipcancer$data$expected
+
+
+# only run example if INLA is installed.
+if (requireNamespace("INLA", quietly = TRUE)) {
+  fit1 = semipar.eCAR.Leroux(y=Y, x=X, W=W, E=E, C=NULL,
+                                    pcprior.sd = c(0.1,1),
+                                    model="Poisson",
+                                    L=10,
+                                    num.threads.inla = '1:1',
+                                    verbose=FALSE)
+  plot(fit1)
+}
+
+</code></pre>
+
+
+</div>

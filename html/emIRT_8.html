@@ -1,0 +1,358 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hierIRT</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Hierarchichal IRT estimation via Variational Inference </h2>
+
+<h3>Description</h3>
+
+ 
+<p><code>hierIRT</code> estimates an hierarchical IRT model with two response categories, allowing the use of covariates
+to help determine ideal point estimates. Estimation is conducted using the variational EM algorithm described
+in the reference paper below. A special case of this model occurs when time/session is used as the covariate —
+this allows legislator ideal points to vary over time with a parametric time trend.  Notably, the popular
+DW-NOMINATE model (Poole and Rosenthal, 1997) is one such example, in which legislator ideal points shift
+by a constant amount each period, and the error term in the hierarchical model is set to 0.  In contrast to
+other functions in this package, this model does not assume a ‘rectangular’ roll call matrix, and all data
+are stored in vector form.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  hierIRT(.data, .starts = NULL, .priors = NULL, .control = NULL) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p> a list with the following items:
+</p>
+
+<dl>
+<dt><code>y</code></dt>
+<dd>
+<p>  A (L x 1) matrix of observed votes. ‘1’ and ‘-1’ are the yea and nay codes.</p>
+</dd>
+<dt><code>i</code></dt>
+<dd>
+<p>  A (L x 1) integer matrix of indexes of the ideal point i[l] linked to each observed
+vote l = 0 <code class="reqn">\ldots</code> L.  Indexes begin at 0 and reach a maximum value of I - 1.</p>
+</dd>
+<dt><code>j</code></dt>
+<dd>
+<p>  A (L x 1) integer matrix of indexes of the bill/item j[l] linked to each observed
+vote l = 0 <code class="reqn">\ldots</code> L.  Indexes begin at 0 and reach a maximum value of J - 1.</p>
+</dd>
+<dt><code>g</code></dt>
+<dd>
+<p>  A (I x 1) integer matrix of indexes of the group membership g[i[l]] linked to each
+ideal point i = 0 <code class="reqn">\ldots</code> I.  Indexes begin at 0 and reach a maximum value of G - 1.</p>
+</dd>
+<dt><code>z</code></dt>
+<dd>
+<p>  A (I x D) numeric matrix of observed covariates.  Rows correspond to ideal points
+i = 0 <code class="reqn">\ldots</code> I.  The columns correspond to the D different covariates.  Typically, the first
+column will be an intercept and fixed to 1, while other columns represent ideal point-specific covariates
+such as session.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.starts</code></td>
+<td>
+<p> a list containing several matrices of starting values for the parameters. The list should
+contain the following matrices:
+</p>
+
+<dl>
+<dt><code>alpha</code></dt>
+<dd>
+<p>  A (J x 1) matrix of starting values for the item difficulty parameter <code class="reqn">\alpha_j</code>. </p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of starting values for the item discrimination parameter <code class="reqn">\beta_j</code>. </p>
+</dd>
+<dt><code>gamma</code></dt>
+<dd>
+<p>  An (I x D) matrix of starting values for the group level coefficients <code class="reqn">\gamma_{m}</code>. </p>
+</dd>
+<dt><code>eta</code></dt>
+<dd>
+<p>  An (I x 1) matrix of starting values for the ideal point error term <code class="reqn">\eta_n</code>.</p>
+</dd>
+<dt><code>sigma</code></dt>
+<dd>
+<p>  An (G x 1) matrix of starting values for the group level variance parameter <code class="reqn">\sigma^2_m</code>. </p>
+</dd>    
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.priors</code></td>
+<td>
+<p>  list, containing several matrices of starting values for the parameters. The list should
+contain the following matrices:
+</p>
+
+<dl>
+<dt><code>gamma.mu</code></dt>
+<dd>
+<p>  A (D x 1) prior means matrix for all group level coefficients <code class="reqn">\gamma_{m}</code>.</p>
+</dd>
+<dt><code>gamma.sigma</code></dt>
+<dd>
+<p>  A (D x D) prior covariance matrix for all group level coefficients <code class="reqn">\gamma_{m}</code>.</p>
+</dd>
+<dt><code>beta.mu</code></dt>
+<dd>
+<p>  A (2 x 1) prior means matrix for all bill parameters <code class="reqn">\alpha_j</code> and <code class="reqn">\beta_j</code>.</p>
+</dd>
+<dt><code>beta.sigma</code></dt>
+<dd>
+<p>  A (2 x 2) prior covariance matrix for all bill parameters <code class="reqn">\alpha_j</code> and <code class="reqn">\beta_j</code>.</p>
+</dd>
+<dt><code>sigma.v</code></dt>
+<dd>
+<p>  A (1 x 1) matrix containing the group level variance prior parameter <code class="reqn">\nu_{\sigma}</code>.</p>
+</dd>
+<dt><code>sigma.s</code></dt>
+<dd>
+<p>  A (1 x 1) matrix containing the group level variance prior parameter <code class="reqn">s^2_{\sigma}</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.control</code></td>
+<td>
+<p>  list, specifying some control functions for estimation.  Options include the following:
+</p>
+
+<dl>
+<dt><code>threads</code></dt>
+<dd>
+<p>  integer, indicating number of cores to use. Default is to use a single core, but more can be
+supported if more speed is desired.</p>
+</dd>
+<dt><code>verbose</code></dt>
+<dd>
+<p>  boolean, indicating whether output during estimation should be verbose or not.  Set FALSE by default.</p>
+</dd>
+<dt><code>thresh</code></dt>
+<dd>
+<p>  numeric. Algorithm will run until all parameters correlate at 1 - thresh across
+consecutive iterations. Set at 1e-6 by default.</p>
+</dd>
+<dt><code>maxit</code></dt>
+<dd>
+<p>  integer. Sets the maximum number of iterations the algorithm can run. Set at 500 by default.</p>
+</dd>
+<dt><code>checkfreq</code></dt>
+<dd>
+<p>  integer. Sets frequency of verbose output by number of iterations. Set at 50 by default.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>hierIRT</code>.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>means</code></td>
+<td>
+<p> list, containing several matrices of point estimates for the parameters corresponding
+to the inputs for the priors.  The list should contain the following matrices.
+</p>
+
+<dl>
+<dt><code>alpha</code></dt>
+<dd>
+<p>  A (J x 1) matrix of point estimates for the item difficulty parameter <code class="reqn">\alpha_j</code>. </p>
+</dd>
+<dt><code>beta</code></dt>
+<dd>
+<p>  A (J x 1) matrix of point estimates for the item discrimination parameter <code class="reqn">\beta_j</code>. </p>
+</dd>
+<dt><code>gamma</code></dt>
+<dd>
+<p>  An (I x D) matrix of point estimates for the group level coefficients <code class="reqn">\gamma_{m}</code>. </p>
+</dd>
+<dt><code>eta</code></dt>
+<dd>
+<p>  An (I x 1) matrix of point estimates for the ideal point error term <code class="reqn">\eta_n</code>.</p>
+</dd>
+<dt><code>sigma</code></dt>
+<dd>
+<p>  An (G x 1) matrix of point estimates for the group level variance parameter <code class="reqn">\sigma^2_m</code>. </p>
+</dd>    
+<dt><code>x_implied</code></dt>
+<dd>
+<p>  An (I x 1) matrix of the implied ideal point <code class="reqn">x_i</code>, calculated as a function of
+gamma, z, and eta using the point estimates for those parameters. </p>
+</dd>    
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars</code></td>
+<td>
+<p> list, containing several matrices of variance estimates for several parameters of interest for diagnostic
+purposes. Note that these variances are those recovered via variational approximation, and in most cases they are
+known to be far too small and generally unusable. The list should contain the following matrices:
+</p>
+
+<dl>
+<dt><code>eta</code></dt>
+<dd>
+<p>  A (I x 1) matrix of variance estimates for the ideal point noise parameter <code class="reqn">\eta_n</code>.</p>
+</dd>
+<dt><code>gamma</code></dt>
+<dd>
+<p>  A (G x D x D) cube of covariance estimates for the gamma parameters for each group.
+Each of the G items is a matrix with a single covariance matrix for the m-th group's D gamma parameters.</p>
+</dd>
+<dt><code>beta2</code></dt>
+<dd>
+<p>  A (J x 2 x 2) cube of covariance estimates for the item parameters <code class="reqn">\alpha_j</code> and <code class="reqn">\beta_j</code>.
+Each of the J items is a matrix with a single covariance matrix for the j-th item.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runtime</code></td>
+<td>
+<p> A list of fit results, with elements listed as follows:</p>
+</td>
+</tr>
+</table>
+<dl>
+<dt><code>iters</code></dt>
+<dd>
+<p>  integer, number of iterations run.</p>
+</dd>
+<dt><code>conv</code></dt>
+<dd>
+<p>  integer, convergence flag. Will return 1 if threshold reached, and 0 if maximum number of iterations reached.</p>
+</dd>
+<dt><code>threads</code></dt>
+<dd>
+<p>  integer, number of threads used to estimated model.</p>
+</dd>
+<dt><code>tolerance</code></dt>
+<dd>
+<p>  numeric, tolerance threshold for convergence.  Identical to thresh argument in input to .control list.</p>
+</dd>
+</dl>
+<table><tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p> A list of counts of various items:</p>
+</td>
+</tr></table>
+<dl>
+<dt><code>D</code></dt>
+<dd>
+<p>  integer, number of dimensions (i.e. number of covariates, including intercept).</p>
+</dd>
+<dt><code>G</code></dt>
+<dd>
+<p>  integer, number of groups.</p>
+</dd>
+<dt><code>I</code></dt>
+<dd>
+<p>  integer, number of ideal points.</p>
+</dd>
+<dt><code>J</code></dt>
+<dd>
+<p>  integer, number of items/bill parameters.</p>
+</dd>
+<dt><code>L</code></dt>
+<dd>
+<p>  integer, number of observed votes.</p>
+</dd>    
+</dl>
+<table><tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p> Function call used to generate output.</p>
+</td>
+</tr></table>
+<h3>Author(s)</h3>
+
+ 
+<p>Kosuke Imai <a href="mailto:imai@harvard.edu">imai@harvard.edu</a>
+</p>
+<p>James Lo <a href="mailto:lojames@usc.edu">lojames@usc.edu</a>
+</p>
+<p>Jonathan Olmsted <a href="mailto:jpolmsted@gmail.com">jpolmsted@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Variational model is described in Kosuke Imai, James Lo, and Jonathan Olmsted “Fast Estimation
+of Ideal Points with Massive Data.” American Political Science Review, Volume 110, Issue 4, November 2016, pp. 631-656. &lt;DOI:10.1017/S000305541600037X&gt;.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>'dwnom'.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+### Real data example of US Senate 80-110 (not run)
+### Based on voteview.com example of DW-NOMINATE (\url{https://voteview.com/})
+### We estimate a hierarchical model without noise and a linear time covariate
+### This model corresponds very closely to the DW-NOMINATE model
+
+## Not run: 
+data(dwnom)
+
+## This takes about 10 minutes to run on 8 threads
+## You may need to reduce threads depending on what your machine can support
+lout &lt;- hierIRT(.data = dwnom$data.in,
+                    .starts = dwnom$cur,
+                    .priors = dwnom$priors,
+                    .control = {list(
+                    threads = 8,
+                    verbose = TRUE,
+                    thresh = 1e-4,
+				    maxit=200,
+				    checkfreq=1
+                        )})
+
+## Bind ideal point estimates back to legislator data
+final &lt;- cbind(dwnom$legis, idealpt.hier=lout$means$x_implied)
+
+## These are estimates from DW-NOMINATE as given on the Voteview example
+## From file "SL80110C21.DAT"
+nomres &lt;- dwnom$nomres
+
+## Merge the DW-NOMINATE estimates to model results by legislator ID
+## Check correlation between hierIRT() and DW-NOMINATE scores
+res &lt;- merge(final, nomres, by=c("senate","id"),all.x=TRUE,all.y=FALSE)
+cor(res$idealpt.hier, res$dwnom1d)
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

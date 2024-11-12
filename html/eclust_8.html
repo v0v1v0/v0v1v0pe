@@ -1,0 +1,430 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>s_generate_data_mars</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate non linear response and test and training sets for non-linear
+simulation study</h2>
+
+<h3>Description</h3>
+
+<p>create a function that takes as input, the number of genes, the
+true beta vector, the gene expression matrix created from the
+generate_blocks function and returns a list of data matrix, as well as
+correlation matrices, TOM matrices, cluster information, training and test
+data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">s_generate_data_mars(p, X, beta, binary_outcome = FALSE, truemodule, nActive,
+  cluster_distance = c("corr", "corr0", "corr1", "tom", "tom0", "tom1",
+  "diffcorr", "difftom", "corScor", "tomScor", "fisherScore"), n, n0,
+  include_interaction = F, signal_to_noise_ratio = 1,
+  eclust_distance = c("fisherScore", "corScor", "diffcorr", "difftom"),
+  cluster_method = c("hclust", "protoclust"), cut_method = c("dynamic",
+  "gap", "fixed"), distance_method = c("euclidean", "maximum", "manhattan",
+  "canberra", "binary", "minkowski"), n_clusters,
+  agglomeration_method = c("complete", "average", "ward.D2", "single",
+  "ward.D", "mcquitty", "median", "centroid"), nPC = 1, K.max = 10,
+  B = 10)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>number of genes in design matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>gene expression matrix of size n x p using the
+<code>generate_blocks</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>true beta coefficient vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>binary_outcome</code></td>
+<td>
+<p>Logical. Should a binary outcome be generated. Default
+is <code>FALSE</code>. See details on how a binary outcome is generated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truemodule</code></td>
+<td>
+<p>numeric vector of the true module membership used in the
+<code>s_response_mars</code> function. Modules 3 and 4 are active in the
+response. See <code>s_response_mars</code> function for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nActive</code></td>
+<td>
+<p>number of active genes in the response used in the
+<code>s_response_mars</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster_distance</code></td>
+<td>
+<p>character representing which matrix from the training
+set that you want to use to cluster the genes. Must be one of the following
+</p>
+ <ul><li>
+<p> corr, corr0, corr1, tom, tom0, tom1, diffcorr, difftom,
+corScor, tomScor, fisherScore </p>
+</li></ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>total number of subjects</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n0</code></td>
+<td>
+<p>total number of subjects with E=0</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_interaction</code></td>
+<td>
+<p>Should an interaction with the environment be
+generated as part of the response. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>signal_to_noise_ratio</code></td>
+<td>
+<p>signal to noise ratio, default is 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eclust_distance</code></td>
+<td>
+<p>character representing which matrix from the training
+set that you want to use to cluster the genes based on the environment. See
+<code>cluster_distance</code> for avaialble options. Should be different from
+<code>cluster_distance</code>. For example, if <code>cluster_distance=corr</code> and
+<code>EclustDistance=fisherScore</code>. That is, one should be based on
+correlations ignoring the environment, and the other should be based on
+correlations accounting for the environment. This function will always
+return this add on</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster_method</code></td>
+<td>
+<p>Cluster the data using hierarchical clustering or
+prototype clustering. Defaults <code>cluster_method="hclust"</code>. Other option
+is <code>protoclust</code>, however this package must be
+installed before proceeding with this option</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut_method</code></td>
+<td>
+<p>what method to use to cut the dendrogram. <code>'dynamic'</code>
+refers to <code>dynamicTreeCut</code> library. <code>'gap'</code> is Tibshirani's gap
+statistic <code>clusGap</code> using the <code>'Tibs2001SEmax'</code>
+rule. <code>'fixed'</code> is a fixed number specified by the <code>n_clusters</code>
+argument</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance_method</code></td>
+<td>
+<p>one of "euclidean","maximum","manhattan", "canberra",
+"binary","minkowski" to be passed to <code>dist</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_clusters</code></td>
+<td>
+<p>Number of clusters specified by the user. Only applicable
+when <code>cut_method="fixed"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>agglomeration_method</code></td>
+<td>
+<p>the agglomeration method to be used. This should
+be (an unambiguous abbreviation of) one of "ward.D", "ward.D2", "single",
+"complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC)
+or "centroid" (= UPGMC).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nPC</code></td>
+<td>
+<p>number of principal components. Can be 1 or 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K.max</code></td>
+<td>
+<p>the maximum number of clusters to consider, must be at least
+two. Only used if <code>cutMethod='gap'</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>integer, number of Monte Carlo (“bootstrap”) samples. Only used if
+<code>cutMethod='gap'</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>list of (in the following order) </p>
+ <dl>
+<dt>beta_truth</dt>
+<dd>
+<p>a 1
+column matrix containing the true beta coefficient vector</p>
+</dd>
+<dt>similarity</dt>
+<dd>
+<p>an object of class similarity which is the similarity
+matrix specified by the <code>cluster_distance</code>
+argument</p>
+</dd>
+<dt>similarityEclust</dt>
+<dd>
+<p>an object of class similarity which is the
+similarity matrix specified by the <code>eclust_distance</code> argument</p>
+</dd>
+<dt>DT</dt>
+<dd>
+<p>data.table of simulated data from the <code>s_response</code> function</p>
+</dd>
+<dt>Y</dt>
+<dd>
+<p>The simulated response</p>
+</dd> <dt>X0</dt>
+<dd>
+<p>the n0 x p design matrix for the
+unexposed subjects</p>
+</dd> <dt>X1</dt>
+<dd>
+<p>the n1 x p design matrix for the exposed
+subjects</p>
+</dd> <dt>X_train</dt>
+<dd>
+<p>the training design matrix for all subjects</p>
+</dd>
+<dt>X_test</dt>
+<dd>
+<p>the test set design matrix for all subjects</p>
+</dd>
+<dt>Y_train</dt>
+<dd>
+<p>the training set response</p>
+</dd> <dt>Y_test</dt>
+<dd>
+<p>the test set
+response</p>
+</dd> <dt>DT_train</dt>
+<dd>
+<p>the training response and training design matrix
+in a single data.frame object</p>
+</dd> <dt>DT_test</dt>
+<dd>
+<p>the test response and
+training design matrix in a single data.frame object</p>
+</dd> <dt>S0</dt>
+<dd>
+<p>a character
+vector of the active genes i.e. the ones that are associated with the
+response</p>
+</dd> <dt>n_clusters_All</dt>
+<dd>
+<p>the number of clusters identified by using
+the similarity matrix specified by the <code>cluster_distance</code> argument</p>
+</dd>
+<dt>n_clusters_Eclust</dt>
+<dd>
+<p>the number of clusters identified by using the
+similarity matrix specified by the <code>eclust_distance</code>
+argument</p>
+</dd>
+<dt>n_clusters_Addon</dt>
+<dd>
+<p>the sum of <code>n_clusters_All</code> and
+<code>n_clusters_Eclust</code></p>
+</dd> <dt>clustersAll</dt>
+<dd>
+<p>the cluster membership of each
+gene based on the <code>cluster_distance</code> matrix</p>
+</dd> <dt>clustersAddon</dt>
+<dd>
+<p>the
+cluster membership of each gene based on both the <code>cluster_distance</code>
+matrix and the <code>eclust_distance</code> matrix. Note that each gene will
+appear twice here</p>
+</dd>
+<dt>clustersEclust</dt>
+<dd>
+<p>the cluster membership of each gene
+based on the <code>eclust_distance</code> matrix</p>
+</dd>
+<dt>gene_groups_inter</dt>
+<dd>
+<p>cluster membership of each gene with a penalty
+factor used for the group lasso</p>
+</dd> <dt>gene_groups_inter_Addon</dt>
+<dd>
+<p>cluster
+membership of each gene with a penalty factor used for the group lasso</p>
+</dd>
+<dt>tom_train_all</dt>
+<dd>
+<p>the TOM matrix based on all training subjects</p>
+</dd>
+<dt>tom_train_diff</dt>
+<dd>
+<p>the absolute difference of the exposed and unexposed
+TOM matrices: <code class="reqn">|TOM_{E=1} - TOM_{E=0}|</code></p>
+</dd> <dt>tom_train_e1</dt>
+<dd>
+<p>the TOM
+matrix based on training exposed subjects only</p>
+</dd> <dt>tom_train_e0</dt>
+<dd>
+<p>the TOM
+matrix based on training unexposed subjects only</p>
+</dd> <dt>corr_train_all</dt>
+<dd>
+<p>the
+Pearson correlation matrix based on all training subjects</p>
+</dd>
+<dt>corr_train_diff</dt>
+<dd>
+<p>the absolute difference of the exposed and unexposed
+Pearson correlation matrices: <code class="reqn">|Cor_{E=1} - Cor_{E=0}|</code></p>
+</dd>
+<dt>corr_train_e1</dt>
+<dd>
+<p>the Pearson correlation matrix based on training
+exposed subjects only</p>
+</dd> <dt>corr_train_e0</dt>
+<dd>
+<p>the Pearson correlation matrix
+based on training unexposed subjects only</p>
+</dd>
+<dt>fisherScore</dt>
+<dd>
+<p>The fisher
+scoring matrix. see <code>u_fisherZ</code> for details</p>
+</dd>
+<dt>corScor</dt>
+<dd>
+<p>The
+correlation scoring matrix: <code class="reqn">|Cor_{E=1} + Cor_{E=0} - 2|</code></p>
+</dd>
+<dt>mse_null</dt>
+<dd>
+<p>The MSE for the null model</p>
+</dd>
+<dt>DT_train_folds</dt>
+<dd>
+<p>The 10
+training folds used for the stability measures</p>
+</dd>
+<dt>X_train_folds</dt>
+<dd>
+<p>The 10
+X training folds (the same as in DT_train_folds)</p>
+</dd>
+<dt>Y_train_folds</dt>
+<dd>
+<p>The
+10 Y training folds (the same as in DT_train_folds)</p>
+</dd> </dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(magrittr)
+
+# simulation parameters
+rho = 0.90; p = 500 ;SNR = 1 ; n = 200; n0 = n1 = 100 ; nActive = p*0.10 ; cluster_distance = "tom";
+Ecluster_distance = "difftom"; rhoOther = 0.6; betaMean = 2;
+alphaMean = 1; betaE = 3; distanceMethod = "euclidean"; clustMethod = "hclust";
+cutMethod = "dynamic"; agglomerationMethod = "average"
+
+#in this simulation its blocks 3 and 4 that are important
+#leaveOut:  optional specification of modules that should be left out
+#of the simulation, that is their genes will be simulated as unrelated
+#("grey"). This can be useful when simulating several sets, in some which a module
+#is present while in others it is absent.
+d0 &lt;- s_modules(n = n0, p = p, rho = 0, exposed = FALSE,
+                modProportions = c(0.15,0.15,0.15,0.15,0.15,0.25),
+                minCor = 0.01,
+                maxCor = 1,
+                corPower = 1,
+                propNegativeCor = 0.3,
+                backgroundNoise = 0.5,
+                signed = FALSE,
+                leaveOut = 1:4)
+
+d1 &lt;- s_modules(n = n1, p = p, rho = rho, exposed = TRUE,
+                modProportions = c(0.15,0.15,0.15,0.15,0.15,0.25),
+                minCor = 0.4,
+                maxCor = 1,
+                corPower = 0.3,
+                propNegativeCor = 0.3,
+                backgroundNoise = 0.5,
+                signed = FALSE)
+
+truemodule1 &lt;- d1$setLabels
+
+X &lt;- rbind(d0$datExpr, d1$datExpr) %&gt;%
+  magrittr::set_colnames(paste0("Gene", 1:p)) %&gt;%
+  magrittr::set_rownames(paste0("Subject",1:n))
+
+betaMainEffect &lt;- vector("double", length = p)
+
+# the first nActive/2 in the 3rd block are active
+betaMainEffect[which(truemodule1 %in% 3)[1:(nActive/2)]] &lt;- runif(
+  nActive/2, betaMean - 0.1, betaMean + 0.1)
+
+# the first nActive/2 in the 4th block are active
+betaMainEffect[which(truemodule1 %in% 4)[1:(nActive/2)]] &lt;- runif(
+  nActive/2, betaMean+2 - 0.1, betaMean+2 + 0.1)
+beta &lt;- c(betaMainEffect, betaE)
+
+result &lt;- s_generate_data_mars(p = p, X = X,
+                               beta = beta,
+                               binary_outcome = FALSE,
+                               truemodule = truemodule1,
+                               nActive = nActive,
+                               include_interaction = FALSE,
+                               cluster_distance = cluster_distance,
+                               n = n, n0 = n0,
+                               eclust_distance = Ecluster_distance,
+                               signal_to_noise_ratio = SNR,
+                               distance_method = distanceMethod,
+                               cluster_method = clustMethod,
+                               cut_method = cutMethod,
+                               agglomeration_method = agglomerationMethod,
+                               nPC = 1)
+names(result)
+</code></pre>
+
+
+</div>

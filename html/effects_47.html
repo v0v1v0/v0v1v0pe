@@ -1,0 +1,170 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predictorEffects</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Functions For Computing Predictor Effects
+</h2>
+
+<h3>Description</h3>
+
+<p>Alternatives to the <code>Effect</code> and <code>allEffects</code> functions that use a different paradigm for conditioning in an effect display.  The user specifies one predictor, either numeric or a factor (where character and logical variables are treated as factors), for the horizontal axis of a plot, and the function determines the appropriate plot to display (which is drawn by <code>plot</code>). See the vignette <a href="../doc/predictor-effects-gallery.pdf">Predictor Effects Graphics Gallery</a> for details and examples.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predictorEffect(predictor, mod, focal.levels=50, xlevels=5, ...)
+
+## S3 method for class 'poLCA'
+predictorEffect(predictor, mod, focal.levels=50, 
+    xlevels=5, ...)
+
+## S3 method for class 'svyglm'
+predictorEffect(predictor, mod, focal.levels=50, 
+    xlevels=5, ...)
+
+## Default S3 method:
+predictorEffect(predictor, mod, focal.levels=50, 
+    xlevels=5, ..., sources)
+
+predictorEffects(mod, predictors, focal.levels=50, xlevels=5, ...)
+
+## S3 method for class 'poLCA'
+predictorEffects(mod, predictors = ~ ., 
+    focal.levels=50, xlevels=5, ...)
+
+## Default S3 method:
+predictorEffects(mod, predictors = ~ .,
+    focal.levels=50, xlevels=5,  ..., sources)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mod</code></td>
+<td>
+<p>A model object.  Supported models include all those described on the help page for <code>Effect</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor</code></td>
+<td>
+<p>quoted name of the focal predictor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictors</code></td>
+<td>
+<p>If the default, <code>~ .</code>, a predictor effect plot is drawn for each predictor (not regressor) in a model.  Otherwise, this is a one-sided formula specifying the first-order predictors for which predictor effect plots are to be drawn.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focal.levels</code></td>
+<td>
+<p>for <code>predictorEffect</code>, the number of evenly-spaced values (the default is 50) for the numeric focal predictor or a vector of values for the focal predictor. 
+</p>
+<p>For <code>predictorEffects</code>, the number of evenly-spaced values (default 50) to use for each numeric focal predictor in turn, or a named list, similar to <code>xlevels</code>, giving the number of values or the values themselves for each predictor individually, to be used when that predictor is the focal predictor; if a numeric focal predictor doesn't appear in the list, the default of 50 values is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlevels</code></td>
+<td>
+<p>this argument is used to set the levels of conditioning predictors; it may either be a single number specifying the number of evenly-spaced values (the default is 5) to which each conditioning predictor is to be set,  or it may be a list with elements named for the predictors giving the number of values or a vector of values to which each conditioning predictor is to be set, as explained in the help for <code>Effect</code>. 
+</p>
+<p>If the focal predictor is included in the <code>xlevels</code> list, it is disregarded; if any conditioning predictor is omitted from the list, its number of values is set to 5. 
+</p>
+<p>The default behavior of <code>xlevels</code> is different when <code>residuals=TRUE</code>; in that case, it behaves as in <code>Effect.lm</code>, and is effectively set by default to the 0.2, 0.4, 0.6, and 0.8 quantiles of conditioning predictors.
+</p>
+<p>The <code>xlevels</code> argument works similarly for <code>predictorEffect</code> and <code>predictorEffects</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Additional arguments passed to <code>Effect</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sources</code></td>
+<td>
+<p>Provides a mechanism for applying <code>predictorEffect</code> methods to a variety of regression models; see the vignette <a href="../doc/methods-supported-by-effects.pdf">Regression Models Supported by the effects Package</a> for an explanation.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Effect plots view a fitted regression function E(Y|X) in (sequences of) two-dimensional plots using conditioning and slicing.  The functions described here use a different method of determining the conditioning and slicing than <code>allEffects</code> uses.  The predictor effect of a focal predictor, say <code>x1</code>, is the  usual effect for the generalized interaction of <code>x1</code> with all the other predictors in a model.  When a predictor effect object is plotted, the focal predictor is by default plotted on the horizontal axis.
+</p>
+<p>For example, in the model <code>mod</code> with formula <code>y ~ x1 + x2 + x3</code>, the predictor effect <code>p1 &lt;- predictorEffects(mod, ~ x1)</code> is essentially equilavent to <code>p2 &lt;- Effect("x1", mod)</code>.  When plotted, these objects may produce different graphs because <code>plot(p1)</code> will always put <code>x1</code> on the horizontal axis, while <code>plot(p2)</code> uses a rule to determine the horizontal axis based on the characteristics of all the predictors, e.g., preferring numeric predictors over factors.
+</p>
+<p>If <code>mod</code> has the formula <code>y ~ x1 + x2 + x3 + x1:x2</code>, then <code>p1 &lt;- predictorEffects(mod, ~ x1)</code> is essentially equivalent to <code>p2 &lt;- Effect(c("x1", "x2"), mod)</code>.  As in the last example, the plotted versions of these objects may differ because of different rules used to determine the predictor on the horizontal axis.
+</p>
+<p>If <code>mod</code> has the formula <code>y ~ x1 + x2 + x3 + x1:x2 + x1:x3</code>, then <code>p1 &lt;- predictorEffects(mod, ~ x1)</code> is essentially equilavent to <code>p2 &lt;- Effect(c("x1", "x2", "x3"), mod)</code>.  Again, the plotted versions of these objects may differ because of the rules used to determine the horizontal axis.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>predictorEffect</code> returns an object of class <code>c("predictoreff", "eff")</code>.  The components of the object are described in the help for <code>Effect</code>; <code>predictorEffects</code> returns an object of class <code>"predictorefflist"</code>, which is a list whose elements are of class <code>c("predictoreff", "eff")</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>S. Weisberg <a href="mailto:sandy@umn.edu">sandy@umn.edu</a> and J. Fox
+</p>
+
+
+<h3>References</h3>
+
+<p>See <code>Effect</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Effect</code>, <code>plot.predictoreff</code>, the <a href="../doc/predictor-effects-gallery.pdf">Predictor Effects Graphics Gallery</a> vignette, and the <a href="../doc/partial-residuals.pdf">Effect Displays with Partial Residuals</a> vignette.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">mod &lt;- lm(prestige ~ type*(education + income) + women, Prestige)
+plot(predictorEffect("income", mod))
+plot(predictorEffects(mod, ~ education + income + women))
+
+mod.cowles &lt;- glm(volunteer ~ sex + neuroticism*extraversion, data=Cowles, family=binomial)
+plot(predictorEffects(mod.cowles, xlevels=4))
+plot(predictorEffect("neuroticism", mod.cowles, xlevels=list(extraversion=seq(5, 20, by=5))),
+     axes=list(grid=TRUE,
+               x=list(rug=FALSE),
+               y=list(lab="Probability of Vounteering")),
+     lines=list(multiline=TRUE), 
+     type="response")
+predictorEffects(mod.cowles, focal.levels=4, xlevels=4)
+
+# svyglm() example (adapting an example from the survey package)
+
+if (require(survey)){
+  data(api)
+  dstrat&lt;-svydesign(id=~1, strata=~stype, weights=~pw,
+    data=apistrat, fpc=~fpc)
+  mod &lt;- svyglm(sch.wide ~ ell + meals + mobility, design=dstrat,
+    family=quasibinomial())
+  plot(predictorEffects(mod),
+    axes=list(y=list(lim=log(c(0.4, 0.99)/c(0.6, 0.01)),
+      ticks=list(at=c(0.4, 0.75, 0.9, 0.95, 0.99)))))
+}
+
+</code></pre>
+
+
+</div>

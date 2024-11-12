@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_elev_raster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get Raster Elevation</h2>
+
+<h3>Description</h3>
+
+<p>Several web services provide access to raster elevation. Currently, this 
+function provides access to the Amazon Web Services Terrain Tiles and the 
+Open Topography global datasets API. The function accepts a <code>data.frame</code> 
+of x (long) and y (lat), an <code>sf</code>, or <code>terra</code> object as input.  A 
+<code>RasterLayer</code> object is returned. In subsequent versions, a <code>SpatRaster</code>
+will be returned.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_elev_raster(
+  locations,
+  z,
+  prj = NULL,
+  src = c("aws", "gl3", "gl1", "alos", "srtm15plus"),
+  expand = NULL,
+  clip = c("tile", "bbox", "locations"),
+  verbose = TRUE,
+  neg_to_na = FALSE,
+  override_size_check = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>locations</code></td>
+<td>
+<p>Either a <code>data.frame</code> of x (long) and y (lat), an 
+<code>sf</code>, or <code>terra</code> object as input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>The zoom level to return.  The zoom ranges from 1 to 14.  Resolution
+of the resultant raster is determined by the zoom and latitude.  For 
+details on zoom and resolution see the documentation from Mapzen at 
+<a href="https://github.com/tilezen/joerd/blob/master/docs/data-sources.md#what-is-the-ground-resolution">https://github.com/tilezen/joerd/blob/master/docs/data-sources.md#what-is-the-ground-resolution</a>.
+The z is not required for the OpenTopography data sources.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prj</code></td>
+<td>
+<p>A valid input to <code>st_crs</code> If a <code>sf</code> 
+object or a <code>terra</code> object is provided as the <code>locations</code>, 
+the prj is optional and will be taken from <code>locations</code>.  This 
+argument is required for a <code>data.frame</code> of locations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>src</code></td>
+<td>
+<p>A character indicating which API to use.  Currently supports "aws" 
+and "gl3", "gl1", "alos", or "srtm15plus" from the OpenTopography API global 
+datasets. "aws" is the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expand</code></td>
+<td>
+<p>A numeric value of a distance, in map units, used to expand the
+bounding box that is used to fetch the terrain tiles. This can 
+be used for features that fall close to the edge of a tile or 
+for retrieving additional area around the feature. If the 
+feature is a single point, the area it returns will be small if 
+clip is set to "bbox". Default is NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clip</code></td>
+<td>
+<p>A character value used to determine clipping of returned DEM.
+The default value is "tile" which returns the full tiles.  Other 
+options are "bbox" which returns the DEM clipped to the bounding 
+box of the original locations (or expanded bounding box if used), 
+or "locations" if the spatial data (e.g. polygons) in the input 
+locations should be used to clip the DEM.  Locations are not used 
+to clip input point datasets.  Instead the bounding box is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Toggles on and off the note about units and coordinate 
+reference system.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neg_to_na</code></td>
+<td>
+<p>Some of the data sources return large negative numbers as 
+missing data.  When the end result is a projected those 
+large negative numbers can vary.  When set to TRUE, only 
+zero and positive values are returned.  Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>override_size_check</code></td>
+<td>
+<p>Boolean to override size checks.  Any download 
+between 100 Mb and 500Mb report a message but
+continue.  Between 500Mb and 3000Mb requires 
+interaction and greater than 3000Mb fails.  These
+can be overriden with this argument set to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra arguments to pass to <code>httr::GET</code> via a named vector, 
+<code>config</code>.   See
+<code>get_aws_terrain</code> for more details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Currently, the <code>get_elev_raster</code> function utilizes the 
+Amazon Web Services 
+(<a href="https://registry.opendata.aws/terrain-tiles/">https://registry.opendata.aws/terrain-tiles/</a>) terrain 
+tiles and the Open Topography Global Datasets API 
+(<a href="https://opentopography.org/developers">https://opentopography.org/developers</a>).  
+</p>
+<p>The AWS Terrain Tiles data is provided via x, y, and z tiles (see 
+<a href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames">https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames</a> for 
+details.) The x and y are determined from the bounding box of the 
+object submitted for <code>locations</code> argument, and the z argument 
+must be specified by the user.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Function returns a <code>RasterLayer</code> in the projection 
+specified by the <code>prj</code> argument or in the projection of the 
+provided locations.  In subsequent versions, a <code>SpatRaster</code>
+will be returned.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(elevatr)
+library(sf)
+data(lake)
+lake_buff  &lt;- st_buffer(lake, 1000)
+loc_df &lt;- data.frame(x = runif(6,min=sf::st_bbox(lake)$xmin, 
+                               max=sf::st_bbox(lake)$xmax),
+                     y = runif(6,min=sf::st_bbox(lake)$ymin, 
+                               max=sf::st_bbox(lake)$ymax))
+                               
+x &lt;- get_elev_raster(locations = loc_df, prj = st_crs(lake) , z=10)
+x &lt;- get_elev_raster(lake, z = 12)
+x &lt;- get_elev_raster(lake, src = "gl3", expand = 5000)
+x &lt;- get_elev_raster(lake_buff, z = 10, clip = "locations")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

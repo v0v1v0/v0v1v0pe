@@ -1,0 +1,122 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pick_correlation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Signal correlation based event picking</h2>
+
+<h3>Description</h3>
+
+<p>The function picks (identifies) events from continuous data by comparing 
+the data patterns against a template signal using Pearson's correlation 
+coefficient, defining an event when that coefficient is above a threshold 
+value.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pick_correlation(data, on, template, dur_min, time, dt)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>eseis</code> object, <code>numeric</code> vector or list of 
+objects, data set to be processed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>on</code></td>
+<td>
+<p><code>Numeric</code> value, minimum correlation coefficient to define 
+event occurence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p><code>eseis</code> object or signal vector, template event 
+with which the data set is correlated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dur_min</code></td>
+<td>
+<p><code>Numeric</code> value, minimum duration of the event. This 
+is required as the routine tends to identify multipe picks with similarly 
+high correlation coefficients due to autocorrelation effects. If omitted, 
+<code>dur_min</code> is set to <code>0</code>, i.e., all picks are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p><code>POSIXct</code> vector, time vector of the signal(s). If not 
+provided, a synthetic time vector will be created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p><code>Numeric</code> value, sampling period. If omitted, either 
+estimated from <code>time</code> or set to 0.01 s (i.e., f = 100 Hz).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>data.frame</code>, picked events.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Dietze
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## create synthetic event signal
+p &lt;- sin(seq(0, 10 * pi, by = 0.35)) * 0.2 * 
+  (1 + sin(seq(0, pi, length.out = 90)))^5
+
+## show event signal
+plot(p, type = "l")
+
+## create synthetic noise signal
+x &lt;- runif(n = 1000, min = -1, max = 1)
+t &lt;- seq(from = Sys.time(), length.out = length(x), by = 1/200)
+ii &lt;- floor(runif(n = 3, min = 100, max = 900))
+
+## add events to noise
+for(k in 1:length(ii)) {
+  
+  nn &lt;- ii[k]:(ii[k] + 89)
+  x[nn] &lt;- x[nn] + p
+}
+
+## show resulting time series
+plot(x = t, y = x, type = "l")
+
+## pick events based on template
+picks &lt;- eseis::pick_correlation(data = x, 
+                                 on = 0.8, 
+                                 template = p, 
+                                 time = t, 
+                                 dt = 1/200)
+                                 
+## show result
+print(picks)
+                     
+</code></pre>
+
+
+</div>
